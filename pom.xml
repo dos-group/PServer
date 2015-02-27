@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>de.tuberlin.pserver</groupId>
+    <artifactId>pserver</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <name>aura</name>
+    <packaging>pom</packaging>
+    <!-- url>http://github.com/citlab/AURA</url -->
+
+    <!--scm>
+        <url>https://github.com/citlab/AURA</url>
+        <connection>scm:git:git@github.com:citlab/AURA.git</connection>
+        <developerConnection>scm:git:git@github.com:citlab/AURA.git</developerConnection>
+    </scm-->
+
+
+    <!-- ================================= -->
+    <!-- AURA PROJECT CONFIGURATION. -->
+    <!-- ================================= -->
+
+    <properties>
+        <!-- build -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Java -->
+        <jdk.version>1.7</jdk.version>
+
+        <!-- Maven Plugins -->
+        <maven-compiler-plugin.version>3.1</maven-compiler-plugin.version>
+        <maven-jar-plugin.version>2.4</maven-jar-plugin.version>
+
+        <!-- Dependencies -->
+        <netty-all.version>4.0.12.Final</netty-all.version>
+        <kryo.version>3.0.0</kryo.version>
+        <bcel.version>5.1</bcel.version>
+        <commons-io.version>1.3.2</commons-io.version>
+        <zookeeper.version>3.4.5</zookeeper.version>
+        <curator.version>2.5.0</curator.version>
+        <jcip-annotations.version>1.0</jcip-annotations.version>
+        <guava.version>15.0</guava.version>
+        <slf4j-api.version>1.7.5</slf4j-api.version>
+        <slf4j-log4j12.version>1.7.5</slf4j-log4j12.version>
+        <config.version>1.2.1</config.version>
+        <argparse4j.version>0.4.3</argparse4j.version>
+    </properties>
+
+    <!-- ================================= -->
+    <!-- MAVEN DEPENDENCIES. -->
+    <!-- ================================= -->
+
+    <dependencies>
+        <!-- SYSTEM DEPENDENCIES -->
+        <!-- log4f -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
+        <!-- sl4f -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+        </dependency>
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- PROJECT DEPENDENCIES -->
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-node</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-examples</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- SYSTEM DEPENDENCIES -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty-all.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.esotericsoftware.kryo</groupId>
+                <artifactId>kryo</artifactId>
+                <version>${kryo.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>bcel</groupId>
+                <artifactId>bcel</artifactId>
+                <version>${bcel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.zookeeper</groupId>
+                <artifactId>zookeeper</artifactId>
+                <version>${zookeeper.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-framework</artifactId>
+                <version>${curator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.jcip</groupId>
+                <artifactId>jcip-annotations</artifactId>
+                <version>${jcip-annotations.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+                <version>${slf4j-log4j12.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.typesafe</groupId>
+                <artifactId>config</artifactId>
+                <version>${config.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.sourceforge.argparse4j</groupId>
+                <artifactId>argparse4j</artifactId>
+                <version>${argparse4j.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- ================================= -->
+    <!-- MAVEN BUILD. -->
+    <!-- ================================= -->
+
+    <build>
+        <pluginManagement>
+            <plugins>
+
+                <!-- enable specific JVM version -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin.version}</version>
+                    <configuration>
+                        <source>${jdk.version}</source>
+                        <target>${jdk.version}</target>
+                    </configuration>
+                </plugin>
+
+                <!-- enable code formatting -->
+                <plugin>
+                    <groupId>com.googlecode.maven-java-formatter-plugin</groupId>
+                    <artifactId>maven-java-formatter-plugin</artifactId>
+                    <version>0.4</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>format</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <configFile>eclipse/formatter.xml</configFile>
+                    </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>aura-build-tools</artifactId>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.17</version>
+                    <configuration>
+                        <includes>
+                            <include>**/*TestSuite.java</include>
+                        </includes>
+                    </configuration>
+                </plugin>
+
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <!-- ================================= -->
+    <!-- MAVEN MODULES. -->
+    <!-- ================================= -->
+
+    <modules>
+        <module>pserver-core</module>
+        <module>pserver-client</module>
+        <module>pserver-node</module>
+        <module>pserver-examples</module>
+    </modules>
+
+</project>
