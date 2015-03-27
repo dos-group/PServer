@@ -1,12 +1,14 @@
 package de.tuberlin.pserver.examples.local;
 
-import de.tuberlin.pserver.client.PServerClient;
-import de.tuberlin.pserver.core.memory.Buffer;
-import de.tuberlin.pserver.core.infra.ClusterSimulator;
-import de.tuberlin.pserver.app.PServerInvokeable;
+import de.tuberlin.pserver.app.PServerJob;
+import de.tuberlin.pserver.app.dht.BufferValue;
 import de.tuberlin.pserver.app.dht.DHT;
 import de.tuberlin.pserver.app.dht.Key;
-import de.tuberlin.pserver.app.dht.Value;
+import de.tuberlin.pserver.client.PServerClient;
+import de.tuberlin.pserver.core.config.IConfig;
+import de.tuberlin.pserver.core.config.IConfigFactory;
+import de.tuberlin.pserver.core.infra.ClusterSimulator;
+import de.tuberlin.pserver.math.experimental.memory.Buffer;
 import de.tuberlin.pserver.node.PServerNode;
 import org.apache.log4j.ConsoleAppender;
 
@@ -18,10 +20,26 @@ public final class LocalDHTTestJob {
     private LocalDHTTestJob() {}
 
     // ---------------------------------------------------
-    // app Jobs.
+    // HDFS Commands.
     // ---------------------------------------------------
 
-    public static final class DHTTestJob implements PServerInvokeable {
+    /**
+     * ./start-all.sh
+     * ./stop-all.sh
+     *
+     */
+
+    // ---------------------------------------------------
+    // Constants.
+    // ---------------------------------------------------
+
+    private static final int NUM_OF_MACHINES = 4;
+
+    // ---------------------------------------------------
+    // Jobs.
+    // ---------------------------------------------------
+
+    public static final class DHTTestJob extends PServerJob {
 
         private boolean detectDuplicates(final int[] a) {
             boolean duplicates = false;
@@ -33,13 +51,13 @@ public final class LocalDHTTestJob {
         }
 
         @Override
-        public void invoke(final int instanceID) {
+        public void compute() {
             final Random r = new Random();
             final UUID uid = UUID.fromString("31bf55a7-2195-4d11-8ebf-0d030032fede");
-            if (instanceID == 0) {
-                DHT.getInstance().put(Key.newKey(uid), Value.newValue(false, Value.MAX_SIZE * 4));
+            if (ctx.instanceID == 0) {
+                ctx.dht.put(Key.newKey(uid, "test1", Key.DistributionMode.DISTRIBUTED), BufferValue.newValue(false, BufferValue.MAX_SIZE * 4));
             }
-            final Key key = DHT.getInstance().getKey(uid);
+            final Key key = ctx.dht.getKey(uid);
             while (true) {
                 final int numOfAccessedSegments = r.nextInt(10);
                 final int segmentIDs[] = new int[numOfAccessedSegments];
@@ -47,17 +65,17 @@ public final class LocalDHTTestJob {
                     segmentIDs[i] = r.nextInt((20480 * 4) - 1);
 
                 if (!detectDuplicates(segmentIDs)) {
-                    final Value.Segment[] segments = DHT.getInstance().get(key, segmentIDs);
+                    final BufferValue.Segment[] segments = DHT.getInstance().get(key, segmentIDs);
                     for (int i = 0; i < segmentIDs.length; ++i) {
                         if (segments[i] == null)
                             throw new IllegalStateException("segment == null => segmentID = " + segmentIDs[i]);
                     }
                     for (int i = 0; i < segmentIDs.length; ++i) {
                         final Buffer buffer = new Buffer(segments[i].data);
-                        final int randOffset = r.nextInt(Key.DEFAULT_SEGMENT_SIZE - 10);
+                        final int randOffset = r.nextInt(BufferValue.DEFAULT_SEGMENT_SIZE - 10);
                         buffer.putInt(randOffset, r.nextInt());
                     }
-                    DHT.getInstance().put(key, segments);
+                    ctx.dht.put(key, segments);
                 }
             }
         }
@@ -69,7 +87,14 @@ public final class LocalDHTTestJob {
 
     public static void main(final String[] args) {
         org.apache.log4j.Logger.getRootLogger().addAppender(new ConsoleAppender());
-        new ClusterSimulator(PServerNode.class, true, 4);
+
+        new ClusterSimulator(
+                IConfigFactory.load(IConfig.Type.PSERVER_SIMULATION),
+                PServerNode.class,
+                true,
+                NUM_OF_MACHINES,
+                new String[] {"-Xmx1024m"}
+        );
 
         try {
             Thread.sleep(5000);
@@ -77,7 +102,8 @@ public final class LocalDHTTestJob {
             e.printStackTrace();
         }
 
-        new PServerClient().execute(DHTTestJob.class);
+        new PServerClient(IConfigFactory.load(IConfig.Type.PSERVER_CLIENT)).execute(DHTTestJob.class);
+
         while (true) {
             try {
                 Thread.sleep(1000);

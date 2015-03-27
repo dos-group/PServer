@@ -180,7 +180,7 @@ public final class RPCManager {
             final CountDownLatch cdl = new CountDownLatch(1);
             callerTable.put(callUID, cdl);
 
-            // send to server...
+            // push to server...
             netManager.sendEvent(dstMachineID, new NetEvents.RPCCallerRequestEvent(callUID, methodInfo));
 
             try {

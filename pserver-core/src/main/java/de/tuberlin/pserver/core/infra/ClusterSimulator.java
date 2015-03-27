@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.core.infra;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.core.config.IConfig;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.server.NIOServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -32,18 +33,24 @@ public final class ClusterSimulator {
     // Constructors.
     // ---------------------------------------------------
 
-    public ClusterSimulator(final Class<?> mainClass,
+    public ClusterSimulator(final IConfig config,
+                            final Class<?> mainClass,
                             final boolean startupZookeeper,
-                            final int numNodes) {
+                            final int numNodes,
+                            final String[] jvmOpts) {
+
+        Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(mainClass);
+        Preconditions.checkNotNull(jvmOpts);
 
         final int tickTime = 1;
         final int numConnections = 50;
-        final String zkServer = "localhost";
-        final int zkPort = 2181;
+        final String zkServer = ZookeeperClient.buildServersString(config.getObjectList("zookeeper.servers"));
+        final int zkPort = config.getObjectList("zookeeper.servers").get(0).getInt("port");
 
         // sanity check.
-        //ZookeeperClient.checkConnectionString(zkServer);
+        ZookeeperClient.checkConnectionString(zkServer);
+
         if (numNodes < 1)
             throw new IllegalArgumentException("numNodes < 1");
 
@@ -78,7 +85,7 @@ public final class ClusterSimulator {
         // ------- bootstrap cluster -------
 
         //try {
-            String[] jvmOpts = new String[] { };
+            //String[] jvmOpts = new String[] { };
             for (int i = 0; i < numNodes; ++i) {
                 peList.add(new ProcessExecutor(mainClass).execute(jvmOpts));
                 //Thread.sleep(100);
@@ -93,9 +100,7 @@ public final class ClusterSimulator {
     // ---------------------------------------------------
 
     public void shutdown() {
-        for (final ProcessExecutor pe : peList) {
-            pe.destroy();
-        }
+        peList.forEach(ClusterSimulator.ProcessExecutor::destroy);
         this.zookeeperCNXNFactory.closeAll();
         this.zookeeperServer.shutdown();
     }
@@ -140,7 +145,7 @@ public final class ClusterSimulator {
                             + executableClazz.getProtectionDomain().getCodeSource().getLocation().getPath();
             final String canonicalName = executableClazz.getCanonicalName();
             try {
-                final List<String> commandList = new ArrayList<String>();
+                final List<String> commandList = new ArrayList<>();
                 commandList.add(javaRuntime);
                 commandList.add("-cp");
                 commandList.add(classpath);

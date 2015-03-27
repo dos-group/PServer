@@ -1,31 +1,28 @@
 package de.tuberlin.pserver.app;
 
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
+public abstract class PServerJob {
 
-public final class PServerJob implements Serializable {
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
 
-    public static final String PSERVER_SUBMIT_JOB_EVENT  = "PSJE";
+    protected static final Logger LOG = LoggerFactory.getLogger(PServerJob.class);
 
-    public static final String PSERVER_FINISH_JOB_EVENT  = "PFJE";
+    protected PServerContext ctx;
 
-    private static final long serialVersionUID = -1L;
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
 
-    public final String className;
+    public void injectContext(final PServerContext ctx) { this.ctx = Preconditions.checkNotNull(ctx); }
 
-    public final String simpleClassName;
+    public void begin() {}
 
-    public final List<String> classDependencies;
+    public abstract void compute();
 
-    public final byte[] classByteCode;
-
-    public PServerJob(final String className, final String simpleClassName, final List<String> classDependencies, final byte[] byteCode) {
-        this.className          = Preconditions.checkNotNull(className);
-        this.simpleClassName    = Preconditions.checkNotNull(simpleClassName);
-        this.classDependencies  = Collections.unmodifiableList(classDependencies);
-        this.classByteCode      = Preconditions.checkNotNull(byteCode);
-    }
+    public void end() {}
 }

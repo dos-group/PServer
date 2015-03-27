@@ -1,12 +1,7 @@
 package de.tuberlin.pserver.core.infra;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.io.*;
-import java.util.List;
-
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.core.config.IConfig;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
@@ -17,7 +12,13 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ZookeeperClient {
+import java.io.*;
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public final class ZookeeperClient {
 
     // ---------------------------------------------------
     // Constants.
@@ -138,14 +139,14 @@ public class ZookeeperClient {
         }
     }
 
-    /*public static String buildServersString(List<? extends IConfig> servers) {
+    public static String buildServersString(List<? extends IConfig> servers) {
         StringBuilder sb = new StringBuilder();
-        for (IConfig server : servers) {
+        for (final IConfig server : servers) {
             sb.append(server.getString("host"));
             sb.append(':');
             sb.append(server.getInt("port"));
             sb.append(';');
         }
         return servers.isEmpty() ? "" : sb.substring(0, sb.length() - 1);
-    }*/
+    }
 }

@@ -1,4 +1,7 @@
 package de.tuberlin.pserver.utils.nbhm;
+
+import sun.misc.Unsafe;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -7,20 +10,18 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import sun.misc.Unsafe;
-
 /*
  * Written by Cliff Click and released to the public domain, as explained at
  * http://creativecommons.org/licenses/publicdomain
  */
 
 /**
- * A multi-threaded bit-vector set, implemented as an array of primitive
+ * A multi-threaded bit-vectors set, implemented as an array of primitive
  * {@code longs}.  All operations are non-blocking and multi-threaded safe.
  * {@link #contains(int)} calls are roughly the same speed as a {load, mask}
  * sequence.  {@link #add(int)} and {@link #remove(int)} calls are a tad more
  * expensive than a {load, mask, store} sequence because they must use a CAS.
- * The bit-vector is auto-sizing.
+ * The bit-vectors is auto-sizing.
  *
  * <p><em>General note of caution:</em> The Set API allows the use of {@link Integer}
  * with silent autoboxing - which can be very expensive if many calls are
@@ -32,7 +33,7 @@ import sun.misc.Unsafe;
  * the number of elements (as is the case with hash-table based Set
  * implementations).  Space is approximately (largest_element/8 + 64) bytes.
  *
- * The implementation is a simple bit-vector using CAS for update.
+ * The implementation is a simple bit-vectors using CAS for update.
  *
  * @since 1.5
  * @author Cliff Click
@@ -61,7 +62,7 @@ public class NonBlockingSetInt extends AbstractSet<Integer> implements Serializa
   // set implementation with a single CAS.
   private transient NBSI _nbsi;
 
-  /** Create a new empty bit-vector */
+  /** Create a new empty bit-vectors */
   public NonBlockingSetInt( ) { 
     _nbsi = new NBSI(63, new ConcurrentAutoTable(), this); // The initial 1-word set
   }
@@ -270,8 +271,8 @@ public class NonBlockingSetInt extends AbstractSet<Integer> implements Serializa
     // Lower-case 'int' versions - no autoboxing, very fast.
     // 'i' is known positive.
     public boolean add( final int i ) {
-      // Check for out-of-range for the current partitionSize bit vector.
-      // If so we need to grow the bit vector.
+      // Check for out-of-range for the current partitionSize bit vectors.
+      // If so we need to grow the bit vectors.
       if( (i>>6) >= _bits.length ) 
         return install_larger_new_bits(i). // Install larger pile-o-bits (duh)
           help_copy().add(i);              // Finally, add to the new table

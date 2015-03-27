@@ -1,24 +1,14 @@
 package de.tuberlin.pserver.utils.nbhm;
+
+import sun.misc.Unsafe;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Field;
-import java.util.AbstractCollection;
-import java.util.AbstractMap;
-import java.util.AbstractSet;
-import java.util.Collection;
-import java.util.ConcurrentModificationException;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-
-import sun.misc.Unsafe;
 
 /*
  * Written by Cliff Click and released to the public domain, as explained at

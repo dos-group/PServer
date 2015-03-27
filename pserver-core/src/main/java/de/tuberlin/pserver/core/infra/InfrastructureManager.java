@@ -2,6 +2,7 @@ package de.tuberlin.pserver.core.infra;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
 import org.apache.zookeeper.WatchedEvent;
@@ -12,17 +13,15 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class InfrastructureManager extends EventDispatcher {
-
-    public static final String ZOOKEEPER_SERVER = "localhost:2181";
-
-    //public static final String ZOOKEEPER_SERVER = "130.149.249.11:2181";
+public final class InfrastructureManager extends EventDispatcher {
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
     private static final Logger LOG = LoggerFactory.getLogger(InfrastructureManager.class);
+
+    private final IConfig config;
 
     private final MachineDescriptor machine;
 
@@ -38,11 +37,12 @@ public class InfrastructureManager extends EventDispatcher {
     // Constructors.
     // ---------------------------------------------------
 
-    public InfrastructureManager(final MachineDescriptor machine) {
+    public InfrastructureManager(final MachineDescriptor machine, final IConfig config) {
         super(true, "INFRASTRUCTURE-MANAGER-THREAD");
-        this.machine = Preconditions.checkNotNull(machine);
-        this.peers = new ConcurrentHashMap<>();
-        this.machines = Collections.synchronizedList(new ArrayList<MachineDescriptor>());
+        this.config     = Preconditions.checkNotNull(config);
+        this.machine    = Preconditions.checkNotNull(machine);
+        this.peers      = new ConcurrentHashMap<>();
+        this.machines   = Collections.synchronizedList(new ArrayList<>());
         machines.add(machine);
     }
 
@@ -51,7 +51,10 @@ public class InfrastructureManager extends EventDispatcher {
     // ---------------------------------------------------
 
     public void start() {
-        connectZookeeper(ZOOKEEPER_SERVER);
+        final String zookeeperServer = ZookeeperClient.buildServersString(config.getObjectList("zookeeper.servers"));
+        ZookeeperClient.checkConnectionString(zookeeperServer);
+        connectZookeeper(zookeeperServer);
+        LOG.info("Started InfrastructureManager at " + machine);
     }
 
     public Map<UUID, MachineDescriptor> getActivePeers() {
@@ -65,6 +68,8 @@ public class InfrastructureManager extends EventDispatcher {
     public int getCurrentMachineIndex() { return machines.indexOf(machine); }
 
     public int getMachineIndex(final MachineDescriptor machine) { return machines.indexOf(Preconditions.checkNotNull(machine)); }
+
+    public MachineDescriptor getMachine(final int machineIndex) { return machines.get(machineIndex); }
 
     // ---------------------------------------------------
     // Private Methods.
@@ -109,7 +114,7 @@ public class InfrastructureManager extends EventDispatcher {
                     zookeeper.getChildrenForPathAndWatch(ZookeeperClient.ZOOKEEPER_NODES, this);
                     final List<String> machineList = zookeeper.getChildrenForPath(ZookeeperClient.ZOOKEEPER_NODES);
                     // Find out whether a node was created or deleted.
-                    //if (peers.values().size() < machineList.size()) {
+                    //if (peers.values().length() < machineList.length()) {
                         // A node has been added.
                         MachineDescriptor md = null;
                         for (final String machineIDStr : machineList) {

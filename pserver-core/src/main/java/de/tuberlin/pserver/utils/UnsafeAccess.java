@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.utils;
 
-import java.lang.reflect.Field;
-
 import sun.misc.Unsafe;
+
+import java.lang.reflect.Field;
 
 public class UnsafeAccess {
 

@@ -1,15 +1,15 @@
 package de.tuberlin.pserver.app;
 
+import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.utils.Compression;
+import org.apache.bcel.Repository;
+import org.apache.bcel.classfile.*;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.*;
-
-import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.utils.Compression;
-import org.apache.bcel.Repository;
-import org.apache.bcel.classfile.*;
 
 public final class UserCodeManager {
 
@@ -102,7 +102,7 @@ public final class UserCodeManager {
         return this;
     }
 
-    public PServerJob extractClass(final Class<?> clazz) {
+    public PServerJobDescriptor extractClass(final Class<?> clazz) {
         Preconditions.checkNotNull(clazz);
         if (clazz.isMemberClass() && !Modifier.isStatic(clazz.getModifiers()))
             throw new IllegalStateException();
@@ -111,10 +111,10 @@ public final class UserCodeManager {
             dependencies = buildTransitiveDependencyClosure(clazz, new ArrayList<String>());
         else
             dependencies = new ArrayList<>();
-        return new PServerJob(clazz.getName(), clazz.getSimpleName(), dependencies, Compression.compress(loadByteCode(clazz)));
+        return new PServerJobDescriptor(clazz.getName(), clazz.getSimpleName(), dependencies, Compression.compress(loadByteCode(clazz)));
     }
 
-    public Class<?> implantClass(final PServerJob userCode) {
+    public Class<?> implantClass(final PServerJobDescriptor userCode) {
         Preconditions.checkNotNull(userCode);
         try {
             for (final String dependency : userCode.classDependencies)

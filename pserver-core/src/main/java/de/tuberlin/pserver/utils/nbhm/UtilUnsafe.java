@@ -1,7 +1,8 @@
 package de.tuberlin.pserver.utils.nbhm;
-import java.lang.reflect.Field;
 
 import sun.misc.Unsafe;
+
+import java.lang.reflect.Field;
 
 /**
  * Simple class to obtain access to the {@link Unsafe} object.  {@link Unsafe}

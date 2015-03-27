@@ -1,15 +1,15 @@
 package de.tuberlin.pserver.core.infra;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.*;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class InetHelper {
+public final class InetHelper {
 
     private static final Set<Integer> reservedPorts = new HashSet<>();
 

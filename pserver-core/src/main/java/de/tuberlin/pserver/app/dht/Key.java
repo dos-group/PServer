@@ -12,6 +12,17 @@ import java.util.UUID;
 public class Key implements Serializable, Comparable<Key> {
 
     // ---------------------------------------------------
+    // Constants.
+    // ---------------------------------------------------
+
+    public enum DistributionMode {
+
+        LOCAL,
+
+        DISTRIBUTED
+    }
+
+    // ---------------------------------------------------
     // Inner Classes.
     // ---------------------------------------------------
 
@@ -21,7 +32,7 @@ public class Key implements Serializable, Comparable<Key> {
 
         public final int partitionSize;
 
-        public final int globalOffset;
+        public final long globalOffset;
 
         public final int segmentBaseIndex;
 
@@ -33,7 +44,7 @@ public class Key implements Serializable, Comparable<Key> {
 
         public PartitionDescriptor(final int partitionIndex,
                                    final int partitionSize,
-                                   final int globalOffset,
+                                   final long globalOffset,
                                    final int segmentBaseIndex,
                                    final int numberOfSegments,
                                    final int segmentSize,
@@ -43,8 +54,7 @@ public class Key implements Serializable, Comparable<Key> {
             Preconditions.checkArgument(partitionSize > 0);
             Preconditions.checkArgument(globalOffset >= 0);
             Preconditions.checkArgument(segmentBaseIndex >= 0);
-            Preconditions.checkArgument(numberOfSegments > 0);
-            Preconditions.checkArgument(segmentSize >= 0 && segmentSize % DEFAULT_ALIGNMENT_SIZE == 0);
+            Preconditions.checkArgument(segmentSize >= 0 && segmentSize % BufferValue.DEFAULT_ALIGNMENT_SIZE == 0);
 
             this.partitionIndex = partitionIndex;
             this.partitionSize = partitionSize;
@@ -57,66 +67,47 @@ public class Key implements Serializable, Comparable<Key> {
     }
 
     // ---------------------------------------------------
-    // Constants.
+    // Fields.
     // ---------------------------------------------------
 
     private static final long serialVersionUID = -1;
 
-    public static final int DEFAULT_ALIGNMENT_SIZE = 8; // (in bytes)
+    public final DistributionMode distributionMode;
 
-    public static final int DEFAULT_SEGMENT_SIZE = 4096; // (in bytes)
-
-    // ---------------------------------------------------
-    // Fields.
-    // ---------------------------------------------------
-
-    /** The internal ID of the stored key/value entry. The key is
-        used for assigning (per hash partitioning) the entry to a
-        specified machine. */
     public final UUID internalUID;
 
-    private PartitionDescriptor partitionDescriptor;
+    public final String name;
 
-    /** The partition directory. The mapping of partition partitionIndex to dht partition. */
     private final Map<Integer,PartitionDescriptor> partitionDirectory;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    private Key(final UUID uid) {
-        this.internalUID = Preconditions.checkNotNull(uid);
-        this.partitionDirectory = new TreeMap<>();
-    }
-
     // Copy Constructor.
+    private Key(final UUID uid, final String name, final DistributionMode distributionMode) { this(uid, name, /*null,*/  null, distributionMode); }
     private Key(final UUID uid,
-                final PartitionDescriptor partitionDescriptor,
-                final Map<Integer,PartitionDescriptor> partitionDirectory) {
-        this.internalUID = Preconditions.checkNotNull(uid);
-        this.partitionDescriptor = Preconditions.checkNotNull(partitionDescriptor);
-        this.partitionDirectory = new TreeMap<>(Preconditions.checkNotNull(partitionDirectory));
+                final String name,
+                final Map<Integer,PartitionDescriptor> partitionDirectory,
+                final DistributionMode distributionMode) {
+        this.internalUID            = Preconditions.checkNotNull(uid);
+        this.name                   = Preconditions.checkNotNull(name);
+        this.partitionDirectory     = partitionDirectory != null
+                ? new TreeMap<>(Preconditions.checkNotNull(partitionDirectory))
+                : new TreeMap<Integer,PartitionDescriptor>();
+        this.distributionMode       = Preconditions.checkNotNull(distributionMode);
     }
 
-    public static Key newKey(final UUID uid) { return new Key(uid); }
-
-    public static Key copyKey(final Key key, final PartitionDescriptor pd) {
-        return key == null ? null : new Key(key.internalUID, pd, key.partitionDirectory);
-    }
-
-    public static Key copyKey(final Key key) {
-        return key == null ? null : new Key(key.internalUID, key.partitionDescriptor, key.partitionDirectory);
-    }
+    public static Key newKey(final UUID uid, final String name) { return newKey(uid, name, DistributionMode.DISTRIBUTED); }
+    public static Key newKey(final UUID uid, final String name, final DistributionMode distributionMode) { return new Key(uid, name, distributionMode); }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    public void setPartitionDescriptor(final PartitionDescriptor pd) {
-        this.partitionDescriptor = Preconditions.checkNotNull(pd);
+    public PartitionDescriptor getPartitionDescriptor(final int instanceID) {
+        return partitionDirectory.get(instanceID);
     }
-
-    public PartitionDescriptor getPartitionDescriptor() { return this.partitionDescriptor; }
 
     public void addPartitionDirectoryEntry(final int index, final PartitionDescriptor pd) {
         Preconditions.checkArgument(index >= 0);
@@ -127,17 +118,15 @@ public class Key implements Serializable, Comparable<Key> {
         return Collections.unmodifiableMap(partitionDirectory);
     }
 
-    public int getPartitionIndex() { return partitionDescriptor.partitionIndex; }
-
     public MachineDescriptor getDHTNodeFromSegmentIndex(final int segmentIndex) {
-        //Preconditions.checkArgument(segmentIndex >= 0);
         for (final PartitionDescriptor pd : partitionDirectory.values())
             if (segmentIndex >= pd.segmentBaseIndex && segmentIndex <  pd.segmentBaseIndex + pd.numberOfSegments)
                 return pd.machine;
-
-        for (final PartitionDescriptor pd : partitionDirectory.values())
-            System.out.println(">>>>>> " + pd.segmentBaseIndex + " <= " + segmentIndex + " < " + (pd.segmentBaseIndex + pd.numberOfSegments));
         throw new IllegalStateException();
+    }
+
+    public int getSegmentIDFromByteOffset(final long globalOffset) {
+        return (int)globalOffset / BufferValue.DEFAULT_SEGMENT_SIZE;
     }
 
     // ---------------------------------------------------

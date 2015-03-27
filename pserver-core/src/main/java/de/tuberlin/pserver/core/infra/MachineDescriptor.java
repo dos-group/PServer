@@ -23,18 +23,22 @@ public final class MachineDescriptor implements Serializable, Comparable<Machine
 
     public final Integer port;
 
+    public final String hostname;
+
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
     public MachineDescriptor(final UUID machineID,
                              final InetAddress address,
-                             final int port) {
+                             final int port,
+                             final String hostname) {
 
         Preconditions.checkArgument(port > 1024 && port < 65535);
         this.machineID = Preconditions.checkNotNull(machineID);
         this.address = Preconditions.checkNotNull(address);
         this.port = port;
+        this.hostname = Preconditions.checkNotNull(hostname);
     }
 
     // ---------------------------------------------------

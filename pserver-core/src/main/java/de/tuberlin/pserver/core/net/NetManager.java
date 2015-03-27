@@ -2,6 +2,7 @@ package de.tuberlin.pserver.core.net;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.events.EventDispatcher;
+import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
@@ -45,19 +46,20 @@ public final class NetManager extends EventDispatcher {
      * high and stable message throughput. */
     private final NioEventLoopGroup elg;
 
+    private final InfrastructureManager infraManager;
+
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
-    public NetManager(final MachineDescriptor machine, final int eventLoopThreads) {
+    public NetManager(final MachineDescriptor machine, final InfrastructureManager infraManager, final int eventLoopThreads) {
         super(true, "IOManager");
         Preconditions.checkNotNull(machine);
         Preconditions.checkArgument(eventLoopThreads > 0 && eventLoopThreads < 256);
-
         this.machine = machine;
+        this.infraManager = Preconditions.checkNotNull(infraManager);
         this.peers = new ConcurrentHashMap<>();
         this.elg = new NioEventLoopGroup(eventLoopThreads);
-
         start();
     }
 
@@ -78,6 +80,7 @@ public final class NetManager extends EventDispatcher {
 
             @Override
             public void initChannel(SocketChannel ch) throws Exception {
+                //ch.pipeline().addFirst(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4));
                 ch.pipeline().addFirst(new ObjectEncoder());
                 ch.pipeline().addFirst(new IOEventChannelHandler());
                 ch.pipeline().addFirst(new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(getClass().getClassLoader())));
@@ -133,6 +136,13 @@ public final class NetManager extends EventDispatcher {
         }
     }
 
+    public void broadcastEvent(final NetEvents.NetEvent event) {
+        for (final MachineDescriptor md : infraManager.getMachines()) {
+            if (!machine.machineID.equals(md.machineID))
+                sendEvent(md, event);
+        }
+    }
+
     public void disconnect(final UUID machineID) {
         Preconditions.checkNotNull(machineID);
         final Channel channel = peers.get(machineID);
@@ -166,9 +176,10 @@ public final class NetManager extends EventDispatcher {
 
             @Override
             protected void initChannel(SocketChannel ch) throws Exception {
+                //ch.pipeline().addFirst(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4));
                 ch.pipeline().addFirst(new ObjectEncoder());
                 ch.pipeline().addFirst(new IOEventChannelHandler());
-                ch.pipeline().addFirst(new ObjectDecoder(ClassResolvers.cacheDisabled(getClass().getClassLoader())));
+                ch.pipeline().addFirst(new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(getClass().getClassLoader())));
             }
         });
 

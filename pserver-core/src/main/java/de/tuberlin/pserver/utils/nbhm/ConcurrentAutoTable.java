@@ -1,9 +1,10 @@
 package de.tuberlin.pserver.utils.nbhm;
+
+import sun.misc.Unsafe;
+
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-
-import sun.misc.Unsafe;
 
 /*
  * Written by Cliff Click and released to the public domain, as explained at

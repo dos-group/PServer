@@ -18,17 +18,17 @@ public class UnsafeOp {
         }
     }
 
-    public static final long byteArrayOffset = unsafe.arrayBaseOffset(byte[].class);
+    public static final int BYTE_ARRAY_OFFSET      = unsafe.arrayBaseOffset(byte[].class);
 
-    public static final long shortArrayOffset = unsafe.arrayBaseOffset(short[].class);
+    public static final int SHORT_ARRAY_OFFSET     = unsafe.arrayBaseOffset(short[].class);
 
-    public static final long intArrayOffset = unsafe.arrayBaseOffset(int[].class);
+    public static final int INT_ARRAY_OFFSET       = unsafe.arrayBaseOffset(int[].class);
 
-    public static final long longArrayOffset = unsafe.arrayBaseOffset(long[].class);
+    public static final int LONG_ARRAY_OFFSET      = unsafe.arrayBaseOffset(long[].class);
 
-    public static final long floatArrayOffset = unsafe.arrayBaseOffset(float[].class);
+    public static final int FLOAT_ARRAY_OFFSET     = unsafe.arrayBaseOffset(float[].class);
 
-    public static final long doubleArrayOffset = unsafe.arrayBaseOffset(double[].class);
+    public static final int DOUBLE_ARRAY_OFFSET    = unsafe.arrayBaseOffset(double[].class);
 
-    public static final long booleanArrayOffset = unsafe.arrayBaseOffset(boolean[].class);
+    public static final int BOOLEAN_ARRAY_OFFSET   = unsafe.arrayBaseOffset(boolean[].class);
 }
