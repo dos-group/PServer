@@ -2,28 +2,18 @@ package de.tuberlin.pserver.node;
 
 import de.tuberlin.pserver.app.*;
 import de.tuberlin.pserver.app.dht.DHT;
-import de.tuberlin.pserver.core.config.IConfig;
-import de.tuberlin.pserver.core.config.IConfigFactory;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
 import de.tuberlin.pserver.core.events.IEventHandler;
-import de.tuberlin.pserver.core.filesystem.HDFSManager;
-import de.tuberlin.pserver.core.infra.InetHelper;
+import de.tuberlin.pserver.core.filesystem.hdfs.HDFSManager;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.core.infra.ZookeeperClient;
+import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.core.net.RPCManager;
-import net.sourceforge.argparse4j.ArgumentParsers;
-import net.sourceforge.argparse4j.impl.type.FileArgumentType;
-import net.sourceforge.argparse4j.inf.ArgumentParser;
-import net.sourceforge.argparse4j.inf.ArgumentParserException;
-import net.sourceforge.argparse4j.internal.HelpScreenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetAddress;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -34,6 +24,8 @@ public final class PServerNode extends EventDispatcher {
     // ---------------------------------------------------
 
     private static final Logger LOG = LoggerFactory.getLogger(PServerNode.class);
+
+    private final MachineDescriptor machine;
 
     private final InfrastructureManager infraManager;
 
@@ -47,61 +39,24 @@ public final class PServerNode extends EventDispatcher {
 
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
+    private final Map<UUID,PServerJobDescriptor> jobMap;
+
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    public PServerNode(final IConfig config) {
+    public PServerNode(final PServerNodeFactory factory) {
         super(true, "PSERVER-NODE-THREAD");
 
-        MachineDescriptor machine;
-        try {
-            machine = new MachineDescriptor(
-                    UUID.randomUUID(),
-                    InetHelper.getIPAddress(),
-                    InetHelper.getFreePort(),
-                    InetAddress.getLocalHost().getHostName()
-            );
-        } catch(Throwable t) {
-            throw new IllegalStateException(t);
-        }
-
-        this.infraManager       = new InfrastructureManager(machine, config);
-        this.netManager         = new NetManager(machine, infraManager, 16);
-        this.userCodeManager    = new UserCodeManager(this.getClass().getClassLoader(), false);
-
-        final RPCManager rpcManager = new RPCManager(netManager);
-
-        this.infraManager.addEventListener(ZookeeperClient.IM_EVENT_NODE_ADDED, event -> {
-            if (event.getPayload() instanceof MachineDescriptor) {
-                final MachineDescriptor md = (MachineDescriptor)event.getPayload();
-                netManager.connectTo(md);
-            } else
-                throw new IllegalStateException();
-        });
-
-        this.infraManager.start();
+        this.machine         = factory.machine;
+        this.infraManager    = factory.infraManager;
+        this.netManager      = factory.netManager;
+        this.hdfsManager     = factory.hdfsManager;
+        this.userCodeManager = factory.userCodeManager;
+        this.dataManager     = factory.dataManager;
+        this.jobMap          = new HashMap<>();
 
         netManager.addEventListener(PServerJobDescriptor.PSERVER_SUBMIT_JOB_EVENT, new PServerJobHandler());
-
-        try {
-            Thread.sleep(2000);
-        } catch (Exception e) {
-            throw new IllegalStateException();
-        }
-
-        //if (infraManager.getCurrentMachineIndex() == 0)
-        //    hdfsManager = new HDFSManager(infraManager, netManager, rpcManager);
-        //else
-            hdfsManager = null;
-
-        LOG.info(infraManager.getMachine()
-                + " | " + infraManager.getCurrentMachineIndex()
-                + " | " + infraManager.getActivePeers().size()
-                + " | " + infraManager.getMachines().size());
-
-        DHT.getInstance().initialize(infraManager, netManager);
-        this.dataManager = new DataManager(infraManager, netManager, rpcManager, hdfsManager, DHT.getInstance());
     }
 
     // ---------------------------------------------------
@@ -111,9 +66,11 @@ public final class PServerNode extends EventDispatcher {
     private final class PServerJobHandler implements IEventHandler {
         @Override
         public void handleEvent(final Event e) {
-            final PServerJobDescriptor job = (PServerJobDescriptor)e.getPayload();
+            final PServerJobDescriptor jobDescriptor = (PServerJobDescriptor)e.getPayload();
+            LOG.info("Received jobDescriptor " + jobDescriptor.simpleClassName + " on node " + machine + ".");
+            jobMap.put(jobDescriptor.jobUID, jobDescriptor);
             executor.execute(() -> {
-                final Class<?> clazz = userCodeManager.implantClass(job);
+                final Class<?> clazz = userCodeManager.implantClass(jobDescriptor);
                 if (clazz != null) {
                     if (PServerJob.class.isAssignableFrom(clazz)) {
                         @SuppressWarnings("unchecked")
@@ -121,7 +78,7 @@ public final class PServerNode extends EventDispatcher {
                         try {
                             final PServerContext ctx = new PServerContext(
                                     infraManager.getCurrentMachineIndex(),
-                                    job,
+                                    jobDescriptor,
                                     DHT.getInstance(),
                                     netManager,
                                     dataManager
@@ -145,6 +102,8 @@ public final class PServerNode extends EventDispatcher {
 
     public void shutdown() {
         netManager.shutdown();
+        infraManager.shutdown();
+        shutdownEventDispatcher();
     }
 
     // ---------------------------------------------------
@@ -163,54 +122,12 @@ public final class PServerNode extends EventDispatcher {
 
             job.end();
 
+            final NetEvents.NetEvent finishEvent = new NetEvents.NetEvent(PServerJobDescriptor.PSERVER_FINISH_JOB_EVENT);
+            finishEvent.setPayload(job.getJobContext().jobDescriptor.jobUID);
+            netManager.sendEvent(job.getJobContext().jobDescriptor.clientMachine, finishEvent);
+
         } catch (Throwable t) {
             throw new IllegalStateException(t);
         }
-    }
-
-    // ---------------------------------------------------
-    // Entry Point.
-    // ---------------------------------------------------
-
-    public static void main(final String[] args) {
-        // construct base argument parser
-        ArgumentParser parser = getArgumentParser();
-        try {
-            // parse the arguments and store them as system properties
-            parser.parseArgs(args).getAttrs().entrySet().stream()
-                    .filter(e -> e.getValue() != null)
-                    .forEach(e -> System.setProperty(e.getKey(), e.getValue().toString()));
-
-            // Start the PServer node.
-            long start = System.nanoTime();
-            new PServerNode(IConfigFactory.load(IConfig.Type.PSERVER_NODE));
-            LOG.info("pserver startup: " + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms");
-        } catch (HelpScreenException e) {
-            parser.handleError(e);
-        } catch (ArgumentParserException e) {
-            parser.handleError(e);
-            System.exit(1);
-        } catch (Throwable e) {
-            System.err.println(String.format("Unexpected error: %s", e));
-            e.printStackTrace();
-            System.exit(1);
-        }
-    }
-
-    private static ArgumentParser getArgumentParser() {
-        //@formatter:off
-        ArgumentParser parser = ArgumentParsers.newArgumentParser("pserver-node")
-                .defaultHelp(true)
-                .description("pserver");
-
-        parser.addArgument("--config-dir")
-                .type(new FileArgumentType().verifyIsDirectory().verifyCanRead())
-                .dest("aura.path.config")
-                .setDefault("config")
-                .metavar("PATH")
-                .help("config folder");
-        //@formatter:on
-
-        return parser;
     }
 }

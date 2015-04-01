@@ -6,16 +6,20 @@ import de.tuberlin.pserver.app.dht.BufferValue;
 import de.tuberlin.pserver.app.dht.DHT;
 import de.tuberlin.pserver.app.dht.Key;
 import de.tuberlin.pserver.app.dht.Value;
+import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.IEventHandler;
-import de.tuberlin.pserver.core.filesystem.HDFSManager;
-import de.tuberlin.pserver.core.filesystem.InputSplitProvider;
+import de.tuberlin.pserver.core.filesystem.FileDataIterator;
+import de.tuberlin.pserver.core.filesystem.hdfs.HDFSFileDataIterator;
+import de.tuberlin.pserver.core.filesystem.hdfs.HDFSManager;
+import de.tuberlin.pserver.core.filesystem.hdfs.InputSplitProvider;
 import de.tuberlin.pserver.core.filesystem.hdfs.InputSplit;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.core.net.RPCManager;
+import de.tuberlin.pserver.math.experimental.tuples.Tuple;
 import de.tuberlin.pserver.math.experimental.types.matrices.DenseDoubleMatrix;
 import de.tuberlin.pserver.math.experimental.types.matrices.DenseMatrix;
 import de.tuberlin.pserver.math.experimental.types.matrices.Matrix;
@@ -61,13 +65,15 @@ public final class DataManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataManager.class);
 
-    private final HDFSManager hdfsManager;
+    private final IConfig config;
 
     private final InfrastructureManager infraManager;
 
     private final NetManager netManager;
 
     private final RPCManager rpcManager;
+
+    private final HDFSManager hdfsManager;
 
     private final DHT dht;
 
@@ -81,12 +87,14 @@ public final class DataManager {
     // Constructor.
     // ---------------------------------------------------
 
-    public DataManager(final InfrastructureManager infraManager,
+    public DataManager(final IConfig        config,
+                       final InfrastructureManager infraManager,
                        final NetManager     netManager,
                        final RPCManager     rpcManager,
                        final HDFSManager    hdfsManager,
                        final DHT dht) {
 
+        this.config         = Preconditions.checkNotNull(config);
         this.infraManager   = Preconditions.checkNotNull(infraManager);
         this.netManager     = Preconditions.checkNotNull(netManager);
         this.rpcManager     = Preconditions.checkNotNull(rpcManager);
@@ -103,6 +111,21 @@ public final class DataManager {
 
     // ---------------------------------------------------
     // Public Methods.
+    // ---------------------------------------------------
+
+    public IConfig getConfig() {
+        return config;
+    }
+
+    // ---------------------------------------------------
+
+    public FileDataIterator<Tuple> createFileDataIterator(final String filePath, final Class<?>[] fieldTypes) {
+        if (config.getBoolean("filesystem.hdfs.use"))
+            return new HDFSFileDataIterator(this, filePath, fieldTypes);
+        else
+            throw new UnsupportedOperationException();
+    }
+
     // ---------------------------------------------------
 
     public void registerSource(final String filePath, final Class<?>[] fieldTypes) {

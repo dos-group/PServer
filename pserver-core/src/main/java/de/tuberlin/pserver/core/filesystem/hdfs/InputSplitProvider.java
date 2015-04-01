@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.core.filesystem;
+package de.tuberlin.pserver.core.filesystem.hdfs;
 
 import de.tuberlin.pserver.core.filesystem.hdfs.InputSplit;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;

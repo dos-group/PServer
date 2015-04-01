@@ -3,12 +3,13 @@ package de.tuberlin.pserver.examples.local;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.dht.Key;
 import de.tuberlin.pserver.client.PServerClient;
+import de.tuberlin.pserver.client.PServerClientFactory;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.config.IConfigFactory;
 import de.tuberlin.pserver.core.infra.ClusterSimulator;
 import de.tuberlin.pserver.math.experimental.memory.Types;
 import de.tuberlin.pserver.math.experimental.types.matrices.DistributedDenseMatrix;
-import de.tuberlin.pserver.node.PServerNode;
+import de.tuberlin.pserver.node.PServerMain;
 import org.apache.log4j.ConsoleAppender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,12 +19,6 @@ import java.util.UUID;
 public final class LocalDistributedMatrixTestJob {
 
     private LocalDistributedMatrixTestJob() {}
-
-    // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    private static final int NUM_OF_MACHINES = 4;
 
     // ---------------------------------------------------
     // Jobs.
@@ -61,28 +56,17 @@ public final class LocalDistributedMatrixTestJob {
     public static void main(final String[] args) {
         org.apache.log4j.Logger.getRootLogger().addAppender(new ConsoleAppender());
 
-        new ClusterSimulator(
+        final ClusterSimulator simulator = new ClusterSimulator(
                 IConfigFactory.load(IConfig.Type.PSERVER_SIMULATION),
-                PServerNode.class,
-                true,
-                NUM_OF_MACHINES,
-                new String[] {"-Xmx1024m"}
+                PServerMain.class
         );
 
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        final PServerClient client = PServerClientFactory.createPServerClient();
 
-        new PServerClient(IConfigFactory.load(IConfig.Type.PSERVER_CLIENT)).execute(DistributedMatrixTestJob.class);
+        client.execute(DistributedMatrixTestJob.class);
 
-        while (true) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        client.shutdown();
+
+        simulator.shutdown();
     }
 }

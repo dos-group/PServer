@@ -9,7 +9,7 @@ public final class PServerContext {
 
     public final int instanceID;
 
-    public final PServerJobDescriptor job;
+    public final PServerJobDescriptor jobDescriptor;
 
     public final DHT dht;
 
@@ -18,13 +18,13 @@ public final class PServerContext {
     public final DataManager dataManager;
 
     public PServerContext(final int instanceID,
-                          final PServerJobDescriptor job,
+                          final PServerJobDescriptor jobDescriptor,
                           final DHT dht,
                           final NetManager netManager,
                           final DataManager dataManager) {
 
         this.instanceID     = instanceID;
-        this.job            = Preconditions.checkNotNull(job);
+        this.jobDescriptor  = Preconditions.checkNotNull(jobDescriptor);
         this.dht            = Preconditions.checkNotNull(dht);
         this.netManager     = Preconditions.checkNotNull(netManager);
         this.dataManager    = Preconditions.checkNotNull(dataManager);

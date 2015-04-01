@@ -1,0 +1,109 @@
+Parameter Server and HDFS
+-------------------------
+
+(1) Install HDFS on wally-cluster:
+
+	(a) Install hadoop-2.4.1 on "/home/xxx.xxx/hadoop-2.4.1"
+
+	(b) With peel => /home/xxx.xxx/peel/systems/hadoop-2.4.1/
+
+(2) Configure HDFS:
+
+	(a) Configure core-site.xml: .../hadoop-2.4.1/etc/hadoop/core-site.xml
+		e.g.
+			<?xml version="1.0"?>
+			<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+			<!-- Put site-specific property overrides in this file. -->
+			<!--suppress ALL -->
+			<configuration>
+			    <property>
+				<name>fs.default.name</name>
+				<value>hdfs://wally001:45010/</value>
+			    </property>
+			    <property>
+				<name>hadoop.tmp.dir</name>
+				<value>/data/peel/tmp</value>
+			    </property>
+			    <property>
+				<name>io.file.buffer.size</name>
+				<value>524288</value>
+			    </property>
+			</configuration>
+
+	(b) Setting slaves: .../hadoop-2.4.1/etc/hadoop/slaves
+		e.g.
+			wally001
+			wally002
+			wally003
+			wally004
+			wally005
+			wally006
+			wally007
+			wally008
+			wally009
+			wally010
+
+
+(3) Format NameNode & DataNode
+
+	(a) NameNode: .../hadoop-2.4.1 $ bin/hadoop namenode -format
+
+	(b) DataNode: .../hadoop-2.4.1 $ for h in $(cat etc/hadoop/slaves); do echo $h; ssh $h 'rm -Rf /data/tobias.herb/hdfs/data'; done
+
+(4) Start/Stop HDFS:
+
+	(a) Start HDFS: .../hadoop-2.4.1 $ ./sbin/start-all.sh (inclusive YARN)
+
+			.../hadoop-2.4.1 $ ./sbin/start-dfs.sh
+
+	(b) Stop HDFS:  .../hadoop-2.4.1 $ ./sbin/stop-all.sh (inclusive YARN)
+
+			.../hadoop-2.4.1 $ ./sbin/stop-dfs.sh
+
+(5) Create directory in HDFS:
+
+	(a) .../hadoop-2.4.1 $ ./bin/hadoop fs -mkdir <paths> 
+
+(6) Copy data from client to wally:
+
+	(a) scp sourcefile.bsp user@host:directory/destinationfile.bsp 
+	
+	e.g. scp /home/xxx.xxx/Development/Datasets/alpha/alpha_train.dat xxx.xxx@wallyXXX.cit.tu-berlin.de:/home/xxx.xxx/
+
+(7) Copy data into HDFS:
+
+	.../hadoop-2.4.1 $ ./bin/hadoop dfs -copyFromLocal /home/xxx.xxx/data.dat dat.data
+
+(8) Check all DataNodes are running (via jps):
+
+	.../hadoop-2.4.1 $ for h in $(cat etc/hadoop/slaves); do echo $h; ssh $h jps; done
+
+(9) Check Logs:
+
+	NameNode: .../hadoop-2.4.1 $ nano logs/hadoop-xxx.xxx-namenode-wallyXXX.log
+
+	DataNode: .../hadoop-2.4.1 $ nano logs/hadoop-xxx.xxx-datanode-wallyXXX.log
+
+(10) Delete Logs:
+
+	.../hadoop-2.4.1 $ rm -Rf logs/*
+
+(11) HDFS Webinterface (only tested with Firefox)
+
+	(a) Install Foxy-Proxy
+
+	(b) Foxy-Proxy: Add New Proxy
+
+	(c) Foxy-Proxy: Tab General: Enabed (true), Proxy Name (wally)
+
+	(d) Foxy-Proxy: Tab Proxy Details: Manual Proxy Configuration (true), Host or IP Adress (localhost), Port (42301)
+
+	(e) Foxy-Proxy: Tab URL Patterns: Add New Pattern: Enabled (true), Pattern Name (wally), URL Pattern (wally*.cit.tu-berlin.de*)
+
+	(f) Browser: http://wallyXXX.cit.tu-berlin.de:50070/
+
+
+
+
+
+

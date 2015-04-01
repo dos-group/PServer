@@ -157,7 +157,7 @@ SSHEND
 				ssh -t -t "$USER@$ADDRESS" << SSHEND
 cd pserver/pserver-node/
 export MAVEN_OPTS="-Xms4G -Xmx8G -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=9011"
-nohup mvn exec:java -Dexec.mainClass="de.tuberlin.pserver.node.PServerNode" -Dexec.args="$ZOOKEEPER_SERVERS3 10000 11111 $PSERVER_DATA_PATH/logs" > $PSERVER_DATA_PATH/logs/log 2>&1 &
+nohup mvn exec:java -Dexec.mainClass="de.tuberlin.pserver.node.PServerMain" -Dexec.args="$ZOOKEEPER_SERVERS3 10000 11111 $PSERVER_DATA_PATH/logs" > $PSERVER_DATA_PATH/logs/log 2>&1 &
 echo \$! > $PSERVER_DATA_PATH/data/wm_pid
 exit
 SSHEND

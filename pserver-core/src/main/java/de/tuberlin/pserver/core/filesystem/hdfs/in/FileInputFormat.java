@@ -103,7 +103,7 @@ public abstract class FileInputFormat<OT> implements InputFormat<OT, FileInputSp
             throw new IllegalArgumentException("File path may not be null.");
         }
 
-        // TODO The job-submission web interface passes empty args (and thus empty
+        // TODO The jobDescriptor-submission web interface passes empty args (and thus empty
         // paths) to compute the preview graph. The following is a workaround for
         // this situation and we should fix this.
         if (filePath.isEmpty()) {

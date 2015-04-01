@@ -20,6 +20,8 @@ public abstract class PServerJob {
 
     public void injectContext(final PServerContext ctx) { this.ctx = Preconditions.checkNotNull(ctx); }
 
+    public PServerContext getJobContext() { return ctx; }
+
     public void begin() {}
 
     public abstract void compute();

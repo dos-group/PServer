@@ -4,6 +4,8 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.utils.Compression;
 import org.apache.bcel.Repository;
 import org.apache.bcel.classfile.*;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -102,7 +104,7 @@ public final class UserCodeManager {
         return this;
     }
 
-    public PServerJobDescriptor extractClass(final Class<?> clazz) {
+    public Triple<Class<?>, List<String>, byte[]> extractClass(final Class<?> clazz) {
         Preconditions.checkNotNull(clazz);
         if (clazz.isMemberClass() && !Modifier.isStatic(clazz.getModifiers()))
             throw new IllegalStateException();
@@ -111,7 +113,9 @@ public final class UserCodeManager {
             dependencies = buildTransitiveDependencyClosure(clazz, new ArrayList<String>());
         else
             dependencies = new ArrayList<>();
-        return new PServerJobDescriptor(clazz.getName(), clazz.getSimpleName(), dependencies, Compression.compress(loadByteCode(clazz)));
+
+        return Triple.of(clazz, dependencies, Compression.compress(loadByteCode(clazz)));
+        //return new PServerJobDescriptor(UUID.randomUUID(), clazz.getName(), clazz.getSimpleName(), dependencies, Compression.compress(loadByteCode(clazz)));
     }
 
     public Class<?> implantClass(final PServerJobDescriptor userCode) {

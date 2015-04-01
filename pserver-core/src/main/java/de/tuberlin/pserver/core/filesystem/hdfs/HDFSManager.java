@@ -1,10 +1,7 @@
-package de.tuberlin.pserver.core.filesystem;
+package de.tuberlin.pserver.core.filesystem.hdfs;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.core.filesystem.hdfs.FileInputSplit;
-import de.tuberlin.pserver.core.filesystem.hdfs.InputSplit;
-import de.tuberlin.pserver.core.filesystem.hdfs.InputSplitAssigner;
-import de.tuberlin.pserver.core.filesystem.hdfs.LocatableInputSplitAssigner;
+import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.filesystem.hdfs.in.CSVInputFormat;
 import de.tuberlin.pserver.core.filesystem.hdfs.in.InputFormat;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
@@ -27,16 +24,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class HDFSManager implements InputSplitProvider {
 
     // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    public static final String HDFS_URL = "hdfs://wally190.cit.tu-berlin.de:45010/";
-
-    // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
     private static final Logger LOG = LoggerFactory.getLogger(HDFSManager.class);
+
+    private final IConfig config;
 
     private final InfrastructureManager infraManager;
 
@@ -52,10 +45,12 @@ public final class HDFSManager implements InputSplitProvider {
     // Constructors.
     // ---------------------------------------------------
 
-    public HDFSManager(final InfrastructureManager infraManager,
+    public HDFSManager(final IConfig config,
+                       final InfrastructureManager infraManager,
                        final NetManager netManager,
                        final RPCManager rpcManager) {
 
+        this.config         = Preconditions.checkNotNull(config);
         this.infraManager   = Preconditions.checkNotNull(infraManager);
         this.netManager     = Preconditions.checkNotNull(netManager);
         this.rpcManager     = Preconditions.checkNotNull(rpcManager);
@@ -83,7 +78,7 @@ public final class HDFSManager implements InputSplitProvider {
                 final Path path = new Path(source.getLeft());
                 final InputFormat inputFormat = new CSVInputFormat(path, source.getRight());
                 final Configuration conf = new Configuration();
-                conf.set("fs.defaultFS", HDFS_URL);
+                conf.set("fs.defaultFS", config.getString("filesystem.hdfs.url"));
                 inputFormat.configure(conf);
                 final InputSplit[] inputSplits = inputFormat.createInputSplits(infraManager.getMachines().size());
                 final InputSplitAssigner inputSplitAssigner = new LocatableInputSplitAssigner((FileInputSplit[]) inputSplits);
@@ -96,6 +91,9 @@ public final class HDFSManager implements InputSplitProvider {
         }
     }
 
+    //public
+
+
     // ---------------------------------------------------
 
     @Override
@@ -103,7 +101,5 @@ public final class HDFSManager implements InputSplitProvider {
         Preconditions.checkNotNull(md);
         final InputSplitAssigner inputSplitAssigner = inputSplitAssignerMap.get(md.machineID);
         return inputSplitAssigner.getNextInputSplit(md);
-        //LOG.info("========================================> HDFSManager::getNextInputSplit(" + md + ")");
-        //return null;
     }
 }

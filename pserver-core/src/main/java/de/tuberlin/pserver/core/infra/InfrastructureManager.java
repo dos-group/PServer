@@ -57,9 +57,11 @@ public final class InfrastructureManager extends EventDispatcher {
         LOG.info("Started InfrastructureManager at " + machine);
     }
 
-    public Map<UUID, MachineDescriptor> getActivePeers() {
-        return Collections.unmodifiableMap(peers);
+    public void shutdown() {
+        shutdownEventDispatcher();
     }
+
+    public Map<UUID, MachineDescriptor> getActivePeers() { return Collections.unmodifiableMap(peers); }
 
     public MachineDescriptor getMachine() { return Preconditions.checkNotNull(machine); }
 

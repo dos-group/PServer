@@ -3,11 +3,12 @@ package de.tuberlin.pserver.examples.local;
 import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerClient;
+import de.tuberlin.pserver.client.PServerClientFactory;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.config.IConfigFactory;
 import de.tuberlin.pserver.core.infra.ClusterSimulator;
 import de.tuberlin.pserver.math.experimental.types.matrices.DenseDoubleMatrix;
-import de.tuberlin.pserver.node.PServerNode;
+import de.tuberlin.pserver.node.PServerMain;
 import org.apache.log4j.ConsoleAppender;
 
 import java.util.Random;
@@ -19,8 +20,6 @@ public final class LocalAsyncSGDTestJob {
     // ---------------------------------------------------
     // Constants.
     // ---------------------------------------------------
-
-    private static final int NUM_OF_MACHINES = 4;
 
     private static final int MTX_ROWS = 2000;
 
@@ -47,7 +46,6 @@ public final class LocalAsyncSGDTestJob {
                         }
                     };
 
-
         // ---------------------------------------------------
         // Public Methods.
         // ---------------------------------------------------
@@ -56,7 +54,7 @@ public final class LocalAsyncSGDTestJob {
         public void compute() {
             final long start = System.currentTimeMillis();
             DenseDoubleMatrix m = ctx.dataManager.createLocalMatrix("model1", MTX_ROWS, MTX_COLS);
-            for (int i = 0; i < 100000; ++i) {
+            for (int i = 0; i < 5000; ++i) {
                 computeGradient(m);
                 if (i % 1000 == 0)
                     ctx.dataManager.mergeMatrix(m, merger);
@@ -84,28 +82,17 @@ public final class LocalAsyncSGDTestJob {
     public static void main(final String[] args) {
         org.apache.log4j.Logger.getRootLogger().addAppender(new ConsoleAppender());
 
-        new ClusterSimulator(
+        final ClusterSimulator simulator = new ClusterSimulator(
                 IConfigFactory.load(IConfig.Type.PSERVER_SIMULATION),
-                PServerNode.class,
-                true,
-                NUM_OF_MACHINES,
-                new String[] {"-Xmx1024m"}
+                PServerMain.class
         );
 
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        final PServerClient client = PServerClientFactory.createPServerClient();
 
-        new PServerClient(IConfigFactory.load(IConfig.Type.PSERVER_CLIENT)).execute(AsyncSGDTestJob.class);
+        client.execute(AsyncSGDTestJob.class);
 
-        while (true) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        client.shutdown();
+
+        simulator.shutdown();
     }
 }

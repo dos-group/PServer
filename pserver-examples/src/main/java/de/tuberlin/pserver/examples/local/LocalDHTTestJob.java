@@ -5,11 +5,12 @@ import de.tuberlin.pserver.app.dht.BufferValue;
 import de.tuberlin.pserver.app.dht.DHT;
 import de.tuberlin.pserver.app.dht.Key;
 import de.tuberlin.pserver.client.PServerClient;
+import de.tuberlin.pserver.client.PServerClientFactory;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.config.IConfigFactory;
 import de.tuberlin.pserver.core.infra.ClusterSimulator;
 import de.tuberlin.pserver.math.experimental.memory.Buffer;
-import de.tuberlin.pserver.node.PServerNode;
+import de.tuberlin.pserver.node.PServerMain;
 import org.apache.log4j.ConsoleAppender;
 
 import java.util.Random;
@@ -28,12 +29,6 @@ public final class LocalDHTTestJob {
      * ./stop-all.sh
      *
      */
-
-    // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    private static final int NUM_OF_MACHINES = 4;
 
     // ---------------------------------------------------
     // Jobs.
@@ -88,28 +83,19 @@ public final class LocalDHTTestJob {
     public static void main(final String[] args) {
         org.apache.log4j.Logger.getRootLogger().addAppender(new ConsoleAppender());
 
-        new ClusterSimulator(
+        final ClusterSimulator simulator = new ClusterSimulator(
                 IConfigFactory.load(IConfig.Type.PSERVER_SIMULATION),
-                PServerNode.class,
-                true,
-                NUM_OF_MACHINES,
-                new String[] {"-Xmx1024m"}
+                PServerMain.class
         );
 
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        PServerClientFactory.createPServerClient().execute(DHTTestJob.class);
 
-        new PServerClient(IConfigFactory.load(IConfig.Type.PSERVER_CLIENT)).execute(DHTTestJob.class);
+        final PServerClient client = PServerClientFactory.createPServerClient();
 
-        while (true) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        client.execute(DHTTestJob.class);
+
+        client.shutdown();
+
+        simulator.shutdown();
     }
 }
