@@ -32,6 +32,8 @@ public enum PServerClientFactory {
 
     private final Logger LOG = LoggerFactory.getLogger(PServerClientFactory.class);
 
+    public final IConfig config;
+
     public final MachineDescriptor machine;
 
     public final InfrastructureManager infraManager;
@@ -54,10 +56,11 @@ public enum PServerClientFactory {
         final String zookeeperServer = ZookeeperClient.buildServersString(config.getObjectList("zookeeper.servers"));
         ZookeeperClient.checkConnectionString(zookeeperServer);
 
-        this.machine = configureMachine();
+        this.config         = Preconditions.checkNotNull(config);
+        this.machine        = configureMachine();
         this.pServerWorkers = new ArrayList<>();
-        this.infraManager = new InfrastructureManager(machine, config);
-        this.netManager = new NetManager(machine, infraManager, 16);
+        this.infraManager   = new InfrastructureManager(machine, config);
+        this.netManager     = new NetManager(machine, infraManager, 16);
 
         try {
             ZookeeperClient zookeeper = new ZookeeperClient(zookeeperServer);
@@ -85,9 +88,7 @@ public enum PServerClientFactory {
     // Public Methods.
     // ---------------------------------------------------
 
-    public static PServerClient createPServerClient() {
-        return new PServerClient(INSTANCE);
-    }
+    public static PServerClient createPServerClient() { return new PServerClient(INSTANCE); }
 
     // ---------------------------------------------------
     // Private Methods.

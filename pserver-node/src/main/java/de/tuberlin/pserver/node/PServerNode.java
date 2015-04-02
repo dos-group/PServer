@@ -5,7 +5,7 @@ import de.tuberlin.pserver.app.dht.DHT;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
 import de.tuberlin.pserver.core.events.IEventHandler;
-import de.tuberlin.pserver.core.filesystem.hdfs.HDFSManager;
+import de.tuberlin.pserver.core.filesystem.FileSystemManager;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
@@ -31,7 +31,7 @@ public final class PServerNode extends EventDispatcher {
 
     private final NetManager netManager;
 
-    private final HDFSManager hdfsManager;
+    private final FileSystemManager fileSystemManager;
 
     private final UserCodeManager userCodeManager;
 
@@ -48,13 +48,13 @@ public final class PServerNode extends EventDispatcher {
     public PServerNode(final PServerNodeFactory factory) {
         super(true, "PSERVER-NODE-THREAD");
 
-        this.machine         = factory.machine;
-        this.infraManager    = factory.infraManager;
-        this.netManager      = factory.netManager;
-        this.hdfsManager     = factory.hdfsManager;
-        this.userCodeManager = factory.userCodeManager;
-        this.dataManager     = factory.dataManager;
-        this.jobMap          = new HashMap<>();
+        this.machine            = factory.machine;
+        this.infraManager       = factory.infraManager;
+        this.netManager         = factory.netManager;
+        this.fileSystemManager  = factory.fileSystemManager;
+        this.userCodeManager    = factory.userCodeManager;
+        this.dataManager        = factory.dataManager;
+        this.jobMap             = new HashMap<>();
 
         netManager.addEventListener(PServerJobDescriptor.PSERVER_SUBMIT_JOB_EVENT, new PServerJobHandler());
     }
@@ -67,7 +67,7 @@ public final class PServerNode extends EventDispatcher {
         @Override
         public void handleEvent(final Event e) {
             final PServerJobDescriptor jobDescriptor = (PServerJobDescriptor)e.getPayload();
-            LOG.info("Received jobDescriptor " + jobDescriptor.simpleClassName + " on node " + machine + ".");
+            LOG.info("Received job '" + jobDescriptor.simpleClassName + "' [" + jobDescriptor.jobUID +"] on node " + machine + ".");
             jobMap.put(jobDescriptor.jobUID, jobDescriptor);
             executor.execute(() -> {
                 final Class<?> clazz = userCodeManager.implantClass(jobDescriptor);
@@ -77,7 +77,7 @@ public final class PServerNode extends EventDispatcher {
                         final Class<? extends PServerJob> jobClass = (Class<? extends PServerJob>) clazz;
                         try {
                             final PServerContext ctx = new PServerContext(
-                                    infraManager.getCurrentMachineIndex(),
+                                    infraManager.getInstanceID(),
                                     jobDescriptor,
                                     DHT.getInstance(),
                                     netManager,
@@ -115,8 +115,8 @@ public final class PServerNode extends EventDispatcher {
 
             job.begin();
 
-            if (hdfsManager != null)
-                hdfsManager.computeInputSplits();
+            if (fileSystemManager != null)
+                fileSystemManager.computeInputSplitsForRegisteredFiles();
 
             job.compute();
 

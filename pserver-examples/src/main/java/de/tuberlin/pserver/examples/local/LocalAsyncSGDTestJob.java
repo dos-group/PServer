@@ -60,7 +60,7 @@ public final class LocalAsyncSGDTestJob {
                     ctx.dataManager.mergeMatrix(m, merger);
             }
             final long end = System.currentTimeMillis();
-            System.out.println("FINISHED JOB ON INSTANCE ["+ ctx.instanceID +"] IN " + ((end - start) / 1000) + "s");
+            LOG.info("FINISHED JOB ON INSTANCE ["+ ctx.instanceID +"] IN " + ((end - start) / 1000) + "s");
         }
 
         // ---------------------------------------------------

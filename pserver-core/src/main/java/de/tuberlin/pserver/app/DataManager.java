@@ -10,16 +10,10 @@ import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.filesystem.FileDataIterator;
-import de.tuberlin.pserver.core.filesystem.hdfs.HDFSFileDataIterator;
-import de.tuberlin.pserver.core.filesystem.hdfs.HDFSManager;
-import de.tuberlin.pserver.core.filesystem.hdfs.InputSplitProvider;
-import de.tuberlin.pserver.core.filesystem.hdfs.InputSplit;
+import de.tuberlin.pserver.core.filesystem.FileSystemManager;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.core.net.RPCManager;
-import de.tuberlin.pserver.math.experimental.tuples.Tuple;
 import de.tuberlin.pserver.math.experimental.types.matrices.DenseDoubleMatrix;
 import de.tuberlin.pserver.math.experimental.types.matrices.DenseMatrix;
 import de.tuberlin.pserver.math.experimental.types.matrices.Matrix;
@@ -71,42 +65,28 @@ public final class DataManager {
 
     private final NetManager netManager;
 
-    private final RPCManager rpcManager;
-
-    private final HDFSManager hdfsManager;
+    private final FileSystemManager fileSystemManager;
 
     private final DHT dht;
 
     private final int instanceID;
 
-    private final InputSplitProvider inputSplitProvider;
-
-    private final MachineDescriptor hdfsMaster;
-
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
-    public DataManager(final IConfig        config,
+    public DataManager(final IConfig config,
                        final InfrastructureManager infraManager,
-                       final NetManager     netManager,
-                       final RPCManager     rpcManager,
-                       final HDFSManager    hdfsManager,
+                       final NetManager netManager,
+                       final FileSystemManager fileSystemManager,
                        final DHT dht) {
 
-        this.config         = Preconditions.checkNotNull(config);
-        this.infraManager   = Preconditions.checkNotNull(infraManager);
-        this.netManager     = Preconditions.checkNotNull(netManager);
-        this.rpcManager     = Preconditions.checkNotNull(rpcManager);
-        this.hdfsManager    = hdfsManager;
-        this.dht            = Preconditions.checkNotNull(dht);
-        this.instanceID     = infraManager.getCurrentMachineIndex();
-        this.hdfsMaster     = infraManager.getMachine(0); // TODO: replace with config...
-
-        if (hdfsManager == null)
-            this.inputSplitProvider = rpcManager.getRPCProtocolProxy(InputSplitProvider.class, hdfsMaster);
-        else
-            this.inputSplitProvider = null;
+        this.config             = Preconditions.checkNotNull(config);
+        this.infraManager       = Preconditions.checkNotNull(infraManager);
+        this.netManager         = Preconditions.checkNotNull(netManager);
+        this.fileSystemManager  = Preconditions.checkNotNull(fileSystemManager);
+        this.dht                = Preconditions.checkNotNull(dht);
+        this.instanceID         = infraManager.getInstanceID();
     }
 
     // ---------------------------------------------------
@@ -119,27 +99,8 @@ public final class DataManager {
 
     // ---------------------------------------------------
 
-    public FileDataIterator<Tuple> createFileDataIterator(final String filePath, final Class<?>[] fieldTypes) {
-        if (config.getBoolean("filesystem.hdfs.use"))
-            return new HDFSFileDataIterator(this, filePath, fieldTypes);
-        else
-            throw new UnsupportedOperationException();
-    }
-
-    // ---------------------------------------------------
-
-    public void registerSource(final String filePath, final Class<?>[] fieldTypes) {
-        if (hdfsManager != null)
-            hdfsManager.registerSource(filePath, fieldTypes);
-    }
-
-    // ---------------------------------------------------
-
-    public InputSplit getNextInputSplit() {
-        if (hdfsManager != null)
-            return hdfsManager.getNextInputSplit(netManager.getMachineDescriptor());
-        else
-            return inputSplitProvider.getNextInputSplit(netManager.getMachineDescriptor());
+    public <T> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
+        return fileSystemManager.createFileIterator(filePath, recordType);
     }
 
     // ---------------------------------------------------
@@ -156,7 +117,7 @@ public final class DataManager {
     public void push(final int instanceID, final Matrix m) { push(instanceID, DataEventType.MATRIX_EVENT, m); }
     public void push(final int instanceID, final Vector v) { push(instanceID, DataEventType.VECTOR_EVENT, v); }
     public void push(final int instanceID, final DataEventType type, final Serializable data) {
-        Preconditions.checkArgument(instanceID != infraManager.getCurrentMachineIndex());
+        Preconditions.checkArgument(instanceID != infraManager.getInstanceID());
         final NetEvents.NetEvent event = new NetEvents.NetEvent(type.eventType);
         event.setPayload(data);
         netManager.sendEvent(infraManager.getMachine(instanceID), event);
@@ -228,7 +189,7 @@ public final class DataManager {
         do {
             uid = UUID.randomUUID();
             id = (uid.hashCode() & Integer.MAX_VALUE) % infraManager.getMachines().size();
-        } while (id != infraManager.getCurrentMachineIndex());
+        } while (id != infraManager.getInstanceID());
         return uid;
     }
 

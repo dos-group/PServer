@@ -186,7 +186,7 @@
                 </plugin>
 
                 <!-- enable code formatting -->
-                <plugin>
+                <!--plugin>
                     <groupId>com.googlecode.maven-java-formatter-plugin</groupId>
                     <artifactId>maven-java-formatter-plugin</artifactId>
                     <version>0.4</version>
@@ -203,10 +203,10 @@
                     <dependencies>
                         <dependency>
                             <groupId>${project.groupId}</groupId>
-                            <artifactId>aura-build-tools</artifactId>
+                            <artifactId>pserver-build-tools</artifactId>
                         </dependency>
                     </dependencies>
-                </plugin>
+                </plugin-->
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -229,6 +229,7 @@
 
     <modules>
         <module>pserver-core</module>
+        <module>pserver-ml</module>
         <module>pserver-client</module>
         <module>pserver-node</module>
         <module>pserver-examples</module>

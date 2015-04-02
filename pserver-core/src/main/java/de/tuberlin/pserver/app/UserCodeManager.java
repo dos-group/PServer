@@ -19,8 +19,6 @@ public final class UserCodeManager {
     // Inner Classes.
     // ---------------------------------------------------
 
-    // ---------------------------------------------------
-
     private static final class DependencyEmitter extends EmptyVisitor {
 
         private final JavaClass javaClass;
@@ -108,14 +106,10 @@ public final class UserCodeManager {
         Preconditions.checkNotNull(clazz);
         if (clazz.isMemberClass() && !Modifier.isStatic(clazz.getModifiers()))
             throw new IllegalStateException();
-        final List<String> dependencies;
-        if (analyseDependencies)
-            dependencies = buildTransitiveDependencyClosure(clazz, new ArrayList<String>());
-        else
-            dependencies = new ArrayList<>();
-
+        final List<String> dependencies = analyseDependencies
+                ? buildTransitiveDependencyClosure(clazz, new ArrayList<>())
+                : new ArrayList<>();
         return Triple.of(clazz, dependencies, Compression.compress(loadByteCode(clazz)));
-        //return new PServerJobDescriptor(UUID.randomUUID(), clazz.getName(), clazz.getSimpleName(), dependencies, Compression.compress(loadByteCode(clazz)));
     }
 
     public Class<?> implantClass(final PServerJobDescriptor userCode) {

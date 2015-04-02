@@ -67,7 +67,7 @@ public final class InfrastructureManager extends EventDispatcher {
 
     public List<MachineDescriptor> getMachines() { return Collections.unmodifiableList(machines); }
 
-    public int getCurrentMachineIndex() { return machines.indexOf(machine); }
+    public int getInstanceID() { return machines.indexOf(machine); }
 
     public int getMachineIndex(final MachineDescriptor machine) { return machines.indexOf(Preconditions.checkNotNull(machine)); }
 

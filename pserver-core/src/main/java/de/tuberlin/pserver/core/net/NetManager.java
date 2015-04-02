@@ -35,15 +35,8 @@ public final class NetManager extends EventDispatcher {
 
     private final MachineDescriptor machine;
 
-    /** Storing the currently connected peers. Peers are uniquely identified with UIDs.
-     * The communication to a remote peer takes places via a (netty) channel. Number of
-     * peers is not fixed and may change during runtime. */
     private final Map<UUID,Channel> peers;
 
-    /** Event loops for handling outgoing and incoming messages.
-     * There is no strict separation between inbound and outbound processing.
-     * It is important that enough threads are assigned to guarantee
-     * high and stable message throughput. */
     private final NioEventLoopGroup elg;
 
     private final InfrastructureManager infraManager;
@@ -54,12 +47,14 @@ public final class NetManager extends EventDispatcher {
 
     public NetManager(final MachineDescriptor machine, final InfrastructureManager infraManager, final int eventLoopThreads) {
         super(true, "IOManager");
-        Preconditions.checkNotNull(machine);
+
         Preconditions.checkArgument(eventLoopThreads > 0 && eventLoopThreads < 256);
-        this.machine = machine;
-        this.infraManager = Preconditions.checkNotNull(infraManager);
-        this.peers = new ConcurrentHashMap<>();
-        this.elg = new NioEventLoopGroup(eventLoopThreads);
+
+        this.machine        = Preconditions.checkNotNull(machine);;
+        this.infraManager   = Preconditions.checkNotNull(infraManager);
+        this.peers          = new ConcurrentHashMap<>();
+        this.elg            = new NioEventLoopGroup(eventLoopThreads);
+
         start();
     }
 
@@ -189,7 +184,7 @@ public final class NetManager extends EventDispatcher {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
                 if (cf.isSuccess()) {
-                    System.out.println("Server bound to port: " + machine.port);
+                    LOG.info("NetManager of machine [" + machine.machineID + "] bound to port: " + machine.port + ".");
                 } else {
                     throw new IllegalStateException(cf.cause());
                 }

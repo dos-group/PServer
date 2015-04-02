@@ -5,39 +5,34 @@ import de.tuberlin.pserver.client.PServerClient;
 import de.tuberlin.pserver.client.PServerClientFactory;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.config.IConfigFactory;
+import de.tuberlin.pserver.core.filesystem.FileDataIterator;
 import de.tuberlin.pserver.core.infra.ClusterSimulator;
 import de.tuberlin.pserver.node.PServerMain;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.log4j.ConsoleAppender;
 
 
-public final class LocalHDFSTestJob {
+public final class LocalFileSystemTestJob {
 
-    // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    //public static final String HDFS_SOURCE_FILE_PATH = "/tmp/input/groups";
-
-    // ---------------------------------------------------
-
-    private LocalHDFSTestJob() {}
+    private LocalFileSystemTestJob() {}
 
     // ---------------------------------------------------
     // Jobs.
     // ---------------------------------------------------
 
-    public static final class HDFSTestJob extends PServerJob {
+    public static final class FileSystemTestJob extends PServerJob {
 
-        // ---------------------------------------------------
-        // Public Methods.
-        // ---------------------------------------------------
+        private FileDataIterator<CSVRecord> csvFileIterator;
+
+        @Override
+        public void begin() {
+            csvFileIterator = ctx.dataManager.createFileIterator("datasets/covtype.data", CSVRecord.class);
+        }
 
         @Override
         public void compute() {
-
-            if (ctx.instanceID == 0) {
-                ctx.dataManager.getNextInputSplit();
-            }
+            while (csvFileIterator.hasNext())
+                System.out.println(ctx.instanceID + " => " + csvFileIterator.next());
         }
     }
 
@@ -55,7 +50,7 @@ public final class LocalHDFSTestJob {
 
         final PServerClient client = PServerClientFactory.createPServerClient();
 
-        client.execute(HDFSTestJob.class);
+        client.execute(FileSystemTestJob.class);
 
         client.shutdown();
 

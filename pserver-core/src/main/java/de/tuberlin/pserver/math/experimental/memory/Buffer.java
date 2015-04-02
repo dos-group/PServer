@@ -13,7 +13,7 @@ public class Buffer implements Serializable {
     // Constants.
     // ---------------------------------------------------
 
-    public enum CompressionPolicy {
+    public enum CompressionAlgorithm {
 
         NO_COMPRESSION,
 
@@ -28,7 +28,7 @@ public class Buffer implements Serializable {
 
     protected byte[] data;
 
-    protected CompressionPolicy compressionPolicy = CompressionPolicy.NO_COMPRESSION;
+    protected CompressionAlgorithm compressionAlgorithm = CompressionAlgorithm.NO_COMPRESSION;
 
     // ---------------------------------------------------
     // Constructors.
@@ -48,12 +48,12 @@ public class Buffer implements Serializable {
 
     public Buffer(final byte[] data,
                   final int decompressedLength,
-                  final CompressionPolicy compressionPolicy) {
+                  final CompressionAlgorithm compressionAlgorithm) {
 
         Preconditions.checkNotNull(decompressedLength > 0);
         this.data = Preconditions.checkNotNull(data);
         this.decompressedLength = decompressedLength;
-        this.compressionPolicy = Preconditions.checkNotNull(compressionPolicy);
+        this.compressionAlgorithm = Preconditions.checkNotNull(compressionAlgorithm);
     }
 
     // ---------------------------------------------------
@@ -92,7 +92,7 @@ public class Buffer implements Serializable {
 
     // ---------------------------------------------------
 
-    public static Buffer compressBuffer(final CompressionPolicy policy,
+    public static Buffer compressBuffer(final CompressionAlgorithm policy,
                                         final Buffer buffer) {
         Preconditions.checkNotNull(policy);
         Preconditions.checkNotNull(buffer);
@@ -103,7 +103,7 @@ public class Buffer implements Serializable {
                 return new Buffer(
                         Compression.lz4Compress(buffer.data),
                         buffer.data.length,
-                        CompressionPolicy.LZ4_COMPRESSION
+                        CompressionAlgorithm.LZ4_COMPRESSION
                 );
             default:
                 throw new IllegalStateException();
@@ -113,7 +113,7 @@ public class Buffer implements Serializable {
     /** Creates no copy! */
     public static Buffer decompressBuffer(final Buffer buffer) {
         Preconditions.checkNotNull(buffer);
-        switch (buffer.compressionPolicy) {
+        switch (buffer.compressionAlgorithm) {
             case NO_COMPRESSION:
                 return buffer;
             case LZ4_COMPRESSION: {

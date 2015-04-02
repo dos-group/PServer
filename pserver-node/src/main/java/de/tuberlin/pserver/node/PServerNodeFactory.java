@@ -6,7 +6,10 @@ import de.tuberlin.pserver.app.UserCodeManager;
 import de.tuberlin.pserver.app.dht.DHT;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.config.IConfigFactory;
-import de.tuberlin.pserver.core.filesystem.hdfs.HDFSManager;
+import de.tuberlin.pserver.core.filesystem.FileSystemManager;
+import de.tuberlin.pserver.core.filesystem.hdfs.HDFSFileSystemManagerClient;
+import de.tuberlin.pserver.core.filesystem.hdfs.HDFSFileSystemManagerServer;
+import de.tuberlin.pserver.core.filesystem.local.LocalFileSystemManager;
 import de.tuberlin.pserver.core.infra.InetHelper;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
@@ -41,9 +44,11 @@ public enum PServerNodeFactory {
 
     public final NetManager netManager;
 
-    public final HDFSManager hdfsManager;
+    public final FileSystemManager fileSystemManager;
 
     public final UserCodeManager userCodeManager;
+
+    public final DHT dht;
 
     public final DataManager dataManager;
 
@@ -80,17 +85,12 @@ public enum PServerNodeFactory {
             throw new IllegalStateException();
         }
 
-        if (this.config.getBoolean("filesystem.hdfs.use")
-                && this.config.getInt("filesystem.hdfs.masterNodeIndex") == 0)
-            hdfsManager = new HDFSManager(this.config, infraManager, netManager, rpcManager);
-        else
-            hdfsManager = null;
-
-        DHT.getInstance().initialize(infraManager, netManager);
-        this.dataManager = new DataManager(this.config, infraManager, netManager, rpcManager, hdfsManager, DHT.getInstance());
+        this.fileSystemManager = createFileSystem(infraManager.getInstanceID());
+        this.dht = new DHT(this.config, infraManager, netManager);
+        this.dataManager = new DataManager(this.config, infraManager, netManager, fileSystemManager, dht);
 
         LOG.info(infraManager.getMachine()
-                + " | " + infraManager.getCurrentMachineIndex()
+                + " | " + infraManager.getInstanceID()
                 + " | " + infraManager.getActivePeers().size()
                 + " | " + infraManager.getMachines().size());
 
@@ -120,5 +120,24 @@ public enum PServerNodeFactory {
             throw new IllegalStateException(t);
         }
         return machine;
+    }
+
+    private FileSystemManager createFileSystem(final int instanceID) {
+        final String type = config.getString("filesystem.type");
+        final FileSystemManager.FileSystemType fsType = FileSystemManager.FileSystemType.valueOf(type);
+        switch (fsType) {
+            case FILE_SYSTEM_HDFS:
+                return (config.getInt("filesystem.hdfs.masterNodeIndex") == instanceID)
+                        ? new HDFSFileSystemManagerServer(this.config, infraManager, netManager, rpcManager)
+                        : new HDFSFileSystemManagerClient(this.config, infraManager, netManager, rpcManager);
+
+            case FILE_SYSTEM_LOCAL:
+                return new LocalFileSystemManager(infraManager);
+
+            default: {
+                LOG.warn("No supported filesystem.");
+                return null;
+            }
+        }
     }
 }

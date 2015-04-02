@@ -1,3 +1,7 @@
+import de.tuberlin.pserver.core.filesystem.FileDataIterator;
+import de.tuberlin.pserver.core.filesystem.local.LocalCSVInputFile;
+import org.apache.commons.csv.CSVRecord;
+
 public class Test {
 
     /*public static int numOfMachines = 4;
@@ -157,5 +161,72 @@ public class Test {
             System.out.println(Arrays.equals(v.getElement(144), Tuple.toByteArray(new Tuple3<>(72.12, new Tuple2<>(600, 900), 123.123))));
         }
     }*/
+
+        {
+            final LocalCSVInputFile fileSection = new LocalCSVInputFile("test.csv", "\n", ',');
+            fileSection.computeLocalFileSection(4, 0);
+            final FileDataIterator<CSVRecord> fileIterator = fileSection.iterator();
+
+            while (fileIterator.hasNext()) {
+                final CSVRecord record = fileIterator.next();
+                final StringBuilder strBuilder = new StringBuilder();
+                for (int i = 0; i < record.size(); ++i)
+                    strBuilder.append(record.get(i)).append(",");
+                strBuilder.deleteCharAt(strBuilder.length() - 1);
+                System.out.println(strBuilder.toString());
+            }
+        }
+
+        System.out.println("-------------------------------------------------------------------------");
+
+        {
+            final LocalCSVInputFile fileSection = new LocalCSVInputFile("test.csv", "\n", ',');
+            fileSection.computeLocalFileSection(4, 1);
+            final FileDataIterator<CSVRecord> fileIterator = fileSection.iterator();
+
+            while (fileIterator.hasNext()) {
+                final CSVRecord record = fileIterator.next();
+                final StringBuilder strBuilder = new StringBuilder();
+                for (int i = 0; i < record.size(); ++i)
+                    strBuilder.append(record.get(i)).append(",");
+                strBuilder.deleteCharAt(strBuilder.length() - 1);
+                System.out.println(strBuilder.toString());
+            }
+        }
+
+        System.out.println("-------------------------------------------------------------------------");
+
+        {
+            final LocalCSVInputFile fileSection = new LocalCSVInputFile("test.csv", "\n", ',');
+            fileSection.computeLocalFileSection(4, 2);
+            final FileDataIterator<CSVRecord> fileIterator = fileSection.iterator();
+
+            while (fileIterator.hasNext()) {
+                final CSVRecord record = fileIterator.next();
+                final StringBuilder strBuilder = new StringBuilder();
+                for (int i = 0; i < record.size(); ++i)
+                    strBuilder.append(record.get(i)).append(",");
+                strBuilder.deleteCharAt(strBuilder.length() - 1);
+                System.out.println(strBuilder.toString());
+            }
+        }
+
+        System.out.println("-------------------------------------------------------------------------");
+
+        {
+            final LocalCSVInputFile fileSection = new LocalCSVInputFile("test.csv", "\n", ',');
+            fileSection.computeLocalFileSection(4, 3);
+            final FileDataIterator<CSVRecord> fileIterator = fileSection.iterator();
+
+            while (fileIterator.hasNext()) {
+                final CSVRecord record = fileIterator.next();
+                final StringBuilder strBuilder = new StringBuilder();
+                for (int i = 0; i < record.size(); ++i)
+                    strBuilder.append(record.get(i)).append(",");
+                strBuilder.deleteCharAt(strBuilder.length() - 1);
+                System.out.println(strBuilder.toString());
+            }
+        }
+
     }
 }

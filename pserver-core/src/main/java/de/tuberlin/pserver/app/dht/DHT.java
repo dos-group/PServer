@@ -2,6 +2,7 @@ package de.tuberlin.pserver.app.dht;
 
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
+import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
 import de.tuberlin.pserver.core.events.IEventHandler;
@@ -127,8 +128,6 @@ public final class DHT extends EventDispatcher {
     // Constants.
     // ---------------------------------------------------
 
-    private final Buffer.CompressionPolicy compressionPolicy = Buffer.CompressionPolicy.NO_COMPRESSION;
-
     private enum DHTAction {
 
         PUT_VALUE,
@@ -150,13 +149,29 @@ public final class DHT extends EventDispatcher {
 
     private long RESPONSE_TIMEOUT = 55000; // in ms
 
-    private static DHT instance = new DHT();
+    // ---------------------------------------------------
+
+    private static final Object globalDHTMutex = new Object();
+
+    private static DHT globalDHTInstance = null;
+
+    // ---------------------------------------------------
+
+    private final IConfig config;
+
+    private final InfrastructureManager infraManager;
+
+    private final NetManager netManager;
+
+    private final Buffer.CompressionAlgorithm compressionAlgorithm;
 
     private final Map<Key,BufferValue> store;
 
-    private InfrastructureManager infraManager;
+    // ---------------------------------------
 
-    private NetManager netManager;
+    private int instanceID;
+
+    private final GlobalKeyDirectory globalKeyDirectory;
 
     // ---------------------------------------
 
@@ -168,22 +183,47 @@ public final class DHT extends EventDispatcher {
 
     private final Map<UUID,BufferValue.Segment[]> responseSegmentsTable = new NonBlockingHashMap<>();
 
-    // ---------------------------------------
-
-    private int instanceID;
-
-    private GlobalKeyDirectory globalKeyDirectory;
-
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    private DHT() {
+    public DHT(final IConfig config,
+               final InfrastructureManager infraManager,
+               final NetManager netManager) {
+
         super(true, "DHT-THREAD");
-        this.store = new NonBlockingHashMap<>();
+
+        this.config         = Preconditions.checkNotNull(config);
+        this.infraManager   = Preconditions.checkNotNull(infraManager);
+        this.netManager     = Preconditions.checkNotNull(netManager);
+        this.instanceID     = infraManager.getInstanceID();
+        this.store          = new NonBlockingHashMap<>();
+
+        this.compressionAlgorithm = Buffer.CompressionAlgorithm.valueOf(
+                this.config.getString("dht.compression.compressionAlgorithm")
+        );
+
+        // Register DHT events.
+        netManager.addEventListener(DHT_EVENT_PUT_VALUE, new DHTPutValueHandler());
+        netManager.addEventListener(DHT_EVENT_PUT_SEGMENTS, new DHTPutSegmentsHandler());
+        netManager.addEventListener(DHT_EVENT_GET_VALUE_REQUEST, new DHTGetValueRequestHandler());
+        netManager.addEventListener(DHT_EVENT_GET_VALUE_RESPONSE, new DHTGetValueResponseHandler());
+        netManager.addEventListener(DHT_EVENT_GET_SEGMENTS_REQUEST, new DHTGetSegmentsRequestHandler());
+        netManager.addEventListener(DHT_EVENT_GET_SEGMENTS_RESPONSE, new DHTGetSegmentsResponseHandler());
+        netManager.addEventListener(DHT_EVENT_DELETE, new DHTDeleteHandler());
+
+        globalKeyDirectory = new GlobalKeyDirectory();
+
+        synchronized (globalDHTMutex) {
+            if (globalDHTInstance == null)
+                globalDHTInstance = this;
+            else {
+                throw new IllegalStateException();
+            }
+        }
     }
 
-    public static DHT getInstance () { return DHT.instance; }
+    public static DHT getInstance() { return globalDHTInstance; }
 
     // ---------------------------------------------------
     // Event Handler.
@@ -297,18 +337,6 @@ public final class DHT extends EventDispatcher {
     public int getNumberOfDHTNodes() { return getDHTNodes().size(); }
 
     public void initialize(final InfrastructureManager infraManager, final NetManager netManager) {
-        this.infraManager = Preconditions.checkNotNull(infraManager);
-        this.netManager = Preconditions.checkNotNull(netManager);
-        this.instanceID = infraManager.getCurrentMachineIndex();
-        // Register DHT events.
-        netManager.addEventListener(DHT_EVENT_PUT_VALUE, new DHTPutValueHandler());
-        netManager.addEventListener(DHT_EVENT_PUT_SEGMENTS, new DHTPutSegmentsHandler());
-        netManager.addEventListener(DHT_EVENT_GET_VALUE_REQUEST, new DHTGetValueRequestHandler());
-        netManager.addEventListener(DHT_EVENT_GET_VALUE_RESPONSE, new DHTGetValueResponseHandler());
-        netManager.addEventListener(DHT_EVENT_GET_SEGMENTS_REQUEST, new DHTGetSegmentsRequestHandler());
-        netManager.addEventListener(DHT_EVENT_GET_SEGMENTS_RESPONSE, new DHTGetSegmentsResponseHandler());
-        netManager.addEventListener(DHT_EVENT_DELETE, new DHTDeleteHandler());
-        globalKeyDirectory = new GlobalKeyDirectory();
     }
 
     // ---------------------------------------------------

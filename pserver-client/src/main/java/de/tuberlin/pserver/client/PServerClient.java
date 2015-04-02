@@ -32,6 +32,8 @@ public final class PServerClient extends EventDispatcher {
 
     private static final Logger LOG = LoggerFactory.getLogger(PServerClient.class);
 
+    private final IConfig config;
+
     private final MachineDescriptor machine;
 
     private final InfrastructureManager infraManager;
@@ -52,6 +54,7 @@ public final class PServerClient extends EventDispatcher {
         super(true, "PSERVER-CLIENT-THREAD");
         Preconditions.checkNotNull(factory);
 
+        this.config          = factory.config;
         this.machine         = factory.machine;
         this.pServerWorkers  = factory.pServerWorkers;
         this.infraManager    = factory.infraManager;
@@ -82,8 +85,12 @@ public final class PServerClient extends EventDispatcher {
     // Public Methods.
     // ---------------------------------------------------
 
+    public IConfig getConfig() { return config; }
+
     public void execute(final Class<?> algorithmClass) {
         Preconditions.checkNotNull(algorithmClass);
+
+        final long start = System.nanoTime();
 
         final Triple<Class<?>, List<String>, byte[]> classData = userCodeManager.extractClass(algorithmClass);
 
@@ -111,7 +118,9 @@ public final class PServerClient extends EventDispatcher {
             throw new IllegalStateException(e);
         }
 
-        LOG.info("Job " + jobDescriptor.jobUID + " is finished.");
+        LOG.info("Job '" + jobDescriptor.simpleClassName
+                + "' [" + jobDescriptor.jobUID +"] finished in "
+                + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms.");
     }
 
     public void shutdown() {

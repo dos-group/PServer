@@ -3,9 +3,11 @@ package de.tuberlin.pserver.core.filesystem.hdfs;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.DataManager;
+import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.filesystem.FileDataIterator;
 import de.tuberlin.pserver.core.filesystem.hdfs.in.CSVInputFormat;
 import de.tuberlin.pserver.core.filesystem.hdfs.in.InputFormat;
+import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.math.experimental.tuples.Tuple;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -22,7 +24,9 @@ public class HDFSFileDataIterator implements FileDataIterator<Tuple> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HDFSFileDataIterator.class);
 
-    private final DataManager dataManager;
+    private final MachineDescriptor machine;
+
+    private final InputSplitProvider inputSplitProvider;
 
     private final InputFormat<Tuple, FileInputSplit> inputFormat;
 
@@ -34,24 +38,33 @@ public class HDFSFileDataIterator implements FileDataIterator<Tuple> {
     // Constructor.
     // ---------------------------------------------------
 
-    public HDFSFileDataIterator(final DataManager dataManager,
+    @SuppressWarnings("unchecked")
+    public HDFSFileDataIterator(final IConfig config,
+                                final MachineDescriptor machine,
+                                final InputSplitProvider inputSplitProvider,
                                 final String filePath,
                                 final Class<?>[] fieldTypes) {
 
-        this.dataManager = Preconditions.checkNotNull(dataManager);
+        Preconditions.checkNotNull(config);
+        Preconditions.checkNotNull(filePath);
+        Preconditions.checkNotNull(fieldTypes);
 
-        inputFormat = new CSVInputFormat(new Path(Preconditions.checkNotNull(filePath)), fieldTypes);
+        this.machine = Preconditions.checkNotNull(machine);
+        this.inputSplitProvider = Preconditions.checkNotNull(inputSplitProvider);
+        this.inputFormat = new CSVInputFormat(new Path(filePath), fieldTypes);
 
         final Configuration conf = new Configuration();
-
-        conf.set("fs.defaultFS", dataManager.getConfig().getString("filesystem.hdfs.url"));
-
-        inputFormat.configure(conf);
+        conf.set("fs.defaultFS", config.getString("filesystem.hdfs.url"));
+        this.inputFormat.configure(conf);
     }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
+
+    @Override
+    public void initialize() {
+    }
 
     @Override
     public boolean hasNext() {
@@ -64,7 +77,7 @@ public class HDFSFileDataIterator implements FileDataIterator<Tuple> {
             inputFormat.nextRecord(record);
             if (inputFormat.reachedEnd()) {
                 inputFormat.close();
-                split = (FileInputSplit)dataManager.getNextInputSplit();
+                split = (FileInputSplit)inputSplitProvider.getNextInputSplit(machine);
                 if (split == null)
                     return null;
                 inputFormat.open(split);
