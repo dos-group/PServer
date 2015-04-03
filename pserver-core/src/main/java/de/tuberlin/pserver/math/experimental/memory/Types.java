@@ -484,44 +484,4 @@ public class Types {
             System.arraycopy(values[i], 0, dst, offset, values[i].length);
         return dst;
     }
-
-
-    // ---------------------------------------------------
-
-    public static void main(final String[] args) {
-        System.out.println(true + " " + Types.toBoolean(Types.toByteArray(true)));
-        System.out.println(false + " " + Types.toBoolean(Types.toByteArray(false)));
-        System.out.println(Character.MAX_VALUE + " " + Types.toChar(Types.toByteArray(Character.MAX_VALUE)));
-        System.out.println(Short.MAX_VALUE + " " + Types.toShort(Types.toByteArray(Short.MAX_VALUE)));
-        System.out.println(Integer.MAX_VALUE + " " + Types.toInt(Types.toByteArray(Integer.MAX_VALUE)));
-        System.out.println(Long.MAX_VALUE + " " + Types.toLong(Types.toByteArray(Long.MAX_VALUE)));
-        System.out.println(Float.MAX_VALUE + " " + Types.toFloat(Types.toByteArray(Float.MAX_VALUE)));
-        System.out.println(Double.MAX_VALUE + " " + Types.toDouble(Types.toByteArray(Double.MAX_VALUE)));
-
-        final TypeInformation t1 = TypeBuilder.makeTypeBuilder()
-                .add(PrimitiveType.INT)
-                .add(new TypeInformation(PrimitiveType.BYTE, 20))
-                .build();
-        final TypeInformation t2 = new TypeInformation(t1, 120);
-        final TypedBuffer b1 = new TypedBuffer(t2);
-
-        final byte[] ba = toByteArray(toByteArray(123.213), toByteArray(234), toByteArray(123123L));
-        System.out.println(new Buffer(ba).getLong(12));
-
-        TypeInformation ti = TypeBuilder.makeTypeBuilder()
-                .add(PrimitiveType.SHORT)
-                .add(PrimitiveType.INT)
-                .open()
-                .add(PrimitiveType.DOUBLE)
-                .add(PrimitiveType.LONG)
-                .add(PrimitiveType.FLOAT)
-                .open()
-                .add(PrimitiveType.INT)
-                .add(PrimitiveType.INT)
-                .close()
-                .close()
-                .build();
-        System.out.println("sizeof(" + ti.toString() + ") = " + ti.size());
-        System.out.println("relative offset: " + ti.getFieldOffset(new int[]{2, 3, 1}));
-    }
 }

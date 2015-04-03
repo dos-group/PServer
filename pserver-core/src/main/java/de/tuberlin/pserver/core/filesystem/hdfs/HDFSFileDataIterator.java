@@ -63,13 +63,10 @@ public class HDFSFileDataIterator implements FileDataIterator<Tuple> {
     // ---------------------------------------------------
 
     @Override
-    public void initialize() {
-    }
+    public void initialize() {}
 
     @Override
-    public boolean hasNext() {
-        return false;
-    }
+    public boolean hasNext() { return false; } // FIXME: ...implementation...
 
     @Override
     public Tuple next() {

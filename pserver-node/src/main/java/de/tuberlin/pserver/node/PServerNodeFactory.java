@@ -7,6 +7,7 @@ import de.tuberlin.pserver.app.dht.DHT;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.config.IConfigFactory;
 import de.tuberlin.pserver.core.filesystem.FileSystemManager;
+import de.tuberlin.pserver.core.filesystem.FileSystemType;
 import de.tuberlin.pserver.core.filesystem.hdfs.HDFSFileSystemManagerClient;
 import de.tuberlin.pserver.core.filesystem.hdfs.HDFSFileSystemManagerServer;
 import de.tuberlin.pserver.core.filesystem.local.LocalFileSystemManager;
@@ -124,20 +125,18 @@ public enum PServerNodeFactory {
 
     private FileSystemManager createFileSystem(final int instanceID) {
         final String type = config.getString("filesystem.type");
-        final FileSystemManager.FileSystemType fsType = FileSystemManager.FileSystemType.valueOf(type);
+        final FileSystemType fsType = FileSystemType.valueOf(type);
         switch (fsType) {
             case FILE_SYSTEM_HDFS:
                 return (config.getInt("filesystem.hdfs.masterNodeIndex") == instanceID)
-                        ? new HDFSFileSystemManagerServer(this.config, infraManager, netManager, rpcManager)
-                        : new HDFSFileSystemManagerClient(this.config, infraManager, netManager, rpcManager);
+                        ? new HDFSFileSystemManagerServer(config, infraManager, netManager, rpcManager)
+                        : new HDFSFileSystemManagerClient(config, infraManager, netManager, rpcManager);
 
             case FILE_SYSTEM_LOCAL:
                 return new LocalFileSystemManager(infraManager);
 
-            default: {
-                LOG.warn("No supported filesystem.");
-                return null;
-            }
+            default:
+                throw new IllegalStateException("No supported filesystem.");
         }
     }
 }

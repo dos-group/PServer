@@ -28,6 +28,23 @@ import java.util.concurrent.locks.ReentrantLock;
 public final class NetManager extends EventDispatcher {
 
     // ---------------------------------------------------
+    // Inner Classes.
+    // ---------------------------------------------------
+
+    private final class IOEventChannelHandler extends SimpleChannelInboundHandler<NetEvents.NetEvent> {
+
+        @Override
+        protected void channelRead0(final ChannelHandlerContext ctx, final NetEvents.NetEvent event) throws Exception {
+            Preconditions.checkNotNull(event);
+            event.setChannel(ctx.channel());
+            if (NetEvents.NetEventTypes.IO_EVENT_CHANNEL_CONNECTED.equals(event.type))
+                peers.put(event.srcMachineID, ctx.channel());
+            else
+                dispatchEvent(event);
+        }
+    }
+
+    // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
@@ -121,8 +138,7 @@ public final class NetManager extends EventDispatcher {
     public void sendEvent(final UUID machineID, final NetEvents.NetEvent event) {
         Preconditions.checkNotNull(machineID);
         Preconditions.checkNotNull(event);
-        final Channel channel = peers.get(machineID);
-        Preconditions.checkState(channel != null);
+        final Channel channel = Preconditions.checkNotNull(peers.get(machineID));
         event.setSrcAndDst(machine.machineID, machineID);
         try {
             channel.writeAndFlush(event).sync();
@@ -140,7 +156,7 @@ public final class NetManager extends EventDispatcher {
 
     public void disconnect(final UUID machineID) {
         Preconditions.checkNotNull(machineID);
-        final Channel channel = peers.get(machineID);
+        final Channel channel = Preconditions.checkNotNull(peers.get(machineID));
         Preconditions.checkState(channel != null);
         try {
             channel.disconnect().sync();
@@ -179,15 +195,11 @@ public final class NetManager extends EventDispatcher {
         });
 
         final ChannelFuture cf = bootstrap.bind(machine.port);
-        cf.addListener(new ChannelFutureListener() {
-
-            @Override
-            public void operationComplete(ChannelFuture future) throws Exception {
-                if (cf.isSuccess()) {
-                    LOG.info("NetManager of machine [" + machine.machineID + "] bound to port: " + machine.port + ".");
-                } else {
-                    throw new IllegalStateException(cf.cause());
-                }
+        cf.addListener(future -> {
+            if (cf.isSuccess()) {
+                LOG.info("NetManager of machine [" + machine.machineID + "] bound to port: " + machine.port + ".");
+            } else {
+                throw new IllegalStateException(cf.cause());
             }
         });
 
@@ -196,34 +208,6 @@ public final class NetManager extends EventDispatcher {
             cf.sync();
         } catch (InterruptedException e) {
             LOG.error(e.getLocalizedMessage());
-        }
-    }
-
-    // ---------------------------------------------------
-    // Inner Classes.
-    // ---------------------------------------------------
-
-    private final class IOEventChannelHandler extends SimpleChannelInboundHandler<NetEvents.NetEvent> {
-
-        @Override
-        protected void channelRead0(final ChannelHandlerContext ctx, final NetEvents.NetEvent event) throws Exception {
-            Preconditions.checkNotNull(event);
-            event.setChannel(ctx.channel());
-            if (NetEvents.NetEventTypes.IO_EVENT_CHANNEL_CONNECTED.equals(event.type)) {
-                //final SocketAddress address = ctx.channel().remoteAddress();
-                //if (address instanceof InetSocketAddress) {
-                //    final MachineDescriptor machine =
-                //        new MachineDescriptor(
-                //            event.srcMachineID,
-                //            ((InetSocketAddress) address).getAddress(),
-                //            machine.port
-                //        );
-                    peers.put(event.srcMachineID, ctx.channel());
-                    //descriptors.put(event.srcMachineID, machine);
-                //} else
-                //    throw new IllegalStateException();
-            } else
-                dispatchEvent(event);
         }
     }
 }

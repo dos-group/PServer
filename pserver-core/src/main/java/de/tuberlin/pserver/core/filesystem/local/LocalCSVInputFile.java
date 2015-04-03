@@ -148,9 +148,7 @@ public class LocalCSVInputFile implements LocalInputFile<CSVRecord> {
     }
 
     @Override
-    public FileDataIterator<CSVRecord> iterator() {
-        return new CSVFileDataIterator(csvFileSection);
-    }
+    public FileDataIterator<CSVRecord> iterator() { return new CSVFileDataIterator(csvFileSection); }
 
     // ---------------------------------------------------
     // Private Methods.
