@@ -20,6 +20,7 @@ public class BufferValue extends Value {
 
         public Segment(final int segmentIndex,
                        final byte[] data) {
+
             this.segmentIndex = segmentIndex;
             this.data = Preconditions.checkNotNull(data);
         }
@@ -63,21 +64,9 @@ public class BufferValue extends Value {
 
     // ---------------------------------------------------
 
-    /*public static BufferValue compressBufferValue(final Buffer.CompressionPolicy compressionPolicy,
-                                                  final BufferValue bufferValue) {
-        Preconditions.checkNotNull(compressionPolicy);
-        Preconditions.checkNotNull(bufferValue);
-        final BufferValue compressedValue = new BufferValue(bufferValue.partitionSize, bufferValue.allocateMemory);
-        compressedValue.buffer = Buffer.compressBuffer(compressionPolicy, bufferValue.getBuffer());
-        return compressedValue;
-    }*/
+    public void compress() { buffer.compress(); }
 
-    /** Creates no copy! */
-    /*public static BufferValue decompressBufferValue(final BufferValue bufferValue) {
-        Preconditions.checkNotNull(bufferValue);
-        bufferValue.setBuffer(Buffer.decompressBuffer(bufferValue.getBuffer()));
-        return bufferValue;
-    }*/
+    public void decompress() { buffer.decompress(); }
 
     // ---------------------------------------------------
 

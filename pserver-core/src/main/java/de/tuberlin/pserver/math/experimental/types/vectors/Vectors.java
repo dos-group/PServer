@@ -12,8 +12,8 @@ public final class Vectors {
         public DenseDoubleVector(final DenseVectorOld v) { this(v.buffer); }
 
         public DenseDoubleVector(final double[] data) {
-            this(new TypedBuffer(new Types.TypeInformation(Types.PrimitiveType.DOUBLE, data.length)));
-            for (int i = 0; i < data.length; ++i)
+            this(new TypedBuffer(new Types.TypeInformation(Types.PrimitiveType.DOUBLE, data.size)));
+            for (int i = 0; i < data.size; ++i)
                 buffer.putDouble(i, data[i]);
         }
 
@@ -156,57 +156,57 @@ public final class Vectors {
                 && v0.typeInfo.getElementTypeInfo().getPrimitiveType().isNumericType) {
             switch (v0.typeInfo.getElementTypeInfo().getPrimitiveType()) {
                 case BYTE: {
-                    //Preconditions.checkArgument(element.length == Types.PrimitiveType.BYTE.length);
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.BYTE.length;
+                    //Preconditions.checkArgument(element.size == Types.PrimitiveType.BYTE.size);
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.BYTE.size;
                         v0.data.getRawData()[offset] = element[0];
                     }
                 } break;
                 case SHORT: {
-                    //Preconditions.checkArgument(element.length == Types.PrimitiveType.SHORT.length);
+                    //Preconditions.checkArgument(element.size == Types.PrimitiveType.SHORT.size);
                     final short val = Types.toShort(element);
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.SHORT.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.SHORT.size;
                         v0.data.putShort(offset, val);
                     }
                 } break;
                 case INT: {
-                    //Preconditions.checkArgument(element.length == Types.PrimitiveType.INT.length);
+                    //Preconditions.checkArgument(element.size == Types.PrimitiveType.INT.size);
                     final int val = Types.toInt(element);
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.INT.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.INT.size;
                         v0.data.putInt(offset, val);
                     }
                 } break;
                 case LONG: {
-                    //Preconditions.checkArgument(element.length == Types.PrimitiveType.LONG.length);
+                    //Preconditions.checkArgument(element.size == Types.PrimitiveType.LONG.size);
                     final long val = Types.toLong(element);
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.LONG.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.LONG.size;
                         v0.data.putLong(offset, val);
                     }
                 } break;
                 case FLOAT: {
-                    //Preconditions.checkArgument(element.length == Types.PrimitiveType.FLOAT.length);
+                    //Preconditions.checkArgument(element.size == Types.PrimitiveType.FLOAT.size);
                     final float val = Types.toFloat(element);
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.FLOAT.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.FLOAT.size;
                         v0.data.putFloat(offset, val);
                     }
                 } break;
                 case DOUBLE:
-                    //Preconditions.checkArgument(element.length == Types.PrimitiveType.DOUBLE.length);
+                    //Preconditions.checkArgument(element.size == Types.PrimitiveType.DOUBLE.size);
                     final double val = Types.toDouble(element);
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.DOUBLE.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.DOUBLE.size;
                         v0.data.putDouble(offset, val);
                     }
                     break;
             }
         } else {
-            //Preconditions.checkState(v0.data.length() % element.length == 0);
-            for (int i = 0; i < v0.data.length() / element.length; ++i)
-                System.arraycopy(element, 0, v0.data.getRawData(), i * element.length, element.length);
+            //Preconditions.checkState(v0.data.size() % element.size == 0);
+            for (int i = 0; i < v0.data.size() / element.size; ++i)
+                System.arraycopy(element, 0, v0.data.getRawData(), i * element.size, element.size);
         }
         return v0;
     }
@@ -215,7 +215,7 @@ public final class Vectors {
     public static DenseVector add(final DenseVector v0, final DenseVector v1, final BinaryElementOperation<Void> add) {
         Preconditions.checkNotNull(v0);
         Preconditions.checkNotNull(v1);
-        Preconditions.checkArgument(v0.length() == v1.length());
+        Preconditions.checkArgument(v0.size() == v1.size());
         if (v0.typeInfo.getElementTypeInfo().getPrimitiveType() != null
                 && v0.typeInfo.getElementTypeInfo().getPrimitiveType().isNumericType
                 && v1.typeInfo.getElementTypeInfo().getPrimitiveType() != null
@@ -224,38 +224,38 @@ public final class Vectors {
 
             switch (v0.typeInfo.getElementTypeInfo().getPrimitiveType()) {
                 case BYTE: {
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.BYTE.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.BYTE.size;
                         v0.data.putShort(offset, (short)(v0.data.getRawData()[offset] + v1.data.getRawData()[offset]));
                     }
                 } break;
                 case SHORT: {
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.SHORT.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.SHORT.size;
                         v0.data.putShort(offset, (short)(v0.data.getShort(offset) + v1.data.getShort(offset)));
                     }
                 } break;
                 case INT: {
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.INT.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.INT.size;
                         v0.data.putInt(offset, v0.data.getInt(offset) + v1.data.getInt(offset));
                     }
                 } break;
                 case LONG: {
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.LONG.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.LONG.size;
                         v0.data.putLong(offset, v0.data.getLong(offset) + v1.data.getLong(offset));
                     }
                 } break;
                 case FLOAT: {
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.FLOAT.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.FLOAT.size;
                         v0.data.putFloat(offset, v0.data.getFloat(offset) + v1.data.getFloat(offset));
                     }
                 } break;
                 case DOUBLE: {
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.DOUBLE.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.DOUBLE.size;
                         v0.data.putDouble(offset, v0.data.getDouble(offset) + v1.data.getDouble(offset));
                     }
                 } break;
@@ -274,7 +274,7 @@ public final class Vectors {
     public static DenseVector sub(final DenseVector v0, final DenseVector v1, final BinaryElementOperation<Void> sub) {
         Preconditions.checkNotNull(v0);
         Preconditions.checkNotNull(v1);
-        Preconditions.checkArgument(v0.length() == v1.length());
+        Preconditions.checkArgument(v0.size() == v1.size());
         if (v0.typeInfo.getElementTypeInfo().getPrimitiveType() != null
                 && v0.typeInfo.getElementTypeInfo().getPrimitiveType().isNumericType
                 && v1.typeInfo.getElementTypeInfo().getPrimitiveType() != null
@@ -283,38 +283,38 @@ public final class Vectors {
 
             switch (v0.typeInfo.getElementTypeInfo().getPrimitiveType()) {
                 case BYTE: {
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.BYTE.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.BYTE.size;
                         v0.data.putShort(offset, (short)(v0.data.getRawData()[offset] - v1.data.getRawData()[offset]));
                     }
                 } break;
                 case SHORT: {
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.SHORT.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.SHORT.size;
                         v0.data.putShort(offset, (short)(v0.data.getShort(offset) - v1.data.getShort(offset)));
                     }
                 } break;
                 case INT: {
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.INT.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.INT.size;
                         v0.data.putInt(offset, v0.data.getInt(offset) - v1.data.getInt(offset));
                     }
                 } break;
                 case LONG: {
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.LONG.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.LONG.size;
                         v0.data.putLong(offset, v0.data.getLong(offset) - v1.data.getLong(offset));
                     }
                 } break;
                 case FLOAT: {
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.FLOAT.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.FLOAT.size;
                         v0.data.putFloat(offset, v0.data.getFloat(offset) - v1.data.getFloat(offset));
                     }
                 } break;
                 case DOUBLE: {
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.DOUBLE.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.DOUBLE.size;
                         v0.data.putDouble(offset, v0.data.getDouble(offset) - v1.data.getDouble(offset));
                     }
                 } break;
@@ -337,49 +337,49 @@ public final class Vectors {
                 && v0.typeInfo.getElementTypeInfo().getPrimitiveType().isNumericType) {
             switch (v0.typeInfo.getElementTypeInfo().getPrimitiveType()) {
                 case BYTE: {
-                    Preconditions.checkArgument(element.length == Types.PrimitiveType.BYTE.length);
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.BYTE.length;
+                    Preconditions.checkArgument(element.size == Types.PrimitiveType.BYTE.size);
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.BYTE.size;
                         v0.data.getRawData()[offset] = (byte)(v0.data.getRawData()[offset] * element[0]);
                     }
                 } break;
                 case SHORT: {
-                    Preconditions.checkArgument(element.length == Types.PrimitiveType.SHORT.length);
+                    Preconditions.checkArgument(element.size == Types.PrimitiveType.SHORT.size);
                     final short factor = Types.toShort(element);
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.SHORT.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.SHORT.size;
                         v0.data.putShort(offset, (short)(v0.data.getShort(offset) * factor));
                     }
                 } break;
                 case INT: {
-                    Preconditions.checkArgument(element.length == Types.PrimitiveType.INT.length);
+                    Preconditions.checkArgument(element.size == Types.PrimitiveType.INT.size);
                     final int factor = Types.toInt(element);
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.INT.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.INT.size;
                         v0.data.putInt(offset, v0.data.getInt(offset) * factor);
                     }
                 } break;
                 case LONG: {
-                    Preconditions.checkArgument(element.length == Types.PrimitiveType.LONG.length);
+                    Preconditions.checkArgument(element.size == Types.PrimitiveType.LONG.size);
                     final long factor = Types.toLong(element);
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.LONG.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.LONG.size;
                         v0.data.putLong(offset, v0.data.getLong(offset) * factor);
                     }
                 } break;
                 case FLOAT: {
-                    Preconditions.checkArgument(element.length == Types.PrimitiveType.FLOAT.length);
+                    Preconditions.checkArgument(element.size == Types.PrimitiveType.FLOAT.size);
                     final float factor = Types.toFloat(element);
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.FLOAT.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.FLOAT.size;
                         v0.data.putFloat(offset, v0.data.getFloat(offset) * factor);
                     }
                 } break;
                 case DOUBLE: {
-                    Preconditions.checkArgument(element.length == Types.PrimitiveType.DOUBLE.length);
+                    Preconditions.checkArgument(element.size == Types.PrimitiveType.DOUBLE.size);
                     final double factor = Types.toDouble(element);
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.DOUBLE.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.DOUBLE.size;
                         v0.data.putDouble(offset, v0.data.getDouble(offset) * factor);
                     }
                 } break;
@@ -397,7 +397,7 @@ public final class Vectors {
     public static byte[] dotProduct(final DenseVector v0, final DenseVector v1, final BinaryElementOperation<byte[]> dotOp) {
         Preconditions.checkNotNull(v0);
         Preconditions.checkNotNull(v1);
-        Preconditions.checkArgument(v0.length() == v1.length());
+        Preconditions.checkArgument(v0.size() == v1.size());
         if (v0.typeInfo.getElementTypeInfo().getPrimitiveType() != null
                 && v0.typeInfo.getElementTypeInfo().getPrimitiveType().isNumericType
                 && v1.typeInfo.getElementTypeInfo().getPrimitiveType() != null
@@ -406,47 +406,47 @@ public final class Vectors {
 
             switch (v0.typeInfo.getElementTypeInfo().getPrimitiveType()) {
                 case BYTE: {
-                    byte[] result = new byte[Types.PrimitiveType.BYTE.length];
-                    for (int i = 0; i < v0.length(); ++i)
+                    byte[] result = new byte[Types.PrimitiveType.BYTE.size];
+                    for (int i = 0; i < v0.size(); ++i)
                         result[0] += v0.data.getRawData()[i] * v1.data.getRawData()[i];
                     return result;
                 }
                 case SHORT: {
                     short result = 0;
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.SHORT.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.SHORT.size;
                         result += v0.data.getShort(offset) * v1.data.getShort(offset);
                     }
                     return Types.toByteArray(result);
                 }
                 case INT: {
                     int result = 0;
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.INT.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.INT.size;
                         result += v0.data.getInt(offset) * v1.data.getInt(offset);
                     }
                     return Types.toByteArray(result);
                 }
                 case LONG: {
                     long result = 0;
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.LONG.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.LONG.size;
                         result += v0.data.getLong(offset) * v1.data.getLong(offset);
                     }
                     return Types.toByteArray(result);
                 }
                 case FLOAT: {
                     float result = 0;
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.FLOAT.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.FLOAT.size;
                         result += v0.data.getFloat(offset) * v1.data.getFloat(offset);
                     }
                     return Types.toByteArray(result);
                 }
                 case DOUBLE: {
                     double result = 0;
-                    for (int i = 0; i < v0.length(); ++i) {
-                        final int offset = i * Types.PrimitiveType.LONG.length;
+                    for (int i = 0; i < v0.size(); ++i) {
+                        final int offset = i * Types.PrimitiveType.LONG.size;
                         result += v0.data.getDouble(offset) * v1.data.getDouble(offset);
                     }
                     return Types.toByteArray(result);

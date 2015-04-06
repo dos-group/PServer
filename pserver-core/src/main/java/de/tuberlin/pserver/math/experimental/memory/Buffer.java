@@ -2,7 +2,7 @@ package de.tuberlin.pserver.math.experimental.memory;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.utils.Compression;
+import de.tuberlin.pserver.utils.Compressor;
 import de.tuberlin.pserver.utils.UnsafeOp;
 
 import java.io.Serializable;
@@ -10,50 +10,35 @@ import java.io.Serializable;
 public class Buffer implements Serializable {
 
     // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    public enum CompressionAlgorithm {
-
-        NO_COMPRESSION,
-
-        LZ4_COMPRESSION
-    }
-
-    // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    protected final int decompressedLength;
-
     protected byte[] data;
 
-    protected CompressionAlgorithm compressionAlgorithm = CompressionAlgorithm.NO_COMPRESSION;
+    protected Compressor compressor;
+
+    protected final int decompressedLength;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
     public Buffer(final int length) {
-        Preconditions.checkArgument(length > 0);
-        this.data = new byte[length];
-        this.decompressedLength = length;
+        this(new byte[length], length, Compressor.CompressionType.NO_COMPRESSION);
     }
 
     public Buffer(final byte[] data) {
-        Preconditions.checkNotNull(data);
-        this.data = data;
-        this.decompressedLength = data.length;
+        this(data, data.length, Compressor.CompressionType.NO_COMPRESSION);
     }
 
     public Buffer(final byte[] data,
                   final int decompressedLength,
-                  final CompressionAlgorithm compressionAlgorithm) {
+                  final Compressor.CompressionType type) {
 
         Preconditions.checkNotNull(decompressedLength > 0);
         this.data = Preconditions.checkNotNull(data);
         this.decompressedLength = decompressedLength;
-        this.compressionAlgorithm = Preconditions.checkNotNull(compressionAlgorithm);
+        this.compressor = Compressor.Factory.create(Preconditions.checkNotNull(type));
     }
 
     // ---------------------------------------------------
@@ -65,6 +50,12 @@ public class Buffer implements Serializable {
     public byte[] getRawData() { return data; }
 
     public void setRawData(final byte[] data) { this.data = data; }
+
+    // ---------------------------------------------------
+
+    public void compress() { compressor.compress(data); }
+
+    public void decompress() { data = compressor.decompress(data, decompressedLength); }
 
     // ---------------------------------------------------
 
@@ -89,39 +80,4 @@ public class Buffer implements Serializable {
     public float getFloat(final int offset) { return UnsafeOp.unsafe.getFloat(data, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset)); }
 
     public double getDouble(final int offset) { return UnsafeOp.unsafe.getDouble(data, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset)); }
-
-    // ---------------------------------------------------
-
-    public static Buffer compressBuffer(final CompressionAlgorithm policy,
-                                        final Buffer buffer) {
-        Preconditions.checkNotNull(policy);
-        Preconditions.checkNotNull(buffer);
-        switch (policy) {
-            case NO_COMPRESSION:
-                return buffer;
-            case LZ4_COMPRESSION:
-                return new Buffer(
-                        Compression.lz4Compress(buffer.data),
-                        buffer.data.length,
-                        CompressionAlgorithm.LZ4_COMPRESSION
-                );
-            default:
-                throw new IllegalStateException();
-        }
-    }
-
-    /** Creates no copy! */
-    public static Buffer decompressBuffer(final Buffer buffer) {
-        Preconditions.checkNotNull(buffer);
-        switch (buffer.compressionAlgorithm) {
-            case NO_COMPRESSION:
-                return buffer;
-            case LZ4_COMPRESSION: {
-                buffer.data = Compression.lz4Decompress(buffer.data, buffer.decompressedLength);
-                return buffer;
-            }
-            default:
-                throw new IllegalStateException();
-        }
-    }
 }

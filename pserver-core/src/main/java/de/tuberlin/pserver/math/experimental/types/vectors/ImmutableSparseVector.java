@@ -109,7 +109,7 @@ public class ImmutableSparseVector implements Vector {
     // ---------------------------------------------------
 
     @Override
-    public int length() { return sparseSize; } /*arrayIndex != null ? arrayIndex.length : hashIndex.length();*/
+    public int length() { return sparseSize; } /*arrayIndex != null ? arrayIndex.size : hashIndex.size();*/
 
     @Override
     public Types.TypeInformation getType() { return typeInfo; }

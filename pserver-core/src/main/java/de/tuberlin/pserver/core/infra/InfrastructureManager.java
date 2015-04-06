@@ -116,7 +116,7 @@ public final class InfrastructureManager extends EventDispatcher {
                     zookeeper.getChildrenForPathAndWatch(ZookeeperClient.ZOOKEEPER_NODES, this);
                     final List<String> machineList = zookeeper.getChildrenForPath(ZookeeperClient.ZOOKEEPER_NODES);
                     // Find out whether a node was created or deleted.
-                    //if (peers.values().length() < machineList.length()) {
+                    //if (peers.values().size() < machineList.size()) {
                         // A node has been added.
                         MachineDescriptor md = null;
                         for (final String machineIDStr : machineList) {

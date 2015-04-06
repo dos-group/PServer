@@ -51,10 +51,10 @@ public class SimpleMatrixMultiply {
         final double[][] b = new double[SIZE][SIZE];
         final double[][] c = new double[SIZE][SIZE];
 
-        final int m = a.length;
-        final int n = a[0].length;
-        final int p = b.length;
-        final int q = b[0].length;
+        final int m = a.size;
+        final int n = a[0].size;
+        final int p = b.size;
+        final int q = b[0].size;
 
         if (n != p) throw new IllegalStateException("Illegal matrix dimensions.");
 

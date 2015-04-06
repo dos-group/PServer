@@ -52,7 +52,7 @@ public abstract class DelimitedInputFormat<OT> extends FileInputFormat<OT> {
 
     private transient int currOffset;			// offset in above buffer
 
-    private transient int currLen;				// length of current byte sequence
+    private transient int currLen;				// size of current byte sequence
 
     private transient boolean overLimit;
 
@@ -127,7 +127,7 @@ public abstract class DelimitedInputFormat<OT> extends FileInputFormat<OT> {
 
     public void setLineLengthLimit(int lineLengthLimit) {
         if (lineLengthLimit < 1) {
-            throw new IllegalArgumentException("Line length limit must be at least 1.");
+            throw new IllegalArgumentException("Line size limit must be at least 1.");
         }
 
         this.lineLengthLimit = lineLengthLimit;
@@ -291,9 +291,9 @@ public abstract class DelimitedInputFormat<OT> extends FileInputFormat<OT> {
             } else {
                 count = this.limit - startPos;
 
-                // check against the maximum record length
+                // check against the maximum record size
                 if ( ((long) countInWrapBuffer) + count > this.lineLengthLimit) {
-                    throw new IOException("The record length exceeded the maximum record length (" +
+                    throw new IOException("The record size exceeded the maximum record size (" +
                             this.lineLengthLimit + ").");
                 }
 

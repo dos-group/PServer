@@ -44,7 +44,7 @@ public abstract class FileInputFormat<OT> implements InputFormat<OT, FileInputSp
     protected transient long splitStart;
 
     /**
-     * The length of the split that this parallel instance must consume.
+     * The size of the split that this parallel instance must consume.
      */
     protected transient long splitLength;
 
@@ -160,9 +160,9 @@ public abstract class FileInputFormat<OT> implements InputFormat<OT, FileInputSp
     }
 
     /**
-     * Gets the length or remaining length of the current split.
+     * Gets the size or remaining size of the current split.
      *
-     * @return The length or remaining length of the current split.
+     * @return The size or remaining size of the current split.
      */
     public long getSplitLength() {
         return splitLength;

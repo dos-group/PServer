@@ -11,6 +11,7 @@ import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.math.experimental.memory.Buffer;
+import de.tuberlin.pserver.utils.Compressor;
 import de.tuberlin.pserver.utils.nbhm.NonBlockingHashMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -163,7 +164,7 @@ public final class DHT extends EventDispatcher {
 
     private final NetManager netManager;
 
-    private final Buffer.CompressionAlgorithm compressionAlgorithm;
+    private final Compressor.CompressionType compressionType;
 
     private final Map<Key,BufferValue> store;
 
@@ -193,14 +194,22 @@ public final class DHT extends EventDispatcher {
 
         super(true, "DHT-THREAD");
 
+        synchronized (globalDHTMutex) {
+            if (globalDHTInstance == null)
+                globalDHTInstance = this;
+            else {
+                throw new IllegalStateException();
+            }
+        }
+
         this.config         = Preconditions.checkNotNull(config);
         this.infraManager   = Preconditions.checkNotNull(infraManager);
         this.netManager     = Preconditions.checkNotNull(netManager);
         this.instanceID     = infraManager.getInstanceID();
         this.store          = new NonBlockingHashMap<>();
 
-        this.compressionAlgorithm = Buffer.CompressionAlgorithm.valueOf(
-                this.config.getString("dht.compression.compressionAlgorithm")
+        this.compressionType = Compressor.CompressionType.valueOf(
+                this.config.getString("dht.compression.compressionType")
         );
 
         // Register DHT events.
@@ -213,14 +222,6 @@ public final class DHT extends EventDispatcher {
         netManager.addEventListener(DHT_EVENT_DELETE, new DHTDeleteHandler());
 
         globalKeyDirectory = new GlobalKeyDirectory();
-
-        synchronized (globalDHTMutex) {
-            if (globalDHTInstance == null)
-                globalDHTInstance = this;
-            else {
-                throw new IllegalStateException();
-            }
-        }
     }
 
     public static DHT getInstance() { return globalDHTInstance; }
@@ -260,8 +261,8 @@ public final class DHT extends EventDispatcher {
                 final Pair<UUID,Key> request = (Pair<UUID,Key>) event.getPayload();
                 final Key key = globalKeyDirectory.get(request.getRight().internalUID);
                 Preconditions.checkState(key != null);
-                //final BufferValue value = BufferValue.compressBufferValue(compressionPolicy, store.get(key)); // TODO: Compression!
                 final BufferValue value = store.get(key);
+                //value.compress(); // TODO: Compression!
                 final NetEvents.NetEvent e1 = new NetEvents.NetEvent(DHT_EVENT_GET_VALUE_RESPONSE);
                 e1.setPayload(Pair.of(request.getKey(), value));
                 netManager.sendEvent(event.srcMachineID, e1);
@@ -276,8 +277,8 @@ public final class DHT extends EventDispatcher {
             executor.execute(() -> {
                 @SuppressWarnings("unchecked")
                 final Pair<UUID,BufferValue> response = (Pair<UUID,BufferValue>) e.getPayload();
-                //final BufferValue value = BufferValue.decompressBufferValue(response.getValue()); // TODO: Decompression!
                 final BufferValue value = response.getValue();
+                //value.decompress(); // TODO: Decompression!
                 responseValueTable.put(response.getKey(), value);
                 requestTable.remove(response.getKey()).countDown();
             });
@@ -336,9 +337,6 @@ public final class DHT extends EventDispatcher {
 
     public int getNumberOfDHTNodes() { return getDHTNodes().size(); }
 
-    public void initialize(final InfrastructureManager infraManager, final NetManager netManager) {
-    }
-
     // ---------------------------------------------------
 
     /**
@@ -369,7 +367,7 @@ public final class DHT extends EventDispatcher {
                             0,                                          // Global byte offset.
                             basePartitionSegmentIndex,                  // Beginning segment index of this partition.
                             vals[0].getPartitionSize() / segmentSize,   // Number of segments this partition consists of.
-                            segmentSize,                                // Size of a segment. (all segments have equal length).
+                            segmentSize,                                // Size of a segment. (all segments have equal size).
                             primaryMachine                              // The machine where the partition is stored.
                     );
             // Add descriptor to the keys' partition directory.
@@ -399,7 +397,7 @@ public final class DHT extends EventDispatcher {
                                     globalOffset,                   // Global byte offset
                                     basePartitionSegmentIndex,      // Beginning segment index of this partition.
                                     vals[i].getPartitionSize() / segmentSize, // Number of segments this partition consists of.
-                                    segmentSize,                    // Size of a segment. (all segments have equal length).
+                                    segmentSize,                    // Size of a segment. (all segments have equal size).
                                     remoteMachine                   // The machine where the partition is stored.
                             );
 

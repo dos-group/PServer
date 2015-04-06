@@ -1,11 +1,5 @@
 package de.tuberlin.pserver.core.filesystem.hdfs.parser;
 
-
-/**
- * Converts a variable length field of a byte array into a {@link String}. The byte contents between
- * delimiters is interpreted as an ASCII string. The string may be quoted in double quotes. For quoted
- * strings, whitespaces (space and tab) leading and trailing before and after the quotes are removed.
- */
 public class StringParser extends FieldParser<String> {
 	
 	private static final byte WHITESPACE_SPACE = (byte) ' ';

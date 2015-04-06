@@ -7,11 +7,6 @@ import java.lang.reflect.Modifier;
 
 public class InstantiationUtil {
 
-    /**
-     * A custom ObjectInputStream that can also load user-code using a
-     * user-code ClassLoader.
-     *
-     */
     private static class ClassLoaderObjectInputStream extends ObjectInputStream {
         private ClassLoader classLoader;
 
@@ -30,19 +25,6 @@ public class InstantiationUtil {
         }
     }
 
-
-    /**
-     * Creates a new instance of the given class.
-     *
-     * @param <T> The generic type of the class.
-     * @param clazz The class to instantiate.
-     * @param castTo Optional parameter, specifying the class that the given class must be a subclass off. This
-     *               argument is added to prevent class cast exceptions occurring later.
-     * @return An instance of the given class.
-     *
-     * @throws RuntimeException Thrown, if the class could not be instantiated. The exception contains a detailed
-     *                          message about the reason why the instantiation failed.
-     */
     public static <T> T instantiate(Class<T> clazz, Class<? super T> castTo) {
         if (clazz == null) {
             throw new NullPointerException();
@@ -57,17 +39,6 @@ public class InstantiationUtil {
         return instantiate(clazz);
     }
 
-    /**
-     * Creates a new instance of the given class.
-     *
-     * @param <T> The generic type of the class.
-     * @param clazz The class to instantiate.
-
-     * @return An instance of the given class.
-     *
-     * @throws RuntimeException Thrown, if the class could not be instantiated. The exception contains a detailed
-     *                          message about the reason why the instantiation failed.
-     */
     public static <T> T instantiate(Class<T> clazz) {
         if (clazz == null) {
             throw new NullPointerException();
@@ -103,12 +74,6 @@ public class InstantiationUtil {
         }
     }
 
-    /**
-     * Checks, whether the given class has a public nullary constructor.
-     *
-     * @param clazz The class to check.
-     * @return True, if the class has a public nullary constructor, false if not.
-     */
     public static boolean hasPublicNullaryConstructor(Class<?> clazz) {
         Constructor<?>[] constructors = clazz.getConstructors();
         for (int i = 0; i < constructors.length; i++) {
@@ -120,34 +85,15 @@ public class InstantiationUtil {
         return false;
     }
 
-    /**
-     * Checks, whether the given class is public.
-     *
-     * @param clazz The class to check.
-     * @return True, if the class is public, false if not.
-     */
     public static boolean isPublic(Class<?> clazz) {
         return Modifier.isPublic(clazz.getModifiers());
     }
 
-    /**
-     * Checks, whether the class is a proper class, i.e. not abstract or an interface, and not a primitive type.
-     *
-     * @param clazz The class to check.
-     * @return True, if the class is a proper class, false otherwise.
-     */
     public static boolean isProperClass(Class<?> clazz) {
         int mods = clazz.getModifiers();
         return !(Modifier.isAbstract(mods) || Modifier.isInterface(mods) || Modifier.isNative(mods));
     }
 
-    /**
-     * Checks, whether the class is an inner class that is not statically accessible. That is especially true for
-     * anonymous inner classes.
-     *
-     * @param clazz The class to check.
-     * @return True, if the class is a non-statically accessible inner class.
-     */
     public static boolean isNonStaticInnerClass(Class<?> clazz) {
         if (clazz.getEnclosingClass() == null) {
             // no inner class
@@ -164,12 +110,6 @@ public class InstantiationUtil {
         }
     }
 
-    /**
-     * Performs a standard check whether the class can be instantiated by {@code Class#newInstance()}.
-     *
-     * @param clazz The class to check.
-     * @throws RuntimeException Thrown, if the class cannot be instantiated by {@code Class#newInstance()}.
-     */
     public static void checkForInstantiation(Class<?> clazz) {
         final String errorMessage = checkForInstantiationError(clazz);
 
@@ -233,9 +173,6 @@ public class InstantiationUtil {
 
     // --------------------------------------------------------------------------------------------
 
-    /**
-     * Private constructor to prevent instantiation.
-     */
     private InstantiationUtil() {
         throw new RuntimeException();
     }

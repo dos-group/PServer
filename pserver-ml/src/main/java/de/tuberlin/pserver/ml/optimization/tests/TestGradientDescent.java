@@ -16,8 +16,7 @@ import java.util.List;
 public class TestGradientDescent {
 
     // Disallow instantiation.
-    private TestGradientDescent() {
-    }
+    private TestGradientDescent() {}
 
     public static void main(final String[] args) {
 
@@ -48,7 +47,7 @@ public class TestGradientDescent {
         final Gradient gradient = new Gradient.LeastSquaresGradient();
         final DoubleMatrix initialWeights = new DoubleMatrix(numFeatures);
         final GradientDescent sgd = new GradientDescent(gradient, updater, initialWeights);
-        final Tuple2<DoubleMatrix, DoubleMatrix> result = sgd.runMiniBatchSGD(trainingSet);
+        final Tuple2<DoubleMatrix, double[]> result = sgd.runMiniBatchSGD(trainingSet);
 
         final DoubleMatrix model = result._1;
         for (int i = 0; i < model.length; ++i) {

@@ -1,10 +1,9 @@
 package de.tuberlin.pserver.app;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.utils.Compression;
+import de.tuberlin.pserver.utils.Compressor;
 import org.apache.bcel.Repository;
 import org.apache.bcel.classfile.*;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.File;
@@ -53,14 +52,14 @@ public final class UserCodeManager {
 
         public DynamicClassLoader(final ClassLoader cl) {
             super(cl);
-            this.loadedClazzMap = new HashMap<String, Class<?>>();
+            this.loadedClazzMap = new HashMap<>();
         }
 
         public Class<?> buildClassFromByteArray(final String clazzName, final byte[] clazzData) {
             Preconditions.checkNotNull(clazzName);
             Preconditions.checkNotNull(clazzData);
             if (!loadedClazzMap.containsKey(clazzName)) {
-                Class<?> newClazz = null;
+                final Class<?> newClazz;
                 try {
                     newClazz = this.defineClass(clazzName, clazzData, 0, clazzData.length);
                 } catch (ClassFormatError e) {
@@ -82,6 +81,8 @@ public final class UserCodeManager {
     private final boolean analyseDependencies;
 
     private final DynamicClassLoader classLoader;
+
+    private final Compressor compressor = Compressor.Factory.create(Compressor.CompressionType.JAVA_COMPRESSION);
 
     // ---------------------------------------------------
     // Constructor.
@@ -109,7 +110,7 @@ public final class UserCodeManager {
         final List<String> dependencies = analyseDependencies
                 ? buildTransitiveDependencyClosure(clazz, new ArrayList<>())
                 : new ArrayList<>();
-        return Triple.of(clazz, dependencies, Compression.compress(loadByteCode(clazz)));
+        return Triple.of(clazz, dependencies, compressor.compress(loadByteCode(clazz)));
     }
 
     public Class<?> implantClass(final PServerJobDescriptor userCode) {
@@ -124,7 +125,7 @@ public final class UserCodeManager {
         try {
             clazz = Class.forName(userCode.className);
         } catch (ClassNotFoundException e) {
-            clazz = classLoader.buildClassFromByteArray(userCode.className, Compression.decompress(userCode.classByteCode));
+            clazz = classLoader.buildClassFromByteArray(userCode.className, compressor.decompress(userCode.classByteCode));
         }
         return clazz;
     }

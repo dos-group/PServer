@@ -211,11 +211,11 @@ public final class DistributedDenseMatrix implements Matrix {
 
             case BLOCK_PARTITIONING: {
                 throw new IllegalStateException();
-                //if (matrixValues.length % 4 != 0)
+                //if (matrixValues.size % 4 != 0)
                 //    throw new IllegalStateException();
-                //partitionRows = rows / matrixDescriptors.length;
-                //partitionCols = cols / matrixDescriptors.length;
-                //for (int i = 0; i < matrixDescriptors.length; ++i)
+                //partitionRows = rows / matrixDescriptors.size;
+                //partitionCols = cols / matrixDescriptors.size;
+                //for (int i = 0; i < matrixDescriptors.size; ++i)
                 //    matrixDescriptors[i] = new MatrixDescriptor(partitionRows * i, partitionCols * i,
                 //            partitionRows, partitionCols, elementTypeInfo, PartitioningScheme.BLOCK_PARTITIONING);
             }
