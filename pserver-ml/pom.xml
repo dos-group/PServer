@@ -22,6 +22,12 @@
     <!-- ================================= -->
 
     <dependencies>
+        <!-- SYSTEM DEPENDENCIES -->
+        <dependency>
+            <groupId>jfree</groupId>
+            <artifactId>jfreechart</artifactId>
+            <version>1.0.13</version>
+        </dependency>
         <!-- PROJECT DEPENDENCIES -->
         <dependency>
             <groupId>de.tuberlin.pserver</groupId>

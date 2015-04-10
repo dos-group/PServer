@@ -27,4 +27,8 @@ public class DenseDoubleMatrix extends DenseMatrix {
         final long offset = getOffset(row, col);
         UnsafeOp.unsafe.putDouble(buffer.getRawData(), offset, value);
     }
+
+    public double[] toDoubleArray() {
+        return UnsafeOp.primitiveArrayTypeCast(getBuffer().getRawData(), byte[].class, double[].class);
+    }
 }

@@ -1,8 +1,10 @@
+package de.tuberlin.pserver.examples.local.playground;
+
 import de.tuberlin.pserver.core.filesystem.FileDataIterator;
 import de.tuberlin.pserver.core.filesystem.local.LocalCSVInputFile;
 import org.apache.commons.csv.CSVRecord;
 
-public class Test {
+public class Playground {
 
     /*public static int numOfMachines = 4;
 
@@ -214,7 +216,7 @@ public class Test {
                 System.out.println(strBuilder.toString());
             }
         }
-
+/*
         System.out.println("-------------------------------------------------------------------------");
 
         {
@@ -265,6 +267,6 @@ public class Test {
                 System.out.println(strBuilder.toString());
             }
         }
-
+*/
     }
 }

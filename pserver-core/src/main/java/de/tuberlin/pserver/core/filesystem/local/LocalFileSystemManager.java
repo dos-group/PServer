@@ -1,22 +1,38 @@
 package de.tuberlin.pserver.core.filesystem.local;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.filesystem.FileDataIterator;
 import de.tuberlin.pserver.core.filesystem.FileSystemManager;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
+import de.tuberlin.pserver.core.net.NetEvents;
+import de.tuberlin.pserver.core.net.NetManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 public final class LocalFileSystemManager implements FileSystemManager {
+
+    // ---------------------------------------------------
+    // Constants.
+    // ---------------------------------------------------
+
+    public static final String PSERVER_LFSM_COMPUTED_FILE_SPLITS  = "PSLCFS";
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
+    private static final Logger LOG = LoggerFactory.getLogger(LocalFileSystemManager.class);
+
     private final InfrastructureManager infraManager;
+
+    private final NetManager netManager;
 
     private final Map<String,LocalInputFile<?>> inputFileMap;
 
@@ -26,8 +42,9 @@ public final class LocalFileSystemManager implements FileSystemManager {
     // Constructors.
     // ---------------------------------------------------
 
-    public LocalFileSystemManager(final InfrastructureManager infraManager) {
+    public LocalFileSystemManager(final InfrastructureManager infraManager, final NetManager netManager) {
         this.infraManager = Preconditions.checkNotNull(infraManager);
+        this.netManager = Preconditions.checkNotNull(netManager);
         this.inputFileMap = new HashMap<>();
         this.registeredIteratorMap = new HashMap<>();
     }
@@ -38,17 +55,31 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
     @Override
     public void computeInputSplitsForRegisteredFiles() {
-
+        final LocalFileSystemManager lfsm = this;
+        final CountDownLatch splitComputationLatch = new CountDownLatch(infraManager.getMachines().size() - 1);
+        final IEventHandler handler = (e) -> {
+            synchronized (lfsm) {
+                splitComputationLatch.countDown();
+            }
+        };
+        netManager.addEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler);
         inputFileMap.forEach(
                 (k, v) -> v.computeLocalFileSection(
                         infraManager.getMachines().size(),
                         infraManager.getInstanceID()
                 )
         );
-
         registeredIteratorMap.forEach(
                 (k, v) -> v.forEach(FileDataIterator::initialize)
         );
+        netManager.broadcastEvent(new NetEvents.NetEvent(PSERVER_LFSM_COMPUTED_FILE_SPLITS));
+        try {
+            splitComputationLatch.await();
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
+        netManager.removeEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler);
+        LOG.info("Input split are computed.");
     }
 
     @Override

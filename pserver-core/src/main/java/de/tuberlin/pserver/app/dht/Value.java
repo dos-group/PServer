@@ -29,9 +29,7 @@ public abstract class Value implements Serializable {
 
     public UUID getInternalUID() { return internalUID; }
 
-    public void setValueMetadata(final Serializable valueMetadata) {
-        this.valueMetadata = Preconditions.checkNotNull(valueMetadata);
-    }
+    public void setValueMetadata(final Serializable valueMetadata) { this.valueMetadata = Preconditions.checkNotNull(valueMetadata); }
 
-    public Serializable getValueMetadataI() { return valueMetadata; }
+    public Serializable getValueMetadata() { return valueMetadata; }
 }

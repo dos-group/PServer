@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.app.dht;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.app.dht.valuetypes.ByteBufferValue;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 
 import java.io.Serializable;
@@ -54,7 +55,7 @@ public class Key implements Serializable, Comparable<Key> {
             Preconditions.checkArgument(partitionSize > 0);
             Preconditions.checkArgument(globalOffset >= 0);
             Preconditions.checkArgument(segmentBaseIndex >= 0);
-            Preconditions.checkArgument(segmentSize >= 0 && segmentSize % BufferValue.DEFAULT_ALIGNMENT_SIZE == 0);
+            Preconditions.checkArgument(segmentSize >= 0 && segmentSize % ByteBufferValue.DEFAULT_ALIGNMENT_SIZE == 0);
 
             this.partitionIndex = partitionIndex;
             this.partitionSize = partitionSize;
@@ -85,7 +86,7 @@ public class Key implements Serializable, Comparable<Key> {
     // ---------------------------------------------------
 
     // Copy Constructor.
-    private Key(final UUID uid, final String name, final DistributionMode distributionMode) { this(uid, name, /*null,*/  null, distributionMode); }
+    private Key(final UUID uid, final String name, final DistributionMode distributionMode) { this(uid, name, null, distributionMode); }
     private Key(final UUID uid,
                 final String name,
                 final Map<Integer,PartitionDescriptor> partitionDirectory,
@@ -126,7 +127,7 @@ public class Key implements Serializable, Comparable<Key> {
     }
 
     public int getSegmentIDFromByteOffset(final long globalOffset) {
-        return (int)globalOffset / BufferValue.DEFAULT_SEGMENT_SIZE;
+        return (int)globalOffset / ByteBufferValue.DEFAULT_SEGMENT_SIZE;
     }
 
     // ---------------------------------------------------

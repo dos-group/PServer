@@ -11,6 +11,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class MemoryManager {
@@ -44,10 +45,14 @@ public final class MemoryManager {
 
         private ReentrantLock mutex;
 
+        // ---------------------------------------------------
+
         public MemoryLockSection(final long threadID, final int s, final int e) {
             this.threadID   = threadID;
             this.token      = new LockToken(s, e);
         }
+
+        // ---------------------------------------------------
 
         public void lock() { Preconditions.checkNotNull(mutex).lock(); }
 
@@ -66,27 +71,41 @@ public final class MemoryManager {
 
     public static final class MemorySegment {
 
-        public final int offset;
+        private final MemoryArena arena;
 
-        public final int size;
-
-        public final byte[] buffer;
-
-        private MemoryArena arena;
+        private final int index;
 
         private MemorySegment next;
 
         private LockToken lockToken;
 
-        public MemorySegment(final MemoryArena arena, final byte[] buffer, final int offset, final int size) {
+        // ---------------------------------------------------
+
+        public final byte[] buffer;
+
+        public final int offset;
+
+        public final int size;
+
+        // ---------------------------------------------------
+
+        public MemorySegment(final MemoryArena arena,
+                             final int index,
+                             final byte[] buffer,
+                             final int offset,
+                             final int size) {
+
             this.arena  = Preconditions.checkNotNull(arena);
+            this.index  = index;
             this.buffer = Preconditions.checkNotNull(buffer);
             this.offset = offset;
             this.size   = size;
             this.next   = null;
         }
 
-        public void setNext(final MemorySegment next) { this.next = Preconditions.checkNotNull(next); }
+        // ---------------------------------------------------
+
+        public void setSuccessorSegment(final MemorySegment next) { this.next = Preconditions.checkNotNull(next); }
 
         public MemorySegment getNext() { return next; }
 
@@ -130,7 +149,7 @@ public final class MemoryManager {
             this.freeList       = new LinkedBlockingQueue<>(segments);
 
             for (int i = 0; i < numSegments; ++i)
-                segments.add(new MemorySegment(this, memory, i * segmentSize, segmentSize));
+                segments.add(new MemorySegment(this, i, memory, i * segmentSize, segmentSize));
         }
 
         // ---------------------------------------------------
@@ -153,6 +172,8 @@ public final class MemoryManager {
         public MemorySegment allocSegment() { return freeList.poll(); }
 
         public void freeSegment(final MemorySegment segment) { freeList.add(Preconditions.checkNotNull(segment)); }
+
+        // ---------------------------------------------------
 
         public void copy(final MemorySegment msSrc, final int srcOffset,
                          final MemorySegment msDst, final int dstOffset,
@@ -216,6 +237,8 @@ public final class MemoryManager {
 
         private final int maxSegmentSize;
 
+        // ---------------------------------------------------
+
         public ShortLifeHeap(final int numSegmentsPerArena, final int n1, final int n2) {
             Preconditions.checkArgument(n1 >= 0 && n2 > n1);
 
@@ -229,6 +252,8 @@ public final class MemoryManager {
                 arenaMap.put(segmentSize, ma);
             }
         }
+
+        // ---------------------------------------------------
 
         public int getNumSegmentsPerSize() { return numSegmentsPerArena; }
 
@@ -246,6 +271,44 @@ public final class MemoryManager {
     }
 
     // ---------------------------------------------------
+
+    private static final class MemoryObjectPtr {
+
+        private final int offset;
+
+        private final int size;
+
+        private final List<MemorySegment> segments;
+
+        // ---------------------------------------------------
+
+        public MemoryObjectPtr(final int offset, final int size, final List<MemorySegment> segments) {
+            this.offset     = offset;
+            this.size       = size;
+            this.segments   = Preconditions.checkNotNull(segments);
+        }
+
+        // ---------------------------------------------------
+
+        public byte[] extractObject() { return null; } // TODO: ...implement...
+    }
+
+    // ---------------------------------------------------
+
+    private static final class LongLifeHeap {
+
+        private final MemoryArena arena;
+
+        private int currentBlockOffset;
+
+        public LongLifeHeap(final int numSegments, final int segmentSize) {
+            this.arena = new MemoryArena(numSegments, segmentSize);
+            this.currentBlockOffset = 0;
+        }
+
+    }
+
+    // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
@@ -253,7 +316,7 @@ public final class MemoryManager {
 
     private static final Object globalMemoryManagerMutex = new Object();
 
-    private static MemoryManager globalMemoryManagerInstance = null;
+    private static final AtomicReference<MemoryManager> globalMemoryManagerInstance = new AtomicReference<>(null);
 
     // ---------------------------------------------------
 
@@ -280,11 +343,8 @@ public final class MemoryManager {
                          final int longLifeSegmentSize) {
 
         synchronized (globalMemoryManagerMutex) {
-            if (globalMemoryManagerInstance == null)
-                globalMemoryManagerInstance = this;
-            else {
+            if (!globalMemoryManagerInstance.compareAndSet(null, this))
                 throw new IllegalStateException();
-            }
         }
 
         this.totalMemory = Runtime.getRuntime().totalMemory();
@@ -299,7 +359,9 @@ public final class MemoryManager {
         scheduleMemoryUsageObserverTask();
     }
 
-    public static MemoryManager getMemoryManagerInstance() { return globalMemoryManagerInstance; }
+    public static MemoryManager getMemoryManagerInstance() {
+        return Preconditions.checkNotNull(globalMemoryManagerInstance.get());
+    }
 
     // ---------------------------------------------------
     // Public Methods.

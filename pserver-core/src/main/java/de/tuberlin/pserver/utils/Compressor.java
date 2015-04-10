@@ -7,10 +7,11 @@ import net.jpountz.lz4.LZ4FastDecompressor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
-public interface Compressor {
+public interface Compressor extends Serializable {
 
     public abstract byte[] compress(final byte[] data);
 
@@ -61,6 +62,8 @@ public interface Compressor {
         private static final LZ4Compressor compressor = LZ4Factory.fastestInstance().fastCompressor();
 
         private static final LZ4FastDecompressor decompressor = LZ4Factory.fastestInstance().fastDecompressor();
+
+        // ---------------------------------------------------
 
         @Override
         public byte[] compress(byte[] data) {

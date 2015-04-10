@@ -1,12 +1,12 @@
-package de.tuberlin.pserver.ml.optimization.tests;
+package de.tuberlin.pserver.ml.optimization.sparkml_port.tests;
 
 
 import de.tuberlin.pserver.core.filesystem.FileDataIterator;
 import de.tuberlin.pserver.core.filesystem.local.LocalCSVInputFile;
 import de.tuberlin.pserver.math.experimental.tuples.Tuple2;
-import de.tuberlin.pserver.ml.optimization.Gradient;
-import de.tuberlin.pserver.ml.optimization.GradientDescent;
-import de.tuberlin.pserver.ml.optimization.Updater;
+import de.tuberlin.pserver.ml.optimization.sparkml_port.Gradient;
+import de.tuberlin.pserver.ml.optimization.sparkml_port.GradientDescent;
+import de.tuberlin.pserver.ml.optimization.sparkml_port.Updater;
 import org.apache.commons.csv.CSVRecord;
 import org.jblas.DoubleMatrix;
 
@@ -22,9 +22,21 @@ public class TestGradientDescent {
 
         final LocalCSVInputFile fileSection = new LocalCSVInputFile("datasets/parkinsons_updrs.data", "\n", ',');
         final FileDataIterator<CSVRecord> fileIterator = fileSection.iterator();
-        fileSection.computeLocalFileSection(1, 0);
+        fileSection.computeLocalFileSection(3, 0);
 
-        int numFeatures = -1;
+
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        while (fileIterator.hasNext()) {
+            fileIterator.next();
+        }
+
+
+        /*int numFeatures = -1;
         boolean isLabelFirstOrLastElement = true;
 
         final List<Tuple2<Double,DoubleMatrix>> trainingSet = new ArrayList<>();
@@ -53,6 +65,6 @@ public class TestGradientDescent {
         for (int i = 0; i < model.length; ++i) {
             System.out.print(model.get(i));
             System.out.print(" ");
-        }
+        }*/
     }
 }

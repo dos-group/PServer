@@ -2,6 +2,7 @@ package de.tuberlin.pserver.app.dht;
 
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
+import de.tuberlin.pserver.app.dht.valuetypes.AbstractBufferValue;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
@@ -10,7 +11,6 @@ import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.math.experimental.memory.Buffer;
 import de.tuberlin.pserver.utils.Compressor;
 import de.tuberlin.pserver.utils.nbhm.NonBlockingHashMap;
 import org.apache.commons.lang3.ArrayUtils;
@@ -24,6 +24,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public final class DHT extends EventDispatcher {
 
@@ -58,17 +59,11 @@ public final class DHT extends EventDispatcher {
         // ---------------------------------------------------
 
         private final class DHTAddKeyToDirectoryHandler implements IEventHandler {
-            @Override
-            public void handleEvent(final Event e) {
-                put((Key)e.getPayload());
-            }
+            @Override public void handleEvent(final Event e) { put((Key)e.getPayload()); }
         }
 
         private final class DHTRemoveKeyToDirectoryHandler implements IEventHandler {
-            @Override
-            public void handleEvent(final Event e) {
-                remove((Key)e.getPayload());
-            }
+            @Override public void handleEvent(final Event e) { remove((Key)e.getPayload()); }
         }
 
         // ---------------------------------------------------
@@ -126,35 +121,16 @@ public final class DHT extends EventDispatcher {
     }
 
     // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    private enum DHTAction {
-
-        PUT_VALUE,
-
-        PUT_SEGMENT,
-
-        GET_VALUE,
-
-        GET_SEGMENT,
-
-        DELETE_VALUE,
-    }
-
-    // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
     private static final Logger LOG = LoggerFactory.getLogger(DHT.class);
 
-    private long RESPONSE_TIMEOUT = 55000; // in ms
-
-    // ---------------------------------------------------
+    private static long RESPONSE_TIMEOUT = 55000; // in ms
 
     private static final Object globalDHTMutex = new Object();
 
-    private static DHT globalDHTInstance = null;
+    private static final AtomicReference<DHT> globalDHTInstance = new AtomicReference<>(null);
 
     // ---------------------------------------------------
 
@@ -166,11 +142,11 @@ public final class DHT extends EventDispatcher {
 
     private final Compressor.CompressionType compressionType;
 
-    private final Map<Key,BufferValue> store;
+    private final Map<Key,AbstractBufferValue> store;
 
     // ---------------------------------------
 
-    private int instanceID;
+    private final int instanceID;
 
     private final GlobalKeyDirectory globalKeyDirectory;
 
@@ -180,9 +156,9 @@ public final class DHT extends EventDispatcher {
 
     private final Map<UUID,CountDownLatch> requestTable = new NonBlockingHashMap<>();
 
-    private final Map<UUID,BufferValue> responseValueTable = new NonBlockingHashMap<>();
+    private final Map<UUID,AbstractBufferValue> responseValueTable = new NonBlockingHashMap<>();
 
-    private final Map<UUID,BufferValue.Segment[]> responseSegmentsTable = new NonBlockingHashMap<>();
+    private final Map<UUID,AbstractBufferValue.Segment[]> responseSegmentsTable = new NonBlockingHashMap<>();
 
     // ---------------------------------------------------
     // Constructors.
@@ -195,11 +171,8 @@ public final class DHT extends EventDispatcher {
         super(true, "DHT-THREAD");
 
         synchronized (globalDHTMutex) {
-            if (globalDHTInstance == null)
-                globalDHTInstance = this;
-            else {
+            if (!globalDHTInstance.compareAndSet(null, this))
                 throw new IllegalStateException();
-            }
         }
 
         this.config         = Preconditions.checkNotNull(config);
@@ -224,7 +197,7 @@ public final class DHT extends EventDispatcher {
         globalKeyDirectory = new GlobalKeyDirectory();
     }
 
-    public static DHT getInstance() { return globalDHTInstance; }
+    public static DHT getInstance() { return Preconditions.checkNotNull(globalDHTInstance.get()); }
 
     // ---------------------------------------------------
     // Event Handler.
@@ -234,7 +207,7 @@ public final class DHT extends EventDispatcher {
         @Override
         public void handleEvent(final Event e) {
             @SuppressWarnings("unchecked")
-            final Pair<Key,BufferValue> entry = (Pair<Key,BufferValue>)e.getPayload();
+            final Pair<Key,AbstractBufferValue> entry = (Pair<Key,AbstractBufferValue>)e.getPayload();
             localPut(entry.getKey(), entry.getValue());
         }
     }
@@ -243,10 +216,10 @@ public final class DHT extends EventDispatcher {
         @Override
         public void handleEvent(final Event e) {
             @SuppressWarnings("unchecked")
-            final Pair<Key,BufferValue.Segment[]> request = (Pair<Key,BufferValue.Segment[]>)e.getPayload();
+            final Pair<Key,AbstractBufferValue.Segment[]> request = (Pair<Key,AbstractBufferValue.Segment[]>)e.getPayload();
             // Local put.
             final Key key = globalKeyDirectory.get(request.getLeft().internalUID);
-            final BufferValue value = store.get(key);
+            final AbstractBufferValue value = store.get(key);
             value.putSegments(request.getValue(), instanceID);
             logDHTAction(key, DHTAction.PUT_SEGMENT);
         }
@@ -261,7 +234,7 @@ public final class DHT extends EventDispatcher {
                 final Pair<UUID,Key> request = (Pair<UUID,Key>) event.getPayload();
                 final Key key = globalKeyDirectory.get(request.getRight().internalUID);
                 Preconditions.checkState(key != null);
-                final BufferValue value = store.get(key);
+                final AbstractBufferValue value = store.get(key);
                 //value.compress(); // TODO: Compression!
                 final NetEvents.NetEvent e1 = new NetEvents.NetEvent(DHT_EVENT_GET_VALUE_RESPONSE);
                 e1.setPayload(Pair.of(request.getKey(), value));
@@ -276,8 +249,8 @@ public final class DHT extends EventDispatcher {
         public void handleEvent(final Event e) {
             executor.execute(() -> {
                 @SuppressWarnings("unchecked")
-                final Pair<UUID,BufferValue> response = (Pair<UUID,BufferValue>) e.getPayload();
-                final BufferValue value = response.getValue();
+                final Pair<UUID,AbstractBufferValue> response = (Pair<UUID,AbstractBufferValue>) e.getPayload();
+                final AbstractBufferValue value = response.getValue();
                 //value.decompress(); // TODO: Decompression!
                 responseValueTable.put(response.getKey(), value);
                 requestTable.remove(response.getKey()).countDown();
@@ -293,7 +266,7 @@ public final class DHT extends EventDispatcher {
                 @SuppressWarnings("unchecked")
                 final Triple<UUID,Key,int[]> segmentsRequest = (Triple<UUID,Key,int[]>) event.getPayload();
                 final Key key = globalKeyDirectory.get(segmentsRequest.getMiddle().internalUID);
-                final BufferValue.Segment[] segments = store.get(segmentsRequest.getMiddle()).getSegments(segmentsRequest.getRight(), instanceID);
+                final AbstractBufferValue.Segment[] segments = store.get(segmentsRequest.getMiddle()).getSegments(segmentsRequest.getRight(), instanceID);
                 final NetEvents.NetEvent e1 = new NetEvents.NetEvent(DHT_EVENT_GET_SEGMENTS_RESPONSE);
                 e1.setPayload(Pair.of(segmentsRequest.getLeft(), segments));
                 netManager.sendEvent(event.srcMachineID, e1);
@@ -307,7 +280,7 @@ public final class DHT extends EventDispatcher {
         public void handleEvent(final Event e) {
             executor.execute(() -> {
                 @SuppressWarnings("unchecked")
-                final Pair<UUID,BufferValue.Segment[]> response = (Pair<UUID,BufferValue.Segment[]>) e.getPayload();
+                final Pair<UUID,AbstractBufferValue.Segment[]> response = (Pair<UUID,AbstractBufferValue.Segment[]>) e.getPayload();
                 responseSegmentsTable.put(response.getKey(), response.getValue());
                 requestTable.remove(response.getKey()).countDown();
             });
@@ -348,9 +321,9 @@ public final class DHT extends EventDispatcher {
      * @param vals A value object, or a array of value partitions.
      * @return The key containing the distribution metadata of all value partitions.
      */
-    public Key put(final Key key, final BufferValue vals) { return put(key, new BufferValue[] {vals}, BufferValue.DEFAULT_SEGMENT_SIZE); }
-    public Key put(final Key key, final BufferValue[] vals) { return put(key, vals, BufferValue.DEFAULT_SEGMENT_SIZE); }
-    public Key put(final Key key, final BufferValue[] vals, int segmentSize) {
+    public Key put(final Key key, final AbstractBufferValue vals) { return put(key, new AbstractBufferValue[] {vals}, AbstractBufferValue.DEFAULT_SEGMENT_SIZE); }
+    public Key put(final Key key, final AbstractBufferValue[] vals) { return put(key, vals, AbstractBufferValue.DEFAULT_SEGMENT_SIZE); }
+    public Key put(final Key key, final AbstractBufferValue[] vals, int segmentSize) {
 
         if ((key.getPartitionDirectory() == null || key.getPartitionDirectory().size() == 0)
                 && globalKeyDirectory.get(key.internalUID) == null) {
@@ -429,7 +402,7 @@ public final class DHT extends EventDispatcher {
         return key;
     }
 
-    private void localPut(final Key key, final BufferValue val) {
+    private void localPut(final Key key, final AbstractBufferValue val) {
         // Set the key for the value partition.
         val.setInternalUID(key.internalUID);
         val.setKey(key);
@@ -445,15 +418,15 @@ public final class DHT extends EventDispatcher {
      * @param key The key that is associated with the value object.
      * @param segment Updated segments of a value object.
      */
-    public void put(final Key key, final BufferValue.Segment segment) { put(key, new BufferValue.Segment[] { segment }); }
-    public void put(final Key key, final BufferValue.Segment[] segments) {
+    public void put(final Key key, final AbstractBufferValue.Segment segment) { put(key, new AbstractBufferValue.Segment[] { segment }); }
+    public void put(final Key key, final AbstractBufferValue.Segment[] segments) {
         Preconditions.checkNotNull(key);
         Preconditions.checkNotNull(segments);
         // Group all segments according to their storage locations/dht nodes.
-        final Map<MachineDescriptor, List<BufferValue.Segment>> putRequests = new HashMap<>();
-        for (final BufferValue.Segment segment : segments) {
+        final Map<MachineDescriptor, List<AbstractBufferValue.Segment>> putRequests = new HashMap<>();
+        for (final AbstractBufferValue.Segment segment : segments) {
             final MachineDescriptor md = key.getDHTNodeFromSegmentIndex(segment.segmentIndex);
-            List<BufferValue.Segment> segmentsToPut = putRequests.get(md);
+            List<AbstractBufferValue.Segment> segmentsToPut = putRequests.get(md);
             if (segmentsToPut == null) {
                 segmentsToPut = new ArrayList<>();
                 putRequests.put(md, segmentsToPut);
@@ -462,12 +435,12 @@ public final class DHT extends EventDispatcher {
         }
         // Iterate over the grouped segments and push them to their storage locations.
         // Internally we span multiple threads to parallelize the put requests.
-        for (final Map.Entry<MachineDescriptor, List<BufferValue.Segment>> e : putRequests.entrySet()) {
-            final BufferValue.Segment[] segs = new BufferValue.Segment[e.getValue().size()];
+        for (final Map.Entry<MachineDescriptor, List<AbstractBufferValue.Segment>> e : putRequests.entrySet()) {
+            final AbstractBufferValue.Segment[] segs = new AbstractBufferValue.Segment[e.getValue().size()];
             e.getValue().toArray(segs);
             if (isLocal(e.getKey())) {
                 // Local put.
-                final BufferValue value = store.get(key);
+                final AbstractBufferValue value = store.get(key);
                 value.putSegments(segs, instanceID);
                 logDHTAction(key, DHTAction.PUT_SEGMENT);
             } else {
@@ -488,10 +461,10 @@ public final class DHT extends EventDispatcher {
      * @param key The key that is associated with the value object.
      * @return The gathered <Code>Value</Code> partitions.
      */
-    public BufferValue[] get(final Key key) {
+    public AbstractBufferValue[] get(final Key key) {
         Preconditions.checkNotNull(key);
         final int numberOfPartitions = key.getPartitionDirectory().size();
-        final BufferValue[] values = new BufferValue[numberOfPartitions];
+        final AbstractBufferValue[] values = new AbstractBufferValue[numberOfPartitions];
         final CountDownLatch operationCompleteLatch = new CountDownLatch(numberOfPartitions);
         // Iterate over keys' partition directory and request all partitions.
         // Internally we span multiple threads to parallelize the value requests.
@@ -517,7 +490,7 @@ public final class DHT extends EventDispatcher {
         return values;
     }
 
-    private BufferValue getRemoteValueBlocking(final MachineDescriptor machine, final Key key) {
+    private AbstractBufferValue getRemoteValueBlocking(final MachineDescriptor machine, final Key key) {
         final CountDownLatch cdl = new CountDownLatch(1);
         final UUID requestID = UUID.randomUUID();
         requestTable.put(requestID, cdl);
@@ -538,11 +511,11 @@ public final class DHT extends EventDispatcher {
     }
 
     // The returned segment array order does correspond to order in segmentIndices.
-    public BufferValue.Segment[] get(final Key key, final int segmentIndex) { return get(key, new int[] { segmentIndex }); }
-    public BufferValue.Segment[] get(final Key key, final int[] segmentIndices) {
+    public AbstractBufferValue.Segment[] get(final Key key, final int segmentIndex) { return get(key, new int[] { segmentIndex }); }
+    public AbstractBufferValue.Segment[] get(final Key key, final int[] segmentIndices) {
         Preconditions.checkNotNull(key);
         Preconditions.checkNotNull(segmentIndices);
-        final BufferValue.Segment[] segments = new BufferValue.Segment[segmentIndices.length];
+        final AbstractBufferValue.Segment[] segments = new AbstractBufferValue.Segment[segmentIndices.length];
         // Build all requests and group them according to the dht nodes.
         final Map<MachineDescriptor, List<Integer>> requests = new HashMap<>();
         for (final int segmentIndex : segmentIndices) {
@@ -559,8 +532,8 @@ public final class DHT extends EventDispatcher {
         final CountDownLatch operationCompleteLatch = new CountDownLatch(requests.size());
         for (final Map.Entry<MachineDescriptor, List<Integer>> e : requests.entrySet()) {
             if (isLocal(e.getKey())) {
-                final BufferValue.Segment[] localSegments = store.get(key).getSegments(Ints.toArray(e.getValue()), instanceID);
-                for (final BufferValue.Segment localSegment : localSegments) {
+                final AbstractBufferValue.Segment[] localSegments = store.get(key).getSegments(Ints.toArray(e.getValue()), instanceID);
+                for (final AbstractBufferValue.Segment localSegment : localSegments) {
                     final int index = ArrayUtils.indexOf(segmentIndices, localSegment.segmentIndex);
                     segments[index] = localSegment;
                 }
@@ -568,8 +541,8 @@ public final class DHT extends EventDispatcher {
                 operationCompleteLatch.countDown();
             } else {
                 executor.submit(() -> {
-                    final BufferValue.Segment[] remoteSegments = getRemoteSegmentsBlocking(e.getKey(), key, Ints.toArray(e.getValue()));
-                    for (final BufferValue.Segment remoteSegment : remoteSegments) {
+                    final AbstractBufferValue.Segment[] remoteSegments = getRemoteSegmentsBlocking(e.getKey(), key, Ints.toArray(e.getValue()));
+                    for (final AbstractBufferValue.Segment remoteSegment : remoteSegments) {
                         final int index = ArrayUtils.indexOf(segmentIndices, remoteSegment.segmentIndex);
                         segments[index] = remoteSegment;
                     }
@@ -586,7 +559,7 @@ public final class DHT extends EventDispatcher {
         return segments;
     }
 
-    private BufferValue.Segment[] getRemoteSegmentsBlocking(final MachineDescriptor machine, final Key key, final int[] segmentIndices) {
+    private AbstractBufferValue.Segment[] getRemoteSegmentsBlocking(final MachineDescriptor machine, final Key key, final int[] segmentIndices) {
         final CountDownLatch cdl = new CountDownLatch(1);
         final UUID requestID = UUID.randomUUID();
         requestTable.put(requestID, cdl);
@@ -642,7 +615,24 @@ public final class DHT extends EventDispatcher {
     public Key getKey(final UUID internalID) { return globalKeyDirectory.get(Preconditions.checkNotNull(internalID)); }
 
     // ---------------------------------------------------
-    // Helper Methods.
+    // Private Constants.
+    // ---------------------------------------------------
+
+    private enum DHTAction {
+
+        PUT_VALUE,
+
+        PUT_SEGMENT,
+
+        GET_VALUE,
+
+        GET_SEGMENT,
+
+        DELETE_VALUE;
+    }
+
+    // ---------------------------------------------------
+    // Private Methods.
     // ---------------------------------------------------
 
     private MachineDescriptor selectMachineForKey(final Key key) {

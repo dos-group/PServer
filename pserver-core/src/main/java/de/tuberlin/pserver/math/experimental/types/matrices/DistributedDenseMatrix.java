@@ -1,9 +1,9 @@
 package de.tuberlin.pserver.math.experimental.types.matrices;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.app.dht.BufferValue;
 import de.tuberlin.pserver.app.dht.DHT;
 import de.tuberlin.pserver.app.dht.Key;
+import de.tuberlin.pserver.app.dht.valuetypes.ByteBufferValue;
 import de.tuberlin.pserver.math.experimental.memory.TypedBuffer;
 import de.tuberlin.pserver.math.experimental.memory.Types;
 import org.slf4j.Logger;
@@ -152,9 +152,9 @@ public final class DistributedDenseMatrix implements Matrix {
     @Override
     public byte[] getElement(final long row, final long col) {
         final long globalOffset = getGlobalOffset(row, col);
-        final int segmentID = (int)globalOffset / BufferValue.DEFAULT_SEGMENT_SIZE;
-        final int localElementPos = (int)((globalOffset - segmentID * BufferValue.DEFAULT_SEGMENT_SIZE) / elementTypeInfo.size());
-        final BufferValue.Segment[] segments = DHT.getInstance().get(matrixKey, segmentID);
+        final int segmentID = (int)globalOffset / ByteBufferValue.DEFAULT_SEGMENT_SIZE;
+        final int localElementPos = (int)((globalOffset - segmentID * ByteBufferValue.DEFAULT_SEGMENT_SIZE) / elementTypeInfo.size());
+        final ByteBufferValue.Segment[] segments = DHT.getInstance().get(matrixKey, segmentID);
         return new TypedBuffer(segments[0].data, elementTypeInfo).extractElementAsByteArray(localElementPos);
     }
 
@@ -162,8 +162,8 @@ public final class DistributedDenseMatrix implements Matrix {
     public void setElement(final long row, final long col, final byte[] element) {
         final long globalOffset = getGlobalOffset(row, col);
         final int segmentID = matrixKey.getSegmentIDFromByteOffset(globalOffset);
-        final BufferValue.Segment[] segments = DHT.getInstance().get(matrixKey, segmentID);
-        final int localElementPos = (int)((globalOffset - segmentID * BufferValue.DEFAULT_SEGMENT_SIZE) / elementTypeInfo.size());
+        final ByteBufferValue.Segment[] segments = DHT.getInstance().get(matrixKey, segmentID);
+        final int localElementPos = (int)((globalOffset - segmentID * ByteBufferValue.DEFAULT_SEGMENT_SIZE) / elementTypeInfo.size());
         new TypedBuffer(segments[0].data, elementTypeInfo).put(localElementPos, element);
         DHT.getInstance().put(matrixKey, segments);
     }
@@ -172,7 +172,7 @@ public final class DistributedDenseMatrix implements Matrix {
     // Private Methods.
     // ---------------------------------------------------
 
-    private BufferValue[] computeMatrixPartitions() {
+    private ByteBufferValue[] computeMatrixPartitions() {
         final long size = elementTypeInfo.size() * rows * cols;
 
         long alignmentSize = 0;
@@ -182,7 +182,7 @@ public final class DistributedDenseMatrix implements Matrix {
             case BLOCK_PARTITIONING:    throw new IllegalStateException();
         }
 
-        final BufferValue[] matrixValues = BufferValue.newValueAligned(false, size, alignmentSize);
+        final ByteBufferValue[] matrixValues = ByteBufferValue.newValueAligned(false, size, alignmentSize);
         final MatrixDescriptor[] matrixDescriptors = new MatrixDescriptor[matrixValues.length];
         long partitionRows;
         long partitionCols;
@@ -254,7 +254,7 @@ public final class DistributedDenseMatrix implements Matrix {
     }
 
     private DistributedDenseMatrix distribute() {
-        final BufferValue[] matrixValues = computeMatrixPartitions();
+        final ByteBufferValue[] matrixValues = computeMatrixPartitions();
         matrixKey = DHT.getInstance().put(matrixKey, matrixValues);
         return this;
     }

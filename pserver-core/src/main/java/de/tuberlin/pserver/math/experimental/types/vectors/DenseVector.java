@@ -1,14 +1,14 @@
 package de.tuberlin.pserver.math.experimental.types.vectors;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.app.dht.BufferValue;
+import de.tuberlin.pserver.app.dht.valuetypes.ByteBufferValue;
 import de.tuberlin.pserver.math.experimental.memory.TypedBuffer;
 import de.tuberlin.pserver.math.experimental.memory.Types;
 import de.tuberlin.pserver.math.experimental.types.tests.DenseVectorOld;
 
 import java.util.Arrays;
 
-public class DenseVector extends BufferValue implements Vector {
+public class DenseVector extends ByteBufferValue implements Vector {
 
     // ---------------------------------------------------
     // Fields.

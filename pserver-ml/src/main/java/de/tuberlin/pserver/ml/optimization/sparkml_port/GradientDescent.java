@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.ml.optimization;
+package de.tuberlin.pserver.ml.optimization.sparkml_port;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.experimental.tuples.Tuple2;
@@ -80,7 +80,7 @@ public class GradientDescent {
 
         // if no data, return initial weights to avoid NaNs
         if (numExamples == 0) {
-            System.out.println("de.tuberlin.pserver.ml.optimization.GradientDescent.runMiniBatchSGD returning initial weights, no data found");
+            System.out.println("de.tuberlin.pserver.ml.optimization.sparkml_port.GradientDescent.runMiniBatchSGD returning initial weights, no data found");
             return new Tuple2<>(initialWeights, stochasticLossHistory);
         }
 

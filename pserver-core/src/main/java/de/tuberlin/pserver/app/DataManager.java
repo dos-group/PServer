@@ -1,29 +1,19 @@
 package de.tuberlin.pserver.app;
 
-
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.app.dht.BufferValue;
 import de.tuberlin.pserver.app.dht.DHT;
 import de.tuberlin.pserver.app.dht.Key;
 import de.tuberlin.pserver.app.dht.Value;
+import de.tuberlin.pserver.app.dht.valuetypes.DoubleBufferValue;
 import de.tuberlin.pserver.core.config.IConfig;
-import de.tuberlin.pserver.core.events.Event;
-import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.filesystem.FileDataIterator;
 import de.tuberlin.pserver.core.filesystem.FileSystemManager;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.math.experimental.types.matrices.DenseDoubleMatrix;
-import de.tuberlin.pserver.math.experimental.types.matrices.DenseMatrix;
-import de.tuberlin.pserver.math.experimental.types.matrices.Matrix;
-import de.tuberlin.pserver.math.experimental.types.vectors.Vector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public final class DataManager {
 
@@ -31,7 +21,7 @@ public final class DataManager {
     // Inner Classes.
     // ---------------------------------------------------
 
-    public interface MatrixMerger<T extends Matrix> {
+    public interface MatrixMerger<T> {
 
         public abstract void merge(final T a, final T b);
     }
@@ -93,34 +83,12 @@ public final class DataManager {
     // Public Methods.
     // ---------------------------------------------------
 
-    public IConfig getConfig() {
-        return config;
-    }
+    public IConfig getConfig() { return config; }
 
     // ---------------------------------------------------
 
     public <T> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
         return fileSystemManager.createFileIterator(filePath, recordType);
-    }
-
-    // ---------------------------------------------------
-
-    public void addDataEventListener(final DataEventType eventType, final IEventHandler handler) {
-        netManager.addEventListener(eventType.eventType, new IEventHandler() {
-            @Override
-            public void handleEvent(Event event) {
-                handler.handleEvent(event);
-            }
-        });
-    }
-
-    public void push(final int instanceID, final Matrix m) { push(instanceID, DataEventType.MATRIX_EVENT, m); }
-    public void push(final int instanceID, final Vector v) { push(instanceID, DataEventType.VECTOR_EVENT, v); }
-    public void push(final int instanceID, final DataEventType type, final Serializable data) {
-        Preconditions.checkArgument(instanceID != infraManager.getInstanceID());
-        final NetEvents.NetEvent event = new NetEvents.NetEvent(type.eventType);
-        event.setPayload(data);
-        netManager.sendEvent(infraManager.getMachine(instanceID), event);
     }
 
     // ---------------------------------------------------
@@ -138,15 +106,12 @@ public final class DataManager {
         return values;
     }
 
-    public final void globalPush(final String name, final BufferValue value) {
-        final Set<Key> keys = dht.getKey(name);
-        for (final Key k : keys)
-            dht.put(k, value);
-    }
-
-    public <T extends DenseMatrix> void mergeMatrix(final T localMtx, final MatrixMerger<T> merger) {
+    public <T extends DoubleBufferValue> void mergeMatrix(final T localMtx, final MatrixMerger<T> merger) {
         final Key k = localMtx.getKey();
-        final Value[] matrices = globalPull(k.name);
+        final List<Value> matrices = Arrays.asList(globalPull(k.name));
+        Collections.sort(matrices,
+                (Value o1, Value o2) -> ((Integer)o1.getValueMetadata()).compareTo(((Integer)o2.getValueMetadata()))
+        );
         for (final Value v : matrices) {
             final T remoteMtx = (T)v;
             if (!localMtx.getKey().internalUID.equals(remoteMtx.getKey().internalUID)) {
@@ -159,15 +124,16 @@ public final class DataManager {
 
     // ---------------------------------------------------
 
-    public DenseDoubleMatrix createLocalMatrix(final String name, final int rows, final int cols) {
+    public DoubleBufferValue createLocalMatrix(final String name, final int rows, final int cols) {
         Preconditions.checkNotNull(name);
         final Key key = createLocalKeyWithName(name);
-        final DenseDoubleMatrix m = new DenseDoubleMatrix(rows, cols, Matrix.BlockLayout.ROW_LAYOUT);
+        final DoubleBufferValue m = new DoubleBufferValue(rows, cols, false);
+        m.setValueMetadata(instanceID);
         dht.put(key, m);
         return m;
     }
 
-    public Matrix getLocalMatrix(final String name) {
+    public DoubleBufferValue getLocalMatrix(final String name) {
         Preconditions.checkNotNull(name);
         Key localKey = null;
         final Set<Key> keys = dht.getKey(name);
@@ -177,7 +143,7 @@ public final class DataManager {
                 break;
             }
         }
-        return (Matrix)dht.get(localKey)[0];
+        return (DoubleBufferValue)dht.get(localKey)[0];
     }
 
     // ---------------------------------------------------

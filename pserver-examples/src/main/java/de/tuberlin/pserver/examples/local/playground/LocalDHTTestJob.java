@@ -1,9 +1,9 @@
-package de.tuberlin.pserver.examples.local;
+package de.tuberlin.pserver.examples.local.playground;
 
 import de.tuberlin.pserver.app.PServerJob;
-import de.tuberlin.pserver.app.dht.BufferValue;
 import de.tuberlin.pserver.app.dht.DHT;
 import de.tuberlin.pserver.app.dht.Key;
+import de.tuberlin.pserver.app.dht.valuetypes.ByteBufferValue;
 import de.tuberlin.pserver.client.PServerClient;
 import de.tuberlin.pserver.client.PServerClientFactory;
 import de.tuberlin.pserver.core.config.IConfig;
@@ -50,7 +50,7 @@ public final class LocalDHTTestJob {
             final Random r = new Random();
             final UUID uid = UUID.fromString("31bf55a7-2195-4d11-8ebf-0d030032fede");
             if (ctx.instanceID == 0) {
-                ctx.dht.put(Key.newKey(uid, "test1", Key.DistributionMode.DISTRIBUTED), BufferValue.newValue(false, BufferValue.MAX_SIZE * 4));
+                ctx.dht.put(Key.newKey(uid, "test1", Key.DistributionMode.DISTRIBUTED), ByteBufferValue.newValue(false, ByteBufferValue.MAX_SIZE * 4));
             }
             final Key key = ctx.dht.getKey(uid);
             while (true) {
@@ -60,14 +60,14 @@ public final class LocalDHTTestJob {
                     segmentIDs[i] = r.nextInt((20480 * 4) - 1);
 
                 if (!detectDuplicates(segmentIDs)) {
-                    final BufferValue.Segment[] segments = DHT.getInstance().get(key, segmentIDs);
+                    final ByteBufferValue.Segment[] segments = DHT.getInstance().get(key, segmentIDs);
                     for (int i = 0; i < segmentIDs.length; ++i) {
                         if (segments[i] == null)
                             throw new IllegalStateException("segment == null => segmentID = " + segmentIDs[i]);
                     }
                     for (int i = 0; i < segmentIDs.length; ++i) {
                         final Buffer buffer = new Buffer(segments[i].data);
-                        final int randOffset = r.nextInt(BufferValue.DEFAULT_SEGMENT_SIZE - 10);
+                        final int randOffset = r.nextInt(ByteBufferValue.DEFAULT_SEGMENT_SIZE - 10);
                         buffer.putInt(randOffset, r.nextInt());
                     }
                     ctx.dht.put(key, segments);

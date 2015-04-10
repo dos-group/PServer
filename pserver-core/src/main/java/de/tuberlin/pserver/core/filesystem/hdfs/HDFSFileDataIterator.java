@@ -66,20 +66,30 @@ public class HDFSFileDataIterator implements FileDataIterator<Tuple> {
     public void initialize() {}
 
     @Override
-    public boolean hasNext() { return false; } // FIXME: ...implementation...
+    public void reset() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean hasNext() {
+        try {
+            if (inputFormat.reachedEnd()) {
+                inputFormat.close();
+                split = (FileInputSplit)inputSplitProvider.getNextInputSplit(machine);
+                if (split == null)
+                    return false;
+                inputFormat.open(split);
+            }
+            return true;
+        } catch(IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     @Override
     public Tuple next() {
         try {
             inputFormat.nextRecord(record);
-            if (inputFormat.reachedEnd()) {
-                inputFormat.close();
-                split = (FileInputSplit)inputSplitProvider.getNextInputSplit(machine);
-                if (split == null)
-                    return null;
-                inputFormat.open(split);
-                inputFormat.nextRecord(record);
-            }
             return record;
         } catch(IOException e) {
             throw new IllegalStateException(e);

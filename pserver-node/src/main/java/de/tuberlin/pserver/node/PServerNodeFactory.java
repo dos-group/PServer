@@ -133,7 +133,7 @@ public enum PServerNodeFactory {
                         : new HDFSFileSystemManagerClient(config, infraManager, netManager, rpcManager);
 
             case FILE_SYSTEM_LOCAL:
-                return new LocalFileSystemManager(infraManager);
+                return new LocalFileSystemManager(infraManager, netManager);
 
             default:
                 throw new IllegalStateException("No supported filesystem.");

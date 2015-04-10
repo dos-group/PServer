@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.math.experimental.types.matrices;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.app.dht.BufferValue;
+import de.tuberlin.pserver.app.dht.valuetypes.ByteBufferValue;
 import de.tuberlin.pserver.math.experimental.memory.TypedBuffer;
 import de.tuberlin.pserver.math.experimental.memory.Types;
 import de.tuberlin.pserver.math.experimental.types.tests.DenseVectorOld;
@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-public class DenseMatrix extends BufferValue implements Matrix {
+public class DenseMatrix extends ByteBufferValue implements Matrix {
 
     // ---------------------------------------------------
     // Fields.
