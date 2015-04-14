@@ -25,7 +25,7 @@ public final class LocalFileSystemTestJob {
         private FileDataIterator<CSVRecord> csvFileIterator;
 
         @Override
-        public void begin() {
+        public void prologue() {
             csvFileIterator = ctx.dataManager.createFileIterator("datasets/covtype.data", CSVRecord.class);
         }
 

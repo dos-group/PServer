@@ -22,9 +22,9 @@ public abstract class PServerJob {
 
     public PServerContext getJobContext() { return ctx; }
 
-    public void begin() {}
+    public void prologue() {}
 
     public abstract void compute();
 
-    public void end() {}
+    public void epilogue() {}
 }

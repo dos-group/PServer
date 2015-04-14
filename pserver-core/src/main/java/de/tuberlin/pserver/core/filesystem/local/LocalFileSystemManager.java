@@ -79,7 +79,7 @@ public final class LocalFileSystemManager implements FileSystemManager {
             throw new IllegalStateException(e);
         }
         netManager.removeEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler);
-        LOG.info("Input split are computed.");
+        LOG.info("Input splits are computed.");
     }
 
     @Override

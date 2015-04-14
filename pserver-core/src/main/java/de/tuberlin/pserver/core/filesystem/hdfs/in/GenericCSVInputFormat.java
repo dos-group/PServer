@@ -333,7 +333,7 @@ public abstract class GenericCSVInputFormat<OT> extends DelimitedInputFormat<OT>
             }
 
             if (i < limit) {
-                // end of the quoted field
+                // epilogue of the quoted field
                 i++; // the quote
 
                 // skip trailing whitespace characters
@@ -348,7 +348,7 @@ public abstract class GenericCSVInputFormat<OT> extends DelimitedInputFormat<OT>
 
                 return (i == limit ? limit : i+1);
             } else {
-                // exited due to line end without quote termination
+                // exited due to line epilogue without quote termination
                 return -1;
             }
         }

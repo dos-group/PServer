@@ -75,7 +75,7 @@ public class NonBlockingHashSet<E> extends AbstractSet<E> implements Serializabl
    * thread might see immutable flag not set yet, then mutate the Set after
    * the {@link #readOnly} call returns.  This call can be called concurrently
    * (and indeed until the operation completes, all calls on the Set from any
-   * thread either complete normally or end up calling {@link #readOnly}
+   * thread either complete normally or epilogue up calling {@link #readOnly}
    * internally).
    *
    * <p> This call is useful in debugging multi-threaded programs where the

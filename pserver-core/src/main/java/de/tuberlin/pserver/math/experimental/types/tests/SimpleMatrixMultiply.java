@@ -38,8 +38,8 @@ public class SimpleMatrixMultiply {
             }
         }
 
-        final long end = System.currentTimeMillis();
-        final long time = end - start;
+        final long epilogue = System.currentTimeMillis();
+        final long time = epilogue - start;
         System.out.println("elapsed time: " + time + "ms");
         // 592594ms
         */
@@ -76,8 +76,8 @@ public class SimpleMatrixMultiply {
             }
         }
 
-        final long end = System.currentTimeMillis();
-        final long time = end - start;
+        final long epilogue = System.currentTimeMillis();
+        final long time = epilogue - start;
         System.out.println("elapsed time: " + time + "ms");*/
     }
 }

@@ -202,7 +202,24 @@ public class Playground {
 
     }*/
 
-        {
+        int a = 0;
+
+        int b = 0;
+
+        int c = 2;
+
+        b += a += c;
+
+        b += a += c;
+
+
+        System.out.println(a);
+        System.out.println(b);
+        System.out.println(c);
+
+
+
+        /*{
             final LocalCSVInputFile fileSection = new LocalCSVInputFile("test.csv", "\n", ',');
             fileSection.computeLocalFileSection(4, 0);
             final FileDataIterator<CSVRecord> fileIterator = fileSection.iterator();
@@ -215,7 +232,7 @@ public class Playground {
                 strBuilder.deleteCharAt(strBuilder.length() - 1);
                 System.out.println(strBuilder.toString());
             }
-        }
+        }*/
 /*
         System.out.println("-------------------------------------------------------------------------");
 

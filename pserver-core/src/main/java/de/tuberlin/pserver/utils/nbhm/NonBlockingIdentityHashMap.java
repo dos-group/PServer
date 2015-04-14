@@ -494,7 +494,7 @@ public class NonBlockingIdentityHashMap<TypeK, TypeV>
       // Annoyingly this means we have to volatile-read before EACH key compare.
       // .
       // We also need a volatile-read between reading a newly inserted Value
-      // and returning the Value (so the user might end up reading the stale
+      // and returning the Value (so the user might epilogue up reading the stale
       // Value contents).  Same problem as with keys - and the one volatile
       // read covers both.
       final Object[] newkvs = chm._newkvs; // VOLATILE READ before key compare
@@ -691,7 +691,7 @@ public class NonBlockingIdentityHashMap<TypeK, TypeV>
     // These next 2 fields are used in the resizing heuristics, to judge when
     // it is time to resize or copy the table.  Slots is a count of used-up
     // key slots, and when it nears a large fraction of the table we probably
-    // end up reprobing too much.  Last-resize-milli is the time since the
+    // epilogue up reprobing too much.  Last-resize-milli is the time since the
     // last resize; if we are running back-to-back resizes without growing
     // (because there are only a few live keys but many slots full of dead
     // keys) then we need a larger table to cut down on the churn.
@@ -745,7 +745,7 @@ public class NonBlockingIdentityHashMap<TypeK, TypeV>
     // new table.  Note that if a 'get' call has reprobed too many times and
     // decided the table must be full, then always the estimate_sum must be
     // high and we must report the table is full.  If we do not, then we might
-    // end up deciding that the table is not full and inserting into the
+    // epilogue up deciding that the table is not full and inserting into the
     // current table, while a 'get' has decided the same key cannot be in this
     // table because of too many reprobes.  The invariant is:
     //   slots.estimate_sum >= max_reprobe_cnt >= reprobe_limit(len)
@@ -1046,7 +1046,7 @@ public class NonBlockingIdentityHashMap<TypeK, TypeV>
         oldval = val(oldkvs,idx);
 
       return copied_into_new;
-    } // end copy_slot
+    } // epilogue copy_slot
   } // End of CHM
 
 
@@ -1249,7 +1249,7 @@ public class NonBlockingIdentityHashMap<TypeK, TypeV>
       s.writeObject(K);         // Write the <TypeK,TypeV> pair
       s.writeObject(V);
     }
-    s.writeObject(null);        // Sentinel to indicate end-of-data
+    s.writeObject(null);        // Sentinel to indicate epilogue-of-data
     s.writeObject(null);
   }
 

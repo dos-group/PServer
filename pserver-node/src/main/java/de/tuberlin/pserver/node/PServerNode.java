@@ -113,14 +113,14 @@ public final class PServerNode extends EventDispatcher {
     private void executeLifecycle(final PServerJob job) {
         try {
 
-            job.begin();
+            job.prologue();
 
             if (fileSystemManager != null)
                 fileSystemManager.computeInputSplitsForRegisteredFiles();
 
             job.compute();
 
-            job.end();
+            job.epilogue();
 
             final NetEvents.NetEvent finishEvent = new NetEvents.NetEvent(PServerJobDescriptor.PSERVER_FINISH_JOB_EVENT);
             finishEvent.setPayload(job.getJobContext().jobDescriptor.jobUID);

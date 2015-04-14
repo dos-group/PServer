@@ -268,7 +268,7 @@ public abstract class DelimitedInputFormat<OT> extends FileInputFormat<OT> {
 
             // check why we dropped out
             if (i == this.delimiter.length) {
-                // line end
+                // line epilogue
                 count = this.readPos - startPos - this.delimiter.length;
 
                 // copy to byte array

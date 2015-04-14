@@ -6,6 +6,6 @@ public class GenerateLocalTestData {
 
     public static void main(final String[] args) {
 
-        DataGenerator.generateDatasetAndWriteToFile(900000, 15, 42, "datasets/data.csv");
+        DataGenerator.generateDatasetAndWriteToFile2(300000, 15, 42, "datasets/data.csv");
     }
 }

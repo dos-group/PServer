@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.app.dht.valuetypes;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.utils.UnsafeOp;
 
 public class DoubleBufferValue extends AbstractBufferValue{
 
@@ -33,13 +34,14 @@ public class DoubleBufferValue extends AbstractBufferValue{
 
     public DoubleBufferValue(final int rows,
                              final int cols,
-                             final boolean allocateMemory) {
+                             final boolean allocateMemory,
+                             final BlockLayout layout) {
 
         super(rows * cols * Double.BYTES, allocateMemory);
 
         this.rows   = rows;
         this.cols   = cols;
-        this.layout = BlockLayout.ROW_LAYOUT;
+        this.layout = Preconditions.checkNotNull(layout);
     }
 
     // ---------------------------------------------------
@@ -69,8 +71,9 @@ public class DoubleBufferValue extends AbstractBufferValue{
     @Override
     public void allocateMemory(final int instanceID) {
         Preconditions.checkState(data == null);
-        data = new double[Preconditions.checkNotNull(key).getPartitionDescriptor(instanceID).partitionSize / Double.BYTES];
-
+        final byte[] byteData = new byte[Preconditions.checkNotNull(key).getPartitionDescriptor(instanceID).partitionSize];
+        data = UnsafeOp.primitiveArrayTypeCast(byteData, byte[].class, double[].class);
+        //data = new double[Preconditions.checkNotNull(key).getPartitionDescriptor(instanceID).partitionSize / Double.BYTES];
     }
 
     @Override

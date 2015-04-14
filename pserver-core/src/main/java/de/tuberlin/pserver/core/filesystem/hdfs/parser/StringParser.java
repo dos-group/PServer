@@ -34,7 +34,7 @@ public class StringParser extends FieldParser<String> {
 			}
 			
 			if (i < limit) {
-				// end of the string
+				// epilogue of the string
 				this.result = new String(bytes, quoteStart, i-quoteStart);
 				
 				i++; // the quote
@@ -52,7 +52,7 @@ public class StringParser extends FieldParser<String> {
 				
 				return (i == limit ? limit : i+1);
 			} else {
-				// exited due to line end without quote termination
+				// exited due to line epilogue without quote termination
 				setErrorState(ParseErrorState.UNTERMINATED_QUOTED_STRING);
 				return -1;
 			}

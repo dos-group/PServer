@@ -53,7 +53,7 @@ public final class LocalAsyncSGDTestJob2 {
         @Override
         public void compute() {
             final long start = System.currentTimeMillis();
-            DoubleBufferValue m = ctx.dataManager.createLocalMatrix("model1", MTX_ROWS, MTX_COLS);
+            DoubleBufferValue m = ctx.dataManager.createLocalMatrix("model1", MTX_ROWS, MTX_COLS, DoubleBufferValue.BlockLayout.ROW_LAYOUT);
             for (int i = 0; i < 5000; ++i) {
                 computeGradient(m);
                 if (i % 1000 == 0)

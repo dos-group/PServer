@@ -2,7 +2,9 @@ package de.tuberlin.pserver.app.memmng;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.utils.IntervalTree;
+import org.apache.commons.lang.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,8 +12,10 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class MemoryManager {
@@ -20,11 +24,17 @@ public final class MemoryManager {
     // Constants.
     // ---------------------------------------------------
 
-    public static final long MEMORY_OBSERVER_TASK_PERIOD = 1000 * 60; // 60s.
+    /*
+    public static final long    DEFAULT_MEMORY_OBSERVER_TASK_PERIOD = 1000 * 60; // 60s.
 
-    public static final int DEFAULT_MEMORY_SEGMENT_SIZE = 1024 * 4; // 4K.
+    public static final long    DEFAULT_FRAGMENTATION_OBSERVER_TASK_PERIOD = 1000 * 60 * 5; // 60s.
 
-    public static final long SEGMENT_REQUEST_TIMEOUT = 1000 * 20; // 20s
+    public static final double  DEFAULT_CRITICAL_FRAGMENTATION_FACTOR = 0.4;
+
+    public static final int     DEFAULT_MEMORY_SEGMENT_SIZE = 1024 * 4; // 4K.
+
+    public static final long    DEFAULT_SEGMENT_REQUEST_TIMEOUT = 1000 * 20; // 20s
+    */
 
     // ---------------------------------------------------
     // Inner Classes.
@@ -140,7 +150,7 @@ public final class MemoryManager {
 
         // ---------------------------------------------------
 
-        public MemoryArena(final int numSegments) { this(numSegments, DEFAULT_MEMORY_SEGMENT_SIZE); }
+        public MemoryArena(final int numSegments) { this(numSegments, getMemoryManager().longLifeSegmentSize); }
         public MemoryArena(final int numSegments, final int segmentSize) {
             this.memory         = new byte[numSegments * segmentSize];
             this.segmentSize    = segmentSize;
@@ -154,13 +164,17 @@ public final class MemoryManager {
 
         // ---------------------------------------------------
 
+        public int getArenaSize() { return memory.length; }
+
         public int getSegmentSize() { return segmentSize; }
+
+        public List<MemorySegment> getSegments() { return Collections.unmodifiableList(segments); }
 
         public MemorySegment allocSegmentBlocking() {
             MemorySegment ms;
             do {
                 try {
-                    ms = freeList.poll(SEGMENT_REQUEST_TIMEOUT, TimeUnit.MILLISECONDS);
+                    ms = freeList.poll(getMemoryManager().segmentRequestTimeOut, TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e) {
                     LOG.warn("Segment Request Timeout.");
                     ms = null;
@@ -215,6 +229,17 @@ public final class MemoryManager {
             }
             ns.lock();
             return ns.token;
+        }
+
+        public void releaseLock(final int s, final int e) {
+            Preconditions.checkArgument(s >= 0 && e > s);
+            final IntervalTree.Interval in = new IntervalTree.Interval(s, e);
+            activeLocks.get(in);
+            final MemoryLockSection es = activeLocks.get(new IntervalTree.Interval(s, e));
+            synchronized (this) {
+                activeLocks.remove(in);
+            }
+            es.unlock();
         }
 
         public void releaseLock(final LockToken token) {
@@ -272,7 +297,9 @@ public final class MemoryManager {
 
     // ---------------------------------------------------
 
-    private static final class MemoryObjectPtr {
+    private static final class MemoryObjectPtr implements Comparable<MemoryObjectPtr> {
+
+        private final UUID uid;
 
         private final int offset;
 
@@ -282,7 +309,8 @@ public final class MemoryManager {
 
         // ---------------------------------------------------
 
-        public MemoryObjectPtr(final int offset, final int size, final List<MemorySegment> segments) {
+        public MemoryObjectPtr(final UUID uid, final int offset, final int size, final List<MemorySegment> segments) {
+            this.uid        = Preconditions.checkNotNull(uid);
             this.offset     = offset;
             this.size       = size;
             this.segments   = Preconditions.checkNotNull(segments);
@@ -290,22 +318,225 @@ public final class MemoryManager {
 
         // ---------------------------------------------------
 
-        public byte[] extractObject() { return null; } // TODO: ...implement...
+        public byte[] extractObject() { throw new UnsupportedOperationException(); } // TODO: ...implement...
+
+        // ---------------------------------------------------
+
+        public void lockObject() { throw new UnsupportedOperationException(); } // TODO: ...implement...
+
+        public void unlockObject() { throw new UnsupportedOperationException(); } // TODO: ...implement...
+
+        // ---------------------------------------------------
+
+        @Override
+        public int compareTo(MemoryObjectPtr o) {
+            return new Integer(offset).compareTo(o.offset);
+        }
     }
 
     // ---------------------------------------------------
 
-    private static final class LongLifeHeap {
+    public static final class LongLifeHeap {
+
+        private Map<UUID, MemoryObjectPtr> objects;
 
         private final MemoryArena arena;
 
-        private int currentBlockOffset;
+        // ---------------------------------------------------
+
+        private MemorySegment currentSegment;
+
+        private int currentSegmentOffset;
+
+        // ---------------------------------------------------
+
+        private final AtomicInteger fragmentationSize;
+
+        private final ReentrantLock defragmentationLock;
+
+        private final Condition defragmentationCondition;
+
+        private volatile boolean isDefragmenting;
+
+        // ---------------------------------------------------
 
         public LongLifeHeap(final int numSegments, final int segmentSize) {
             this.arena = new MemoryArena(numSegments, segmentSize);
-            this.currentBlockOffset = 0;
+            this.objects = new HashMap<>();
+            this.fragmentationSize = new AtomicInteger();
+            this.defragmentationLock = new ReentrantLock();
+            this.defragmentationCondition = defragmentationLock.newCondition();
+
+            if (getMemoryManager().longLifeUseDefragmentation)
+                scheduleFragmentationTask();
+
+            allocNewSegment();
         }
 
+        // ---------------------------------------------------
+
+        public MemoryObjectPtr getObjectPtr(final UUID uid) { return objects.get(Preconditions.checkNotNull(uid)); }
+
+        public void store(final UUID uid, final byte[] data) {
+            Preconditions.checkNotNull(uid);
+            Preconditions.checkNotNull(data);
+            defragmentationLock.lock();
+            try {
+                if (isDefragmenting) {
+                    defragmentationCondition.await();
+                }
+                final MemoryObjectPtr objPtr;
+                final List<MemorySegment> objSegments = new ArrayList<>();
+                synchronized (this) {
+                    if (!objects.containsKey(uid)) {
+                        objPtr = new MemoryObjectPtr(uid, currentSegmentOffset, data.length, objSegments);
+                        int firstSegmentSize = currentSegment.size - currentSegmentOffset;
+                        int fillOffset = 0;
+                        objSegments.add(currentSegment);
+                        if (data.length <= firstSegmentSize) {
+                            System.arraycopy(data, 0, currentSegment.buffer, currentSegmentOffset, data.length);
+                            currentSegmentOffset += data.length;
+                            if (data.length == firstSegmentSize)
+                                allocNewSegment();
+                            objects.put(objPtr.uid, objPtr);
+                        } else {
+                            System.arraycopy(data, 0, currentSegment.buffer, currentSegmentOffset, firstSegmentSize);
+                            fillOffset += firstSegmentSize;
+                            while (true) {
+                                allocNewSegment();
+                                objSegments.add(currentSegment);
+                                int copySize = data.length - fillOffset;
+                                if (copySize <= currentSegment.size) {
+                                    System.arraycopy(data, fillOffset, currentSegment.buffer, currentSegmentOffset, copySize);
+                                    if (copySize == 0)
+                                        allocNewSegment();
+                                    else
+                                        currentSegmentOffset = copySize;
+                                    break;
+                                } else {
+                                    System.arraycopy(data, fillOffset, currentSegment.buffer, currentSegmentOffset, currentSegment.size);
+                                    fillOffset += currentSegment.size;
+                                }
+                            }
+                            objects.put(objPtr.uid, objPtr);
+                        }
+                    } else {
+                        throw new UnsupportedOperationException(); // TODO
+                    }
+                }
+            } catch (InterruptedException ie) {
+                throw new IllegalStateException(ie);
+            } finally {
+                defragmentationLock.unlock();
+            }
+        }
+
+        public byte[] fetch(final UUID uid) {
+            Preconditions.checkNotNull(uid);
+            defragmentationLock.lock();
+            try {
+                if (isDefragmenting) {
+                    defragmentationCondition.await();
+                }
+                final MemoryObjectPtr objPtr = objects.get(uid);
+                if (objPtr == null)
+                    throw new IllegalStateException();
+                int fillOffset = 0;
+                final byte[] data = new byte[objPtr.size];
+                for (int i = 0; i < objPtr.segments.size(); ++i) {
+                    final MemorySegment ms = objPtr.segments.get(i);
+                    if (i == 0) {
+                        if (objPtr.segments.size() == 1)
+                            System.arraycopy(ms.buffer, objPtr.offset, data, fillOffset, objPtr.size);
+                        else {
+                            System.arraycopy(ms.buffer, objPtr.offset, data, fillOffset, ms.size - objPtr.offset);
+                            fillOffset += ms.size - objPtr.offset;
+                        }
+                    } else if (i == objPtr.segments.size() - 1) {
+                        System.arraycopy(ms.buffer, 0, data, fillOffset, data.length - fillOffset);
+                        fillOffset += ms.size;
+                        if (fillOffset != data.length)
+                            throw new IllegalStateException();
+                    } else {
+                        System.arraycopy(ms.buffer, 0, data, fillOffset, ms.size);
+                        fillOffset += ms.size;
+                    }
+                }
+                return data;
+            } catch (InterruptedException ie) {
+                throw new IllegalStateException(ie);
+            } finally {
+                defragmentationLock.unlock();
+            }
+        }
+
+        public void free(final UUID uid) {
+            Preconditions.checkNotNull(uid);
+            defragmentationLock.lock();
+            try {
+                if (isDefragmenting) {
+                    defragmentationCondition.await();
+                }
+                final MemoryObjectPtr objPtr = objects.get(uid);
+                if (objPtr == null)
+                    throw new IllegalStateException();
+                final int firstFragmentSize = objPtr.segments.get(0).size - objPtr.offset;
+                final int lastFragmentSize = (objPtr.size - firstFragmentSize) % arena.getSegmentSize();
+                fragmentationSize.addAndGet(firstFragmentSize + lastFragmentSize);
+                if (objPtr.segments.size() > 2) {
+                    for (int i = 1; i < objPtr.segments.size() - 1; ++i) {
+                        objPtr.segments.get(i).free();
+                    }
+                }
+            } catch (InterruptedException ie) {
+                throw new IllegalStateException(ie);
+            } finally {
+                defragmentationLock.unlock();
+            }
+        }
+
+        // ---------------------------------------------------
+
+        private void allocNewSegment() {
+            currentSegment = arena.allocSegmentBlocking();
+            currentSegmentOffset = 0;
+        }
+
+        private void scheduleFragmentationTask() {
+            new Timer(true).scheduleAtFixedRate(new TimerTask() {
+
+                @Override
+                public void run() {
+                    final double fragmentationFactor = fragmentationSize.get() / arena.getArenaSize();
+                    if (fragmentationFactor >= getMemoryManager().longLifeCriticalFragmentationFactor) {
+                        isDefragmenting = true;
+                        defragmentationLock.lock();
+                        try {
+                            defragmentHeap();
+                            fragmentationSize.set(0);
+                            defragmentationCondition.signal();
+                        } finally {
+                            defragmentationLock.unlock();
+                        }
+                    }
+                }
+
+            }, 0, getMemoryManager().longLifeFragmentationObserverPeriod);
+        }
+
+        private void defragmentHeap() {
+            /*final List<MemoryObjectPtr> orderedObjs = new ArrayList<>(objects.values());
+            Collections.sort(orderedObjs);
+            for (int i = 0; i < orderedObjs.size() - 1; ++i) {
+                final MemoryObjectPtr objPtr = orderedObjs.get(i);
+                int fillOffset = 0;
+                final int segmentNum = objPtr.size / arena.getSegmentSize();
+                final MemorySegment[] tmpSegments = MemoryManager.getMemoryManager().allocShortLifeBlocking(DEFAULT_MEMORY_SEGMENT_SIZE, segmentNum);
+                MemoryManager.getMemoryManager().freeShortLifeSegments(tmpSegments);
+            }*/
+            throw new NotImplementedException();
+            // TODO: Implement first fit decreasing algorithm for bin packing problem.
+        }
     }
 
     // ---------------------------------------------------
@@ -320,15 +551,35 @@ public final class MemoryManager {
 
     // ---------------------------------------------------
 
+    private final IConfig config;
+
+    public final double longLifeHeapFraction;
+
+    public final int longLifeSegmentSize;
+
+    public final boolean longLifeUseDefragmentation;
+
+    public final long longLifeFragmentationObserverPeriod;
+
+    public final double longLifeCriticalFragmentationFactor;
+
+    // Short Life Heap Configuration.
+    public final double shortLifeHeapFraction;
+
+    // Global Settings.
+    public final long memoryObserverPeriod;
+
+    public final long segmentRequestTimeOut;
+
+    // ---------------------------------------------------
+
     private final long totalMemory;
 
     private final AtomicLong freeMemory;
 
     private final AtomicLong usedMemory;
 
-    private final double longLifeHeapFraction;
-
-    private final double shortLifeHeapFraction;
+    // ---------------------------------------------------
 
     private final ShortLifeHeap shortLifeHeap;
 
@@ -338,20 +589,26 @@ public final class MemoryManager {
     // Constructor.
     // ---------------------------------------------------
 
-    public MemoryManager(final double longLifeHeapFraction,
-                         final double shortLifeHeapFraction,
-                         final int longLifeSegmentSize) {
+    public MemoryManager(final IConfig config) {
 
         synchronized (globalMemoryManagerMutex) {
             if (!globalMemoryManagerInstance.compareAndSet(null, this))
                 throw new IllegalStateException();
         }
 
+        this.config = config;
+        this.longLifeHeapFraction = config.getDouble("mem.longLifeHeapFraction");
+        this.longLifeSegmentSize = config.getInt("mem.longLifeSegmentSize");
+        this.longLifeUseDefragmentation = config.getBoolean("mem.longLifeUseDefragmentation");
+        this.longLifeFragmentationObserverPeriod = config.getLong("mem.longLifeFragmentationObserverPeriod");
+        this.longLifeCriticalFragmentationFactor = config.getDouble("mem.longLifeCriticalFragmentationFactor");
+        this.shortLifeHeapFraction = config.getDouble("mem.shortLifeHeapFraction");
+        this.memoryObserverPeriod = config.getLong("mem.longLifeFragmentationObserverPeriod");
+        this.segmentRequestTimeOut = config.getLong("mem.segmentRequestTimeOut");
+
         this.totalMemory = Runtime.getRuntime().totalMemory();
         this.freeMemory = new AtomicLong();
         this.usedMemory = new AtomicLong();
-        this.longLifeHeapFraction = longLifeHeapFraction;
-        this.shortLifeHeapFraction = shortLifeHeapFraction;
         final int numLongLifeSegments = (int) (totalMemory / longLifeSegmentSize);
         this.longLifeArena = new MemoryArena(numLongLifeSegments, longLifeSegmentSize);
         // TODO: make dependent from <code>shortLifeHeapFraction</code>
@@ -359,7 +616,7 @@ public final class MemoryManager {
         scheduleMemoryUsageObserverTask();
     }
 
-    public static MemoryManager getMemoryManagerInstance() {
+    public static MemoryManager getMemoryManager() {
         return Preconditions.checkNotNull(globalMemoryManagerInstance.get());
     }
 
@@ -383,6 +640,19 @@ public final class MemoryManager {
 
     public MemorySegment allocShortLifeBlocking(final int size) { return shortLifeHeap.allocBlocking(size); }
 
+    public MemorySegment[] allocShortLifeBlocking(final int size, final int num) {
+        final MemorySegment[] segments = new MemorySegment[num];
+        for (int i = 0; i < num; ++i)
+            segments[i] = shortLifeHeap.allocBlocking(size);
+        return segments;
+    }
+
+    public void freeShortLifeSegments(final MemorySegment[] segments) {
+        Preconditions.checkNotNull(segments);
+        for (final MemorySegment ms : segments)
+            ms.free();
+    }
+
     // ---------------------------------------------------
 
     public MemorySegment allocLongLifeSegment() { return longLifeArena.allocSegment(); }
@@ -400,6 +670,6 @@ public final class MemoryManager {
                 usedMemory.set(totalMemory - freeMemory.get());
             }
 
-        }, 0, MEMORY_OBSERVER_TASK_PERIOD);
+        }, 0, memoryObserverPeriod);
     }
 }

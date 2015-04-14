@@ -54,7 +54,7 @@ public final class LocalAsyncSGDTestJob {
         // ---------------------------------------------------
 
         @Override
-        public void begin() {
+        public void prologue() {
             csvFileIterator = ctx.dataManager.createFileIterator("datasets/data.csv", CSVRecord.class);
             regressor = new GradientDescent.SGDRegressor();
             regressor.setLossFunction(new GradientDescent.SquaredLossFunction());
@@ -65,7 +65,7 @@ public final class LocalAsyncSGDTestJob {
         @Override
         public void compute() {
             final long start = System.currentTimeMillis();
-            DoubleBufferValue m = ctx.dataManager.createLocalMatrix("model1", MTX_ROWS, MTX_COLS);
+            DoubleBufferValue m = ctx.dataManager.createLocalMatrix("model1", MTX_ROWS, MTX_COLS, DoubleBufferValue.BlockLayout.ROW_LAYOUT);
             regressor.setWeightsUpdater((epoch, weights) -> {
                 if (epoch % 10 == 0)
                     ctx.dataManager.mergeMatrix(m, merger);

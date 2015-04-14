@@ -124,10 +124,14 @@ public final class DataManager {
 
     // ---------------------------------------------------
 
-    public DoubleBufferValue createLocalMatrix(final String name, final int rows, final int cols) {
+    public DoubleBufferValue createLocalMatrix(final String name,
+                                               final int rows,
+                                               final int cols,
+                                               final DoubleBufferValue.BlockLayout layout) {
+
         Preconditions.checkNotNull(name);
         final Key key = createLocalKeyWithName(name);
-        final DoubleBufferValue m = new DoubleBufferValue(rows, cols, false);
+        final DoubleBufferValue m = new DoubleBufferValue(rows, cols, false, layout);
         m.setValueMetadata(instanceID);
         dht.put(key, m);
         return m;

@@ -2,7 +2,9 @@ package de.tuberlin.pserver.ml.optimization.naive.tests;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.filesystem.FileDataIterator;
+import de.tuberlin.pserver.ml.optimization.naive.DataGenerator;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class TestGradientDescent {
 
@@ -150,27 +152,34 @@ public class TestGradientDescent {
 
     public static void main(final String[] args) {
 
-        /*final int numExamples = 1000;
+        final int numExamples = 1000;
 
         final int labelIndex, numFeatures = labelIndex = 15;
-
-        //final int labelIndex = 4;
 
         final SGDRegressor regressor = new SGDRegressor();
 
         regressor.setLossFunction(new SquaredLossFunction());
 
-        regressor.setLearningRate(0.005);
+        regressor.setLearningRate(0.00005);
 
-        regressor.setNumIterations(150000);
+        regressor.setNumIterations(5500000);
 
-        final double[][] trainingData = DataGenerator.generateDataset(numExamples, numFeatures, 42);
+        final Pair<double[][], double[]> res = DataGenerator.generateDataset2(numExamples, numFeatures, 42);
+
+        final double[][] trainingData = res.getLeft();
+
+        final double[] params = res.getRight();
 
         final double[] weights = regressor.fit(new double[numFeatures + 1], trainingData, labelIndex);
 
-        for (double weight : weights)
-            System.out.print(weight + " ");
+        for (int i = 1; i < weights.length; ++i)
+            System.out.print(weights[i] + "|");
 
-        DataGenerator.generateDatasetAndWriteToFile(900000, 15, 42, "datasets/data.csv");*/
+        System.out.println();
+
+        for (double param : params)
+            System.out.print(param + "|");
+
+        //DataGenerator.generateDatasetAndWriteToFile2(100000, 15, 42, "datasets/data.csv");
     }
 }

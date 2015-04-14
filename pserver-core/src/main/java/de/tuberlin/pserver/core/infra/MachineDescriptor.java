@@ -35,10 +35,10 @@ public final class MachineDescriptor implements Serializable, Comparable<Machine
                              final String hostname) {
 
         Preconditions.checkArgument(port > 1024 && port < 65535);
-        this.machineID = Preconditions.checkNotNull(machineID);
-        this.address = Preconditions.checkNotNull(address);
-        this.port = port;
-        this.hostname = Preconditions.checkNotNull(hostname);
+        this.machineID  = Preconditions.checkNotNull(machineID);
+        this.address    = Preconditions.checkNotNull(address);
+        this.port       = port;
+        this.hostname   = Preconditions.checkNotNull(hostname);
     }
 
     // ---------------------------------------------------
@@ -69,16 +69,10 @@ public final class MachineDescriptor implements Serializable, Comparable<Machine
     }
 
     @Override
-    public String toString() {
-        return toJson();
-    }
+    public String toString() { return toJson(); }
 
     @Override
-    public int compareTo(final MachineDescriptor o) {
-        return machineID.compareTo(o.machineID);
-    }
+    public int compareTo(final MachineDescriptor o) { return machineID.compareTo(o.machineID); }
 
-    public String toJson() {
-        return gson.toJson(this);
-    }
+    public String toJson() { return gson.toJson(this); }
 }
