@@ -101,6 +101,11 @@
                 <artifactId>pserver-examples</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-ml</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <!-- SYSTEM DEPENDENCIES -->
             <dependency>
@@ -233,6 +238,7 @@
         <module>pserver-client</module>
         <module>pserver-node</module>
         <module>pserver-examples</module>
+        <module>pserver-dist</module>
     </modules>
 
 </project>
