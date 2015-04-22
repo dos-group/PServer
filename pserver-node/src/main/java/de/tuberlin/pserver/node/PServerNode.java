@@ -2,10 +2,10 @@ package de.tuberlin.pserver.node;
 
 import de.tuberlin.pserver.app.*;
 import de.tuberlin.pserver.app.dht.DHT;
+import de.tuberlin.pserver.app.filesystem.FileSystemManager;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
 import de.tuberlin.pserver.core.events.IEventHandler;
-import de.tuberlin.pserver.core.filesystem.FileSystemManager;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
@@ -13,7 +13,9 @@ import de.tuberlin.pserver.core.net.NetManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -100,10 +102,11 @@ public final class PServerNode extends EventDispatcher {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void shutdown() {
-        netManager.shutdown();
-        infraManager.shutdown();
-        shutdownEventDispatcher();
+    @Override
+    public void deactivate() {
+        netManager.deactivate();
+        infraManager.deactivate();
+        super.deactivate();
     }
 
     // ---------------------------------------------------
@@ -113,14 +116,46 @@ public final class PServerNode extends EventDispatcher {
     private void executeLifecycle(final PServerJob job) {
         try {
 
-            job.prologue();
+            {
+                LOG.info("Enter " + job.getJobContext().jobDescriptor.simpleClassName + " prologue phase.");
 
-            if (fileSystemManager != null)
-                fileSystemManager.computeInputSplitsForRegisteredFiles();
+                final long start = System.currentTimeMillis();
 
-            job.compute();
+                job.prologue();
 
-            job.epilogue();
+                dataManager.postProloguePhase();
+
+                final long end = System.currentTimeMillis();
+
+                LOG.info("Leave " + job.getJobContext().jobDescriptor.simpleClassName
+                        + " prologue phase [duration: " + (end - start) + " ms].");
+            }
+
+            {
+                LOG.info("Enter " + job.getJobContext().jobDescriptor.simpleClassName + " computation phase.");
+
+                final long start = System.currentTimeMillis();
+
+                job.compute();
+
+                final long end = System.currentTimeMillis();
+
+                LOG.info("Leave " + job.getJobContext().jobDescriptor.simpleClassName +
+                        " computation phase [duration: " + (end - start) + " ms].");
+            }
+
+            {
+                LOG.info("Enter " + job.getJobContext().jobDescriptor.simpleClassName + " epilogue phase.");
+
+                final long start = System.currentTimeMillis();
+
+                job.epilogue();
+
+                final long end = System.currentTimeMillis();
+
+                LOG.info("Leave " + job.getJobContext().jobDescriptor.simpleClassName
+                        + " epilogue phase [duration: " + (end - start) + " ms].");
+            }
 
             final NetEvents.NetEvent finishEvent = new NetEvents.NetEvent(PServerJobDescriptor.PSERVER_FINISH_JOB_EVENT);
             finishEvent.setPayload(job.getJobContext().jobDescriptor.jobUID);

@@ -1,4 +1,5 @@
 #!/bin/sh
+
 USER="tobias.herb"
 URL="cit.tu-berlin.de"
 
@@ -94,7 +95,7 @@ SSHEND
 
 		ssh -t -t "$USER@$WALLYMASTER" << SSHEND
 cd $PSERVER_PATH/
-mvn clean install
+mvn -X clean install
 exit
 SSHEND
 
@@ -102,6 +103,7 @@ SSHEND
 			ADDRESS="wally`printf "%03d" $i`.$URL"
 
 			ssh -t -t "$USER@$ADDRESS" << SSHEND
+
 mkdir -p $PSERVER_DATA_PATH/
 mkdir -p $PSERVER_DATA_PATH/logs
 mkdir -p $PSERVER_DATA_PATH/data
@@ -138,12 +140,12 @@ SSHEND
 	;;
 	# Start
 	start)
-		echo "Start TaskManagers..."
+		echo "Start PServer Workers..."
 		for i in $(seq $2 $3); do
 			ADDRESS="wally`printf "%03d" $i`.$URL"
 			printf "Start TaskManager on $ADDRESS ... "
 
-			# Start Zookeeper	
+			# Start Zookeeper
 			if [ $i -lt $(($2 + $ZOOKEEPERS)) ]; then
 				echo "START ZOOKEEPER"
 				ssh -t -t "$USER@$ADDRESS" << SSHEND
@@ -151,12 +153,12 @@ sh $ZOOKEEPER_PATH/bin/zkServer.sh start
 exit
 SSHEND
 			fi	
-
+#-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=9011
 			# Start PServer
 #			if [ $i -eq $2 ]; then
 				ssh -t -t "$USER@$ADDRESS" << SSHEND
 cd pserver/pserver-node/
-export MAVEN_OPTS="-Xms4G -Xmx8G -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=9011"
+export MAVEN_OPTS="-Xms4G -Xmx8G"
 nohup mvn exec:java -Dexec.mainClass="de.tuberlin.pserver.node.PServerMain" -Dexec.args="$ZOOKEEPER_SERVERS3 10000 11111 $PSERVER_DATA_PATH/logs" > $PSERVER_DATA_PATH/logs/log 2>&1 &
 echo \$! > $PSERVER_DATA_PATH/data/wm_pid
 exit

@@ -3,8 +3,6 @@ package de.tuberlin.pserver.node;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.type.FileArgumentType;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
-import net.sourceforge.argparse4j.inf.ArgumentParserException;
-import net.sourceforge.argparse4j.internal.HelpScreenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +32,6 @@ public final class PServerMain {
                 .metavar("PATH")
                 .help("config folder");
         //@formatter:on
-
         return parser;
     }
 
@@ -44,16 +41,16 @@ public final class PServerMain {
 
     public static void main(final String[] args) {
         // construct base argument parser
-        ArgumentParser parser = getArgumentParser();
+        /*ArgumentParser parser = getArgumentParser();
         try {
             // parse the arguments and store them as system properties
             parser.parseArgs(args).getAttrs().entrySet().stream()
                     .filter(e -> e.getValue() != null)
-                    .forEach(e -> System.setProperty(e.getKey(), e.getValue().toString()));
+                    .forEach(e -> System.setProperty(e.getKey(), e.getValue().toString()));*/
 
             PServerNodeFactory.createParameterServerNode();
 
-        } catch (HelpScreenException e) {
+        /*} catch (HelpScreenException e) {
             parser.handleError(e);
         } catch (ArgumentParserException e) {
             parser.handleError(e);
@@ -62,6 +59,6 @@ public final class PServerMain {
             System.err.println(String.format("Unexpected error: %s", e));
             e.printStackTrace();
             System.exit(1);
-        }
+        }*/
     }
 }

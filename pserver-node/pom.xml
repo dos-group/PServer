@@ -33,7 +33,7 @@
     <!-- MAVEN BUILD. -->
     <!-- ================================= -->
 
-    <!--build>
+    <build>
         <plugins>
 
             <plugin>
@@ -43,13 +43,13 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.aura.runtime.server.WorkloadManagerServer</mainClass>
+                            <mainClass>de.tuberlin.pserver.node.PServerMain</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
             </plugin>
 
         </plugins>
-    </build-->
+    </build>
 
 </project>

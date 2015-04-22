@@ -1,8 +1,6 @@
 package de.tuberlin.pserver.app.memmng;
 
 
-import java.util.UUID;
-
 public class MemoryManagerTest {
 
     // Disallow instantiation.
@@ -12,12 +10,12 @@ public class MemoryManagerTest {
 
         // Test Long Life Heap...
 
-        final MemoryManager.LongLifeHeap llh = new MemoryManager.LongLifeHeap(32, 4096);
+        /*final MemoryManager.LongLifeHeap llh = new MemoryManager.LongLifeHeap(32, 4096);
 
         final UUID obj1UID = UUID.randomUUID();
 
         final byte[] obj1 = new byte[2048];
 
-        llh.store(obj1UID, obj1);
+        llh.store(obj1UID, obj1);*/
     }
 }

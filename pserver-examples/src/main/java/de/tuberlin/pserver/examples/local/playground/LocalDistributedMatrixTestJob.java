@@ -2,15 +2,9 @@ package de.tuberlin.pserver.examples.local.playground;
 
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.dht.Key;
-import de.tuberlin.pserver.client.PServerClient;
-import de.tuberlin.pserver.client.PServerClientFactory;
-import de.tuberlin.pserver.core.config.IConfig;
-import de.tuberlin.pserver.core.config.IConfigFactory;
-import de.tuberlin.pserver.core.infra.ClusterSimulator;
+import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.math.experimental.memory.Types;
 import de.tuberlin.pserver.math.experimental.types.matrices.DistributedDenseMatrix;
-import de.tuberlin.pserver.node.PServerMain;
-import org.apache.log4j.ConsoleAppender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,19 +48,8 @@ public final class LocalDistributedMatrixTestJob {
     // ---------------------------------------------------
 
     public static void main(final String[] args) {
-        org.apache.log4j.Logger.getRootLogger().addAppender(new ConsoleAppender());
-
-        final ClusterSimulator simulator = new ClusterSimulator(
-                IConfigFactory.load(IConfig.Type.PSERVER_SIMULATION),
-                PServerMain.class
-        );
-
-        final PServerClient client = PServerClientFactory.createPServerClient();
-
-        client.execute(DistributedMatrixTestJob.class);
-
-        client.shutdown();
-
-        simulator.shutdown();
+        PServerExecutor.LOCAL
+                .run(DistributedMatrixTestJob.class)
+                .done();
     }
 }

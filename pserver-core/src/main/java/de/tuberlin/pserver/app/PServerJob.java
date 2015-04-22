@@ -14,11 +14,16 @@ public abstract class PServerJob {
 
     protected PServerContext ctx;
 
+    protected DataManager dataManager;
+
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    public void injectContext(final PServerContext ctx) { this.ctx = Preconditions.checkNotNull(ctx); }
+    public void injectContext(final PServerContext ctx) {
+        this.ctx = Preconditions.checkNotNull(ctx);
+        this.dataManager = ctx.dataManager;
+    }
 
     public PServerContext getJobContext() { return ctx; }
 

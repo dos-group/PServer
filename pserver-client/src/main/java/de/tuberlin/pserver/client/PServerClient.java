@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.client;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.PServerJobDescriptor;
 import de.tuberlin.pserver.app.UserCodeManager;
 import de.tuberlin.pserver.core.config.IConfig;
@@ -15,7 +16,10 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
 public final class PServerClient extends EventDispatcher {
@@ -81,12 +85,12 @@ public final class PServerClient extends EventDispatcher {
 
     public IConfig getConfig() { return config; }
 
-    public void execute(final Class<?> algorithmClass) {
-        Preconditions.checkNotNull(algorithmClass);
+    public void execute(final Class<? extends PServerJob> jobClass) {
+        Preconditions.checkNotNull(jobClass);
 
         final long start = System.nanoTime();
 
-        final Triple<Class<?>, List<String>, byte[]> classData = userCodeManager.extractClass(algorithmClass);
+        final Triple<Class<?>, List<String>, byte[]> classData = userCodeManager.extractClass(jobClass);
 
         final PServerJobDescriptor jobDescriptor = new PServerJobDescriptor(
                 machine,
@@ -99,6 +103,8 @@ public final class PServerClient extends EventDispatcher {
 
         final CountDownLatch jobLatch = new CountDownLatch(pServerWorkers.size());
         activeJobs.put(jobDescriptor.jobUID, jobLatch);
+
+        LOG.info("Submit Job '" + jobDescriptor.simpleClassName + "' to worker nodes.");
 
         for (final MachineDescriptor md : pServerWorkers) {
             final NetEvents.NetEvent event = new NetEvents.NetEvent(PServerJobDescriptor.PSERVER_SUBMIT_JOB_EVENT);
@@ -117,9 +123,10 @@ public final class PServerClient extends EventDispatcher {
                 + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms.");
     }
 
-    public void shutdown() {
-        netManager.shutdown();
-        infraManager.shutdown();
-        shutdownEventDispatcher();
+    @Override
+    public void deactivate() {
+        netManager.deactivate();
+        infraManager.deactivate();
+        super.deactivate();
     }
 }

@@ -57,10 +57,6 @@ public final class InfrastructureManager extends EventDispatcher {
         LOG.info("Started InfrastructureManager at " + machine);
     }
 
-    public void shutdown() {
-        shutdownEventDispatcher();
-    }
-
     public Map<UUID, MachineDescriptor> getActivePeers() { return Collections.unmodifiableMap(peers); }
 
     public MachineDescriptor getMachine() { return Preconditions.checkNotNull(machine); }
@@ -72,6 +68,9 @@ public final class InfrastructureManager extends EventDispatcher {
     public int getMachineIndex(final MachineDescriptor machine) { return machines.indexOf(Preconditions.checkNotNull(machine)); }
 
     public MachineDescriptor getMachine(final int machineIndex) { return machines.get(machineIndex); }
+
+    @Override
+    public void deactivate() { super.deactivate(); }
 
     // ---------------------------------------------------
     // Private Methods.

@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.core.infra;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.core.common.Deactivatable;
 import de.tuberlin.pserver.core.config.IConfig;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.server.NIOServerCnxnFactory;
@@ -15,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public final class ClusterSimulator {
+public final class ClusterSimulator implements Deactivatable {
 
     // ---------------------------------------------------
     // Constants.
@@ -105,7 +106,8 @@ public final class ClusterSimulator {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void shutdown() {
+    @Override
+    public void deactivate() {
         peList.forEach(ClusterSimulator.ProcessExecutor::destroy);
         this.zookeeperCNXNFactory.closeAll();
         this.zookeeperServer.shutdown();

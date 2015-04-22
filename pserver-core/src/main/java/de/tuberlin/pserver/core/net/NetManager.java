@@ -165,7 +165,8 @@ public final class NetManager extends EventDispatcher {
         }
     }
 
-    public void shutdown() {
+    @Override
+    public void deactivate() {
         for (final UUID machineID : peers.keySet())
             disconnect(machineID);
         peers.clear();
@@ -174,7 +175,7 @@ public final class NetManager extends EventDispatcher {
         } catch (InterruptedException e) {
             LOG.error(e.getLocalizedMessage());
         }
-        shutdownEventDispatcher();
+        super.deactivate();
     }
 
     // ---------------------------------------------------

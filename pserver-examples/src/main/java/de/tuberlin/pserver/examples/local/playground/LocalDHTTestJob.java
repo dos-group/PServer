@@ -4,14 +4,8 @@ import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.dht.DHT;
 import de.tuberlin.pserver.app.dht.Key;
 import de.tuberlin.pserver.app.dht.valuetypes.ByteBufferValue;
-import de.tuberlin.pserver.client.PServerClient;
-import de.tuberlin.pserver.client.PServerClientFactory;
-import de.tuberlin.pserver.core.config.IConfig;
-import de.tuberlin.pserver.core.config.IConfigFactory;
-import de.tuberlin.pserver.core.infra.ClusterSimulator;
+import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.math.experimental.memory.Buffer;
-import de.tuberlin.pserver.node.PServerMain;
-import org.apache.log4j.ConsoleAppender;
 
 import java.util.Random;
 import java.util.UUID;
@@ -81,21 +75,8 @@ public final class LocalDHTTestJob {
     // ---------------------------------------------------
 
     public static void main(final String[] args) {
-        org.apache.log4j.Logger.getRootLogger().addAppender(new ConsoleAppender());
-
-        final ClusterSimulator simulator = new ClusterSimulator(
-                IConfigFactory.load(IConfig.Type.PSERVER_SIMULATION),
-                PServerMain.class
-        );
-
-        PServerClientFactory.createPServerClient().execute(DHTTestJob.class);
-
-        final PServerClient client = PServerClientFactory.createPServerClient();
-
-        client.execute(DHTTestJob.class);
-
-        client.shutdown();
-
-        simulator.shutdown();
+        PServerExecutor.LOCAL
+                .run(DHTTestJob.class)
+                .done();
     }
 }

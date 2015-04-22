@@ -2,6 +2,8 @@ package de.tuberlin.pserver.app.dht.valuetypes;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.dht.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 
@@ -41,6 +43,8 @@ public abstract class AbstractBufferValue extends Value {
     // Fields.
     // ---------------------------------------------------
 
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractBufferValue.class);
+
     private static final long serialVersionUID = -1;
 
     protected final boolean allocateMemory;
@@ -55,7 +59,7 @@ public abstract class AbstractBufferValue extends Value {
                                final boolean allocateMemory) {
 
         Preconditions.checkArgument(partitionSize > 0);
-        this.partitionSize = partitionSize;
+        this.partitionSize  = partitionSize;
         this.allocateMemory = allocateMemory;
     }
 
