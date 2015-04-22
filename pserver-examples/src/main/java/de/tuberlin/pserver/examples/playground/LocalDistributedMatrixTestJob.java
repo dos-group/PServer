@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.examples.local.playground;
+package de.tuberlin.pserver.examples.playground;
 
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.dht.Key;

@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.examples.local.playground;
+package de.tuberlin.pserver.examples.playground;
 
 public class Playground {
 

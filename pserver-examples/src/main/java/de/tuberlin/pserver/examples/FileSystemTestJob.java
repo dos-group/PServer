@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.examples.local;
+package de.tuberlin.pserver.examples;
 
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.types.DMatrix;

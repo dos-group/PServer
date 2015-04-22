@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.examples.local;
+package de.tuberlin.pserver.examples;
 
 import de.tuberlin.pserver.ml.generators.DataGenerator;
 
