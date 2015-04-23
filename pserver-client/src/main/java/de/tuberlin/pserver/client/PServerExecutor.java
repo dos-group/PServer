@@ -7,6 +7,8 @@ import de.tuberlin.pserver.core.config.IConfigFactory;
 import de.tuberlin.pserver.core.infra.ClusterSimulator;
 import de.tuberlin.pserver.node.PServerMain;
 import org.apache.log4j.ConsoleAppender;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public enum PServerExecutor {
     LOCAL(true),
@@ -17,9 +19,11 @@ public enum PServerExecutor {
     // Fields.
     // ---------------------------------------------------
 
+    private static final Logger LOG = LoggerFactory.getLogger(PServerExecutor.class);
+
     private final ClusterSimulator simulator;
 
-    private final PServerClient client;
+    private PServerClient client;
 
     // ---------------------------------------------------
     // Constructors.
@@ -36,8 +40,6 @@ public enum PServerExecutor {
             );
         } else
             simulator = null;
-
-        client = PServerClientFactory.createPServerClient();
     }
 
     // ---------------------------------------------------
@@ -45,17 +47,15 @@ public enum PServerExecutor {
     // ---------------------------------------------------
 
     public PServerExecutor run(final Class<? extends PServerJob> jobClass) {
-        Preconditions.checkState(client != null);
+        client = PServerClientFactory.createPServerClient();
         client.execute(Preconditions.checkNotNull(jobClass));
         return this;
     }
 
     public void done() {
-        if (client != null)
-            client.deactivate();
-        else
-            throw new IllegalStateException();
-        if (simulator != null)
+        client.deactivate();
+        if (simulator != null) {
             simulator.deactivate();
+        }
     }
 }

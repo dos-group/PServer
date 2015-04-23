@@ -70,13 +70,9 @@ public enum PServerNodeFactory {
         this.machine            = configureMachine();
         this.memoryManager      = new MemoryManager(config);
         this.infraManager       = new InfrastructureManager(machine, config);
-        //LOG.info("START INFRA-MANAGER");
         this.netManager         = new NetManager(machine, infraManager, 16);
-        //LOG.info("START NET-MANAGER");
         this.userCodeManager    = new UserCodeManager(this.getClass().getClassLoader(), false);
-        //LOG.info("START USERCODE-MANAGER");
         this.rpcManager         = new RPCManager(netManager);
-        //LOG.info("START RPC-MANAGER");
 
         infraManager.addEventListener(ZookeeperClient.IM_EVENT_NODE_ADDED, event -> {
             if (event.getPayload() instanceof MachineDescriptor) {
@@ -93,11 +89,8 @@ public enum PServerNodeFactory {
         try { Thread.sleep(2000); } catch (Exception e) { throw new IllegalStateException(); }
 
         this.fileSystemManager = createFileSystem(infraManager.getInstanceID());
-        //LOG.info("START FILESYSTEM-MANAGER");
         this.dht = new DHT(this.config, infraManager, netManager);
-        //LOG.info("START DHT");
         this.dataManager = new DataManager(this.config, infraManager, netManager, fileSystemManager, dht);
-        //LOG.info("START DATAMANAGER");
 
         LOG.info(infraManager.getMachine()
                 + " | " + infraManager.getInstanceID()

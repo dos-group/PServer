@@ -72,10 +72,11 @@ public final class PServerClient extends EventDispatcher {
         public void handleEvent(final Event e) {
             final UUID jobUID = (UUID) e.getPayload();
             final CountDownLatch jobLatch = activeJobs.get(jobUID);
-            if (jobLatch != null)
+            if (jobLatch != null) {
                 jobLatch.countDown();
-            else
+            } else {
                 throw new IllegalStateException();
+            }
         }
     }
 
