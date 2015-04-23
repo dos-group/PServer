@@ -15,13 +15,13 @@ public final class FileSystemTestJob extends PServerJob {
 
     @Override
     public void prologue() {
-        dataManager.loadDMatrix("datasets/data1.csv");
+        dataManager.loadDMatrix("datasets/demo_dataset.csv");
     }
 
     @Override
     public void compute() {
 
-        final DMatrix data  = dataManager.getLocalMatrix("data1.csv");
+        final DMatrix data  = dataManager.getLocalMatrix("datasets/demo_dataset.csv");
 
         final DMatrix.RowIterator iter = data.rowIterator();
 

@@ -19,6 +19,8 @@ public interface Compressor extends Serializable {
 
     public abstract byte[] decompress(final byte[] data, final int decompressedLength);
 
+    public abstract byte[] decompress(final byte[] src, final byte[] dst);
+
     // ---------------------------------------------------
 
     public enum CompressionType {
@@ -53,6 +55,7 @@ public interface Compressor extends Serializable {
         @Override  public byte[] compress(final byte[] data) { return data; }
         @Override  public byte[] decompress(final byte[] data) { return data; }
         @Override  public byte[] decompress(byte[] data, int decompressedLength) { return data; }
+        @Override  public byte[] decompress(byte[] src, byte[] dst) { System.arraycopy(src, 0, dst, 0, src.length); return dst; }
     }
 
     // ---------------------------------------------------
@@ -85,6 +88,12 @@ public interface Compressor extends Serializable {
             final byte[] restored = new byte[decompressedLength];
             decompressor.decompress(data, 0, restored, 0, decompressedLength);
             return restored;
+        }
+
+        @Override
+        public byte[] decompress(final byte[] src, final byte[] dst) {
+            decompressor.decompress(src, dst);
+            return dst;
         }
     }
     // ---------------------------------------------------
@@ -141,5 +150,10 @@ public interface Compressor extends Serializable {
 
         @Override
         public byte[] decompress(final byte[] data, final int decompressedLength) { return decompress(data); }
+
+        @Override
+        public byte[] decompress(byte[] src, byte[] dst) {
+            throw new UnsupportedOperationException();
+        }
     }
 }

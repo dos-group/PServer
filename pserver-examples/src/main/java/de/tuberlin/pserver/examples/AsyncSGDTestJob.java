@@ -42,7 +42,7 @@ public final class AsyncSGDTestJob extends PServerJob {
 
         model = dataManager.createLocalMatrix("model1", 1, 16);
 
-        dataManager.loadDMatrix("datasets/data1.csv");
+        dataManager.loadDMatrix("datasets/demo_dataset.csv");
 
         regressor = new SGDRegressor(getJobContext())
             .setLearningRate(0.005)
@@ -55,7 +55,7 @@ public final class AsyncSGDTestJob extends PServerJob {
 
         final int labelColumnIndex = 15;
 
-        final DMatrix trainingData = dataManager.getLocalMatrix("data1.csv");
+        final DMatrix trainingData = dataManager.getLocalMatrix("demo_dataset.csv");
 
         final DMatrix weights = regressor.fit(model, trainingData, labelColumnIndex);
 
