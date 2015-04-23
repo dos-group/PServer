@@ -112,6 +112,14 @@ public final class InfrastructureManager extends EventDispatcher {
         public synchronized void process(final WatchedEvent event) {
             //try {
                 synchronized (lock) {
+
+                    while (zookeeper == null) // Killer solution ! :)
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
                     zookeeper.getChildrenForPathAndWatch(ZookeeperClient.ZOOKEEPER_NODES, this);
                     final List<String> machineList = zookeeper.getChildrenForPath(ZookeeperClient.ZOOKEEPER_NODES);
                     // Find out whether a node was created or deleted.
