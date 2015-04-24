@@ -92,10 +92,10 @@ public enum PServerNodeFactory {
         this.dht = new DHT(this.config, infraManager, netManager);
         this.dataManager = new DataManager(this.config, infraManager, netManager, fileSystemManager, dht);
 
-        LOG.info(infraManager.getMachine()
-                + " | " + infraManager.getInstanceID()
-                + " | " + infraManager.getActivePeers().size()
-                + " | " + infraManager.getMachines().size());
+        //LOG.info(infraManager.getMachine()
+        //        + " | " + infraManager.getInstanceID()
+        //        + " | " + infraManager.getActivePeers().size()
+        //        + " | " + infraManager.getMachines().size());
 
         LOG.info("PServer Node Startup: " + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms");
     }

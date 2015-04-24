@@ -13,7 +13,9 @@ import de.tuberlin.pserver.core.net.NetManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -39,9 +41,9 @@ public final class PServerNode extends EventDispatcher {
 
     private final DataManager dataManager;
 
-    private final ExecutorService executor = Executors.newCachedThreadPool();
+    private final ExecutorService executor;
 
-    private final Map<UUID,PServerJobDescriptor> jobMap;
+    private final Map<UUID,PServerJobSubmissionEvent> jobMap;
 
     // ---------------------------------------------------
     // Constructors.
@@ -57,8 +59,9 @@ public final class PServerNode extends EventDispatcher {
         this.userCodeManager    = factory.userCodeManager;
         this.dataManager        = factory.dataManager;
         this.jobMap             = new HashMap<>();
+        this.executor           = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        netManager.addEventListener(PServerJobDescriptor.PSERVER_SUBMIT_JOB_EVENT, new PServerJobHandler());
+        netManager.addEventListener(PServerJobSubmissionEvent.PSERVER_JOB_SUBMISSION_EVENT, new PServerJobHandler());
     }
 
     // ---------------------------------------------------
@@ -68,33 +71,47 @@ public final class PServerNode extends EventDispatcher {
     private final class PServerJobHandler implements IEventHandler {
         @Override
         public void handleEvent(final Event e) {
-            final PServerJobDescriptor jobDescriptor = (PServerJobDescriptor)e.getPayload();
-            LOG.info("Received job '" + jobDescriptor.simpleClassName + "' [" + jobDescriptor.jobUID +"] on node " + machine + ".");
-            jobMap.put(jobDescriptor.jobUID, jobDescriptor);
-            executor.execute(() -> {
-                final Class<?> clazz = userCodeManager.implantClass(jobDescriptor);
-                if (clazz != null) {
-                    if (PServerJob.class.isAssignableFrom(clazz)) {
-                        @SuppressWarnings("unchecked")
-                        final Class<? extends PServerJob> jobClass = (Class<? extends PServerJob>) clazz;
-                        try {
+            final PServerJobSubmissionEvent jobSubmission = (PServerJobSubmissionEvent)e;
+            LOG.info("Received job on instance " + "[" + infraManager.getInstanceID() + "]" + jobSubmission.toString());
+            jobMap.put(jobSubmission.jobUID, jobSubmission);
+            for (int i = 0; i < jobSubmission.perNodeParallelism; ++i) {
+                final int threadID = i;
+                executor.execute(() -> {
+                    try {
+                        final Class<?> clazz = userCodeManager.implantClass(jobSubmission);
+                        if (PServerJob.class.isAssignableFrom(clazz)) {
+                            @SuppressWarnings("unchecked")
+                            final Class<? extends PServerJob> jobClass = (Class<? extends PServerJob>) clazz;
                             final PServerContext ctx = new PServerContext(
+                                    jobSubmission.clientMachine,
+                                    jobSubmission.jobUID,
+                                    jobSubmission.className,
+                                    jobSubmission.simpleClassName,
+                                    jobSubmission.perNodeParallelism,
                                     infraManager.getInstanceID(),
-                                    jobDescriptor,
-                                    DHT.getInstance(),
+                                    threadID,
                                     netManager,
+                                    DHT.getInstance(),
                                     dataManager
                             );
                             final PServerJob jobInvokeable = jobClass.newInstance();
                             jobInvokeable.injectContext(ctx);
+                            //dataManager.registerJobContext(ctx);
                             executeLifecycle(jobInvokeable);
-                        } catch (Exception ex) {
-                            throw new IllegalStateException(ex);
-                        }
+                        } else
+                            throw new IllegalStateException();
+                    } catch (Exception ex) {
+                        final PServerJobFailureEvent jfe = new PServerJobFailureEvent(
+                                machine,
+                                jobSubmission.jobUID,
+                                infraManager.getInstanceID(),
+                                threadID, jobSubmission.simpleClassName,
+                                ex.getCause()
+                        );
+                        netManager.sendEvent(jobSubmission.clientMachine, jfe);
                     }
-                } else
-                    throw new IllegalStateException();
-            });
+                });
+            }
         }
     }
 
@@ -117,7 +134,7 @@ public final class PServerNode extends EventDispatcher {
         try {
 
             {
-                LOG.info("Enter " + job.getJobContext().jobDescriptor.simpleClassName + " prologue phase.");
+                LOG.debug("Enter " + job.getJobContext().simpleClassName + " prologue phase.");
 
                 final long start = System.currentTimeMillis();
 
@@ -127,12 +144,12 @@ public final class PServerNode extends EventDispatcher {
 
                 final long end = System.currentTimeMillis();
 
-                LOG.info("Leave " + job.getJobContext().jobDescriptor.simpleClassName
+                LOG.debug("Leave " + job.getJobContext().simpleClassName
                         + " prologue phase [duration: " + (end - start) + " ms].");
             }
 
             {
-                LOG.info("Enter " + job.getJobContext().jobDescriptor.simpleClassName + " computation phase.");
+                LOG.debug("Enter " + job.getJobContext().simpleClassName + " computation phase.");
 
                 final long start = System.currentTimeMillis();
 
@@ -140,12 +157,12 @@ public final class PServerNode extends EventDispatcher {
 
                 final long end = System.currentTimeMillis();
 
-                LOG.info("Leave " + job.getJobContext().jobDescriptor.simpleClassName +
+                LOG.debug("Leave " + job.getJobContext().simpleClassName +
                         " computation phase [duration: " + (end - start) + " ms].");
             }
 
             {
-                LOG.info("Enter " + job.getJobContext().jobDescriptor.simpleClassName + " epilogue phase.");
+                LOG.debug("Enter " + job.getJobContext().simpleClassName + " epilogue phase.");
 
                 final long start = System.currentTimeMillis();
 
@@ -153,13 +170,21 @@ public final class PServerNode extends EventDispatcher {
 
                 final long end = System.currentTimeMillis();
 
-                LOG.info("Leave " + job.getJobContext().jobDescriptor.simpleClassName
+                LOG.debug("Leave " + job.getJobContext().simpleClassName
                         + " epilogue phase [duration: " + (end - start) + " ms].");
             }
 
-            final NetEvents.NetEvent finishEvent = new NetEvents.NetEvent(PServerJobDescriptor.PSERVER_FINISH_JOB_EVENT);
-            finishEvent.setPayload(job.getJobContext().jobDescriptor.jobUID);
-            netManager.sendEvent(job.getJobContext().jobDescriptor.clientMachine, finishEvent);
+            final List<Serializable> results = dataManager.getResults(job.getJobContext().jobUID);
+
+            final PServerJobResultEvent jre = new PServerJobResultEvent(
+                    machine,
+                    infraManager.getInstanceID(),
+                    job.getJobContext().jobUID,
+                    results
+            );
+
+            netManager.sendEvent(job.getJobContext().clientMachine, jre);
+
 
         } catch (Throwable t) {
             throw new IllegalStateException(t);

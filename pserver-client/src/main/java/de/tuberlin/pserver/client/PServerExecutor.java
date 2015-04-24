@@ -10,6 +10,11 @@ import org.apache.log4j.ConsoleAppender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 public enum PServerExecutor {
     LOCAL(true),
 
@@ -24,6 +29,8 @@ public enum PServerExecutor {
     private final ClusterSimulator simulator;
 
     private PServerClient client;
+
+    private UUID currentJob = null;
 
     // ---------------------------------------------------
     // Constructors.
@@ -46,9 +53,17 @@ public enum PServerExecutor {
     // Public Methods.
     // ---------------------------------------------------
 
-    public PServerExecutor run(final Class<? extends PServerJob> jobClass) {
+    public PServerExecutor run(final Class<? extends PServerJob> jobClass) { return run(jobClass, 1); }
+    public PServerExecutor run(final Class<? extends PServerJob> jobClass, final int perNodeParallelism) {
         client = PServerClientFactory.createPServerClient();
-        client.execute(Preconditions.checkNotNull(jobClass));
+        currentJob = client.execute(Preconditions.checkNotNull(jobClass), perNodeParallelism);
+        return this;
+    }
+
+    public PServerExecutor results(final List<List<Serializable>> results) {
+        Preconditions.checkState(currentJob != null);
+        for (int i = 0; i < client.getNumberOfWorkers(); ++i)
+            results.add(client.getResultsFromWorker(currentJob, i));
         return this;
     }
 

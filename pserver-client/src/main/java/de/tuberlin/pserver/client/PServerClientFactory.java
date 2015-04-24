@@ -42,7 +42,7 @@ public enum PServerClientFactory {
 
     public final UserCodeManager userCodeManager;
 
-    public final List<MachineDescriptor> pServerWorkers;
+    public final List<MachineDescriptor> workers;
 
     // ---------------------------------------------------
     // Constructors.
@@ -58,7 +58,7 @@ public enum PServerClientFactory {
 
         this.config         = Preconditions.checkNotNull(config);
         this.machine        = configureMachine();
-        this.pServerWorkers = new ArrayList<>();
+        this.workers        = new ArrayList<>();
         this.infraManager   = new InfrastructureManager(machine, config);
         this.netManager     = new NetManager(machine, infraManager, 16);
 
@@ -68,7 +68,7 @@ public enum PServerClientFactory {
             for (final String machineID : machineIDs) {
                 final MachineDescriptor md = (MachineDescriptor) zookeeper.read(ZookeeperClient.ZOOKEEPER_NODES + "/" + machineID);
                 netManager.connectTo(md);
-                pServerWorkers.add(md);
+                workers.add(md);
             }
             zookeeper.close();
         } catch (Exception e) {

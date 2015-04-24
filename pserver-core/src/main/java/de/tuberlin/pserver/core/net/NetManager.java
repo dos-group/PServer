@@ -198,7 +198,7 @@ public final class NetManager extends EventDispatcher {
         final ChannelFuture cf = bootstrap.bind(machine.port);
         cf.addListener(future -> {
             if (cf.isSuccess()) {
-                LOG.info("NetManager of machine [" + machine.machineID + "] bound to port: " + machine.port + ".");
+                LOG.debug("NetManager of [" + machine.machineID + "] bound to port: " + machine.port + ".");
             } else {
                 throw new IllegalStateException(cf.cause());
             }

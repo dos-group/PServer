@@ -21,7 +21,7 @@ public final class FileSystemTestJob extends PServerJob {
     @Override
     public void compute() {
 
-        final DMatrix data  = dataManager.getLocalMatrix("datasets/demo_dataset.csv");
+        final DMatrix data = dataManager.getLocalMatrix("demo_dataset.csv");
 
         final DMatrix.RowIterator iter = data.rowIterator();
 
@@ -29,11 +29,11 @@ public final class FileSystemTestJob extends PServerJob {
 
         if (ctx.instanceID == 0) {
             while (iter.hasNextRow()) {
+                iter.nextRow();
                 for (int i = 0; i < iter.numCols(); ++i) {
-                    System.out.print(numberFormat.format(iter.getValue(i)) + "\t\t");
+                    System.out.print(numberFormat.format(iter.getValueOfColumn(i)) + "\t\t");
                 }
                 System.out.println();
-                iter.nextRow();
             }
         }
     }
@@ -46,5 +46,6 @@ public final class FileSystemTestJob extends PServerJob {
         PServerExecutor.LOCAL
                 .run(FileSystemTestJob.class)
                 .done();
+
     }
 }

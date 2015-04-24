@@ -39,11 +39,15 @@ public final class AsyncMatrixPullTestJob extends PServerJob {
     // ---------------------------------------------------
 
     @Override
+    public void prologue() {
+    }
+
+    @Override
     public void compute() {
 
-        final DMatrix matrix = dataManager.createLocalMatrix("model1", MTX_ROWS, MTX_COLS);
+       final DMatrix matrix = dataManager.createLocalMatrix("model1", MTX_ROWS, MTX_COLS);
 
-        for (int i = 0; i < 15000; ++i) {
+       for (int i = 0; i < 9000; ++i) {
             randomUpdate(matrix);
             if (i % 1000 == 0)
                 ctx.dataManager.mergeMatrix(matrix, matrixMerger);

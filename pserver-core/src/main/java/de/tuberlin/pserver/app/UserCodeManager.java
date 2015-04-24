@@ -113,7 +113,7 @@ public final class UserCodeManager {
         return Triple.of(clazz, dependencies, compressor.compress(loadByteCode(clazz)));
     }
 
-    public Class<?> implantClass(final PServerJobDescriptor userCode) {
+    public Class<?> implantClass(final PServerJobSubmissionEvent userCode) {
         Preconditions.checkNotNull(userCode);
         try {
             for (final String dependency : userCode.classDependencies)

@@ -655,7 +655,7 @@ public final class DHT extends EventDispatcher {
     }
 
     private void logDHTAction(final Key key, final DHTAction action) {
-        LOG.info(action + " ON " + infraManager.getMachine() + " => KEY = "
+        LOG.debug(action + " ON " + infraManager.getMachine() + " => KEY = "
                 + key.internalUID + " | " + "PARTITION = " + key.getPartitionDescriptor(instanceID).partitionIndex);
     }
 }

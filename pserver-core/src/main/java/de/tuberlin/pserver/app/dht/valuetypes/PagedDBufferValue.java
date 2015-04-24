@@ -22,35 +22,46 @@ public class PagedDBufferValue extends AbstractBufferValue implements DMatrix {
 
         private int localIndex;
 
-        private int globalIndex;
+        private int globalRowIndex;
 
         private double[] currentSegment;
 
         private double[] nextSegment;
 
+        private final int startRow;
+
         // ---------------------------------------------------
 
-        public RowIterator(final PagedDBufferValue s) {
-            this.self = Preconditions.checkNotNull(s);
-            this.end  = self.rows * self.cols;
+        public RowIterator(final PagedDBufferValue v) { this(v, 0, (int)Preconditions.checkNotNull(v).numRows()); }
+        public RowIterator(final PagedDBufferValue v, final int startRow, final int endRow) {
+
+            this.self = Preconditions.checkNotNull(v);
+            Preconditions.checkArgument(startRow >= 0 && startRow < self.numRows());
+
+            this.startRow       = startRow;
+            this.end            = endRow * self.cols;
+            this.segmentIndex   = startRow / (self.segmentSize / Double.BYTES);
+            this.globalRowIndex = startRow - self.cols;
+            this.localIndex     = (globalRowIndex % (self.segmentSize / Double.BYTES));
+
             reset();
         }
 
         // ---------------------------------------------------
 
         @Override
-        public boolean hasNextRow() { return globalIndex < end; }
+        public boolean hasNextRow() { return globalRowIndex < end || globalRowIndex < self.rows * self.cols; }
 
         @Override
         public void nextRow() {
-            globalIndex += self.cols;
+            globalRowIndex += self.cols;
             localIndex  += self.cols;
             if (localIndex >= currentSegment.length)
                 nextSegment();
         }
 
         @Override
-        public double getValue(final int col) {
+        public double getValueOfColumn(final int col) {
             if (localIndex + col >= currentSegment.length)
                 return nextSegment[(localIndex + col) - currentSegment.length];
             else
@@ -59,12 +70,20 @@ public class PagedDBufferValue extends AbstractBufferValue implements DMatrix {
 
         @Override
         public void reset() {
-            currentSegment = self.buffers.get(0);
+            segmentIndex = startRow / (self.segmentSize / Double.BYTES);
+            globalRowIndex = startRow - self.cols;
+            localIndex   = (globalRowIndex % (self.segmentSize / Double.BYTES));
+
+            currentSegment = self.buffers.get(segmentIndex);
+            if (self.buffers.size() > segmentIndex + 1)
+                nextSegment = self.buffers.get(segmentIndex + 1);
+
+            /*currentSegment = self.buffers.get(0);
             if (self.buffers.size() >= 1)
                 nextSegment = self.buffers.get(1);
+            globalRowIndex = startRow - self.cols;
             localIndex   = 0;
-            globalIndex  = 0;
-            segmentIndex = 0;
+            segmentIndex = 0;*/
         }
 
         @Override
@@ -162,6 +181,9 @@ public class PagedDBufferValue extends AbstractBufferValue implements DMatrix {
     public long numCols() { return cols; }
 
     @Override
+    public DMatrix.RowIterator rowIterator(final int startRow, final int endRow) { return new RowIterator(this, startRow, endRow); }
+
+    @Override
     public DMatrix.RowIterator rowIterator() { return new RowIterator(this); }
 
     @Override
@@ -178,68 +200,4 @@ public class PagedDBufferValue extends AbstractBufferValue implements DMatrix {
         }
         throw new IllegalStateException();
     }
-
-    // ---------------------------------------------------
-
-    /*private final class SegmentSwapManager {
-
-        private final BlockingQueue<Pair<Integer,double[]>> writeQueue;
-
-        private final BlockingQueue<Pair<Integer,double[]>> readQueue;
-
-        private volatile boolean isRunning = true;
-
-        public SegmentSwapManager() {
-
-            this.writeQueue = new LinkedBlockingQueue<>();
-
-            this.readQueue  = new LinkedBlockingQueue<>();
-
-            final Runnable writerThread = () -> {
-
-                while (isRunning) {
-
-                    try {
-
-                        final Pair<Integer,double[]> segment = writeQueue.take();
-
-                        final File segFile = new File("tmp-" + key.internalUID + "-" + segment.getLeft());
-
-                        final byte[] seg = UnsafeOp.primitiveArrayTypeCast(segment.getRight(), double[].class, byte[].class);
-
-                        final FileOutputStream os = new FileOutputStream(segFile);
-
-                        os.write(seg);
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            };
-
-            final Runnable readerThread = () -> {
-
-                while (isRunning) {
-
-                    try {
-
-                        final Pair<Integer,double[]> segment = readQueue.take();
-
-                        final File segFile = new File("tmp-" + key.internalUID + "-" + segment.getLeft());
-
-                        final FileInputStream is = new FileInputStream(segFile);
-
-                        final byte[] seg = UnsafeOp.primitiveArrayTypeCast(segment.getRight(), double[].class, byte[].class);
-
-                        is.read(seg);
-
-                        UnsafeOp.primitiveArrayTypeCast(seg, byte[].class, double[].class);
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            };
-        }
-    }*/
 }

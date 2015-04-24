@@ -22,6 +22,12 @@ public final class LocalFileSystemManager implements FileSystemManager {
     // Fields.
     // ---------------------------------------------------
 
+    public static final long SYNC_TIME = 2000; // 2s to sync. all simulation workers.
+
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
     private static final Logger LOG = LoggerFactory.getLogger(LocalFileSystemManager.class);
 
     private final InfrastructureManager infraManager;
@@ -49,31 +55,48 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
     @Override
     public void computeInputSplitsForRegisteredFiles() {
-        final LocalFileSystemManager lfsm = this;
         final CountDownLatch splitComputationLatch = new CountDownLatch(infraManager.getMachines().size() - 1);
         final IEventHandler handler = (e) -> {
-            synchronized (lfsm) {
+            synchronized (LocalFileSystemManager.this) {
                 splitComputationLatch.countDown();
             }
         };
         netManager.addEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler);
+
+        final long start = System.currentTimeMillis();
+
         inputFileMap.forEach(
                 (k, v) -> v.computeLocalFileSection(
                         infraManager.getMachines().size(),
                         infraManager.getInstanceID()
                 )
         );
+
         registeredIteratorMap.forEach(
                 (k, v) -> v.forEach(FileDataIterator::initialize)
         );
+
+        final long end = System.currentTimeMillis();
+
+        // We need to sync. here in simulation mode.
+        if (end - start < SYNC_TIME) {
+            try {
+                Thread.sleep(SYNC_TIME - (end - start));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         netManager.broadcastEvent(new NetEvents.NetEvent(PSERVER_LFSM_COMPUTED_FILE_SPLITS));
+
         try {
             splitComputationLatch.await();
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
         }
+
         netManager.removeEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler);
-        LOG.info("Input splits are computed.");
+        LOG.debug("Input splits are computed.");
     }
 
     @Override

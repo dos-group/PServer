@@ -98,6 +98,8 @@ public class SGDRegressor implements SGDBase {
 
                 while(iter.hasNextRow()) {
 
+                    iter.nextRow();
+
                     if (first) {
                         numFeatures     = (int)iter.numCols() - 1;
                         featureIndices  = new int[numFeatures];
@@ -114,31 +116,26 @@ public class SGDRegressor implements SGDBase {
                     int m = 1;
                     double p = weights.get(0, 0);
                     for (int j : featureIndices) {
-                        p += iter.getValue(j) * weights.get(0, m);
+                        p += iter.getValueOfColumn(j) * weights.get(0, m);
                         m++;
                     }
                     // -- Minimize the loss function --
                     // Compute parameter Θ(0).
-                    weights.set(0, 0, weights.get(0, 0) - alpha * lossFunction.dloss(p, iter.getValue(labelIndex)));
+                    weights.set(0, 0, weights.get(0, 0) - alpha * lossFunction.dloss(p, iter.getValueOfColumn(labelIndex)));
 
 
                     // Compute parameters Θ(1..m).
                     int n = 1;
                     for (int k : featureIndices) {
-                        weights.set(0, n, weights.get(0, n) - alpha * lossFunction.dloss(p, iter.getValue(labelIndex)) * iter.getValue(k));
+                        weights.set(0, n, weights.get(0, n) - alpha * lossFunction.dloss(p, iter.getValueOfColumn(labelIndex)) * iter.getValueOfColumn(k));
                         n++;
                     }
-
-                    iter.nextRow();
                 }
 
                 iter.reset();
 
                 if (weightsUpdater != null)
                     weightsUpdater.updateWeights(epoch, weights);
-
-                if (epoch % 10 == 0)
-                    LOG.info("On instance [" + instanceID + "] SGD is in iteration " + epoch);
             }
         } else
             throw new IllegalStateException();

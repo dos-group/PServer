@@ -1,6 +1,10 @@
 package de.tuberlin.pserver.app.types;
 
-public interface DMatrix {
+import de.tuberlin.pserver.app.PServerContext;
+
+import java.io.Serializable;
+
+public interface DMatrix extends Serializable {
 
     // ---------------------------------------------------
     // Constants.
@@ -23,7 +27,7 @@ public interface DMatrix {
 
         public abstract void nextRow();
 
-        public abstract double getValue(final int col);
+        public abstract double getValueOfColumn(final int col);
 
         public abstract void reset();
 
@@ -38,7 +42,7 @@ public interface DMatrix {
 
         public abstract void nextColumn();
 
-        public abstract double getValue(final int row);
+        public abstract double getValueOfRow(final int row);
 
         public abstract void reset();
 
@@ -58,6 +62,8 @@ public interface DMatrix {
     public abstract long numRows();
 
     public abstract long numCols();
+
+    public abstract RowIterator rowIterator(final int startRow, final int endRow);
 
     public abstract RowIterator rowIterator();
 

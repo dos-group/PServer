@@ -54,7 +54,7 @@ public final class InfrastructureManager extends EventDispatcher {
         final String zookeeperServer = ZookeeperClient.buildServersString(config.getObjectList("zookeeper.servers"));
         ZookeeperClient.checkConnectionString(zookeeperServer);
         connectZookeeper(zookeeperServer);
-        LOG.info("Started InfrastructureManager at " + machine);
+        LOG.debug("Started InfrastructureManager at " + machine);
     }
 
     public Map<UUID, MachineDescriptor> getActivePeers() { return Collections.unmodifiableMap(peers); }

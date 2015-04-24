@@ -45,8 +45,8 @@ public final class PServerMain {
         try {
             // parse the arguments and store them as system properties
             parser.parseArgs(args).getAttrs().entrySet().stream()
-                    .filter(e -> e.getValue() != null)
-                    .forEach(e -> System.setProperty(e.getKey(), e.getValue().toString()));*/
+                    .filter(e -> e.getValueOfColumn() != null)
+                    .forEach(e -> System.setProperty(e.getKey(), e.getValueOfColumn().toString()));*/
 
             PServerNodeFactory.createParameterServerNode();
 

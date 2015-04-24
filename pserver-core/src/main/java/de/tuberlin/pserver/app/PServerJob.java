@@ -4,6 +4,9 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
+import java.util.Arrays;
+
 public abstract class PServerJob {
 
     // ---------------------------------------------------
@@ -26,6 +29,8 @@ public abstract class PServerJob {
     }
 
     public PServerContext getJobContext() { return ctx; }
+
+    public void result(final Serializable... obj) { dataManager.setResults(ctx.jobUID, Arrays.asList(obj)); }
 
     public void prologue() {}
 

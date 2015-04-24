@@ -1,5 +1,6 @@
 package de.tuberlin.pserver.examples;
 
+import com.google.common.collect.Lists;
 import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.types.DMatrix;
@@ -12,6 +13,11 @@ import de.tuberlin.pserver.core.infra.ClusterSimulator;
 import de.tuberlin.pserver.ml.optimization.gradientdescent.SGDRegressor;
 import de.tuberlin.pserver.ml.optimization.gradientdescent.WeightsUpdater;
 import de.tuberlin.pserver.node.PServerMain;
+
+import java.io.Serializable;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class AsyncSGDTestJob extends PServerJob {
 
@@ -52,7 +58,7 @@ public final class AsyncSGDTestJob extends PServerJob {
 
         regressor = new SGDRegressor(getJobContext())
             .setLearningRate(0.005)
-            .setNumberOfIterations(400)
+            .setNumberOfIterations(15400)
             .setWeightsUpdater(weightsUpdater);
     }
 
@@ -65,8 +71,7 @@ public final class AsyncSGDTestJob extends PServerJob {
 
         final DMatrix weights = regressor.fit(model, trainingData, labelColumnIndex);
 
-        for (double weight : weights.toArray())
-            System.out.print(weight + " | ");
+        result(weights);
     }
 
     // ---------------------------------------------------
@@ -74,8 +79,23 @@ public final class AsyncSGDTestJob extends PServerJob {
     // ---------------------------------------------------
 
     public static void main(final String[] args) {
+
+        final List<List<Serializable>> weights = Lists.newArrayList();
+
         PServerExecutor.LOCAL
                 .run(AsyncSGDTestJob.class)
+                .results(weights)
                 .done();
+
+        final DecimalFormat numberFormat = new DecimalFormat("###.###");
+        weights.forEach(
+                r -> r.forEach(
+                        w -> {
+                            for (double weight : ((DMatrix) w).toArray())
+                                System.out.print(numberFormat.format(weight) + "\t | ");
+                            System.out.println();
+                        }
+                )
+        );
     }
 }

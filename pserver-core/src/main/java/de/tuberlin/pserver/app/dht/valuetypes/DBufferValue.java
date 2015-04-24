@@ -16,29 +16,36 @@ public class DBufferValue extends AbstractBufferValue implements DMatrix {
 
         private final long end;
 
-        private int globalIndex;
+        private int globalRowIndex;
+
+        private final int startRow;
 
         // ---------------------------------------------------
 
-        public RowIterator(final DBufferValue s) {
-            this.self = Preconditions.checkNotNull(s);
-            this.end  = self.rows * self.cols;
+        public RowIterator(final DBufferValue v) { this(v, 0, (int)Preconditions.checkNotNull(v).numRows()); }
+        public RowIterator(final DBufferValue v, final int startRow, final int endRow) {
+            this.self = v;
+            Preconditions.checkArgument(startRow >= 0 && startRow < self.numRows());
+            Preconditions.checkArgument(endRow >= 0 && endRow < self.numRows());
+            this.startRow = startRow;
+            this.end = endRow * self.cols;
+            this.globalRowIndex = startRow - (int)-self.cols;
             reset();
         }
 
         // ---------------------------------------------------
 
         @Override
-        public boolean hasNextRow() { return globalIndex < end; }
+        public boolean hasNextRow() { return globalRowIndex < end || globalRowIndex < self.rows * self.cols; }
 
         @Override
-        public void nextRow() { globalIndex += self.cols; }
+        public void nextRow() { globalRowIndex += self.cols; }
 
         @Override
-        public double getValue(final int col) { return self.data[globalIndex + col]; }
+        public double getValueOfColumn(final int col) { return self.data[globalRowIndex + col]; }
 
         @Override
-        public void reset() { globalIndex  = 0; }
+        public void reset() { globalRowIndex = startRow - (int)self.cols; }
 
         @Override
         public long numRows() { return self.rows; }
@@ -90,6 +97,9 @@ public class DBufferValue extends AbstractBufferValue implements DMatrix {
 
     @Override
     public void set(final long row, final long col, final double value) { data[getPos(row, col)] = value; }
+
+    @Override
+    public DMatrix.RowIterator rowIterator(final int startRow, final int endRow) { return new RowIterator(this, startRow, endRow); }
 
     @Override
     public DMatrix.RowIterator rowIterator() { return new RowIterator(this); }

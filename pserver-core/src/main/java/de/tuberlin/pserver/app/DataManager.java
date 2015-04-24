@@ -17,8 +17,10 @@ import org.apache.commons.csv.CSVRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class DataManager {
 
@@ -68,6 +70,10 @@ public final class DataManager {
 
     private final List<FileDataIterator<CSVRecord>> filesToLoad;
 
+    private final Map<UUID, List<Serializable>> resultObjects;
+
+    private final Map<Long, PServerContext> contextResolver;
+
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
@@ -85,6 +91,8 @@ public final class DataManager {
         this.dht                = Preconditions.checkNotNull(dht);
         this.instanceID         = infraManager.getInstanceID();
         this.filesToLoad        = new ArrayList<>();
+        this.resultObjects      = new HashMap<>();
+        this.contextResolver    = new ConcurrentHashMap<>();
     }
 
     // ---------------------------------------------------
@@ -92,6 +100,13 @@ public final class DataManager {
     // ---------------------------------------------------
 
     public IConfig getConfig() { return config; }
+
+    // ---------------------------------------------------
+
+    // Must be called from the specific execution context!
+    public void registerJobContext(final PServerContext ctx) {
+        contextResolver.put(Thread.currentThread().getId(), Preconditions.checkNotNull(ctx));
+    }
 
     // ---------------------------------------------------
 
@@ -149,6 +164,15 @@ public final class DataManager {
 
     // ---------------------------------------------------
 
+    public DMatrix.RowIterator localRowIterator(final DMatrix matrix) {
+        final long systemThreadID = Thread.currentThread().getId();
+        final PServerContext ctx = contextResolver.get(systemThreadID);
+        final int rowBlock = (int)matrix.numRows() / ctx.perNodeParallelism;
+        return matrix.rowIterator(ctx.threadID * rowBlock, ctx.threadID * rowBlock + rowBlock);
+    }
+
+    // ---------------------------------------------------
+
     public DMatrix getLocalMatrix(final String name) {
         Preconditions.checkNotNull(name);
         Key localKey = null;
@@ -164,6 +188,19 @@ public final class DataManager {
             return (DMatrix)dht.get(localKey)[0];
         else
             throw new IllegalStateException();
+    }
+
+    // ---------------------------------------------------
+
+    public void setResults(final UUID jobUID, final List<Serializable> results) {
+        Preconditions.checkNotNull(jobUID);
+        Preconditions.checkNotNull(results);
+        resultObjects.put(jobUID, results);
+    }
+
+    public List<Serializable> getResults(final UUID jobUID) {
+        Preconditions.checkNotNull(jobUID);
+        return resultObjects.get(jobUID);
     }
 
     // ---------------------------------------------------

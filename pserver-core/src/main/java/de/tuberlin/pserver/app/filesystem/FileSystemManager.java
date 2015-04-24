@@ -6,7 +6,7 @@ public interface FileSystemManager {
     // Constants.
     // ---------------------------------------------------
 
-    public static final String PSERVER_LFSM_COMPUTED_FILE_SPLITS  = "PSLCFS";
+    public static final String PSERVER_LFSM_COMPUTED_FILE_SPLITS  = "PSERVER_LFSM_COMPUTED_FILE_SPLITS";
 
     // ---------------------------------------------------
     // Public Methods.
