@@ -3,7 +3,7 @@ package de.tuberlin.pserver.app.dht.valuetypes;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.dht.DHT;
 import de.tuberlin.pserver.app.dht.Key;
-import de.tuberlin.pserver.math.experimental.memory.Buffer;
+import de.tuberlin.pserver.experimental.memory.Buffer;
 
 public class ByteBufferValue extends AbstractBufferValue {
 

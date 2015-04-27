@@ -2,6 +2,7 @@ package de.tuberlin.pserver.ml.generators;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -11,7 +12,7 @@ import java.util.Random;
 
 public class SyntheticDataGenerator {
 
-    private static final String NEW_LINE_SEPARATOR = "\n";
+    /*private static final String NEW_LINE_SEPARATOR = "\n";
     private static final Random random = new Random();
 
 
@@ -187,5 +188,5 @@ public class SyntheticDataGenerator {
 
     public enum SyntheticType{
         LINEAR,POLYNOMIAL,SIN;
-    }
+    }*/
 }

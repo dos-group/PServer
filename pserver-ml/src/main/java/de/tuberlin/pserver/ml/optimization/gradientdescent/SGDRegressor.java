@@ -2,7 +2,7 @@ package de.tuberlin.pserver.ml.optimization.gradientdescent;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.PServerContext;
-import de.tuberlin.pserver.app.types.DMatrix;
+import de.tuberlin.pserver.math.DMatrix;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

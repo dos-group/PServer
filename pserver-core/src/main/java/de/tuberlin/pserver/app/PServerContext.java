@@ -5,9 +5,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.dht.DHT;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.utils.GsonUtils;
 
-import java.util.List;
 import java.util.UUID;
 
 public final class PServerContext {

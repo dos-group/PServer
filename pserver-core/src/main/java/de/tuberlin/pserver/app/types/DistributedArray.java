@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.app.types;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.commons.UnsafeOp;
 import de.tuberlin.pserver.utils.ObjectSerializer;
-import de.tuberlin.pserver.utils.UnsafeOp;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.Serializable;

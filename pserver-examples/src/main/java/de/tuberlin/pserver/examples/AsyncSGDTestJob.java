@@ -3,20 +3,13 @@ package de.tuberlin.pserver.examples;
 import com.google.common.collect.Lists;
 import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
-import de.tuberlin.pserver.app.types.DMatrix;
-import de.tuberlin.pserver.client.PServerClient;
-import de.tuberlin.pserver.client.PServerClientFactory;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.core.config.IConfig;
-import de.tuberlin.pserver.core.config.IConfigFactory;
-import de.tuberlin.pserver.core.infra.ClusterSimulator;
+import de.tuberlin.pserver.math.DMatrix;
 import de.tuberlin.pserver.ml.optimization.gradientdescent.SGDRegressor;
 import de.tuberlin.pserver.ml.optimization.gradientdescent.WeightsUpdater;
-import de.tuberlin.pserver.node.PServerMain;
 
 import java.io.Serializable;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.List;
 
 public final class AsyncSGDTestJob extends PServerJob {

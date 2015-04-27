@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.ml.optimization.gradientdescent;
 
 
-import de.tuberlin.pserver.app.types.DMatrix;
+import de.tuberlin.pserver.math.DMatrix;
 
 public interface WeightsUpdater {
 

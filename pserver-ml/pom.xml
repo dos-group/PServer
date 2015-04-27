@@ -15,7 +15,6 @@
     <artifactId>pserver-ml</artifactId>
     <packaging>jar</packaging>
     <name>pserver-ml</name>
-    <url>http://maven.apache.org</url>
 
     <!-- ================================= -->
     <!-- MAVEN DEPENDENCIES. -->

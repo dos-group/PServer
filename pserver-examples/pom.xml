@@ -15,7 +15,6 @@
     <artifactId>pserver-examples</artifactId>
     <packaging>jar</packaging>
     <name>pserver-examples</name>
-    <url>http://maven.apache.org</url>
 
     <!-- ================================= -->
     <!-- MAVEN DEPENDENCIES. -->

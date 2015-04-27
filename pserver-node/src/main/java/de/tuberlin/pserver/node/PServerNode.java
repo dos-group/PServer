@@ -8,7 +8,6 @@ import de.tuberlin.pserver.core.events.EventDispatcher;
 import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -134,7 +133,7 @@ public final class PServerNode extends EventDispatcher {
         try {
 
             {
-                LOG.debug("Enter " + job.getJobContext().simpleClassName + " prologue phase.");
+                LOG.info("Enter " + job.getJobContext().simpleClassName + " prologue phase.");
 
                 final long start = System.currentTimeMillis();
 
@@ -144,12 +143,12 @@ public final class PServerNode extends EventDispatcher {
 
                 final long end = System.currentTimeMillis();
 
-                LOG.debug("Leave " + job.getJobContext().simpleClassName
+                LOG.info("Leave " + job.getJobContext().simpleClassName
                         + " prologue phase [duration: " + (end - start) + " ms].");
             }
 
             {
-                LOG.debug("Enter " + job.getJobContext().simpleClassName + " computation phase.");
+                LOG.info("Enter " + job.getJobContext().simpleClassName + " computation phase.");
 
                 final long start = System.currentTimeMillis();
 
@@ -157,12 +156,12 @@ public final class PServerNode extends EventDispatcher {
 
                 final long end = System.currentTimeMillis();
 
-                LOG.debug("Leave " + job.getJobContext().simpleClassName +
+                LOG.info("Leave " + job.getJobContext().simpleClassName +
                         " computation phase [duration: " + (end - start) + " ms].");
             }
 
             {
-                LOG.debug("Enter " + job.getJobContext().simpleClassName + " epilogue phase.");
+                LOG.info("Enter " + job.getJobContext().simpleClassName + " epilogue phase.");
 
                 final long start = System.currentTimeMillis();
 
@@ -170,7 +169,7 @@ public final class PServerNode extends EventDispatcher {
 
                 final long end = System.currentTimeMillis();
 
-                LOG.debug("Leave " + job.getJobContext().simpleClassName
+                LOG.info("Leave " + job.getJobContext().simpleClassName
                         + " epilogue phase [duration: " + (end - start) + " ms].");
             }
 

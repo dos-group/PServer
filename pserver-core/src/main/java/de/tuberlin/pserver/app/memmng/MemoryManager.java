@@ -2,17 +2,15 @@ package de.tuberlin.pserver.app.memmng;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.commons.UnsafeOp;
 import de.tuberlin.pserver.core.config.IConfig;
-import de.tuberlin.pserver.utils.UnsafeOp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
 public final class MemoryManager {
 

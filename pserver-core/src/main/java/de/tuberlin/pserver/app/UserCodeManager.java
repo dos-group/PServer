@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.app;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.utils.Compressor;
+import de.tuberlin.pserver.commons.Compressor;
 import org.apache.bcel.Repository;
 import org.apache.bcel.classfile.*;
 import org.apache.commons.lang3.tuple.Triple;

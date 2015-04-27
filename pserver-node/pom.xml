@@ -15,7 +15,6 @@
     <artifactId>pserver-node</artifactId>
     <packaging>jar</packaging>
     <name>pserver-node</name>
-    <url>http://maven.apache.org</url>
 
     <!-- ================================= -->
     <!-- MAVEN DEPENDENCIES. -->
@@ -35,7 +34,6 @@
 
     <build>
         <plugins>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -48,7 +46,6 @@
                     </archive>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
 
