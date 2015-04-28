@@ -167,7 +167,7 @@ if [ -z "${PSERVER_OPTS}" ]; then
 fi
 
 if [ -z "${PSERVER_SSH_OPTS}" ]; then
-    PSERVER_OPTS=$(readFromConfig ${KEY_ENV_SSH_OPTS} "${DEFAULT_ENV_SSH_OPTS}" ${YAML_CONF})
+    PSERVER_SSH_OPTS=$(readFromConfig ${KEY_ENV_SSH_OPTS} "${DEFAULT_ENV_SSH_OPTS}" ${YAML_CONF})
 fi
 
 # Arguments for the JVM. Used for job and task manager JVMs.
