@@ -1,7 +1,8 @@
 package de.tuberlin.pserver.core.events;
 
+import de.tuberlin.pserver.core.common.Deactivatable;
 
-public interface IEventDispatcher {
+public interface IEventDispatcher extends Deactivatable {
 
     public abstract void addEventListener(String type, IEventHandler listener);
 
@@ -16,6 +17,4 @@ public interface IEventDispatcher {
     public abstract boolean hasEventListener(String type);
 
     public abstract void joinDispatcherThread();
-
-    public abstract void shutdownEventDispatcher();
 }

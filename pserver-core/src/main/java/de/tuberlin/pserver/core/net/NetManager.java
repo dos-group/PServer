@@ -165,7 +165,8 @@ public final class NetManager extends EventDispatcher {
         }
     }
 
-    public void shutdown() {
+    @Override
+    public void deactivate() {
         for (final UUID machineID : peers.keySet())
             disconnect(machineID);
         peers.clear();
@@ -174,7 +175,7 @@ public final class NetManager extends EventDispatcher {
         } catch (InterruptedException e) {
             LOG.error(e.getLocalizedMessage());
         }
-        shutdownEventDispatcher();
+        super.deactivate();
     }
 
     // ---------------------------------------------------
@@ -197,7 +198,7 @@ public final class NetManager extends EventDispatcher {
         final ChannelFuture cf = bootstrap.bind(machine.port);
         cf.addListener(future -> {
             if (cf.isSuccess()) {
-                LOG.info("NetManager of machine [" + machine.machineID + "] bound to port: " + machine.port + ".");
+                LOG.debug("NetManager of [" + machine.machineID + "] bound to port: " + machine.port + ".");
             } else {
                 throw new IllegalStateException(cf.cause());
             }

@@ -46,8 +46,8 @@ public final class IConfigFactory {
         config = currentRuntimeConfig().withFallback(config);
         // 3. merge a config from a classpath entry named '$profile.{pserver.profile}.conf' or fall back to profile.default.conf
         if (System.getProperty("pserver.profile") == null) {
-            LOG.warn("No configuration profile specified! Falling back to profile.default.conf.");
-            LOG.warn("You may want to create a profile for your configuration.");
+            //LOG.warn("No configuration profile specified! Falling back to profile.default.conf.");
+            //LOG.warn("You may want to create a profile for your configuration.");
             System.setProperty("pserver.profile", "default");
         }
         config = ConfigFactory.parseResources(String.format("profile.%s.conf", System.getProperty("pserver.profile")), opts).withFallback(config);

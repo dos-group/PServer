@@ -3,6 +3,7 @@ package de.tuberlin.pserver.app.dht;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import de.tuberlin.pserver.app.dht.valuetypes.AbstractBufferValue;
+import de.tuberlin.pserver.commons.Compressor;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
@@ -11,7 +12,6 @@ import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.utils.Compressor;
 import de.tuberlin.pserver.utils.nbhm.NonBlockingHashMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -655,7 +655,7 @@ public final class DHT extends EventDispatcher {
     }
 
     private void logDHTAction(final Key key, final DHTAction action) {
-        LOG.info(action + " ON " + infraManager.getMachine() + " => KEY = "
+        LOG.debug(action + " ON " + infraManager.getMachine() + " => KEY = "
                 + key.internalUID + " | " + "PARTITION = " + key.getPartitionDescriptor(instanceID).partitionIndex);
     }
 }

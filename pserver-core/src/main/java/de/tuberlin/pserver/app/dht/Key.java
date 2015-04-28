@@ -145,4 +145,7 @@ public class Key implements Serializable, Comparable<Key> {
 
     @Override
     public int compareTo(final Key k) { return internalUID.compareTo(k.internalUID); }
+
+    @Override
+    public String toString() { return name + ":" + internalUID.toString(); }
 }

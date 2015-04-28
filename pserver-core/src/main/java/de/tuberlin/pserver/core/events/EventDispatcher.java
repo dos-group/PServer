@@ -165,7 +165,7 @@ public class EventDispatcher implements IEventDispatcher {
     }
 
     @Override
-    public void shutdownEventDispatcher() {
+    public void deactivate() {
         if (useDispatchThread) {
             LOG.trace("Shutdown event dispatcher");
             isRunning.set(false);

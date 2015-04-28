@@ -1,21 +1,24 @@
 package de.tuberlin.pserver.client;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.app.PServerJobDescriptor;
-import de.tuberlin.pserver.app.UserCodeManager;
+import de.tuberlin.pserver.app.*;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
 import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
 public final class PServerClient extends EventDispatcher {
@@ -36,9 +39,13 @@ public final class PServerClient extends EventDispatcher {
 
     private final UserCodeManager userCodeManager;
 
-    private final List<MachineDescriptor> pServerWorkers;
+    private final List<MachineDescriptor> workers;
 
     private final Map<UUID, CountDownLatch> activeJobs;
+
+    private final Map<Pair<UUID,Integer>, List<Serializable>> jobResults;
+
+    //private final Map<String, UUID> nameUIDMapping;
 
     // ---------------------------------------------------
     // Constructors.
@@ -50,28 +57,41 @@ public final class PServerClient extends EventDispatcher {
 
         this.config          = factory.config;
         this.machine         = factory.machine;
-        this.pServerWorkers  = factory.pServerWorkers;
+        this.workers         = factory.workers;
         this.infraManager    = factory.infraManager;
         this.netManager      = factory.netManager;
         this.userCodeManager = factory.userCodeManager;
         this.activeJobs      = new HashMap<>();
+        this.jobResults      = new HashMap<>();
+        //this.nameUIDMapping  = new HashMap<>();
 
-        this.netManager.addEventListener(PServerJobDescriptor.PSERVER_FINISH_JOB_EVENT, new ClientFinishedJobEvent());
+        this.netManager.addEventListener(PServerJobFailureEvent.PSERVER_FAILURE_JOB_EVENT, new JobFailureEvent());
+        this.netManager.addEventListener(PServerJobResultEvent.PSERVER_JOB_RESULT_EVENT, new JobResultEvent());
     }
 
     // ---------------------------------------------------
     // Event Handler.
     // ---------------------------------------------------
 
-    private final class ClientFinishedJobEvent implements IEventHandler {
+    private final class JobFailureEvent implements IEventHandler {
         @Override
         public void handleEvent(final Event e) {
-            final UUID jobUID = (UUID) e.getPayload();
-            final CountDownLatch jobLatch = activeJobs.get(jobUID);
-            if (jobLatch != null)
+            final PServerJobFailureEvent jfe = (PServerJobFailureEvent)e;
+            LOG.error(jfe.toString());
+        }
+    }
+
+    private final class JobResultEvent implements IEventHandler {
+        @Override
+        public void handleEvent(final Event e) {
+            final PServerJobResultEvent jre = (PServerJobResultEvent) e;
+            jobResults.put(Pair.of(jre.jobUID, jre.instanceID), jre.resultObjects);
+            final CountDownLatch jobLatch = activeJobs.get(jre.jobUID);
+            if (jobLatch != null) {
                 jobLatch.countDown();
-            else
+            } else {
                 throw new IllegalStateException();
+            }
         }
     }
 
@@ -79,32 +99,30 @@ public final class PServerClient extends EventDispatcher {
     // Public Methods.
     // ---------------------------------------------------
 
-    public IConfig getConfig() { return config; }
-
-    public void execute(final Class<?> algorithmClass) {
-        Preconditions.checkNotNull(algorithmClass);
+    public UUID execute(final Class<? extends PServerJob> jobClass) { return execute(jobClass, 1); }
+    public UUID execute(final Class<? extends PServerJob> jobClass, final int perNodeParallelism) {
+        Preconditions.checkNotNull(jobClass);
+        Preconditions.checkArgument(perNodeParallelism >= 1);
 
         final long start = System.nanoTime();
-
-        final Triple<Class<?>, List<String>, byte[]> classData = userCodeManager.extractClass(algorithmClass);
-
-        final PServerJobDescriptor jobDescriptor = new PServerJobDescriptor(
+        final Triple<Class<?>, List<String>, byte[]> classData = userCodeManager.extractClass(jobClass);
+        final UUID jopUID = UUID.randomUUID();
+        final PServerJobSubmissionEvent jobSubmission = new PServerJobSubmissionEvent(
                 machine,
-                UUID.randomUUID(),
+                jopUID,
                 classData.getLeft().getName(),
                 classData.getLeft().getSimpleName(),
+                perNodeParallelism,
                 classData.getMiddle(),
                 classData.getRight()
         );
 
-        final CountDownLatch jobLatch = new CountDownLatch(pServerWorkers.size());
-        activeJobs.put(jobDescriptor.jobUID, jobLatch);
+        final CountDownLatch jobLatch = new CountDownLatch(workers.size());
+        activeJobs.put(jopUID, jobLatch);
+        //nameUIDMapping.put(jobSubmission.simpleClassName, jopUID);
 
-        for (final MachineDescriptor md : pServerWorkers) {
-            final NetEvents.NetEvent event = new NetEvents.NetEvent(PServerJobDescriptor.PSERVER_SUBMIT_JOB_EVENT);
-            event.setPayload(jobDescriptor);
-            netManager.sendEvent(md, event);
-        }
+        LOG.info("Submit Job '" + jobSubmission.simpleClassName + "'.");
+        workers.forEach(md -> netManager.sendEvent(md, jobSubmission));
 
         try {
             jobLatch.await();
@@ -112,14 +130,25 @@ public final class PServerClient extends EventDispatcher {
             throw new IllegalStateException(e);
         }
 
-        LOG.info("Job '" + jobDescriptor.simpleClassName
-                + "' [" + jobDescriptor.jobUID +"] finished in "
+        LOG.info("Job '" + jobSubmission.simpleClassName
+                + "' [" + jobSubmission.jobUID +"] finished in "
                 + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms.");
+
+        return jopUID;
     }
 
-    public void shutdown() {
-        netManager.shutdown();
-        infraManager.shutdown();
-        shutdownEventDispatcher();
+    public List<Serializable> getResultsFromWorker(final UUID jobUID, final int instanceID) {
+        return jobResults.get(Pair.of(jobUID, instanceID));
+    }
+
+    public IConfig getConfig() { return config; }
+
+    public int getNumberOfWorkers() { return workers.size(); }
+
+    @Override
+    public void deactivate() {
+        netManager.deactivate();
+        infraManager.deactivate();
+        super.deactivate();
     }
 }

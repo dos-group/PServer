@@ -15,47 +15,17 @@
     <artifactId>pserver-ml</artifactId>
     <packaging>jar</packaging>
     <name>pserver-ml</name>
-    <url>http://maven.apache.org</url>
 
     <!-- ================================= -->
     <!-- MAVEN DEPENDENCIES. -->
     <!-- ================================= -->
 
     <dependencies>
-        <!-- SYSTEM DEPENDENCIES -->
-        <dependency>
-            <groupId>jfree</groupId>
-            <artifactId>jfreechart</artifactId>
-            <version>1.0.13</version>
-        </dependency>
         <!-- PROJECT DEPENDENCIES -->
         <dependency>
             <groupId>de.tuberlin.pserver</groupId>
             <artifactId>pserver-core</artifactId>
         </dependency>
     </dependencies>
-
-    <!-- ================================= -->
-    <!-- MAVEN BUILD. -->
-    <!-- ================================= -->
-
-    <!--build>
-        <plugins>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>${maven-jar-plugin.version}</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>com.aura.runtime.server.WorkloadManagerServer</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-
-        </plugins>
-    </build-->
 
 </project>

@@ -2,6 +2,7 @@ package de.tuberlin.pserver.core.net;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.events.Event;
+import de.tuberlin.pserver.utils.GsonUtils;
 import io.netty.channel.Channel;
 
 import java.util.UUID;
@@ -31,8 +32,10 @@ public final class NetEvents {
 
         transient private Channel channel;
 
+        @GsonUtils.Exclude
         public UUID srcMachineID;
 
+        @GsonUtils.Exclude
         public UUID dstMachineID;
 
         public NetEvent(final String type) { this(type, null, null); }

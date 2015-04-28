@@ -54,11 +54,7 @@ public final class InfrastructureManager extends EventDispatcher {
         final String zookeeperServer = ZookeeperClient.buildServersString(config.getObjectList("zookeeper.servers"));
         ZookeeperClient.checkConnectionString(zookeeperServer);
         connectZookeeper(zookeeperServer);
-        LOG.info("Started InfrastructureManager at " + machine);
-    }
-
-    public void shutdown() {
-        shutdownEventDispatcher();
+        LOG.debug("Started InfrastructureManager at " + machine);
     }
 
     public Map<UUID, MachineDescriptor> getActivePeers() { return Collections.unmodifiableMap(peers); }
@@ -72,6 +68,9 @@ public final class InfrastructureManager extends EventDispatcher {
     public int getMachineIndex(final MachineDescriptor machine) { return machines.indexOf(Preconditions.checkNotNull(machine)); }
 
     public MachineDescriptor getMachine(final int machineIndex) { return machines.get(machineIndex); }
+
+    @Override
+    public void deactivate() { super.deactivate(); }
 
     // ---------------------------------------------------
     // Private Methods.
@@ -113,6 +112,14 @@ public final class InfrastructureManager extends EventDispatcher {
         public synchronized void process(final WatchedEvent event) {
             //try {
                 synchronized (lock) {
+
+                    while (zookeeper == null) // Killer solution ! :)
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
                     zookeeper.getChildrenForPathAndWatch(ZookeeperClient.ZOOKEEPER_NODES, this);
                     final List<String> machineList = zookeeper.getChildrenForPath(ZookeeperClient.ZOOKEEPER_NODES);
                     // Find out whether a node was created or deleted.

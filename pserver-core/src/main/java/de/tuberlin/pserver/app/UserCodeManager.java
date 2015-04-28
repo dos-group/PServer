@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.app;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.utils.Compressor;
+import de.tuberlin.pserver.commons.Compressor;
 import org.apache.bcel.Repository;
 import org.apache.bcel.classfile.*;
 import org.apache.commons.lang3.tuple.Triple;
@@ -113,7 +113,7 @@ public final class UserCodeManager {
         return Triple.of(clazz, dependencies, compressor.compress(loadByteCode(clazz)));
     }
 
-    public Class<?> implantClass(final PServerJobDescriptor userCode) {
+    public Class<?> implantClass(final PServerJobSubmissionEvent userCode) {
         Preconditions.checkNotNull(userCode);
         try {
             for (final String dependency : userCode.classDependencies)
