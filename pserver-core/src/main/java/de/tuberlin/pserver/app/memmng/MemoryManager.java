@@ -62,8 +62,6 @@ public final class MemoryManager {
 
     // ---------------------------------------------------
 
-    private final long totalMemory;
-
     private final AtomicLong freeMemory;
 
     private final AtomicLong usedMemory;
@@ -95,10 +93,10 @@ public final class MemoryManager {
         this.memoryObserverPeriod = config.getLong("mem.longLifeFragmentationObserverPeriod");
         this.segmentRequestTimeOut = config.getLong("mem.segmentRequestTimeOut");
 
-        this.totalMemory = Runtime.getRuntime().totalMemory();
         this.freeMemory = new AtomicLong();
         this.usedMemory = new AtomicLong();
-        final int numLongLifeSegments = (int) (totalMemory / longLifeSegmentSize);
+        calculateMemoryUsage();
+        final int numLongLifeSegments = (int) ((freeMemory.get() / 2) / longLifeSegmentSize);
         this.longLifeArena = new MemoryArena(numLongLifeSegments, longLifeSegmentSize);
         // TODO: make dependent from <code>shortLifeHeapFraction</code>
         this.shortLifeHeap = new ShortLifeHeap(100, 10, 15);
@@ -166,10 +164,14 @@ public final class MemoryManager {
 
             @Override
             public void run() {
-                freeMemory.set(Runtime.getRuntime().freeMemory());
-                usedMemory.set(totalMemory - freeMemory.get());
+                calculateMemoryUsage();
             }
 
         }, 0, memoryObserverPeriod);
+    }
+
+    private void calculateMemoryUsage() {
+        usedMemory.set(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
+        freeMemory.set(Runtime.getRuntime().maxMemory() - usedMemory.get());
     }
 }
