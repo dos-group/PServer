@@ -68,7 +68,7 @@ public enum PServerNodeFactory {
 
         this.config             = Preconditions.checkNotNull(config);
         this.machine            = configureMachine();
-        this.memoryManager      = new MemoryManager(config);
+        this.memoryManager      = null; //new MemoryManager(config);
         this.infraManager       = new InfrastructureManager(machine, config);
         this.netManager         = new NetManager(machine, infraManager, 16);
         this.userCodeManager    = new UserCodeManager(this.getClass().getClassLoader(), false);
