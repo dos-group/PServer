@@ -20,4 +20,4 @@ if [ -z ${PSERVER_ROOT_DIR+x} ] || [ -z "${PSERVER_ROOT_DIR}" ]; then
 fi
 
 CMD="pserver-start"
-. "${PSERVER_ROOT_DIR}/sbin/cluster.sh"
+. "${PSERVER_ROOT_DIR}/sbin/staged-cluster.sh"

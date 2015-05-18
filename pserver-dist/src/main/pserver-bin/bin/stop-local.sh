@@ -14,10 +14,10 @@
 # 
 ########################################################################################################################
 
-bin=`dirname "$0"`
-bin=`cd "$bin"; pwd`
+if [ -z ${PSERVER_ROOT_DIR+x} ] || [ -z "${PSERVER_ROOT_DIR}" ]; then
+    PWD=$(dirname "$0"); PWD=$(cd "${PWD}"; pwd);
+    PSERVER_ROOT_DIR=$(cd "${PWD}/.."; pwd)
+fi
 
-. "$bin"/env.sh
-
-# stop local node
-$PSERVER_BIN_DIR/node.sh stop
+CMD="pserver-stop"
+. "${PSERVER_ROOT_DIR}/sbin/local.sh"

@@ -37,6 +37,34 @@ manglePathList() {
     fi
 }
 
+# Auxilliary functionTypeName for log file rotation
+rotateLogFile() {
+    log=$1;
+    num=$MAX_LOG_FILE_NUMBER
+    if [ -f "$log" -a "$num" -gt 0 ]; then
+        while [ $num -gt 1 ]; do
+            prev=`expr $num - 1`
+            [ -f "$log.$prev" ] && mv "$log.$prev" "$log.$num"
+            num=$prev
+        done
+        mv "$log" "$log.$num";
+    fi
+}
+
+# auxilliary functionTypeName to construct a lightweight classpath
+constructNodeClassPath() {
+
+    for jarfile in $PSERVER_LIB_DIR/*.jar ; do
+        if [ -z ${PSERVER_NODE_CLASSPATH+x} ] || [ -z "${PSERVER_NODE_CLASSPATH}" ]; then
+            PSERVER_NODE_CLASSPATH=$jarfile;
+        else
+            PSERVER_NODE_CLASSPATH=$PSERVER_NODE_CLASSPATH:$jarfile
+        fi
+    done
+
+    echo $PSERVER_NODE_CLASSPATH
+}
+
 # Looks up a config value by key from a simple YAML-style key-value map.
 # $1: key to look up
 # $2: default value to return if key does not exist
@@ -83,26 +111,6 @@ KEY_ENV_SSH_OPTS="env.ssh.opts"
 # PATHS AND CONFIG
 ########################################################################################################################
 
-# Resolve links
-this="$0"
-while [ -h "$this" ]; do
-  ls=`ls -ld "$this"`
-  link=`expr "$ls" : '.*-> \(.*\)$'`
-  if expr "$link" : '.*/.*' > /dev/null; then
-    this="$link"
-  else
-    this=`dirname "$this"`/"$link"
-  fi
-done
-
-# Convert relative path to absolute path
-bin=`dirname "$this"`
-script=`basename "$this"`
-bin=`cd "$bin"; pwd`
-this="$bin/$script"
-
-# Define the main directory of the pserver installation
-PSERVER_ROOT_DIR=`dirname "$this"`/..
 PSERVER_LIB_DIR=$PSERVER_ROOT_DIR/lib
 
 # These need to be mangled because they are directly passed to java.
@@ -144,6 +152,11 @@ else
     fi
 fi
 
+if [ "$PSERVER_IDENT_STRING" = "" ]; then
+    PSERVER_IDENT_STRING="$USER"
+fi
+
+
 # Define HOSTNAME if it is not already set
 if [ -z "${HOSTNAME}" ]; then
     HOSTNAME=`hostname`
@@ -177,17 +190,3 @@ JVM_ARGS=""
 
 # Default classpath 
 CLASSPATH=`manglePathList $( echo $PSERVER_LIB_DIR/*.jar . | sed 's/ /:/g' )`
-
-# Auxilliary functionTypeName for log file rotation
-rotateLogFile() {
-    log=$1;
-    num=$MAX_LOG_FILE_NUMBER
-    if [ -f "$log" -a "$num" -gt 0 ]; then
-        while [ $num -gt 1 ]; do
-            prev=`expr $num - 1`
-            [ -f "$log.$prev" ] && mv "$log.$prev" "$log.$num"
-            num=$prev
-        done
-        mv "$log" "$log.$num";
-    fi
-}

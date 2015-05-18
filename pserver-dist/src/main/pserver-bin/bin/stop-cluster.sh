@@ -14,27 +14,10 @@
 # 
 ########################################################################################################################
 
-bin=`dirname "$0"`
-bin=`cd "$bin"; pwd`
-
-. "$bin"/env.sh
-
-HOSTLIST=$PSERVER_SLAVES
-
-if [ "$HOSTLIST" = "" ]; then
-    HOSTLIST="${PSERVER_CONF_DIR}/slaves"
+if [ -z ${PSERVER_ROOT_DIR+x} ] || [ -z "${PSERVER_ROOT_DIR}" ]; then
+    PWD=$(dirname "$0"); PWD=$(cd "${PWD}"; pwd);
+    PSERVER_ROOT_DIR=$(cd "${PWD}/.."; pwd)
 fi
 
-if [ ! -f $HOSTLIST ]; then
-    echo $HOSTLIST is not a valid slave list
-    exit 1
-fi
-
-GOON=true
-while $GOON
-do
-    read HOST || GOON=false
-    if [ -n "$HOST" ]; then
-        ssh -n $PSERVER_SSH_OPTS $HOST -- "nohup /bin/bash $PSERVER_BIN_DIR/node.sh stop &"
-    fi
-done < $HOSTLIST
+CMD="pserver-stop"
+. "${PSERVER_ROOT_DIR}/sbin/cluster.sh"

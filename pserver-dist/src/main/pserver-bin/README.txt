@@ -1,31 +1,22 @@
-For the latest information about Aura, please visit our website at:
+Quick Start Guide (With wally profile)
 
-   <insert pserver website here>
+This guide is intended for users wanting to quickly run the pserver on the wally cluster.
 
-and our GitHub Account 
+If you have direct access to the nodes of the cluster, use the commands as they are named in the following.
+But if you only have access to the master node, prepent "staged-" to all script names. Example:
+sbin/cluster.sh fetch-logs -f <first-wally-node-id> -c <number-of-nodes-to-use> -fetch-logs-interval <in seconds>
+sbin/cluster-staged.sh fetch-logs -f <first-wally-node-id> -c <number-of-nodes-to-use> -fetch-logs-interval <in seconds>
 
-   https://github.com/citlab/PServer
-
-If you have any questions, ask on our Mailing list
-
-   <insert pserver mailinglist here>
-
-This distribution includes cryptographic software.  The country in 
-which you currently reside may have restrictions on the import, 
-possession, use, and/or re-export to another country, of 
-encryption software.  BEFORE using any encryption software, please 
-check your country's laws, regulations and policies concerning the
-import, possession, or use, and re-export of encryption software, to 
-see if this is permitted.  See <http://www.wassenaar.org/> for more
-information.
-
-The U.S. Government Department of Commerce, Bureau of Industry and
-Security (BIS), has classified this software as Export Commodity 
-Control Number (ECCN) 5D002.C.1, which includes information security
-software using or performing cryptographic functions with asymmetric
-algorithms.  The form and manner of this Apache Software Foundation
-distribution makes it eligible for export under the License Exception
-ENC Technology Software Unrestricted (TSU) exception (see the BIS 
-Export Administration Regulations, Section 740.13) for both object 
-code and source code.
-
+0. Make sure your project is built with mvn package
+1. Add all runtime configuration parameters like heap-space, java-home, ssh-options etc. to conf/pserver.conf
+2. Add all deployment specific options like target-directories etc. to conf/deploy.conf
+3. Run scripts/deploy-zookeeper-setup-start-all.sh -f <first-wally-node-id> -c <number-of-nodes-to-use> -z <number-of-zookeeper-nodes>
+   This will do the following:
+   - upload the built binary package (pserver-dist/target) to the specified range of wally node
+   - install and configure zookeeper in the specified range
+   - start zookeeper- and pserver-nodes
+4. Run sbin/cluster.sh fetch-logs -f <first-wally-node-id> -c <number-of-nodes-to-use> -fetch-logs-interval <in seconds>
+   This will repeatedly gather all available logs from the specified node range and copy them into the log directory.
+   You can monitor the log files with "less -F".
+5. When you are done, run scripts/stop-all-fetch-logs.sh -f <first-wally-node-id> -c <number-of-nodes-to-use> -z <number-of-zookeeper-nodes>
+   This will stop all running nodes and fetch the final

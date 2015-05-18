@@ -65,6 +65,41 @@
             <fileMode>0644</fileMode>
         </fileSet>
 
+        <!-- copy env -->
+        <fileSet>
+            <directory>src/main/pserver-bin/env</directory>
+            <outputDirectory>env</outputDirectory>
+            <fileMode>0744</fileMode>
+        </fileSet>
+
+        <!-- copy sbin -->
+        <fileSet>
+            <directory>src/main/pserver-bin/sbin</directory>
+            <outputDirectory>sbin</outputDirectory>
+            <fileMode>0744</fileMode>
+        </fileSet>
+
+        <!-- copy profiles -->
+        <fileSet>
+            <directory>src/main/pserver-bin/profiles</directory>
+            <outputDirectory>profiles</outputDirectory>
+            <fileMode>0744</fileMode>
+        </fileSet>
+
+        <!-- copy incs -->
+        <fileSet>
+            <directory>src/main/pserver-bin/inc</directory>
+            <outputDirectory>inc</outputDirectory>
+            <fileMode>0744</fileMode>
+        </fileSet>
+
+        <!-- copy scripts -->
+        <fileSet>
+            <directory>src/main/pserver-bin/scripts</directory>
+            <outputDirectory>scripts</outputDirectory>
+            <fileMode>0744</fileMode>
+        </fileSet>t
+
         <fileSet>
             <!-- create an empty log directory -->
             <directory>src/main/pserver-bin/</directory>
@@ -94,13 +129,6 @@
                 <include>pserver-*-javadoc.jar</include>
             </includes>
             <outputDirectory>docs/javadoc</outputDirectory>
-            <fileMode>0644</fileMode>
-        </fileSet>
-
-        <!-- copy the tools -->
-        <fileSet>
-            <directory>src/main/pserver-bin/tools</directory>
-            <outputDirectory>tools</outputDirectory>
             <fileMode>0644</fileMode>
         </fileSet>
 

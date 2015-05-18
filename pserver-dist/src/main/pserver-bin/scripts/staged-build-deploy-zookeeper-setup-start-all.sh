@@ -19,5 +19,17 @@ if [ -z ${PSERVER_ROOT_DIR+x} ] || [ -z "${PSERVER_ROOT_DIR}" ]; then
     PSERVER_ROOT_DIR=$(cd "${PWD}/.."; pwd)
 fi
 
+# build
+mvn clean install
+# deploy pserver
+CMD="pserver-deploy"
+. ${PSERVER_ROOT_DIR}/sbin/staged-cluster.sh
+# setup zookeeper
+CMD="zookeeper-setup"
+. ${PSERVER_ROOT_DIR}/sbin/staged-cluster.sh
+# start zookeeper
+CMD="zookeeper-start"
+. ${PSERVER_ROOT_DIR}/sbin/staged-cluster.sh
+# stop pserver
 CMD="pserver-start"
-. "${PSERVER_ROOT_DIR}/sbin/cluster.sh"
+. ${PSERVER_ROOT_DIR}/sbin/staged-cluster.sh

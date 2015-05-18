@@ -14,10 +14,36 @@
 # 
 ########################################################################################################################
 
+# set root dir if not done yet
 if [ -z ${PSERVER_ROOT_DIR+x} ] || [ -z "${PSERVER_ROOT_DIR}" ]; then
-    PWD=$(dirname "$0"); PWD=$(cd "${PWD}"; pwd);
-    PSERVER_ROOT_DIR=$(cd "${PWD}/.."; pwd)
+	PWD=$(dirname "$0"); PWD=$(cd "${PWD}"; pwd);
+	PSERVER_ROOT_DIR=$(cd "${PWD}/../.."; pwd)
 fi
 
-CMD="pserver-start"
-. "${PSERVER_ROOT_DIR}/sbin/cluster.sh"
+if [ -z ${ENV+x} ] || [ -z "${ENV}" ]; then
+    . "${PSERVER_ROOT_DIR}/env/env.sh"
+fi
+
+# ${HOSTLIST} may be set to the zookeepers file to "iterate" over zookeeper hosts
+if [ -z ${HOSTLIST+x} ] || [ -z "${HOSTLIST}" ]; then
+    HOSTLIST="${SLAVES_FILE}"
+fi
+
+if [ "$(type -t run_on_host 2>/dev/null)" != "function" ]; then
+	echo "[ERROR][${HOSTNAME}] You have to define a function 'run_on_host <HOST>' before including this snippet"
+    exit 1
+fi
+
+if [ ! -f $HOSTLIST ]; then
+    echo "[ERROR][${HOSTNAME}] $HOSTLIST is not a valid slave list"
+    exit 1
+fi
+
+GOON=true
+while $GOON
+do
+    read HOST || GOON=false
+    if [ -n "${HOST}" ]; then
+        run_on_host "${HOST}" || true
+    fi
+done < $HOSTLIST

@@ -19,5 +19,5 @@ if [ -z ${PSERVER_ROOT_DIR+x} ] || [ -z "${PSERVER_ROOT_DIR}" ]; then
     PSERVER_ROOT_DIR=$(cd "${PWD}/.."; pwd)
 fi
 
-CMD="pserver-start"
-. "${PSERVER_ROOT_DIR}/sbin/cluster.sh"
+CMD="pserver-stop"
+. "${PSERVER_ROOT_DIR}/sbin/staged-cluster.sh"

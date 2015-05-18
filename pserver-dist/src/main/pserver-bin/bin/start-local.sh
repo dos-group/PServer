@@ -14,10 +14,10 @@
 # 
 ########################################################################################################################
 
-bin=`dirname "$0"`
-bin=`cd "$bin"; pwd`
+if [ -z ${PSERVER_ROOT_DIR+x} ] || [ -z "${PSERVER_ROOT_DIR}" ]; then
+    PWD=$(dirname "$0"); PWD=$(cd "${PWD}"; pwd);
+    PSERVER_ROOT_DIR=$(cd "${PWD}/.."; pwd)
+fi
 
-. "$bin"/env.sh
-
-# local mode, only bring up one node
-$PSERVER_BIN_DIR/node.sh start local
+CMD="pserver-start"
+. "${PSERVER_ROOT_DIR}/sbin/local.sh"
