@@ -52,3 +52,9 @@ crashlytics-build.properties
 */target/
 *.*~
 logs/
+
+# maven git plugin
+.version.properties
+
+*.zip
+*/slaves

@@ -2,7 +2,11 @@ package de.tuberlin.pserver.node;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.type.FileArgumentType;
+import net.sourceforge.argparse4j.impl.type.StringArgumentType;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
+import net.sourceforge.argparse4j.inf.ArgumentParserException;
+import net.sourceforge.argparse4j.inf.Namespace;
+import net.sourceforge.argparse4j.internal.HelpScreenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,9 +32,15 @@ public final class PServerMain {
         parser.addArgument("--config-dir")
                 .type(new FileArgumentType().verifyIsDirectory().verifyCanRead())
                 .dest("pserver.path.config")
-                .setDefault("config")
                 .metavar("PATH")
                 .help("config folder");
+
+        parser.addArgument("--profile")
+                .type(new StringArgumentType())
+                .dest("pserver.profile")
+                .metavar("PROFILE")
+                .help("pserver profile");
+
         //@formatter:on
         return parser;
     }
@@ -39,18 +49,26 @@ public final class PServerMain {
     // Entry Point.
     // ---------------------------------------------------
 
-    public static void main(final String[] args) {
+    public static void main(String[] args) {
+
         // construct base argument parser
-        /*ArgumentParser parser = getArgumentParser();
+        ArgumentParser parser = getArgumentParser();
         try {
             // parse the arguments and store them as system properties
             parser.parseArgs(args).getAttrs().entrySet().stream()
-                    .filter(e -> e.getValueOfColumn() != null)
-                    .forEach(e -> System.setProperty(e.getKey(), e.getValueOfColumn().toString()));*/
+                    .filter(e -> e.getValue() != null)
+                    .forEach(e -> {
+                        if(e.getKey().equals("pserver.profile") && e.getValue().toString().equals("remote")) {
+                            System.setProperty(e.getKey(), "wally");
+                        }
+                        else {
+                            System.setProperty(e.getKey(), e.getValue().toString());
+                        }
+                    });
 
             PServerNodeFactory.createParameterServerNode();
 
-        /*} catch (HelpScreenException e) {
+        } catch (HelpScreenException e) {
             parser.handleError(e);
         } catch (ArgumentParserException e) {
             parser.handleError(e);
@@ -59,6 +77,6 @@ public final class PServerMain {
             System.err.println(String.format("Unexpected error: %s", e));
             e.printStackTrace();
             System.exit(1);
-        }*/
+        }
     }
 }
