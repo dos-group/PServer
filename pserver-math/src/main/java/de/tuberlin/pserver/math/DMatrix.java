@@ -48,7 +48,9 @@ public class DMatrix implements Matrix, Serializable {
         this.cols = cols;
         this.layout = Preconditions.checkNotNull(layout);
         this.data = (data == null) ? new double[(int)(rows * cols)] : Preconditions.checkNotNull(data);
-        Preconditions.checkState(data.length == rows * cols);
+        //edited by Mustafa
+        //Preconditions.checkState(data.length == rows * cols);
+        Preconditions.checkState(this.data.length == rows * cols);
     }
 
     // ---------------------------------------------------
