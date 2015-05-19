@@ -3,7 +3,7 @@ package de.tuberlin.pserver.examples.playground;
 
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.math.DMatrix;
+import de.tuberlin.pserver.experimental.old.DMatrix;
 
 import java.text.DecimalFormat;
 

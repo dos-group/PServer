@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.math.DMatrix;
+import de.tuberlin.pserver.experimental.old.DMatrix;
 import de.tuberlin.pserver.ml.optimization.gradientdescent.SGDRegressor;
 import de.tuberlin.pserver.ml.optimization.gradientdescent.WeightsUpdater;
 
@@ -49,10 +49,10 @@ public final class AsyncSGDTestJob extends PServerJob {
 
         dataManager.loadDMatrix("datasets/demo_dataset.csv");
 
-        regressor = new SGDRegressor(getJobContext())
-            .setLearningRate(0.005)
-            .setNumberOfIterations(15400)
-            .setWeightsUpdater(weightsUpdater);
+        regressor = new SGDRegressor(getJobContext());
+        regressor.setLearningRate(0.005);
+        regressor.setNumberOfIterations(15400);
+        regressor.setWeightsUpdater(weightsUpdater);
     }
 
     @Override

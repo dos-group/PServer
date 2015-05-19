@@ -3,10 +3,10 @@ package de.tuberlin.pserver.app.types;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.dht.valuetypes.AbstractBufferValue;
 import de.tuberlin.pserver.commons.UnsafeOp;
-import de.tuberlin.pserver.math.DMatrix;
-import de.tuberlin.pserver.math.DVector;
-import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
-import de.tuberlin.pserver.math.delegates.MathLibFactory;
+import de.tuberlin.pserver.experimental.old.DMatrix;
+import de.tuberlin.pserver.experimental.old.DVector;
+import de.tuberlin.pserver.experimental.old.delegates.LibraryMatrixOps;
+import de.tuberlin.pserver.experimental.old.delegates.MathLibFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

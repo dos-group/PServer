@@ -1,15 +1,8 @@
 package de.tuberlin.pserver.math.delegates;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.DMatrix;
-import de.tuberlin.pserver.math.DVector;
-import de.tuberlin.pserver.math.SMatrix;
-import de.tuberlin.pserver.math.SVector;
-import de.tuberlin.pserver.math.delegates.dense.ejml.EJMLMatrixOps;
-import de.tuberlin.pserver.math.delegates.dense.ejml.EJMLVectorOps;
-import de.tuberlin.pserver.math.delegates.sparse.ujmp.UJMPMatrixOps;
-import de.tuberlin.pserver.math.delegates.sparse.ujmp.UJMPVectorOps;
-import org.ujmp.core.matrix.SparseMatrix;
+import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.Vector;
 
 public class MathLibFactory {
 
@@ -51,10 +44,10 @@ public class MathLibFactory {
 
     // ---------------------------------------------------
 
-    public static LibraryMatrixOps<DMatrix, DVector> delegateDMatrixOpsTo(final DMathLibrary lib) {
+    public static LibraryMatrixOps<Matrix, Vector> delegateDMatrixOpsTo(final DMathLibrary lib) {
         switch (Preconditions.checkNotNull(lib)) {
             case EJML_LIBRARY:
-                return new EJMLMatrixOps();
+                return new de.tuberlin.pserver.math.delegates.dense.ejml.EJMLMatrixOps();
             case MTJ_LIBRARY:
                 throw new UnsupportedOperationException();
             case JBLAS_LIBRARY:
@@ -65,10 +58,10 @@ public class MathLibFactory {
 
     // ---------------------------------------------------
 
-    public static LibraryVectorOps<DVector> delegateDVectorOpsTo(final DMathLibrary lib) {
+    public static LibraryVectorOps<Vector> delegateDVectorOpsTo(final DMathLibrary lib) {
         switch (Preconditions.checkNotNull(lib)) {
             case EJML_LIBRARY:
-                return new EJMLVectorOps();
+                return new de.tuberlin.pserver.math.delegates.dense.ejml.EJMLVectorOps();
             case MTJ_LIBRARY:
                 throw new UnsupportedOperationException();
             case JBLAS_LIBRARY:
@@ -78,8 +71,8 @@ public class MathLibFactory {
     }
 
     // ---------------------------------------------------
-
-    public static LibraryMatrixOps<SMatrix, SVector> delegateSMatrixOpsTo(final SMathLibrary lib) {
+/*
+    public static de.tuberlin.pserver.math.delegates.LibraryMatrixOps<SMatrix, SVector> delegateSMatrixOpsTo(final SMathLibrary lib) {
         switch (Preconditions.checkNotNull(lib)) {
             case UJMP_LIBRARY:
                 return new UJMPMatrixOps();
@@ -103,7 +96,7 @@ public class MathLibFactory {
     public static LibraryVectorOps<SVector> delegateSVectorOpsTo(final SMathLibrary lib) {
         switch (Preconditions.checkNotNull(lib)) {
             case UJMP_LIBRARY:
-                return new UJMPVectorOps();
+                return new de.tuberlin.pserver.math.delegates.sparse.ujmp.UJMPVectorOps();
         }
         throw new IllegalStateException();
     }
@@ -117,4 +110,5 @@ public class MathLibFactory {
         }
         throw new IllegalStateException();
     }
+    */
 }

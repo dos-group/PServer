@@ -3,8 +3,8 @@ package de.tuberlin.pserver.app.types;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.dht.valuetypes.AbstractBufferValue;
 import de.tuberlin.pserver.app.memmng.MemoryManager;
-import de.tuberlin.pserver.math.DMatrix;
-import de.tuberlin.pserver.math.DVector;
+import de.tuberlin.pserver.experimental.old.DMatrix;
+import de.tuberlin.pserver.experimental.old.DVector;
 
 import java.util.List;
 

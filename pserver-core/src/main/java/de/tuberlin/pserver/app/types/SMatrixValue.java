@@ -2,10 +2,10 @@ package de.tuberlin.pserver.app.types;
 
 
 import de.tuberlin.pserver.app.dht.Value;
-import de.tuberlin.pserver.math.SMatrix;
-import de.tuberlin.pserver.math.SVector;
-import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
-import de.tuberlin.pserver.math.delegates.MathLibFactory;
+import de.tuberlin.pserver.experimental.old.SMatrix;
+import de.tuberlin.pserver.experimental.old.SVector;
+import de.tuberlin.pserver.experimental.old.delegates.LibraryMatrixOps;
+import de.tuberlin.pserver.experimental.old.delegates.MathLibFactory;
 
 public class SMatrixValue extends Value implements SMatrix {
 
