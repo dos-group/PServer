@@ -98,7 +98,7 @@
             <directory>src/main/pserver-bin/scripts</directory>
             <outputDirectory>scripts</outputDirectory>
             <fileMode>0744</fileMode>
-        </fileSet>t
+        </fileSet>
 
         <fileSet>
             <!-- create an empty log directory -->
