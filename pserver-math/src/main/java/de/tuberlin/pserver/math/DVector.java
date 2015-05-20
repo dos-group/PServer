@@ -135,7 +135,7 @@ public class DVector implements Vector, Serializable {
 
     @Override
     public Vector assign(final Vector other, final DoubleDoubleFunction function) {
-        Preconditions.checkState(size() != other.size());
+        Preconditions.checkState(size() == other.size());
         // is there some other way to know if function.apply(0, x) = x for all x?
         if (function instanceof PlusMult) {
             Iterator<Element> it = other.iterateNonZero();

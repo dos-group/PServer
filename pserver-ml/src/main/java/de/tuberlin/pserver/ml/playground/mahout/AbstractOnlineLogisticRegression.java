@@ -102,10 +102,6 @@ public abstract class AbstractOnlineLogisticRegression extends AbstractVectorCla
     public Vector classifyNoLink(Vector instance) {
         // apply pending regularization to whichever coefficients matter
 
-        LOG.info("----------------------------------> instance " + instance.size());
-        LOG.info("----------------------------------> beta rows " + beta.numRows());
-        LOG.info("----------------------------------> beta cols " + beta.numCols());
-
         regularize(instance);
         return beta.mul(instance);
     }
