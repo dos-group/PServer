@@ -5,7 +5,7 @@ public class TestMahoutLogisticRegression {
     public static void main(final String args) {
 
 
-        
+
 
     }
 }
