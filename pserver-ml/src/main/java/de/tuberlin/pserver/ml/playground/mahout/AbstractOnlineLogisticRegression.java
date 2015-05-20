@@ -6,6 +6,8 @@ import de.tuberlin.pserver.math.DVector;
 import de.tuberlin.pserver.math.DoubleFunction;
 import de.tuberlin.pserver.math.Functions;
 import de.tuberlin.pserver.math.Vector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 
@@ -19,6 +21,10 @@ import java.util.Iterator;
  * and per-term annealing for themselves.
  */
 public abstract class AbstractOnlineLogisticRegression extends AbstractVectorClassifier implements OnlineLearner {
+
+
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractOnlineLogisticRegression.class);
+
     // coefficients for the classification.  This is a dense matrix
     // that is (numCategories-1) x numFeatures
     protected Matrix beta;
@@ -95,6 +101,11 @@ public abstract class AbstractOnlineLogisticRegression extends AbstractVectorCla
     @Override
     public Vector classifyNoLink(Vector instance) {
         // apply pending regularization to whichever coefficients matter
+
+        LOG.info("----------------------------------> instance " + instance.size());
+        LOG.info("----------------------------------> beta rows " + beta.numRows());
+        LOG.info("----------------------------------> beta cols " + beta.numCols());
+
         regularize(instance);
         return beta.mul(instance);
     }

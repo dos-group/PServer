@@ -59,6 +59,8 @@
         <ejml.version>0.25</ejml.version>
 
         <hadoop-client.version>2.4.1</hadoop-client.version>
+
+        <commons.math3.version>3.2</commons.math3.version>
     </properties>
 
     <!-- ================================= -->
@@ -91,6 +93,11 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
         </dependency>
 
     </dependencies>
@@ -245,6 +252,12 @@
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-client</artifactId>
                 <version>${hadoop-client.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-math3</artifactId>
+                <version>${commons.math3.version}</version>
             </dependency>
 
         </dependencies>

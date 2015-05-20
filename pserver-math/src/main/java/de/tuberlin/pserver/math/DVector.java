@@ -67,6 +67,7 @@ public class DVector implements Vector, Serializable {
 
     public DVector(final DVector v) { this(v.data.length, v.data, v.type); }
     public DVector(final long size) { this(size, null, VectorType.ROW_VECTOR); }
+    public DVector(final long size, final VectorType type) { this(size, null, type); }
     public DVector(final long size, final double[] data) { this(size, data, VectorType.ROW_VECTOR); }
     public DVector(final long size, final double[] data, final VectorType type) {
         this.data = (data == null) ? new double[(int)size] : data;

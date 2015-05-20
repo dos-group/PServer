@@ -1,5 +1,7 @@
 package de.tuberlin.pserver.ml.playground.mahout;
 
+import org.apache.hadoop.io.Writable;
+
 /**
  * A prior is used to regularize the learning algorithm.  This allows a trade-off to
  * be made between complexity of the model being learned and the accuracy with which
@@ -7,7 +9,7 @@ package de.tuberlin.pserver.ml.playground.mahout;
  * which can be approximated using different priors.  For large sparse systems, such
  * as text classification, the L1 prior is often used which favors sparse models.
  */
-public interface PriorFunction {
+public interface PriorFunction extends Writable {
     /**
      * Applies the regularization to a coefficient.
      * @param oldValue        The previous value.
