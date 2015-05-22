@@ -90,9 +90,9 @@ public class EJMLVectorOps implements LibraryVectorOps<Vector> {
     public static DenseMatrix64F convertDVectorToDenseVector64F(final Vector vector) {
         switch (vector.getVectorType()) {
             case COLUMN_VECTOR:
-                return new DenseMatrix64F((int)vector.size(), 1, true, vector.toArray());
+                return DenseMatrix64F.wrap((int)vector.size(), 1, vector.toArray());
             case ROW_VECTOR:
-                return new DenseMatrix64F(1, (int)vector.size(), true, vector.toArray());
+                return DenseMatrix64F.wrap(1, (int)vector.size(), vector.toArray());
         }
         throw new IllegalStateException();
     }

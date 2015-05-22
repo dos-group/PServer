@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.math.delegates.dense.ejml;
 
-import de.tuberlin.pserver.math.Matrix;
+import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.math.*;
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
-import de.tuberlin.pserver.math.Vector;
 import org.ejml.alg.dense.mult.MatrixVectorMult;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
@@ -33,17 +33,18 @@ public final class EJMLMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
     public Vector mul(final Matrix A, final Vector X) {
         final DenseMatrix64F a = convertDMatrixToDenseMatrix64F(A);
         final DenseMatrix64F b = EJMLVectorOps.convertDVectorToDenseVector64F(X);
-        final DenseMatrix64F c = new DenseMatrix64F(a.getNumRows(), b.getNumCols(), true, b.getData());
+        DenseMatrix64F c = DenseMatrix64F.wrap((int)A.numRows(), 1, new double[(int)A.numRows()]);
         MatrixVectorMult.mult(a, b, c);
-        return X;
+        return new DVector(a.getNumRows(), c.getData());
     }
 
     @Override
     public Matrix mul(final Matrix A, final Matrix B) {
         final DenseMatrix64F a = convertDMatrixToDenseMatrix64F(A);
-        final DenseMatrix64F b = convertDMatrixToDenseMatrix64F(B);;
-        CommonOps.mult(a, b, a);
-        return A;
+        final DenseMatrix64F b = convertDMatrixToDenseMatrix64F(B);
+        DenseMatrix64F c = DenseMatrix64F.wrap((int)A.numRows(), (int)B.numCols(), new double[(int)A.numRows()*(int)B.numCols()]);
+        CommonOps.mult(a, b, c);
+        return new DMatrix(A.numRows(), B.numCols(), c.getData());
     }
 
     @Override
@@ -84,6 +85,6 @@ public final class EJMLMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
     // ---------------------------------------------------
 
     private static DenseMatrix64F convertDMatrixToDenseMatrix64F(final Matrix matrix) {
-        return new DenseMatrix64F((int)matrix.numRows(), (int)matrix.numCols(), true, matrix.toArray());
+        return DenseMatrix64F.wrap((int)matrix.numRows(), (int)matrix.numCols(), matrix.toArray());
     }
 }
