@@ -9,7 +9,7 @@ import org.junit.Test;
 import java.util.Random;
 
 /**
- * Tests if direct calls of EJML produces same result as delegated calls.
+ * Tests if direct calls of EJML produce same result as delegated calls.
  * Errors here indicate, that a delegation is faulty.
  */
 public class EJMLDelegationTests {
@@ -131,6 +131,30 @@ public class EJMLDelegationTests {
             CommonOps.mult(ejmlMat1, ejmlMat2, ejmlRes);
 
             Matrix res = mat1.mul(mat2);
+            double[] resData = res.toArray();
+
+            assert(java.util.Arrays.equals(resData, ejmlResData));
+        }
+    }
+
+    @Test
+    public void matrixTranspose() {
+
+        Random rand = new Random();
+
+        for(int i=0; i<1000; i++) {
+            int a = (rand.nextInt(10) + 1)*10;
+            int b = (rand.nextInt(10) + 1)*10;
+            
+            Matrix mat1 = MatrixGenerator.RandomDMatrix(a,b);
+
+            double[] ejmlMat1Data = new double[a*b];
+            System.arraycopy(mat1.toArray(), 0, ejmlMat1Data, 0, a*b);
+            DenseMatrix64F ejmlMat1 = DenseMatrix64F.wrap(a, b, ejmlMat1Data);
+            CommonOps.transpose(ejmlMat1);
+            double[] ejmlResData = ejmlMat1.getData();
+
+            Matrix res = mat1.transpose();
             double[] resData = res.toArray();
 
             assert(java.util.Arrays.equals(resData, ejmlResData));

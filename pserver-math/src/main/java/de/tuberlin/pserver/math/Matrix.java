@@ -69,12 +69,20 @@ public interface Matrix {
 
     public abstract Vector mul(final Vector B);                     //
 
+    // shouln't that be
+    // public abstract void mul(final Vector x, final Vector y);
+    //                 ^^^^
+    // ?
     public abstract Vector mul(final Vector x, final Vector y);     // y = A * x
 
     public abstract Matrix scale(final double alpha);               // A = alpha * A
 
     public abstract Matrix transpose();                             // A = A^T
 
+    // shouln't that be
+    // public abstract void transpose(final Matrix B);
+    //                 ^^^^
+    // ?
     public abstract Matrix transpose(final Matrix B);               // B = A^T
 
     public abstract boolean invert();                               // A = A^-1

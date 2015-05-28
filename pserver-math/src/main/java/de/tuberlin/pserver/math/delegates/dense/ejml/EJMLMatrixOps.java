@@ -3,6 +3,7 @@ package de.tuberlin.pserver.math.delegates.dense.ejml;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.*;
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
+import org.ejml.alg.dense.misc.TransposeAlgs;
 import org.ejml.alg.dense.mult.MatrixVectorMult;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
@@ -65,8 +66,19 @@ public final class EJMLMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
 
     @Override
     public Matrix transpose(final Matrix A) {
-        CommonOps.transpose(convertDMatrixToDenseMatrix64F(A));
-        return A;
+        final DenseMatrix64F a = convertDMatrixToDenseMatrix64F(A);
+        // if matrix is square, EJML does not change the buffer. Dimensions stay the same also, so we can return the same object
+        if(A.numRows() == A.numCols()) {
+            TransposeAlgs.square(a);
+            return A;
+        }
+        // however, if the matrix is not square, dimensions and buffer change. So let's create a new object
+        else {
+            // (also EJML requires a second buffer for cpu cache line optimization. worth it?)
+            final DenseMatrix64F b = DenseMatrix64F.wrap((int)A.numCols(), (int)A.numRows(), new double[A.toArray().length]);
+            DenseMatrix64F res = CommonOps.transpose(a,b);
+            return new DMatrix(A.numCols(), A.numRows(), res.getData());
+        }
     }
 
     @Override

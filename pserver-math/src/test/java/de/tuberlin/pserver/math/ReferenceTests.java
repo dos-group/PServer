@@ -36,6 +36,19 @@ public class ReferenceTests {
         assert(mat1.scale(1.0) == mat1);
         // scale does not change buffer identity
         assert(mat1.scale(1.0).toArray() == mat1.toArray());
+
+    }
+
+    public void testReferencesMatrixOpsTranspose(Matrix mat1) {
+        // transpose does change object/buffer identity iff matrix is not square
+        if(mat1.numRows() == mat1.numCols()) {
+            assert(mat1.transpose() == mat1);
+            assert(mat1.transpose().toArray() == mat1.toArray());
+        }
+        else {
+            assert(mat1.transpose() != mat1);
+            assert(mat1.transpose().toArray() != mat1.toArray());
+        }
     }
 
     @Test
@@ -47,6 +60,9 @@ public class ReferenceTests {
                 MatrixGenerator.RandomDMatrix(50,50),
                 VectorGenerator.RandomDVector(50)
         );
+
+        testReferencesMatrixOpsTranspose(MatrixGenerator.RandomDMatrix(50,50));
+        testReferencesMatrixOpsTranspose(MatrixGenerator.RandomDMatrix(25,50));
 
     }
 
