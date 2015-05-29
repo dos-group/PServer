@@ -49,12 +49,11 @@ public final class EJMLMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
     }
 
     @Override
-    public Vector mul(final Matrix A, final Vector X, final Vector Y) {
+    public void mul(final Matrix A, final Vector X, final Vector Y) {
         final DenseMatrix64F a = convertDMatrixToDenseMatrix64F(A);
-        final DenseMatrix64F x = EJMLVectorOps.convertDVectorToDenseVector64F(X);
-        final DenseMatrix64F y = EJMLVectorOps.convertDVectorToDenseVector64F(Y);
-        CommonOps.mult(a, x, y);
-        return Y;
+        final DenseMatrix64F b = EJMLVectorOps.convertDVectorToDenseVector64F(X);
+        final DenseMatrix64F c = EJMLVectorOps.convertDVectorToDenseVector64F(Y);
+        MatrixVectorMult.mult(a, b, c);
     }
 
     @Override
@@ -82,9 +81,10 @@ public final class EJMLMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
     }
 
     @Override
-    public Matrix transpose(final Matrix B, final Matrix A) {
-        CommonOps.transpose(convertDMatrixToDenseMatrix64F(A), convertDMatrixToDenseMatrix64F(B));
-        return B;
+    public void transpose(final Matrix A, final Matrix B) {
+        final DenseMatrix64F a = convertDMatrixToDenseMatrix64F(A);
+        final DenseMatrix64F b = convertDMatrixToDenseMatrix64F(B);
+        CommonOps.transpose(a,b);
     }
 
     @Override

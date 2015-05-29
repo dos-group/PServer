@@ -116,13 +116,13 @@ public class DMatrix implements Matrix, Serializable {
 
     @Override public Vector mul(final Vector v) { return matrixOpDelegate.mul(this, v); }
 
-    @Override public Vector mul(final Vector x, final Vector y) { return matrixOpDelegate.mul(this, x, y); }
+    @Override public void mul(final Vector x, final Vector y) { matrixOpDelegate.mul(this, x, y); }
 
     @Override public Matrix scale(final double alpha) { return matrixOpDelegate.scale(alpha, this); }
 
     @Override public Matrix transpose() { return matrixOpDelegate.transpose(this); }
 
-    @Override public Matrix transpose(final Matrix B) { return matrixOpDelegate.transpose(B, this); }
+    @Override public void transpose(final Matrix B) { matrixOpDelegate.transpose(this, B); }
 
     @Override public boolean invert() { return matrixOpDelegate.invert(this); }
 
