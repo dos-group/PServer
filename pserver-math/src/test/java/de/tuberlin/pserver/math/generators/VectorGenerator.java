@@ -10,18 +10,12 @@ public class VectorGenerator {
     private static final Random rand = new Random();
 
     public static Vector RandomDVector(long size) {
-        double[] data = new double[(int)size];
-        for(int i=0; i<size; i++) {
-            data[i] = rand.nextDouble();
-        }
+        double[] data = BufferGenerator.RandomValues(size);
         return new DVector(size, data, Vector.VectorType.COLUMN_VECTOR);
     }
 
     public static Vector RandomDVector(long size, Vector.VectorType type) {
-        double[] data = new double[(int)size];
-        for(int i=0; i<size; i++) {
-            data[i] = rand.nextDouble();
-        }
+        double[] data = BufferGenerator.RandomValues(size);
         return new DVector(size, data, type);
     }
 

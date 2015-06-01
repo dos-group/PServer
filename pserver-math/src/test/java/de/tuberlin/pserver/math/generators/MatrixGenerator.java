@@ -11,19 +11,23 @@ public class MatrixGenerator {
 
     private static final Random rand = new Random();
 
-    public static Matrix RandomDMatrix(long rows, long cols) {
-        double[] data = new double[(int) (rows*cols)];
-        for(int i=0; i<data.length; i++) {
-            data[i] = rand.nextDouble();
-        }
+    public static DMatrix RandomDMatrix(long rows, long cols) {
+        double[] data = BufferGenerator.RandomValues(rows, cols);
         return new DMatrix(rows, cols, data, DMatrix.MemoryLayout.ROW_LAYOUT);
     }
 
-    public static Matrix RandomDMatrix(long rows, long cols, DMatrix.MemoryLayout layout) {
-        double[] data = new double[(int) (rows*cols)];
-        for(int i=0; i<data.length; i++) {
-            data[i] = rand.nextDouble();
-        }
+    public static DMatrix RandomDMatrix(long rows, long cols, DMatrix.MemoryLayout layout) {
+        double[] data = BufferGenerator.RandomValues(rows, cols);
+        return new DMatrix(rows, cols, data, layout);
+    }
+
+    public static DMatrix AscendingDMatrix(long rows, long cols) {
+        double[] data = BufferGenerator.AscendingValues(rows, cols);
+        return new DMatrix(rows, cols, data, DMatrix.MemoryLayout.ROW_LAYOUT);
+    }
+
+    public static DMatrix AscendingDMatrix(long rows, long cols, DMatrix.MemoryLayout layout) {
+        double[] data = BufferGenerator.AscendingValues(rows, cols);
         return new DMatrix(rows, cols, data, layout);
     }
 
