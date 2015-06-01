@@ -11,7 +11,7 @@ public class TestMahoutLogisticRegression {
 
         Vector v1 = new DVector(100);
 
-        Matrix m = new DMatrix(100, 1);
+        Matrix m = new DMatrix(1, 100);
 
         Vector v2 = m.mul(v1);
     }
