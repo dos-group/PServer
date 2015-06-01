@@ -8,11 +8,5 @@ import de.tuberlin.pserver.math.Vector;
 public class TestMahoutLogisticRegression {
 
     public static void main(String[] args) {
-
-        Vector v1 = new DVector(100);
-
-        Matrix m = new DMatrix(1, 100);
-
-        Vector v2 = m.mul(v1);
     }
 }

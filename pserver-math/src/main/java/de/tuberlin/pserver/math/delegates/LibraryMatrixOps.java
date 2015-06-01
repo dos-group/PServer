@@ -13,13 +13,13 @@ public interface LibraryMatrixOps<TM extends Matrix, TV extends Vector> {
 
     public abstract TM mul(final TM A, final TM B);
 
-    public abstract TV mul(final TM A, final TV x, final TV y); // y = A * x
+    public abstract void mul(final TM A, final TV x, final TV y); // y = A * x
 
     public abstract TM scale(final double alpha, final TM A);   // A = alpha * A
 
     public abstract TM transpose(final TM A);                   // A = A^T
 
-    public abstract TM transpose(final TM B, final TM A);       // B = A^T
+    public abstract void transpose(final TM A, final TM B);       // B = A^T
 
     public abstract boolean invert(final TM A);                 // A = A^-1
 }
