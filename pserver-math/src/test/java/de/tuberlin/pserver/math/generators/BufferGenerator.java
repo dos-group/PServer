@@ -22,13 +22,26 @@ public class BufferGenerator {
     }
 
     public static double[] AscendingValues(long rows, long cols) {
-        return AscendingValues(rows*cols);
+        return AscendingValues(rows * cols);
     }
 
     public static double[] AscendingValues(long size) {
         double[] data = new double[(int) (size)];
         for(int i=0; i<data.length; i++) {
             data[i] = i;
+        }
+        return data;
+    }
+
+    public static double[] RandomUniValues(long rows, long cols) {
+        return RandomUniValues(rows*cols);
+    }
+
+    public static double[] RandomUniValues(long size) {
+        double val = rand.nextDouble();
+        double[] data = new double[(int) (size)];
+        for(int i=0; i<data.length; i++) {
+            data[i] = val;
         }
         return data;
     }
