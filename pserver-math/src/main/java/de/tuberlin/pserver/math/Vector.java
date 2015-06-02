@@ -1,8 +1,9 @@
 package de.tuberlin.pserver.math;
 
+import java.io.Serializable;
 import java.util.Iterator;
 
-public interface Vector {
+public interface Vector extends Serializable {
 
     // ---------------------------------------------------
     // Constants.

@@ -1,11 +1,7 @@
 package de.tuberlin.pserver.ml.playground.mahout;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.DVector;
-import de.tuberlin.pserver.math.DoubleFunction;
-import de.tuberlin.pserver.math.Functions;
-import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.math.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +23,7 @@ public abstract class AbstractOnlineLogisticRegression extends AbstractVectorCla
 
     // coefficients for the classification.  This is a dense matrix
     // that is (numCategories-1) x numFeatures
-    protected Matrix beta;
+    protected Matrix beta; // THE MODEL!!!!
 
     // number of categories we are classifying.  This should the number of rows of beta plus one.
     protected int numCategories;

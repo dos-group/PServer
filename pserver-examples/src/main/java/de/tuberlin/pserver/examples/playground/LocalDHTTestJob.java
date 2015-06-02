@@ -5,7 +5,7 @@ import de.tuberlin.pserver.app.dht.DHT;
 import de.tuberlin.pserver.app.dht.Key;
 import de.tuberlin.pserver.app.dht.valuetypes.ByteBufferValue;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.experimental.exp1.memory.Buffer;
+import de.tuberlin.pserver.playground.exp1.memory.Buffer;
 
 import java.util.Random;
 import java.util.UUID;

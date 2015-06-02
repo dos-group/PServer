@@ -1,0 +1,6 @@
+
+Gradient Descent
+https://github.com/thomasjungblut/thomasjungblut-common/tree/master/src/de/jungblut/math/minimize
+
+Mahout SGD Classification
+https://github.com/apache/mahout/tree/34800682e119975183b3f24c20366acf692d128d/mr/src/main/java/org/apache/mahout/classifier/sgd

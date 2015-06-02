@@ -2,8 +2,8 @@ package de.tuberlin.pserver.ml.playground.mahout;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.DMatrix;
-import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.DVector;
+import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.Vector;
 
 /**

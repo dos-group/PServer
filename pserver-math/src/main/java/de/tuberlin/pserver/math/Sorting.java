@@ -20,7 +20,6 @@ package de.tuberlin.pserver.math;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.function.*;
 
-
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;

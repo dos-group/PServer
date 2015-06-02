@@ -37,13 +37,8 @@ import de.tuberlin.pserver.math.function.DoubleProcedure;
 import java.util.ArrayList;
 import java.util.List;
 
-
 //CHECKSTYLE:OFF
-
 //CHECKSTYLE:ON
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  Abstract base class for resizable lists holding <code>double</code> elements; abstract.

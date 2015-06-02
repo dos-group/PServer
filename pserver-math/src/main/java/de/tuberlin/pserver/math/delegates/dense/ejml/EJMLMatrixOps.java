@@ -1,7 +1,9 @@
 package de.tuberlin.pserver.math.delegates.dense.ejml;
 
-import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.*;
+import de.tuberlin.pserver.math.DMatrix;
+import de.tuberlin.pserver.math.DVector;
+import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.Vector;
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
 import org.ejml.alg.dense.misc.TransposeAlgs;
 import org.ejml.alg.dense.mult.MatrixVectorMult;

@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.examples;
 
-import de.tuberlin.pserver.ml.generators.DataGenerator;
+import de.tuberlin.pserver.ml.playground.generators.DataGenerator;
 
 public class GenerateLocalTestData {
 

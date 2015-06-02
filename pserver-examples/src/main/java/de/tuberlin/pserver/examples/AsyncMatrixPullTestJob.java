@@ -3,7 +3,7 @@ package de.tuberlin.pserver.examples;
 import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.experimental.old.DMatrix;
+import de.tuberlin.pserver.math.Matrix;
 
 import java.util.Random;
 
@@ -23,11 +23,11 @@ public final class AsyncMatrixPullTestJob extends PServerJob {
 
     private final Random rand = new Random();
 
-    private final DataManager.MatrixMerger<DMatrix> matrixMerger = (localMatrix, remoteMatrices) -> {
+    private final DataManager.MatrixMerger<Matrix> matrixMerger = (localMatrix, remoteMatrices) -> {
         for (int i = 0; i < localMatrix.numRows(); ++i) {
             for (int j = 0; j < localMatrix.numCols(); ++j) {
                 double v = 0.0;
-                for (final DMatrix m : remoteMatrices)
+                for (final Matrix m : remoteMatrices)
                     v += m.get(i, j);
                 localMatrix.set(i, j, (v / remoteMatrices.length));
             }
@@ -45,7 +45,7 @@ public final class AsyncMatrixPullTestJob extends PServerJob {
     @Override
     public void compute() {
 
-       final DMatrix matrix = dataManager.createLocalMatrix("model1", MTX_ROWS, MTX_COLS);
+       final Matrix matrix = dataManager.createLocalMatrix("model1", MTX_ROWS, MTX_COLS);
 
        for (int i = 0; i < 9000; ++i) {
             randomUpdate(matrix);
@@ -58,7 +58,7 @@ public final class AsyncMatrixPullTestJob extends PServerJob {
     // Private Methods.
     // ---------------------------------------------------
 
-    private void randomUpdate(final DMatrix matrix) {
+    private void randomUpdate(final Matrix matrix) {
         int x = rand.nextInt(MTX_ROWS - 1);
         int y = rand.nextInt(MTX_COLS - 1);
         double v = rand.nextDouble();

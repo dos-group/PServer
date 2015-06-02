@@ -4,8 +4,6 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
 import de.tuberlin.pserver.math.delegates.MathLibFactory;
 
-import org.apache.commons.lang3.NotImplementedException;
-
 import java.io.Serializable;
 
 public class DMatrix implements Matrix, Serializable {
@@ -22,7 +20,59 @@ public class DMatrix implements Matrix, Serializable {
     }
 
     // ---------------------------------------------------
+    // Inner Classes.
+    // ---------------------------------------------------
+
+    private static final class RowIterator implements Matrix.RowIterator {
+
+        private DMatrix self;
+
+        private final long end;
+
+        private int globalRowIndex;
+
+        private final int startRow;
+
+        // ---------------------------------------------------
+
+        public RowIterator(final DMatrix v) { this(v, 0, (int)Preconditions.checkNotNull(v).numRows() - 1); }
+        public RowIterator(final DMatrix v, final int startRow, final int endRow) {
+            this.self = v;
+            Preconditions.checkArgument(startRow >= 0 && startRow < self.numRows());
+            Preconditions.checkArgument(endRow > startRow && endRow < self.numRows());
+            this.startRow = startRow;
+            this.end = endRow * self.cols;
+            this.globalRowIndex = startRow - (int)-self.cols;
+            reset();
+        }
+
+        // ---------------------------------------------------
+
+        @Override
+        public boolean hasNextRow() { return globalRowIndex < end || globalRowIndex < self.rows * self.cols; }
+
+        @Override
+        public void nextRow() { globalRowIndex += self.cols; }
+
+        @Override
+        public double getValueOfColumn(final int col) { return self.data[globalRowIndex + col]; }
+
+        @Override
+        public void reset() { globalRowIndex = startRow - (int)self.cols; }
+
+        @Override
+        public long numRows() { return self.rows; }
+
+        @Override
+        public long numCols() { return self.cols; }
+    }
+
+    // ---------------------------------------------------
     // Fields.
+    // ---------------------------------------------------
+
+    private Object owner;
+
     // ---------------------------------------------------
 
     private static final LibraryMatrixOps<Matrix, Vector> matrixOpDelegate =
@@ -48,11 +98,19 @@ public class DMatrix implements Matrix, Serializable {
         this.cols = cols;
         this.layout = Preconditions.checkNotNull(layout);
         this.data = (data == null) ? new double[(int)(rows * cols)] : Preconditions.checkNotNull(data);
-        Preconditions.checkState(this.data.length == rows * cols);
+        //Preconditions.checkState(this.data.length == rows * cols);
     }
 
     // ---------------------------------------------------
     // Public Methods.
+    // ---------------------------------------------------
+
+    @Override
+    public void setOwner(final Object owner) { this.owner = owner; }
+
+    @Override
+    public Object getOwner() { return owner; }
+
     // ---------------------------------------------------
 
     @Override
@@ -79,10 +137,10 @@ public class DMatrix implements Matrix, Serializable {
     }
 
     @Override
-    public RowIterator rowIterator() { throw new NotImplementedException(""); }
+    public RowIterator rowIterator() { return new RowIterator(this); }
 
     @Override
-    public RowIterator rowIterator(int startRow, int endRow) { throw new NotImplementedException(""); }
+    public RowIterator rowIterator(final int startRow, final int endRow) { return new RowIterator(this, startRow, endRow); }
 
     @Override
     public double aggregate(DoubleDoubleFunction combiner, DoubleFunction mapper) {

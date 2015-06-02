@@ -1,14 +1,6 @@
 package de.tuberlin.pserver.app.types;
 
-import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.app.dht.valuetypes.AbstractBufferValue;
-import de.tuberlin.pserver.app.memmng.MemoryManager;
-import de.tuberlin.pserver.experimental.old.DMatrix;
-import de.tuberlin.pserver.experimental.old.DVector;
-
-import java.util.List;
-
-public class PagedDMatrixValue extends AbstractBufferValue implements DMatrix {
+public class PagedDMatrixValue {/*extends AbstractBufferValue implements DMatrix {
 
     // ---------------------------------------------------
     // Inner Classes.
@@ -80,12 +72,12 @@ public class PagedDMatrixValue extends AbstractBufferValue implements DMatrix {
             if (self.buffers.size() > segmentIndex + 1)
                 nextSegment = self.buffers.get(segmentIndex + 1);
 
-            /*currentSegment = self.buffers.get(0);
-            if (self.buffers.size() >= 1)
-                nextSegment = self.buffers.get(1);
-            globalRowIndex = startRow - self.cols;
-            localIndex   = 0;
-            segmentIndex = 0;*/
+            //currentSegment = self.buffers.get(0);
+            //if (self.buffers.size() >= 1)
+            //    nextSegment = self.buffers.get(1);
+            //globalRowIndex = startRow - self.cols;
+            //localIndex   = 0;
+            //segmentIndex = 0;
         }
 
         @Override
@@ -222,5 +214,5 @@ public class PagedDMatrixValue extends AbstractBufferValue implements DMatrix {
             case COLUMN_LAYOUT: return (int)(col * rows + row);
         }
         throw new IllegalStateException();
-    }
+    }*/
 }

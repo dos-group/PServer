@@ -2,7 +2,7 @@ package de.tuberlin.pserver.examples.playground;
 
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.experimental.old.DMatrix;
+import de.tuberlin.pserver.math.Matrix;
 
 import java.text.DecimalFormat;
 
@@ -21,9 +21,9 @@ public final class FileSystemTestJob extends PServerJob {
     @Override
     public void compute() {
 
-        final DMatrix data = dataManager.getLocalMatrix("demo_dataset.csv");
+        final Matrix data = dataManager.getLocalMatrix("demo_dataset.csv");
 
-        final DMatrix.RowIterator iter = data.rowIterator();
+        final Matrix.RowIterator iter = data.rowIterator();
 
         final DecimalFormat numberFormat = new DecimalFormat("###.###");
 

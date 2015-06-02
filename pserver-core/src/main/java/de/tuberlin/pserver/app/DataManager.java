@@ -10,7 +10,8 @@ import de.tuberlin.pserver.app.types.DMatrixValue;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.experimental.old.DMatrix;
+import de.tuberlin.pserver.math.DMatrix;
+import de.tuberlin.pserver.math.Matrix;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
@@ -136,34 +137,35 @@ public final class DataManager {
 
     // ---------------------------------------------------
 
-    public void mergeMatrix(final DMatrix localMtx, final MatrixMerger<DMatrix> merger) {
-        final Key k = ((Value)localMtx).getKey();
+    public void mergeMatrix(final Matrix localMtx, final MatrixMerger<Matrix> merger) {
+        Preconditions.checkState(localMtx.getOwner() != null);
+        final Key k = ((Value)localMtx.getOwner()).getKey();
         final List<Value> matrices = Arrays.asList(globalPull(k.name));
         Collections.sort(matrices,
                 (Value o1, Value o2) -> ((Integer)o1.getValueMetadata()).compareTo(((Integer)o2.getValueMetadata()))
         );
-        final DMatrixValue[] ms = new DMatrixValue[matrices.size()];
+        final Matrix[] ms = new Matrix[matrices.size()];
         for (int i = 0; i < matrices.size(); ++i)
-            ms[i] = (DMatrixValue)matrices.get(i);
+            ms[i] = ((DMatrixValue)matrices.get(i)).matrix;
         merger.merge(localMtx, ms);
     }
 
     // ---------------------------------------------------
 
-    public DMatrix createLocalMatrix(final String name, final int rows, final int cols)
+    public Matrix createLocalMatrix(final String name, final int rows, final int cols)
     { return createLocalMatrix(name, rows, cols, DMatrix.MemoryLayout.ROW_LAYOUT); }
-    public DMatrix createLocalMatrix(final String name, final int rows, final int cols, final DMatrix.MemoryLayout layout) {
+    public Matrix createLocalMatrix(final String name, final int rows, final int cols, final DMatrix.MemoryLayout layout) {
         Preconditions.checkNotNull(name);
         final Key key = createLocalKeyWithName(name);
         final DMatrixValue m = new DMatrixValue(rows, cols, false, layout);
         m.setValueMetadata(instanceID);
         dht.put(key, m);
-        return m;
+        return m.matrix;
     }
 
     // ---------------------------------------------------
 
-    public DMatrix.RowIterator threadPartitionedRowIterator(final DMatrix matrix) {
+    public Matrix.RowIterator threadPartitionedRowIterator(final Matrix matrix) {
         final long systemThreadID = Thread.currentThread().getId();
         final PServerContext ctx = contextResolver.get(systemThreadID);
         final int rowBlock = (int)matrix.numRows() / ctx.perNodeParallelism;
@@ -172,7 +174,7 @@ public final class DataManager {
 
     // ---------------------------------------------------
 
-    public DMatrix getLocalMatrix(final String name) {
+    public Matrix getLocalMatrix(final String name) {
         Preconditions.checkNotNull(name);
         Key localKey = null;
         final Set<Key> keys = dht.getKey(name);
@@ -183,8 +185,8 @@ public final class DataManager {
             }
         }
         final Value value = dht.get(localKey)[0];
-        if (value instanceof DMatrix)
-            return (DMatrix)dht.get(localKey)[0];
+        if (value instanceof DMatrixValue)
+            return ((DMatrixValue)dht.get(localKey)[0]).matrix;
         else
             throw new IllegalStateException();
     }

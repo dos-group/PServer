@@ -1,6 +1,8 @@
 package de.tuberlin.pserver.math;
 
-public interface Matrix {
+import java.io.Serializable;
+
+public interface Matrix extends Serializable {
 
     // ---------------------------------------------------
     // Inner Interfaces/Classes.
@@ -35,6 +37,12 @@ public interface Matrix {
 
         public abstract long numCols();
     }
+
+    // ---------------------------------------------------
+
+    public abstract void setOwner(final Object owner);
+
+    public abstract Object getOwner();
 
     // ---------------------------------------------------
 

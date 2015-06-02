@@ -17,13 +17,11 @@
 
 package de.tuberlin.pserver.ml.playground.mahout.evaluation;
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.RandomUtils;
-
-
 import de.tuberlin.pserver.math.DMatrix;
 import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.list.DoubleArrayList;
-import com.google.common.base.Preconditions;
 
 import java.util.Random;
 

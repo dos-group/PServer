@@ -27,7 +27,7 @@ It is provided "as is" without expressed or implied warranty.
 package de.tuberlin.pserver.math.list;
 
 
-import de.tuberlin.pserver.collections.Arithmetic;
+import de.tuberlin.pserver.math.Arithmetic;
 import de.tuberlin.pserver.math.Arrays;
 import de.tuberlin.pserver.math.BinarySearch;
 import de.tuberlin.pserver.math.function.DoubleProcedure;
