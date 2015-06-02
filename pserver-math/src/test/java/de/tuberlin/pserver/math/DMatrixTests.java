@@ -2,6 +2,7 @@ package de.tuberlin.pserver.math;
 
 import de.tuberlin.pserver.math.generators.BufferGenerator;
 import de.tuberlin.pserver.math.generators.MatrixGenerator;
+import de.tuberlin.pserver.math.generators.VectorGenerator;
 import org.junit.Test;
 
 public class DMatrixTests {
@@ -74,5 +75,59 @@ public class DMatrixTests {
                 assert(colVecFromRowLayout.get(j) == matRowLayout.get(j,i));
             }
         }
+    }
+
+    @Test
+    public void testAssigns() {
+        int rows = 10;
+        int cols = 15;
+        Matrix matRowLayout = MatrixGenerator.RandomDMatrix(rows, cols, DMatrix.MemoryLayout.ROW_LAYOUT);
+        checkRowColumnAssigns(rows, cols, matRowLayout);
+        checkUniAndMatrixAssign(rows, cols, matRowLayout);
+        Matrix matColumnLayout = MatrixGenerator.RandomDMatrix(rows, cols, DMatrix.MemoryLayout.COLUMN_LAYOUT);
+        checkRowColumnAssigns(rows, cols, matColumnLayout);
+        checkUniAndMatrixAssign(rows, cols, matColumnLayout);
+    }
+
+    public void checkRowColumnAssigns(int rows, int cols, Matrix mat) {
+        double[][] rowsRowLayout = new double[rows][cols];
+        for(int i = 0; i < rows; i++) {
+            rowsRowLayout[i] = mat.viewRow(i).toArray();
+        }
+        double[][] colsRowLayout = new double[cols][rows];
+        for(int i = 0; i < cols; i++) {
+            colsRowLayout[i] = mat.viewColumn(i).toArray();
+        }
+        for(int row = 0; row < rows; row++) {
+            Vector vec = VectorGenerator.RandomDVector(cols);
+            mat.assignRow(row, vec);
+            rowsRowLayout[row] = vec.toArray();
+            for(int i = 0; i < cols; i++) {
+                colsRowLayout[i][row] = vec.toArray()[i];
+                assert(java.util.Arrays.equals(colsRowLayout[i], mat.viewColumn(i).toArray()));
+            }
+            for(int i = 0; i < rows; i++) {
+                assert(java.util.Arrays.equals(rowsRowLayout[i], mat.viewRow(i).toArray()));
+            }
+        }
+        for(int col = 0; col < cols; col++) {
+            Vector vec = VectorGenerator.RandomDVector(rows);
+            mat.assignColumn(col, vec);
+            colsRowLayout[col] = vec.toArray();
+            for(int i = 0; i < rows; i++) {
+                rowsRowLayout[i][col] = vec.toArray()[i];
+                assert(java.util.Arrays.equals(rowsRowLayout[i], mat.viewRow(i).toArray()));
+            }
+            for(int i = 0; i < cols; i++) {
+                assert(java.util.Arrays.equals(colsRowLayout[i], mat.viewColumn(i).toArray()));
+            }
+        }
+    }
+
+    public void checkUniAndMatrixAssign(int rows, int cols, Matrix mat) {
+        double[] uniVals = BufferGenerator.RandomUniValues(rows, cols);
+        assert(java.util.Arrays.equals(mat.assign(uniVals[0]).toArray(), uniVals));
+        Matrix randMat = MatrixGenerator.RandomDMatrix(10, 15);
+        assert(java.util.Arrays.equals(mat.assign(randMat).toArray(), randMat.toArray()));
     }
 }
