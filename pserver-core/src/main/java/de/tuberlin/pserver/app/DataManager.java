@@ -166,10 +166,13 @@ public final class DataManager {
     // ---------------------------------------------------
 
     public Matrix.RowIterator threadPartitionedRowIterator(final Matrix matrix) {
+        Preconditions.checkNotNull(matrix);
         final long systemThreadID = Thread.currentThread().getId();
         final PServerContext ctx = contextResolver.get(systemThreadID);
         final int rowBlock = (int)matrix.numRows() / ctx.perNodeParallelism;
-        return matrix.rowIterator(ctx.threadID * rowBlock, ctx.threadID * rowBlock + rowBlock);
+        int end = (ctx.threadID * rowBlock + rowBlock - 1);
+        end = (ctx.threadID == ctx.perNodeParallelism - 1) ?  end + (int)matrix.numRows() % ctx.perNodeParallelism : end;
+        return matrix.rowIterator(ctx.threadID * rowBlock, end);
     }
 
     // ---------------------------------------------------
@@ -206,10 +209,13 @@ public final class DataManager {
 
     // ---------------------------------------------------
 
-    public void postProloguePhase() {
+    public void postProloguePhase(final PServerContext ctx) {
+        Preconditions.checkNotNull(ctx);
         if (fileSystemManager != null) {
-            fileSystemManager.computeInputSplitsForRegisteredFiles();
-            loadFilesIntoDHT();
+            if (ctx.threadID == 0) {
+                fileSystemManager.computeInputSplitsForRegisteredFiles();
+                loadFilesIntoDHT();
+            }
         }
     }
 

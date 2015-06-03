@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -43,6 +44,11 @@ public final class PServerNode extends EventDispatcher {
     private final ExecutorService executor;
 
     private final Map<UUID,PServerJobSubmissionEvent> jobMap;
+
+
+    private CountDownLatch jobStartBarrier = null;
+
+    private CountDownLatch jobEndBarrier = null;
 
     // ---------------------------------------------------
     // Constructors.
@@ -73,6 +79,10 @@ public final class PServerNode extends EventDispatcher {
             final PServerJobSubmissionEvent jobSubmission = (PServerJobSubmissionEvent)e;
             LOG.info("Received job on instance " + "[" + infraManager.getInstanceID() + "]" + jobSubmission.toString());
             jobMap.put(jobSubmission.jobUID, jobSubmission);
+
+            jobStartBarrier = new CountDownLatch(1);
+            jobEndBarrier = new CountDownLatch(jobSubmission.perNodeParallelism);
+
             for (int i = 0; i < jobSubmission.perNodeParallelism; ++i) {
                 final int threadID = i;
                 executor.execute(() -> {
@@ -94,9 +104,30 @@ public final class PServerNode extends EventDispatcher {
                                     dataManager
                             );
                             final PServerJob jobInvokeable = jobClass.newInstance();
+
                             jobInvokeable.injectContext(ctx);
-                            //dataManager.registerJobContext(ctx);
+                            dataManager.registerJobContext(ctx);
                             executeLifecycle(jobInvokeable);
+
+                            if (ctx.threadID == 0) {
+
+                                try {
+                                    jobEndBarrier.await();
+                                } catch (InterruptedException ie) {
+                                }
+
+                                final List<Serializable> results = dataManager.getResults(jobSubmission.jobUID);
+
+                                final PServerJobResultEvent jre = new PServerJobResultEvent(
+                                        machine,
+                                        infraManager.getInstanceID(),
+                                        jobSubmission.jobUID,
+                                        results
+                                );
+
+                                netManager.sendEvent(jobSubmission.clientMachine, jre);
+                            }
+
                         } else
                             throw new IllegalStateException();
                     } catch (Exception ex) {
@@ -132,20 +163,28 @@ public final class PServerNode extends EventDispatcher {
     private void executeLifecycle(final PServerJob job) {
         try {
 
-            {
-                LOG.info("Enter " + job.getJobContext().simpleClassName + " prologue phase.");
+            if (job.getJobContext().threadID == 0) {
+                {
+                    LOG.info("Enter " + job.getJobContext().simpleClassName + " prologue phase.");
 
-                final long start = System.currentTimeMillis();
+                    final long start = System.currentTimeMillis();
 
-                job.prologue();
+                    job.prologue();
 
-                dataManager.postProloguePhase();
+                    dataManager.postProloguePhase(job.getJobContext());
 
-                final long end = System.currentTimeMillis();
+                    final long end = System.currentTimeMillis();
 
-                LOG.info("Leave " + job.getJobContext().simpleClassName
-                        + " prologue phase [duration: " + (end - start) + " ms].");
+                    LOG.info("Leave " + job.getJobContext().simpleClassName
+                            + " prologue phase [duration: " + (end - start) + " ms].");
+                }
+
+                jobStartBarrier.countDown();
             }
+
+            Thread.sleep(1); // TODO: Not very elegant...
+
+            jobStartBarrier.await();
 
             {
                 LOG.info("Enter " + job.getJobContext().simpleClassName + " computation phase.");
@@ -160,30 +199,23 @@ public final class PServerNode extends EventDispatcher {
                         " computation phase [duration: " + (end - start) + " ms].");
             }
 
-            {
-                LOG.info("Enter " + job.getJobContext().simpleClassName + " epilogue phase.");
+            if (job.getJobContext().threadID == 0) {
 
-                final long start = System.currentTimeMillis();
+                {
+                    LOG.info("Enter " + job.getJobContext().simpleClassName + " epilogue phase.");
 
-                job.epilogue();
+                    final long start = System.currentTimeMillis();
 
-                final long end = System.currentTimeMillis();
+                    job.epilogue();
 
-                LOG.info("Leave " + job.getJobContext().simpleClassName
-                        + " epilogue phase [duration: " + (end - start) + " ms].");
+                    final long end = System.currentTimeMillis();
+
+                    LOG.info("Leave " + job.getJobContext().simpleClassName
+                            + " epilogue phase [duration: " + (end - start) + " ms].");
+                }
             }
 
-            final List<Serializable> results = dataManager.getResults(job.getJobContext().jobUID);
-
-            final PServerJobResultEvent jre = new PServerJobResultEvent(
-                    machine,
-                    infraManager.getInstanceID(),
-                    job.getJobContext().jobUID,
-                    results
-            );
-
-            netManager.sendEvent(job.getJobContext().clientMachine, jre);
-
+            jobEndBarrier.countDown();
 
         } catch (Throwable t) {
             throw new IllegalStateException(t);

@@ -54,6 +54,10 @@ public interface Matrix extends Serializable {
 
     public abstract void set(final long row, final long col, final double value);
 
+    public abstract double atomicGet(final long row, final long col);
+
+    public abstract void atomicSet(final long row, final long col, final double value);
+
     public abstract double[] toArray();
 
     public abstract void setArray(final double[] data);

@@ -1,6 +1,5 @@
 package de.tuberlin.pserver.examples.playground;
 
-
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.math.Matrix;
@@ -25,9 +24,8 @@ public final class ThreadedMatrixIterationTestJob extends PServerJob {
 
         final Matrix.RowIterator iter = dataManager.threadPartitionedRowIterator(data);
 
-        final DecimalFormat numberFormat = new DecimalFormat("###.###");
-
-        if (ctx.instanceID == 0) {
+        if (ctx.instanceID == 0 && ctx.threadID == 1) {
+            final DecimalFormat numberFormat = new DecimalFormat("###.###");
             while (iter.hasNextRow()) {
                 iter.nextRow();
                 for (int i = 0; i < iter.numCols(); ++i) {
@@ -44,8 +42,7 @@ public final class ThreadedMatrixIterationTestJob extends PServerJob {
 
     public static void main(final String[] args) {
         PServerExecutor.LOCAL
-                .run(ThreadedMatrixIterationTestJob.class, 3)
+                .run(ThreadedMatrixIterationTestJob.class, 4)
                 .done();
-
     }
 }

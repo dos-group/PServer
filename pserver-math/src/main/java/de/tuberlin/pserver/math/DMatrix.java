@@ -1,8 +1,11 @@
 package de.tuberlin.pserver.math;
 
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.AtomicDoubleArray;
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
 import de.tuberlin.pserver.math.delegates.MathLibFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 
@@ -40,16 +43,16 @@ public class DMatrix implements Matrix, Serializable {
             this.self = v;
             Preconditions.checkArgument(startRow >= 0 && startRow < self.numRows());
             Preconditions.checkArgument(endRow > startRow && endRow < self.numRows());
-            this.startRow = startRow;
+            this.startRow = startRow * (int)self.cols;
             this.end = endRow * self.cols;
-            this.globalRowIndex = startRow - (int)-self.cols;
+            this.globalRowIndex = this.startRow - (int)-self.cols;
             reset();
         }
 
         // ---------------------------------------------------
 
         @Override
-        public boolean hasNextRow() { return globalRowIndex < end || globalRowIndex < self.rows * self.cols; }
+        public boolean hasNextRow() { return globalRowIndex < end /*|| globalRowIndex < self.rows * self.cols*/; }
 
         @Override
         public void nextRow() { globalRowIndex += self.cols; }
@@ -71,6 +74,9 @@ public class DMatrix implements Matrix, Serializable {
     // Fields.
     // ---------------------------------------------------
 
+    private static final Logger LOG = LoggerFactory.getLogger(DMatrix.class);
+
+
     private Object owner;
 
     // ---------------------------------------------------
@@ -86,6 +92,8 @@ public class DMatrix implements Matrix, Serializable {
 
     private final MemoryLayout layout;
 
+    private AtomicDoubleArray atomicWrapper;
+
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
@@ -99,6 +107,7 @@ public class DMatrix implements Matrix, Serializable {
         this.layout = Preconditions.checkNotNull(layout);
         this.data = (data == null) ? new double[(int)(rows * cols)] : Preconditions.checkNotNull(data);
         //Preconditions.checkState(this.data.length == rows * cols);
+        atomicWrapper = new AtomicDoubleArray(data);
     }
 
     // ---------------------------------------------------
@@ -124,6 +133,12 @@ public class DMatrix implements Matrix, Serializable {
 
     @Override
     public void set(long row, long col, double value) { data[getPos(row, col)] = value; }
+
+    @Override
+    public double atomicGet(long row, long col) { return atomicWrapper.get(getPos(row, col)); }
+
+    @Override
+    public void atomicSet(long row, long col, double value) { atomicWrapper.set(getPos(row, col), value); }
 
     @Override
     public double[] toArray() {
