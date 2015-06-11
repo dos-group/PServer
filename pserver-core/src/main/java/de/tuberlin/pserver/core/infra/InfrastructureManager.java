@@ -81,8 +81,8 @@ public final class InfrastructureManager extends EventDispatcher {
         try {
             ZookeeperClient zookeeper = new ZookeeperClient(server);
             zookeeper.initDirectories();
-            final String zkTaskManagerDir = ZookeeperClient.ZOOKEEPER_NODES + "/" + machine.machineID.toString();
-            zookeeper.store(zkTaskManagerDir, machine);
+            final String zkNodeDir = ZookeeperClient.ZOOKEEPER_NODES + "/" + machine.machineID.toString();
+            zookeeper.store(zkNodeDir, machine);
             final InfrastructureWatcher watcher = new InfrastructureWatcher();
             final List<String> machineIDs = zookeeper.getChildrenForPathAndWatch(ZookeeperClient.ZOOKEEPER_NODES, watcher);
             synchronized (lock) {

@@ -16,6 +16,10 @@ public interface Matrix extends Serializable {
 
         public abstract double getValueOfColumn(final int col);
 
+        public abstract Vector getAsVector();
+
+        public abstract Vector getAsVector(int from, int size);
+
         public abstract void reset();
 
         public abstract long numRows();
@@ -44,6 +48,10 @@ public interface Matrix extends Serializable {
 
     public abstract Object getOwner();
 
+    public abstract void lock();
+
+    public abstract void unlock();
+
     // ---------------------------------------------------
 
     public abstract long numRows();
@@ -66,30 +74,35 @@ public interface Matrix extends Serializable {
 
     public abstract RowIterator rowIterator(final int startRow, final int endRow);
 
+    public abstract RowIterator randomRowIterator();
+
+    public abstract RowIterator randomRowIterator(final int startRow, final int endRow);
+
     // ---------------------------------------------------
 
     public abstract double aggregate(final DoubleDoubleFunction combiner, final DoubleFunction mapper);
 
     public abstract Vector aggregateRows(final VectorFunction f);
 
+    public abstract Matrix axpy(final double alpha, final Matrix B);        // A = alpha * B + A
 
-    public abstract Matrix add(final Matrix B);                     // A = B + A
+    public abstract Matrix add(final Matrix B);                             // A = B + A
 
-    public abstract Matrix sub(final Matrix B);                     // A = B - A
+    public abstract Matrix sub(final Matrix B);                                             // A = B - A
 
-    public abstract Matrix mul(final Matrix B);                     // A = B * A
+    public abstract Matrix mul(final Matrix B);                                             // A = B * A
 
-    public abstract Vector mul(final Vector B);                     //
+    public abstract Vector mul(final Vector B);                                             //
 
-    public abstract void mul(final Vector x, final Vector y);     // y = A * x
+    public abstract void mul(final Vector x, final Vector y);                               // y = A * x
 
-    public abstract Matrix scale(final double alpha);               // A = alpha * A
+    public abstract Matrix scale(final double alpha);                                       // A = alpha * A
 
-    public abstract Matrix transpose();                             // A = A^T
+    public abstract Matrix transpose();                                                     // A = A^T
 
-    public abstract void transpose(final Matrix B);               // B = A^T
+    public abstract void transpose(final Matrix B);                                         // B = A^T
 
-    public abstract boolean invert();                               // A = A^-1
+    public abstract boolean invert();                                                       // A = A^-1
 
     // ---------------------------------------------------
 

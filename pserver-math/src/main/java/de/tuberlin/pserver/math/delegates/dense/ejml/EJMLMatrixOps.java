@@ -17,6 +17,14 @@ public final class EJMLMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
     // ---------------------------------------------------
 
     @Override
+    public Matrix axpy(double alpha, Matrix B, Matrix A) {
+        final DenseMatrix64F b = convertDMatrixToDenseMatrix64F(B);
+        final DenseMatrix64F a = convertDMatrixToDenseMatrix64F(A);
+        CommonOps.multAdd(alpha, a, b, a);
+        return A;
+    }
+
+    @Override
     public Matrix add(final Matrix B, final Matrix A) {
         final DenseMatrix64F b = convertDMatrixToDenseMatrix64F(B);
         final DenseMatrix64F a = convertDMatrixToDenseMatrix64F(A);

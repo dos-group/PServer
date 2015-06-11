@@ -2,9 +2,9 @@ package de.tuberlin.pserver.ml.playground.mahout.examples.adultincome;
 
 import de.tuberlin.pserver.math.DVector;
 import de.tuberlin.pserver.math.Vector;
-import de.tuberlin.pserver.ml.playground.encoders.ConstantValueEncoder;
-import de.tuberlin.pserver.ml.playground.encoders.FeatureVectorEncoder;
-import de.tuberlin.pserver.ml.playground.encoders.StaticWordValueEncoder;
+import de.tuberlin.pserver.ml.playground.mahout.encoders.ConstantValueEncoder;
+import de.tuberlin.pserver.ml.playground.mahout.encoders.FeatureVectorEncoder;
+import de.tuberlin.pserver.ml.playground.mahout.encoders.StaticWordValueEncoder;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;

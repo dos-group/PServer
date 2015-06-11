@@ -4,3 +4,145 @@ https://github.com/thomasjungblut/thomasjungblut-common/tree/master/src/de/jungb
 
 Mahout SGD Classification
 https://github.com/apache/mahout/tree/34800682e119975183b3f24c20366acf692d128d/mr/src/main/java/org/apache/mahout/classifier/sgd
+
+
+import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.math.DMatrix;
+import de.tuberlin.pserver.math.Matrix;
+
+public class SGDOptimizerOLD implements Optimizer {
+
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
+    private double alpha;
+
+    private int numIterations;
+
+    private LossFunction lossFunction;
+
+    private int labelIndex;
+
+    // ---------------------------------------------------
+
+    private LearningRateDecayFunction decayFunction;
+
+    // ---------------------------------------------------
+    // Constructor.
+    // ---------------------------------------------------
+
+    public SGDOptimizerOLD() {
+        // Per default label is the last column in the data matrix.
+        // Then the labelIndex will be set in the optimize call.
+        labelIndex = -1;
+    }
+
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
+
+    @Override
+    public Matrix optimize(final Matrix weights, final Matrix.RowIterator dataIterator) {
+        Preconditions.checkNotNull(weights);
+        Preconditions.checkNotNull(dataIterator);
+
+        if (labelIndex == -1)
+            labelIndex = (int)dataIterator.numCols() - 1;
+
+        final int[] featureIndices = extractFeatureIndices(dataIterator);
+        final int numFeatures = featureIndices.length;
+
+        final Matrix gradient = new DMatrix(1, weights.numCols());
+
+        double current_alpha = alpha;
+
+        for (int epoch = 0; epoch < numIterations; ++epoch) {
+
+            while (dataIterator.hasNextRow()) {
+
+                dataIterator.nextRow();
+
+                double p = weights.get(0, 0);
+                for (int i = 0, j = 1; i < numFeatures; ++i, ++j)
+                    p += dataIterator.getValueOfColumn(featureIndices[i]) * weights.get(0, j);
+
+                final double label = dataIterator.getValueOfColumn(labelIndex);
+
+                // Compute parameter Θ(0).
+                final double weight_0_old = weights.atomicGet(0, 0);
+                final double gradient_0 = lossFunction.gradient(p, label);
+                final double weight_0 = weight_0_old - current_alpha * gradient_0;
+                gradient.set(1, 0, gradient_0);
+                weights.atomicSet(0, 0, weight_0);
+
+                // Compute parameters Θ(1..m).
+                for (int i = 0, j = 1; i < numFeatures; ++i, ++j) {
+                    final double feature = dataIterator.getValueOfColumn(featureIndices[i]);
+                    final double weight_j_old = weights.atomicGet(0, j);
+                    final double gradient_j = lossFunction.gradient(p, label * feature);
+                    final double weight_j = weight_j_old - current_alpha * gradient_j;
+                    gradient.set(1, j, gradient_j);
+                    weights.atomicSet(0, j, weight_j);
+                }
+
+                // TODO: publish gradient!
+            }
+
+            dataIterator.reset();
+
+            if (decayFunction != null) {
+                current_alpha = decayFunction.decayLearningRate(epoch, alpha, current_alpha);
+            }
+        }
+
+        return weights;
+    }
+
+    private int[] extractFeatureIndices(final Matrix.RowIterator dataIterator) {
+        int[] indices = new int[(int)dataIterator.numCols() - 1];
+        for (int j = 0, k = 0; j < indices.length + 1; ++j) {
+            if (j != labelIndex) {
+                indices[k] = j;
+                ++k;
+            }
+        }
+        return indices;
+    }
+
+    // ---------------------------------------------------
+
+    public SGDOptimizerOLD setLearningRate(final double alpha) { this.alpha = alpha; return this; }
+
+    public SGDOptimizerOLD setLearningRateDecayFunction(final LearningRateDecayFunction decayFunction) { this.decayFunction = decayFunction; return this; }
+
+    public SGDOptimizerOLD setNumberOfIterations(final int numIterations) { this.numIterations = numIterations; return this; }
+
+    public SGDOptimizerOLD setLossFunction(final LossFunction lossFunction) { this.lossFunction = lossFunction; return this; }
+
+    public SGDOptimizerOLD setLabelIndex(final int labelIndex) { this.labelIndex = labelIndex; return this; }
+
+    // ---------------------------------------------------
+
+    public static interface LearningRateDecayFunction {
+
+        public abstract double decayLearningRate(final int epoch, final double initialAlpha, final double lastAlpha);
+    }
+
+    public static class SimpleLearningRateDecay implements LearningRateDecayFunction {
+
+        // Sets a simple annealing (alpha / (1+current_iteration / phi)) where phi
+        // is the given parameter here. This will gradually lower the global
+        // learning rate after the given amount of iterations.
+        private int decayEpoch;
+
+        public SimpleLearningRateDecay(final int decayEpoch) {
+            this.decayEpoch = decayEpoch;
+        }
+
+        @Override
+        public double decayLearningRate(final int epoch, final double initialAlpha, final double lastAlpha) {
+            return initialAlpha / (1d + epoch / decayEpoch);
+        }
+    }
+}

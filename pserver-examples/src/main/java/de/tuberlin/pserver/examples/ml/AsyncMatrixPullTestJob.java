@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.examples;
+package de.tuberlin.pserver.examples.ml;
 
 import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
@@ -23,7 +23,7 @@ public final class AsyncMatrixPullTestJob extends PServerJob {
 
     private final Random rand = new Random();
 
-    private final DataManager.MatrixMerger<Matrix> matrixMerger = (localMatrix, remoteMatrices) -> {
+    private final DataManager.Merger<Matrix> merger = (localMatrix, remoteMatrices) -> {
         for (int i = 0; i < localMatrix.numRows(); ++i) {
             for (int j = 0; j < localMatrix.numCols(); ++j) {
                 double v = 0.0;
@@ -50,7 +50,7 @@ public final class AsyncMatrixPullTestJob extends PServerJob {
        for (int i = 0; i < 9000; ++i) {
             randomUpdate(matrix);
             if (i % 1000 == 0)
-                ctx.dataManager.mergeMatrix(matrix, matrixMerger);
+                ctx.dataManager.mergeMatrix(matrix, merger);
         }
     }
 

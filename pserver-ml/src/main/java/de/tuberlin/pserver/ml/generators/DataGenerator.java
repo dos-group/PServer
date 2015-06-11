@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.ml.playground.generators;
+package de.tuberlin.pserver.ml.generators;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -63,7 +63,7 @@ public final class DataGenerator {
 
     // ---------------------------------------------------
 
-    public static void generateDatasetAndWriteToFile(final int numExamples,
+    /*public static void generateDatasetAndWriteToFile(final int numExamples,
                                                      final int numFeatures,
                                                      final long seed,
                                                      final String fileName) {
@@ -99,14 +99,14 @@ public final class DataGenerator {
                 throw new IllegalStateException(e);
             }
         }
-    }
+    }*/
 
     // ---------------------------------------------------
 
-    public static double[] generateDatasetAndWriteToFile2(final int numExamples,
-                                                          final int numFeatures,
-                                                          final long seed,
-                                                          final String fileName) {
+    public static double[] generateDatasetAndWriteToFile(final int numExamples,
+                                                         final int numFeatures,
+                                                         final long seed,
+                                                         final String fileName) {
         final Random rand = new Random();
         rand.setSeed(seed);
 
@@ -123,6 +123,71 @@ public final class DataGenerator {
             params.add((double)0);
             for(int l = 1; l < numFeatures; l++) {
                 params.add(rand.nextDouble());
+            }
+
+            parameterCSVPrinter.printRecord(params);
+            parameterFW.flush();
+            parameterFW.close();
+            parameterCSVPrinter.close();
+
+            trainingDataFW = new FileWriter(fileName);
+            trainingDataCSVPrinter = new CSVPrinter(trainingDataFW, csvFileFormat);
+            final List<Double> data = new ArrayList<>(numFeatures + 1);
+
+            for (int i = 0; i < numExamples; ++i) {
+                double label = 0;
+                for (int j = 0; j < numFeatures; ++j) {
+                    final double value = rand.nextGaussian();
+                    data.add(j, value);
+                    label += value * params.get(j);
+                }
+                data.add(numFeatures, label + Math.abs(rand.nextGaussian()));
+                trainingDataCSVPrinter.printRecord(data);
+                data.clear();
+            }
+
+            return ArrayUtils.toPrimitive(params.toArray(new Double[numFeatures]));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            try {
+                if (trainingDataFW != null) {
+                    trainingDataFW.flush();
+                    trainingDataFW.close();
+                }
+                if (trainingDataCSVPrinter != null)
+                    trainingDataCSVPrinter.close();
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+    }
+
+    // ---------------------------------------------------
+
+    public static double[] generateSparseDatasetAndWriteToFile(final int numExamples,
+                                                               final int numFeatures,
+                                                               final long seed,
+                                                               final String fileName) {
+        final Random rand = new Random();
+        rand.setSeed(seed);
+
+        FileWriter parameterFW              = null;
+        CSVPrinter parameterCSVPrinter      = null;
+        FileWriter trainingDataFW           = null;
+        CSVPrinter trainingDataCSVPrinter   = null;
+        final CSVFormat csvFileFormat = CSVFormat.DEFAULT.withRecordSeparator("\n");
+
+        try {
+            parameterFW = new FileWriter(fileName + ".param");
+            parameterCSVPrinter = new CSVPrinter(parameterFW, csvFileFormat);
+            List<Double> params = new ArrayList<>();
+            params.add((double)0);
+            for(int l = 1; l < numFeatures; l++) {
+                if (rand.nextDouble() <= 0.5)
+                    params.add(rand.nextDouble());
+                else
+                    params.add(0.0);
             }
 
             parameterCSVPrinter.printRecord(params);

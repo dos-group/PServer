@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package de.tuberlin.pserver.ml.playground.encoders;
+package de.tuberlin.pserver.ml.playground.mahout.encoders;
 
 import de.tuberlin.pserver.commons.hash.MurmurHash;
 

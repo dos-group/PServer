@@ -11,7 +11,7 @@ public class DMatrixValue extends AbstractBufferValue {
     // Fields.
     // ---------------------------------------------------
 
-    private double[] data;
+    protected double[] data;
 
     public final Matrix matrix;
 

@@ -49,10 +49,11 @@ public class DVector implements Vector, Serializable {
         }
     }
 
-
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
+
+    private Object owner;
 
     private static final LibraryVectorOps<Vector> vectorOpDelegate =
             MathLibFactory.delegateDVectorOpsTo(MathLibFactory.DMathLibrary.EJML_LIBRARY);
@@ -101,6 +102,12 @@ public class DVector implements Vector, Serializable {
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
+
+    @Override
+    public void setOwner(final Object owner) { this.owner = owner; }
+
+    @Override
+    public Object getOwner() { return owner; }
 
     @Override public boolean isDense() { return true; }
 

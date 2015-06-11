@@ -25,11 +25,11 @@ public final class ThreadedMatrixIterationTestJob extends PServerJob {
         final Matrix.RowIterator iter = dataManager.threadPartitionedRowIterator(data);
 
         if (ctx.instanceID == 0 && ctx.threadID == 1) {
-            final DecimalFormat numberFormat = new DecimalFormat("###.###");
+            final DecimalFormat numberFormat = new DecimalFormat("0.000");
             while (iter.hasNextRow()) {
                 iter.nextRow();
                 for (int i = 0; i < iter.numCols(); ++i) {
-                    System.out.print("THREAD ID [" + ctx.threadID + "] " + numberFormat.format(iter.getValueOfColumn(i)) + "\t\t");
+                    System.out.print(numberFormat.format(iter.getValueOfColumn(i)) + "\t | ");
                 }
                 System.out.println();
             }

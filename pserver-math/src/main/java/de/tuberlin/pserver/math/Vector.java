@@ -16,6 +16,12 @@ public interface Vector extends Serializable {
         COLUMN_VECTOR
     }
 
+
+    public abstract void setOwner(final Object owner);
+
+    public abstract Object getOwner();
+
+
     public abstract boolean isDense();
 
     public abstract void set(final long index, final double value);
@@ -29,7 +35,6 @@ public interface Vector extends Serializable {
     public double[] toArray();
 
     public void setArray(final double[] data);
-
 
 
     public abstract Vector mul(final double alpha);                 // x = alpha * x

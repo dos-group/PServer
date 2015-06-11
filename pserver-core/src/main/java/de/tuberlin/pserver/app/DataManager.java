@@ -7,11 +7,12 @@ import de.tuberlin.pserver.app.dht.Value;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
 import de.tuberlin.pserver.app.filesystem.FileSystemManager;
 import de.tuberlin.pserver.app.types.DMatrixValue;
+import de.tuberlin.pserver.app.types.DVectorValue;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.math.DMatrix;
-import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.*;
+import de.tuberlin.pserver.math.Vector;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class DataManager {
@@ -28,7 +30,7 @@ public final class DataManager {
     // Inner Classes.
     // ---------------------------------------------------
 
-    public interface MatrixMerger<T> {
+    public interface Merger<T> {
 
         public abstract void merge(final T s, final T[] m);
     }
@@ -137,7 +139,7 @@ public final class DataManager {
 
     // ---------------------------------------------------
 
-    public void mergeMatrix(final Matrix localMtx, final MatrixMerger<Matrix> merger) {
+    public void mergeMatrix(final Matrix localMtx, final Merger<Matrix> merger) {
         Preconditions.checkState(localMtx.getOwner() != null);
         final Key k = ((Value)localMtx.getOwner()).getKey();
         final List<Value> matrices = Arrays.asList(globalPull(k.name));
@@ -152,6 +154,21 @@ public final class DataManager {
 
     // ---------------------------------------------------
 
+    public void mergeVector(final Vector localVec, final Merger<Vector> merger) {
+        Preconditions.checkState(localVec.getOwner() != null);
+        final Key k = ((Value)localVec.getOwner()).getKey();
+        final List<Value> vectors = Arrays.asList(globalPull(k.name));
+        Collections.sort(vectors,
+                (Value o1, Value o2) -> ((Integer)o1.getValueMetadata()).compareTo(((Integer)o2.getValueMetadata()))
+        );
+        final Vector[] ms = new Vector[vectors.size()];
+        for (int i = 0; i < vectors.size(); ++i)
+            ms[i] = ((DVectorValue)vectors.get(i)).vector;
+        merger.merge(localVec, ms);
+    }
+
+    // ---------------------------------------------------
+
     public Matrix createLocalMatrix(final String name, final int rows, final int cols)
     { return createLocalMatrix(name, rows, cols, DMatrix.MemoryLayout.ROW_LAYOUT); }
     public Matrix createLocalMatrix(final String name, final int rows, final int cols, final DMatrix.MemoryLayout layout) {
@@ -161,6 +178,17 @@ public final class DataManager {
         m.setValueMetadata(instanceID);
         dht.put(key, m);
         return m.matrix;
+    }
+
+    // ---------------------------------------------------
+
+    public Vector createLocalVector(final String name, final int size, final Vector.VectorType type) {
+        Preconditions.checkNotNull(name);
+        final Key key = createLocalKeyWithName(name);
+        final DVectorValue v = new DVectorValue(size, false, type);
+        v.setValueMetadata(instanceID);
+        dht.put(key, v);
+        return v.vector;
     }
 
     // ---------------------------------------------------

@@ -19,11 +19,13 @@ public class DVectorValue extends AbstractBufferValue {
     // ---------------------------------------------------
 
     public DVectorValue(final long size,
-                        final boolean allocateMemory) {
+                        final boolean allocateMemory,
+                        final Vector.VectorType type) {
 
         super((int)(size * Double.BYTES), allocateMemory);
         data = new double[(int)size];
-        vector = new DVector(size, data);
+        vector = new DVector(size, data, type);
+        this.vector.setOwner(this);
     }
 
     // ---------------------------------------------------

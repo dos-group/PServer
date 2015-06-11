@@ -5,6 +5,8 @@ import de.tuberlin.pserver.math.Vector;
 
 public interface LibraryMatrixOps<TM extends Matrix, TV extends Vector> {
 
+    public abstract TM axpy(final double alpha, final TM B, final TM A);
+
     public abstract TM add(final TM B, final TM A);             // A = B + A
 
     public abstract TM sub(final TM B, final TM A);             // A = B - A

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package de.tuberlin.pserver.ml.playground.encoders;
+package de.tuberlin.pserver.ml.playground.mahout.encoders;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
