@@ -4,8 +4,9 @@ import com.google.common.collect.Lists;
 import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.Vector;
-import de.tuberlin.pserver.ml.optimization.WeightsObserver;
+import de.tuberlin.pserver.ml.optimization.*;
 
 import java.io.Serializable;
 import java.text.DecimalFormat;
@@ -17,8 +18,6 @@ public final class AsyncHogwildSGDTestJob extends PServerJob {
     // Fields.
     // ---------------------------------------------------
 
-    private Vector model;
-
     private final DataManager.Merger<Vector> merger = (l, r) -> {
         for (int j = 0; j < l.size(); ++j) {
             double nv = 0.0;
@@ -29,8 +28,8 @@ public final class AsyncHogwildSGDTestJob extends PServerJob {
     };
 
     private final WeightsObserver observer = (epoch, weights) -> {
-        if (epoch % 10 == 0)
-            dataManager.mergeVector(model, merger);
+        if (epoch % 200 == 0)
+            dataManager.mergeVector(weights, merger);
     };
 
     // ---------------------------------------------------
@@ -39,42 +38,37 @@ public final class AsyncHogwildSGDTestJob extends PServerJob {
 
     @Override
     public void prologue() {
+
         dataManager.loadDMatrix("datasets/sparse_dataset.csv");
+
+        dataManager.createLocalVector("weight-vector", 1000, Vector.VectorType.ROW_VECTOR);
     }
 
     @Override
     public void compute() {
 
-        /// ---------------------------------- DOES NOT WORK ----------------------------------
-
-        /*try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        model = dataManager.createLocalVector("model1", 15, Vector.VectorType.ROW_VECTOR);
+        final Vector weights = dataManager.getLocalVector("weight-vector");
 
         final Matrix trainingData = dataManager.getLocalMatrix("sparse_dataset.csv");
 
-        final Functions.PredictionFunction predictionFunction = new Functions.LinearPredictionFunction();
+        final PredictionFunction predictionFunction = new PredictionFunction.LinearPredictionFunction();
 
-        final Functions.PartialLossFunction partialLossFunction = new Functions.SquareLoss();
+        final PartialLossFunction partialLossFunction = new PartialLossFunction.SquareLoss();
 
-        final Optimizer optimizer = new SGDOptimizer()
-                .setNumberOfIterations(12000)
-                .setLearningRate(0.005)
-                .setLossFunction(new Functions.GenericLossFunction(predictionFunction, partialLossFunction))
-                .setGradientStepFunction(new SGDOptimizer.SimpleGradientStep())
-                .setLearningRateDecayFunction(new SGDOptimizer.SimpleDecay())
-                .setWeightsObserver(observer);
+        final Optimizer optimizer = new SGDOptimizer(SGDOptimizer.TYPE.SGD_SIMPLE)
+                .setNumberOfIterations(1000)
+                .setLearningRate(0.00005)
+                .setLossFunction(new LossFunction.GenericLossFunction(predictionFunction, partialLossFunction))
+                .setGradientStepFunction(new GradientStepFunction.AtomicGradientStep())
+                .setLearningRateDecayFunction(null)
+                .setWeightsObserver(observer)
+                .setRandomShuffle(true);
 
-        final Vector weights = optimizer.optimize(model, trainingData.rowIterator());
+        final Matrix.RowIterator dataIterator = dataManager.threadPartitionedRowIterator(trainingData);
 
-        result(weights);*/
+        optimizer.optimize(weights, dataIterator);
 
-        /// ---------------------------------- DOES NOT WORK ----------------------------------
-
+        result(weights);
     }
 
     // ---------------------------------------------------
@@ -86,7 +80,7 @@ public final class AsyncHogwildSGDTestJob extends PServerJob {
         final List<List<Serializable>> weights = Lists.newArrayList();
 
         PServerExecutor.LOCAL
-                .run(AsyncSGDTestJob.class, 2) // <-- enable multi-threading
+                .run(AsyncHogwildSGDTestJob.class, 2) // <-- enable multi-threading, 2 threads per compute node.
                 .results(weights)
                 .done();
 

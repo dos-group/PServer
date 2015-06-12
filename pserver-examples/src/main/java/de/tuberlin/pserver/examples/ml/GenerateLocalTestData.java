@@ -8,6 +8,6 @@ public class GenerateLocalTestData {
 
         //DataGenerator.generateDatasetAndWriteToFile(1000, 15, 42, "datasets/demo_dataset.csv");
 
-        DataGenerator.generateDatasetAndWriteToFile(5000, 1000, 42, "datasets/sparse_dataset.csv");
+        DataGenerator.generateDatasetAndWriteToFile(1000, 1000, 42, "datasets/sparse_dataset.csv");
     }
 }

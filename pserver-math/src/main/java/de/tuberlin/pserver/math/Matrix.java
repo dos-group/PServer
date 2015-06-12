@@ -14,6 +14,8 @@ public interface Matrix extends Serializable {
 
         public abstract void nextRow();
 
+        public abstract void nextRandomRow();
+
         public abstract double getValueOfColumn(final int col);
 
         public abstract Vector getAsVector();
@@ -73,10 +75,6 @@ public interface Matrix extends Serializable {
     public abstract RowIterator rowIterator();
 
     public abstract RowIterator rowIterator(final int startRow, final int endRow);
-
-    public abstract RowIterator randomRowIterator();
-
-    public abstract RowIterator randomRowIterator(final int startRow, final int endRow);
 
     // ---------------------------------------------------
 

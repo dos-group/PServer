@@ -103,26 +103,18 @@ public final class DataManager {
 
     public IConfig getConfig() { return config; }
 
-    // ---------------------------------------------------
-
     // Must be called from the specific execution context!
     public void registerJobContext(final PServerContext ctx) {
         contextResolver.put(Thread.currentThread().getId(), Preconditions.checkNotNull(ctx));
     }
 
-    // ---------------------------------------------------
-
     public <T> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
         return fileSystemManager != null ? fileSystemManager.createFileIterator(filePath, recordType) : null;
     }
 
-    // ---------------------------------------------------
-
     public void loadDMatrix(final String filePath) {
         filesToLoad.add(createFileIterator(Preconditions.checkNotNull(filePath), null));
     }
-
-    // ---------------------------------------------------
 
     public final Value[] globalPull(final String name) {
         Preconditions.checkNotNull(name);
@@ -137,8 +129,6 @@ public final class DataManager {
         return values;
     }
 
-    // ---------------------------------------------------
-
     public void mergeMatrix(final Matrix localMtx, final Merger<Matrix> merger) {
         Preconditions.checkState(localMtx.getOwner() != null);
         final Key k = ((Value)localMtx.getOwner()).getKey();
@@ -151,8 +141,6 @@ public final class DataManager {
             ms[i] = ((DMatrixValue)matrices.get(i)).matrix;
         merger.merge(localMtx, ms);
     }
-
-    // ---------------------------------------------------
 
     public void mergeVector(final Vector localVec, final Merger<Vector> merger) {
         Preconditions.checkState(localVec.getOwner() != null);
@@ -167,8 +155,6 @@ public final class DataManager {
         merger.merge(localVec, ms);
     }
 
-    // ---------------------------------------------------
-
     public Matrix createLocalMatrix(final String name, final int rows, final int cols)
     { return createLocalMatrix(name, rows, cols, DMatrix.MemoryLayout.ROW_LAYOUT); }
     public Matrix createLocalMatrix(final String name, final int rows, final int cols, final DMatrix.MemoryLayout layout) {
@@ -180,8 +166,6 @@ public final class DataManager {
         return m.matrix;
     }
 
-    // ---------------------------------------------------
-
     public Vector createLocalVector(final String name, final int size, final Vector.VectorType type) {
         Preconditions.checkNotNull(name);
         final Key key = createLocalKeyWithName(name);
@@ -190,8 +174,6 @@ public final class DataManager {
         dht.put(key, v);
         return v.vector;
     }
-
-    // ---------------------------------------------------
 
     public Matrix.RowIterator threadPartitionedRowIterator(final Matrix matrix) {
         Preconditions.checkNotNull(matrix);
@@ -202,8 +184,6 @@ public final class DataManager {
         end = (ctx.threadID == ctx.perNodeParallelism - 1) ?  end + (int)matrix.numRows() % ctx.perNodeParallelism : end;
         return matrix.rowIterator(ctx.threadID * rowBlock, end);
     }
-
-    // ---------------------------------------------------
 
     public Matrix getLocalMatrix(final String name) {
         Preconditions.checkNotNull(name);
@@ -222,7 +202,23 @@ public final class DataManager {
             throw new IllegalStateException();
     }
 
-    // ---------------------------------------------------
+
+    public Vector getLocalVector(final String name) {
+        Preconditions.checkNotNull(name);
+        Key localKey = null;
+        final Set<Key> keys = dht.getKey(name);
+        for (final Key k : keys) {
+            if (k.getPartitionDescriptor(instanceID) != null) {
+                localKey = k;
+                break;
+            }
+        }
+        final Value value = dht.get(localKey)[0];
+        if (value instanceof DVectorValue)
+            return ((DVectorValue)dht.get(localKey)[0]).vector;
+        else
+            throw new IllegalStateException();
+    }
 
     public void setResults(final UUID jobUID, final List<Serializable> results) {
         Preconditions.checkNotNull(jobUID);
@@ -234,8 +230,6 @@ public final class DataManager {
         Preconditions.checkNotNull(jobUID);
         return resultObjects.get(jobUID);
     }
-
-    // ---------------------------------------------------
 
     public void postProloguePhase(final PServerContext ctx) {
         Preconditions.checkNotNull(ctx);
@@ -250,38 +244,6 @@ public final class DataManager {
     // ---------------------------------------------------
     // Private Methods.
     // ---------------------------------------------------
-
-    /*private void loadFilesIntoDHT() {
-        for (final FileDataIterator<CSVRecord> fileIterator : filesToLoad) {
-            double[] currentSegment = (double[]) MemoryManager.getMemoryManager().allocSegmentAs(double[].class);
-            List<double[]> buffers = new ArrayList<>();
-            buffers.add(currentSegment);
-            int rows = 0, cols = -1, localIndex = 0;
-            while (fileIterator.hasNext()) {
-                final CSVRecord record = fileIterator.next();
-
-                if (cols == -1)
-                    cols = record.size();
-                if (record.size() != cols)
-                    throw new IllegalStateException("cols must always have size: " + cols + " but it has record.size = " + record.size());
-
-                for (int i = 0; i < record.size(); ++i) {
-                    if (localIndex == currentSegment.length - 1) {
-                        currentSegment = (double[]) MemoryManager.getMemoryManager().allocSegmentAs(double[].class);
-                        buffers.add(currentSegment);
-                        localIndex = 0;
-                    }
-                    currentSegment[localIndex] = Double.parseDouble(record.get(i));
-                    ++localIndex;
-                }
-                ++rows;
-            }
-            final String filename = Paths.get(fileIterator.getFilePath()).getFileName().toString();
-            final Key key = createLocalKeyWithName(filename);
-            final PagedDMatrixValue dBuf = new PagedDMatrixValue(rows, cols, buffers);
-            dht.put(key, dBuf);
-        }
-    }*/
 
     private void loadFilesIntoDHT() {
         for (final FileDataIterator<CSVRecord> fileIterator : filesToLoad) {
@@ -306,7 +268,6 @@ public final class DataManager {
                     currentSegment[localIndex] = Double.parseDouble(record.get(i));
                     ++localIndex;
                 }
-
                 ++rows;
             }
 

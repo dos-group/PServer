@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.math;
 
 import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.AtomicDoubleArray;
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
 import de.tuberlin.pserver.math.delegates.MathLibFactory;
 import org.slf4j.Logger;
@@ -33,79 +32,22 @@ public class DMatrix implements Matrix, Serializable {
 
         private DMatrix self;
 
-        private final long end;
-
         private int globalRowIndex;
-
-        private final int startRow;
-
-        // ---------------------------------------------------
-
-        public RowIterator(final DMatrix v) { this(v, 0, (int)Preconditions.checkNotNull(v).numRows() - 1); }
-        public RowIterator(final DMatrix v, final int startRow, final int endRow) {
-            this.self = v;
-            Preconditions.checkArgument(startRow >= 0 && startRow < self.numRows());
-            Preconditions.checkArgument(endRow > startRow && endRow < self.numRows());
-            this.startRow = startRow * (int)self.cols;
-            this.end = endRow * self.cols;
-            this.globalRowIndex = this.startRow - (int)-self.cols;
-            reset();
-        }
-
-        // ---------------------------------------------------
-
-        @Override
-        public boolean hasNextRow() { return globalRowIndex < end /*|| globalRowIndex < self.rows * self.cols*/; }
-
-        @Override
-        public void nextRow() { globalRowIndex += self.cols; }
-
-        @Override
-        public double getValueOfColumn(final int col) { return self.data[globalRowIndex + col]; }
-
-        @Override
-        public Vector getAsVector() { return getAsVector(0, (int)self.cols); }
-
-        @Override
-        public Vector getAsVector(int from, int size) {
-            final double v[] = new double[size];
-            System.arraycopy(self.data, globalRowIndex + from, v, 0, size);
-            return new DVector(size, v);
-        }
-
-        @Override
-        public void reset() { globalRowIndex = startRow - (int)self.cols; }
-
-        @Override
-        public long numRows() { return self.rows; }
-
-        @Override
-        public long numCols() { return self.cols; }
-    }
-
-    // ---------------------------------------------------
-
-    private static final class RandomRowIterator implements Matrix.RowIterator {
-
-        private DMatrix self;
-
-        private final int start;
 
         private final int end;
 
+        private final int start;
+
         private final int numRows;
 
-        private int globalRowIndex;
-
-
-        private int randRowIndex;
+        private int currentRowIndex;
 
         private Random rand;
 
         // ---------------------------------------------------
 
-        public RandomRowIterator(final DMatrix v) { this(v, 0, (int)Preconditions.checkNotNull(v).numRows() - 1); }
-        public RandomRowIterator(final DMatrix v, final int startRow, final int endRow) {
+        public RowIterator(final DMatrix v) { this(v, 0, (int)Preconditions.checkNotNull(v).numRows() - 1); }
+        public RowIterator(final DMatrix v, final int startRow, final int endRow) {
             this.self = v;
             Preconditions.checkArgument(startRow >= 0 && startRow < self.numRows());
             Preconditions.checkArgument(endRow > startRow && endRow < self.numRows());
@@ -123,13 +65,16 @@ public class DMatrix implements Matrix, Serializable {
         public boolean hasNextRow() { return globalRowIndex < end /*|| globalRowIndex < self.rows * self.cols*/; }
 
         @Override
-        public void nextRow() {
+        public void nextRow() { globalRowIndex += self.cols; currentRowIndex = globalRowIndex; }
+
+        @Override
+        public void nextRandomRow() {
             globalRowIndex += self.cols;
-            randRowIndex = start + (int)((rand.nextDouble() * numRows) * self.cols);
+            currentRowIndex = start +  (rand.nextInt(numRows) * (int)self.cols);
         }
 
         @Override
-        public double getValueOfColumn(final int col) { return self.data[randRowIndex + col]; }
+        public double getValueOfColumn(final int col) { return self.data[currentRowIndex + col]; }
 
         @Override
         public Vector getAsVector() { return getAsVector(0, (int)self.cols); }
@@ -137,7 +82,7 @@ public class DMatrix implements Matrix, Serializable {
         @Override
         public Vector getAsVector(int from, int size) {
             final double v[] = new double[size];
-            System.arraycopy(v, randRowIndex + from, v, 0, size);
+            System.arraycopy(self.data, currentRowIndex + from, v, 0, size);
             return new DVector(size, v);
         }
 
@@ -172,8 +117,6 @@ public class DMatrix implements Matrix, Serializable {
 
     private final MemoryLayout layout;
 
-    private AtomicDoubleArray atomicWrapper;
-
     private Lock lock;
 
     // ---------------------------------------------------
@@ -189,7 +132,6 @@ public class DMatrix implements Matrix, Serializable {
         this.layout = Preconditions.checkNotNull(layout);
         this.data = (data == null) ? new double[(int)(rows * cols)] : Preconditions.checkNotNull(data);
         //Preconditions.checkState(this.data.length == rows * cols);
-        this.atomicWrapper = new AtomicDoubleArray(data);
         this.lock = new ReentrantLock();
     }
 
@@ -224,10 +166,10 @@ public class DMatrix implements Matrix, Serializable {
     public void set(long row, long col, double value) { data[getPos(row, col)] = value; }
 
     @Override
-    public double atomicGet(long row, long col) { return atomicWrapper.get(getPos(row, col)); }
+    public double atomicGet(long row, long col) { throw new UnsupportedOperationException(); }
 
     @Override
-    public void atomicSet(long row, long col, double value) { atomicWrapper.set(getPos(row, col), value); }
+    public void atomicSet(long row, long col, double value) { throw new UnsupportedOperationException(); }
 
     @Override
     public double[] toArray() {
@@ -245,12 +187,6 @@ public class DMatrix implements Matrix, Serializable {
 
     @Override
     public RowIterator rowIterator(final int startRow, final int endRow) { return new RowIterator(this, startRow, endRow); }
-
-    @Override
-    public Matrix.RowIterator randomRowIterator() { return new RandomRowIterator(this); }
-
-    @Override
-    public Matrix.RowIterator randomRowIterator(int startRow, int endRow) { return new RandomRowIterator(this, startRow, endRow); }
 
     @Override
     public double aggregate(DoubleDoubleFunction combiner, DoubleFunction mapper) {

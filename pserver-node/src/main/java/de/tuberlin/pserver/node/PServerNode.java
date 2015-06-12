@@ -164,6 +164,7 @@ public final class PServerNode extends EventDispatcher {
         try {
 
             if (job.getJobContext().threadID == 0) {
+
                 {
                     LOG.info("Enter " + job.getJobContext().simpleClassName + " prologue phase.");
 
@@ -179,10 +180,10 @@ public final class PServerNode extends EventDispatcher {
                             + " prologue phase [duration: " + (end - start) + " ms].");
                 }
 
+                Thread.sleep(10); // TODO: Not very elegant...
+
                 jobStartBarrier.countDown();
             }
-
-            Thread.sleep(1); // TODO: Not very elegant...
 
             jobStartBarrier.await();
 

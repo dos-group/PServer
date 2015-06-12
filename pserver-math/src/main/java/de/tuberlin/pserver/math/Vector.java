@@ -27,6 +27,10 @@ public interface Vector extends Serializable {
     public abstract void set(final long index, final double value);
 
     public abstract double get(final long index);
+    
+    public abstract double atomicGet(final long index);
+
+    public abstract void atomicSet(final long index, final double value);
 
     public abstract long size();
 

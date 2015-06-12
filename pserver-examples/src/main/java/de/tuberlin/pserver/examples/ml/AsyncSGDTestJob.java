@@ -55,7 +55,7 @@ public final class AsyncSGDTestJob extends PServerJob {
 
         final PartialLossFunction partialLossFunction = new PartialLossFunction.SquareLoss();
 
-        final Optimizer optimizer = new SGDOptimizer()
+        final Optimizer optimizer = new SGDOptimizer(SGDOptimizer.TYPE.SGD_SIMPLE)
                 .setNumberOfIterations(12000)
                 .setLearningRate(0.005)
                 .setLossFunction(new LossFunction.GenericLossFunction(predictionFunction, partialLossFunction))
@@ -63,9 +63,9 @@ public final class AsyncSGDTestJob extends PServerJob {
                 .setLearningRateDecayFunction(new DecayFunction.SimpleDecay())
                 .setWeightsObserver(observer);
 
-        final Vector weights = optimizer.optimize(model, trainingData.rowIterator());
+        optimizer.optimize(model, trainingData.rowIterator());
 
-        result(weights);
+        result(model);
     }
 
     // ---------------------------------------------------

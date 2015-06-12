@@ -2,6 +2,7 @@ package de.tuberlin.pserver.math;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
+import com.google.common.util.concurrent.AtomicDoubleArray;
 import de.tuberlin.pserver.math.delegates.LibraryVectorOps;
 import de.tuberlin.pserver.math.delegates.MathLibFactory;
 
@@ -114,6 +115,10 @@ public class DVector implements Vector, Serializable {
     @Override public void set(final long index, final double value) { data[(int)index] = value; }
 
     @Override public double get(long index) { return data[(int)index]; }
+
+    @Override public double atomicGet(final long index) { throw new UnsupportedOperationException(); }
+
+    @Override public void atomicSet(final long index, final double value) { throw new UnsupportedOperationException(); }
 
     @Override public long size() { return data.length; }
 
