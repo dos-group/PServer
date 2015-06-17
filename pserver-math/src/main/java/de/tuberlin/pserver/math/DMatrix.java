@@ -12,18 +12,7 @@ import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class DMatrix implements Matrix, Serializable {
-
-    // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    public enum MemoryLayout {
-
-        ROW_LAYOUT,
-
-        COLUMN_LAYOUT
-    }
+public class DMatrix extends AbstractMatrix implements Matrix, Serializable {
 
     // ---------------------------------------------------
     // Inner Classes.
@@ -164,17 +153,9 @@ public class DMatrix implements Matrix, Serializable {
     private static final LibraryMatrixOps<Matrix, Vector> matrixOpDelegate =
             MathLibFactory.delegateDMatrixOpsTo(MathLibFactory.DMathLibrary.EJML_LIBRARY);
 
-    private final long rows;
-
-    private final long cols;
-
     private double[] data;
 
-    private final MemoryLayout layout;
-
     private AtomicDoubleArray atomicWrapper;
-
-    private Lock lock;
 
     // ---------------------------------------------------
     // Constructors.
@@ -184,13 +165,10 @@ public class DMatrix implements Matrix, Serializable {
     public DMatrix(final long rows, final long cols) { this(rows, cols, null, MemoryLayout.ROW_LAYOUT); }
     public DMatrix(final long rows, final long cols, final double[] data) { this(rows, cols, data, MemoryLayout.ROW_LAYOUT); }
     public DMatrix(final long rows, final long cols, final double[] data, final MemoryLayout layout) {
-        this.rows = rows;
-        this.cols = cols;
-        this.layout = Preconditions.checkNotNull(layout);
+        super(rows, cols, layout);
         this.data = (data == null) ? new double[(int)(rows * cols)] : Preconditions.checkNotNull(data);
         //Preconditions.checkState(this.data.length == rows * cols);
         this.atomicWrapper = new AtomicDoubleArray(data);
-        this.lock = new ReentrantLock();
     }
 
     // ---------------------------------------------------
@@ -198,36 +176,16 @@ public class DMatrix implements Matrix, Serializable {
     // ---------------------------------------------------
 
     @Override
-    public void setOwner(final Object owner) { this.owner = owner; }
+    public double get(final long row, final long col) { return data[Utils.getPos(row, col, this)]; }
 
     @Override
-    public Object getOwner() { return owner; }
+    public void set(long row, long col, double value) { data[Utils.getPos(row, col, this)] = value; }
 
     @Override
-    public void lock() { lock.lock(); }
+    public double atomicGet(long row, long col) { return atomicWrapper.get(Utils.getPos(row, col, this)); }
 
     @Override
-    public void unlock() { lock.unlock(); }
-
-    // ---------------------------------------------------
-
-    @Override
-    public long numRows() { return rows; }
-
-    @Override
-    public long numCols() { return cols; }
-
-    @Override
-    public double get(final long row, final long col) { return data[getPos(row, col)]; }
-
-    @Override
-    public void set(long row, long col, double value) { data[getPos(row, col)] = value; }
-
-    @Override
-    public double atomicGet(long row, long col) { return atomicWrapper.get(getPos(row, col)); }
-
-    @Override
-    public void atomicSet(long row, long col, double value) { atomicWrapper.set(getPos(row, col), value); }
+    public void atomicSet(long row, long col, double value) { atomicWrapper.set(Utils.getPos(row, col, this), value); }
 
     @Override
     public double[] toArray() {
@@ -316,7 +274,7 @@ public class DMatrix implements Matrix, Serializable {
     public Vector viewRow(final long row) {
         Vector r = new DVector(numCols());
         for (int i = 0; i < numCols(); ++i)
-            r.set(i, data[getPos(row, i)]);
+            r.set(i, data[Utils.getPos(row, i, this)]);
         return r;
     }
 
@@ -324,7 +282,7 @@ public class DMatrix implements Matrix, Serializable {
     public Vector viewColumn(final long col) {
         Vector r = new DVector(numRows());
         for (int i = 0; i < numRows(); ++i)
-            r.set(i, data[getPos(i, col)]);
+            r.set(i, data[Utils.getPos(i, col, this)]);
         return r;
     }
 
@@ -332,7 +290,7 @@ public class DMatrix implements Matrix, Serializable {
     public Matrix assignRow(final long row, final Vector v) {
         Preconditions.checkNotNull(numCols() == v.size());
         for (int i = 0; i < v.size(); ++i)
-            data[getPos(row, i)] = v.get(i);
+            data[Utils.getPos(row, i, this)] = v.get(i);
         return this;
     }
 
@@ -340,19 +298,8 @@ public class DMatrix implements Matrix, Serializable {
     public Matrix assignColumn(final long col, final Vector v) {
         Preconditions.checkNotNull(numRows() == v.size());
         for (int i = 0; i < v.size(); ++i)
-            data[getPos(i, col)] = v.get(i);
+            data[Utils.getPos(i, col, this)] = v.get(i);
         return this;
     }
 
-    // ---------------------------------------------------
-    // Private Methods.
-    // ---------------------------------------------------
-
-    private int getPos(final long row, final long col) {
-        switch (layout) {
-            case ROW_LAYOUT: return (int)(row * cols + col);
-            case COLUMN_LAYOUT: return (int)(col * rows + row);
-        }
-        throw new IllegalStateException();
-    }
 }

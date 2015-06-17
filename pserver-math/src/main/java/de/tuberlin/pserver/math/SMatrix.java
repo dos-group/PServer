@@ -1,42 +1,32 @@
 package de.tuberlin.pserver.math;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.delegates.DelegationMatrix;
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
 import de.tuberlin.pserver.math.delegates.MathLibFactory;
-import de.tuberlin.pserver.math.delegates.sparse.mtj.MTJMatrix;
+import no.uib.cipr.matrix.MatrixEntry;
+import no.uib.cipr.matrix.sparse.CompColMatrix;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 
-public abstract class SMatrix<T> extends DelegationMatrix<T> {
+import java.util.Iterator;
 
-    // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    public enum MemoryLayout {
-
-        COMPRESSED_ROW,
-
-        COMPRESSED_COL
-    }
+public class SMatrix extends AbstractMatrix {
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    protected final MemoryLayout layout;
+    protected no.uib.cipr.matrix.Matrix data;
 
-    private static final LibraryMatrixOps<SMatrix, SVector> matrixOpDelegate =
+    private static final LibraryMatrixOps<Matrix, Vector> matrixOpDelegate =
             MathLibFactory.delegateSMatrixOpsTo(MathLibFactory.SMathLibrary.MTJ_LIBRARY);
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    protected SMatrix(final long rows, final long cols, T target, MemoryLayout layout) {
-        super(rows, cols, target);
-        this.layout = Preconditions.checkNotNull(layout);
-        Preconditions.checkArgument(java.util.Arrays.asList(MemoryLayout.values()).contains(layout), "Unknown MemoryLayout: " + layout.toString());
+    public SMatrix(no.uib.cipr.matrix.Matrix mat, MemoryLayout layout) {
+        super(mat.numRows(), mat.numColumns(), layout);
+        data = mat;
     }
 
     /**
@@ -67,7 +57,8 @@ public abstract class SMatrix<T> extends DelegationMatrix<T> {
                 }
             }
         }
-        return new MTJMatrix(mat.numRows(), mat.numCols(), mtjMat, MemoryLayout.COMPRESSED_ROW);
+        return null;
+        //return new MTJMatrix(mat.numRows(), mat.numCols(), mtjMat, MemoryLayout.COMPRESSED_ROW);
     }
 
     @Override
@@ -76,28 +67,131 @@ public abstract class SMatrix<T> extends DelegationMatrix<T> {
         return new DMatrix(rows, cols, data);
     }
 
+    @Override
+    public Vector viewRow(long row) {
+        return null;
+    }
+
+    @Override
+    public Vector viewColumn(long col) {
+        return null;
+    }
+
+    @Override
+    public Matrix assignRow(long row, Vector v) {
+        return null;
+    }
+
+    @Override
+    public Matrix assignColumn(long col, Vector v) {
+        return null;
+    }
+
     // ---------------------------------------------------
     // Matrix Operation Delegates.
     // ---------------------------------------------------
 
-    @Override public Matrix add(final Matrix B) { return matrixOpDelegate.add((SMatrix)B, this); }
+    @Override public Matrix add(final Matrix B) { return matrixOpDelegate.add(B, this); }
 
-    @Override public Matrix sub(final Matrix B) { return matrixOpDelegate.sub((SMatrix)B, this); }
+    @Override public Matrix sub(final Matrix B) { return matrixOpDelegate.sub(B, this); }
 
-    @Override public Matrix mul(final Matrix B) { return matrixOpDelegate.mul(this, (SMatrix)B); }
+    @Override public Matrix mul(final Matrix B) { return matrixOpDelegate.mul(this, B); }
 
-    @Override public Vector mul(final Vector v) { return matrixOpDelegate.mul(this, (SVector)v); }
+    @Override public Vector mul(final Vector v) { return matrixOpDelegate.mul(this, v); }
 
-    @Override public void mul(final Vector x, final Vector y) { matrixOpDelegate.mul(this, (SVector)x, (SVector)y); }
+    @Override public void mul(final Vector x, final Vector y) { matrixOpDelegate.mul(this, x, y); }
 
     @Override public Matrix scale(final double alpha) { return matrixOpDelegate.scale(alpha, this); }
 
     @Override public Matrix transpose() { return matrixOpDelegate.transpose(this); }
 
-    @Override public void transpose(final Matrix B) { matrixOpDelegate.transpose(this, (SMatrix)B); }
+    @Override public void transpose(final Matrix B) { matrixOpDelegate.transpose(this, B); }
 
     @Override public boolean invert() { return matrixOpDelegate.invert(this); }
 
+    @Override
+    public Matrix assign(Matrix v) {
+        return null;
+    }
+
+    @Override
+    public double get(long row, long col) { return data.get(Utils.toInt(row), Utils.toInt(col)); }
+
+    @Override
+    public void set(long row, long col, double value) { data.set(Utils.toInt(row), Utils.toInt(col), value); }
+
+    @Override
+    public double atomicGet(long row, long col) {
+        synchronized (data) {
+            return data.get(Utils.toInt(row), Utils.toInt(col));
+        }
+    }
+
+    @Override
+    public void atomicSet(long row, long col, double value) {
+        synchronized (data) {
+            data.set(Utils.toInt(row), Utils.toInt(col), value);
+        }
+    }
+
+    @Override
+    public double[] toArray() {
+        double[] result = new double[Utils.toInt(rows*cols)];
+        Iterator<MatrixEntry> iter = data.iterator();
+        while(iter.hasNext()) {
+            MatrixEntry entry = iter.next();
+            result[Utils.getPos(entry.row(), entry.column(), layout, rows, cols)] = entry.get();
+        }
+        return result;
+    }
+
+    private no.uib.cipr.matrix.Matrix getNewInstance(int[][] nz) {
+        no.uib.cipr.matrix.AbstractMatrix result;
+        switch(layout) {
+            case ROW_LAYOUT:
+                result = new CompRowMatrix(Utils.toInt(rows), Utils.toInt(cols), nz);
+                break;
+            case COLUMN_LAYOUT:
+                result = new CompColMatrix(Utils.toInt(rows), Utils.toInt(cols), nz);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown MemoryLayout: " + layout.toString());
+        }
+        return result;
+    }
+
+    @Override
+    public void setArray(double[] data) {
+        Preconditions.checkArgument(data.length == rows * cols, String.format("Wrong length of data array. Excepted: rows * cols = %d * %d = %d. Actual: %d", rows, cols, rows*cols, data.length));
+        this.data = null;//getNewInstance(buildNz(data));
+        for(long i = 0; i < rows; i++) {
+            for(long j = 0; j < cols; j++) {
+                double val = data[Utils.getPos(i, j, layout, rows, cols)];
+                if(val != 0.0) {
+                    this.data.set(Utils.toInt(i), Utils.toInt(j), val);
+                }
+            }
+        }
+    }
+
+    @Override
+    public Matrix.RowIterator randomRowIterator() {
+        return null;
+    }
+
+    @Override
+    public Matrix.RowIterator randomRowIterator(int startRow, int endRow) {
+        return null;
+    }
+
+    @Override
+    public Matrix axpy(double alpha, Matrix B) {
+        return null;
+    }
+
+    public no.uib.cipr.matrix.Matrix getContainer() {
+        return data;
+    }
 
 
     class Entry {

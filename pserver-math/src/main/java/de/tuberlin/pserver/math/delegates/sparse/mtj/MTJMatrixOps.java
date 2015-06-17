@@ -1,65 +1,78 @@
 package de.tuberlin.pserver.math.delegates.sparse.mtj;
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.*;
+import de.tuberlin.pserver.math.AbstractVector;
+import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.Vector;
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
 import no.uib.cipr.matrix.*;
-import no.uib.cipr.matrix.Matrix;
-import no.uib.cipr.matrix.Vector;
 import no.uib.cipr.matrix.sparse.*;
 
-public class MTJMatrixOps implements LibraryMatrixOps<SMatrix, SVector> {
+public class MTJMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
 
     @Override
-    public SMatrix add(SMatrix B, SMatrix A) {
-        return toSMatrix(toLibMatrix(B).add(toLibMatrix(A)));
+    public Matrix axpy(double alpha, Matrix B, Matrix A) {
+        return null;
     }
 
     @Override
-    public SMatrix sub(SMatrix B, SMatrix A) {
-        return toSMatrix(toLibMatrix(B).scale(-1.).add(toLibMatrix(A)).scale(-1.));
+    public Matrix add(Matrix B, Matrix A) {
+        return toPserverMatrix(toLibMatrix(B, true).add(toLibMatrix(A)));
     }
 
     @Override
-    public SVector mul(SMatrix A, SVector x) {
-        Vector result = new SparseVector(Utils.toInt(A.numRows()), Utils.toInt(A.numRows() / 4));
-        Matrix mtj_A = toLibMatrix(A);
-        Vector mtj_x = toLibVector(x);
-        return toSVector(mtj_A.mult(mtj_x, result), de.tuberlin.pserver.math.Vector.VectorType.COLUMN_VECTOR);
+    public Matrix sub(Matrix B, Matrix A) {
+        return toPserverMatrix(toLibMatrix(B, true).scale(-1.).add(toLibMatrix(A)).scale(-1.));
     }
 
     @Override
-    public SMatrix mul(SMatrix A, SMatrix B) {
-        Matrix mtj_A = toLibMatrix(A);
-        Matrix mtj_B = toLibMatrix(B);
-        Matrix result = new FlexCompColMatrix(mtj_A.numRows(), mtj_B.numColumns());;
-        return toSMatrix(mtj_A.mult(mtj_B, result));
+    public Vector mul(Matrix A, Vector x) {
+        SparseVector result = new SparseVector(Utils.toInt(A.numRows()), Utils.toInt(A.numRows() / 4));
+        return toPserverVector(
+                toLibMatrix(A, true).mult(
+                        toLibVector(x),
+                        result),
+                Vector.VectorType.COLUMN_VECTOR);
     }
 
     @Override
-    public void mul(SMatrix A, SVector x, SVector y) {
-        Matrix mtj_A = toLibMatrix(A);
-        Vector mtj_x = toLibVector(x);
-        Vector mtj_y = toLibVector(y);
-        mtj_A.mult(mtj_x, mtj_y);
+    public Matrix mul(Matrix A, Matrix B) {
+        return toPserverMatrix(
+                toLibMatrix(A, true).mult(
+                        toLibMatrix(B),
+                        new FlexCompColMatrix(Utils.toInt(A.numRows()), Utils.toInt(B.numCols()))
+                ));
     }
 
     @Override
-    public SMatrix scale(double alpha, SMatrix A) {
-        return toSMatrix(toLibMatrix(A).scale(alpha));
+    public void mul(Matrix A, Vector x, Vector y) {
+        Vector result = toPserverVector(
+                toLibMatrix(A).mult(
+                        toLibVector(x),
+                        toLibVector(y)
+                ),
+                Vector.VectorType.COLUMN_VECTOR);
+        y.assign(result);
     }
 
     @Override
-    public SMatrix transpose(SMatrix A) {
-        return toSMatrix(toLibMatrix(A).transpose());
+    public Matrix scale(double alpha, Matrix A) {
+        return toPserverMatrix(toLibMatrix(A).scale(alpha));
     }
 
     @Override
-    public void transpose(SMatrix A, SMatrix B) {
-        toLibMatrix(A).transpose(toLibMatrix(B));
+    public Matrix transpose(Matrix A) {
+        return toPserverMatrix(toLibMatrix(A, true).transpose());
     }
 
     @Override
-    public boolean invert(SMatrix A) {
+    public void transpose(Matrix A, Matrix B) {
+        B.assign(toPserverMatrix(toLibMatrix(A).transpose(toLibMatrix(B))));
+    }
+
+    @Override
+    public boolean invert(Matrix A) {
         DenseMatrix I = Matrices.identity(Utils.toInt(Math.min(A.numCols(), A.numRows())));
         DenseMatrix AI = I.copy();
         try {
@@ -72,40 +85,81 @@ public class MTJMatrixOps implements LibraryMatrixOps<SMatrix, SVector> {
         return true;
     }
 
-    private static Matrix toLibMatrix(SMatrix<? extends Matrix> mat) {
-        return mat.getTarget();
+    private static no.uib.cipr.matrix.Matrix toLibMatrix(Matrix mat) {
+        return toLibMatrix(mat, false);
     }
 
-    private static SMatrix toSMatrix(Matrix mat) {
-        return new MTJMatrix(mat.numRows(), mat.numColumns(), mat, getLayout(mat));
-    }
-
-    private static SMatrix.MemoryLayout getLayout(Matrix mat) {
-        SMatrix.MemoryLayout result;
-        if(mat instanceof CompRowMatrix) {
-            result = SMatrix.MemoryLayout.COMPRESSED_ROW;
+    private static no.uib.cipr.matrix.Matrix toLibMatrix(Matrix mat, boolean mutable) {
+        no.uib.cipr.matrix.Matrix result = null;
+        if(mat instanceof SMatrix) {
+            result = ((SMatrix) mat).getContainer();
+            if(mutable) {
+                if(result instanceof CompRowMatrix) {
+                    result = new FlexCompRowMatrix(result);
+                }
+                else if(result instanceof CompColMatrix) {
+                    result = new FlexCompColMatrix(result);
+                }
+            }
         }
-        else if(mat instanceof FlexCompRowMatrix) {
-            result = SMatrix.MemoryLayout.COMPRESSED_ROW;
+        else if(mat instanceof DMatrix) {
+            switch(mat.getLayout()) {
+                case COLUMN_LAYOUT :
+                    result = new DenseMatrix(Utils.toInt(mat.numRows()), Utils.toInt(mat.numCols()), mat.toArray(), mutable);
+                    break;
+                case ROW_LAYOUT :
+                    Matrix aux = new DMatrix(mat.numCols(), mat.numRows());
+                    mat.transpose(aux);
+                    result = new DenseMatrix(Utils.toInt(mat.numRows()), Utils.toInt(mat.numCols()), aux.toArray(), mutable);
+                    break;
+                default :
+                    throw new IllegalArgumentException("Unkown memory layout: " + mat.getLayout().toString());
+            }
         }
-        else if(mat instanceof CompColMatrix) {
-            result = SMatrix.MemoryLayout.COMPRESSED_COL;
-        }
-        else if(mat instanceof FlexCompColMatrix) {
-            result = SMatrix.MemoryLayout.COMPRESSED_COL;
-        }
-        else {
-            throw new IllegalArgumentException("Unknown Matrix type");
-        }
+        Preconditions.checkState(result != null, "Unable to convert matrix");
         return result;
     }
 
-    private static Vector toLibVector(SVector<? extends Vector> vec) {
-        return vec.getTarget();
+    private static Matrix toPserverMatrix(no.uib.cipr.matrix.Matrix mat) {
+        Matrix result = null;
+        if(mat instanceof no.uib.cipr.matrix.DenseMatrix) {
+            result = new DMatrix(mat.numRows(), mat.numRows(), ((DenseMatrix) mat).getData(), Matrix.MemoryLayout.COLUMN_LAYOUT);
+        }
+        else {
+            if(mat instanceof FlexCompRowMatrix || mat instanceof CompRowMatrix) {
+                result = new SMatrix(mat, Matrix.MemoryLayout.ROW_LAYOUT);
+            }
+            else if(mat instanceof FlexCompColMatrix || mat instanceof CompColMatrix) {
+                result = new SMatrix(mat, Matrix.MemoryLayout.COLUMN_LAYOUT);
+            }
+        }
+        Preconditions.checkState(result != null, "Unable to convert matrix");
+        return result;
     }
 
-    private static SVector toSVector(Vector vec, de.tuberlin.pserver.math.Vector.VectorType type) {
-        return new MTJVector(vec.size(), type, vec);
+
+    private static no.uib.cipr.matrix.Vector toLibVector(Vector vec) {
+        no.uib.cipr.matrix.Vector result = null;
+        if(vec instanceof DVector) {
+            result = new DenseVector(vec.toArray());
+        }
+        else if(vec instanceof SVector) {
+            result = ((SVector) vec).getContainer();
+        }
+        Preconditions.checkState(result != null, "Unable to convert vector");
+        return result;
+    }
+
+    private static Vector toPserverVector(no.uib.cipr.matrix.Vector vec, Vector.VectorType type) {
+        Vector result = null;
+        if(MTJUtils.isDense(vec)) {
+            result = new DVector(vec.size(), ((AbstractVector) vec).toArray(), type);
+        }
+        else {
+            result = new SVector(vec.size(), ((SparseVector) vec).getIndex(), ((SparseVector) vec).getData(), type);
+        }
+        // Preconditions.checkState(result != null, "Unable to convert vector");
+        return result;
     }
 
 

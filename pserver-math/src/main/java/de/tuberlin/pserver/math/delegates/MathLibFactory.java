@@ -77,7 +77,7 @@ public class MathLibFactory {
 
     // ---------------------------------------------------
 
-    public static de.tuberlin.pserver.math.delegates.LibraryMatrixOps<SMatrix, SVector> delegateSMatrixOpsTo(final SMathLibrary lib) {
+    public static de.tuberlin.pserver.math.delegates.LibraryMatrixOps<Matrix, Vector> delegateSMatrixOpsTo(final SMathLibrary lib) {
         switch (Preconditions.checkNotNull(lib)) {
             case MTJ_LIBRARY:
                 return new MTJMatrixOps();

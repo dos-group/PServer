@@ -17,6 +17,8 @@ public abstract class AbstractVector implements Vector {
 
     protected VectorType type;
 
+    protected Object owner;
+
     @Override
     public long size() { return size; }
 
@@ -29,6 +31,12 @@ public abstract class AbstractVector implements Vector {
     public VectorType getVectorType() {
         return type;
     }
+
+    @Override
+    public void setOwner(final Object owner) { this.owner = owner; }
+
+    @Override
+    public Object getOwner() { return owner; }
 
     @Override
     public double[] toArray() {
