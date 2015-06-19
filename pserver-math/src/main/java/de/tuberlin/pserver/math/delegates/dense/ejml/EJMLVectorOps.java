@@ -24,7 +24,7 @@ public class EJMLVectorOps implements LibraryVectorOps<Vector> {
     @Override
     public Vector div(final Vector X, final double alpha) {
         final DenseMatrix64F x = convertDVectorToDenseVector64F(X);
-        CommonOps.scale(1 / alpha, x);
+        CommonOps.scale(1. / alpha, x);
         return X;
     }
 

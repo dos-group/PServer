@@ -2,7 +2,10 @@ package de.tuberlin.pserver.math.delegates;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.SMatrix;
+import de.tuberlin.pserver.math.SVector;
 import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.math.delegates.sparse.mtj.MTJMatrixOps;
 
 public class MathLibFactory {
 
@@ -24,7 +27,9 @@ public class MathLibFactory {
 
     public static enum SMathLibrary {
 
-        UJMP_LIBRARY
+        UJMP_LIBRARY,
+
+        MTJ_LIBRARY
     }
 
     // ---------------------------------------------------
@@ -71,17 +76,25 @@ public class MathLibFactory {
     }
 
     // ---------------------------------------------------
-/*
-    public static de.tuberlin.pserver.math.delegates.LibraryMatrixOps<SMatrix, SVector> delegateSMatrixOpsTo(final SMathLibrary lib) {
+
+    public static LibraryMatrixOps<Matrix, Vector> delegateSMatrixOpsTo(final SMathLibrary lib) {
         switch (Preconditions.checkNotNull(lib)) {
-            case UJMP_LIBRARY:
-                return new UJMPMatrixOps();
+            case MTJ_LIBRARY:
+                return new MTJMatrixOps();
         }
         throw new IllegalStateException();
     }
 
     // ---------------------------------------------------
 
+    public static LibraryVectorOps<Vector> delegateSVectorOpsTo(final SMathLibrary lib) {
+        switch (Preconditions.checkNotNull(lib)) {
+            case MTJ_LIBRARY:
+                return new de.tuberlin.pserver.math.delegates.sparse.mtj.MTJVectorOps();
+        }
+        throw new IllegalStateException();
+    }
+/*
     public static Object createSMatrixInternalObject(final SMathLibrary lib, final SMatrix matrix) {
         switch (Preconditions.checkNotNull(lib)) {
             case UJMP_LIBRARY:

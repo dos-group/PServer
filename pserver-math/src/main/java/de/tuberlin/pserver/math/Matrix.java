@@ -4,6 +4,13 @@ import java.io.Serializable;
 
 public interface Matrix extends Serializable {
 
+    public enum MemoryLayout {
+
+        ROW_LAYOUT,
+
+        COLUMN_LAYOUT
+    }
+
     // ---------------------------------------------------
     // Inner Interfaces/Classes.
     // ---------------------------------------------------
@@ -53,6 +60,8 @@ public interface Matrix extends Serializable {
     public abstract void lock();
 
     public abstract void unlock();
+
+    public MemoryLayout getLayout();
 
     // ---------------------------------------------------
 
