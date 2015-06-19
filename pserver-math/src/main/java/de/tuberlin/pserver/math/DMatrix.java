@@ -171,6 +171,10 @@ public class DMatrix extends AbstractMatrix implements Matrix, Serializable {
         this.atomicWrapper = new AtomicDoubleArray(data);
     }
 
+    public static DMatrix fromSMatrix(SMatrix mat, MemoryLayout targetLayout) {
+        return new DMatrix(mat.rows, mat.cols, mat.toArray(targetLayout), targetLayout);
+    }
+
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------

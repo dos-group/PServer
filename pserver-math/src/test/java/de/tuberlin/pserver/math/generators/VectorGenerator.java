@@ -19,4 +19,22 @@ public class VectorGenerator {
         return new DVector(size, data, type);
     }
 
+    public static Vector RandomSVector(long size) {
+        return RandomSVector(size, 0.9);
+    }
+
+    public static Vector RandomSVector(long size, double sparsity) {
+        return RandomSVector(size, Vector.VectorType.COLUMN_VECTOR, sparsity);
+    }
+
+    public static Vector RandomSVector(long size, Vector.VectorType type) {
+        return RandomSVector(size, type, 0.9);
+    }
+
+    public static Vector RandomSVector(long size, Vector.VectorType type, double sparsity) {
+        double[] data = BufferGenerator.SparseRandomValues(size, sparsity);
+        return new DVector(size, data, type);
+    }
+
+
 }

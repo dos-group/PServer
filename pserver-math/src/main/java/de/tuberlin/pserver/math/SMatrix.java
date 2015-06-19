@@ -3,9 +3,12 @@ package de.tuberlin.pserver.math;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
 import de.tuberlin.pserver.math.delegates.MathLibFactory;
+import de.tuberlin.pserver.math.delegates.sparse.mtj.MTJUtils;
 import no.uib.cipr.matrix.MatrixEntry;
 import no.uib.cipr.matrix.sparse.CompColMatrix;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
+import no.uib.cipr.matrix.sparse.FlexCompColMatrix;
+import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 
 import java.util.Iterator;
 
@@ -29,36 +32,60 @@ public class SMatrix extends AbstractMatrix {
         data = mat;
     }
 
-    /**
-     * Builds a MTJ CompRowMatrix from a Pserver DMatrix by iterating over the rows of @param mat and constructing the
-     * int[][] nz structure. In another iteration the non-zero elements are set.
-     * @param mat The Pserver DMatrix
-     * @return An SMatrix instance containing the constructed MTJ CompRowMatrix
-     */
-    public static SMatrix toCompRowMatrix(DMatrix mat) {
-        int[][] nz = new int[(int)mat.numRows()][];
-        double[] data = mat.toArray();
+    public static SMatrix fromDMatrix(DMatrix mat) {
+        return fromDMatrix(mat, mat.getLayout(), false);
+    }
+
+    public static SMatrix fromDMatrix(DMatrix mat, MemoryLayout targetLayout) {
+        return fromDMatrix(mat, targetLayout, false);
+    }
+
+    public static SMatrix fromDMatrix(DMatrix mat, boolean mutable) {
+        return fromDMatrix(mat, mat.getLayout(), mutable);
+    }
+
+    public static SMatrix fromDMatrix(DMatrix mat, MemoryLayout targetLayout, boolean mutable) {
+        no.uib.cipr.matrix.Matrix data = null;
+        if(!mutable) { // create Comp[Row|Col]Matrix
+            switch(targetLayout) {
+                case ROW_LAYOUT:
+                    data = new CompRowMatrix(Utils.toInt(mat.numRows()), Utils.toInt(mat.numCols()), MTJUtils.buildRowBasedNz(mat));
+                    setNonZeroElements(mat, data);
+                    break;
+                case COLUMN_LAYOUT:
+                    data = new CompColMatrix(Utils.toInt(mat.numRows()), Utils.toInt(mat.numCols()), MTJUtils.buildColBasedNz(mat));
+                    setNonZeroElements(mat, data);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown Memory Layout " + mat.getLayout().toString());
+            }
+        }
+        else { // create FlexComp[Row|Col]Matrix
+            switch(targetLayout) {
+                case ROW_LAYOUT:
+                    data = new FlexCompColMatrix(Utils.toInt(mat.numRows()), Utils.toInt(mat.numCols()));
+                    setNonZeroElements(mat, data);
+                    break;
+                case COLUMN_LAYOUT:
+                    data = new FlexCompRowMatrix(Utils.toInt(mat.numRows()), Utils.toInt(mat.numCols()));
+                    setNonZeroElements(mat, data);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown Memory Layout " + mat.getLayout().toString());
+            }
+        }
+        Preconditions.checkState(data != null, "Can not convert DMatrix to SMatrix");
+        return new SMatrix(data, targetLayout);
+    }
+
+    public static void setNonZeroElements(Matrix mat, no.uib.cipr.matrix.Matrix data) {
         for(long i = 0; i < mat.numRows(); i++) {
-            int[] buffer = new int[(int)mat.numCols()];
-            int bufLength = 0;
             for(long j = 0; j < mat.numCols(); j++) {
-                if(mat.get(i, j) != 0.0) {
-                    buffer[bufLength] = (int)j;
-                    bufLength++;
+                if( ! Utils.closeTo(mat.get(i, j), 0.0)) {
+                    data.set(Utils.toInt(i), Utils.toInt(j), mat.get(i, j));
                 }
             }
-            nz[(int)i] = java.util.Arrays.copyOf(buffer, bufLength);
         }
-        no.uib.cipr.matrix.AbstractMatrix mtjMat = new CompRowMatrix((int)mat.numRows(), (int)mat.numCols(), nz);
-        for(long i = 0; i < mat.numRows(); i++) {
-            for(long j = 0; j < mat.numCols(); j++) {
-                if(mat.get(i, j) != 0.0) {
-                    mtjMat.set((int)i, (int)j, mat.get(i, j));
-                }
-            }
-        }
-        return null;
-        //return new MTJMatrix(mat.numRows(), mat.numCols(), mtjMat, MemoryLayout.COMPRESSED_ROW);
     }
 
     @Override
@@ -145,17 +172,12 @@ public class SMatrix extends AbstractMatrix {
         return result;
     }
 
-    private no.uib.cipr.matrix.Matrix getNewInstance(int[][] nz) {
-        no.uib.cipr.matrix.AbstractMatrix result;
-        switch(layout) {
-            case ROW_LAYOUT:
-                result = new CompRowMatrix(Utils.toInt(rows), Utils.toInt(cols), nz);
-                break;
-            case COLUMN_LAYOUT:
-                result = new CompColMatrix(Utils.toInt(rows), Utils.toInt(cols), nz);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown MemoryLayout: " + layout.toString());
+    public double[] toArray(MemoryLayout targetLayout) {
+        double[] result = new double[Utils.toInt(rows*cols)];
+        Iterator<MatrixEntry> iter = data.iterator();
+        while(iter.hasNext()) {
+            MatrixEntry entry = iter.next();
+            result[Utils.getPos(entry.row(), entry.column(), targetLayout, rows, cols)] = entry.get();
         }
         return result;
     }
@@ -163,25 +185,7 @@ public class SMatrix extends AbstractMatrix {
     @Override
     public void setArray(double[] data) {
         Preconditions.checkArgument(data.length == rows * cols, String.format("Wrong length of data array. Excepted: rows * cols = %d * %d = %d. Actual: %d", rows, cols, rows*cols, data.length));
-        this.data = null;//getNewInstance(buildNz(data));
-        for(long i = 0; i < rows; i++) {
-            for(long j = 0; j < cols; j++) {
-                double val = data[Utils.getPos(i, j, layout, rows, cols)];
-                if(val != 0.0) {
-                    this.data.set(Utils.toInt(i), Utils.toInt(j), val);
-                }
-            }
-        }
-    }
-
-    @Override
-    public Matrix.RowIterator randomRowIterator() {
-        return null;
-    }
-
-    @Override
-    public Matrix.RowIterator randomRowIterator(int startRow, int endRow) {
-        return null;
+        this.data = SMatrix.fromDMatrix(new DMatrix(rows, cols, data, layout), layout, true).getContainer();
     }
 
     @Override
@@ -193,21 +197,62 @@ public class SMatrix extends AbstractMatrix {
         return data;
     }
 
+    @Override
+    public Matrix.RowIterator randomRowIterator() {
+        return randomRowIterator(0, Utils.toInt(rows - 1));
+    }
 
-    class Entry {
-        // fields
-        private final long row, col;
-        private final double value;
-        // constructor
-        public Entry(long row, long col, double value) {
-            this.row = row;
-            this.col = col;
-            this.value = value;
+    @Override
+    public Matrix.RowIterator randomRowIterator(int startRow, int endRow) {
+        return new SparseRandomRowIterator(this, startRow, endRow);
+    }
+
+    @Override
+    public RowIterator rowIterator() {
+        return rowIterator(0, Utils.toInt(rows - 1));
+    }
+
+    @Override
+    public RowIterator rowIterator(int startRow, int endRow) {
+        return new SparseRowIterator(this, startRow, endRow);
+    }
+
+    // ---------------------------------------------------
+    // Inner Classes.
+    // ---------------------------------------------------
+
+    public static final class SparseRowIterator extends AbstractRowIterator {
+
+        public SparseRowIterator(AbstractMatrix mat, int startRow, int endRow) {
+            super(mat, startRow, endRow);
         }
-        // getter
-        public long getRow() { return row; }
-        public long getCol() { return col; }
-        public double getValue() { return value; }
+
+        @Override
+        public Vector getAsVector() {
+            return getAsVector(0, Utils.toInt(target.numCols()), new SVector(target.numCols(), Vector.VectorType.COLUMN_VECTOR));
+        }
+
+        @Override
+        public Vector getAsVector(int from, int size) {
+            return getAsVector(from, size, new SVector(size, Vector.VectorType.COLUMN_VECTOR));
+        }
+    }
+
+    public static final class SparseRandomRowIterator extends AbstractRandomRowIterator {
+
+        public SparseRandomRowIterator(AbstractMatrix mat, int startRow, int endRow) {
+            super(mat, startRow, endRow);
+        }
+
+        @Override
+        public Vector getAsVector() {
+            return getAsVector(0, Utils.toInt(target.numCols()), new SVector(target.numCols(), Vector.VectorType.COLUMN_VECTOR));
+        }
+
+        @Override
+        public Vector getAsVector(int from, int size) {
+            return getAsVector(from, size, new SVector(size, Vector.VectorType.COLUMN_VECTOR));
+        }
     }
 
 }

@@ -77,7 +77,7 @@ public class MathLibFactory {
 
     // ---------------------------------------------------
 
-    public static de.tuberlin.pserver.math.delegates.LibraryMatrixOps<Matrix, Vector> delegateSMatrixOpsTo(final SMathLibrary lib) {
+    public static LibraryMatrixOps<Matrix, Vector> delegateSMatrixOpsTo(final SMathLibrary lib) {
         switch (Preconditions.checkNotNull(lib)) {
             case MTJ_LIBRARY:
                 return new MTJMatrixOps();
@@ -86,6 +86,14 @@ public class MathLibFactory {
     }
 
     // ---------------------------------------------------
+
+    public static LibraryVectorOps<Vector> delegateSVectorOpsTo(final SMathLibrary lib) {
+        switch (Preconditions.checkNotNull(lib)) {
+            case MTJ_LIBRARY:
+                return new de.tuberlin.pserver.math.delegates.sparse.mtj.MTJVectorOps();
+        }
+        throw new IllegalStateException();
+    }
 /*
     public static Object createSMatrixInternalObject(final SMathLibrary lib, final SMatrix matrix) {
         switch (Preconditions.checkNotNull(lib)) {

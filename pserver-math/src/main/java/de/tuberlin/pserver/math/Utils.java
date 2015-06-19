@@ -10,7 +10,7 @@ public class Utils {
         return getPos(row, col, mat.getLayout(), mat.numRows(), mat.numCols());
     }
 
-    public static int getPos(final long row, final long col,Matrix.MemoryLayout layout, long numRows, long numCols) {
+    public static int getPos(final long row, final long col, Matrix.MemoryLayout layout, long numRows, long numCols) {
         switch (layout) {
             case ROW_LAYOUT: return toInt(row * numCols + col);
             case COLUMN_LAYOUT: return toInt(col * numRows + row);
@@ -19,7 +19,7 @@ public class Utils {
     }
 
     public static int toInt(long value) {
-        Preconditions.checkArgument(value < Integer.MIN_VALUE || value > Integer.MAX_VALUE, "Parameter cannot be casted to int without changing its value.");
+        Preconditions.checkArgument(value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE, "Long value '%s' cannot be casted to int without changing its value.", value);
         return (int) value;
     }
 
@@ -27,8 +27,10 @@ public class Utils {
         return closeTo(val, target, DEFAULT_EPSILON);
     }
 
-    public static boolean closeTo(double val, double target, double epsilon) {
-        return val + epsilon < target && val - epsilon > target;
+    public static boolean closeTo(double val, double target, double eps) {
+        //    Interval: (target-eps, target+eps)
+        //   (<target-eps>------target------<target+eps>)
+        return val > target - eps && val < target + eps;
     }
 
     public static double[] transposeBufferInplace(double[] data, int rows, int cols, Matrix.MemoryLayout layout) {

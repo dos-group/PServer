@@ -2,12 +2,12 @@ package de.tuberlin.pserver.math;
 
 import com.google.common.base.Preconditions;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * Created by fsander on 05.06.15.
- */
 public abstract class AbstractMatrix implements Matrix {
 
     protected Object owner;
@@ -38,9 +38,9 @@ public abstract class AbstractMatrix implements Matrix {
 
                public MemoryLayout getLayout() { return layout; }
 
-    @Override  public RowIterator rowIterator() { return new DefaultRowIterator(this); }
+    @Override  public abstract RowIterator rowIterator();
 
-    @Override  public RowIterator rowIterator(int startRow, int endRow) { return new DefaultRowIterator(this, startRow, endRow); }
+    @Override  public abstract RowIterator rowIterator(int startRow, int endRow);
 
     @Override
     public double aggregate(DoubleDoubleFunction combiner, DoubleFunction mapper) {
@@ -72,30 +72,26 @@ public abstract class AbstractMatrix implements Matrix {
     // Inner Classes.
     // ---------------------------------------------------
 
-    public static final class DefaultRowIterator implements Matrix.RowIterator {
+    public static abstract class AbstractRowIterator implements Matrix.RowIterator {
 
-        private AbstractMatrix self;
+        protected AbstractMatrix target;
 
-        private int currentRow;
+        protected int currentRow;
 
-        private final int startRow;
+        protected final int startRow;
 
-        private final long endRow;
+        protected final long endRow;
 
-        // ---------------------------------------------------
-
-        public DefaultRowIterator(final AbstractMatrix v) { this(v, 0, Utils.toInt(Preconditions.checkNotNull(v).numRows()) - 1); }
-        public DefaultRowIterator(final AbstractMatrix v, final int startRow, final int endRow) {
-            this.self = v;
-            Preconditions.checkArgument(startRow >= 0 && startRow < self.numRows());
-            Preconditions.checkArgument(endRow > startRow && endRow < self.numRows());
-            this.startRow = startRow * Utils.toInt(self.cols);
-            this.endRow = endRow * self.cols;
+        public AbstractRowIterator(final AbstractMatrix mat) { this(mat, 0, Utils.toInt(Preconditions.checkNotNull(mat).numRows()) - 1); }
+        public AbstractRowIterator(final AbstractMatrix mat, final int startRow, final int endRow) {
+            this.target = mat;
+            Preconditions.checkArgument(startRow >= 0 && startRow < target.numRows());
+            Preconditions.checkArgument(endRow > startRow && endRow < target.numRows());
+            this.startRow = startRow * Utils.toInt(target.cols);
+            this.endRow = endRow * target.cols;
             this.currentRow = this.startRow;
             reset();
         }
-
-        // ---------------------------------------------------
 
         @Override
         public boolean hasNextRow() { return currentRow < endRow; }
@@ -104,29 +100,67 @@ public abstract class AbstractMatrix implements Matrix {
         public void nextRow() { currentRow++; }
 
         @Override
-        public double getValueOfColumn(final int col) { return self.get(currentRow, col); }
+        public double getValueOfColumn(final int col) { return target.get(currentRow, col); }
 
-        @Override
-        public Vector getAsVector() {
-            // TODO:
-            return null;
+        protected Vector getAsVector(int from, int size, Vector result) {
+            Preconditions.checkArgument(from + size <= target.numCols());
+            Preconditions.checkArgument(result.size() == size);
+            for(int i = from; i - from < size; i++) {
+                result.set(i, target.get(currentRow, i));
+            }
+            return result;
         }
 
         @Override
-        public Vector getAsVector(int from, int size) {
-            // TODO:
-            return null;
-        }
+        public abstract Vector getAsVector();
+
+        @Override
+        public abstract Vector getAsVector(int from, int size);
 
         @Override
         public void reset() { currentRow = startRow; }
 
         @Override
-        public long numRows() { return self.rows; }
+        public long numRows() { return target.rows; }
 
         @Override
-        public long numCols() { return self.cols; }
+        public long numCols() { return target.cols; }
 
+    }
+
+    public static abstract class AbstractRandomRowIterator extends AbstractRowIterator {
+
+        protected List<Integer> fetchedRows;
+
+        protected Random random;
+
+
+        public AbstractRandomRowIterator(AbstractMatrix mat) {
+            this(mat, 0, Utils.toInt(Preconditions.checkNotNull(mat).numRows()) - 1);
+        }
+
+        public AbstractRandomRowIterator(AbstractMatrix mat, int startRow, int endRow) {
+            super(mat, startRow, endRow);
+            fetchedRows = new ArrayList<Integer>(Utils.toInt(endRow - startRow + 1));
+            random = new Random();
+        }
+
+        @Override
+        public boolean hasNextRow() { return fetchedRows.size() < endRow - startRow + 1; }
+
+        @Override
+        public void nextRow() {
+            do {
+                currentRow = startRow + random.nextInt(Utils.toInt(endRow - startRow + 1));
+            } while(fetchedRows.contains(currentRow));
+        }
+
+        @Override
+        public void reset() {
+            super.reset();
+            fetchedRows.clear();
+            nextRow();
+        }
     }
 
 

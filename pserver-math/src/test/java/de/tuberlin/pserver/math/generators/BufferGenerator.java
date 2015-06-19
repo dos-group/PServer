@@ -21,6 +21,31 @@ public class BufferGenerator {
         return data;
     }
 
+    public static double[] SparseRandomValues(long size) {
+        return SparseRandomValues(size, 0.9);
+    }
+
+    public static double[] SparseRandomValues(long rows, long cols) {
+        return SparseRandomValues(rows * cols);
+    }
+
+    public static double[] SparseRandomValues(long rows, long cols, double sparsity) {
+        return SparseRandomValues(rows * cols, sparsity);
+    }
+
+    public static double[] SparseRandomValues(long size, double sparsity) {
+        double[] data = new double[(int) (size)];
+        for(int i=0; i<data.length; i++) {
+            if(rand.nextDouble() > sparsity) {
+                data[i] = rand.nextDouble();
+            }
+            else {
+                data[i] = 0.0;
+            }
+        }
+        return data;
+    }
+
     public static double[] AscendingValues(long rows, long cols) {
         return AscendingValues(rows * cols);
     }
