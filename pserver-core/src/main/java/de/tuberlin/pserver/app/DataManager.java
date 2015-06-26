@@ -6,6 +6,7 @@ import de.tuberlin.pserver.app.dht.Key;
 import de.tuberlin.pserver.app.dht.Value;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
 import de.tuberlin.pserver.app.filesystem.FileSystemManager;
+import de.tuberlin.pserver.app.filesystem.record.IRecord;
 import de.tuberlin.pserver.app.types.DMatrixValue;
 import de.tuberlin.pserver.app.types.DVectorValue;
 import de.tuberlin.pserver.core.config.IConfig;
@@ -70,7 +71,7 @@ public final class DataManager {
 
     private final int instanceID;
 
-    private final List<FileDataIterator<CSVRecord>> filesToLoad;
+    private final List<FileDataIterator<? extends IRecord>> filesToLoad;
 
     private final Map<UUID, List<Serializable>> resultObjects;
 
@@ -108,7 +109,7 @@ public final class DataManager {
         contextResolver.put(Thread.currentThread().getId(), Preconditions.checkNotNull(ctx));
     }
 
-    public <T> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
+    public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
         return fileSystemManager != null ? fileSystemManager.createFileIterator(filePath, recordType) : null;
     }
 
@@ -246,13 +247,13 @@ public final class DataManager {
     // ---------------------------------------------------
 
     private void loadFilesIntoDHT() {
-        for (final FileDataIterator<CSVRecord> fileIterator : filesToLoad) {
+        for (final FileDataIterator<? extends IRecord> fileIterator : filesToLoad) {
             double[] data = new double[0];
             double[] currentSegment = new double[4096];
 
             int rows = 0, cols = -1, localIndex = 0;
             while (fileIterator.hasNext()) {
-                final CSVRecord record = fileIterator.next();
+                final IRecord record = fileIterator.next();
 
                 if (cols == -1)
                     cols = record.size();
@@ -265,7 +266,7 @@ public final class DataManager {
                         currentSegment = new double[4096];
                         localIndex = 0;
                     }
-                    currentSegment[localIndex] = Double.parseDouble(record.get(i));
+                    currentSegment[localIndex] = record.get(i);
                     ++localIndex;
                 }
                 ++rows;
@@ -292,7 +293,6 @@ public final class DataManager {
 
     private Key createLocalKeyWithName(final String name) {
         final UUID localUID = createLocalUID();
-        final Key key = Key.newKey(localUID, name, Key.DistributionMode.DISTRIBUTED);
-        return key;
+        return Key.newKey(localUID, name, Key.DistributionMode.DISTRIBUTED);
     }
 }

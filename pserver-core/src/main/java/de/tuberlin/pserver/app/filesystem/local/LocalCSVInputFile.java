@@ -3,6 +3,7 @@ package de.tuberlin.pserver.app.filesystem.local;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
+import de.tuberlin.pserver.app.filesystem.record.CSVRecordWrapper;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -15,103 +16,7 @@ import java.io.IOException;
 import java.io.LineNumberReader;
 import java.util.Iterator;
 
-public class LocalCSVInputFile implements LocalInputFile<CSVRecord> {
-
-    // ---------------------------------------------------
-    // Inner Classes.
-    // ---------------------------------------------------
-
-    private class LocalCSVFileSection {
-
-        public long totalLines  = 0;
-
-        public long linesToRead = 0;
-
-        public long startOffset = 0;
-
-        public void set(final long totalLines, final long linesToRead, final long startOffset) {
-            this.totalLines     = totalLines;
-            this.linesToRead    = linesToRead;
-            this.startOffset    = startOffset;
-        }
-    }
-
-    // ---------------------------------------------------
-
-    private class CSVFileDataIterator implements FileDataIterator<CSVRecord> {
-
-        private final FileReader fileReader;
-
-        private final CSVParser csvFileParser;
-
-        private final Iterator<CSVRecord> csvIterator;
-
-        private final LocalCSVFileSection csvFileSection;
-
-        private long currentLine = 0;
-
-        // ---------------------------------------------------
-
-        public CSVFileDataIterator(final LocalCSVFileSection csvFileSection) {
-            try {
-
-                this.csvFileSection = Preconditions.checkNotNull(csvFileSection);
-                this.fileReader     = new FileReader(Preconditions.checkNotNull(filePath));
-                this.csvFileParser  = new CSVParser(fileReader, format);
-                this.csvIterator    = csvFileParser.iterator();
-
-            } catch(Exception e) {
-                close();
-                throw new IllegalStateException(e);
-            }
-        }
-
-        // ---------------------------------------------------
-
-        @Override
-        public void initialize() {
-            try {
-                Preconditions.checkState(csvFileSection != null);
-                fileReader.skip(csvFileSection.startOffset);
-            } catch(Exception e) {
-                throw new IllegalStateException(e);
-            }
-        }
-
-        @Override
-        public void reset() { /*iterator = null;*/ }
-
-        @Override
-        public String getFilePath() { return filePath; }
-
-        @Override
-        public boolean hasNext() {
-            final boolean hasNext = currentLine < csvFileSection.linesToRead && csvIterator.hasNext();
-            if (!hasNext)
-                close();
-            return hasNext;
-        }
-
-        @Override
-        public CSVRecord next() {
-            final CSVRecord record = csvIterator.next();
-            ++currentLine;
-            return record;
-        }
-
-        // ---------------------------------------------------
-
-        private void close() {
-            try {
-                if (csvFileParser != null)
-                    csvFileParser.close();
-                if (fileReader != null)
-                    fileReader.close();
-            } catch (IOException ioe) {
-                throw new IllegalStateException(ioe);
-            }
-        }
-    };
+public class LocalCSVInputFile implements LocalInputFile<CSVRecordWrapper> {
 
     // ---------------------------------------------------
     // Fields.
@@ -169,7 +74,7 @@ public class LocalCSVInputFile implements LocalInputFile<CSVRecord> {
     }
 
     @Override
-    public FileDataIterator<CSVRecord> iterator() { return new CSVFileDataIterator(csvFileSection); }
+    public FileDataIterator<CSVRecordWrapper> iterator() { return new CSVFileDataIterator(csvFileSection); }
 
     // ---------------------------------------------------
     // Private Methods.
@@ -184,6 +89,102 @@ public class LocalCSVInputFile implements LocalInputFile<CSVRecord> {
             return  numLines;
         } catch(IOException ioe) {
             throw new IllegalStateException(ioe);
+        }
+    }
+
+    // ---------------------------------------------------
+    // Inner Classes.
+    // ---------------------------------------------------
+
+    private class LocalCSVFileSection {
+
+        public long totalLines  = 0;
+
+        public long linesToRead = 0;
+
+        public long startOffset = 0;
+
+        public void set(final long totalLines, final long linesToRead, final long startOffset) {
+            this.totalLines     = totalLines;
+            this.linesToRead    = linesToRead;
+            this.startOffset    = startOffset;
+        }
+    }
+
+    // ---------------------------------------------------
+
+    private class CSVFileDataIterator implements FileDataIterator<CSVRecordWrapper> {
+
+        private final FileReader fileReader;
+
+        private final CSVParser csvFileParser;
+
+        private final Iterator<CSVRecord> csvIterator;
+
+        private final LocalCSVFileSection csvFileSection;
+
+        private long currentLine = 0;
+
+        // ---------------------------------------------------
+
+        public CSVFileDataIterator(final LocalCSVFileSection csvFileSection) {
+            try {
+
+                this.csvFileSection = Preconditions.checkNotNull(csvFileSection);
+                this.fileReader     = new FileReader(Preconditions.checkNotNull(filePath));
+                this.csvFileParser  = new CSVParser(fileReader, format);
+                this.csvIterator    = csvFileParser.iterator();
+
+            } catch(Exception e) {
+                close();
+                throw new IllegalStateException(e);
+            }
+        }
+
+        // ---------------------------------------------------
+
+        @Override
+        public void initialize() {
+            try {
+                Preconditions.checkState(csvFileSection != null);
+                fileReader.skip(csvFileSection.startOffset);
+            } catch(Exception e) {
+                throw new IllegalStateException(e);
+            }
+        }
+
+        @Override
+        public void reset() { /*iterator = null;*/ }
+
+        @Override
+        public String getFilePath() { return filePath; }
+
+        @Override
+        public boolean hasNext() {
+            final boolean hasNext = currentLine < csvFileSection.linesToRead && csvIterator.hasNext();
+            if (!hasNext)
+                close();
+            return hasNext;
+        }
+
+        @Override
+        public CSVRecordWrapper next() {
+            final CSVRecord record = csvIterator.next();
+            ++currentLine;
+            return CSVRecordWrapper.wrap(record);
+        }
+
+        // ---------------------------------------------------
+
+        private void close() {
+            try {
+                if (csvFileParser != null)
+                    csvFileParser.close();
+                if (fileReader != null)
+                    fileReader.close();
+            } catch (IOException ioe) {
+                throw new IllegalStateException(ioe);
+            }
         }
     }
 }

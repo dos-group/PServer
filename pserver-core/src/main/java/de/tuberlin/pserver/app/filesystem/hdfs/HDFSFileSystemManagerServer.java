@@ -3,6 +3,7 @@ package de.tuberlin.pserver.app.filesystem.hdfs;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
 import de.tuberlin.pserver.app.filesystem.FileSystemManager;
+import de.tuberlin.pserver.app.filesystem.record.IRecord;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
@@ -85,7 +86,7 @@ public final class HDFSFileSystemManagerServer implements FileSystemManager, Inp
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
+    public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
         HDFSCSVInputFile inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
         if (inputFile == null) {
             inputFile = new HDFSCSVInputFile(config, netManager, filePath);

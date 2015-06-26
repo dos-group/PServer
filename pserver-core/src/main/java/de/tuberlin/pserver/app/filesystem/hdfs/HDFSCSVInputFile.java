@@ -3,6 +3,7 @@ package de.tuberlin.pserver.app.filesystem.hdfs;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
+import de.tuberlin.pserver.app.filesystem.record.CSVRecordWrapper;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.net.NetManager;
 import org.apache.commons.csv.CSVFormat;
@@ -352,7 +353,7 @@ public class HDFSCSVInputFile implements InputFormat<CSVRecord,FileInputSplit> {
                 "File Input (" + this.filePath.toString() + ')';
     }
 
-    public FileDataIterator<CSVRecord> iterator(final InputSplitProvider isp) {
+    public FileDataIterator<CSVRecordWrapper> iterator(final InputSplitProvider isp) {
         return new HDFSFileDataIterator(
                 config,
                 netManager.getMachineDescriptor(),
