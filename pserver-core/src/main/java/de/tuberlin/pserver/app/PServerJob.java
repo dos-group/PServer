@@ -30,7 +30,15 @@ public abstract class PServerJob {
 
     public PServerContext getJobContext() { return ctx; }
 
-    public void result(final Serializable... obj) { dataManager.setResults(ctx.jobUID, Arrays.asList(obj)); }
+    public void result(final Serializable... obj) {
+        if (ctx.threadID == 0) {
+            dataManager.setResults(ctx.jobUID, Arrays.asList(obj));
+        }
+    }
+
+    // ---------------------------------------------------
+    // Job Lifecycle.
+    // ---------------------------------------------------
 
     public void prologue() {}
 

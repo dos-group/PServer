@@ -1,15 +1,19 @@
 package de.tuberlin.pserver.examples.ml;
 
 import com.google.common.collect.Lists;
-import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.math.DVector;
 import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.ml.models.GeneralLinearModel;
 import de.tuberlin.pserver.ml.optimization.*;
+import de.tuberlin.pserver.ml.optimization.SGD.SGDOptimizer;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.Serializable;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 public final class AsyncSGDTestJob extends PServerJob {
@@ -18,21 +22,9 @@ public final class AsyncSGDTestJob extends PServerJob {
     // Fields.
     // ---------------------------------------------------
 
-    private Vector model;
+    private final Observer observer = (epoch, weights, gradient) -> {};
 
-    private final DataManager.Merger<Vector> merger = (l, r) -> {
-        for (int j = 0; j < l.size(); ++j) {
-            double nv = 0.0;
-            for (final Vector v : r)
-                nv += v.get(j);
-            l.set(j, (nv / r.length));
-        }
-    };
-
-    private final WeightsObserver observer = (epoch, weights) -> {
-        if (epoch % 10 == 0)
-            dataManager.mergeVector(model, merger);
-    };
+    private final GeneralLinearModel model = new GeneralLinearModel("model1", 15);
 
     // ---------------------------------------------------
     // Public Methods.
@@ -41,7 +33,7 @@ public final class AsyncSGDTestJob extends PServerJob {
     @Override
     public void prologue() {
 
-        model = dataManager.createLocalVector("model1", 15, Vector.VectorType.ROW_VECTOR);
+        model.createModel(ctx);
 
         dataManager.loadDMatrix("datasets/demo_dataset.csv");
     }
@@ -55,18 +47,38 @@ public final class AsyncSGDTestJob extends PServerJob {
 
         final PartialLossFunction partialLossFunction = new PartialLossFunction.SquareLoss();
 
-        final Optimizer optimizer = new SGDOptimizer(SGDOptimizer.TYPE.SGD_SIMPLE)
-                .setNumberOfIterations(12000)
-                .setLearningRate(0.005)
+        final Optimizer optimizer = new SGDOptimizer(ctx, SGDOptimizer.TYPE.SGD_SIMPLE, false)
+                .setNumberOfIterations(150000)
+                .setLearningRate(0.0005)
                 .setLossFunction(new LossFunction.GenericLossFunction(predictionFunction, partialLossFunction))
                 .setGradientStepFunction(new GradientStepFunction.SimpleGradientStep())
-                .setLearningRateDecayFunction(new DecayFunction.SimpleDecay())
-                .setWeightsObserver(observer);
+                .setLearningRateDecayFunction(null)
+                .setWeightsObserver(null, 0, false);
 
+        optimizer.register();
         optimizer.optimize(model, trainingData.rowIterator());
+        optimizer.unregister();
 
-        result(model);
+        result(model.getWeights());
     }
+
+    // ---------------------------------------------------
+    // Private Methods.
+    // ---------------------------------------------------
+
+    private List<Pair<Integer,Double>> gradientUpdate(final Vector gradient, final Vector gradientSums, final double updateThreshold) {
+        final List<Pair<Integer,Double>> gradientUpdates = new ArrayList<>();
+        for (int i = 0; i < gradient.size(); ++i) {
+            boolean updatedGradient = Math.abs((gradientSums.get(i) - gradient.get(i)) / gradient.get(i)) > updateThreshold;
+            if (updatedGradient) {
+                gradientUpdates.add(Pair.of(i, gradientSums.get(i) + gradient.get(i)));
+                gradientSums.set(i, gradient.get(i));
+            } else
+                gradientSums.set(i, gradientSums.get(i) + gradient.get(i));
+        }
+        return gradientUpdates;
+    }
+
 
     // ---------------------------------------------------
     // Entry Point.
@@ -74,15 +86,15 @@ public final class AsyncSGDTestJob extends PServerJob {
 
     public static void main(final String[] args) {
 
-        final List<List<Serializable>> weights = Lists.newArrayList();
+        final List<List<Serializable>> res = Lists.newArrayList();
 
         PServerExecutor.LOCAL
                 .run(AsyncSGDTestJob.class)
-                .results(weights)
+                .results(res)
                 .done();
 
         final DecimalFormat numberFormat = new DecimalFormat("0.000");
-        weights.forEach(
+        res.forEach(
                 r -> r.forEach(
                         w -> {
                             for (double weight : ((Vector)w).toArray())

@@ -103,9 +103,15 @@ public final class DataManager {
 
     public IConfig getConfig() { return config; }
 
+    public DHT getDHT() { return dht; }
+
     // Must be called from the specific execution context!
     public void registerJobContext(final PServerContext ctx) {
         contextResolver.put(Thread.currentThread().getId(), Preconditions.checkNotNull(ctx));
+    }
+
+    public PServerContext getJobContext() {
+        return contextResolver.get(Thread.currentThread().getId());
     }
 
     public <T> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
@@ -116,7 +122,7 @@ public final class DataManager {
         filesToLoad.add(createFileIterator(Preconditions.checkNotNull(filePath), null));
     }
 
-    public final Value[] globalPull(final String name) {
+    public Value[] globalPull(final String name) {
         Preconditions.checkNotNull(name);
         int idx = 0;
         final Set<Key> keys = dht.getKey(name);
@@ -127,6 +133,13 @@ public final class DataManager {
             ++idx;
         }
         return values;
+    }
+
+    public void push(final String name, final Value[] vals) {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(vals);
+
+        // TODO:
     }
 
     public void mergeMatrix(final Matrix localMtx, final Merger<Matrix> merger) {

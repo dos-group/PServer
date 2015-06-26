@@ -16,11 +16,13 @@ public interface Vector extends Serializable {
         COLUMN_VECTOR
     }
 
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
 
     public abstract void setOwner(final Object owner);
 
     public abstract Object getOwner();
-
 
     public abstract boolean isDense();
 
@@ -40,7 +42,6 @@ public interface Vector extends Serializable {
 
     public void setArray(final double[] data);
 
-
     public abstract Vector mul(final double alpha);                 // x = alpha * x
 
     public abstract Vector div(final double alpha);
@@ -48,7 +49,6 @@ public interface Vector extends Serializable {
     public abstract Vector add(final Vector y);                       // x = y + x
 
     public abstract Vector sub(final Vector y);                       // x = y - x
-
 
     public abstract Vector add(final double alpha, final Vector y);   // x = alpha * y + x
 
@@ -62,8 +62,6 @@ public interface Vector extends Serializable {
 
     public abstract double minValue();
 
-
-
     public abstract Vector assign(final Vector v);
 
     public abstract Vector assign(final double v);
@@ -72,16 +70,15 @@ public interface Vector extends Serializable {
 
     public abstract Vector assign(final Vector v, DoubleDoubleFunction df);
 
-
     public abstract Vector viewPart(final long s, final long e);
 
     public abstract Vector like();
 
-
     public abstract Iterator<Element> iterateNonZero();
 
-
     public abstract double aggregate(DoubleDoubleFunction aggregator, DoubleFunction map);
+
+    public abstract Vector copy();
 
     /**
      * A holder for information about a specific item in the Vector. <p/> When using with an Iterator, the implementation

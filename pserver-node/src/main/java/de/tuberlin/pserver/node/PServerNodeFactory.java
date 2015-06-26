@@ -2,6 +2,7 @@ package de.tuberlin.pserver.node;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.DataManager;
+import de.tuberlin.pserver.app.ExecutionManager;
 import de.tuberlin.pserver.app.UserCodeManager;
 import de.tuberlin.pserver.app.dht.DHT;
 import de.tuberlin.pserver.app.filesystem.FileSystemManager;
@@ -58,6 +59,8 @@ public enum PServerNodeFactory {
 
     public final RPCManager rpcManager;
 
+    public final ExecutionManager executionManager;
+
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
@@ -91,6 +94,7 @@ public enum PServerNodeFactory {
         this.fileSystemManager = createFileSystem(infraManager.getInstanceID());
         this.dht = new DHT(this.config, infraManager, netManager);
         this.dataManager = new DataManager(this.config, infraManager, netManager, fileSystemManager, dht);
+        this.executionManager = new ExecutionManager(dataManager);
 
         //LOG.info(infraManager.getMachine()
         //        + " | " + infraManager.getInstanceID()

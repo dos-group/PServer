@@ -6,7 +6,9 @@ import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.ml.models.GeneralLinearModel;
 import de.tuberlin.pserver.ml.optimization.*;
+import de.tuberlin.pserver.ml.optimization.SGD.SGDOptimizer;
 
 import java.io.Serializable;
 import java.text.DecimalFormat;
@@ -27,10 +29,10 @@ public final class AsyncHogwildSGDTestJob extends PServerJob {
         }
     };
 
-    private final WeightsObserver observer = (epoch, weights) -> {
-        if (epoch % 200 == 0)
-            dataManager.mergeVector(weights, merger);
-    };
+    private final Observer observer = (epoch, weights, gradientSum) ->
+        dataManager.mergeVector(weights, merger);
+
+    private final GeneralLinearModel model = new GeneralLinearModel("model1", 1000);
 
     // ---------------------------------------------------
     // Public Methods.
@@ -41,13 +43,11 @@ public final class AsyncHogwildSGDTestJob extends PServerJob {
 
         dataManager.loadDMatrix("datasets/sparse_dataset.csv");
 
-        dataManager.createLocalVector("weight-vector", 1000, Vector.VectorType.ROW_VECTOR);
+        model.createModel(ctx);
     }
 
     @Override
     public void compute() {
-
-        final Vector weights = dataManager.getLocalVector("weight-vector");
 
         final Matrix trainingData = dataManager.getLocalMatrix("sparse_dataset.csv");
 
@@ -55,20 +55,22 @@ public final class AsyncHogwildSGDTestJob extends PServerJob {
 
         final PartialLossFunction partialLossFunction = new PartialLossFunction.SquareLoss();
 
-        final Optimizer optimizer = new SGDOptimizer(SGDOptimizer.TYPE.SGD_SIMPLE)
+        final Optimizer optimizer = new SGDOptimizer(ctx, SGDOptimizer.TYPE.SGD_SIMPLE, false)
                 .setNumberOfIterations(1000)
                 .setLearningRate(0.00005)
                 .setLossFunction(new LossFunction.GenericLossFunction(predictionFunction, partialLossFunction))
                 .setGradientStepFunction(new GradientStepFunction.AtomicGradientStep())
                 .setLearningRateDecayFunction(null)
-                .setWeightsObserver(observer)
+                .setWeightsObserver(observer, 200, true)
                 .setRandomShuffle(true);
 
         final Matrix.RowIterator dataIterator = dataManager.threadPartitionedRowIterator(trainingData);
 
-        optimizer.optimize(weights, dataIterator);
+        optimizer.register();
+        optimizer.optimize(model, dataIterator);
+        optimizer.unregister();
 
-        result(weights);
+        result(model.getWeights());
     }
 
     // ---------------------------------------------------
@@ -77,15 +79,15 @@ public final class AsyncHogwildSGDTestJob extends PServerJob {
 
     public static void main(final String[] args) {
 
-        final List<List<Serializable>> weights = Lists.newArrayList();
+        final List<List<Serializable>> res = Lists.newArrayList();
 
         PServerExecutor.LOCAL
                 .run(AsyncHogwildSGDTestJob.class, 2) // <-- enable multi-threading, 2 threads per compute node.
-                .results(weights)
+                .results(res)
                 .done();
 
         final DecimalFormat numberFormat = new DecimalFormat("0.000");
-        weights.forEach(
+        res.forEach(
                 r -> r.forEach(
                         w -> {
                             for (double weight : ((Vector)w).toArray())

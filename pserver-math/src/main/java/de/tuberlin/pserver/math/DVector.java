@@ -67,7 +67,14 @@ public class DVector implements Vector, Serializable {
     // Constructors.
     // ---------------------------------------------------
 
-    public DVector(final DVector v) { this(v.data.length, v.data, v.type); }
+    // Copy Constructor.
+    public DVector(final DVector v) { this(v, v.type); }
+    public DVector(final DVector v, final VectorType type) {
+        this.data = new double[v.data.length];
+        System.arraycopy(v.data, 0, this.data, 0, v.data.length);
+        this.type = type;
+    }
+
     public DVector(final long size) { this(size, null, VectorType.ROW_VECTOR); }
     public DVector(final long size, final VectorType type) { this(size, null, type); }
     public DVector(final long size, final double[] data) { this(size, data, VectorType.ROW_VECTOR); }
@@ -193,7 +200,25 @@ public class DVector implements Vector, Serializable {
     }
 
     @Override
+    public Vector copy() {
+        return new DVector(this);
+    }
+
+    @Override
     public Vector viewPart(final long s, final long e) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        for (int i = 0; i < data.length; i++)
+            sb.append(data[i]).append(",");
+        sb.deleteCharAt(sb.length() - 1);
+        sb.append("]");
+        if (type == VectorType.COLUMN_VECTOR)
+            sb.append("^T");
+        return sb.toString();
     }
 }

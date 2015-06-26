@@ -2,7 +2,10 @@ package de.tuberlin.pserver.ml.optimization;
 
 import de.tuberlin.pserver.math.DVector;
 import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.ml.common.LabeledVector;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public interface LossFunction {
 
@@ -15,6 +18,8 @@ public interface LossFunction {
     // ---------------------------------------------------
 
     class GenericLossFunction implements LossFunction {
+
+        private static final Logger LOG = LoggerFactory.getLogger(GenericLossFunction.class);
 
         public final PredictionFunction predictionFunction;
 
@@ -46,13 +51,11 @@ public interface LossFunction {
 
             double lossDerivative = partialLossFunction.derivative(prediction, v.label);
 
-            double[] data = v.vector.toArray();
+            Vector gradient = new DVector((DVector)v.vector, Vector.VectorType.COLUMN_VECTOR); // predictionFunction.gradient(v.vector, weights)
 
-            Vector weightGradient = new DVector(data.length, data, Vector.VectorType.ROW_VECTOR); // predictionFunction.gradient(v.vector, weights)
+            gradient.mul(lossDerivative);
 
-            weightGradient.mul(lossDerivative);
-
-            return Pair.of(loss, weightGradient);
+            return Pair.of(loss, gradient);
         }
     }
 }

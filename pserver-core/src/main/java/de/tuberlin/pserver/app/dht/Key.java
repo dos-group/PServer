@@ -86,16 +86,16 @@ public class Key implements Serializable, Comparable<Key> {
     // ---------------------------------------------------
 
     // Copy Constructor.
-    private Key(final UUID uid, final String name, final DistributionMode distributionMode) { this(uid, name, null, distributionMode); }
-    private Key(final UUID uid,
-                final String name,
-                final Map<Integer,PartitionDescriptor> partitionDirectory,
-                final DistributionMode distributionMode) {
+    protected Key(final UUID uid, final String name, final DistributionMode distributionMode) { this(uid, name, null, distributionMode); }
+    protected Key(final UUID uid,
+                  final String name,
+                  final Map<Integer,PartitionDescriptor> partitionDirectory,
+                  final DistributionMode distributionMode) {
         this.internalUID            = Preconditions.checkNotNull(uid);
         this.name                   = Preconditions.checkNotNull(name);
         this.partitionDirectory     = partitionDirectory != null
                 ? new TreeMap<>(Preconditions.checkNotNull(partitionDirectory))
-                : new TreeMap<Integer,PartitionDescriptor>();
+                : new TreeMap<>();
         this.distributionMode       = Preconditions.checkNotNull(distributionMode);
     }
 

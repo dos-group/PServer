@@ -104,15 +104,25 @@ public interface Matrix extends Serializable {
 
     // ---------------------------------------------------
 
+    public Vector rowAsVector();
+
+    public Vector rowAsVector(final long row);
+
+    public Vector rowAsVector(final long row, final long from, final long to);
+
+    public Vector colAsVector();
+
+    public Vector colAsVector(final long col);
+
+    public Vector colAsVector(final long col, final long from, final long to);
+
     public abstract Matrix assign(final Matrix v);
 
     public abstract Matrix assign(final double v);
 
-    public abstract Vector viewRow(final long row);
-
-    public abstract Vector viewColumn(final long col);
-
     public abstract Matrix assignRow(final long row, final Vector v);
 
     public abstract Matrix assignColumn(final long col, final Vector v);
+
+    public abstract Matrix copy();
 }

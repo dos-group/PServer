@@ -144,6 +144,8 @@ public final class DHT extends EventDispatcher {
 
     private final Map<Key,AbstractBufferValue> store;
 
+    private final Map<Key,Value> lstore;
+
     // ---------------------------------------
 
     private final int instanceID;
@@ -180,6 +182,7 @@ public final class DHT extends EventDispatcher {
         this.netManager     = Preconditions.checkNotNull(netManager);
         this.instanceID     = infraManager.getInstanceID();
         this.store          = new NonBlockingHashMap<>();
+        this.lstore         = new NonBlockingHashMap<>();
 
         this.compressionType = Compressor.CompressionType.valueOf(
                 this.config.getString("dht.compression.compressionType")
@@ -613,6 +616,14 @@ public final class DHT extends EventDispatcher {
     public Set<Key> getKey(final String name) { return globalKeyDirectory.get(Preconditions.checkNotNull(name)); }
 
     public Key getKey(final UUID internalID) { return globalKeyDirectory.get(Preconditions.checkNotNull(internalID)); }
+
+    // ---------------------------------------------------
+
+    public void lput(final Key k, final Value v) { lstore.put(Preconditions.checkNotNull(k), Preconditions.checkNotNull(v)); }
+
+    public Value lget(final Key k) { return Preconditions.checkNotNull(lstore.get(k)); }
+
+    public void ldelete(final Key k) { lstore.remove(k); }
 
     // ---------------------------------------------------
     // Private Constants.

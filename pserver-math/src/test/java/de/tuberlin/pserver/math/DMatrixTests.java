@@ -51,11 +51,11 @@ public class DMatrixTests {
             // naive case: get rows from row-layout
             double[] rowData = new double[cols];
             System.arraycopy(dataRowLayout, i * cols, rowData, 0, cols);
-            Vector rowVec = matRowLayout.viewRow(i);
+            Vector rowVec = matRowLayout.rowAsVector(i);
             assert(rowVec.size() == cols);
             assert(java.util.Arrays.equals(rowVec.toArray(), rowData));
             // more difficult case: get rows from col-layout
-            Vector rowVecFromColLayout = matColumnLayout.viewRow(i);
+            Vector rowVecFromColLayout = matColumnLayout.rowAsVector(i);
             assert(rowVecFromColLayout.size() == cols);
             for(int j = 0; j < cols; j++) {
                 assert(rowVecFromColLayout.get(j) == matColumnLayout.get(i,j));
@@ -65,11 +65,11 @@ public class DMatrixTests {
             // naive case: get cols from col-layout
             double[] colData = new double[rows];
             System.arraycopy(dataColumnLayout, i * rows, colData, 0, rows);
-            Vector colVec = matColumnLayout.viewColumn(i);
+            Vector colVec = matColumnLayout.colAsVector(i);
             assert(colVec.size() == rows);
             assert(java.util.Arrays.equals(colVec.toArray(), colData));
             // more difficult case: get rows from col-layout
-            Vector colVecFromRowLayout = matRowLayout.viewColumn(i);
+            Vector colVecFromRowLayout = matRowLayout.colAsVector(i);
             assert(colVecFromRowLayout.size() == rows);
             for(int j = 0; j < rows; j++) {
                 assert(colVecFromRowLayout.get(j) == matRowLayout.get(j,i));
@@ -92,11 +92,11 @@ public class DMatrixTests {
     public void checkRowColumnAssigns(int rows, int cols, Matrix mat) {
         double[][] rowsRowLayout = new double[rows][cols];
         for(int i = 0; i < rows; i++) {
-            rowsRowLayout[i] = mat.viewRow(i).toArray();
+            rowsRowLayout[i] = mat.rowAsVector(i).toArray();
         }
         double[][] colsRowLayout = new double[cols][rows];
         for(int i = 0; i < cols; i++) {
-            colsRowLayout[i] = mat.viewColumn(i).toArray();
+            colsRowLayout[i] = mat.colAsVector(i).toArray();
         }
         for(int row = 0; row < rows; row++) {
             Vector vec = VectorGenerator.RandomDVector(cols);
@@ -104,10 +104,10 @@ public class DMatrixTests {
             rowsRowLayout[row] = vec.toArray();
             for(int i = 0; i < cols; i++) {
                 colsRowLayout[i][row] = vec.toArray()[i];
-                assert(java.util.Arrays.equals(colsRowLayout[i], mat.viewColumn(i).toArray()));
+                assert(java.util.Arrays.equals(colsRowLayout[i], mat.colAsVector(i).toArray()));
             }
             for(int i = 0; i < rows; i++) {
-                assert(java.util.Arrays.equals(rowsRowLayout[i], mat.viewRow(i).toArray()));
+                assert(java.util.Arrays.equals(rowsRowLayout[i], mat.rowAsVector(i).toArray()));
             }
         }
         for(int col = 0; col < cols; col++) {
@@ -116,10 +116,10 @@ public class DMatrixTests {
             colsRowLayout[col] = vec.toArray();
             for(int i = 0; i < rows; i++) {
                 rowsRowLayout[i][col] = vec.toArray()[i];
-                assert(java.util.Arrays.equals(rowsRowLayout[i], mat.viewRow(i).toArray()));
+                assert(java.util.Arrays.equals(rowsRowLayout[i], mat.rowAsVector(i).toArray()));
             }
             for(int i = 0; i < cols; i++) {
-                assert(java.util.Arrays.equals(colsRowLayout[i], mat.viewColumn(i).toArray()));
+                assert(java.util.Arrays.equals(colsRowLayout[i], mat.colAsVector(i).toArray()));
             }
         }
     }

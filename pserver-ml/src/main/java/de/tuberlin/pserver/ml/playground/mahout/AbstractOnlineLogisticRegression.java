@@ -103,7 +103,7 @@ public abstract class AbstractOnlineLogisticRegression extends AbstractVectorCla
     }
 
     public double classifyScalarNoLink(Vector instance) {
-        return beta.viewRow(0).dot(instance);
+        return beta.rowAsVector(0).dot(instance);
     }
 
     /**

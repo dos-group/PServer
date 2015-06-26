@@ -34,6 +34,8 @@ public final class PServerContext {
 
     public final DataManager dataManager;
 
+    public final ExecutionManager executionManager;
+
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
@@ -47,7 +49,8 @@ public final class PServerContext {
                           final int threadID,
                           final NetManager netManager,
                           final DHT dht,
-                          final DataManager dataManager) {
+                          final DataManager dataManager,
+                          final ExecutionManager executionManager) {
 
         this.clientMachine      = Preconditions.checkNotNull(clientMachine);
         this.jobUID             = Preconditions.checkNotNull(jobUID);
@@ -59,5 +62,6 @@ public final class PServerContext {
         this.dht                = Preconditions.checkNotNull(dht);
         this.netManager         = Preconditions.checkNotNull(netManager);
         this.dataManager        = Preconditions.checkNotNull(dataManager);
+        this.executionManager   = Preconditions.checkNotNull(executionManager);
     }
 }

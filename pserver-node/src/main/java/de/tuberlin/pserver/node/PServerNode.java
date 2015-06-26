@@ -41,10 +41,11 @@ public final class PServerNode extends EventDispatcher {
 
     private final DataManager dataManager;
 
+    private final ExecutionManager executionManager;
+
     private final ExecutorService executor;
 
     private final Map<UUID,PServerJobSubmissionEvent> jobMap;
-
 
     private CountDownLatch jobStartBarrier = null;
 
@@ -63,6 +64,7 @@ public final class PServerNode extends EventDispatcher {
         this.fileSystemManager  = factory.fileSystemManager;
         this.userCodeManager    = factory.userCodeManager;
         this.dataManager        = factory.dataManager;
+        this.executionManager   = factory.executionManager;
         this.jobMap             = new HashMap<>();
         this.executor           = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
@@ -83,6 +85,8 @@ public final class PServerNode extends EventDispatcher {
             jobStartBarrier = new CountDownLatch(1);
             jobEndBarrier = new CountDownLatch(jobSubmission.perNodeParallelism);
 
+            executionManager.createExecutionContext(jobSubmission.jobUID, jobSubmission.perNodeParallelism);
+
             for (int i = 0; i < jobSubmission.perNodeParallelism; ++i) {
                 final int threadID = i;
                 executor.execute(() -> {
@@ -101,7 +105,8 @@ public final class PServerNode extends EventDispatcher {
                                     threadID,
                                     netManager,
                                     DHT.getInstance(),
-                                    dataManager
+                                    dataManager,
+                                    executionManager
                             );
                             final PServerJob jobInvokeable = jobClass.newInstance();
 
@@ -126,6 +131,8 @@ public final class PServerNode extends EventDispatcher {
                                 );
 
                                 netManager.sendEvent(jobSubmission.clientMachine, jre);
+
+                                executionManager.deleteExecutionContext(jobSubmission.jobUID);
                             }
 
                         } else
@@ -180,7 +187,7 @@ public final class PServerNode extends EventDispatcher {
                             + " prologue phase [duration: " + (end - start) + " ms].");
                 }
 
-                Thread.sleep(10); // TODO: Not very elegant...
+                Thread.sleep(5000); // TODO: Not very elegant...
 
                 jobStartBarrier.countDown();
             }

@@ -123,7 +123,28 @@ public class DMatrix implements Matrix, Serializable {
     // Constructors.
     // ---------------------------------------------------
 
-    public DMatrix(final DMatrix mtx) { this(mtx.rows, mtx.cols, mtx.data, mtx.layout); }
+    // Copy Constructor.
+    public DMatrix(final Vector m) {
+        final double[] md = m.toArray();
+        this.data = new double[md.length];
+        System.arraycopy(md, 0, this.data, 0, md.length);
+        this.rows = m.getVectorType() == Vector.VectorType.COLUMN_VECTOR ?
+                1 : m.size();
+        this.cols = m.getVectorType() == Vector.VectorType.COLUMN_VECTOR ?
+                m.size() : 1;
+        this.layout = m.getVectorType() == Vector.VectorType.COLUMN_VECTOR ?
+                MemoryLayout.COLUMN_LAYOUT : MemoryLayout.ROW_LAYOUT;
+    }
+
+    // Copy Constructor.
+    public DMatrix(final DMatrix m) {
+        this.data = new double[m.data.length];
+        System.arraycopy(m.data, 0, this.data, 0, m.data.length);
+        this.rows = m.rows;
+        this.cols = m.cols;
+        this.layout = m.layout;
+    }
+
     public DMatrix(final long rows, final long cols) { this(rows, cols, null, MemoryLayout.ROW_LAYOUT); }
     public DMatrix(final long rows, final long cols, final double[] data) { this(rows, cols, data, MemoryLayout.ROW_LAYOUT); }
     public DMatrix(final long rows, final long cols, final double[] data, final MemoryLayout layout) {
@@ -203,7 +224,7 @@ public class DMatrix implements Matrix, Serializable {
         Vector r = new DVector(numRows());
         long n = numRows();
         for (int row = 0; row < n; row++) {
-            r.set(row, f.apply(viewRow(row)));
+            r.set(row, f.apply(rowAsVector(row)));
         }
         return r;
     }
@@ -249,17 +270,37 @@ public class DMatrix implements Matrix, Serializable {
     }
 
     @Override
-    public Vector viewRow(final long row) {
-        Vector r = new DVector(numCols());
-        for (int i = 0; i < numCols(); ++i)
+    public Vector rowAsVector() {
+        return rowAsVector(0, 0, numCols());
+    }
+
+    @Override
+    public Vector rowAsVector(final long row) {
+        return rowAsVector(row, 0, numCols());
+    }
+
+    @Override
+    public Vector rowAsVector(final long row, final long from, final long to) { // TODO: Optimize with respect to the layout with array copy.
+        Vector r = new DVector(to - from);
+        for (long i = from; i < to; ++i)
             r.set(i, data[getPos(row, i)]);
         return r;
     }
 
     @Override
-    public Vector viewColumn(final long col) {
-        Vector r = new DVector(numRows());
-        for (int i = 0; i < numRows(); ++i)
+    public Vector colAsVector() {
+        return colAsVector(0, 0, numRows());
+    }
+
+    @Override
+    public Vector colAsVector(final long col) {
+        return colAsVector(col, 0, numRows());
+    }
+
+    @Override
+    public Vector colAsVector(final long col, final long from, final long to) { // TODO: Optimize with respect to the layout with array copy.
+        Vector r = new DVector(to - from);
+        for (long i = from; i < to; ++i)
             r.set(i, data[getPos(i, col)]);
         return r;
     }
@@ -278,6 +319,11 @@ public class DMatrix implements Matrix, Serializable {
         for (int i = 0; i < v.size(); ++i)
             data[getPos(i, col)] = v.get(i);
         return this;
+    }
+
+    @Override
+    public Matrix copy() {
+        return new DMatrix(this);
     }
 
     // ---------------------------------------------------
