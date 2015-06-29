@@ -3,14 +3,13 @@ package de.tuberlin.pserver.app.filesystem.hdfs;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
-import de.tuberlin.pserver.app.filesystem.record.CSVRecordWrapper;
+import de.tuberlin.pserver.app.filesystem.record.Record;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
-import org.apache.commons.csv.CSVRecord;
 
 import java.io.IOException;
 
-public class HDFSFileDataIterator implements FileDataIterator<CSVRecordWrapper> {
+public class HDFSFileDataIterator implements FileDataIterator<Record> {
 
     // ---------------------------------------------------
     // Fields.
@@ -81,9 +80,9 @@ public class HDFSFileDataIterator implements FileDataIterator<CSVRecordWrapper> 
     }
 
     @Override
-    public CSVRecordWrapper next() {
+    public Record next() {
         try {
-            return CSVRecordWrapper.wrap(inputFile.nextRecord(null));
+            return Record.wrap(inputFile.nextRecord(null), null);
         } catch(IOException e) {
             throw new IllegalStateException(e);
         }

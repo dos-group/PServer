@@ -3,7 +3,9 @@ package de.tuberlin.pserver.app.filesystem.local;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
-import de.tuberlin.pserver.app.filesystem.record.CriteoRecord;
+import de.tuberlin.pserver.app.filesystem.record.Record;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,28 +13,32 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
+import java.util.Iterator;
 
-public class LocalCriteoInputFile implements LocalInputFile<CriteoRecord> {
+public class LocalnputFile implements ILocalInputFile<Record> {
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    private static final Logger LOG = LoggerFactory.getLogger(LocalCriteoInputFile.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LocalnputFile.class);
 
     private final String filePath;
 
-    private final LocalFileSection fileSelection = new LocalFileSection();
+    private final InputFormat format;
 
-    private final int[] fields;
+    private final LocalCSVFileSection csvFileSection;
 
-    // ---------------------------------------------------
-    // Constructors.
-    // ---------------------------------------------------
+    public LocalnputFile(final String filePath) {
+        this(filePath, InputFormat.DEFAULT);
+    }
 
-    public LocalCriteoInputFile(final String filePath, int[] fields) {
-        this.filePath = Preconditions.checkNotNull(filePath);
-        this.fields = fields;
+    public LocalnputFile(final String filePath, InputFormat format) {
+        Preconditions.checkNotNull(filePath);
+        Preconditions.checkNotNull(format);
+        this.filePath = filePath;
+        this.format   = format;
+        this.csvFileSection = new LocalCSVFileSection();
     }
 
     // ---------------------------------------------------
@@ -55,14 +61,14 @@ public class LocalCriteoInputFile implements LocalInputFile<CriteoRecord> {
                 else break;
             }
             br.close();
-            fileSelection.set(totalLines, linesToRead, startOffset);
+            csvFileSection.set(totalLines, linesToRead, startOffset);
         } catch (IOException ioe) {
             throw new IllegalStateException(ioe);
         }
     }
 
     @Override
-    public FileDataIterator<CriteoRecord> iterator() { return new CriteoFileDataIterator(fileSelection, fields); }
+    public FileDataIterator<Record> iterator() { return new CSVFileDataIterator(csvFileSection); }
 
     // ---------------------------------------------------
     // Private Methods.
@@ -84,7 +90,7 @@ public class LocalCriteoInputFile implements LocalInputFile<CriteoRecord> {
     // Inner Classes.
     // ---------------------------------------------------
 
-    private class LocalFileSection {
+    private class LocalCSVFileSection {
 
         public long totalLines  = 0;
 
@@ -101,24 +107,27 @@ public class LocalCriteoInputFile implements LocalInputFile<CriteoRecord> {
 
     // ---------------------------------------------------
 
-    private class CriteoFileDataIterator implements FileDataIterator<CriteoRecord> {
+    private class CSVFileDataIterator implements FileDataIterator<Record> {
 
-        private final BufferedReader reader;
+        private final FileReader fileReader;
 
-        private final LocalFileSection fileSection;
+        private final CSVParser csvFileParser;
+
+        private final Iterator<CSVRecord> csvIterator;
+
+        private final LocalCSVFileSection csvFileSection;
 
         private long currentLine = 0;
 
-        private final int[] fields;
-
         // ---------------------------------------------------
 
-        public CriteoFileDataIterator(final LocalFileSection fileSection, int[] fields) {
+        public CSVFileDataIterator(final LocalCSVFileSection csvFileSection) {
             try {
 
-                this.fileSection = Preconditions.checkNotNull(fileSection);
-                this.reader      = new BufferedReader(new FileReader(Preconditions.checkNotNull(filePath)));
-                this.fields      = Preconditions.checkNotNull(fields);
+                this.csvFileSection = Preconditions.checkNotNull(csvFileSection);
+                this.fileReader     = new FileReader(Preconditions.checkNotNull(filePath));
+                this.csvFileParser  = new CSVParser(fileReader, format.getCsvFormat());
+                this.csvIterator    = csvFileParser.iterator();
 
             } catch(Exception e) {
                 close();
@@ -126,53 +135,80 @@ public class LocalCriteoInputFile implements LocalInputFile<CriteoRecord> {
             }
         }
 
-        // ---------------------------------------------------reader
+        // ---------------------------------------------------
 
         @Override
         public void initialize() {
             try {
-                Preconditions.checkState(fileSection != null);
-                reader.skip(fileSection.startOffset);
+                Preconditions.checkState(csvFileSection != null);
+                fileReader.skip(csvFileSection.startOffset);
             } catch(Exception e) {
                 throw new IllegalStateException(e);
             }
         }
 
         @Override
-        public void reset() { currentLine = 0; }
+        public void reset() { /*iterator = null;*/ }
 
         @Override
         public String getFilePath() { return filePath; }
 
         @Override
         public boolean hasNext() {
-            final boolean hasNext = currentLine < fileSection.linesToRead;
+            final boolean hasNext = currentLine < csvFileSection.linesToRead && csvIterator.hasNext();
             if (!hasNext)
                 close();
             return hasNext;
         }
 
         @Override
-        public CriteoRecord next() {
-            final String line;
-            try {
-                line = reader.readLine();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        public Record next() {
+            final CSVRecord record = csvIterator.next();
             ++currentLine;
-            return CriteoRecord.parse(line, "[ \t]+", fields);
+            return Record.wrap(record, format.getProjection());
         }
 
         // ---------------------------------------------------
 
         private void close() {
             try {
-                if (reader != null)
-                    reader.close();
+                if (csvFileParser != null)
+                    csvFileParser.close();
+                if (fileReader != null)
+                    fileReader.close();
             } catch (IOException ioe) {
                 throw new IllegalStateException(ioe);
             }
         }
     }
+
+
+    public static void main(String[] args) {
+        LocalnputFile file = new LocalnputFile("datasets/criteo_2.csv", new InputFormat(new int[] {0,1,2, 3}, '\t', '\n'));
+        file.computeLocalFileSection(1, 0);
+        Iterator<Record> iterator = file.iterator();
+        Record next;
+        while(iterator.hasNext()) {
+            next = iterator.next();
+            StringBuilder builder = new StringBuilder("<");
+            int size = next.size();
+            if(size < 0) {
+                builder.append("negative size: ").append(size);
+            }
+            else if(size == 0) {
+                builder.append("empty");
+            }
+            else {
+                for(int i = 0; i < size; i++) {
+                    builder.append(next.get(i));
+                    if(i + 1 < size) {
+                        builder.append(", ");
+                    }
+                }
+            }
+            builder.append(">");
+            System.out.println(builder.toString());
+        }
+    }
+
 }

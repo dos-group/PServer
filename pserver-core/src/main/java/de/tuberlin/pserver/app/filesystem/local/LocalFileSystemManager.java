@@ -35,7 +35,7 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
     private final NetManager netManager;
 
-    private final Map<String,LocalInputFile<?>> inputFileMap;
+    private final Map<String,ILocalInputFile<?>> inputFileMap;
 
     private final Map<String,List<FileDataIterator<?>>> registeredIteratorMap;
 
@@ -103,9 +103,9 @@ public final class LocalFileSystemManager implements FileSystemManager {
     @Override
     @SuppressWarnings("unchecked")
     public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
-        LocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
+        ILocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
         if (inputFile == null) {
-            inputFile = new LocalCSVInputFile(filePath);
+            inputFile = new LocalnputFile(filePath);
             inputFileMap.put(filePath, inputFile);
             registeredIteratorMap.put(filePath, new ArrayList<>());
         }
