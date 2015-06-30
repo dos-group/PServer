@@ -6,7 +6,7 @@ package de.tuberlin.pserver.app.types;
  * This implementation is mutable and is useful in situations where an iteration over entries would cause multiple
  * unnecessary object instantiations.
  */
-public class MutableMatrixEntry implements MatrixEntry {
+public class MutableMatrixEntry implements ReusableMatrixEntry {
 
     private long row;
 
@@ -20,10 +20,11 @@ public class MutableMatrixEntry implements MatrixEntry {
         this.value = value;
     }
 
-    public void set(long row, long col, double value) {
+    public MutableMatrixEntry set(long row, long col, double value) {
         this.row = row;
         this.col = col;
         this.value = value;
+        return this;
     }
 
     @Override

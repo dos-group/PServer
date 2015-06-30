@@ -2,6 +2,7 @@ package de.tuberlin.pserver.app.filesystem.record;
 
 import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.types.MatrixEntry;
+import de.tuberlin.pserver.app.types.ReusableMatrixEntry;
 
 import java.util.Iterator;
 
@@ -30,5 +31,7 @@ public interface IRecord extends Iterator<MatrixEntry> {
      * @return the value of the i'th field of this record
      */
     MatrixEntry get(int i);
+
+    public MatrixEntry next(ReusableMatrixEntry reusable);
 
 }

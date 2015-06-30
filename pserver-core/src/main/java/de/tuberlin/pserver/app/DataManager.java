@@ -7,9 +7,7 @@ import de.tuberlin.pserver.app.dht.Value;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
 import de.tuberlin.pserver.app.filesystem.FileSystemManager;
 import de.tuberlin.pserver.app.filesystem.record.IRecord;
-import de.tuberlin.pserver.app.types.DMatrixValue;
-import de.tuberlin.pserver.app.types.DVectorValue;
-import de.tuberlin.pserver.app.types.MatrixEntry;
+import de.tuberlin.pserver.app.types.*;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.net.NetManager;
@@ -265,6 +263,8 @@ public final class DataManager {
             double[] data = new double[0];
             double[] currentSegment = new double[4096];
 
+            ReusableMatrixEntry reusable = new MutableMatrixEntry(0, 0, 0);
+
             int rows = 0, cols = -1, localIndex = 0;
             while (fileIterator.hasNext()) {
                 final IRecord record = fileIterator.next();
@@ -280,7 +280,7 @@ public final class DataManager {
                         currentSegment = new double[4096];
                         localIndex = 0;
                     }
-                    MatrixEntry entry = record.next();
+                    MatrixEntry entry = record.next(reusable);
                     currentSegment[localIndex] = entry.getValue();
                     ++localIndex;
                 }
