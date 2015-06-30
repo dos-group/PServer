@@ -56,6 +56,7 @@ DEFAULT_ZOOKEEPER_INSTALL_DIR="/data/$(whoami)/zookeeper"
 DEFAULT_ZOOKEEPER_DATA_DIR="/data/$(whoami)/zookeeper/data"
 DEFAULT_PSERVER_CONFIG_FILE="pserver.conf"
 DEFAULT_ZOOKEEPER_DIST_URL="http://archive.apache.org/dist/zookeeper/zookeeper-3.4.5/zookeeper-3.4.5.tar.gz"
+DEFAULT_ZOOKEEPER_FETCH_METHOD="cp"
 
 ########################################################################################################################
 # CONFIG KEYS: The default values can be overwritten by the following keys in tools/wally.conf
@@ -68,6 +69,7 @@ KEY_ZOOKEEPER_INSTALL_DIR="deploy.zookeeper.install.dir"
 KEY_ZOOKEEPER_DATA_DIR="deploy.zookeeper.data.dir"
 KEY_PSERVER_CONFIG_FILE="pserver.config.file"
 KEY_ZOOKEEPER_DIST_URL="zookeeper.dist.url"
+KEY_ZOOKEEPER_FETCH_METHOD="zookeeper.fetch.method"
 
 ########################################################################################################################
 # PATHS AND CONFIG
@@ -119,6 +121,10 @@ fi
 
 if [ -z "${ZOOKEEPER_DIST_URL}" ]; then
     ZOOKEEPER_DIST_URL=$(readFromConfig ${KEY_ZOOKEEPER_DIST_URL} ${DEFAULT_ZOOKEEPER_DIST_URL} ${YAML_DEPLOY_CONF})
+fi
+
+if [ -z "${ZOOKEEPER_FETCH_METHOD}" ]; then
+    ZOOKEEPER_FETCH_METHOD=$(readFromConfig ${KEY_ZOOKEEPER_FETCH_METHOD} ${DEFAULT_ZOOKEEPER_FETCH_METHOD} ${YAML_DEPLOY_CONF})
 fi
 
 ZOOKEEPER_LOG_DIR=${ZOOKEEPER_INSTALL_DIR}/logs
