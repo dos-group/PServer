@@ -20,11 +20,8 @@ if [ -z ${PSERVER_ROOT_DIR+x} ] || [ -z "${PSERVER_ROOT_DIR}" ]; then
 fi
 
 # stop pserver
-CMD="pserver-stop"
-. ${PSERVER_ROOT_DIR}/sbin/cluster.sh
+${PSERVER_ROOT_DIR}/sbin/cluster.sh "pserver-stop" "$@"
 # stop zookeeper
-CMD="zookeeper-stop"
-. ${PSERVER_ROOT_DIR}/sbin/cluster.sh
+${PSERVER_ROOT_DIR}/sbin/cluster.sh "zookeeper-stop" "$@"
 # fetch-logs
-CMD="fetch-logs"
-. ${PSERVER_ROOT_DIR}/sbin/cluster.sh
+${PSERVER_ROOT_DIR}/sbin/cluster.sh "fetch-logs" "$@"
