@@ -1,5 +1,10 @@
 package de.tuberlin.pserver.app.filesystem.record;
 
+import de.tuberlin.pserver.app.types.ImmutableMatrixEntry;
+import de.tuberlin.pserver.app.types.MatrixEntry;
+
+import java.util.Iterator;
+
 /**
  * Wraps a {@link org.apache.commons.csv.CSVRecord} instance for compatibility with the generic {@link IRecord} interface.
  */
@@ -25,7 +30,7 @@ public class Record implements IRecord {
     }
 
     @Override
-    public double get(int i) {
+    public MatrixEntry get(int i) {
         if(projection != null) {
             i = projection[currentIndex++];
         }
@@ -35,12 +40,22 @@ public class Record implements IRecord {
             result = Double.parseDouble(value);
         }
         catch(NumberFormatException e) {}
-        return result;
+        return new ImmutableMatrixEntry(-1, currentIndex, result);
     }
 
     public Record set(org.apache.commons.csv.CSVRecord record, int[] projection) {
         this.delegate = delegate;
         this.projection = projection;
         return this;
+    }
+
+    @Override
+    public boolean hasNext() {
+        return currentIndex < size();
+    }
+
+    @Override
+    public MatrixEntry next() {
+        return get(currentIndex);
     }
 }

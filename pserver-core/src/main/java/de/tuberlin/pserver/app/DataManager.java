@@ -9,6 +9,7 @@ import de.tuberlin.pserver.app.filesystem.FileSystemManager;
 import de.tuberlin.pserver.app.filesystem.record.IRecord;
 import de.tuberlin.pserver.app.types.DMatrixValue;
 import de.tuberlin.pserver.app.types.DVectorValue;
+import de.tuberlin.pserver.app.types.MatrixEntry;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.net.NetManager;
@@ -273,14 +274,19 @@ public final class DataManager {
                 if (record.size() != cols)
                     throw new IllegalStateException("cols must always have size: " + cols + " but it has record.size = " + record.size());
 
-                for (int i = 0; i < record.size(); ++i) {
+                while(record.hasNext()) {
                     if (localIndex == currentSegment.length - 1) {
                         data = ArrayUtils.addAll(data, currentSegment);
                         currentSegment = new double[4096];
                         localIndex = 0;
                     }
-                    currentSegment[localIndex] = record.get(i);
+                    MatrixEntry entry = record.next();
+                    currentSegment[localIndex] = entry.getValue();
                     ++localIndex;
+                }
+
+                for (int i = 0; i < record.size(); ++i) {
+
                 }
                 ++rows;
             }

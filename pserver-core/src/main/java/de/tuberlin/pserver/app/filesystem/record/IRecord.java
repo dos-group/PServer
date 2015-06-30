@@ -1,6 +1,9 @@
 package de.tuberlin.pserver.app.filesystem.record;
 
 import de.tuberlin.pserver.app.DataManager;
+import de.tuberlin.pserver.app.types.MatrixEntry;
+
+import java.util.Iterator;
 
 /**
  * Represents a record consisting of arbitrarily many fields.
@@ -8,7 +11,7 @@ import de.tuberlin.pserver.app.DataManager;
  * <i>Note: A record is interpreted as a row by {@link DataManager#loadFilesIntoDHT()} with its fields as column
  * values </i>
  */
-public interface IRecord {
+public interface IRecord extends Iterator<MatrixEntry> {
 
     /**
      * How many fields are accessible in this record.
@@ -26,6 +29,6 @@ public interface IRecord {
      *
      * @return the value of the i'th field of this record
      */
-    double get(int i);
+    MatrixEntry get(int i);
 
 }
