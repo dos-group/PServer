@@ -28,11 +28,11 @@ It is provided "as is" without expressed or implied warranty.
 
 package de.tuberlin.pserver.math.list;
 
-import de.tuberlin.pserver.math.stuff.Arrays;
-import de.tuberlin.pserver.math.stuff.Sorting;
 import de.tuberlin.pserver.math.buffer.DoubleBufferConsumer;
 import de.tuberlin.pserver.math.function.DoubleComparator;
 import de.tuberlin.pserver.math.function.DoubleProcedure;
+import de.tuberlin.pserver.math.stuff.Arrays;
+import de.tuberlin.pserver.math.stuff.Sorting;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -3,13 +3,13 @@ package de.tuberlin.pserver.app.filesystem.hdfs;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
+import de.tuberlin.pserver.app.filesystem.record.Record;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
-import org.apache.commons.csv.CSVRecord;
 
 import java.io.IOException;
 
-public class HDFSFileDataIterator implements FileDataIterator<CSVRecord> {
+public class HDFSFileDataIterator implements FileDataIterator<Record> {
 
     // ---------------------------------------------------
     // Fields.
@@ -21,7 +21,7 @@ public class HDFSFileDataIterator implements FileDataIterator<CSVRecord> {
 
     private final InputSplitProvider inputSplitProvider;
 
-    private final HDFSCSVInputFile inputFile;
+    private final HDFSInputFile inputFile;
 
     private FileInputSplit split;
 
@@ -33,7 +33,7 @@ public class HDFSFileDataIterator implements FileDataIterator<CSVRecord> {
     public HDFSFileDataIterator(final IConfig config,
                                 final MachineDescriptor machine,
                                 final InputSplitProvider inputSplitProvider,
-                                final HDFSCSVInputFile inputFile) {
+                                final HDFSInputFile inputFile) {
 
         Preconditions.checkNotNull(config);
         this.machine = Preconditions.checkNotNull(machine);
@@ -80,7 +80,7 @@ public class HDFSFileDataIterator implements FileDataIterator<CSVRecord> {
     }
 
     @Override
-    public CSVRecord next() {
+    public Record next() {
         try {
             return inputFile.nextRecord(null);
         } catch(IOException e) {

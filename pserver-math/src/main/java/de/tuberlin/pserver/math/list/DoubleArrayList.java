@@ -27,10 +27,10 @@ It is provided "as is" without expressed or implied warranty.
 package de.tuberlin.pserver.math.list;
 
 
+import de.tuberlin.pserver.math.function.DoubleProcedure;
 import de.tuberlin.pserver.math.stuff.Arithmetic;
 import de.tuberlin.pserver.math.stuff.Arrays;
 import de.tuberlin.pserver.math.stuff.BinarySearch;
-import de.tuberlin.pserver.math.function.DoubleProcedure;
 
 /**
  Resizable list holding <code>double</code> elements; implemented with arrays.

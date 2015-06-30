@@ -140,8 +140,18 @@ zookeeper-setup)
 		if [ ! -d "${ZOOKEEPER_INSTALL_DIR}" ]; then
 			mkdir -p ${ZOOKEEPER_INSTALL_DIR}
 			echo "[NOTICE][$(hostname)] Zookeeper installation not found. Installing ..."
-			#wget -q -O "${ZOOKEEPER_INSTALL_DIR}/${ZOOKEEPER_FILE_NAME}" "${ZOOKEEPER_DIST_URL}"
-			cp "${ZOOKEEPER_DIST_URL}" "${ZOOKEEPER_INSTALL_DIR}/${ZOOKEEPER_FILE_NAME}"
+			case "${ZOOKEEPER_FETCH_METHOD}" in
+				wget)
+					wget -q -O "${ZOOKEEPER_INSTALL_DIR}/${ZOOKEEPER_FILE_NAME}" "${ZOOKEEPER_DIST_URL}"
+					;;
+				cp)
+					cp "${ZOOKEEPER_DIST_URL}" "${ZOOKEEPER_INSTALL_DIR}/${ZOOKEEPER_FILE_NAME}"
+					;;
+				*)
+					echo "[ERROR][$(hostname)] Unkown zookeeper fetch method: ${ZOOKEEPER_FETCH_METHOD}. Check config."
+					exit 1
+					;;
+			esac
 			tar xzf ${ZOOKEEPER_INSTALL_DIR}/${ZOOKEEPER_FILE_NAME} -C ${ZOOKEEPER_INSTALL_DIR}
 			rm ${ZOOKEEPER_INSTALL_DIR}/${ZOOKEEPER_FILE_NAME}
 			mv "${ACTUAL_ZOOKEEPER_INSTALL_DIR}/conf/zoo_sample.cfg" ${ZOOKEEPER_CONFIG_FILE}

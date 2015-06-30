@@ -1,9 +1,6 @@
 package de.tuberlin.pserver.examples.ml;
 
-import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.ml.generators.DataGenerator;
-
-import java.text.DecimalFormat;
 
 public class GenerateLocalTestData {
 

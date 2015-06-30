@@ -1,9 +1,5 @@
 package de.tuberlin.pserver.math.stuff;
 
-import de.tuberlin.pserver.math.stuff.DoubleDoubleFunction;
-import de.tuberlin.pserver.math.stuff.DoubleFunction;
-import de.tuberlin.pserver.math.stuff.PlusMult;
-
 /**
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with

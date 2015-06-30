@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.ml.optimization;
 
 import de.tuberlin.pserver.math.DVector;
-import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.Vector;
 
 public interface PredictionFunction {

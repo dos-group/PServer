@@ -1,22 +1,6 @@
 package de.tuberlin.pserver.ml.playground.optimization1.SGD;
 
 
-import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
-import de.tuberlin.pserver.app.ExecutionManager;
-import de.tuberlin.pserver.app.PServerContext;
-import de.tuberlin.pserver.math.DMatrix;
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.Vector;
-import de.tuberlin.pserver.ml.common.LabeledVector;
-import de.tuberlin.pserver.ml.models.GeneralLinearModel;
-import de.tuberlin.pserver.ml.playground.optimization1.*;
-import de.tuberlin.pserver.utils.GsonUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.CyclicBarrier;
-
 public class SGDOptimizer {} /*implements Optimizer {
 
     // ---------------------------------------------------

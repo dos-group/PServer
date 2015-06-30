@@ -4,8 +4,11 @@ import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.Vector;
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
 import de.tuberlin.pserver.math.stuff.Utils;
-import no.uib.cipr.matrix.*;
-import no.uib.cipr.matrix.sparse.*;
+import no.uib.cipr.matrix.DenseMatrix;
+import no.uib.cipr.matrix.Matrices;
+import no.uib.cipr.matrix.MatrixSingularException;
+import no.uib.cipr.matrix.sparse.FlexCompColMatrix;
+import no.uib.cipr.matrix.sparse.SparseVector;
 
 public class MTJMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
 

@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.ml.playground.mahout;
 
-import de.tuberlin.pserver.math.stuff.Functions;
 import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.math.stuff.Functions;
 
 /**
  * Implements the basic logistic training law.

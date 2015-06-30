@@ -3,6 +3,7 @@ package de.tuberlin.pserver.app.filesystem.local;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
 import de.tuberlin.pserver.app.filesystem.FileSystemManager;
+import de.tuberlin.pserver.app.filesystem.record.IRecord;
 import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.net.NetEvents;
@@ -34,7 +35,7 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
     private final NetManager netManager;
 
-    private final Map<String,LocalInputFile<?>> inputFileMap;
+    private final Map<String,ILocalInputFile<?>> inputFileMap;
 
     private final Map<String,List<FileDataIterator<?>>> registeredIteratorMap;
 
@@ -101,10 +102,10 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
-        LocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
+    public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
+        ILocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
         if (inputFile == null) {
-            inputFile = new LocalCSVInputFile(filePath);
+            inputFile = new LocalnputFile(filePath);
             inputFileMap.put(filePath, inputFile);
             registeredIteratorMap.put(filePath, new ArrayList<>());
         }

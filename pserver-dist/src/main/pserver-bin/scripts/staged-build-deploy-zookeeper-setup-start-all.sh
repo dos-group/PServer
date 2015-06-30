@@ -22,14 +22,10 @@ fi
 # build
 mvn clean install
 # deploy pserver
-CMD="pserver-deploy"
-. ${PSERVER_ROOT_DIR}/sbin/staged-cluster.sh
+${PSERVER_ROOT_DIR}/sbin/staged-cluster.sh "pserver-deploy" "$@"
 # setup zookeeper
-CMD="zookeeper-setup"
-. ${PSERVER_ROOT_DIR}/sbin/staged-cluster.sh
+${PSERVER_ROOT_DIR}/sbin/staged-cluster.sh "zookeeper-setup" "$@"
 # start zookeeper
-CMD="zookeeper-start"
-. ${PSERVER_ROOT_DIR}/sbin/staged-cluster.sh
+${PSERVER_ROOT_DIR}/sbin/staged-cluster.sh "zookeeper-start" "$@"
 # stop pserver
-CMD="pserver-start"
-. ${PSERVER_ROOT_DIR}/sbin/staged-cluster.sh
+${PSERVER_ROOT_DIR}/sbin/staged-cluster.sh "pserver-start" "$@"

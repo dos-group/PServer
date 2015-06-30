@@ -1,5 +1,7 @@
 package de.tuberlin.pserver.app.filesystem;
 
+import de.tuberlin.pserver.app.filesystem.record.IRecord;
+
 public interface FileSystemManager {
 
     // ---------------------------------------------------
@@ -14,5 +16,5 @@ public interface FileSystemManager {
 
     public abstract void computeInputSplitsForRegisteredFiles();
 
-    public abstract <T> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType);
+    public abstract <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType);
 }

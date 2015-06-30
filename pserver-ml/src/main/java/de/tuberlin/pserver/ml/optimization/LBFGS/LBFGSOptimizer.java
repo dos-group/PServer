@@ -1,20 +1,5 @@
 package de.tuberlin.pserver.ml.optimization.LBFGS;
 
-import de.tuberlin.pserver.math.DVector;
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.Vector;
-import de.tuberlin.pserver.ml.models.GeneralLinearModel;
-import de.tuberlin.pserver.ml.optimization.GradientStepFunction;
-import de.tuberlin.pserver.ml.common.LabeledVector;
-import de.tuberlin.pserver.ml.optimization.LossFunction;
-import de.tuberlin.pserver.ml.optimization.Optimizer;
-import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
-
 public class LBFGSOptimizer {
 
     // ---------------------------------------------------

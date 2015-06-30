@@ -2,7 +2,7 @@ package de.tuberlin.pserver.ml.playground.optimization2.SGD;
 
 import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.ml.models.GeneralLinearModel;
-import de.tuberlin.pserver.ml.playground.optimization2.*;
+import de.tuberlin.pserver.ml.playground.optimization2.Optimizer;
 
 public class SGDOptimizer<TLabel, TFeature, TWeight> implements Optimizer {
 

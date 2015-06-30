@@ -7,7 +7,6 @@ import com.esotericsoftware.kryo.io.UnsafeInput;
 import com.esotericsoftware.kryo.io.UnsafeOutput;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.SerializationUtils;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

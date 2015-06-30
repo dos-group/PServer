@@ -1,7 +1,9 @@
 package de.tuberlin.pserver.ml.playground.mahout;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.*;
+import de.tuberlin.pserver.math.DVector;
+import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.Vector;
 import de.tuberlin.pserver.math.stuff.DoubleFunction;
 import de.tuberlin.pserver.math.stuff.Functions;
 import org.slf4j.Logger;

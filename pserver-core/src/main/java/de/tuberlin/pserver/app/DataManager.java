@@ -8,6 +8,7 @@ import de.tuberlin.pserver.app.dht.Value;
 import de.tuberlin.pserver.app.dht.valuetypes.AbstractBufferValue;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
 import de.tuberlin.pserver.app.filesystem.FileSystemManager;
+import de.tuberlin.pserver.app.filesystem.record.IRecord;
 import de.tuberlin.pserver.app.types.MObjectValue;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
@@ -20,7 +21,6 @@ import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.math.MObject;
 import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.MatrixBuilder;
-import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,7 +83,7 @@ public class DataManager extends EventDispatcher {
 
     private final int instanceID;
 
-    private final List<FileDataIterator<CSVRecord>> filesToLoad;
+    private final List<FileDataIterator<? extends IRecord>> filesToLoad;
 
     private final Map<UUID, List<Serializable>> resultObjects;
 
@@ -371,17 +371,19 @@ public class DataManager extends EventDispatcher {
     // Private Methods.
     // ---------------------------------------------------
 
-    private <T> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
+    public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
         return fileSystemManager != null ? fileSystemManager.createFileIterator(filePath, recordType) : null;
     }
 
     private void loadFilesIntoDHT() {
-        for (final FileDataIterator<CSVRecord> fileIterator : filesToLoad) {
+        for (final FileDataIterator<? extends IRecord> fileIterator : filesToLoad) {
             double[] data = new double[0];
             double[] currentSegment = new double[4096];
             int rows = 0, cols = -1, localIndex = 0;
             while (fileIterator.hasNext()) {
-                final CSVRecord record = fileIterator.next();
+
+                final IRecord record = fileIterator.next();
+
                 if (cols == -1)
                     cols = record.size();
                 if (record.size() != cols)
@@ -392,7 +394,7 @@ public class DataManager extends EventDispatcher {
                         currentSegment = new double[4096];
                         localIndex = 0;
                     }
-                    currentSegment[localIndex] = Double.parseDouble(record.get(i));
+                    currentSegment[localIndex] = record.get(i);
                     ++localIndex;
                 }
                 ++rows;

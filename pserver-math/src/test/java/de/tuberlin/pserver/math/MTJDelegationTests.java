@@ -5,7 +5,7 @@ import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.sparse.FlexCompColMatrix;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Random;
 
 /**
  * Tests if direct calls of MTJ produce same result as delegated calls.
