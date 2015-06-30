@@ -343,7 +343,7 @@ public final class DHT extends EventDispatcher {
                             0,                                          // Global byte offset.
                             basePartitionSegmentIndex,                  // Beginning segment index of this partition.
                             vals[0].getPartitionSize() / segmentSize,   // Number of segments this partition consists of.
-                            segmentSize,                                // Size of a segment. (all segments have equal size).
+                            segmentSize,                                // Size of a segment. (all segments have equal length).
                             primaryMachine                              // The machine where the partition is stored.
                     );
             // Add descriptor to the keys' partition directory.
@@ -373,7 +373,7 @@ public final class DHT extends EventDispatcher {
                                     globalOffset,                   // Global byte offset
                                     basePartitionSegmentIndex,      // Beginning segment index of this partition.
                                     vals[i].getPartitionSize() / segmentSize, // Number of segments this partition consists of.
-                                    segmentSize,                    // Size of a segment. (all segments have equal size).
+                                    segmentSize,                    // Size of a segment. (all segments have equal length).
                                     remoteMachine                   // The machine where the partition is stored.
                             );
 
@@ -624,6 +624,23 @@ public final class DHT extends EventDispatcher {
     public Value lget(final Key k) { return Preconditions.checkNotNull(lstore.get(k)); }
 
     public void ldelete(final Key k) { lstore.remove(k); }
+
+    // ---------------------------------------------------
+
+    public UUID createLocalUID() {
+        int id; UUID uid;
+        do {
+            uid = UUID.randomUUID();
+            id = (uid.hashCode() & Integer.MAX_VALUE) % infraManager.getMachines().size();
+        } while (id != infraManager.getInstanceID());
+        return uid;
+    }
+
+    public Key createLocalKey(final String name) {
+        final UUID localUID = createLocalUID();
+        final Key key = Key.newKey(localUID, name, Key.DistributionMode.DISTRIBUTED);
+        return key;
+    }
 
     // ---------------------------------------------------
     // Private Constants.

@@ -109,7 +109,7 @@ public class HDFSCSVInputFile implements InputFormat<CSVRecord,FileInputSplit> {
 
     public void setMinSplitSize(long minSplitSize) {
         if (minSplitSize < 0) {
-            throw new IllegalArgumentException("The minimum split size cannot be negative.");
+            throw new IllegalArgumentException("The minimum split length cannot be negative.");
         }
         this.minSplitSize = minSplitSize;
     }
@@ -135,9 +135,9 @@ public class HDFSCSVInputFile implements InputFormat<CSVRecord,FileInputSplit> {
     public long getSplitStart() { return splitStart; }
 
     /**
-     * Gets the size or remaining size of the current split.
+     * Gets the length or remaining length of the current split.
      *
-     * @return The size or remaining size of the current split.
+     * @return The length or remaining length of the current split.
      */
     public long getSplitLength() { return splitLength; }
 
@@ -214,8 +214,8 @@ public class HDFSCSVInputFile implements InputFormat<CSVRecord,FileInputSplit> {
             }
             else {
                 if (LOG.isWarnEnabled()) {
-                    LOG.warn("Minimal split size of " + this.minSplitSize + " is larger than the block size of " +
-                            blockSize + ". Decreasing minimal split size to block size.");
+                    LOG.warn("Minimal split length of " + this.minSplitSize + " is larger than the block length of " +
+                            blockSize + ". Decreasing minimal split length to block length.");
                 }
                 minSplitSize = blockSize;
             }

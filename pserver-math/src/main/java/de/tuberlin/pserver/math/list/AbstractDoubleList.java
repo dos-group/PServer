@@ -28,8 +28,8 @@ It is provided "as is" without expressed or implied warranty.
 
 package de.tuberlin.pserver.math.list;
 
-import de.tuberlin.pserver.math.Arrays;
-import de.tuberlin.pserver.math.Sorting;
+import de.tuberlin.pserver.math.stuff.Arrays;
+import de.tuberlin.pserver.math.stuff.Sorting;
 import de.tuberlin.pserver.math.buffer.DoubleBufferConsumer;
 import de.tuberlin.pserver.math.function.DoubleComparator;
 import de.tuberlin.pserver.math.function.DoubleProcedure;
@@ -46,7 +46,7 @@ import java.util.List;
 public abstract class AbstractDoubleList extends AbstractList implements DoubleBufferConsumer {
 
 	/**
-	 * The size of the list. This is a READ_ONLY variable for all methods but setSizeRaw(int newSize) !!! If you violate
+	 * The length of the list. This is a READ_ONLY variable for all methods but setSizeRaw(int newSize) !!! If you violate
 	 * this principle in subclasses, you should exactly know what you are doing.
 	 */
 	protected int size;
@@ -76,8 +76,8 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	 * @param other the list to be added to the receiver.
 	 * @param from  the index of the first element to be appended (inclusive).
 	 * @param to    the index of the last element to be appended (inclusive).
-	 * @throws IndexOutOfBoundsException index is out of range (<tt>other.size()&gt;0 && (from&lt;0 || from&gt;to ||
-	 *                                   to&gt;=other.size())</tt>).
+	 * @throws IndexOutOfBoundsException index is out of range (<tt>other.length()&gt;0 && (from&lt;0 || from&gt;to ||
+	 *                                   to&gt;=other.length())</tt>).
 	 */
 	public void addAllOfFromTo(AbstractDoubleList other, int from, int to) {
 		beforeInsertAllOfFromTo(size, other, from, to);
@@ -96,9 +96,9 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	 * Inserts the specified element before the specified position into the receiver. Shifts the element currently at that
 	 * position (if any) and any subsequent elements to the right.
 	 *
-	 * @param index   index before which the specified element is to be inserted (must be in [0,size]).
+	 * @param index   index before which the specified element is to be inserted (must be in [0,length]).
 	 * @param element element to be inserted.
-	 * @throws IndexOutOfBoundsException index is out of range (<tt>index &lt; 0 || index &gt; size()</tt>).
+	 * @throws IndexOutOfBoundsException index is out of range (<tt>index &lt; 0 || index &gt; length()</tt>).
 	 */
 	public void beforeInsert(int index, double element) {
 		beforeInsertDummies(index, 1);
@@ -110,13 +110,13 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	 * (inclusive) before the specified position into the receiver. Shifts the element currently at that position (if any)
 	 * and any subsequent elements to the right.
 	 *
-	 * @param index index before which to insert first element from the specified list (must be in [0,size])..
+	 * @param index index before which to insert first element from the specified list (must be in [0,length])..
 	 * @param other list of which a part is to be inserted into the receiver.
 	 * @param from  the index of the first element to be inserted (inclusive).
 	 * @param to    the index of the last element to be inserted (inclusive).
-	 * @throws IndexOutOfBoundsException index is out of range (<tt>other.size()&gt;0 && (from&lt;0 || from&gt;to ||
-	 *                                   to&gt;=other.size())</tt>).
-	 * @throws IndexOutOfBoundsException index is out of range (<tt>index &lt; 0 || index &gt; size()</tt>).
+	 * @throws IndexOutOfBoundsException index is out of range (<tt>other.length()&gt;0 && (from&lt;0 || from&gt;to ||
+	 *                                   to&gt;=other.length())</tt>).
+	 * @throws IndexOutOfBoundsException index is out of range (<tt>index &lt; 0 || index &gt; length()</tt>).
 	 */
 	public void beforeInsertAllOfFromTo(int index, AbstractDoubleList other, int from, int to) {
 		int length = to - from + 1;
@@ -126,12 +126,12 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 
 	/**
 	 * Inserts <tt>length</tt> dummy elements before the specified position into the receiver. Shifts the element
-	 * currently at that position (if any) and any subsequent elements to the right. <b>This method must set the new size
-	 * to be <tt>size()+length</tt>.
+	 * currently at that position (if any) and any subsequent elements to the right. <b>This method must set the new length
+	 * to be <tt>length()+length</tt>.
 	 *
-	 * @param index  index before which to insert dummy elements (must be in [0,size])..
+	 * @param index  index before which to insert dummy elements (must be in [0,length])..
 	 * @param length number of dummy elements to be inserted.
-	 * @throws IndexOutOfBoundsException if <tt>index &lt; 0 || index &gt; size()</tt>.
+	 * @throws IndexOutOfBoundsException if <tt>index &lt; 0 || index &gt; length()</tt>.
 	 */
 	@Override
 	protected void beforeInsertDummies(int index, int length) {
@@ -154,7 +154,7 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	 * @param key the value to be searched for.
 	 * @return index of the search key, if it is contained in the receiver; otherwise, <tt>(-(<i>insertion point</i>) -
 	 *         1)</tt>.  The <i>insertion point</i> is defined as the the point at which the value would be inserted into
-	 *         the receiver: the index of the first element greater than the key, or <tt>receiver.size()</tt>, if all
+	 *         the receiver: the index of the first element greater than the key, or <tt>receiver.length()</tt>, if all
 	 *         elements in the receiver are less than the specified key.  Note that this guarantees that the return value
 	 *         will be &gt;= 0 if and only if the key is found.
 	 * @see java.util.Arrays
@@ -174,7 +174,7 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	 * @param to   the rightmost search position, inclusive.
 	 * @return index of the search key, if it is contained in the receiver; otherwise, <tt>(-(<i>insertion point</i>) -
 	 *         1)</tt>.  The <i>insertion point</i> is defined as the the point at which the value would be inserted into
-	 *         the receiver: the index of the first element greater than the key, or <tt>receiver.size()</tt>, if all
+	 *         the receiver: the index of the first element greater than the key, or <tt>receiver.length()</tt>, if all
 	 *         elements in the receiver are less than the specified key.  Note that this guarantees that the return value
 	 *         will be &gt;= 0 if and only if the key is found.
 	 * @see java.util.Arrays
@@ -230,7 +230,7 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	}
 
 	/**
-	 * Returns the elements currently stored, possibly including invalid elements between size and capacity.
+	 * Returns the elements currently stored, possibly including invalid elements between length and capacity.
 	 *
 	 * <b>WARNING:</b> For efficiency reasons and to keep memory usage low, this method may decide <b>not to copy the
 	 * array</b>. So if subsequently you modify the returned array directly via the [] operator, be sure you know what
@@ -247,7 +247,7 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	}
 
 	/**
-	 * Sets the receiver's elements to be the specified array. The size and capacity of the list is the length of the
+	 * Sets the receiver's elements to be the specified array. The length and capacity of the list is the length of the
 	 * array. <b>WARNING:</b> For efficiency reasons and to keep memory usage low, this method may decide <b>not to copy
 	 * the array</b>. So if subsequently you modify the returned array directly via the [] operator, be sure you know what
 	 * you're doing.
@@ -271,7 +271,7 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 
 	/**
 	 * Compares the specified Object with the receiver. Returns true if and only if the specified Object is also an
-	 * ArrayList of the same type, both Lists have the same size, and all corresponding pairs of elements in the two Lists
+	 * ArrayList of the same type, both Lists have the same length, and all corresponding pairs of elements in the two Lists
 	 * are identical. In other words, two Lists are defined to be equal if they contain the same elements in the same
 	 * order.
 	 *
@@ -335,7 +335,7 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	 * Returns the element at the specified position in the receiver.
 	 *
 	 * @param index index of element to return.
-	 * @throws IndexOutOfBoundsException index is out of range (index &lt; 0 || index &gt;= size()).
+	 * @throws IndexOutOfBoundsException index is out of range (index &lt; 0 || index &gt;= length()).
 	 */
 	public double get(int index) {
 		if (index >= size || index < 0) {
@@ -348,7 +348,7 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	 * Returns the element at the specified position in the receiver; <b>WARNING:</b> Does not check preconditions.
 	 * Provided with invalid parameters this method may return invalid elements without throwing any exception! <b>You
 	 * should only use this method when you are absolutely sure that the index is within bounds.</b> Precondition
-	 * (unchecked): <tt>index &gt;= 0 && index &lt; size()</tt>.
+	 * (unchecked): <tt>index &gt;= 0 && index &lt; length()</tt>.
 	 *
 	 * This method is normally only used internally in large loops where bounds are explicitly checked before the loop and
 	 * need no be rechecked within the loop. However, when desperately, you can give this method <tt>public</tt>
@@ -380,8 +380,8 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	 * @param to      the rightmost search position, inclusive.
 	 * @return the index of the first occurrence of the element in the receiver; returns <code>-1</code> if the element is
 	 *         not found.
-	 * @throws IndexOutOfBoundsException index is out of range (<tt>size()&gt;0 && (from&lt;0 || from&gt;to ||
-	 *                                   to&gt;=size())</tt>).
+	 * @throws IndexOutOfBoundsException index is out of range (<tt>length()&gt;0 && (from&lt;0 || from&gt;to ||
+	 *                                   to&gt;=length())</tt>).
 	 */
 	public int indexOfFromTo(double element, int from, int to) {
 		checkRangeFromTo(from, to, size);
@@ -416,8 +416,8 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	 * @param to      the rightmost search position, inclusive.
 	 * @return the index of the last occurrence of the element in the receiver; returns <code>-1</code> if the element is
 	 *         not found.
-	 * @throws IndexOutOfBoundsException index is out of range (<tt>size()&gt;0 && (from&lt;0 || from&gt;to ||
-	 *                                   to&gt;=size())</tt>).
+	 * @throws IndexOutOfBoundsException index is out of range (<tt>length()&gt;0 && (from&lt;0 || from&gt;to ||
+	 *                                   to&gt;=length())</tt>).
 	 */
 	public int lastIndexOfFromTo(double element, int from, int to) {
 		checkRangeFromTo(from, to, size());
@@ -443,8 +443,8 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	 *
 	 * @param from the index of the first element (inclusive) to be sorted.
 	 * @param to   the index of the last element (inclusive) to be sorted.
-	 * @throws IndexOutOfBoundsException index is out of range (<tt>size()&gt;0 && (from&lt;0 || from&gt;to ||
-	 *                                   to&gt;=size())</tt>).
+	 * @throws IndexOutOfBoundsException index is out of range (<tt>length()&gt;0 && (from&lt;0 || from&gt;to ||
+	 *                                   to&gt;=length())</tt>).
 	 */
 	@Override
 	public void mergeSortFromTo(int from, int to) {
@@ -475,8 +475,8 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	 *                                        the specified comparator.
 	 * @throws IllegalArgumentException       if <tt>fromIndex &gt; toIndex</tt>
 	 * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or <tt>toIndex &gt; a.length</tt>
-	 * @throws IndexOutOfBoundsException      index is out of range (<tt>size()&gt;0 && (from&lt;0 || from&gt;to ||
-	 *                                        to&gt;=size())</tt>).
+	 * @throws IndexOutOfBoundsException      index is out of range (<tt>length()&gt;0 && (from&lt;0 || from&gt;to ||
+	 *                                        to&gt;=length())</tt>).
 	 */
 	public void mergeSortFromTo(int from, int to, DoubleComparator c) {
 		int mySize = size();
@@ -495,8 +495,8 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	 * @param from the index of the first element (inclusive).
 	 * @param to   the index of the last element (inclusive).
 	 * @return a new list
-	 * @throws IndexOutOfBoundsException index is out of range (<tt>size()&gt;0 && (from&lt;0 || from&gt;to ||
-	 *                                   to&gt;=size())</tt>).
+	 * @throws IndexOutOfBoundsException index is out of range (<tt>length()&gt;0 && (from&lt;0 || from&gt;to ||
+	 *                                   to&gt;=length())</tt>).
 	 */
 	public AbstractDoubleList partFromTo(int from, int to) {
 		checkRangeFromTo(from, to, size);
@@ -519,8 +519,8 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	 *
 	 * @param from the index of the first element (inclusive) to be sorted.
 	 * @param to   the index of the last element (inclusive) to be sorted.
-	 * @throws IndexOutOfBoundsException index is out of range (<tt>size()&gt;0 && (from&lt;0 || from&gt;to ||
-	 *                                   to&gt;=size())</tt>).
+	 * @throws IndexOutOfBoundsException index is out of range (<tt>length()&gt;0 && (from&lt;0 || from&gt;to ||
+	 *                                   to&gt;=length())</tt>).
 	 */
 	@Override
 	public void quickSortFromTo(int from, int to) {
@@ -549,8 +549,8 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	 *                                        the specified comparator.
 	 * @throws IllegalArgumentException       if <tt>fromIndex &gt; toIndex</tt>
 	 * @throws ArrayIndexOutOfBoundsException if <tt>fromIndex &lt; 0</tt> or <tt>toIndex &gt; a.length</tt>
-	 * @throws IndexOutOfBoundsException      index is out of range (<tt>size()&gt;0 && (from&lt;0 || from&gt;to ||
-	 *                                        to&gt;=size())</tt>).
+	 * @throws IndexOutOfBoundsException      index is out of range (<tt>length()&gt;0 && (from&lt;0 || from&gt;to ||
+	 *                                        to&gt;=length())</tt>).
 	 */
 	public void quickSortFromTo(int from, int to, DoubleComparator c) {
 		int mySize = size();
@@ -593,8 +593,8 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	 *
 	 * @param from index of first element to be removed.
 	 * @param to   index of last element to be removed.
-	 * @throws IndexOutOfBoundsException index is out of range (<tt>size()&gt;0 && (from&lt;0 || from&gt;to ||
-	 *                                   to&gt;=size())</tt>).
+	 * @throws IndexOutOfBoundsException index is out of range (<tt>length()&gt;0 && (from&lt;0 || from&gt;to ||
+	 *                                   to&gt;=length())</tt>).
 	 */
 	@Override
 	public void removeFromTo(int from, int to) {
@@ -602,7 +602,7 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 		int numMoved = size - to - 1;
 		if (numMoved > 0) {
 			replaceFromToWithFrom(from, from - 1 + numMoved, this, to + 1);
-			//fillFromToWith(from+numMoved, size-1, 0.0f); //delta
+			//fillFromToWith(from+numMoved, length-1, 0.0f); //delta
 		}
 		int width = to - from + 1;
 		if (width > 0) {
@@ -643,7 +643,7 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	/**
 	 * Replaces the part between <code>from</code> (inclusive) and <code>to</code> (inclusive) with the other list's part
 	 * between <code>otherFrom</code> and <code>otherTo</code>. Powerful (and tricky) method! Both parts need not be of
-	 * the same size (part A can both be smaller or larger than part B). Parts may overlap. Receiver and other list may
+	 * the same length (part A can both be smaller or larger than part B). Parts may overlap. Receiver and other list may
 	 * (but most not) be identical. If <code>from &gt; to</code>, then inserts other part before <code>from</code>.
 	 *
 	 * @param from      the first element of the receiver (inclusive)
@@ -768,7 +768,7 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	 *
 	 * @param index   index of element to replace.
 	 * @param element element to be stored at the specified position.
-	 * @throws IndexOutOfBoundsException if <tt>index &lt; 0 || index &gt;= size()</tt>.
+	 * @throws IndexOutOfBoundsException if <tt>index &lt; 0 || index &gt;= length()</tt>.
 	 */
 	public void set(int index, double element) {
 		if (index >= size || index < 0) {
@@ -781,7 +781,7 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	 * Replaces the element at the specified position in the receiver with the specified element; <b>WARNING:</b> Does not
 	 * check preconditions. Provided with invalid parameters this method may access invalid indexes without throwing any
 	 * exception! <b>You should only use this method when you are absolutely sure that the index is within bounds.</b>
-	 * Precondition (unchecked): <tt>index &gt;= 0 && index &lt; size()</tt>.
+	 * Precondition (unchecked): <tt>index &gt;= 0 && index &lt; length()</tt>.
 	 *
 	 * This method is normally only used internally in large loops where bounds are explicitly checked before the loop and
 	 * need no be rechecked within the loop. However, when desperately, you can give this method <tt>public</tt>
@@ -793,13 +793,13 @@ public abstract class AbstractDoubleList extends AbstractList implements DoubleB
 	protected abstract void setQuick(int index, double element);
 
 	/**
-	 * Sets the size of the receiver without modifying it otherwise. This method should not release or allocate new memory
-	 * but simply set some instance variable like <tt>size</tt>.
+	 * Sets the length of the receiver without modifying it otherwise. This method should not release or allocate new memory
+	 * but simply set some instance variable like <tt>length</tt>.
 	 *
-	 * If your subclass overrides and delegates size changing methods to some other object, you must make sure that those
-	 * overriding methods not only update the size of the delegate but also of this class. For example: public
+	 * If your subclass overrides and delegates length changing methods to some other object, you must make sure that those
+	 * overriding methods not only update the length of the delegate but also of this class. For example: public
 	 * DatabaseList extends AbstractDoubleList { ... public void removeFromTo(int from,int to) {
-	 * myDatabase.removeFromTo(from,to); this.setSizeRaw(size-(to-from+1)); } }
+	 * myDatabase.removeFromTo(from,to); this.setSizeRaw(length-(to-from+1)); } }
 	 */
 	protected void setSizeRaw(int newSize) {
 		size = newSize;

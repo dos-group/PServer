@@ -14,15 +14,15 @@ public final class ThreadedMatrixIterationTestJob extends PServerJob {
 
     @Override
     public void prologue() {
-        dataManager.loadDMatrix("datasets/demo_dataset.csv");
+        dataManager.loadAsMatrix("datasets/demo_dataset.csv");
     }
 
     @Override
     public void compute() {
 
-        final Matrix data = dataManager.getLocalMatrix("demo_dataset.csv");
+        final Matrix data = dataManager.getObject("demo_dataset.csv");
 
-        final Matrix.RowIterator iter = dataManager.threadPartitionedRowIterator(data);
+        final Matrix.RowIterator iter = dataManager.createThreadPartitionedRowIterator(data);
 
         if (ctx.instanceID == 0 && ctx.threadID == 1) {
             final DecimalFormat numberFormat = new DecimalFormat("0.000");

@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
 import de.tuberlin.pserver.math.delegates.MathLibFactory;
 import de.tuberlin.pserver.math.delegates.sparse.mtj.MTJUtils;
+import de.tuberlin.pserver.math.stuff.Utils;
 import no.uib.cipr.matrix.MatrixEntry;
 import no.uib.cipr.matrix.sparse.CompColMatrix;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
@@ -27,16 +28,34 @@ public class SMatrix extends AbstractMatrix {
     // Constructors.
     // ---------------------------------------------------
 
-    public SMatrix(no.uib.cipr.matrix.Matrix mat, MemoryLayout layout) {
+    public SMatrix() {
+        super(0, 0, Matrix.Layout.ROW_LAYOUT);
+    }
+
+    public SMatrix(no.uib.cipr.matrix.Matrix mat, Layout layout) {
         super(mat.numRows(), mat.numColumns(), layout);
         data = mat;
+    }
+
+    public SMatrix(final long rows, final long cols, final Layout layout) {
+        super(rows, cols, layout);
+        switch(layout) {
+            case ROW_LAYOUT:
+                data = new FlexCompColMatrix(Utils.toInt(numRows()), Utils.toInt(numCols()));
+                break;
+            case COLUMN_LAYOUT:
+                data = new FlexCompRowMatrix(Utils.toInt(numRows()), Utils.toInt(numCols()));
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown Memory Layout " + getLayout().toString());
+        }
     }
 
     public static SMatrix fromDMatrix(DMatrix mat) {
         return fromDMatrix(mat, mat.getLayout(), false);
     }
 
-    public static SMatrix fromDMatrix(DMatrix mat, MemoryLayout targetLayout) {
+    public static SMatrix fromDMatrix(DMatrix mat, Layout targetLayout) {
         return fromDMatrix(mat, targetLayout, false);
     }
 
@@ -44,7 +63,7 @@ public class SMatrix extends AbstractMatrix {
         return fromDMatrix(mat, mat.getLayout(), mutable);
     }
 
-    public static SMatrix fromDMatrix(DMatrix mat, MemoryLayout targetLayout, boolean mutable) {
+    public static SMatrix fromDMatrix(DMatrix mat, Layout targetLayout, boolean mutable) {
         no.uib.cipr.matrix.Matrix data = null;
         if(!mutable) { // create Comp[Row|Col]Matrix
             switch(targetLayout) {
@@ -167,7 +186,7 @@ public class SMatrix extends AbstractMatrix {
         return result;
     }
 
-    public double[] toArray(MemoryLayout targetLayout) {
+    public double[] toArray(Layout targetLayout) {
         double[] result = new double[Utils.toInt(rows*cols)];
         Iterator<MatrixEntry> iter = data.iterator();
         while(iter.hasNext()) {
@@ -250,12 +269,12 @@ public class SMatrix extends AbstractMatrix {
 
         @Override
         public Vector getAsVector() {
-            return getAsVector(0, Utils.toInt(target.numCols()), new SVector(target.numCols(), Vector.VectorType.COLUMN_VECTOR));
+            return getAsVector(0, Utils.toInt(target.numCols()), new SVector(target.numCols(), Vector.Layout.COLUMN_LAYOUT));
         }
 
         @Override
         public Vector getAsVector(int from, int size) {
-            return getAsVector(from, size, new SVector(size, Vector.VectorType.COLUMN_VECTOR));
+            return getAsVector(from, size, new SVector(size, Vector.Layout.COLUMN_LAYOUT));
         }
     }
 }

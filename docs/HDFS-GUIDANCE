@@ -25,7 +25,7 @@ Parameter Server and HDFS
 				<value>/data/peel/tmp</value>
 			    </property>
 			    <property>
-				<name>io.file.buffer.size</name>
+				<name>io.file.buffer.length</name>
 				<value>524288</value>
 			    </property>
 			</configuration>

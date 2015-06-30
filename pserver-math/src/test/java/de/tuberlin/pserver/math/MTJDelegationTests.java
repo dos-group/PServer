@@ -1,12 +1,8 @@
 package de.tuberlin.pserver.math;
 
 import de.tuberlin.pserver.math.generators.MatrixGenerator;
-import de.tuberlin.pserver.math.generators.VectorGenerator;
 import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.sparse.FlexCompColMatrix;
-import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
 import org.junit.Test;
 
 import java.util.*;
@@ -26,10 +22,10 @@ public class MTJDelegationTests {
             int a = rand.nextInt(500) + 1;
             int b = rand.nextInt(500) + 1;
 
-            Matrix mat1 = MatrixGenerator.RandomSMatrix(a, b, Matrix.MemoryLayout.COLUMN_LAYOUT);
+            Matrix mat1 = MatrixGenerator.RandomSMatrix(a, b, Matrix.Layout.COLUMN_LAYOUT);
             FlexCompColMatrix mtjMat1 = new FlexCompColMatrix(new DenseMatrix(a, b, mat1.toArray(), false));
 
-            Matrix mat2 = MatrixGenerator.RandomSMatrix(a, b, Matrix.MemoryLayout.COLUMN_LAYOUT);
+            Matrix mat2 = MatrixGenerator.RandomSMatrix(a, b, Matrix.Layout.COLUMN_LAYOUT);
             FlexCompColMatrix mtjMat2 = new FlexCompColMatrix(new DenseMatrix(a, b, mat2.toArray(), false));
 
             no.uib.cipr.matrix.Matrix mtjResult = mtjMat1.add(mtjMat2);
@@ -49,10 +45,10 @@ public class MTJDelegationTests {
             int a = rand.nextInt(500) + 1;
             int b = rand.nextInt(500) + 1;
 
-            Matrix mat1 = MatrixGenerator.RandomSMatrix(a, b, Matrix.MemoryLayout.COLUMN_LAYOUT);
+            Matrix mat1 = MatrixGenerator.RandomSMatrix(a, b, Matrix.Layout.COLUMN_LAYOUT);
             FlexCompColMatrix mtjMat1 = new FlexCompColMatrix(new DenseMatrix(a, b, mat1.toArray(), false));
 
-            Matrix mat2 = MatrixGenerator.RandomSMatrix(a, b, Matrix.MemoryLayout.COLUMN_LAYOUT);
+            Matrix mat2 = MatrixGenerator.RandomSMatrix(a, b, Matrix.Layout.COLUMN_LAYOUT);
             FlexCompColMatrix mtjMat2 = new FlexCompColMatrix(new DenseMatrix(a, b, mat2.toArray(), false));
 
             no.uib.cipr.matrix.Matrix mtjResult = mtjMat1.add(mtjMat2.scale(-1));

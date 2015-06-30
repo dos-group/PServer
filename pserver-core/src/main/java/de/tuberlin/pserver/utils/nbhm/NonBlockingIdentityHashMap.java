@@ -474,7 +474,7 @@ public class NonBlockingIdentityHashMap<TypeK, TypeV>
 
   private static final Object get_impl( final NonBlockingIdentityHashMap topmap, final Object[] kvs, final Object key ) {
     final int fullhash= hash (key); // throws NullPointerException if key is null
-    final int len     = len  (kvs); // Count of key/value pairs, reads kvs.size
+    final int len     = len  (kvs); // Count of key/value pairs, reads kvs.length
     final CHM chm     = chm  (kvs); // The CHM, for a volatile read below; reads slot 0 of kvs
 
     int idx = fullhash & (len-1); // First key hash
@@ -530,7 +530,7 @@ public class NonBlockingIdentityHashMap<TypeK, TypeV>
     assert !(putval instanceof Prime);
     assert !(expVal instanceof Prime);
     final int fullhash = hash  (key); // throws NullPointerException if key null
-    final int len      = len   (kvs); // Count of key/value pairs, reads kvs.size
+    final int len      = len   (kvs); // Count of key/value pairs, reads kvs.length
     final CHM chm      = chm   (kvs); // Reads kvs[0]
     int idx = fullhash & (len-1);
 
@@ -855,7 +855,7 @@ public class NonBlockingIdentityHashMap<TypeK, TypeV>
 
 
     // The next part of the table to copy.  It monotonically transits from zero
-    // to _kvs.size.  Visitors to the table can claim 'work chunks' by
+    // to _kvs.length.  Visitors to the table can claim 'work chunks' by
     // CAS'ing this field up, then copying the indicated indices from the old
     // table to the new table.  Workers are not required to finish any chunk;
     // the counter simply wraps and work is copied duplicately until somebody
@@ -1075,7 +1075,7 @@ public class NonBlockingIdentityHashMap<TypeK, TypeV>
     }
     int length() { return len(_sskvs); }
     Object key(int idx) { return NonBlockingIdentityHashMap.key(_sskvs,idx); }
-    private int _idx;              // Varies from 0-keys.size
+    private int _idx;              // Varies from 0-keys.length
     private Object _nextK, _prevK; // Last 2 keys found
     private TypeV  _nextV, _prevV; // Last 2 values found
     public boolean hasNext() { return _nextV != null; }

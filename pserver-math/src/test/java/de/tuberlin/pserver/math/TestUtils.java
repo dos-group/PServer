@@ -1,5 +1,7 @@
 package de.tuberlin.pserver.math;
 
+import de.tuberlin.pserver.math.stuff.Utils;
+
 public class TestUtils {
 
     public static void checkValues(Matrix mat1, Matrix mat2) {

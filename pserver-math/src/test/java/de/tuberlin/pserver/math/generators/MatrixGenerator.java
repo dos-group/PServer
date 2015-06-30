@@ -12,34 +12,34 @@ public class MatrixGenerator {
 
     public static DMatrix RandomDMatrix(long rows, long cols) {
         double[] data = BufferGenerator.RandomValues(rows, cols);
-        return new DMatrix(rows, cols, data, DMatrix.MemoryLayout.ROW_LAYOUT);
+        return new DMatrix(rows, cols, data, Matrix.Layout.ROW_LAYOUT);
     }
 
-    public static DMatrix RandomDMatrix(long rows, long cols, DMatrix.MemoryLayout layout) {
+    public static DMatrix RandomDMatrix(long rows, long cols, Matrix.Layout layout) {
         double[] data = BufferGenerator.RandomValues(rows, cols);
         return new DMatrix(rows, cols, data, layout);
     }
 
     public static SMatrix RandomSMatrix(long rows, long cols) {
-        return RandomSMatrix(rows, cols, Matrix.MemoryLayout.ROW_LAYOUT);
+        return RandomSMatrix(rows, cols, Matrix.Layout.ROW_LAYOUT);
     }
 
-    public static SMatrix RandomSMatrix(long rows, long cols, DMatrix.MemoryLayout layout) {
+    public static SMatrix RandomSMatrix(long rows, long cols, Matrix.Layout layout) {
         double[] data = BufferGenerator.SparseRandomValues(rows, cols);
         return SMatrix.fromDMatrix(new DMatrix(rows, cols, data, layout));
     }
 
-    public static SMatrix RandomSMatrix(long rows, long cols, DMatrix.MemoryLayout layout, double sparsity) {
+    public static SMatrix RandomSMatrix(long rows, long cols, Matrix.Layout layout, double sparsity) {
         double[] data = BufferGenerator.SparseRandomValues(rows, cols, sparsity);
         return SMatrix.fromDMatrix(new DMatrix(rows, cols, data, layout));
     }
 
     public static DMatrix AscendingDMatrix(long rows, long cols) {
         double[] data = BufferGenerator.AscendingValues(rows, cols);
-        return new DMatrix(rows, cols, data, DMatrix.MemoryLayout.ROW_LAYOUT);
+        return new DMatrix(rows, cols, data, Matrix.Layout.ROW_LAYOUT);
     }
 
-    public static DMatrix AscendingDMatrix(long rows, long cols, DMatrix.MemoryLayout layout) {
+    public static DMatrix AscendingDMatrix(long rows, long cols, Matrix.Layout layout) {
         double[] data = BufferGenerator.AscendingValues(rows, cols);
         return new DMatrix(rows, cols, data, layout);
     }

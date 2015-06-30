@@ -125,14 +125,14 @@ public final class MemoryManager {
 
     // ---------------------------------------------------
 
-    public MemorySegment allocShortLife(final int size) { return shortLifeHeap.alloc(size); }
+    public MemorySegment allocShortLife(final int length) { return shortLifeHeap.alloc(length); }
 
-    public MemorySegment allocShortLifeBlocking(final int size) { return shortLifeHeap.allocBlocking(size); }
+    public MemorySegment allocShortLifeBlocking(final int length) { return shortLifeHeap.allocBlocking(length); }
 
-    public MemorySegment[] allocShortLifeBlocking(final int size, final int num) {
+    public MemorySegment[] allocShortLifeBlocking(final int length, final int num) {
         final MemorySegment[] segments = new MemorySegment[num];
         for (int i = 0; i < num; ++i)
-            segments[i] = shortLifeHeap.allocBlocking(size);
+            segments[i] = shortLifeHeap.allocBlocking(length);
         return segments;
     }
 

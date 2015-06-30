@@ -51,7 +51,7 @@ public interface LossFunction {
 
             double lossDerivative = partialLossFunction.derivative(prediction, v.label);
 
-            Vector gradient = new DVector((DVector)v.vector, Vector.VectorType.COLUMN_VECTOR); // predictionFunction.gradient(v.vector, weights)
+            Vector gradient = new DVector((DVector)v.vector, Vector.Layout.COLUMN_LAYOUT); // predictionFunction.gradient(v.vector, weights)
 
             gradient.mul(lossDerivative);
 

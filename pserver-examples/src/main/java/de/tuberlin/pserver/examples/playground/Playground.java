@@ -1,5 +1,11 @@
 package de.tuberlin.pserver.examples.playground;
 
+import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.SMatrix2;
+import de.tuberlin.pserver.utils.ObjectSerializer;
+
+import java.util.Random;
+
 public class Playground {
 
     /*public static int numOfMachines = 4;
@@ -16,8 +22,41 @@ public class Playground {
     }*/
 
     public static void main(final String[] args) {
-        //System.out.println("=> " + (16000 * 16000 * Types.DOUBLE_TYPE_INFO.size()));
 
+        Matrix gradientMtx = new SMatrix2(5, 1000000, Matrix.Layout.ROW_LAYOUT);
+
+        /*new MatrixBuilder()
+                .dimension(5, 1000000)
+                .format(Matrix.MatrixFormat.SPARSE_MATRIX)
+                .layout(Matrix.MemoryLayout.ROW_LAYOUT)
+                .build();*/
+
+        Random rand = new Random();
+
+        for (int i = 0; i < 100000000; ++i) {
+            gradientMtx.set(rand.nextInt(5 - 1), rand.nextInt(1000000 - 1), rand.nextDouble());
+        }
+
+        //gradientMtx.set(5, 5, 5);
+
+        ObjectSerializer serializer = ObjectSerializer.Factory.create(ObjectSerializer.SerializerType.KRYO_SERIALIZER);
+
+        final byte[] data = serializer.serialize(gradientMtx);
+
+        System.out.println(data.length);
+
+        //15012249
+        //63000213
+        //148000046
+        //37194
+
+        //SMatrix c = serializer.deserialize(data, SMatrix.class);
+
+        //System.out.println(c.get(5, 5));
+
+
+
+        //System.out.println("=> " + (16000 * 16000 * Types.DOUBLE_TYPE_INFO.length()));
 
         //System.out.println(createLocalKey(1).toString());
         //System.out.println(createLocalKey(2).toString());
@@ -192,28 +231,11 @@ public class Playground {
                 .close()
                 .build();
 
-        System.out.println("sizeof(" + ti.toString() + ") = " + ti.size());
+        System.out.println("sizeof(" + ti.toString() + ") = " + ti.length());
         System.out.println("relative offset: " + ti.getFieldOffset(new int[]{2, 3, 1}));
 
 
     }*/
-
-        int a = 0;
-
-        int b = 0;
-
-        int c = 2;
-
-        b += a += c;
-
-        b += a += c;
-
-
-        System.out.println(a);
-        System.out.println(b);
-        System.out.println(c);
-
-
 
         /*{
             final LocalCSVInputFile fileSection = new LocalCSVInputFile("test.csv", "\n", ',');
@@ -223,7 +245,7 @@ public class Playground {
             while (fileIterator.hasNext()) {
                 final CSVRecord record = fileIterator.next();
                 final StringBuilder strBuilder = new StringBuilder();
-                for (int i = 0; i < record.size(); ++i)
+                for (int i = 0; i < record.length(); ++i)
                     strBuilder.append(record.get(i)).append(",");
                 strBuilder.deleteCharAt(strBuilder.length() - 1);
                 System.out.println(strBuilder.toString());
@@ -240,7 +262,7 @@ public class Playground {
             while (fileIterator.hasNext()) {
                 final CSVRecord record = fileIterator.next();
                 final StringBuilder strBuilder = new StringBuilder();
-                for (int i = 0; i < record.size(); ++i)
+                for (int i = 0; i < record.length(); ++i)
                     strBuilder.append(record.get(i)).append(",");
                 strBuilder.deleteCharAt(strBuilder.length() - 1);
                 System.out.println(strBuilder.toString());
@@ -257,7 +279,7 @@ public class Playground {
             while (fileIterator.hasNext()) {
                 final CSVRecord record = fileIterator.next();
                 final StringBuilder strBuilder = new StringBuilder();
-                for (int i = 0; i < record.size(); ++i)
+                for (int i = 0; i < record.length(); ++i)
                     strBuilder.append(record.get(i)).append(",");
                 strBuilder.deleteCharAt(strBuilder.length() - 1);
                 System.out.println(strBuilder.toString());
@@ -274,7 +296,7 @@ public class Playground {
             while (fileIterator.hasNext()) {
                 final CSVRecord record = fileIterator.next();
                 final StringBuilder strBuilder = new StringBuilder();
-                for (int i = 0; i < record.size(); ++i)
+                for (int i = 0; i < record.length(); ++i)
                     strBuilder.append(record.get(i)).append(",");
                 strBuilder.deleteCharAt(strBuilder.length() - 1);
                 System.out.println(strBuilder.toString());

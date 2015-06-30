@@ -125,7 +125,7 @@ public final class IConfigFactory {
         Map<String, Object> runtimeConfig = new HashMap<>();
         runtimeConfig.put("default.machine.cpu.cores", Runtime.getRuntime().availableProcessors());
         runtimeConfig.put("default.machine.memory.max", Runtime.getRuntime().maxMemory());
-        runtimeConfig.put("default.machine.disk.size", new File("/").getTotalSpace()); // FIXME
+        runtimeConfig.put("default.machine.disk.length", new File("/").getTotalSpace()); // FIXME
         runtimeConfig.put("default.io.tcp.port", InetHelper.getFreePort());
         runtimeConfig.put("default.io.rpc.port", InetHelper.getFreePort());
         return ConfigFactory.parseMap(runtimeConfig);

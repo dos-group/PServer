@@ -199,10 +199,10 @@ public final class LongLifeHeap {
     private void defragmentHeap() {
         //final List<MemoryObjectPtr> orderedObjs = new ArrayList<>(objects.values());
         //Collections.sort(orderedObjs);
-        //for (int i = 0; i < orderedObjs.size() - 1; ++i) {
+        //for (int i = 0; i < orderedObjs.length() - 1; ++i) {
         //    final MemoryObjectPtr objPtr = orderedObjs.get(i);
         //    int fillOffset = 0;
-        //    final int segmentNum = objPtr.size / arena.getSegmentSize();
+        //    final int segmentNum = objPtr.length / arena.getSegmentSize();
         //    final MemorySegment[] tmpSegments = MemoryManager.getMemoryManager().allocShortLifeBlocking(DEFAULT_MEMORY_SEGMENT_SIZE, segmentNum);
         //    MemoryManager.getMemoryManager().freeShortLifeSegments(tmpSegments);
         //}

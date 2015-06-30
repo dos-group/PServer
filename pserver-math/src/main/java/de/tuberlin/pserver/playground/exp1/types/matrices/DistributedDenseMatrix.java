@@ -141,7 +141,7 @@ public final class DistributedDenseMatrix /*implements Matrix*/ {
     public byte[] getElement(final long row, final long col) {
         final long globalOffset = getGlobalOffset(row, col);
         final int segmentID = (int)globalOffset / ByteBufferValue.DEFAULT_SEGMENT_SIZE;
-        final int localElementPos = (int)((globalOffset - segmentID * ByteBufferValue.DEFAULT_SEGMENT_SIZE) / elementTypeInfo.size());
+        final int localElementPos = (int)((globalOffset - segmentID * ByteBufferValue.DEFAULT_SEGMENT_SIZE) / elementTypeInfo.length());
         final ByteBufferValue.Segment[] segments = DHT.getInstance().get(matrixKey, segmentID);
         return new TypedBuffer(segments[0].data, elementTypeInfo).extractElementAsByteArray(localElementPos);
     }
@@ -151,7 +151,7 @@ public final class DistributedDenseMatrix /*implements Matrix*/ {
         final long globalOffset = getGlobalOffset(row, col);
         final int segmentID = matrixKey.getSegmentIDFromByteOffset(globalOffset);
         final ByteBufferValue.Segment[] segments = DHT.getInstance().get(matrixKey, segmentID);
-        final int localElementPos = (int)((globalOffset - segmentID * ByteBufferValue.DEFAULT_SEGMENT_SIZE) / elementTypeInfo.size());
+        final int localElementPos = (int)((globalOffset - segmentID * ByteBufferValue.DEFAULT_SEGMENT_SIZE) / elementTypeInfo.length());
         new TypedBuffer(segments[0].data, elementTypeInfo).put(localElementPos, element);
         DHT.getInstance().put(matrixKey, segments);
     }
@@ -161,16 +161,16 @@ public final class DistributedDenseMatrix /*implements Matrix*/ {
     // ---------------------------------------------------
 
     private ByteBufferValue[] computeMatrixPartitions() {
-        final long size = elementTypeInfo.size() * rows * cols;
+        final long length = elementTypeInfo.length() * rows * cols;
 
         long alignmentSize = 0;
         switch (partitioningScheme) {
-            case ROW_PARTITIONING:      alignmentSize = cols * elementTypeInfo.size(); break;
-            case COLUMN_PARTITIONING:   alignmentSize = rows * elementTypeInfo.size(); break;
+            case ROW_PARTITIONING:      alignmentSize = cols * elementTypeInfo.length(); break;
+            case COLUMN_PARTITIONING:   alignmentSize = rows * elementTypeInfo.length(); break;
             case BLOCK_PARTITIONING:    throw new IllegalStateException();
         }
 
-        final ByteBufferValue[] matrixValues = ByteBufferValue.newValueAligned(false, size, alignmentSize);
+        final ByteBufferValue[] matrixValues = ByteBufferValue.newValueAligned(false, length, alignmentSize);
         final MatrixDescriptor[] matrixDescriptors = new MatrixDescriptor[matrixValues.length];
         long partitionRows;
         long partitionCols;
@@ -199,11 +199,11 @@ public final class DistributedDenseMatrix /*implements Matrix*/ {
 
             case BLOCK_PARTITIONING: {
                 throw new IllegalStateException();
-                //if (matrixValues.size % 4 != 0)
+                //if (matrixValues.length % 4 != 0)
                 //    throw new IllegalStateException();
-                //partitionRows = rows / matrixDescriptors.size;
-                //partitionCols = cols / matrixDescriptors.size;
-                //for (int i = 0; i < matrixDescriptors.size; ++i)
+                //partitionRows = rows / matrixDescriptors.length;
+                //partitionCols = cols / matrixDescriptors.length;
+                //for (int i = 0; i < matrixDescriptors.length; ++i)
                 //    matrixDescriptors[i] = new MatrixDescriptor(partitionRows * i, partitionCols * i,
                 //            partitionRows, partitionCols, elementTypeInfo, PartitioningScheme.BLOCK_PARTITIONING);
             }
@@ -221,8 +221,8 @@ public final class DistributedDenseMatrix /*implements Matrix*/ {
                                  final int row_blocks, final int col_blocks) {
 
         switch (partitioningScheme) {
-            case ROW_PARTITIONING:    return (row * cols + col) * elementTypeInfo.size();
-            case COLUMN_PARTITIONING: return (col * rows + row) * elementTypeInfo.size();
+            case ROW_PARTITIONING:    return (row * cols + col) * elementTypeInfo.length();
+            case COLUMN_PARTITIONING: return (col * rows + row) * elementTypeInfo.length();
             case BLOCK_PARTITIONING:  {
                 switch (blockLayout) {
                     case ROW_LAYOUT: {

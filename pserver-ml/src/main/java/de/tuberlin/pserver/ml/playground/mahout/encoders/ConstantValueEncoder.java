@@ -33,7 +33,7 @@ public class ConstantValueEncoder extends CachingValueEncoder {
     int probes = getProbes();
     String name = getName();
     for (int i = 0; i < probes; i++) {
-      int n = hashForProbe(originalForm, (int)data.size(), name, i);
+      int n = hashForProbe(originalForm, (int)data.length(), name, i);
       if (isTraceEnabled()) {
         trace((String) null, n);                
       }

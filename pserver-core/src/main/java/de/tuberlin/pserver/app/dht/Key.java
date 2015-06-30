@@ -57,13 +57,13 @@ public class Key implements Serializable, Comparable<Key> {
             Preconditions.checkArgument(segmentBaseIndex >= 0);
             Preconditions.checkArgument(segmentSize >= 0 && segmentSize % ByteBufferValue.DEFAULT_ALIGNMENT_SIZE == 0);
 
-            this.partitionIndex = partitionIndex;
-            this.partitionSize = partitionSize;
-            this.globalOffset = globalOffset;
-            this.segmentBaseIndex = segmentBaseIndex;
-            this.numberOfSegments = numberOfSegments;
-            this.segmentSize = segmentSize;
-            this.machine = Preconditions.checkNotNull(machine);
+            this.partitionIndex     = partitionIndex;
+            this.partitionSize      = partitionSize;
+            this.globalOffset       = globalOffset;
+            this.segmentBaseIndex   = segmentBaseIndex;
+            this.numberOfSegments   = numberOfSegments;
+            this.segmentSize        = segmentSize;
+            this.machine            = Preconditions.checkNotNull(machine);
         }
     }
 

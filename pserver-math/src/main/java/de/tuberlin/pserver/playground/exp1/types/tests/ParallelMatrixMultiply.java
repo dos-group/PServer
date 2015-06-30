@@ -394,10 +394,10 @@ public class ParallelMatrixMultiply {
                         for (int k = 0; k < size; k += 2) {
                             
                             {
-                                //final double a  = UnsafeOp.unsafe.getDouble(A.getBuffer().getRawData(), (long)(((aRow + i) * (aCol + k) + (aCol + k)) * size + UnsafeOp.BYTE_ARRAY_OFFSET));
-                                //final double a1 = UnsafeOp.unsafe.getDouble(A.getBuffer().getRawData(), (long) (((aRow + i + 1) * (aCol + k) + (aCol + k)) * size + UnsafeOp.BYTE_ARRAY_OFFSET));
-                                //final double b  = UnsafeOp.unsafe.getDouble(B.getBuffer().getRawData(), (long) (((bRow + k) * (bCol + j) + (bCol + j)) * size + UnsafeOp.BYTE_ARRAY_OFFSET));
-                                //final double b1 = UnsafeOp.unsafe.getDouble(B.getBuffer().getRawData(), (long) (((bRow + k) * (bCol + j + 1) + (bCol + j + 1)) * size + UnsafeOp.BYTE_ARRAY_OFFSET));
+                                //final double a  = UnsafeOp.unsafe.getDouble(A.getBuffer().getRawData(), (long)(((aRow + i) * (aCol + k) + (aCol + k)) * length + UnsafeOp.BYTE_ARRAY_OFFSET));
+                                //final double a1 = UnsafeOp.unsafe.getDouble(A.getBuffer().getRawData(), (long) (((aRow + i + 1) * (aCol + k) + (aCol + k)) * length + UnsafeOp.BYTE_ARRAY_OFFSET));
+                                //final double b  = UnsafeOp.unsafe.getDouble(B.getBuffer().getRawData(), (long) (((bRow + k) * (bCol + j) + (bCol + j)) * length + UnsafeOp.BYTE_ARRAY_OFFSET));
+                                //final double b1 = UnsafeOp.unsafe.getDouble(B.getBuffer().getRawData(), (long) (((bRow + k) * (bCol + j + 1) + (bCol + j + 1)) * length + UnsafeOp.BYTE_ARRAY_OFFSET));
 
                                 //final long offAxTmp = (aCol + k) + (aCol + k);
                                 //final long offA     = ((aRow + i)     * offAxTmp) * ds + UnsafeOp.BYTE_ARRAY_OFFSET;
@@ -424,10 +424,10 @@ public class ParallelMatrixMultiply {
                             }
 
                             {
-                                //final double a  = UnsafeOp.unsafe.getDouble(A.getBuffer().getRawData(), (long) (((aRow + i) * (aCol + k + 1) + (aCol + k + 1)) * size + UnsafeOp.BYTE_ARRAY_OFFSET));
-                                //final double a1 = UnsafeOp.unsafe.getDouble(A.getBuffer().getRawData(), (long) (((aRow + i + 1) * (aCol + k + 1) + (aCol + k + 1)) * size + UnsafeOp.BYTE_ARRAY_OFFSET));
-                                //final double b  = UnsafeOp.unsafe.getDouble(B.getBuffer().getRawData(), (long) (((bRow + k + 1) * (bCol + j) + (bCol + j)) * size + UnsafeOp.BYTE_ARRAY_OFFSET));
-                                //final double b1 = UnsafeOp.unsafe.getDouble(B.getBuffer().getRawData(), (long) (((bRow + k + 1) * (bCol + j + 1) + (bCol + j + 1)) * size + UnsafeOp.BYTE_ARRAY_OFFSET));
+                                //final double a  = UnsafeOp.unsafe.getDouble(A.getBuffer().getRawData(), (long) (((aRow + i) * (aCol + k + 1) + (aCol + k + 1)) * length + UnsafeOp.BYTE_ARRAY_OFFSET));
+                                //final double a1 = UnsafeOp.unsafe.getDouble(A.getBuffer().getRawData(), (long) (((aRow + i + 1) * (aCol + k + 1) + (aCol + k + 1)) * length + UnsafeOp.BYTE_ARRAY_OFFSET));
+                                //final double b  = UnsafeOp.unsafe.getDouble(B.getBuffer().getRawData(), (long) (((bRow + k + 1) * (bCol + j) + (bCol + j)) * length + UnsafeOp.BYTE_ARRAY_OFFSET));
+                                //final double b1 = UnsafeOp.unsafe.getDouble(B.getBuffer().getRawData(), (long) (((bRow + k + 1) * (bCol + j + 1) + (bCol + j + 1)) * length + UnsafeOp.BYTE_ARRAY_OFFSET));
 
                                 //final long offAxTmp = (aCol + k + 1) + (aCol + k + 1);
                                 //final long offA     = (((aRow + i) * offAxTmp)     * ds + UnsafeOp.BYTE_ARRAY_OFFSET);

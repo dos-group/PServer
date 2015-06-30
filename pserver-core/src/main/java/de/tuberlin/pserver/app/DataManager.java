@@ -1,18 +1,25 @@
 package de.tuberlin.pserver.app;
 
+
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.dht.DHT;
 import de.tuberlin.pserver.app.dht.Key;
 import de.tuberlin.pserver.app.dht.Value;
+import de.tuberlin.pserver.app.dht.valuetypes.AbstractBufferValue;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
 import de.tuberlin.pserver.app.filesystem.FileSystemManager;
-import de.tuberlin.pserver.app.types.DMatrixValue;
-import de.tuberlin.pserver.app.types.DVectorValue;
+import de.tuberlin.pserver.app.types.MObjectValue;
 import de.tuberlin.pserver.core.config.IConfig;
+import de.tuberlin.pserver.core.events.Event;
+import de.tuberlin.pserver.core.events.EventDispatcher;
+import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
+import de.tuberlin.pserver.core.infra.MachineDescriptor;
+import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.math.*;
-import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.math.MObject;
+import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.MatrixBuilder;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
@@ -21,36 +28,42 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-public final class DataManager {
+public class DataManager extends EventDispatcher {
 
     // ---------------------------------------------------
     // Inner Classes.
     // ---------------------------------------------------
 
-    public interface Merger<T> {
+    public abstract class DataEventHandler implements IEventHandler {
 
-        public abstract void merge(final T s, final T[] m);
+        public abstract void handleDataEvent(final int srcInstanceID, final Value[] values);
+
+        @Override
+        public void handleEvent(final Event e) {
+            final NetEvents.NetEvent event = (NetEvents.NetEvent)e;
+            final int srcInstanceID = infraManager.getInstanceIDFromMachineUID(event.srcMachineID);
+            final Value[] values = (Value[]) event.getPayload();
+            handleDataEvent(srcInstanceID, values);
+        }
+    }
+
+    public interface Merger<T extends MObject> {
+
+        public abstract void merge(final T dst, final List<T> src);
     }
 
     // ---------------------------------------------------
     // Constants.
     // ---------------------------------------------------
 
-    public static enum DataEventType {
+    private static final String BSP_SYNC_BARRIER_EVENT = "bsp_sync_barrier_event";
 
-        MATRIX_EVENT("MATRIX_EVENT"),
-
-        VECTOR_EVENT("VECTOR_EVENT");
-
-        public final String eventType;
-
-        DataEventType(final String eventType) { this.eventType = eventType; }
-
-        @Override public String toString() { return eventType; }
-    }
+    private static final String PUSH_EVENT_PREFIX = "push__";
 
     // ---------------------------------------------------
     // Fields.
@@ -77,6 +90,12 @@ public final class DataManager {
     private final Map<Long, PServerContext> contextResolver;
 
     // ---------------------------------------------------
+
+    private final int[] instanceIDs;
+
+    private CountDownLatch bspSyncBarrier;
+
+    // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
@@ -85,6 +104,7 @@ public final class DataManager {
                        final NetManager netManager,
                        final FileSystemManager fileSystemManager,
                        final DHT dht) {
+        super(true);
 
         this.config             = Preconditions.checkNotNull(config);
         this.infraManager       = Preconditions.checkNotNull(infraManager);
@@ -95,6 +115,216 @@ public final class DataManager {
         this.filesToLoad        = new ArrayList<>();
         this.resultObjects      = new HashMap<>();
         this.contextResolver    = new ConcurrentHashMap<>();
+
+        this.bspSyncBarrier = new CountDownLatch(infraManager.getMachines().size());
+        this.netManager.addEventListener(BSP_SYNC_BARRIER_EVENT, event -> bspSyncBarrier.countDown());
+
+        this.instanceIDs = IntStream.iterate(0, x -> x + 1).limit(infraManager.getMachines().size()).toArray();
+    }
+
+    // ---------------------------------------------------
+    // DATA LOADING
+    // ---------------------------------------------------
+
+    public void loadAsMatrix(final String filePath) {
+        filesToLoad.add(createFileIterator(Preconditions.checkNotNull(filePath), null));
+    }
+
+    // ---------------------------------------------------
+    // EVENT HANDLING
+    // ---------------------------------------------------
+
+    public void addDataEventListener(final String name, final DataEventHandler handler) {
+        netManager.addEventListener(PUSH_EVENT_PREFIX + name, handler);
+    }
+
+    public void removeDataEventListener(final String name, final DataEventHandler handler) {
+        netManager.removeEventListener(PUSH_EVENT_PREFIX + name, handler);
+    }
+
+    // ---------------------------------------------------
+    // COMMUNICATION PRIMITIVES
+    // ---------------------------------------------------
+
+    public Value[] pullFrom(final String name, final int[] instanceIDs) {
+        Preconditions.checkNotNull(name);
+        int idx = 0;
+        final Set<Key> keys = dht.getKey(name);
+        Preconditions.checkState(instanceIDs.length <= keys.size());
+        final Value[] values = new Value[instanceIDs.length];
+        for (final int id : instanceIDs) {
+            for (final Key key : keys) {
+                if (key.getPartitionDescriptor(id) != null) {
+                    values[idx] = dht.get(key)[0];
+                    values[idx].setKey(key);
+                    ++idx;
+                    break;
+                }
+            }
+        }
+        return values;
+    }
+
+    public void pushTo(final Value[] values, final int[] instanceIDs) {
+        Preconditions.checkNotNull(instanceIDs);
+        Preconditions.checkNotNull(values);
+        for (final int id : instanceIDs) {
+            final NetEvents.NetEvent event = new NetEvents.NetEvent(PUSH_EVENT_PREFIX + values[0].getKey().name);
+            event.setPayload(values);
+            netManager.sendEvent(id, event);
+        }
+    }
+
+    public Value[] pullFromAll(final String name) {
+        Preconditions.checkNotNull(name);
+        int idx = 0;
+        final Set<Key> keys = dht.getKey(name);
+        final Value[] values = new Value[keys.size()];
+        for (final Key key : keys) {
+            values[idx] = dht.get(key)[0];
+            values[idx].setKey(key);
+            ++idx;
+        }
+        return values;
+    }
+
+    public void pushToAll(final Value[] values) {
+        Preconditions.checkNotNull(values);
+        for (final MachineDescriptor md : infraManager.getMachines()) {
+            final NetEvents.NetEvent event = new NetEvents.NetEvent(PUSH_EVENT_PREFIX + values[0].getKey().name);
+            event.setPayload(values);
+            netManager.sendEvent(md, event);
+        }
+    }
+
+    // ---------------------------------------------------
+    // OBJECT MANAGEMENT
+    // ---------------------------------------------------
+
+    public Key putLocal(final String name, final AbstractBufferValue value) {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(value);
+        final Key key = dht.createLocalKey(name);
+        value.setValueMetadata(instanceID);
+        dht.put(key, value);
+        return key;
+    }
+
+    public Value[] getLocal(final String name) {
+        Preconditions.checkNotNull(name);
+        Key localKey = null;
+        final Set<Key> keys = dht.getKey(name);
+        for (final Key k : keys) {
+            if (k.getPartitionDescriptor(instanceID) != null) {
+                localKey = k;
+                break;
+            }
+        }
+        return getLocal(localKey);
+    }
+
+    public Value[] getLocal(final Key key) {
+        Preconditions.checkNotNull(key);
+        return dht.get(key);
+    }
+
+    public void removeLocal(final String name) {
+        Preconditions.checkNotNull(name);
+        Key localKey = null;
+        final Set<Key> keys = dht.getKey(name);
+        for (final Key k : keys) {
+            if (k.getPartitionDescriptor(instanceID) != null) {
+                localKey = k;
+                break;
+            }
+        }
+        removeLocal(localKey);
+    }
+
+    public void removeLocal(final Key key) {
+        Preconditions.checkNotNull(key);
+        dht.delete(key);
+    }
+
+    // ---------------------------------------------------
+
+    public <T extends MObject> Key putObject(final String name, final T obj) {
+        return putLocal(name, new MObjectValue<T>(obj));
+    }
+
+    public <T extends MObject> T getObject(final String name) {
+        return (T)((MObjectValue)getLocal(name)[0]).object;
+    }
+
+    // ---------------------------------------------------
+
+
+    public <T extends MObject> void pullMerge(final T dstObj,
+                                              final Merger<T> merger) {
+
+        pullMerge(((MObjectValue<T>)dstObj.getOwner()).getKey().name, instanceIDs, dstObj, merger);
+    }
+
+
+    public <T extends MObject> void pullMerge(final String name,
+                                              final T dstObj,
+                                              final Merger<T> merger) {
+
+        pullMerge(name, instanceIDs, dstObj, merger);
+    }
+
+    public <T extends MObject> void pullMerge(final String name,
+                                              final int[] instanceIDs,
+                                              final T dstObj,
+                                              final Merger<T> merger) {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(instanceIDs);
+        Preconditions.checkNotNull(dstObj);
+        Preconditions.checkNotNull(merger);
+
+        final Value[] values = pullFrom(name, instanceIDs);
+        if (values.length > 0) {
+            if (values.getClass().getComponentType() != dstObj.getClass())
+                throw new IllegalStateException();
+            final List<Value> valueList = Arrays.asList(values);
+            Collections.sort(valueList,
+                    (Value o1, Value o2) -> ((Integer)o1.getValueMetadata()).compareTo(((Integer)o2.getValueMetadata())));
+            final List<T> mObjects = valueList.stream().map(v -> ((MObjectValue<T>)v).object).collect(Collectors.toList());
+            merger.merge(dstObj, mObjects);
+        } else
+            throw new IllegalStateException();
+    }
+
+    // ---------------------------------------------------
+    // CONTROL FLOW
+    // ---------------------------------------------------
+
+    public void sync() {
+        netManager.broadcastEvent(new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT));
+        try {
+            bspSyncBarrier.await();
+        } catch (InterruptedException e) {
+            LOG.error(e.getMessage());
+        }
+        if (bspSyncBarrier.getCount() == 0) {
+            bspSyncBarrier = new CountDownLatch(infraManager.getMachines().size());
+        } else {
+            throw new IllegalStateException();
+        }
+    }
+
+    // ---------------------------------------------------
+    // THREAD PARALLEL PRIMITIVES
+    // ---------------------------------------------------
+
+    public Matrix.RowIterator createThreadPartitionedRowIterator(final Matrix matrix) {
+        Preconditions.checkNotNull(matrix);
+        final long systemThreadID = Thread.currentThread().getId();
+        final PServerContext ctx = contextResolver.get(systemThreadID);
+        final int rowBlock = (int)matrix.numRows() / ctx.perNodeParallelism;
+        int end = (ctx.threadID * rowBlock + rowBlock - 1);
+        end = (ctx.threadID == ctx.perNodeParallelism - 1) ?  end + (int)matrix.numRows() % ctx.perNodeParallelism : end;
+        return matrix.rowIterator(ctx.threadID * rowBlock, end);
     }
 
     // ---------------------------------------------------
@@ -110,129 +340,6 @@ public final class DataManager {
         contextResolver.put(Thread.currentThread().getId(), Preconditions.checkNotNull(ctx));
     }
 
-    public PServerContext getJobContext() {
-        return contextResolver.get(Thread.currentThread().getId());
-    }
-
-    public <T> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
-        return fileSystemManager != null ? fileSystemManager.createFileIterator(filePath, recordType) : null;
-    }
-
-    public void loadDMatrix(final String filePath) {
-        filesToLoad.add(createFileIterator(Preconditions.checkNotNull(filePath), null));
-    }
-
-    public Value[] globalPull(final String name) {
-        Preconditions.checkNotNull(name);
-        int idx = 0;
-        final Set<Key> keys = dht.getKey(name);
-        final Value[] values = new Value[keys.size()];
-        for (final Key key : keys) {
-            values[idx] = dht.get(key)[0];
-            values[idx].setKey(key);
-            ++idx;
-        }
-        return values;
-    }
-
-    public void push(final String name, final Value[] vals) {
-        Preconditions.checkNotNull(name);
-        Preconditions.checkNotNull(vals);
-
-        // TODO:
-    }
-
-    public void mergeMatrix(final Matrix localMtx, final Merger<Matrix> merger) {
-        Preconditions.checkState(localMtx.getOwner() != null);
-        final Key k = ((Value)localMtx.getOwner()).getKey();
-        final List<Value> matrices = Arrays.asList(globalPull(k.name));
-        Collections.sort(matrices,
-                (Value o1, Value o2) -> ((Integer)o1.getValueMetadata()).compareTo(((Integer)o2.getValueMetadata()))
-        );
-        final Matrix[] ms = new Matrix[matrices.size()];
-        for (int i = 0; i < matrices.size(); ++i)
-            ms[i] = ((DMatrixValue)matrices.get(i)).matrix;
-        merger.merge(localMtx, ms);
-    }
-
-    public void mergeVector(final Vector localVec, final Merger<Vector> merger) {
-        Preconditions.checkState(localVec.getOwner() != null);
-        final Key k = ((Value)localVec.getOwner()).getKey();
-        final List<Value> vectors = Arrays.asList(globalPull(k.name));
-        Collections.sort(vectors,
-                (Value o1, Value o2) -> ((Integer)o1.getValueMetadata()).compareTo(((Integer)o2.getValueMetadata()))
-        );
-        final Vector[] ms = new Vector[vectors.size()];
-        for (int i = 0; i < vectors.size(); ++i)
-            ms[i] = ((DVectorValue)vectors.get(i)).vector;
-        merger.merge(localVec, ms);
-    }
-
-    public Matrix createLocalMatrix(final String name, final int rows, final int cols)
-    { return createLocalMatrix(name, rows, cols, DMatrix.MemoryLayout.ROW_LAYOUT); }
-    public Matrix createLocalMatrix(final String name, final int rows, final int cols, final DMatrix.MemoryLayout layout) {
-        Preconditions.checkNotNull(name);
-        final Key key = createLocalKeyWithName(name);
-        final DMatrixValue m = new DMatrixValue(rows, cols, false, layout);
-        m.setValueMetadata(instanceID);
-        dht.put(key, m);
-        return m.matrix;
-    }
-
-    public Vector createLocalVector(final String name, final int size, final Vector.VectorType type) {
-        Preconditions.checkNotNull(name);
-        final Key key = createLocalKeyWithName(name);
-        final DVectorValue v = new DVectorValue(size, false, type);
-        v.setValueMetadata(instanceID);
-        dht.put(key, v);
-        return v.vector;
-    }
-
-    public Matrix.RowIterator threadPartitionedRowIterator(final Matrix matrix) {
-        Preconditions.checkNotNull(matrix);
-        final long systemThreadID = Thread.currentThread().getId();
-        final PServerContext ctx = contextResolver.get(systemThreadID);
-        final int rowBlock = (int)matrix.numRows() / ctx.perNodeParallelism;
-        int end = (ctx.threadID * rowBlock + rowBlock - 1);
-        end = (ctx.threadID == ctx.perNodeParallelism - 1) ?  end + (int)matrix.numRows() % ctx.perNodeParallelism : end;
-        return matrix.rowIterator(ctx.threadID * rowBlock, end);
-    }
-
-    public Matrix getLocalMatrix(final String name) {
-        Preconditions.checkNotNull(name);
-        Key localKey = null;
-        final Set<Key> keys = dht.getKey(name);
-        for (final Key k : keys) {
-            if (k.getPartitionDescriptor(instanceID) != null) {
-                localKey = k;
-                break;
-            }
-        }
-        final Value value = dht.get(localKey)[0];
-        if (value instanceof DMatrixValue)
-            return ((DMatrixValue)dht.get(localKey)[0]).matrix;
-        else
-            throw new IllegalStateException();
-    }
-
-
-    public Vector getLocalVector(final String name) {
-        Preconditions.checkNotNull(name);
-        Key localKey = null;
-        final Set<Key> keys = dht.getKey(name);
-        for (final Key k : keys) {
-            if (k.getPartitionDescriptor(instanceID) != null) {
-                localKey = k;
-                break;
-            }
-        }
-        final Value value = dht.get(localKey)[0];
-        if (value instanceof DVectorValue)
-            return ((DVectorValue)dht.get(localKey)[0]).vector;
-        else
-            throw new IllegalStateException();
-    }
-
     public void setResults(final UUID jobUID, final List<Serializable> results) {
         Preconditions.checkNotNull(jobUID);
         Preconditions.checkNotNull(results);
@@ -243,6 +350,12 @@ public final class DataManager {
         Preconditions.checkNotNull(jobUID);
         return resultObjects.get(jobUID);
     }
+
+    public PServerContext getJobContext() {
+        return contextResolver.get(Thread.currentThread().getId());
+    }
+
+    // ---------------------------------------------------
 
     public void postProloguePhase(final PServerContext ctx) {
         Preconditions.checkNotNull(ctx);
@@ -258,20 +371,21 @@ public final class DataManager {
     // Private Methods.
     // ---------------------------------------------------
 
+    private <T> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
+        return fileSystemManager != null ? fileSystemManager.createFileIterator(filePath, recordType) : null;
+    }
+
     private void loadFilesIntoDHT() {
         for (final FileDataIterator<CSVRecord> fileIterator : filesToLoad) {
             double[] data = new double[0];
             double[] currentSegment = new double[4096];
-
             int rows = 0, cols = -1, localIndex = 0;
             while (fileIterator.hasNext()) {
                 final CSVRecord record = fileIterator.next();
-
                 if (cols == -1)
                     cols = record.size();
                 if (record.size() != cols)
-                    throw new IllegalStateException("cols must always have size: " + cols + " but it has record.size = " + record.size());
-
+                    throw new IllegalStateException("cols must always have length: " + cols + " but it has record.length = " + record.size());
                 for (int i = 0; i < record.size(); ++i) {
                     if (localIndex == currentSegment.length - 1) {
                         data = ArrayUtils.addAll(data, currentSegment);
@@ -283,29 +397,19 @@ public final class DataManager {
                 }
                 ++rows;
             }
-
             if (localIndex > 0)
                 data = ArrayUtils.addAll(data, currentSegment); // TODO: We waste here a bit memory, if the last segment is not full...
 
             final String filename = Paths.get(fileIterator.getFilePath()).getFileName().toString();
-            final Key key = createLocalKeyWithName(filename);
-            final DMatrixValue dBuf = new DMatrixValue(rows, cols, data);
-            dht.put(key, dBuf);
+
+            Matrix dataMatrix = new MatrixBuilder()
+                    .dimension(rows, cols)
+                    .format(Matrix.Format.DENSE_MATRIX)
+                    .layout(Matrix.Layout.ROW_LAYOUT)
+                    .data(data)
+                    .build();
+
+            putObject(filename, dataMatrix);
         }
-    }
-
-    private UUID createLocalUID() {
-        int id; UUID uid;
-        do {
-            uid = UUID.randomUUID();
-            id = (uid.hashCode() & Integer.MAX_VALUE) % infraManager.getMachines().size();
-        } while (id != infraManager.getInstanceID());
-        return uid;
-    }
-
-    private Key createLocalKeyWithName(final String name) {
-        final UUID localUID = createLocalUID();
-        final Key key = Key.newKey(localUID, name, Key.DistributionMode.DISTRIBUTED);
-        return key;
     }
 }

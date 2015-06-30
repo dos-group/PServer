@@ -11,9 +11,9 @@ public class DMatrixTests {
     public void testMemoryLayoutGetAndSet() {
         int rows = 10;
         int cols = 15;
-        Matrix matRowLayout = MatrixGenerator.RandomDMatrix(rows, cols, DMatrix.MemoryLayout.ROW_LAYOUT);
+        Matrix matRowLayout = MatrixGenerator.RandomDMatrix(rows, cols, Matrix.Layout.ROW_LAYOUT);
         double[] dataRowLayout = matRowLayout.toArray();
-        Matrix matColumnLayout = MatrixGenerator.RandomDMatrix(rows, cols, DMatrix.MemoryLayout.COLUMN_LAYOUT);
+        Matrix matColumnLayout = MatrixGenerator.RandomDMatrix(rows, cols, Matrix.Layout.COLUMN_LAYOUT);
         double[] dataColumnLayout = matColumnLayout.toArray();
         for(int i = 0; i < rows; i++) {
             for(int j = 0; j < cols; j++) {
@@ -43,20 +43,20 @@ public class DMatrixTests {
     public void testViews() {
         int rows = 10;
         int cols = 15;
-        Matrix matRowLayout = MatrixGenerator.RandomDMatrix(rows, cols, DMatrix.MemoryLayout.ROW_LAYOUT);
+        Matrix matRowLayout = MatrixGenerator.RandomDMatrix(rows, cols, Matrix.Layout.ROW_LAYOUT);
         double[] dataRowLayout = matRowLayout.toArray();
-        Matrix matColumnLayout = MatrixGenerator.RandomDMatrix(rows, cols, DMatrix.MemoryLayout.COLUMN_LAYOUT);
+        Matrix matColumnLayout = MatrixGenerator.RandomDMatrix(rows, cols, Matrix.Layout.COLUMN_LAYOUT);
         double[] dataColumnLayout = matColumnLayout.toArray();
         for(int i = 0; i < rows; i++) {
             // naive case: get rows from row-layout
             double[] rowData = new double[cols];
             System.arraycopy(dataRowLayout, i * cols, rowData, 0, cols);
             Vector rowVec = matRowLayout.rowAsVector(i);
-            assert(rowVec.size() == cols);
+            assert(rowVec.length() == cols);
             assert(java.util.Arrays.equals(rowVec.toArray(), rowData));
             // more difficult case: get rows from col-layout
             Vector rowVecFromColLayout = matColumnLayout.rowAsVector(i);
-            assert(rowVecFromColLayout.size() == cols);
+            assert(rowVecFromColLayout.length() == cols);
             for(int j = 0; j < cols; j++) {
                 assert(rowVecFromColLayout.get(j) == matColumnLayout.get(i,j));
             }
@@ -66,11 +66,11 @@ public class DMatrixTests {
             double[] colData = new double[rows];
             System.arraycopy(dataColumnLayout, i * rows, colData, 0, rows);
             Vector colVec = matColumnLayout.colAsVector(i);
-            assert(colVec.size() == rows);
+            assert(colVec.length() == rows);
             assert(java.util.Arrays.equals(colVec.toArray(), colData));
             // more difficult case: get rows from col-layout
             Vector colVecFromRowLayout = matRowLayout.colAsVector(i);
-            assert(colVecFromRowLayout.size() == rows);
+            assert(colVecFromRowLayout.length() == rows);
             for(int j = 0; j < rows; j++) {
                 assert(colVecFromRowLayout.get(j) == matRowLayout.get(j,i));
             }
@@ -81,10 +81,10 @@ public class DMatrixTests {
     public void testAssigns() {
         int rows = 10;
         int cols = 15;
-        Matrix matRowLayout = MatrixGenerator.RandomDMatrix(rows, cols, DMatrix.MemoryLayout.ROW_LAYOUT);
+        Matrix matRowLayout = MatrixGenerator.RandomDMatrix(rows, cols, Matrix.Layout.ROW_LAYOUT);
         checkRowColumnAssigns(rows, cols, matRowLayout);
         checkUniAndMatrixAssign(rows, cols, matRowLayout);
-        Matrix matColumnLayout = MatrixGenerator.RandomDMatrix(rows, cols, DMatrix.MemoryLayout.COLUMN_LAYOUT);
+        Matrix matColumnLayout = MatrixGenerator.RandomDMatrix(rows, cols, Matrix.Layout.COLUMN_LAYOUT);
         checkRowColumnAssigns(rows, cols, matColumnLayout);
         checkUniAndMatrixAssign(rows, cols, matColumnLayout);
     }

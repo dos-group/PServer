@@ -11,7 +11,7 @@ public class GenerateLocalTestData {
 
         //DataGenerator.generateDatasetAndWriteToFile(50, 3, 42, "datasets/demo_dataset.csv");
 
-        DataGenerator.generateDatasetAndWriteToFile(100, 1000, 42, "datasets/sparse_dataset.csv");
+        DataGenerator.generateDatasetAndWriteToFile(5, 1000000, 42, "datasets/sparse_dataset.csv");
 
         /*double[] weights = DataGenerator.generateLinearData("datasets/demo_dataset.csv", 15, 1000, 5.0);
 

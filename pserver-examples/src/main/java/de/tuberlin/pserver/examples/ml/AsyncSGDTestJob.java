@@ -3,9 +3,7 @@ package de.tuberlin.pserver.examples.ml;
 import com.google.common.collect.Lists;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.math.DVector;
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.math.*;
 import de.tuberlin.pserver.ml.models.GeneralLinearModel;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.ml.optimization.SGD.SGDOptimizer;
@@ -22,9 +20,13 @@ public final class AsyncSGDTestJob extends PServerJob {
     // Fields.
     // ---------------------------------------------------
 
-    private final Observer observer = (epoch, weights, gradient) -> {};
+    private final Observer observer = (epoch, model, gradientSum) -> {
 
-    private final GeneralLinearModel model = new GeneralLinearModel("model1", 15);
+    };
+
+    private GeneralLinearModel model = new GeneralLinearModel("model1", 15);
+
+    private Matrix gradientMtx;
 
     // ---------------------------------------------------
     // Public Methods.
@@ -35,13 +37,21 @@ public final class AsyncSGDTestJob extends PServerJob {
 
         model.createModel(ctx);
 
-        dataManager.loadDMatrix("datasets/demo_dataset.csv");
+        dataManager.loadAsMatrix("datasets/sparse_dataset.csv");
+
+        gradientMtx = new MatrixBuilder()
+                .dimension(5, 1000000)
+                .format(Matrix.Format.SPARSE_MATRIX)
+                .layout(Matrix.Layout.ROW_LAYOUT)
+                .build();
+
+                //new SMatrix(5, 1000000, Matrix.MemoryLayout.ROW_LAYOUT);
     }
 
     @Override
     public void compute() {
 
-        final Matrix trainingData = dataManager.getLocalMatrix("demo_dataset.csv");
+        final Matrix trainingData = dataManager.getObject("sparse_dataset.csv");
 
         final PredictionFunction predictionFunction = new PredictionFunction.LinearPredictionFunction();
 
@@ -53,7 +63,7 @@ public final class AsyncSGDTestJob extends PServerJob {
                 .setLossFunction(new LossFunction.GenericLossFunction(predictionFunction, partialLossFunction))
                 .setGradientStepFunction(new GradientStepFunction.SimpleGradientStep())
                 .setLearningRateDecayFunction(null)
-                .setWeightsObserver(null, 0, false);
+                .setWeightsObserver(observer, 100, false);
 
         optimizer.register();
         optimizer.optimize(model, trainingData.rowIterator());
@@ -68,7 +78,7 @@ public final class AsyncSGDTestJob extends PServerJob {
 
     private List<Pair<Integer,Double>> gradientUpdate(final Vector gradient, final Vector gradientSums, final double updateThreshold) {
         final List<Pair<Integer,Double>> gradientUpdates = new ArrayList<>();
-        for (int i = 0; i < gradient.size(); ++i) {
+        for (int i = 0; i < gradient.length(); ++i) {
             boolean updatedGradient = Math.abs((gradientSums.get(i) - gradient.get(i)) / gradient.get(i)) > updateThreshold;
             if (updatedGradient) {
                 gradientUpdates.add(Pair.of(i, gradientSums.get(i) + gradient.get(i)));

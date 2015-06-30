@@ -34,7 +34,7 @@ public interface GradientStepFunction {
 
         @Override
         public Vector takeStep(final Vector weights, final Vector gradients, final double alpha) {
-            for( int i = 0; i < weights.size(); i++ ) {
+            for( int i = 0; i < weights.length(); i++ ) {
 
                 final long value = Double.doubleToRawLongBits(weights.get(i) + (-alpha) * gradients.get(i));
 

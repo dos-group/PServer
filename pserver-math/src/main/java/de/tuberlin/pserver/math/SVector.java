@@ -3,6 +3,7 @@ package de.tuberlin.pserver.math;
 
 import de.tuberlin.pserver.math.delegates.LibraryVectorOps;
 import de.tuberlin.pserver.math.delegates.MathLibFactory;
+import de.tuberlin.pserver.math.stuff.Utils;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 public class SVector extends AbstractVector {
@@ -12,24 +13,23 @@ public class SVector extends AbstractVector {
     private static final LibraryVectorOps<Vector> vectorOpDelegate =
             MathLibFactory.delegateSVectorOpsTo(MathLibFactory.SMathLibrary.MTJ_LIBRARY);
 
-    public SVector(long size, int[] index, double[] data, VectorType type) {
+    public SVector(long size, int[] index, double[] data, Layout type) {
         super(size, type);
         this.data = new SparseVector(Utils.toInt(size), index, data);
     }
 
-    public SVector(long size, VectorType type) {
+    public SVector(long size, Layout type) {
         super(size, type);
         this.data = new SparseVector(Utils.toInt(size));
     }
 
     public SVector(long size) {
-        super(size, VectorType.ROW_VECTOR);
+        super(size, Layout.ROW_LAYOUT);
         this.data = new SparseVector(Utils.toInt(size));
     }
 
-    @Override
-    public boolean isDense() {
-        return false;
+    @Override public Format format() {
+        return Format.SPARSE_VECTOR;
     }
 
     @Override
@@ -59,7 +59,7 @@ public class SVector extends AbstractVector {
 
     @Override
     public Vector like() {
-        return new SVector(size, data.getIndex(), data.getData(), type);
+        return new SVector(length, data.getIndex(), data.getData(), type);
     }
 
     @Override

@@ -2,6 +2,8 @@ package de.tuberlin.pserver.ml.playground.mahout;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.*;
+import de.tuberlin.pserver.math.stuff.DoubleFunction;
+import de.tuberlin.pserver.math.stuff.Functions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +71,7 @@ public abstract class AbstractOnlineLogisticRegression extends AbstractVectorCla
         double max = v.maxValue();
         if (max >= 40) {
             // if max > 40, we subtract the large offset first
-            // the size of the max means that 1+sum(exp(v)) = sum(exp(v)) to within round-off
+            // the length of the max means that 1+sum(exp(v)) = sum(exp(v)) to within round-off
             v.assign(Functions.minus(max)).assign(Functions.EXP);
             return v.div(v.norm(1));
         } else {

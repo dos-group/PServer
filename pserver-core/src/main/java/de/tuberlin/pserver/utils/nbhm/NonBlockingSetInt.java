@@ -385,7 +385,7 @@ public class NonBlockingSetInt extends AbstractSet<Integer> implements Serializa
         // One shot CAS to promote - it may fail since we are racing; others
         // may promote as well
         if( _non_blocking_set_int.CAS_nbsi( top_nbsi, top_nbsi._new ) ) {
-          //System.out.println("Promote at top level to partitionSize "+(_non_blocking_set_int._nbsi._bits.size<<6));
+          //System.out.println("Promote at top level to partitionSize "+(_non_blocking_set_int._nbsi._bits.length<<6));
         }
 
       // Return the new bitvector for 'fluid' programming style

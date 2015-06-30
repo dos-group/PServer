@@ -1,34 +1,29 @@
 package de.tuberlin.pserver.math.delegates.sparse.mtj;
 
-import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.*;
 import de.tuberlin.pserver.math.Vector;
-import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
 import de.tuberlin.pserver.math.delegates.LibraryVectorOps;
-import no.uib.cipr.matrix.*;
-import no.uib.cipr.matrix.sparse.*;
 
 public class MTJVectorOps implements LibraryVectorOps<Vector> {
 
 
     @Override
     public Vector mul(Vector x, double alpha) {
-        return MTJUtils.toPserverVector(MTJUtils.toLibVector(x).scale(alpha), x.getVectorType());
+        return MTJUtils.toPserverVector(MTJUtils.toLibVector(x).scale(alpha), x.layout());
     }
 
     @Override
     public Vector div(Vector x, double alpha) {
-        return MTJUtils.toPserverVector(MTJUtils.toLibVector(x).scale(1. / alpha), x.getVectorType());
+        return MTJUtils.toPserverVector(MTJUtils.toLibVector(x).scale(1. / alpha), x.layout());
     }
 
     @Override
     public Vector add(Vector x, Vector y) {
-        return MTJUtils.toPserverVector(MTJUtils.toLibVector(x).add(MTJUtils.toLibVector(y)), x.getVectorType());
+        return MTJUtils.toPserverVector(MTJUtils.toLibVector(x).add(MTJUtils.toLibVector(y)), x.layout());
     }
 
     @Override
     public Vector sub(Vector x, Vector y) {
-        return MTJUtils.toPserverVector(MTJUtils.toLibVector(x).scale(-1.).add(MTJUtils.toLibVector(y)), x.getVectorType());
+        return MTJUtils.toPserverVector(MTJUtils.toLibVector(x).scale(-1.).add(MTJUtils.toLibVector(y)), x.layout());
     }
 
     @Override

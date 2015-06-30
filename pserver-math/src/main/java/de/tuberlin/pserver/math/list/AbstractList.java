@@ -35,7 +35,7 @@ It is provided "as is" without expressed or implied warranty.
 package de.tuberlin.pserver.math.list;
 
 
-import de.tuberlin.pserver.math.PersistentObject;
+import de.tuberlin.pserver.math.stuff.PersistentObject;
 
 /**
  * Abstract base class for resizable lists holding objects or primitive data types such as
@@ -61,12 +61,12 @@ public abstract class AbstractList extends PersistentObject {
 
   /**
    * Inserts <tt>length</tt> dummy elements before the specified position into the receiver. Shifts the element
-   * currently at that position (if any) and any subsequent elements to the right. <b>This method must set the new size
-   * to be <tt>size()+length</tt>.
+   * currently at that position (if any) and any subsequent elements to the right. <b>This method must set the new length
+   * to be <tt>length()+length</tt>.
    *
-   * @param index  index before which to insert dummy elements (must be in [0,size])..
+   * @param index  index before which to insert dummy elements (must be in [0,length])..
    * @param length number of dummy elements to be inserted.
-   * @throws IndexOutOfBoundsException if <tt>index &lt; 0 || index &gt; size()</tt>.
+   * @throws IndexOutOfBoundsException if <tt>index &lt; 0 || index &gt; length()</tt>.
    */
   protected abstract void beforeInsertDummies(int index, int length);
 
@@ -80,14 +80,14 @@ public abstract class AbstractList extends PersistentObject {
   /**
    * Checks if the given range is within the contained array's bounds.
    *
-   * @throws IndexOutOfBoundsException if <tt>to!=from-1 || from&lt;0 || from&gt;to || to&gt;=size()</tt>.
+   * @throws IndexOutOfBoundsException if <tt>to!=from-1 || from&lt;0 || from&gt;to || to&gt;=length()</tt>.
    */
   protected static void checkRangeFromTo(int from, int to, int theSize) {
     if (to == from - 1) {
       return;
     }
     if (from < 0 || from > to || to >= theSize) {
-      throw new IndexOutOfBoundsException("from: " + from + ", to: " + to + ", size=" + theSize);
+      throw new IndexOutOfBoundsException("from: " + from + ", to: " + to + ", length=" + theSize);
     }
   }
 
@@ -129,7 +129,7 @@ public abstract class AbstractList extends PersistentObject {
    *
    * @param from the index of the first element (inclusive) to be sorted.
    * @param to   the index of the last element (inclusive) to be sorted.
-   * @throws IndexOutOfBoundsException if <tt>(from&lt;0 || from&gt;to || to&gt;=size()) && to!=from-1</tt>.
+   * @throws IndexOutOfBoundsException if <tt>(from&lt;0 || from&gt;to || to&gt;=length()) && to!=from-1</tt>.
    */
   public abstract void mergeSortFromTo(int from, int to);
 
@@ -159,7 +159,7 @@ public abstract class AbstractList extends PersistentObject {
    *
    * @param from the index of the first element (inclusive) to be sorted.
    * @param to   the index of the last element (inclusive) to be sorted.
-   * @throws IndexOutOfBoundsException if <tt>(from&lt;0 || from&gt;to || to&gt;=size()) && to!=from-1</tt>.
+   * @throws IndexOutOfBoundsException if <tt>(from&lt;0 || from&gt;to || to&gt;=length()) && to!=from-1</tt>.
    */
   public abstract void quickSortFromTo(int from, int to);
 
@@ -167,7 +167,7 @@ public abstract class AbstractList extends PersistentObject {
    * Removes the element at the specified position from the receiver. Shifts any subsequent elements to the left.
    *
    * @param index the index of the element to removed.
-   * @throws IndexOutOfBoundsException if <tt>index &lt; 0 || index &gt;= size()</tt>.
+   * @throws IndexOutOfBoundsException if <tt>index &lt; 0 || index &gt;= length()</tt>.
    */
   public void remove(int index) {
     removeFromTo(index, index);
@@ -180,7 +180,7 @@ public abstract class AbstractList extends PersistentObject {
    *
    * @param fromIndex index of first element to be removed.
    * @param toIndex   index of last element to be removed.
-   * @throws IndexOutOfBoundsException if <tt>(from&lt;0 || from&gt;to || to&gt;=size()) && to!=from-1</tt>.
+   * @throws IndexOutOfBoundsException if <tt>(from&lt;0 || from&gt;to || to&gt;=length()) && to!=from-1</tt>.
    */
   public abstract void removeFromTo(int fromIndex, int toIndex);
 
@@ -188,12 +188,12 @@ public abstract class AbstractList extends PersistentObject {
   public abstract void reverse();
 
   /**
-   * Sets the size of the receiver. If the new size is greater than the current size, new null or zero items are added
-   * to the end of the receiver. If the new size is less than the current size, all components at index newSize and
+   * Sets the length of the receiver. If the new length is greater than the current length, new null or zero items are added
+   * to the end of the receiver. If the new length is less than the current length, all components at index newSize and
    * greater are discarded. This method does not release any superfluos internal memory. Use method <tt>trimToSize</tt>
    * to release superfluos internal memory.
    *
-   * @param newSize the new size of the receiver.
+   * @param newSize the new length of the receiver.
    * @throws IndexOutOfBoundsException if <tt>newSize &lt; 0</tt>.
    */
   public void setSize(int newSize) {
@@ -232,14 +232,14 @@ public abstract class AbstractList extends PersistentObject {
    *
    * @param from the index of the first element (inclusive) to be sorted.
    * @param to   the index of the last element (inclusive) to be sorted.
-   * @throws IndexOutOfBoundsException if <tt>(from&lt;0 || from&gt;to || to&gt;=size()) && to!=from-1</tt>.
+   * @throws IndexOutOfBoundsException if <tt>(from&lt;0 || from&gt;to || to&gt;=length()) && to!=from-1</tt>.
    */
   public void sortFromTo(int from, int to) {
     quickSortFromTo(from, to);
   }
 
   /**
-   * Trims the capacity of the receiver to be the receiver's current size. Releases any superfluos internal memory. An
+   * Trims the capacity of the receiver to be the receiver's current length. Releases any superfluos internal memory. An
    * application can use this operation to minimize the storage of the receiver. <p> This default implementation does
    * nothing. Override this method in space efficient implementations.
    */

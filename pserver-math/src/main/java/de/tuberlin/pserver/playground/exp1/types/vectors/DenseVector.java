@@ -14,11 +14,11 @@ public class DenseVector /*extends ByteBufferValue implements Vector*/ {
     // Constructors.
     // ---------------------------------------------------
 
-    public DenseVector(final int size,
+    public DenseVector(final int length,
                        final Types.TypeInformation elementTypeInfo,
                        final boolean isAllocated) {
-        super(size * elementTypeInfo.size(), isAllocated);
-        this.typeInfo = new Types.TypeInformation(Preconditions.checkNotNull(elementTypeInfo), size);
+        super(length * elementTypeInfo.length(), isAllocated);
+        this.typeInfo = new Types.TypeInformation(Preconditions.checkNotNull(elementTypeInfo), length);
     }
 
     // ---------------------------------------------------
@@ -48,15 +48,15 @@ public class DenseVector /*extends ByteBufferValue implements Vector*/ {
 
     @Override
     public byte[] getElement(final int pos) {
-        final byte[] value = new byte[typeInfo.getElementTypeInfo().size()];
-        System.arraycopy(buffer.getRawData(), pos * typeInfo.getElementTypeInfo().size(), value, 0, value.length);
+        final byte[] value = new byte[typeInfo.getElementTypeInfo().length()];
+        System.arraycopy(buffer.getRawData(), pos * typeInfo.getElementTypeInfo().length(), value, 0, value.length);
         return value;
     }
 
     @Override
     public void setElement(final int pos, final byte[] value) {
-        Preconditions.checkArgument(value.length == typeInfo.getElementTypeInfo().size());
-        System.arraycopy(value, 0, buffer.getRawData(), pos * typeInfo.getElementTypeInfo().size(), value.length);
+        Preconditions.checkArgument(value.length == typeInfo.getElementTypeInfo().length());
+        System.arraycopy(value, 0, buffer.getRawData(), pos * typeInfo.getElementTypeInfo().length(), value.length);
     }
 
     // ---------------------------------------------------

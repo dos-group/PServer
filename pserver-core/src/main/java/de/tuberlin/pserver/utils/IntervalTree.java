@@ -48,7 +48,7 @@ public class IntervalTree<Value>  {
         Interval interval;      // key
         Value value;              // associated data
         Node left, right;         // left and right subtrees
-        int N;                    // size of subtree rooted at this node
+        int N;                    // length of subtree rooted at this node
         int max;                  // max endpoint in subtree rooted at this node
 
         Node(Interval interval, Value value) {

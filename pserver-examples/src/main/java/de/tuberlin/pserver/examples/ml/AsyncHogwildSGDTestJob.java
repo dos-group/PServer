@@ -21,16 +21,16 @@ public final class AsyncHogwildSGDTestJob extends PServerJob {
     // ---------------------------------------------------
 
     private final DataManager.Merger<Vector> merger = (l, r) -> {
-        for (int j = 0; j < l.size(); ++j) {
+        for (int j = 0; j < l.length(); ++j) {
             double nv = 0.0;
             for (final Vector v : r)
                 nv += v.get(j);
-            l.set(j, (nv / r.length));
+            l.set(j, (nv / r.size()));
         }
     };
 
     private final Observer observer = (epoch, weights, gradientSum) ->
-        dataManager.mergeVector(weights, merger);
+        dataManager.pullMerge(weights, merger);
 
     private final GeneralLinearModel model = new GeneralLinearModel("model1", 1000);
 
@@ -41,7 +41,7 @@ public final class AsyncHogwildSGDTestJob extends PServerJob {
     @Override
     public void prologue() {
 
-        dataManager.loadDMatrix("datasets/sparse_dataset.csv");
+        dataManager.loadAsMatrix("datasets/sparse_dataset.csv");
 
         model.createModel(ctx);
     }
@@ -49,7 +49,7 @@ public final class AsyncHogwildSGDTestJob extends PServerJob {
     @Override
     public void compute() {
 
-        final Matrix trainingData = dataManager.getLocalMatrix("sparse_dataset.csv");
+        final Matrix trainingData = dataManager.getObject("sparse_dataset.csv");
 
         final PredictionFunction predictionFunction = new PredictionFunction.LinearPredictionFunction();
 
@@ -64,7 +64,7 @@ public final class AsyncHogwildSGDTestJob extends PServerJob {
                 .setWeightsObserver(observer, 200, true)
                 .setRandomShuffle(true);
 
-        final Matrix.RowIterator dataIterator = dataManager.threadPartitionedRowIterator(trainingData);
+        final Matrix.RowIterator dataIterator = dataManager.createThreadPartitionedRowIterator(trainingData);
 
         optimizer.register();
         optimizer.optimize(model, dataIterator);

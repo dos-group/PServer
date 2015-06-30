@@ -184,7 +184,7 @@ public class SGDOptimizer implements Optimizer {
 
         final int numFeatures = (int)dataIterator.numCols() - 1;
 
-        state.gradientSum = new DVector(model.getWeights().size(), Vector.VectorType.COLUMN_VECTOR);
+        state.gradientSum = new DVector(model.getWeights().length(), Vector.Layout.COLUMN_LAYOUT);
 
         model.startTraining();
 

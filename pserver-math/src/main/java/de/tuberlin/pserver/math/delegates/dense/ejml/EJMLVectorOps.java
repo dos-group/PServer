@@ -88,11 +88,11 @@ public class EJMLVectorOps implements LibraryVectorOps<Vector> {
     // ---------------------------------------------------
 
     public static DenseMatrix64F convertDVectorToDenseVector64F(final Vector vector) {
-        switch (vector.getVectorType()) {
-            case COLUMN_VECTOR:
-                return DenseMatrix64F.wrap((int)vector.size(), 1, vector.toArray());
-            case ROW_VECTOR:
-                return DenseMatrix64F.wrap(1, (int)vector.size(), vector.toArray());
+        switch (vector.layout()) {
+            case COLUMN_LAYOUT:
+                return DenseMatrix64F.wrap((int)vector.length(), 1, vector.toArray());
+            case ROW_LAYOUT:
+                return DenseMatrix64F.wrap(1, (int)vector.length(), vector.toArray());
         }
         throw new IllegalStateException();
     }

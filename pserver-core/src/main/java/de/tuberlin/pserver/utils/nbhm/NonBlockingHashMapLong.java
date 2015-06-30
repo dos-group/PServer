@@ -781,7 +781,7 @@ public class NonBlockingHashMapLong<TypeV>
 
 
     // The next part of the table to copy.  It monotonically transits from zero
-    // to _keys.size.  Visitors to the table can claim 'work chunks' by
+    // to _keys.length.  Visitors to the table can claim 'work chunks' by
     // CAS'ing this field up, then copying the indicated indices from the old
     // table to the new table.  Workers are not required to finish any chunk;
     // the counter simply wraps and work is copied duplicately until somebody
@@ -901,7 +901,7 @@ public class NonBlockingHashMapLong<TypeV>
           _nbhml.CAS(_chm_offset,this,_newchm) ) {
         _nbhml._last_resize_milli = System.currentTimeMillis();  // Record resize time for next check
         //long nano = System.nanoTime();
-        //System.out.println(" "+nano+" Promote table "+oldlen+" to "+_newchm._keys.size);
+        //System.out.println(" "+nano+" Promote table "+oldlen+" to "+_newchm._keys.length);
         //System.out.print("_"+oldlen+"]");
       }
     }
@@ -997,7 +997,7 @@ public class NonBlockingHashMapLong<TypeV>
     }
     int length() { return _sschm._keys.length; }
     long key(final int idx) { return _sschm._keys[idx]; }
-    private int _idx;           // -2 for NO_KEY, -1 for CHECK_NEW_TABLE_LONG, 0-keys.size
+    private int _idx;           // -2 for NO_KEY, -1 for CHECK_NEW_TABLE_LONG, 0-keys.length
     private long  _nextK, _prevK; // Last 2 keys found
     private TypeV _nextV, _prevV; // Last 2 values found
     public boolean hasNext() { return _nextV != null; }

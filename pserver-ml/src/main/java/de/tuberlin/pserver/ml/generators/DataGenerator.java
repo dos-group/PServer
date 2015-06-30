@@ -6,7 +6,6 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.omg.CORBA.DATA_CONVERSION;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -269,7 +268,7 @@ public final class DataGenerator {
         final Random rand = new Random();
         rand.setSeed(42);
         final Vector weights = new DVector(nFeatures);
-        for (long i = 0; i < weights.size(); ++i)
+        for (long i = 0; i < weights.length(); ++i)
             weights.set(i, rand.nextDouble() - 0.5);
         final Vector xMean = new DVector(nFeatures);
         xMean.assign(0.0);
@@ -292,8 +291,8 @@ public final class DataGenerator {
 
         final Vector[] x = new Vector[nPoints];
         for (int i = 0; i < nPoints; ++i) {
-            x[i] = new DVector(weights.size());
-            for (int j = 0; j < (int)weights.size(); ++j) {
+            x[i] = new DVector(weights.length());
+            for (int j = 0; j < (int)weights.length(); ++j) {
                 x[i].set(j, (rand.nextDouble() - 0.5) * Math.sqrt(12.0 * xVariance.get(j)) + xMean.get(j));
             }
         }
@@ -310,9 +309,9 @@ public final class DataGenerator {
         try {
             trainingDataFW = new FileWriter(fileName);
             trainingDataCSVPrinter = new CSVPrinter(trainingDataFW, csvFileFormat);
-            final List<Double> data = new ArrayList<>((int)weights.size() + 1);
+            final List<Double> data = new ArrayList<>((int)weights.length() + 1);
             for (int i = 0; i < nPoints; ++i) {
-                for (int j = 0; j < (int)weights.size(); ++j) {
+                for (int j = 0; j < (int)weights.length(); ++j) {
                     data.add(x[i].get(j));
                 }
                 data.add(y[i]);

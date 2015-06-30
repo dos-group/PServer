@@ -2,13 +2,12 @@ package de.tuberlin.pserver.math.delegates.sparse.mtj;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.*;
+import de.tuberlin.pserver.math.stuff.Utils;
 import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.Matrix;
 import no.uib.cipr.matrix.Vector;
 import no.uib.cipr.matrix.sparse.*;
-
-import java.util.Arrays;
 
 public class MTJUtils {
 
@@ -36,7 +35,7 @@ public class MTJUtils {
         return buildColBasedNz(mat.toArray(), mat.numRows(), mat.numCols(), mat.getLayout());
     }
 
-    public static int[][] buildRowBasedNz(double[] data, long rows, long cols, de.tuberlin.pserver.math.Matrix.MemoryLayout layout) {
+    public static int[][] buildRowBasedNz(double[] data, long rows, long cols, de.tuberlin.pserver.math.Matrix.Layout layout) {
         // nz: for each col: the row-indices that are not zero
         int[][] nz = new int[Utils.toInt(rows)][];
         // (create buffer for row indices)
@@ -59,7 +58,7 @@ public class MTJUtils {
         return nz;
     }
 
-    public static int[][] buildColBasedNz(double[] data, long rows, long cols, de.tuberlin.pserver.math.Matrix.MemoryLayout layout) {
+    public static int[][] buildColBasedNz(double[] data, long rows, long cols, de.tuberlin.pserver.math.Matrix.Layout layout) {
         // nz: for each col: the row-indices that are not zero
         int[][] nz = new int[Utils.toInt(cols)][];
         // (create buffer for row indices)
@@ -120,14 +119,14 @@ public class MTJUtils {
     public static de.tuberlin.pserver.math.Matrix toPserverMatrix(no.uib.cipr.matrix.Matrix mat) {
         de.tuberlin.pserver.math.Matrix result = null;
         if(mat instanceof no.uib.cipr.matrix.DenseMatrix) {
-            result = new DMatrix(mat.numRows(), mat.numRows(), ((DenseMatrix) mat).getData(), de.tuberlin.pserver.math.Matrix.MemoryLayout.COLUMN_LAYOUT);
+            result = new DMatrix(mat.numRows(), mat.numRows(), ((DenseMatrix) mat).getData(), de.tuberlin.pserver.math.Matrix.Layout.COLUMN_LAYOUT);
         }
         else {
             if(mat instanceof FlexCompRowMatrix || mat instanceof CompRowMatrix) {
-                result = new SMatrix(mat, de.tuberlin.pserver.math.Matrix.MemoryLayout.ROW_LAYOUT);
+                result = new SMatrix(mat, de.tuberlin.pserver.math.Matrix.Layout.ROW_LAYOUT);
             }
             else if(mat instanceof FlexCompColMatrix || mat instanceof CompColMatrix) {
-                result = new SMatrix(mat, de.tuberlin.pserver.math.Matrix.MemoryLayout.COLUMN_LAYOUT);
+                result = new SMatrix(mat, de.tuberlin.pserver.math.Matrix.Layout.COLUMN_LAYOUT);
             }
         }
         Preconditions.checkState(result != null, "Unable to convert matrix");
@@ -147,7 +146,7 @@ public class MTJUtils {
         return result;
     }
 
-    public static de.tuberlin.pserver.math.Vector toPserverVector(no.uib.cipr.matrix.Vector vec, de.tuberlin.pserver.math.Vector.VectorType type) {
+    public static de.tuberlin.pserver.math.Vector toPserverVector(no.uib.cipr.matrix.Vector vec, de.tuberlin.pserver.math.Vector.Layout type) {
         de.tuberlin.pserver.math.Vector result = null;
         if(MTJUtils.isDense(vec)) {
             result = new DVector(vec.size(), ((AbstractVector) vec).toArray(), type);

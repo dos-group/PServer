@@ -1,6 +1,9 @@
 package de.tuberlin.pserver.math;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.math.stuff.DoubleDoubleFunction;
+import de.tuberlin.pserver.math.stuff.DoubleFunction;
+import de.tuberlin.pserver.math.stuff.Utils;
 
 import java.util.Iterator;
 
@@ -13,22 +16,39 @@ import java.util.Iterator;
  */
 public abstract class AbstractVector implements Vector {
 
-    protected long size;
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
 
-    protected VectorType type;
+    protected long length;
+
+    protected Layout type;
 
     protected Object owner;
 
-    @Override
-    public long size() { return size; }
+    // ---------------------------------------------------
+    // Constructors.
+    // ---------------------------------------------------
 
-    public AbstractVector(long size, VectorType type) {
-        this.size = size;
+    public AbstractVector(long length, Layout type) {
+        this.length = length;
         this.type = type;
     }
 
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
+
     @Override
-    public VectorType getVectorType() {
+    public long sizeOf() {
+        return length * Double.BYTES;
+    }
+
+    @Override
+    public long length() { return length; }
+
+    @Override
+    public Layout layout() {
         return type;
     }
 
@@ -40,8 +60,8 @@ public abstract class AbstractVector implements Vector {
 
     @Override
     public double[] toArray() {
-        double[] result = new double[Utils.toInt(size)];
-        for(long i = 0; i < size; i++) {
+        double[] result = new double[Utils.toInt(length)];
+        for(long i = 0; i < length; i++) {
             result[Utils.toInt(i)] = get(i);
         }
         return result;
@@ -49,15 +69,17 @@ public abstract class AbstractVector implements Vector {
 
     @Override
     public void setArray(double[] data) {
-        Preconditions.checkArgument(data.length == size, String.format("Can not set array of Vector because length of array (%d) is not equal to size of Vector (%d)", data.length, size));
-        for(int i = 0; i < size; i++) {
+        Preconditions.checkArgument(data.length == length,
+                String.format("Can not set array of Vector because length of " +
+                              "array (%d) is not equal to length of Vector (%d)", data.length, length));
+        for(int i = 0; i < length; i++) {
             set(i, data[i]);
         }
     }
 
     @Override
     public Vector mul(double alpha) {
-        for(long i = 0; i < size; i++) {
+        for(long i = 0; i < length; i++) {
             set(i, get(i) * alpha);
         }
         return this;
@@ -65,7 +87,7 @@ public abstract class AbstractVector implements Vector {
 
     @Override
     public Vector div(double alpha) {
-        for(long i = 0; i < size; i++) {
+        for(long i = 0; i < length; i++) {
             set(i, get(i) / alpha);
         }
         return this;
@@ -84,7 +106,7 @@ public abstract class AbstractVector implements Vector {
     @Override
     public Vector add(double alpha, Vector y) {
         checkDimensions(y);
-        for(long i = 0; i < size; i++) {
+        for(long i = 0; i < length; i++) {
             set(i, alpha * y.get(i) + get(i));
         }
         return this;
@@ -93,7 +115,7 @@ public abstract class AbstractVector implements Vector {
     @Override
     public double dot(Vector y) {
         double result = 0;
-        for(long i = 0; i < size; i++) {
+        for(long i = 0; i < length; i++) {
             result += get(i) * y.get(i);
         }
         return result;
@@ -102,7 +124,7 @@ public abstract class AbstractVector implements Vector {
     @Override
     public double zSum() {
         double result = 0;
-        for(long i = 0; i < size; i++) {
+        for(long i = 0; i < length; i++) {
             result += get(i);
         }
         return result;
@@ -111,7 +133,7 @@ public abstract class AbstractVector implements Vector {
     @Override
     public double norm(double v) {
         double result = 0;
-        for(long i = 0; i < size; i++) {
+        for(long i = 0; i < length; i++) {
             result += Math.pow(get(i), 2);
         }
         return Math.sqrt(result);
@@ -120,7 +142,7 @@ public abstract class AbstractVector implements Vector {
     @Override
     public double maxValue() {
         double result = Double.MIN_VALUE;
-        for(long i = 0; i < size; i++) {
+        for(long i = 0; i < length; i++) {
             result = Math.max(result, get(i));
         }
         return result;
@@ -129,7 +151,7 @@ public abstract class AbstractVector implements Vector {
     @Override
     public double minValue() {
         double result = Double.MAX_VALUE;
-        for(long i = 0; i < size; i++) {
+        for(long i = 0; i < length; i++) {
             result = Math.min(result, get(i));
         }
         return result;
@@ -138,7 +160,7 @@ public abstract class AbstractVector implements Vector {
     @Override
     public Vector assign(Vector v) {
         checkDimensions(v);
-        for(long i = 0; i < size; i++) {
+        for(long i = 0; i < length; i++) {
             set(i, v.get(i));
         }
         return this;
@@ -146,7 +168,7 @@ public abstract class AbstractVector implements Vector {
 
     @Override
     public Vector assign(double v) {
-        for(long i = 0; i < size; i++) {
+        for(long i = 0; i < length; i++) {
             set(i, v);
         }
         return this;
@@ -154,7 +176,7 @@ public abstract class AbstractVector implements Vector {
 
     @Override
     public Vector assign(DoubleFunction df) {
-        for(long i = 0; i < size; i++) {
+        for(long i = 0; i < length; i++) {
             set(i, df.apply(get(i)));
         }
         return this;
@@ -162,7 +184,7 @@ public abstract class AbstractVector implements Vector {
 
     @Override
     public Vector assign(Vector v, DoubleDoubleFunction df) {
-        for(long i = 0; i < size; i++) {
+        for(long i = 0; i < length; i++) {
             set(i, df.apply(get(i), v.get(i)));
         }
         return this;
@@ -176,15 +198,19 @@ public abstract class AbstractVector implements Vector {
     @Override
     public double aggregate(DoubleDoubleFunction aggregator, DoubleFunction map) {
         double result = 0;
-        for(long i = 0; i < size; i++) {
+        for(long i = 0; i < length; i++) {
             result += aggregator.apply(result, map.apply(get(i)));
         }
         return result;
     }
 
     protected void checkDimensions(Vector arg) {
-        Preconditions.checkArgument(size == arg.size(), String.format("Can not apply operation because supplied vector length (%d) differs from base vector length (%d)",arg.size(), size));
+        Preconditions.checkArgument(length == arg.length(), String.format("Can not apply operation because supplied vector length (%d) differs from base vector length (%d)",arg.length(), length));
     }
+
+    // ---------------------------------------------------
+    // Inner Classes.
+    // ---------------------------------------------------
 
     public class DefaultIterator implements Iterator<Element> {
 
@@ -197,7 +223,7 @@ public abstract class AbstractVector implements Vector {
 
         @Override
         public boolean hasNext() {
-            return currentIndex < vector.size();
+            return currentIndex < vector.length();
         }
 
         @Override

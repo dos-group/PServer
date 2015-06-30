@@ -1,30 +1,39 @@
 package de.tuberlin.pserver.math;
 
-import java.io.Serializable;
+import de.tuberlin.pserver.math.stuff.DoubleDoubleFunction;
+import de.tuberlin.pserver.math.stuff.DoubleFunction;
+
 import java.util.Iterator;
 
-public interface Vector extends Serializable {
+public interface Vector extends MObject {
 
     // ---------------------------------------------------
     // Constants.
     // ---------------------------------------------------
 
-    public enum VectorType {
+    public enum Format {
 
-        ROW_VECTOR,
+        SPARSE_VECTOR,
 
-        COLUMN_VECTOR
+        DENSE_VECTOR
+    }
+
+    public enum Layout {
+
+        ROW_LAYOUT,
+
+        COLUMN_LAYOUT
     }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    public abstract void setOwner(final Object owner);
+    public abstract long length();
 
-    public abstract Object getOwner();
+    public abstract Format format();
 
-    public abstract boolean isDense();
+    public abstract Layout layout();
 
     public abstract void set(final long index, final double value);
 
@@ -33,14 +42,6 @@ public interface Vector extends Serializable {
     public abstract double atomicGet(final long index);
 
     public abstract void atomicSet(final long index, final double value);
-
-    public abstract long size();
-
-    public VectorType getVectorType();
-
-    public double[] toArray();
-
-    public void setArray(final double[] data);
 
     public abstract Vector mul(final double alpha);                 // x = alpha * x
 

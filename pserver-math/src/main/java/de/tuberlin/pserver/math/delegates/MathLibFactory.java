@@ -119,7 +119,7 @@ public class MathLibFactory {
     public static Object createSVectorInternalObject(final SMathLibrary lib, final SVector vector) {
         switch (Preconditions.checkNotNull(lib)) {
             case UJMP_LIBRARY:
-                return SparseMatrix.factory.zeros(1, vector.size());
+                return SparseMatrix.factory.zeros(1, vector.length());
         }
         throw new IllegalStateException();
     }

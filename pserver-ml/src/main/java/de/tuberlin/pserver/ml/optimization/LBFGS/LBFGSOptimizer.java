@@ -76,7 +76,7 @@ public class LBFGSOptimizer {
 
         @Override
         public Pair<Double, Vector> calculate(Vector x) {
-            final long n = x.size();
+            final long n = x.length();
 
             final int numFeatures = (int)dataIterator.numCols() - 1;
 
@@ -149,7 +149,7 @@ public class LBFGSOptimizer {
 
             final double diag;
 
-            if (memStep.size() > 0) {
+            if (memStep.length() > 0) {
 
                 Vector prevStep = memStep.get(0);
 
@@ -172,7 +172,7 @@ public class LBFGSOptimizer {
 
             double[] rho = new double[m];
 
-            for (int i = 0; i < memStep.size(); ++i) {
+            for (int i = 0; i < memStep.length(); ++i) {
 
                 rho[i] = memStep.get(i).dot(memGradDelta.get(i));
 
@@ -187,7 +187,7 @@ public class LBFGSOptimizer {
 
             dir.mul(diag);
 
-            for(int i = (memStep.size() - 1); i > 0; --i) { // TODO: > OR >= ??
+            for(int i = (memStep.length() - 1); i > 0; --i) { // TODO: > OR >= ??
 
                 double beta = memGradDelta.get(i).dot(dir) / rho[i];
 

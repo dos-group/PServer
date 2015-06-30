@@ -31,7 +31,7 @@ package de.tuberlin.pserver.examples.playground;
 
     private final OptimizerObserver observer = (epoch, weights, gradientSum) -> {
 
-        for (int i = 0; i < weights.size(); ++i) {
+        for (int i = 0; i < weights.length(); ++i) {
             changeVector.set(i, ((weightsSnapshot.get(i) - weights.get(i)) / weights.get(i)) > 0.0001 ? 1.0 : 0.0);
         }
 
@@ -54,7 +54,7 @@ package de.tuberlin.pserver.examples.playground;
 
         //dataManager.loadDMatrix("datasets/sparse_validation_dataset.csv");
 
-        dataManager.createLocalVector("weight-vector", 1000, Vector.VectorType.ROW_VECTOR);
+        dataManager.createLocalVector("weight-vector", 1000, Vector.VectorType.ROW_LAYOUT);
     }
 
     @Override

@@ -3,8 +3,8 @@ package de.tuberlin.pserver.ml.models;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.PServerContext;
-import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.math.VectorBuilder;
 
 public class GeneralLinearModel extends Model<GeneralLinearModel> {
 
@@ -12,7 +12,7 @@ public class GeneralLinearModel extends Model<GeneralLinearModel> {
     // Fields.
     // ---------------------------------------------------
 
-    public final int size;
+    public final long length;
 
     private Vector weights;
 
@@ -20,17 +20,17 @@ public class GeneralLinearModel extends Model<GeneralLinearModel> {
     // Constructor.
     // ---------------------------------------------------
 
-    public GeneralLinearModel(final String name, final int size) {
-        this(name, 0, size, null);
+    public GeneralLinearModel(final String name, final long length) {
+        this(name, 0, length, null);
     }
 
     public GeneralLinearModel(final GeneralLinearModel lm) {
-        this(Preconditions.checkNotNull(lm.name), lm.instanceID, lm.size, Preconditions.checkNotNull(lm.weights).copy());
+        this(Preconditions.checkNotNull(lm.name), lm.instanceID, lm.length, Preconditions.checkNotNull(lm.weights).copy());
     }
 
-    public GeneralLinearModel(final String name, final int instanceID, final int size, final Vector weights) {
+    public GeneralLinearModel(final String name, final int instanceID, final long length, final Vector weights) {
         super(name, instanceID);
-        this.size       = size;
+        this.length     = length;
         this.weights    = weights;
     }
 
@@ -40,13 +40,22 @@ public class GeneralLinearModel extends Model<GeneralLinearModel> {
 
     @Override
     public void createModel(final PServerContext ctx) {
-        Preconditions.checkArgument(size > 0);
-        weights = Preconditions.checkNotNull(ctx).dataManager.createLocalVector(name, size, Vector.VectorType.COLUMN_VECTOR);
+        Preconditions.checkNotNull(ctx);
+        Preconditions.checkArgument(length > 0);
+
+        Vector weights = new VectorBuilder()
+                .dimension(length)
+                .format(Vector.Format.DENSE_VECTOR)
+                .layout(Vector.Layout.COLUMN_LAYOUT)
+                .build();
+
+        ctx.dataManager.putObject(name, weights);
     }
 
     @Override
     public void fetchModel(final PServerContext ctx) {
-        weights = Preconditions.checkNotNull(ctx).dataManager.getLocalVector(name);
+        Preconditions.checkNotNull(ctx);
+        weights = ctx.dataManager.getObject(name);
     }
 
     @Override

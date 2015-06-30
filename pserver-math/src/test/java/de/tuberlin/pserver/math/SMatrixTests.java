@@ -15,8 +15,8 @@ public class SMatrixTests {
             rows = 1 + random.nextInt(500);
             cols = 1 + random.nextInt(500);
             double[] data = BufferGenerator.SparseRandomValues(rows, cols, 0.9);
-            for (Matrix.MemoryLayout srcLayout : Matrix.MemoryLayout.values()) {
-                for (Matrix.MemoryLayout targetLayout : Matrix.MemoryLayout.values()) {
+            for (Matrix.Layout srcLayout : Matrix.Layout.values()) {
+                for (Matrix.Layout targetLayout : Matrix.Layout.values()) {
                     DMatrix dMat = new DMatrix(rows, cols, data, srcLayout);
                     SMatrix sMat = SMatrix.fromDMatrix(dMat, targetLayout);
                     TestUtils.checkValues(dMat, sMat);

@@ -2,9 +2,11 @@ package de.tuberlin.pserver.math;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
-import com.google.common.util.concurrent.AtomicDoubleArray;
 import de.tuberlin.pserver.math.delegates.LibraryVectorOps;
 import de.tuberlin.pserver.math.delegates.MathLibFactory;
+import de.tuberlin.pserver.math.stuff.DoubleDoubleFunction;
+import de.tuberlin.pserver.math.stuff.DoubleFunction;
+import de.tuberlin.pserver.math.stuff.PlusMult;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -37,10 +39,10 @@ public class DVector implements Vector, Serializable {
 
         @Override
         protected Element computeNext() {
-            while (index < size() && data[index] == 0.0) {
+            while (index < length() && data[index] == 0.0) {
                 index++;
             }
-            if (index < size()) {
+            if (index < length()) {
                 element.index = index;
                 index++;
                 return element;
@@ -61,7 +63,7 @@ public class DVector implements Vector, Serializable {
 
     protected double[] data;
 
-    protected VectorType type;
+    protected Layout type;
 
     // ---------------------------------------------------
     // Constructors.
@@ -69,16 +71,16 @@ public class DVector implements Vector, Serializable {
 
     // Copy Constructor.
     public DVector(final DVector v) { this(v, v.type); }
-    public DVector(final DVector v, final VectorType type) {
+    public DVector(final DVector v, final Layout type) {
         this.data = new double[v.data.length];
         System.arraycopy(v.data, 0, this.data, 0, v.data.length);
         this.type = type;
     }
 
-    public DVector(final long size) { this(size, null, VectorType.ROW_VECTOR); }
-    public DVector(final long size, final VectorType type) { this(size, null, type); }
-    public DVector(final long size, final double[] data) { this(size, data, VectorType.ROW_VECTOR); }
-    public DVector(final long size, final double[] data, final VectorType type) {
+    public DVector(final long size) { this(size, null, Layout.ROW_LAYOUT); }
+    public DVector(final long size, final Layout type) { this(size, null, type); }
+    public DVector(final long size, final double[] data) { this(size, data, Layout.ROW_LAYOUT); }
+    public DVector(final long size, final double[] data, final Layout type) {
         this.data = (data == null) ? new double[(int)size] : data;
         this.type = Preconditions.checkNotNull(type);
     }
@@ -111,13 +113,17 @@ public class DVector implements Vector, Serializable {
     // Public Methods.
     // ---------------------------------------------------
 
-    @Override
-    public void setOwner(final Object owner) { this.owner = owner; }
+    @Override public long sizeOf() { return data.length * Double.BYTES; }
 
-    @Override
-    public Object getOwner() { return owner; }
+    @Override public long length() { return data.length; }
 
-    @Override public boolean isDense() { return true; }
+    @Override public Layout layout() { return type; }
+
+    @Override public Format format() { return Format.DENSE_VECTOR; }
+
+    @Override public void setOwner(final Object owner) { this.owner = owner; }
+
+    @Override public Object getOwner() { return owner; }
 
     @Override public void set(final long index, final double value) { data[(int)index] = value; }
 
@@ -126,10 +132,6 @@ public class DVector implements Vector, Serializable {
     @Override public double atomicGet(final long index) { throw new UnsupportedOperationException(); }
 
     @Override public void atomicSet(final long index, final double value) { throw new UnsupportedOperationException(); }
-
-    @Override public long size() { return data.length; }
-
-    @Override public VectorType getVectorType() { return type; }
 
     @Override public double[] toArray() { return data; }
 
@@ -146,7 +148,7 @@ public class DVector implements Vector, Serializable {
 
     @Override
     public Vector assign(final DoubleFunction df) {
-        for (int i = 0; i < size(); i++) {
+        for (int i = 0; i < length(); i++) {
             data[i] = df.apply(data[i]);
         }
         return this;
@@ -154,7 +156,7 @@ public class DVector implements Vector, Serializable {
 
     @Override
     public Vector assign(final Vector other, final DoubleDoubleFunction function) {
-        Preconditions.checkState(size() == other.size());
+        Preconditions.checkState(length() == other.length());
         // is there some other way to know if function.apply(0, x) = x for all x?
         if (function instanceof PlusMult) {
             Iterator<Element> it = other.iterateNonZero();
@@ -163,7 +165,7 @@ public class DVector implements Vector, Serializable {
                 data[e.index()] = function.apply(data[e.index()], e.get());
             }
         } else {
-            for (int i = 0; i < size(); i++) {
+            for (int i = 0; i < length(); i++) {
                 data[i] = function.apply(data[i], other.get(i));
             }
         }
@@ -217,7 +219,7 @@ public class DVector implements Vector, Serializable {
             sb.append(data[i]).append(",");
         sb.deleteCharAt(sb.length() - 1);
         sb.append("]");
-        if (type == VectorType.COLUMN_VECTOR)
+        if (type == Layout.COLUMN_LAYOUT)
             sb.append("^T");
         return sb.toString();
     }

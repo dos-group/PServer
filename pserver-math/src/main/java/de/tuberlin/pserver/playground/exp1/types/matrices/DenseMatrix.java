@@ -27,7 +27,7 @@ public class DenseMatrix /*extends ByteBufferValue implements Matrix*/ {
                        final BlockLayout layout,
                        final boolean isAllocated) {
 
-        //super(rows * cols * elementTypeInfo.size(), isAllocated);
+        //super(rows * cols * elementTypeInfo.length(), isAllocated);
         this.rows       = rows;
         this.cols       = cols;
         this.layout     = Preconditions.checkNotNull(layout);
@@ -78,13 +78,13 @@ public class DenseMatrix /*extends ByteBufferValue implements Matrix*/ {
             case ROW_LAYOUT:
                 throw new NotImplementedException();
             case COLUMN_LAYOUT: {
-                final byte[] data = new byte[getElementType().size() * rows];
+                final byte[] data = new byte[getElementType().length() * rows];
                 for (int i = 0; i < rows; ++i)
                     System.arraycopy(
                             buffer.getRawData(),
-                            (int)col * elementTypeInfo.size() + (i * cols * elementTypeInfo.size()),
+                            (int)col * elementTypeInfo.length() + (i * cols * elementTypeInfo.length()),
                             data,
-                            i * elementTypeInfo.size(), elementTypeInfo.size()
+                            i * elementTypeInfo.length(), elementTypeInfo.length()
                     );
                 return data;
             }
@@ -125,6 +125,6 @@ public class DenseMatrix /*extends ByteBufferValue implements Matrix*/ {
     }
 
     protected int getOffset(final int row, final int col) {
-        return getPos(row, col) * elementTypeInfo.size() + UnsafeOp.BYTE_ARRAY_OFFSET;
+        return getPos(row, col) * elementTypeInfo.length() + UnsafeOp.BYTE_ARRAY_OFFSET;
     }*/
 }

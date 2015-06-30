@@ -11,10 +11,10 @@ public class VectorGenerator {
 
     public static Vector RandomDVector(long size) {
         double[] data = BufferGenerator.RandomValues(size);
-        return new DVector(size, data, Vector.VectorType.COLUMN_VECTOR);
+        return new DVector(size, data, Vector.Layout.COLUMN_LAYOUT);
     }
 
-    public static Vector RandomDVector(long size, Vector.VectorType type) {
+    public static Vector RandomDVector(long size, Vector.Layout type) {
         double[] data = BufferGenerator.RandomValues(size);
         return new DVector(size, data, type);
     }
@@ -24,14 +24,14 @@ public class VectorGenerator {
     }
 
     public static Vector RandomSVector(long size, double sparsity) {
-        return RandomSVector(size, Vector.VectorType.COLUMN_VECTOR, sparsity);
+        return RandomSVector(size, Vector.Layout.COLUMN_LAYOUT, sparsity);
     }
 
-    public static Vector RandomSVector(long size, Vector.VectorType type) {
+    public static Vector RandomSVector(long size, Vector.Layout type) {
         return RandomSVector(size, type, 0.9);
     }
 
-    public static Vector RandomSVector(long size, Vector.VectorType type, double sparsity) {
+    public static Vector RandomSVector(long size, Vector.Layout type, double sparsity) {
         double[] data = BufferGenerator.SparseRandomValues(size, sparsity);
         return new DVector(size, data, type);
     }

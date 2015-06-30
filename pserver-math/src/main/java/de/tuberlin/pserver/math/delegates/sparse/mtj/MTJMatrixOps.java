@@ -1,11 +1,9 @@
 package de.tuberlin.pserver.math.delegates.sparse.mtj;
 
-import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.*;
-import de.tuberlin.pserver.math.AbstractVector;
 import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.Vector;
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
+import de.tuberlin.pserver.math.stuff.Utils;
 import no.uib.cipr.matrix.*;
 import no.uib.cipr.matrix.sparse.*;
 
@@ -33,7 +31,7 @@ public class MTJMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
                 MTJUtils.toLibMatrix(A, true).mult(
                         MTJUtils.toLibVector(x),
                         result),
-                Vector.VectorType.COLUMN_VECTOR);
+                Vector.Layout.COLUMN_LAYOUT);
     }
 
     @Override
@@ -52,7 +50,7 @@ public class MTJMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
                         MTJUtils.toLibVector(x),
                         MTJUtils.toLibVector(y)
                 ),
-                Vector.VectorType.COLUMN_VECTOR);
+                Vector.Layout.COLUMN_LAYOUT);
         y.assign(result);
     }
 

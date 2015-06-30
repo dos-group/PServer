@@ -27,9 +27,9 @@ It is provided "as is" without expressed or implied warranty.
 package de.tuberlin.pserver.math.list;
 
 
-import de.tuberlin.pserver.math.Arithmetic;
-import de.tuberlin.pserver.math.Arrays;
-import de.tuberlin.pserver.math.BinarySearch;
+import de.tuberlin.pserver.math.stuff.Arithmetic;
+import de.tuberlin.pserver.math.stuff.Arrays;
+import de.tuberlin.pserver.math.stuff.BinarySearch;
 import de.tuberlin.pserver.math.function.DoubleProcedure;
 
 /**
@@ -50,7 +50,7 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
 	}
 
 	/**
-	 * Constructs a list containing the specified elements. The initial size and capacity of the list is the length of the
+	 * Constructs a list containing the specified elements. The initial length and capacity of the list is the length of the
 	 * array.
 	 *
 	 * <b>WARNING:</b> For efficiency reasons and to keep memory usage low, <b>the array is not copied</b>. So if
@@ -90,9 +90,9 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
 	 * Inserts the specified element before the specified position into the receiver. Shifts the element currently at that
 	 * position (if any) and any subsequent elements to the right.
 	 *
-	 * @param index   index before which the specified element is to be inserted (must be in [0,size]).
+	 * @param index   index before which the specified element is to be inserted (must be in [0,length]).
 	 * @param element element to be inserted.
-	 * @throws IndexOutOfBoundsException index is out of range (<tt>index &lt; 0 || index &gt; size()</tt>).
+	 * @throws IndexOutOfBoundsException index is out of range (<tt>index &lt; 0 || index &gt; length()</tt>).
 	 */
 	public void beforeInsert(int index, double element) {
 		// overridden for performance only.
@@ -120,10 +120,10 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
 	 * @param to   the rightmost search position, inclusive.
 	 * @return index of the search key, if it is contained in the receiver; otherwise, <tt>(-(<i>insertion point</i>) -
 	 *         1)</tt>.  The <i>insertion point</i> is defined as the the point at which the value would be inserted into
-	 *         the receiver: the index of the first element greater than the key, or <tt>receiver.size()</tt>, if all
+	 *         the receiver: the index of the first element greater than the key, or <tt>receiver.length()</tt>, if all
 	 *         elements in the receiver are less than the specified key.  Note that this guarantees that the return value
 	 *         will be &gt;= 0 if and only if the key is found.
-	 * @see de.tuberlin.pserver.math.BinarySearch
+	 * @see de.tuberlin.pserver.math.stuff.BinarySearch
 	 * @see java.util.Arrays
 	 */
 	@Override
@@ -155,7 +155,7 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
 
 
 	/**
-	 * Returns the elements currently stored, including invalid elements between size and capacity, if any.
+	 * Returns the elements currently stored, including invalid elements between length and capacity, if any.
 	 *
 	 * <b>WARNING:</b> For efficiency reasons and to keep memory usage low, <b>the array is not copied</b>. So if
 	 * subsequently you modify the returned array directly via the [] operator, be sure you know what you're doing.
@@ -169,7 +169,7 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
 	/**
 	 * Sets the receiver's elements to be the specified array (not a copy of it).
 	 *
-	 * The size and capacity of the list is the length of the array. <b>WARNING:</b> For efficiency reasons and to keep
+	 * The length and capacity of the list is the length of the array. <b>WARNING:</b> For efficiency reasons and to keep
 	 * memory usage low, <b>the array is not copied</b>. So if subsequently you modify the specified array directly via
 	 * the [] operator, be sure you know what you're doing.
 	 *
@@ -194,7 +194,7 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
 
 	/**
 	 * Compares the specified Object with the receiver. Returns true if and only if the specified Object is also an
-	 * ArrayList of the same type, both Lists have the same size, and all corresponding pairs of elements in the two Lists
+	 * ArrayList of the same type, both Lists have the same length, and all corresponding pairs of elements in the two Lists
 	 * are identical. In other words, two Lists are defined to be equal if they contain the same elements in the same
 	 * order.
 	 *
@@ -251,7 +251,7 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
 	 * Returns the element at the specified position in the receiver.
 	 *
 	 * @param index index of element to return.
-	 * @throws IndexOutOfBoundsException index is out of range (index &lt; 0 || index &gt;= size()).
+	 * @throws IndexOutOfBoundsException index is out of range (index &lt; 0 || index &gt;= length()).
 	 */
 	public double get(int index) {
 		// overridden for performance only.
@@ -265,7 +265,7 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
 	 * Returns the element at the specified position in the receiver; <b>WARNING:</b> Does not check preconditions.
 	 * Provided with invalid parameters this method may return invalid elements without throwing any exception! <b>You
 	 * should only use this method when you are absolutely sure that the index is within bounds.</b> Precondition
-	 * (unchecked): <tt>index &gt;= 0 && index &lt; size()</tt>.
+	 * (unchecked): <tt>index &gt;= 0 && index &lt; length()</tt>.
 	 *
 	 * @param index index of element to return.
 	 */
@@ -284,8 +284,8 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
 	 * @param to      the rightmost search position, inclusive.
 	 * @return the index of the first occurrence of the element in the receiver; returns <code>-1</code> if the element is
 	 *         not found.
-	 * @throws IndexOutOfBoundsException index is out of range (<tt>size()&gt;0 && (from&lt;0 || from&gt;to ||
-	 *                                   to&gt;=size())</tt>).
+	 * @throws IndexOutOfBoundsException index is out of range (<tt>length()&gt;0 && (from&lt;0 || from&gt;to ||
+	 *                                   to&gt;=length())</tt>).
 	 */
 	@Override
 	public int indexOfFromTo(double element, int from, int to) {
@@ -314,8 +314,8 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
 	 * @param to      the rightmost search position, inclusive.
 	 * @return the index of the last occurrence of the element in the receiver; returns <code>-1</code> if the element is
 	 *         not found.
-	 * @throws IndexOutOfBoundsException index is out of range (<tt>size()&gt;0 && (from&lt;0 || from&gt;to ||
-	 *                                   to&gt;=size())</tt>).
+	 * @throws IndexOutOfBoundsException index is out of range (<tt>length()&gt;0 && (from&lt;0 || from&gt;to ||
+	 *                                   to&gt;=length())</tt>).
 	 */
 	@Override
 	public int lastIndexOfFromTo(double element, int from, int to) {
@@ -341,8 +341,8 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
 	 * @param from the index of the first element (inclusive).
 	 * @param to   the index of the last element (inclusive).
 	 * @return a new list
-	 * @throws IndexOutOfBoundsException index is out of range (<tt>size()&gt;0 && (from&lt;0 || from&gt;to ||
-	 *                                   to&gt;=size())</tt>).
+	 * @throws IndexOutOfBoundsException index is out of range (<tt>length()&gt;0 && (from&lt;0 || from&gt;to ||
+	 *                                   to&gt;=length())</tt>).
 	 */
 	@Override
 	public AbstractDoubleList partFromTo(int from, int to) {
@@ -374,7 +374,7 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
        a) use other.indexOf(...)
        b) sort other, then use other.binarySearch(...)
 
-       Let's try to figure out which one is faster. Let M=size, N=other.size, then
+       Let's try to figure out which one is faster. Let M=length, N=other.length, then
        a) takes O(M*N) steps
        b) takes O(N*logN + M*logN) steps (sorting is O(N*logN) and binarySearch is O(logN))
 
@@ -458,7 +458,7 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
        a) use other.indexOf(...)
        b) sort other, then use other.binarySearch(...)
 
-       Let's try to figure out which one is faster. Let M=size, N=other.size, then
+       Let's try to figure out which one is faster. Let M=length, N=other.length, then
        a) takes O(M*N) steps
        b) takes O(N*logN + M*logN) steps (sorting is O(N*logN) and binarySearch is O(logN))
 
@@ -515,7 +515,7 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
 	 *
 	 * @param index   index of element to replace.
 	 * @param element element to be stored at the specified position.
-	 * @throws IndexOutOfBoundsException index is out of range (index &lt; 0 || index &gt;= size()).
+	 * @throws IndexOutOfBoundsException index is out of range (index &lt; 0 || index &gt;= length()).
 	 */
 	@Override
 	public void set(int index, double element) {
@@ -530,7 +530,7 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
 	 * Replaces the element at the specified position in the receiver with the specified element; <b>WARNING:</b> Does not
 	 * check preconditions. Provided with invalid parameters this method may access invalid indexes without throwing any
 	 * exception! <b>You should only use this method when you are absolutely sure that the index is within bounds.</b>
-	 * Precondition (unchecked): <tt>index &gt;= 0 && index &lt; size()</tt>.
+	 * Precondition (unchecked): <tt>index &gt;= 0 && index &lt; length()</tt>.
 	 *
 	 * @param index   index of element to replace.
 	 * @param element element to be stored at the specified position.
@@ -545,8 +545,8 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
 	 *
 	 * @param from the index of the first element (inclusive) to be permuted.
 	 * @param to   the index of the last element (inclusive) to be permuted.
-	 * @throws IndexOutOfBoundsException index is out of range (<tt>size()&gt;0 && (from&lt;0 || from&gt;to ||
-	 *                                   to&gt;=size())</tt>).
+	 * @throws IndexOutOfBoundsException index is out of range (<tt>length()&gt;0 && (from&lt;0 || from&gt;to ||
+	 *                                   to&gt;=length())</tt>).
 	 */
 
 	/**
@@ -561,8 +561,8 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
 	 *
 	 * @param from the index of the first element (inclusive) to be sorted.
 	 * @param to   the index of the last element (inclusive) to be sorted.
-	 * @throws IndexOutOfBoundsException index is out of range (<tt>size()&gt;0 && (from&lt;0 || from&gt;to ||
-	 *                                   to&gt;=size())</tt>).
+	 * @throws IndexOutOfBoundsException index is out of range (<tt>length()&gt;0 && (from&lt;0 || from&gt;to ||
+	 *                                   to&gt;=length())</tt>).
 	 */
 	@Override
 	public void sortFromTo(int from, int to) {
@@ -594,7 +594,7 @@ public class DoubleArrayList extends AbstractDoubleList implements Cloneable {
 	}
 
 	/**
-	 * Trims the capacity of the receiver to be the receiver's current size. Releases any superfluous internal memory. An
+	 * Trims the capacity of the receiver to be the receiver's current length. Releases any superfluous internal memory. An
 	 * application can use this operation to minimize the storage of the receiver.
 	 */
 	@Override

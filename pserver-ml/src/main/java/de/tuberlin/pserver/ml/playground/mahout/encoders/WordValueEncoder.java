@@ -47,7 +47,7 @@ public abstract class WordValueEncoder extends FeatureVectorEncoder {
     for (int i = 0; i < probes; i++) {
 
       // edited by mustafa, casting to int
-      int n = hashForProbe(originalForm, (int)data.size(), name, i);
+      int n = hashForProbe(originalForm, (int)data.length(), name, i);
       if (isTraceEnabled()) {
         trace(originalForm, n);        
       }

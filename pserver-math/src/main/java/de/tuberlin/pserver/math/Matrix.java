@@ -1,10 +1,23 @@
 package de.tuberlin.pserver.math;
 
-import java.io.Serializable;
+import de.tuberlin.pserver.math.stuff.DoubleDoubleFunction;
+import de.tuberlin.pserver.math.stuff.DoubleFunction;
+import de.tuberlin.pserver.math.stuff.VectorFunction;
 
-public interface Matrix extends Serializable {
+public interface Matrix extends MObject {
 
-    public enum MemoryLayout {
+    // ---------------------------------------------------
+    // Constants.
+    // ---------------------------------------------------
+
+    public enum Format {
+
+        SPARSE_MATRIX,
+
+        DENSE_MATRIX
+    }
+
+    public enum Layout {
 
         ROW_LAYOUT,
 
@@ -53,15 +66,11 @@ public interface Matrix extends Serializable {
 
     // ---------------------------------------------------
 
-    public abstract void setOwner(final Object owner);
-
-    public abstract Object getOwner();
-
     public abstract void lock();
 
     public abstract void unlock();
 
-    public MemoryLayout getLayout();
+    public Layout getLayout();
 
     // ---------------------------------------------------
 
@@ -76,10 +85,6 @@ public interface Matrix extends Serializable {
     public abstract double atomicGet(final long row, final long col);
 
     public abstract void atomicSet(final long row, final long col, final double value);
-
-    public abstract double[] toArray();
-
-    public abstract void setArray(final double[] data);
 
     public abstract RowIterator rowIterator();
 

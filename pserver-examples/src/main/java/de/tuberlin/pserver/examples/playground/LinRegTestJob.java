@@ -27,13 +27,13 @@ public final class LinRegTestJob extends PServerJob {
 
     @Override
     public void prologue() {
-        dataManager.loadDMatrix("datasets/demo_dataset.csv");
+        dataManager.loadAsMatrix("datasets/demo_dataset.csv");
         model.createModel(ctx);
     }
 
     @Override
     public void compute() {
-        final Matrix data = dataManager.getLocalMatrix("demo_dataset.csv");
+        final Matrix data = dataManager.getObject("demo_dataset.csv");
         linreg = new LinRegAlgorithm(ctx);
         linreg.register();
         linreg.train(model, data);

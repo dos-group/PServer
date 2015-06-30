@@ -90,7 +90,7 @@ readFromConfig() {
 # WARNING !!! , these values are only used if there is nothing else is specified in
 # conf/pserver.conf
 
-DEFAULT_ENV_NODE_HEAP_MB=512                        # Java heap size for a pserver node (in MB)
+DEFAULT_ENV_NODE_HEAP_MB=512                        # Java heap length for a pserver node (in MB)
 DEFAULT_ENV_PID_DIR="/tmp"                          # Directory to store *.pid files to
 DEFAULT_ENV_LOG_MAX=5                               # Maximum number of old log files to keep
 DEFAULT_ENV_JAVA_OPTS=""                            # Optional JVM args

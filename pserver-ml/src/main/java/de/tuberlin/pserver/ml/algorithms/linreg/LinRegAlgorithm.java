@@ -50,7 +50,7 @@ public class LinRegAlgorithm extends MLAlgorithm<LinRegModel> {
     @Override
     public void train(final LinRegModel model, final Matrix data) {
 
-        final Matrix.RowIterator dataIterator = ctx.dataManager.threadPartitionedRowIterator(data);
+        final Matrix.RowIterator dataIterator = ctx.dataManager.createThreadPartitionedRowIterator(data);
 
         optimizer.optimize(model, dataIterator);
     }

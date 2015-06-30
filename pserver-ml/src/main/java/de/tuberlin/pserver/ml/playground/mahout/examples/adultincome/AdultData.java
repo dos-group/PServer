@@ -20,7 +20,7 @@ public class AdultData {
   private Map<String, String> fields = new LinkedHashMap<>();
 
   public AdultData(Iterable<String> fieldNames, Iterable<String> values) {
-    vector = new DVector(FEATURES, Vector.VectorType.COLUMN_VECTOR);
+    vector = new DVector(FEATURES, Vector.Layout.COLUMN_LAYOUT);
     Iterator<String> value = values.iterator();
     interceptEncoder.addToVector("1", vector);
     for (String name : fieldNames) {

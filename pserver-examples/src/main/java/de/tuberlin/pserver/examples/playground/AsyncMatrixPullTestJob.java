@@ -4,6 +4,7 @@ import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.MatrixBuilder;
 
 import java.util.Random;
 
@@ -29,7 +30,7 @@ public final class AsyncMatrixPullTestJob extends PServerJob {
                 double v = 0.0;
                 for (final Matrix m : remoteMatrices)
                     v += m.get(i, j);
-                localMatrix.set(i, j, (v / remoteMatrices.length));
+                localMatrix.set(i, j, (v / remoteMatrices.size()));
             }
         }
     };
@@ -45,12 +46,18 @@ public final class AsyncMatrixPullTestJob extends PServerJob {
     @Override
     public void compute() {
 
-       final Matrix matrix = dataManager.createLocalMatrix("model1", MTX_ROWS, MTX_COLS);
+        final Matrix m = new MatrixBuilder()
+                .dimension(MTX_ROWS, MTX_COLS)
+                .format(Matrix.Format.DENSE_MATRIX)
+                .layout(Matrix.Layout.ROW_LAYOUT)
+                .build();
+
+       dataManager.putObject("model1", m);
 
        for (int i = 0; i < 9000; ++i) {
-            randomUpdate(matrix);
+            randomUpdate(m);
             if (i % 1000 == 0)
-                ctx.dataManager.mergeMatrix(matrix, merger);
+                ctx.dataManager.pullMerge(m, merger);
         }
     }
 

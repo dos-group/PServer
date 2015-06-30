@@ -98,8 +98,8 @@ public enum PServerNodeFactory {
 
         //LOG.info(infraManager.getMachine()
         //        + " | " + infraManager.getInstanceID()
-        //        + " | " + infraManager.getActivePeers().size()
-        //        + " | " + infraManager.getMachines().size());
+        //        + " | " + infraManager.getActivePeers().length()
+        //        + " | " + infraManager.getMachines().length());
 
         LOG.info("PServer Node Startup: " + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms");
     }

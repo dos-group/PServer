@@ -3,6 +3,7 @@ package de.tuberlin.pserver.math;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
 import de.tuberlin.pserver.math.delegates.MathLibFactory;
+import de.tuberlin.pserver.math.stuff.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,12 +109,12 @@ public class DMatrix extends AbstractMatrix implements Matrix, Serializable {
 
     // Copy Constructor.
     public DMatrix(final Vector m) {
-        super(m.getVectorType() == Vector.VectorType.COLUMN_VECTOR ?
-                1 : m.size(),
-              m.getVectorType() == Vector.VectorType.COLUMN_VECTOR ?
-                m.size() : 1,
-              m.getVectorType() == Vector.VectorType.COLUMN_VECTOR ?
-                MemoryLayout.COLUMN_LAYOUT : MemoryLayout.ROW_LAYOUT);
+        super(m.layout() == Vector.Layout.COLUMN_LAYOUT ?
+                1 : m.length(),
+              m.layout() == Vector.Layout.COLUMN_LAYOUT ?
+                m.length() : 1,
+              m.layout() == Vector.Layout.COLUMN_LAYOUT ?
+                Matrix.Layout.COLUMN_LAYOUT : Matrix.Layout.ROW_LAYOUT);
 
         final double[] md = m.toArray();
         this.data = new double[md.length];
@@ -127,9 +128,9 @@ public class DMatrix extends AbstractMatrix implements Matrix, Serializable {
         System.arraycopy(m.data, 0, this.data, 0, m.data.length);
     }
 
-    public DMatrix(final long rows, final long cols) { this(rows, cols, null, MemoryLayout.ROW_LAYOUT); }
-    public DMatrix(final long rows, final long cols, final double[] data) { this(rows, cols, data, MemoryLayout.ROW_LAYOUT); }
-    public DMatrix(final long rows, final long cols, final double[] data, final MemoryLayout layout) {
+    public DMatrix(final long rows, final long cols) { this(rows, cols, null, Matrix.Layout.ROW_LAYOUT); }
+    public DMatrix(final long rows, final long cols, final double[] data) { this(rows, cols, data, Matrix.Layout.ROW_LAYOUT); }
+    public DMatrix(final long rows, final long cols, final double[] data, final Layout layout) {
         super(rows, cols, layout);
         this.data = (data == null) ? new double[(int)(rows * cols)] : Preconditions.checkNotNull(data);
         //Preconditions.checkState(this.data.length == rows * cols);
@@ -267,16 +268,16 @@ public class DMatrix extends AbstractMatrix implements Matrix, Serializable {
 
     @Override
     public Matrix assignRow(final long row, final Vector v) {
-        Preconditions.checkNotNull(numCols() == v.size());
-        for (int i = 0; i < v.size(); ++i)
+        Preconditions.checkNotNull(numCols() == v.length());
+        for (int i = 0; i < v.length(); ++i)
             data[Utils.getPos(row, i, this)] = v.get(i);
         return this;
     }
 
     @Override
     public Matrix assignColumn(final long col, final Vector v) {
-        Preconditions.checkNotNull(numRows() == v.size());
-        for (int i = 0; i < v.size(); ++i)
+        Preconditions.checkNotNull(numRows() == v.length());
+        for (int i = 0; i < v.length(); ++i)
             data[Utils.getPos(i, col, this)] = v.get(i);
         return this;
     }

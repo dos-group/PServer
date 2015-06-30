@@ -77,7 +77,7 @@ public final class UnsafeOp {
         // Change type.
         final short t2TypeTag = getPrimitiveTypeTag(t2Type);
         unsafe.putShort(t1, ARRAY_HEADER_TYPE_TAG_OFFSET, t2TypeTag);
-        // Change size.
+        // Change length.
         final short t1TypeSize = getPrimitiveSizeInBytes(t1Type);
         final short t2TypeSize = getPrimitiveSizeInBytes(t2Type);
         final int t1Size = unsafe.getInt(t1, ARRAY_HEADER_TYPE_SIZE_OFFSET);

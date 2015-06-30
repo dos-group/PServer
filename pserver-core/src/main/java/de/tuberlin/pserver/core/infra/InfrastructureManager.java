@@ -57,6 +57,16 @@ public final class InfrastructureManager extends EventDispatcher {
         LOG.debug("Started InfrastructureManager at " + machine);
     }
 
+    public int getInstanceIDFromMachineUID(final UUID machineUID) {
+        Preconditions.checkNotNull(machineUID);
+        for (int i = 0; i < machines.size(); ++i) {
+            if (machines.get(i).machineID.equals(machineUID))
+                return i;
+        }
+        throw new IllegalStateException();
+    }
+
+
     public Map<UUID, MachineDescriptor> getActivePeers() { return Collections.unmodifiableMap(peers); }
 
     public MachineDescriptor getMachine() { return Preconditions.checkNotNull(machine); }
@@ -68,6 +78,8 @@ public final class InfrastructureManager extends EventDispatcher {
     public int getMachineIndex(final MachineDescriptor machine) { return machines.indexOf(Preconditions.checkNotNull(machine)); }
 
     public MachineDescriptor getMachine(final int machineIndex) { return machines.get(machineIndex); }
+
+    // ---------------------------------------------------
 
     @Override
     public void deactivate() { super.deactivate(); }
@@ -123,7 +135,7 @@ public final class InfrastructureManager extends EventDispatcher {
                     zookeeper.getChildrenForPathAndWatch(ZookeeperClient.ZOOKEEPER_NODES, this);
                     final List<String> machineList = zookeeper.getChildrenForPath(ZookeeperClient.ZOOKEEPER_NODES);
                     // Find out whether a node was created or deleted.
-                    //if (peers.values().size() < machineList.size()) {
+                    //if (peers.values().length() < machineList.length()) {
                         // A node has been added.
                         MachineDescriptor md = null;
                         for (final String machineIDStr : machineList) {

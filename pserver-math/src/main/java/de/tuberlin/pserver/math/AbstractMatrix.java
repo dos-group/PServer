@@ -1,10 +1,8 @@
 package de.tuberlin.pserver.math;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.math.stuff.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -22,23 +20,25 @@ public abstract class AbstractMatrix implements Matrix {
 
     protected Lock lock;
 
-    protected final MemoryLayout layout;
+    protected final Layout layout;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    public AbstractMatrix(long rows, long cols, MemoryLayout layout) {
+    public AbstractMatrix(long rows, long cols, Layout layout) {
         this.rows = rows;
         this.cols = cols;
         this.layout = Preconditions.checkNotNull(layout);
-        Preconditions.checkArgument(java.util.Arrays.asList(MemoryLayout.values()).contains(layout), "Unknown MemoryLayout: " + layout.toString());
+        Preconditions.checkArgument(java.util.Arrays.asList(Layout.values()).contains(layout), "Unknown MemoryLayout: " + layout.toString());
         this.lock = new ReentrantLock();
     }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
+
+    @Override  public long sizeOf() { return rows * cols * Double.BYTES; }
 
     @Override  public void setOwner(Object owner) { this.owner = owner; }
 
@@ -48,7 +48,7 @@ public abstract class AbstractMatrix implements Matrix {
 
     @Override  public long numCols() { return cols; }
 
-    @Override  public MemoryLayout getLayout() { return layout; }
+    @Override  public Layout getLayout() { return layout; }
 
     @Override  public abstract RowIterator rowIterator();
 
@@ -116,7 +116,7 @@ public abstract class AbstractMatrix implements Matrix {
 
         protected Vector getAsVector(int from, int size, Vector result) {
             Preconditions.checkArgument(from + size <= target.numCols());
-            Preconditions.checkArgument(result.size() == size);
+            Preconditions.checkArgument(result.length() == size);
             for(int i = from; i - from < size; i++) {
                 result.set(i, target.get(currentRow, i));
             }
