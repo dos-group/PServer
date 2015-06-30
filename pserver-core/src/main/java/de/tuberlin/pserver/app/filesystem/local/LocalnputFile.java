@@ -3,6 +3,7 @@ package de.tuberlin.pserver.app.filesystem.local;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
+import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.app.filesystem.record.Record;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -25,15 +26,15 @@ public class LocalnputFile implements ILocalInputFile<Record> {
 
     private final String filePath;
 
-    private final InputFormat format;
+    private final RecordFormat format;
 
     private final LocalCSVFileSection csvFileSection;
 
     public LocalnputFile(final String filePath) {
-        this(filePath, InputFormat.DEFAULT);
+        this(filePath, RecordFormat.DEFAULT);
     }
 
-    public LocalnputFile(final String filePath, InputFormat format) {
+    public LocalnputFile(final String filePath, RecordFormat format) {
         Preconditions.checkNotNull(filePath);
         Preconditions.checkNotNull(format);
         this.filePath = filePath;
@@ -184,7 +185,7 @@ public class LocalnputFile implements ILocalInputFile<Record> {
 
 
     public static void main(String[] args) {
-        LocalnputFile file = new LocalnputFile("datasets/criteo_2.csv", new InputFormat(new int[] {0,1,2, 3}, '\t', '\n'));
+        LocalnputFile file = new LocalnputFile("datasets/criteo_2.csv", new RecordFormat(new int[] {0,1,2, 3}, '\t', '\n'));
         file.computeLocalFileSection(1, 0);
         Iterator<Record> iterator = file.iterator();
         Record next;

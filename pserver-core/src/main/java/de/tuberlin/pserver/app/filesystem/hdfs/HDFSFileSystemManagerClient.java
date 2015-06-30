@@ -36,7 +36,7 @@ public final class HDFSFileSystemManagerClient implements FileSystemManager, Inp
 
     private final Map<String,List<FileDataIterator<?>>> registeredIteratorMap;
 
-    private final Map<String,HDFSCSVInputFile> inputFileMap;
+    private final Map<String,HDFSInputFile> inputFileMap;
 
     // ---------------------------------------------------
     // Constructors.
@@ -92,9 +92,9 @@ public final class HDFSFileSystemManagerClient implements FileSystemManager, Inp
     @Override
     @SuppressWarnings("unchecked")
     public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
-        HDFSCSVInputFile inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
+        HDFSInputFile inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
         if (inputFile == null) {
-            inputFile = new HDFSCSVInputFile(config, netManager, filePath);
+            inputFile = new HDFSInputFile(config, netManager, filePath);
             final Configuration conf = new Configuration();
             conf.set("fs.defaultFS", config.getString("filesystem.hdfs.url"));
             inputFile.configure(conf);

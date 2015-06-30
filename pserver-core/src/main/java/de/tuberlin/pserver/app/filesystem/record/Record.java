@@ -5,10 +5,10 @@ package de.tuberlin.pserver.app.filesystem.record;
  */
 public class Record implements IRecord {
 
-    private final int[] projection;
+    private int[] projection;
     private int currentIndex = 0;
 
-    private final org.apache.commons.csv.CSVRecord delegate;
+    private org.apache.commons.csv.CSVRecord delegate;
 
     public Record(org.apache.commons.csv.CSVRecord delegate, int[] projection) {
         this.delegate = delegate;
@@ -36,5 +36,11 @@ public class Record implements IRecord {
         }
         catch(NumberFormatException e) {}
         return result;
+    }
+
+    public Record set(org.apache.commons.csv.CSVRecord record, int[] projection) {
+        this.delegate = delegate;
+        this.projection = projection;
+        return this;
     }
 }

@@ -21,7 +21,7 @@ public class HDFSFileDataIterator implements FileDataIterator<Record> {
 
     private final InputSplitProvider inputSplitProvider;
 
-    private final HDFSCSVInputFile inputFile;
+    private final HDFSInputFile inputFile;
 
     private FileInputSplit split;
 
@@ -33,7 +33,7 @@ public class HDFSFileDataIterator implements FileDataIterator<Record> {
     public HDFSFileDataIterator(final IConfig config,
                                 final MachineDescriptor machine,
                                 final InputSplitProvider inputSplitProvider,
-                                final HDFSCSVInputFile inputFile) {
+                                final HDFSInputFile inputFile) {
 
         Preconditions.checkNotNull(config);
         this.machine = Preconditions.checkNotNull(machine);
@@ -82,7 +82,7 @@ public class HDFSFileDataIterator implements FileDataIterator<Record> {
     @Override
     public Record next() {
         try {
-            return Record.wrap(inputFile.nextRecord(null), null);
+            return inputFile.nextRecord(null);
         } catch(IOException e) {
             throw new IllegalStateException(e);
         }

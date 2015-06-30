@@ -4,9 +4,9 @@ package de.tuberlin.pserver.app.filesystem.hdfs;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
 import de.tuberlin.pserver.app.filesystem.record.Record;
+import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.net.NetManager;
-import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.hadoop.conf.Configuration;
@@ -18,19 +18,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 
-public class HDFSCSVInputFile implements InputFormat<CSVRecord,FileInputSplit> {
+public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(HDFSCSVInputFile.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HDFSInputFile.class);
 
     private static final long serialVersionUID = 1L;
 
     private static final float MAX_SPLIT_SIZE_DISCREPANCY = 1.1f;
 
     protected static final long READ_WHOLE_SPLIT_FLAG = -1L;
-
-    protected final String recordSeparator = "\n";
-
-    protected final char delimiter = ',';
 
     // --------------------------------------------------------------------------------------------
     //  Variables for internal operation.
@@ -46,7 +42,7 @@ public class HDFSCSVInputFile implements InputFormat<CSVRecord,FileInputSplit> {
 
     protected transient long splitLength;
 
-    protected transient CSVFormat format = CSVFormat.DEFAULT.withRecordSeparator(recordSeparator).withDelimiter(delimiter);
+    protected transient RecordFormat format;
 
     protected transient CSVParser csvFileParser;
 
@@ -72,11 +68,16 @@ public class HDFSCSVInputFile implements InputFormat<CSVRecord,FileInputSplit> {
     //  Constructors
     // --------------------------------------------------------------------------------------------
 
-    public HDFSCSVInputFile(final IConfig config, final NetManager netManager, final String filePath) {
+    public HDFSInputFile(final IConfig config, final NetManager netManager, final String filePath, RecordFormat format) {
         this.config     = Preconditions.checkNotNull(config);
         this.path       = Preconditions.checkNotNull(filePath);
         this.filePath   = new Path(filePath);
         this.netManager = Preconditions.checkNotNull(netManager);
+        this.format     = Preconditions.checkNotNull(format);
+    }
+
+    public HDFSInputFile(final IConfig config, final NetManager netManager, final String filePath) {
+        this(config, netManager, filePath, RecordFormat.DEFAULT);
     }
 
     // --------------------------------------------------------------------------------------------
@@ -326,7 +327,7 @@ public class HDFSCSVInputFile implements InputFormat<CSVRecord,FileInputSplit> {
         }
 
         this.stream.readLine();
-        this.csvFileParser = new CSVParser(new InputStreamReader(this.stream), format);
+        this.csvFileParser = new CSVParser(new InputStreamReader(this.stream), format.getCsvFormat());
         this.csvIterator = csvFileParser.iterator();
     }
 
@@ -336,8 +337,11 @@ public class HDFSCSVInputFile implements InputFormat<CSVRecord,FileInputSplit> {
     }
 
     @Override
-    public CSVRecord nextRecord(CSVRecord reuse) throws IOException {
-        return csvIterator.next();
+    public Record nextRecord(Record reuse) throws IOException {
+        if(reuse == null) {
+            return Record.wrap(csvIterator.next(), format.getProjection());
+        }
+        return reuse.set(csvIterator.next(), format.getProjection());
     }
 
     public void close() throws IOException {
