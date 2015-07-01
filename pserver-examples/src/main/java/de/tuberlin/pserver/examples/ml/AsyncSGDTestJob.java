@@ -39,7 +39,7 @@ public final class AsyncSGDTestJob extends PServerJob {
 
         model.createModel(ctx);
 
-        dataManager.loadAsMatrix("datasets/sparse_dataset.csv");
+        dataManager.loadAsMatrix("datasets/sparse_dataset.csv", GenerateLocalTestData.ROWS_SPARSE_DATASET, GenerateLocalTestData.COLS_SPARSE_DATASET);
 
         gradientMtx = new MatrixBuilder()
                 .dimension(5, 1000000)

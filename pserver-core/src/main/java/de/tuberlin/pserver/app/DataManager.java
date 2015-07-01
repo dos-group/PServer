@@ -9,6 +9,10 @@ import de.tuberlin.pserver.app.dht.valuetypes.AbstractBufferValue;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
 import de.tuberlin.pserver.app.filesystem.FileSystemManager;
 import de.tuberlin.pserver.app.filesystem.record.IRecord;
+import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
+import de.tuberlin.pserver.app.partitioning.IMatrixPartitioner;
+import de.tuberlin.pserver.app.types.ImmutableMatrixEntry;
+import de.tuberlin.pserver.app.partitioning.MatrixByRowParitioner;
 import de.tuberlin.pserver.app.types.MObjectValue;
 import de.tuberlin.pserver.app.types.*;
 import de.tuberlin.pserver.core.config.IConfig;
@@ -19,15 +23,14 @@ import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
+import de.tuberlin.pserver.core.net.RPCManager;
 import de.tuberlin.pserver.math.MObject;
 import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.MatrixBuilder;
-import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -84,7 +87,7 @@ public class DataManager extends EventDispatcher {
 
     private final int instanceID;
 
-    private final List<FileDataIterator<? extends IRecord>> filesToLoad;
+    private final List<MatrixLoadTask> matrixLoadTasks;
 
     private final Map<UUID, List<Serializable>> resultObjects;
 
@@ -113,7 +116,7 @@ public class DataManager extends EventDispatcher {
         this.fileSystemManager  = fileSystemManager;
         this.dht                = Preconditions.checkNotNull(dht);
         this.instanceID         = infraManager.getInstanceID();
-        this.filesToLoad        = new ArrayList<>();
+        this.matrixLoadTasks    = new ArrayList<>();
         this.resultObjects      = new HashMap<>();
         this.contextResolver    = new ConcurrentHashMap<>();
 
@@ -127,8 +130,12 @@ public class DataManager extends EventDispatcher {
     // DATA LOADING
     // ---------------------------------------------------
 
-    public void loadAsMatrix(final String filePath) {
-        filesToLoad.add(createFileIterator(Preconditions.checkNotNull(filePath), null));
+    public void loadAsMatrix(final String filePath, long rows, long cols) {
+        loadAsMatrix(filePath, rows, cols, RecordFormat.DEFAULT, Matrix.Format.DENSE_MATRIX, Matrix.Layout.ROW_LAYOUT, new MatrixByRowParitioner(instanceID, instanceIDs.length));
+    }
+
+    public void loadAsMatrix(final String filePath, long rows, long cols, RecordFormat recordFormat, Matrix.Format matrixFormat, Matrix.Layout matrixLayout, IMatrixPartitioner matrixPartitioner) {
+        matrixLoadTasks.add(new MatrixLoadTask(filePath, recordFormat, rows, cols, matrixFormat, matrixLayout, matrixPartitioner));
     }
 
     // ---------------------------------------------------
@@ -372,54 +379,71 @@ public class DataManager extends EventDispatcher {
     // Private Methods.
     // ---------------------------------------------------
 
-    public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
-        return fileSystemManager != null ? fileSystemManager.createFileIterator(filePath, recordType) : null;
-    }
-
     private void loadFilesIntoDHT() {
-        for (final FileDataIterator<? extends IRecord> fileIterator : filesToLoad) {
-            double[] data = new double[0];
-            double[] currentSegment = new double[4096];
-            ReusableMatrixEntry reusable = new MutableMatrixEntry(0, 0, 0);
-            int rows = 0, cols = -1, localIndex = 0;
-            while (fileIterator.hasNext()) {
-
-                final IRecord record = fileIterator.next();
-
-                if (cols == -1)
-                    cols = record.size();
-                if (record.size() != cols)
-                    throw new IllegalStateException("cols must always have length: " + cols + " but it has record.length = " + record.size());
-
-                while(record.hasNext()) {
-                    if (localIndex == currentSegment.length - 1) {
-                        data = ArrayUtils.addAll(data, currentSegment);
-                        currentSegment = new double[4096];
-                        localIndex = 0;
-                    }
-                    MatrixEntry entry = record.next(reusable);
-                    currentSegment[localIndex] = entry.getValue();
-                    ++localIndex;
-                }
-
-                for (int i = 0; i < record.size(); ++i) {
-
-                }
-                ++rows;
-            }
-            if (localIndex > 0)
-                data = ArrayUtils.addAll(data, currentSegment); // TODO: We waste here a bit memory, if the last segment is not full...
-
-            final String filename = Paths.get(fileIterator.getFilePath()).getFileName().toString();
-
-            Matrix dataMatrix = new MatrixBuilder()
-                    .dimension(rows, cols)
-                    .format(Matrix.Format.DENSE_MATRIX)
-                    .layout(Matrix.Layout.ROW_LAYOUT)
-                    .data(data)
+        // prepare to read entries that belong to foreign matrix partitions
+        Map<Integer,List<MatrixEntry>> foreignEntries = null; // data structure to hold foreign entries
+        int foreignEntriesThreshold = 512; // threshold that indicates how many entries are gathered before sending
+        // iterate through load tasks
+        for(final MatrixLoadTask task : matrixLoadTasks) {
+            // preallocate local matrix partition TODO: will be used by multiple threads. hold global object wide data structures for this
+            Matrix.Dimension partitionDimension = task.matrixPartitioner.getPartitionedDimension(task.rows, task.cols);
+            Matrix matrix = new MatrixBuilder()
+                    //.dimension(partitionDimension.getRow(), partitionDimension.getCol())
+                    .dimension(task.rows, task.cols+1)
+                    .format(task.matrixFormat)
+                    .layout(task.matrixLayout)
                     .build();
-
-            putObject(filename, dataMatrix);
+            // iterate through records in file
+            FileDataIterator<? extends IRecord> fileIterator = task.fileIterator;
+            while (fileIterator.hasNext()) {
+                final IRecord record = fileIterator.next();
+                // iterate through entries in record
+                ReusableMatrixEntry reusable = new MutableMatrixEntry(0, 0, 0);
+                while(record.hasNext()) {
+                    MatrixEntry entry = record.next(reusable);
+                    // get the partition this record belongs to
+                    int targetPartition = task.matrixPartitioner.getPartitionOfEntry(entry);
+                    // if record belongs to own instance, set the value
+                    if(targetPartition == instanceID) {
+                        // this has to be thread safe!
+                        // incoming values from other instances may cause parallel set operations on the matrix
+                        //matrix.atomicSet(entry.getRow(), entry.getCol(), entry.getValue());
+                        matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
+                    }
+                    // otherwise append entry to foreign entries and send them depending on threshold
+                    else {
+                        List<MatrixEntry> foreignsOfTargetInstance = foreignEntries.get(targetPartition);
+                        foreignsOfTargetInstance.add(new ImmutableMatrixEntry(entry));
+                        if(foreignsOfTargetInstance.size() >= foreignEntriesThreshold) {
+                            // send them
+                        }
+                    } // </partition check>
+                } // </entries in record iteration
+            } // </records in file iteration>>
+            // finally put matrix in DHT
+            putObject(fileIterator.getFilePath(), matrix);
         }
     }
+
+    private class MatrixLoadTask {
+
+        final FileDataIterator fileIterator;
+        final RecordFormat recordFormat;
+        final long rows;
+        final long cols;
+        final Matrix.Format matrixFormat;
+        final Matrix.Layout matrixLayout;
+        final IMatrixPartitioner matrixPartitioner;
+
+        public MatrixLoadTask(String filePath, RecordFormat recordFormat, long rows, long cols, Matrix.Format matrixFormat, Matrix.Layout matrixLayout, IMatrixPartitioner matrixPartitioner) {
+            this.fileIterator = fileSystemManager.createFileIterator(filePath, recordFormat);
+            this.recordFormat = recordFormat;
+            this.rows = rows;
+            this.cols = cols;
+            this.matrixFormat = matrixFormat;
+            this.matrixLayout = matrixLayout;
+            this.matrixPartitioner = matrixPartitioner;
+        }
+    }
+
 }

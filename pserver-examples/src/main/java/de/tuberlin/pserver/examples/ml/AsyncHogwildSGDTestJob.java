@@ -41,7 +41,7 @@ public final class AsyncHogwildSGDTestJob extends PServerJob {
     @Override
     public void prologue() {
 
-        dataManager.loadAsMatrix("datasets/sparse_dataset.csv");
+        dataManager.loadAsMatrix("datasets/sparse_dataset.csv", GenerateLocalTestData.ROWS_SPARSE_DATASET, GenerateLocalTestData.COLS_SPARSE_DATASET);
 
         model.createModel(ctx);
     }

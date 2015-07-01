@@ -24,6 +24,29 @@ public interface Matrix extends MObject {
         COLUMN_LAYOUT
     }
 
+    public static class Dimension {
+
+        final long row;
+        final long col;
+
+        public Dimension(long row, long col) {
+            this.row = row;
+            this.col = col;
+        }
+
+        public long getRow() {
+            return row;
+        }
+
+        public long getCol() {
+            return col;
+        }
+
+        public Dimension create(long row, long col) {
+            return new Dimension(row, col);
+        }
+    }
+
     // ---------------------------------------------------
     // Inner Interfaces/Classes.
     // ---------------------------------------------------

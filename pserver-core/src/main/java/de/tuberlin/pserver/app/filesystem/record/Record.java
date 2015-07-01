@@ -2,10 +2,7 @@ package de.tuberlin.pserver.app.filesystem.record;
 
 import de.tuberlin.pserver.app.types.ImmutableMatrixEntry;
 import de.tuberlin.pserver.app.types.MatrixEntry;
-import de.tuberlin.pserver.app.types.MutableMatrixEntry;
 import de.tuberlin.pserver.app.types.ReusableMatrixEntry;
-
-import java.util.Iterator;
 
 /**
  * Wraps a {@link org.apache.commons.csv.CSVRecord} instance for compatibility with the generic {@link IRecord} interface.
@@ -14,16 +11,18 @@ public class Record implements IRecord {
 
     private int[] projection;
     private int currentIndex = 0;
+    private long row;
 
     private org.apache.commons.csv.CSVRecord delegate;
 
-    public Record(org.apache.commons.csv.CSVRecord delegate, int[] projection) {
+    public Record(org.apache.commons.csv.CSVRecord delegate, int[] projection, long row) {
         this.delegate = delegate;
         this.projection = projection;
+        this.row = row;
     }
 
-    public static Record wrap(org.apache.commons.csv.CSVRecord record, int[] projection) {
-        return new Record(record, projection);
+    public static Record wrap(org.apache.commons.csv.CSVRecord record, int[] projection, long row) {
+        return new Record(record, projection, row);
     }
 
     @Override
@@ -51,12 +50,13 @@ public class Record implements IRecord {
     }
 
     public MatrixEntry get(int i, ReusableMatrixEntry resuable) {
-        return resuable.set(-1, currentIndex, getValue(i));
+        return resuable.set(row, currentIndex, getValue(i));
     }
 
-    public Record set(org.apache.commons.csv.CSVRecord delegate, int[] projection) {
+    public Record set(org.apache.commons.csv.CSVRecord delegate, int[] projection, long row) {
         this.delegate = delegate;
         this.projection = projection;
+        this.row = row;
         return this;
     }
 

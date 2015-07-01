@@ -2,6 +2,7 @@ package de.tuberlin.pserver.math;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.math.stuff.Utils;
 
 public class MatrixBuilder {
 
@@ -65,8 +66,12 @@ public class MatrixBuilder {
                 else
                     throw new UnsupportedOperationException("");
             case DENSE_MATRIX:
-                if (mutable)
+                if (mutable) {
+                    if (data == null) {
+                        return new DMatrix(rows, cols, new double[Utils.toInt(rows * cols)], layout);
+                    }
                     return new DMatrix(rows, cols, data, layout);
+                }
                 else
                     throw new UnsupportedOperationException("");
         }

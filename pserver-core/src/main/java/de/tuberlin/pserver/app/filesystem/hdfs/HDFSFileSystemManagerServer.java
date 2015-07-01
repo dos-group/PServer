@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
 import de.tuberlin.pserver.app.filesystem.FileSystemManager;
 import de.tuberlin.pserver.app.filesystem.record.IRecord;
+import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
@@ -86,10 +87,10 @@ public final class HDFSFileSystemManagerServer implements FileSystemManager, Inp
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
+    public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath, final RecordFormat recordFormat) {
         HDFSInputFile inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
         if (inputFile == null) {
-            inputFile = new HDFSInputFile(config, netManager, filePath);
+            inputFile = new HDFSInputFile(config, netManager, filePath, recordFormat);
             final Configuration conf = new Configuration();
             conf.set("fs.defaultFS", config.getString("filesystem.hdfs.url"));
             inputFile.configure(conf);

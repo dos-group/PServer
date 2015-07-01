@@ -2,6 +2,7 @@ package de.tuberlin.pserver.examples.playground;
 
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.examples.ml.GenerateLocalTestData;
 import de.tuberlin.pserver.math.Matrix;
 
 import java.text.DecimalFormat;
@@ -15,7 +16,7 @@ public final class FileSystemTestJob extends PServerJob {
 
     @Override
     public void prologue() {
-        dataManager.loadAsMatrix("datasets/demo_dataset.csv");
+        dataManager.loadAsMatrix("datasets/demo_dataset.csv", GenerateLocalTestData.ROWS_DEMO_DATASET, GenerateLocalTestData.COLS_DEMO_DATASET);
     }
 
     @Override

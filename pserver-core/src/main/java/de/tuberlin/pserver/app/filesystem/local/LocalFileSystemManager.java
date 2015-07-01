@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
 import de.tuberlin.pserver.app.filesystem.FileSystemManager;
 import de.tuberlin.pserver.app.filesystem.record.IRecord;
+import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.net.NetEvents;
@@ -102,10 +103,10 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath, final Class<T> recordType) {
+    public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath, final RecordFormat recordFormat) {
         ILocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
         if (inputFile == null) {
-            inputFile = new LocalnputFile(filePath);
+            inputFile = new LocalnputFile(filePath, recordFormat);
             inputFileMap.put(filePath, inputFile);
             registeredIteratorMap.put(filePath, new ArrayList<>());
         }

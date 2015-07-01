@@ -171,11 +171,11 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
         if(!acceptFile(pathFile)) {
             throw new IOException("The given file does not pass the file-filter");
         }
-        if (pathFile.isDir()) {
+        if (pathFile.isDirectory()) {
             // input is directory. list all contained files
             final FileStatus[] dir = fs.listStatus(path);
             for (int i = 0; i < dir.length; i++) {
-                if (!dir[i].isDir() && acceptFile(dir[i])) {
+                if (!dir[i].isDirectory() && acceptFile(dir[i])) {
                     files.add(dir[i]);
                     totalLength += dir[i].getLen();
                 }
@@ -339,9 +339,9 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
     @Override
     public Record nextRecord(Record reuse) throws IOException {
         if(reuse == null) {
-            return Record.wrap(csvIterator.next(), format.getProjection());
+            return Record.wrap(csvIterator.next(), format.getProjection(), 0);
         }
-        return reuse.set(csvIterator.next(), format.getProjection());
+        return reuse.set(csvIterator.next(), format.getProjection(), 0);
     }
 
     public void close() throws IOException {

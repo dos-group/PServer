@@ -165,8 +165,7 @@ public class LocalnputFile implements ILocalInputFile<Record> {
         @Override
         public Record next() {
             final CSVRecord record = csvIterator.next();
-            ++currentLine;
-            return Record.wrap(record, format.getProjection());
+            return Record.wrap(record, format.getProjection(), currentLine++);
         }
 
         // ---------------------------------------------------
