@@ -10,6 +10,7 @@ import de.tuberlin.pserver.app.filesystem.FileDataIterator;
 import de.tuberlin.pserver.app.filesystem.FileSystemManager;
 import de.tuberlin.pserver.app.filesystem.record.IRecord;
 import de.tuberlin.pserver.app.types.MObjectValue;
+import de.tuberlin.pserver.app.types.*;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
@@ -379,6 +380,7 @@ public class DataManager extends EventDispatcher {
         for (final FileDataIterator<? extends IRecord> fileIterator : filesToLoad) {
             double[] data = new double[0];
             double[] currentSegment = new double[4096];
+            ReusableMatrixEntry reusable = new MutableMatrixEntry(0, 0, 0);
             int rows = 0, cols = -1, localIndex = 0;
             while (fileIterator.hasNext()) {
 
@@ -388,14 +390,20 @@ public class DataManager extends EventDispatcher {
                     cols = record.size();
                 if (record.size() != cols)
                     throw new IllegalStateException("cols must always have length: " + cols + " but it has record.length = " + record.size());
-                for (int i = 0; i < record.size(); ++i) {
+
+                while(record.hasNext()) {
                     if (localIndex == currentSegment.length - 1) {
                         data = ArrayUtils.addAll(data, currentSegment);
                         currentSegment = new double[4096];
                         localIndex = 0;
                     }
-                    currentSegment[localIndex] = record.get(i);
+                    MatrixEntry entry = record.next(reusable);
+                    currentSegment[localIndex] = entry.getValue();
                     ++localIndex;
+                }
+
+                for (int i = 0; i < record.size(); ++i) {
+
                 }
                 ++rows;
             }
