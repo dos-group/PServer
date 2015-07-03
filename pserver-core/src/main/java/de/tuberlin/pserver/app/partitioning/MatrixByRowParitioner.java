@@ -8,23 +8,27 @@ public class MatrixByRowParitioner implements IMatrixPartitioner {
 
     private final int instanceId;
     private final int numNodes;
+    private final long rows;
+    private final long cols;
 
-    public MatrixByRowParitioner(int instanceId, int numNodes) {
+    public MatrixByRowParitioner(int instanceId, int numNodes, long rows, long cols) {
         this.instanceId = instanceId;
         this.numNodes = numNodes;
+        this.rows = rows;
+        this.cols = cols;
     }
 
     @Override
     public int getPartitionOfEntry(MatrixEntry entry) {
-        return Utils.toInt(entry.getRow() % numNodes);
+        return Utils.toInt(entry.getRow() / (rows / numNodes));
     }
 
     @Override
-    public Matrix.Dimension getPartitionedDimension(long rows, long cols) {
+    public Matrix.PartitionShape getPartitionShape() {
         if(instanceId + 1 >= numNodes) {
-            return new Matrix.Dimension(rows / numNodes + rows % numNodes, cols);
+            return new Matrix.PartitionShape(rows / numNodes + rows % numNodes, cols);
         }
-        return new Matrix.Dimension(rows / numNodes, cols);
+        return new Matrix.PartitionShape(rows / numNodes, cols);
     }
 
 }

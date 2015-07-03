@@ -18,9 +18,16 @@ public class RecordFormat {
 
     private final int[] projection;
 
-    public RecordFormat(int[] projection, char delimiter, char recordSeparator) {
+    private IRecordFactory recordFactory;
+
+    public RecordFormat(int[] projection, char delimiter, char recordSeparator, IRecordFactory recordFactory) {
         this.projection = projection;
         this.csvFormat = CSVFormat.DEFAULT.withDelimiter(delimiter).withRecordSeparator(recordSeparator);
+        this.recordFactory = recordFactory;
+    }
+
+    public RecordFormat(int[] projection, char delimiter, char recordSeparator) {
+        this(projection, delimiter, recordSeparator, IRecordFactory.ROW_RECORD);
     }
 
     public RecordFormat(int[] projection, char delimiter) {
@@ -39,11 +46,20 @@ public class RecordFormat {
         this(DEFAULT_PROJECTION, DEFAULT_DELIMITER, DEFAULT_RECORD_SEPARATOR);
     }
 
+    public RecordFormat setRecordFactory(IRecordFactory recordFactory) {
+        this.recordFactory = recordFactory;
+        return this;
+    }
+
     public CSVFormat getCsvFormat() {
         return csvFormat;
     }
 
     public int[] getProjection() {
         return projection;
+    }
+
+    public IRecordFactory getRecordFactory() {
+        return recordFactory;
     }
 }

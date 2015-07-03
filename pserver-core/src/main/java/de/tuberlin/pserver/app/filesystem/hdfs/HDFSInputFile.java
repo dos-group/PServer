@@ -3,7 +3,7 @@ package de.tuberlin.pserver.app.filesystem.hdfs;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
-import de.tuberlin.pserver.app.filesystem.record.Record;
+import de.tuberlin.pserver.app.filesystem.record.IRecord;
 import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.net.NetManager;
@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 
-public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
+public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HDFSInputFile.class);
 
@@ -337,9 +337,9 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
     }
 
     @Override
-    public Record nextRecord(Record reuse) throws IOException {
+    public IRecord nextRecord(IRecord reuse) throws IOException {
         if(reuse == null) {
-            return Record.wrap(csvIterator.next(), format.getProjection(), 0);
+            return format.getRecordFactory().wrap(csvIterator.next(), format.getProjection(), 0);
         }
         return reuse.set(csvIterator.next(), format.getProjection(), 0);
     }
@@ -357,7 +357,7 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
                 "File Input (" + this.filePath.toString() + ')';
     }
 
-    public FileDataIterator<Record> iterator(final InputSplitProvider isp) {
+    public FileDataIterator<IRecord> iterator(final InputSplitProvider isp) {
         return new HDFSFileDataIterator(
                 config,
                 netManager.getMachineDescriptor(),

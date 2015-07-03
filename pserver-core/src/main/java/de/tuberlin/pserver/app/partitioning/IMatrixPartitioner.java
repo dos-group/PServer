@@ -5,8 +5,10 @@ import de.tuberlin.pserver.math.Matrix;
 
 public interface IMatrixPartitioner {
 
+    // TODO: find a unified way to pass information that are needed for partitioning
+
     public int getPartitionOfEntry(MatrixEntry entry);
 
-    public Matrix.Dimension getPartitionedDimension(long rows, long cols);
+    public Matrix.PartitionShape getPartitionShape();
 
 }

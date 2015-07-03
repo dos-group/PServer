@@ -3,7 +3,8 @@ package de.tuberlin.pserver.app.filesystem.local;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
-import de.tuberlin.pserver.app.filesystem.record.Record;
+import de.tuberlin.pserver.app.filesystem.record.IRecord;
+import de.tuberlin.pserver.app.filesystem.record.RowRecord;
 import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -16,7 +17,7 @@ import java.io.IOException;
 import java.io.LineNumberReader;
 import java.util.Iterator;
 
-public class LocalnputFile implements ILocalInputFile<Record> {
+public class LocalnputFile implements ILocalInputFile<IRecord> {
 
     // ---------------------------------------------------
     // Fields.
@@ -69,7 +70,7 @@ public class LocalnputFile implements ILocalInputFile<Record> {
     }
 
     @Override
-    public FileDataIterator<Record> iterator() { return new CSVFileDataIterator(csvFileSection); }
+    public FileDataIterator<IRecord> iterator() { return new CSVFileDataIterator(csvFileSection); }
 
     // ---------------------------------------------------
     // Private Methods.
@@ -108,7 +109,7 @@ public class LocalnputFile implements ILocalInputFile<Record> {
 
     // ---------------------------------------------------
 
-    private class CSVFileDataIterator implements FileDataIterator<Record> {
+    private class CSVFileDataIterator implements FileDataIterator<IRecord> {
 
         private final FileReader fileReader;
 
@@ -163,9 +164,9 @@ public class LocalnputFile implements ILocalInputFile<Record> {
         }
 
         @Override
-        public Record next() {
+        public IRecord next() {
             final CSVRecord record = csvIterator.next();
-            return Record.wrap(record, format.getProjection(), currentLine++);
+            return format.getRecordFactory().wrap(record, format.getProjection(), currentLine++);
         }
 
         // ---------------------------------------------------
@@ -186,8 +187,8 @@ public class LocalnputFile implements ILocalInputFile<Record> {
     public static void main(String[] args) {
         LocalnputFile file = new LocalnputFile("datasets/criteo_2.csv", new RecordFormat(new int[] {0,1,2, 3}, '\t', '\n'));
         file.computeLocalFileSection(1, 0);
-        Iterator<Record> iterator = file.iterator();
-        Record next;
+        Iterator<IRecord> iterator = file.iterator();
+        IRecord next;
         while(iterator.hasNext()) {
             next = iterator.next();
             StringBuilder builder = new StringBuilder("<");

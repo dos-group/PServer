@@ -6,7 +6,7 @@ package de.tuberlin.pserver.app.types;
  * This implementation is mutable and is useful in situations where an iteration over entries would cause multiple
  * unnecessary object instantiations.
  */
-public class MutableMatrixEntry implements ReusableMatrixEntry {
+public class MutableMatrixEntry extends AbstractMatrixEntry implements ReusableMatrixEntry {
 
     private long row;
 

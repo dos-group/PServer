@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.core.net;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.app.types.MatrixEntry;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.utils.GsonUtils;
 import io.netty.channel.Channel;
@@ -22,6 +23,8 @@ public final class NetEvents {
         public static final String IO_EVENT_RPC_CALLER_REQUEST = "req";
 
         public static final String IO_EVENT_RPC_CALLER_RESPONSE = "res";
+
+
     }
 
     // -----------------------------------------------------------------------------------------
@@ -106,4 +109,6 @@ public final class NetEvents {
             this.result = result;
         }
     }
+
+
 }

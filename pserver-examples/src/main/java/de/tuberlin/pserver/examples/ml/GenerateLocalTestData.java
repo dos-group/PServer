@@ -7,6 +7,9 @@ public class GenerateLocalTestData {
     public static final int ROWS_SPARSE_DATASET = 5;
     public static final int COLS_SPARSE_DATASET = 1000000;
 
+    public static final int ROWS_ROWCOLVAL_DATASET = 4;
+    public static final int COLS_ROWCOLVAL_DATASET = 4;
+
     public static final int ROWS_DEMO_DATASET = 50;
     public static final int COLS_DEMO_DATASET = 3;
 
@@ -14,7 +17,9 @@ public class GenerateLocalTestData {
 
         //DataGenerator.generateDatasetAndWriteToFile(ROWS_DEMO_DATASET, COLS_DEMO_DATASET, 42, "datasets/demo_dataset.csv");
 
-        DataGenerator.generateDatasetAndWriteToFile(ROWS_SPARSE_DATASET, COLS_SPARSE_DATASET, 42, "datasets/sparse_dataset.csv");
+        //DataGenerator.generateDatasetAndWriteToFile(ROWS_SPARSE_DATASET, COLS_SPARSE_DATASET-1, 42, "datasets/sparse_dataset.csv");
+
+        DataGenerator.generateRowColValuePerLineDatasetAndWriteToFile(ROWS_ROWCOLVAL_DATASET, COLS_ROWCOLVAL_DATASET, 42, "datasets/rowcolval_dataset.csv");
 
         /*double[] weights = DataGenerator.generateLinearData("datasets/demo_dataset.csv", ROWS_DEMO_DATASET, COLS_DEMO_DATASET, 5.0);
 

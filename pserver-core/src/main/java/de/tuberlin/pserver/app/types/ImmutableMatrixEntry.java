@@ -5,7 +5,7 @@ import de.tuberlin.pserver.app.types.MatrixEntry;
 /**
  * Created by fsander on 30.06.15.
  */
-public class ImmutableMatrixEntry implements MatrixEntry {
+public class ImmutableMatrixEntry extends AbstractMatrixEntry {
 
     private final long row;
     private final long col;

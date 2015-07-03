@@ -24,26 +24,46 @@ public interface Matrix extends MObject {
         COLUMN_LAYOUT
     }
 
-    public static class Dimension {
+    public static class PartitionShape {
 
-        final long row;
-        final long col;
+        final long rows;
+        final long cols;
+        final long rowOffset;
+        final long colOffset;
 
-        public Dimension(long row, long col) {
-            this.row = row;
-            this.col = col;
+        public PartitionShape(long rows, long cols) {
+            this(rows, cols, 0, 0);
         }
 
-        public long getRow() {
-            return row;
+        public PartitionShape(long rows, long cols, long rowOffset, long colOffset) {
+            this.rows = rows;
+            this.cols = cols;
+            this.rowOffset = rowOffset;
+            this.colOffset = colOffset;
         }
 
-        public long getCol() {
-            return col;
+        public long getRows() {
+            return rows;
         }
 
-        public Dimension create(long row, long col) {
-            return new Dimension(row, col);
+        public long getCols() {
+            return cols;
+        }
+
+        public long getRowOffset() {
+            return rowOffset;
+        }
+
+        public long getColOffset() {
+            return colOffset;
+        }
+
+        public PartitionShape create(long row, long col) {
+            return new PartitionShape(row, col);
+        }
+
+        public boolean contains(long row, long col) {
+            return row < rows && col < cols;
         }
     }
 
