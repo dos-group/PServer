@@ -6,15 +6,17 @@ import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.app.partitioning.MatrixByRowParitioner;
+import de.tuberlin.pserver.app.types.MatrixEntry;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.examples.ml.GenerateLocalTestData;
 import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.math.stuff.Utils;
 import de.tuberlin.pserver.ml.models.GeneralLinearModel;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.ml.optimization.SGD.SGDOptimizer;
 
-import java.io.Serializable;
+import java.io.*;
 import java.text.DecimalFormat;
 import java.util.List;
 
@@ -37,17 +39,42 @@ public final class ThreadedMatrixLoaderTestJob extends PServerJob {
 
     }
 
+    private boolean isOwnPartition(int row, int col) {
+        double numOfRowsPerInstance = (double) GenerateLocalTestData.ROWS_ROWCOLVAL_DATASET / GenerateLocalTestData.COLS_ROWCOLVAL_DATASET;
+        double partition = row / numOfRowsPerInstance;
+        return Utils.toInt((long) (partition % 5)) == ctx.instanceID;
+    }
+
     @Override
     public void compute() {
-        final Matrix data = dataManager.getObject("datasets/rowcolval_dataset.csv");
-        String out = "";
-        for(long i = 0; i < data.numRows(); i++) {
-            for(int j = 0; j < data.numCols(); j++) {
-                out += "("+i+","+j+","+data.get(i, j)+")";
+        System.out.println(ctx.instanceID);
+        final Matrix matrix = dataManager.getObject("datasets/rowcolval_dataset.csv");
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new FileReader("datasets/rowcolval_dataset.csv"));
+            String line = null;
+            while((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                int row = Integer.parseInt(parts[0]);
+                int col = Integer.parseInt(parts[1]);
+                double val = Double.parseDouble(parts[2]);
+                if(isOwnPartition(row, col)) {
+                    double matrixVal = matrix.get(row, col);
+                    assert(matrixVal == val);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        finally {
+            if(br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
-        System.out.println(Thread.currentThread().getName() + ":" + out);
-
     }
 
     // ---------------------------------------------------

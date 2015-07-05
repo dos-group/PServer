@@ -20,7 +20,9 @@ public class MatrixByRowParitioner implements IMatrixPartitioner {
 
     @Override
     public int getPartitionOfEntry(MatrixEntry entry) {
-        return Utils.toInt(entry.getRow() / (rows / numNodes));
+        double numOfRowsPerInstance = (double) rows / numNodes;
+        double partition = entry.getRow() / numOfRowsPerInstance;
+        return Utils.toInt((long) (partition % numNodes));
     }
 
     @Override

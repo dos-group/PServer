@@ -93,6 +93,8 @@ public class DataManager extends EventDispatcher {
 
     private final Map<String, AtomicInteger> fileLoadingSyncBarrier;
 
+    private CountDownLatch finishedLoadingLatch;
+
     private final Map<String, Matrix> loadingMatrices;
 
     private final Map<UUID, List<Serializable>> resultObjects;
@@ -402,9 +404,10 @@ public class DataManager extends EventDispatcher {
     // ---------------------------------------------------
 
     private void loadFilesIntoDHT() {
+        finishedLoadingLatch = new CountDownLatch(matrixLoadTasks.size());
         // prepare to read entries that belong to foreign matrix partitions
         Map<Integer,List<MatrixEntry>> foreignEntries = new HashMap<Integer,List<MatrixEntry>>(); // data structure to hold foreign entries
-        int foreignEntriesThreshold = 1; // threshold that indicates how many entries are gathered before sending
+        int foreignEntriesThreshold = 2048; // threshold that indicates how many entries are gathered before sending
         // iterate through load tasks
         for(final MatrixLoadTask task : matrixLoadTasks.values()) {
             // preallocate local matrix partition
@@ -444,6 +447,9 @@ public class DataManager extends EventDispatcher {
             netManager.broadcastEvent(new FinishedLoadingFileEvent(fileIterator.getFilePath()));
             instanceFinishedProcessingSplit(fileIterator.getFilePath());
         }
+        try {
+            finishedLoadingLatch.await();
+        } catch (InterruptedException e) { }
     }
 
     /**
@@ -466,6 +472,7 @@ public class DataManager extends EventDispatcher {
             }
             synchronized (matrix) {
                 putObject(name, matrix);
+                finishedLoadingLatch.countDown();
             }
         }
     }

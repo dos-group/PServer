@@ -354,17 +354,22 @@ public final class DataGenerator {
             trainingDataFW = new FileWriter(fileName);
             trainingDataCSVPrinter = new CSVPrinter(trainingDataFW, csvFileFormat);
 
-            final List<Object[]> data = new ArrayList<Object[]>();
+            //final List<Object[]> data = new ArrayList<Object[]>();
+            Object[] reusable = new Object[3];
             for (int i = 0; i < numExamples; ++i) {
                 for (int j = 0; j < numFeatures; ++j) {
                     final double value = rand.nextGaussian();
-                    data.add(new Object[] {i, j, value});
+                    //data.add(new Object[] {i, j, value});
+                    reusable[0] = i;
+                    reusable[1] = j;
+                    reusable[2] = value;
+                    trainingDataCSVPrinter.printRecord(reusable);
                 }
             }
-            Collections.shuffle(data);
-            for(Object[] point : data) {
-                trainingDataCSVPrinter.printRecord(point);
-            }
+            //Collections.shuffle(data);
+            //for(Object[] point : data) {
+                //trainingDataCSVPrinter.printRecord(point);
+            //}
 
         } catch (Exception e) {
             throw new IllegalStateException(e);
