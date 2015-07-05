@@ -128,21 +128,16 @@ public class DataManager extends EventDispatcher {
         this.resultObjects      = new HashMap<>();
         this.contextResolver    = new ConcurrentHashMap<>();
 
-        fileLoadingSyncBarrier  = new HashMap<String, AtomicInteger>();
+        fileLoadingSyncBarrier  = new HashMap<>();
         this.bspSyncBarrier     = new CountDownLatch(infraManager.getMachines().size());
 
-        loadingMatrices         = new HashMap<String, Matrix>();
+        loadingMatrices         = new HashMap<>();
 
         this.netManager.addEventListener(BSP_SYNC_BARRIER_EVENT, event -> bspSyncBarrier.countDown());
         this.netManager.addEventListener(Events.MATRIX_ENTRY_PARTITION_EVENT, new MatrixEntryPartitionEventHandler());
         this.netManager.addEventListener(Events.FINISHED_LOADING_FILE_EVENT, event -> {
             FinishedLoadingFileEvent e = Preconditions.checkNotNull((FinishedLoadingFileEvent) event);
-            synchronized(fileLoadingSyncBarrier) {
-                int counter = fileLoadingSyncBarrier.get(e.getName()).decrementAndGet();
-                if(counter <= 0) {
-                    finishLoadingFile(e.getName());
-                }
-            }
+            instanceFinishedProcessingSplit(e.getName());
         });
 
         this.instanceIDs = IntStream.iterate(0, x -> x + 1).limit(infraManager.getMachines().size()).toArray();
@@ -427,9 +422,7 @@ public class DataManager extends EventDispatcher {
                         int targetPartition = task.matrixPartitioner.getPartitionOfEntry(entry);
                         // if record belongs to own instance, set the value
                         if (targetPartition == instanceID) {
-                            // this has to be thread safe!
-                            // incoming values from other instances may cause parallel set operations on the matrix
-                            //matrix.atomicSet(entry.getRows(), entry.getCols(), entry.getValue());
+                            // set entry
                             matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
                         }
                         // otherwise append entry to foreign entries and send them depending on threshold
@@ -449,30 +442,39 @@ public class DataManager extends EventDispatcher {
                 sendPartition(map.getKey(), map.getValue(), task);
             }
             netManager.broadcastEvent(new FinishedLoadingFileEvent(fileIterator.getFilePath()));
-            synchronized(fileLoadingSyncBarrier) {
-                int counter = fileLoadingSyncBarrier.get(fileIterator.getFilePath()).decrementAndGet();
-                if(counter <= 0) {
-                    finishLoadingFile(fileIterator.getFilePath());
-                }
-            }
+            instanceFinishedProcessingSplit(fileIterator.getFilePath());
         }
     }
 
-    private void finishLoadingFile(String name) {
-        // is it possible that a FinishedLoading event overtakes a SendPartition event?
-        // this assumes it is not:
-        Matrix matrix;
-        synchronized(loadingMatrices) {
-            matrix = Preconditions.checkNotNull(loadingMatrices.get(name));
+    /**
+     * Is called whenever an instance finished processing an input split. This is triggered either by reaching the end
+     * of the own input split or by receiving a @link FinishedLoadingFileEvent. If all instances finished processing,
+     * the matrix can be put into the DHT.
+     * @param name
+     */
+    private void instanceFinishedProcessingSplit(String name) {
+        int counter;
+        synchronized(fileLoadingSyncBarrier) {
+            counter = fileLoadingSyncBarrier.get(name).decrementAndGet();
         }
-        putObject(name, matrix);
+        if(counter <= 0) {
+            // is it possible that a FinishedLoading event overtakes a SendPartition event?
+            // this assumes it is not:
+            Matrix matrix;
+            synchronized(loadingMatrices) {
+                matrix = Preconditions.checkNotNull(loadingMatrices.get(name));
+            }
+            synchronized (matrix) {
+                putObject(name, matrix);
+            }
+        }
     }
 
     private List<MatrixEntry> getSavely(Map<Integer, List<MatrixEntry>> foreignEntries, int partitionId, int threshold) {
         List<MatrixEntry> result = foreignEntries.get(partitionId);
         // if list does not exist yet, create and put it into map
         if(result == null) {
-            result = new ArrayList<MatrixEntry>(threshold);
+            result = new ArrayList<>(threshold);
             foreignEntries.put(partitionId, result);
         }
         return result;

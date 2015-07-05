@@ -9,32 +9,32 @@ public class ImmutableMatrixEntry extends AbstractMatrixEntry {
 
     private final long row;
     private final long col;
-    private final double values;
+    private final double value;
 
     public ImmutableMatrixEntry(MatrixEntry entry) {
         this.row = entry.getRow();
         this.col = entry.getCol();
-        this.values = entry.getValue();
+        this.value = entry.getValue();
     }
 
-    public ImmutableMatrixEntry(long row, long col, double values) {
+    public ImmutableMatrixEntry(long row, long col, double value) {
         this.row = row;
         this.col = col;
-        this.values = values;
+        this.value = value;
     }
 
     @Override
     public long getRow() {
-        return 0;
+        return row;
     }
 
     @Override
     public long getCol() {
-        return 0;
+        return col;
     }
 
     @Override
     public double getValue() {
-        return 0;
+        return value;
     }
 }
