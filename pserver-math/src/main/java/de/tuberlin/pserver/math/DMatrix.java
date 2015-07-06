@@ -40,7 +40,7 @@ public class DMatrix extends AbstractMatrix implements Matrix, Serializable {
         public RowIterator(final DMatrix v, final int startRow, final int endRow) {
             this.self = v;
             Preconditions.checkArgument(startRow >= 0 && startRow < self.numRows());
-            Preconditions.checkArgument(endRow > startRow && endRow < self.numRows());
+//            Preconditions.checkArgument(endRow > startRow && endRow < self.numRows());
             this.start = startRow * (int)self.cols;
             this.end = endRow * (int)self.cols;
             this.globalRowIndex = this.start - (int)-self.cols;

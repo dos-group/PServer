@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.examples.ml;
 
 import com.google.common.collect.Lists;
+import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.math.Matrix;
@@ -22,13 +23,19 @@ public final class AsyncSGDTestJob extends PServerJob {
     // Fields.
     // ---------------------------------------------------
 
-    private final Observer observer = (epoch, model, gradientSum) -> {
-
+    private final DataManager.Merger<Vector> merger = (l, r) -> {
+        for (int j = 0; j < l.length(); ++j) {
+            double nv = 0.0;
+            for (final Vector v : r)
+                nv += v.get(j);
+            l.set(j, (nv / r.size()));
+        }
     };
 
-    private GeneralLinearModel model = new GeneralLinearModel("model1", 15);
+    private final Observer observer = (epoch, weights, gradientSum) ->
+            dataManager.pullMerge(weights, merger);
 
-    private Matrix gradientMtx;
+    private GeneralLinearModel model = new GeneralLinearModel("model1", 15);
 
     // ---------------------------------------------------
     // Public Methods.
@@ -39,28 +46,20 @@ public final class AsyncSGDTestJob extends PServerJob {
 
         model.createModel(ctx);
 
-        dataManager.loadAsMatrix("datasets/sparse_dataset.csv");
-
-        gradientMtx = new MatrixBuilder()
-                .dimension(5, 1000000)
-                .format(Matrix.Format.SPARSE_MATRIX)
-                .layout(Matrix.Layout.ROW_LAYOUT)
-                .build();
-
-                //new SMatrix(5, 1000000, Matrix.MemoryLayout.ROW_LAYOUT);
+        dataManager.loadAsMatrix("datasets/demo_dataset.csv");
     }
 
     @Override
     public void compute() {
 
-        final Matrix trainingData = dataManager.getObject("sparse_dataset.csv");
+        final Matrix trainingData = dataManager.getObject("demo_dataset.csv");
 
         final PredictionFunction predictionFunction = new PredictionFunction.LinearPredictionFunction();
 
         final PartialLossFunction partialLossFunction = new PartialLossFunction.SquareLoss();
 
         final Optimizer optimizer = new SGDOptimizer(ctx, SGDOptimizer.TYPE.SGD_SIMPLE, false)
-                .setNumberOfIterations(150000)
+                .setNumberOfIterations(200)
                 .setLearningRate(0.0005)
                 .setLossFunction(new LossFunction.GenericLossFunction(predictionFunction, partialLossFunction))
                 .setGradientStepFunction(new GradientStepFunction.SimpleGradientStep())

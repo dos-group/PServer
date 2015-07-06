@@ -284,8 +284,8 @@ public class DataManager extends EventDispatcher {
 
         final Value[] values = pullFrom(name, instanceIDs);
         if (values.length > 0) {
-            if (values.getClass().getComponentType() != dstObj.getClass())
-                throw new IllegalStateException();
+            //if (values.getClass().getComponentType() != dstObj.getClass())
+            //    throw new IllegalStateException();
             final List<Value> valueList = Arrays.asList(values);
             Collections.sort(valueList,
                     (Value o1, Value o2) -> ((Integer)o1.getValueMetadata()).compareTo(((Integer)o2.getValueMetadata())));

@@ -135,6 +135,11 @@ public class SGDOptimizer implements Optimizer {
     }
 
     @Override
+    public Vector optimize(GeneralLinearModel model, Vector example) {
+        return null;
+    }
+
+    @Override
     public void register() {
         ctx.executionManager.registerAlgorithm(this.getClass(), state);
     }

@@ -2,6 +2,7 @@ package de.tuberlin.pserver.ml.optimization.ADMM;
 
 
 import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.Vector;
 import de.tuberlin.pserver.ml.models.GeneralLinearModel;
 import de.tuberlin.pserver.ml.optimization.Optimizer;
 import org.slf4j.Logger;
@@ -32,12 +33,15 @@ public class ADMMOptimizer implements Optimizer {
     }
 
     @Override
-    public void register() {
+    public Vector optimize(GeneralLinearModel model, Vector example) {
+        return null;
+    }
 
+    @Override
+    public void register() {
     }
 
     @Override
     public void unregister() {
-
     }
 }

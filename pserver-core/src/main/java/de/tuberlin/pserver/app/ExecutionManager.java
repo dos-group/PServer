@@ -19,6 +19,8 @@ public class ExecutionManager {
 
         public final int threadID;
 
+        //public final PServerJob instance;
+
         public final Class<?> exeClass;
 
         public final Object stateObj;

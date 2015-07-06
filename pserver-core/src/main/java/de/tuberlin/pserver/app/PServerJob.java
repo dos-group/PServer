@@ -1,13 +1,14 @@
 package de.tuberlin.pserver.app;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.core.events.EventDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.Arrays;
 
-public abstract class PServerJob {
+public abstract class PServerJob extends EventDispatcher {
 
     // ---------------------------------------------------
     // Fields.
@@ -18,6 +19,14 @@ public abstract class PServerJob {
     protected PServerContext ctx;
 
     protected DataManager dataManager;
+
+    // ---------------------------------------------------
+    // Constructors.
+    // ---------------------------------------------------
+
+    public PServerJob() {
+        super(true);
+    }
 
     // ---------------------------------------------------
     // Public Methods.
