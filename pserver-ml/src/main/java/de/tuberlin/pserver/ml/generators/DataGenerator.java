@@ -10,6 +10,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -333,5 +334,57 @@ public final class DataGenerator {
             }
         }
         return weights.toArray();
+    }
+
+    public static void generateRowColValuePerLineDatasetAndWriteToFile(final int numExamples,
+                                                                       final int numFeatures,
+                                                                       final long seed,
+                                                                       final String fileName) {
+
+        final Random rand = new Random();
+        rand.setSeed(seed);
+
+        FileWriter parameterFW              = null;
+        CSVPrinter parameterCSVPrinter      = null;
+        FileWriter trainingDataFW           = null;
+        CSVPrinter trainingDataCSVPrinter   = null;
+        final CSVFormat csvFileFormat = CSVFormat.DEFAULT.withRecordSeparator("\n");
+
+        try {
+            trainingDataFW = new FileWriter(fileName);
+            trainingDataCSVPrinter = new CSVPrinter(trainingDataFW, csvFileFormat);
+
+            //final List<Object[]> data = new ArrayList<Object[]>();
+            Object[] reusable = new Object[3];
+            for (int i = 0; i < numExamples; ++i) {
+                for (int j = 0; j < numFeatures; ++j) {
+                    final double value = rand.nextGaussian();
+                    //data.add(new Object[] {i, j, value});
+                    reusable[0] = i;
+                    reusable[1] = j;
+                    reusable[2] = value;
+                    trainingDataCSVPrinter.printRecord(reusable);
+                }
+            }
+            //Collections.shuffle(data);
+            //for(Object[] point : data) {
+                //trainingDataCSVPrinter.printRecord(point);
+            //}
+
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            try {
+                if (trainingDataFW != null) {
+                    trainingDataFW.flush();
+                    trainingDataFW.close();
+                }
+                if (trainingDataCSVPrinter != null)
+                    trainingDataCSVPrinter.close();
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+
     }
 }

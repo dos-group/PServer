@@ -49,11 +49,13 @@ public class IterativeProgramSGD extends IterativeProgram {
 
         model.createModel(ctx);
 
-        dataManager.loadAsMatrix("datasets/demo_dataset.csv");
+        dataManager.loadAsMatrix("datasets/sparse_dataset.csv", GenerateLocalTestData.ROWS_SPARSE_DATASET, GenerateLocalTestData.COLS_SPARSE_DATASET);
     }
 
     @Override
     public void iterate() {
+
+        // TODO: implement optimize call on a single sample.
 
     }
 }

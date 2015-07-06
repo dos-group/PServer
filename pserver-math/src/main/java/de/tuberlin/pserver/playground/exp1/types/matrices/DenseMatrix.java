@@ -62,7 +62,7 @@ public class DenseMatrix /*extends ByteBufferValue implements Matrix*/ {
     public TypedBuffer getBuffer() { return (TypedBuffer)buffer; }
 
     @Override
-    public byte[] getRow(final long row) {
+    public byte[] getRows(final long row) {
         switch (layout) {
             case ROW_LAYOUT:
                 return typedBuffer.extractElementSequenceAsByteArray(cols * (int) row, cols);
@@ -93,7 +93,7 @@ public class DenseMatrix /*extends ByteBufferValue implements Matrix*/ {
     }
 
     public DenseVectorOld getRowAsDenseVector(final int row) {
-        return new DenseVectorOld(getRow(row), elementTypeInfo);
+        return new DenseVectorOld(getRows(row), elementTypeInfo);
     }
 
     public DenseVectorOld getColumnAsDenseVector(final int col) {

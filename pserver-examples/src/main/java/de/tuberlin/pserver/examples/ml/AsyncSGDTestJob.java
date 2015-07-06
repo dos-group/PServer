@@ -35,7 +35,7 @@ public final class AsyncSGDTestJob extends PServerJob {
     private final Observer observer = (epoch, weights, gradientSum) ->
             dataManager.pullMerge(weights, merger);
 
-    private GeneralLinearModel model = new GeneralLinearModel("model1", 15);
+    private GeneralLinearModel model = new GeneralLinearModel("model1", GenerateLocalTestData.COLS_DEMO_DATASET - 1);
 
     // ---------------------------------------------------
     // Public Methods.
@@ -46,21 +46,23 @@ public final class AsyncSGDTestJob extends PServerJob {
 
         model.createModel(ctx);
 
-        dataManager.loadAsMatrix("datasets/demo_dataset.csv");
+        dataManager.loadAsMatrix("datasets/demo_dataset.csv", GenerateLocalTestData.ROWS_DEMO_DATASET, GenerateLocalTestData.COLS_DEMO_DATASET);
     }
 
     @Override
     public void compute() {
 
-        final Matrix trainingData = dataManager.getObject("demo_dataset.csv");
+        final Matrix trainingData = dataManager.getObject("datasets/demo_dataset.csv");
+
+        final Matrix.RowIterator iterator = trainingData.rowIterator();
 
         final PredictionFunction predictionFunction = new PredictionFunction.LinearPredictionFunction();
 
         final PartialLossFunction partialLossFunction = new PartialLossFunction.SquareLoss();
 
         final Optimizer optimizer = new SGDOptimizer(ctx, SGDOptimizer.TYPE.SGD_SIMPLE, false)
-                .setNumberOfIterations(200)
-                .setLearningRate(0.0005)
+                .setNumberOfIterations(300)
+                .setLearningRate(0.005)
                 .setLossFunction(new LossFunction.GenericLossFunction(predictionFunction, partialLossFunction))
                 .setGradientStepFunction(new GradientStepFunction.SimpleGradientStep())
                 .setLearningRateDecayFunction(null)
@@ -77,7 +79,7 @@ public final class AsyncSGDTestJob extends PServerJob {
     // Private Methods.
     // ---------------------------------------------------
 
-    private List<Pair<Integer,Double>> gradientUpdate(final Vector gradient, final Vector gradientSums, final double updateThreshold) {
+    /*private List<Pair<Integer,Double>> gradientUpdate(final Vector gradient, final Vector gradientSums, final double updateThreshold) {
         final List<Pair<Integer,Double>> gradientUpdates = new ArrayList<>();
         for (int i = 0; i < gradient.length(); ++i) {
             boolean updatedGradient = Math.abs((gradientSums.get(i) - gradient.get(i)) / gradient.get(i)) > updateThreshold;
@@ -88,8 +90,7 @@ public final class AsyncSGDTestJob extends PServerJob {
                 gradientSums.set(i, gradientSums.get(i) + gradient.get(i));
         }
         return gradientUpdates;
-    }
-
+    }*/
 
     // ---------------------------------------------------
     // Entry Point.

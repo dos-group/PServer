@@ -17,13 +17,13 @@ public class DMatrixTests {
         double[] dataColumnLayout = matColumnLayout.toArray();
         for(int i = 0; i < rows; i++) {
             for(int j = 0; j < cols; j++) {
-                // row layout: [ < #cols elements ... > < #cols elements ... > ... ]
-                //               ^   first row  ^       ^  second row  ^
-                //               ^ row * numCols + col
+                // rows layout: [ < #cols elements ... > < #cols elements ... > ... ]
+                //               ^   first rows  ^       ^  second rows  ^
+                //               ^ rows * numCols + cols
                 assert(matRowLayout.get(i, j) == dataRowLayout[i * cols + j]);
-                // col layout: [ < #rows elements ... > < #rows elements ... > ... ]
-                //               ^   first col  ^       ^  second col  ^
-                //               ^ col * numRows + row
+                // cols layout: [ < #rows elements ... > < #rows elements ... > ... ]
+                //               ^   first cols  ^       ^  second cols  ^
+                //               ^ cols * numRows + rows
                 assert(matColumnLayout.get(i, j) == dataColumnLayout[j * rows + i]);
             }
         }
@@ -48,13 +48,13 @@ public class DMatrixTests {
         Matrix matColumnLayout = MatrixGenerator.RandomDMatrix(rows, cols, Matrix.Layout.COLUMN_LAYOUT);
         double[] dataColumnLayout = matColumnLayout.toArray();
         for(int i = 0; i < rows; i++) {
-            // naive case: get rows from row-layout
+            // naive case: get rows from rows-layout
             double[] rowData = new double[cols];
             System.arraycopy(dataRowLayout, i * cols, rowData, 0, cols);
             Vector rowVec = matRowLayout.rowAsVector(i);
             assert(rowVec.length() == cols);
             assert(java.util.Arrays.equals(rowVec.toArray(), rowData));
-            // more difficult case: get rows from col-layout
+            // more difficult case: get rows from cols-layout
             Vector rowVecFromColLayout = matColumnLayout.rowAsVector(i);
             assert(rowVecFromColLayout.length() == cols);
             for(int j = 0; j < cols; j++) {
@@ -62,13 +62,13 @@ public class DMatrixTests {
             }
         }
         for(int i = 0; i < cols; i++) {
-            // naive case: get cols from col-layout
+            // naive case: get cols from cols-layout
             double[] colData = new double[rows];
             System.arraycopy(dataColumnLayout, i * rows, colData, 0, rows);
             Vector colVec = matColumnLayout.colAsVector(i);
             assert(colVec.length() == rows);
             assert(java.util.Arrays.equals(colVec.toArray(), colData));
-            // more difficult case: get rows from col-layout
+            // more difficult case: get rows from cols-layout
             Vector colVecFromRowLayout = matRowLayout.colAsVector(i);
             assert(colVecFromRowLayout.length() == rows);
             for(int j = 0; j < rows; j++) {

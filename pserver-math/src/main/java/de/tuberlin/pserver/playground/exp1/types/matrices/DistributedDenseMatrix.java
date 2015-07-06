@@ -132,7 +132,7 @@ public final class DistributedDenseMatrix /*implements Matrix*/ {
     public TypedBuffer getBuffer() { return null; }
 
     @Override
-    public byte[] getRow(final long row) { throw new NotImplementedException(); }
+    public byte[] getRows(final long row) { throw new NotImplementedException(); }
 
     @Override
     public byte[] getColumn(final long col) { throw new NotImplementedException(); }

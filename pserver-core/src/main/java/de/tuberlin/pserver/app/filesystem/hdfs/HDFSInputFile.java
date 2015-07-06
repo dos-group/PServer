@@ -3,7 +3,7 @@ package de.tuberlin.pserver.app.filesystem.hdfs;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.filesystem.FileDataIterator;
-import de.tuberlin.pserver.app.filesystem.record.Record;
+import de.tuberlin.pserver.app.filesystem.record.IRecord;
 import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.net.NetManager;
@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 
-public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
+public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HDFSInputFile.class);
 
@@ -171,11 +171,11 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
         if(!acceptFile(pathFile)) {
             throw new IOException("The given file does not pass the file-filter");
         }
-        if (pathFile.isDir()) {
+        if (pathFile.isDirectory()) {
             // input is directory. list all contained files
             final FileStatus[] dir = fs.listStatus(path);
             for (int i = 0; i < dir.length; i++) {
-                if (!dir[i].isDir() && acceptFile(dir[i])) {
+                if (!dir[i].isDirectory() && acceptFile(dir[i])) {
                     files.add(dir[i]);
                     totalLength += dir[i].getLen();
                 }
@@ -337,11 +337,11 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
     }
 
     @Override
-    public Record nextRecord(Record reuse) throws IOException {
+    public IRecord nextRecord(IRecord reuse) throws IOException {
         if(reuse == null) {
-            return Record.wrap(csvIterator.next(), format.getProjection());
+            return format.getRecordFactory().wrap(csvIterator.next(), format.getProjection(), 0);
         }
-        return reuse.set(csvIterator.next(), format.getProjection());
+        return reuse.set(csvIterator.next(), format.getProjection(), 0);
     }
 
     public void close() throws IOException {
@@ -357,7 +357,7 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
                 "File Input (" + this.filePath.toString() + ')';
     }
 
-    public FileDataIterator<Record> iterator(final InputSplitProvider isp) {
+    public FileDataIterator<IRecord> iterator(final InputSplitProvider isp) {
         return new HDFSFileDataIterator(
                 config,
                 netManager.getMachineDescriptor(),
