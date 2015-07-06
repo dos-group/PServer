@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.math;
 
 
+import de.tuberlin.pserver.math.stuff.Utils;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.util.HashMap;
@@ -12,7 +13,7 @@ public class SMatrix2 extends AbstractMatrix {
     // Inner Classes.
     // ---------------------------------------------------
 
-    private static final class MtxPos {
+    public static final class MtxPos {
 
         public final long row;
 
@@ -92,12 +93,12 @@ public class SMatrix2 extends AbstractMatrix {
 
     @Override
     public RowIterator rowIterator() {
-        return null;
+        return new SMatrix2RowIterator(this);
     }
 
     @Override
     public RowIterator rowIterator(int startRow, int endRow) {
-        return null;
+        return new SMatrix2RowIterator(this, startRow, endRow);
     }
 
     @Override
@@ -204,4 +205,35 @@ public class SMatrix2 extends AbstractMatrix {
     public Matrix copy() {
         return null;
     }
+
+    public static class SMatrix2RowIterator extends AbstractRowIterator {
+
+        public SMatrix2RowIterator(AbstractMatrix mat) {
+            super(mat);
+        }
+
+        public SMatrix2RowIterator(AbstractMatrix mat, int startRow, int endRow) {
+            super(mat, startRow, endRow);
+        }
+
+        @Override
+        public Vector getAsVector() {
+            return getAsVector(0, Utils.toInt(numCols()));
+        }
+
+        @Override
+        public Vector getAsVector(int from, int size) {
+            System.out.println("curRow:" + currentRow);
+            if(from < 0 || size > numCols()) {
+                throw new IllegalArgumentException();
+            }
+            DVector rowVec = new DVector(size, Vector.Layout.ROW_LAYOUT);
+            for(long col = from; col < size; col++) {
+                double val = target.get(currentRow, col);
+                rowVec.set(col, val);
+            }
+            return rowVec;
+        }
+    }
+
 }

@@ -3,6 +3,7 @@ package de.tuberlin.pserver.math;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.stuff.*;
 
+import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -92,24 +93,38 @@ public abstract class AbstractMatrix implements Matrix {
 
         protected final int startRow;
 
-        protected final long endRow;
+        protected final int endRow;
+
+        protected int numFetched;
+
+        protected Random rand = new Random();
 
         public AbstractRowIterator(final AbstractMatrix mat) { this(mat, 0, Utils.toInt(Preconditions.checkNotNull(mat).numRows()) - 1); }
         public AbstractRowIterator(final AbstractMatrix mat, final int startRow, final int endRow) {
             this.target = mat;
             Preconditions.checkArgument(startRow >= 0 && startRow < target.numRows());
             Preconditions.checkArgument(endRow > startRow && endRow < target.numRows());
-            this.startRow = startRow * Utils.toInt(target.cols);
-            this.endRow = endRow * target.cols;
-            this.currentRow = this.startRow;
+            this.startRow = startRow;
+            this.endRow = endRow;
             reset();
         }
 
         @Override
-        public boolean hasNextRow() { return currentRow < endRow; }
+        public boolean hasNextRow() {
+            return numFetched < (endRow - startRow + 1);
+        }
 
         @Override
-        public void nextRow() { currentRow++; }
+        public void nextRow() {
+            numFetched++;
+            currentRow++;
+        }
+
+        @Override
+        public void nextRandomRow() {
+            numFetched++;
+            currentRow = startRow + rand.nextInt(endRow+1);
+        }
 
         @Override
         public double getValueOfColumn(final int col) { return target.get(currentRow, col); }
@@ -130,7 +145,10 @@ public abstract class AbstractMatrix implements Matrix {
         public abstract Vector getAsVector(int from, int size);
 
         @Override
-        public void reset() { currentRow = startRow; }
+        public void reset() {
+            currentRow = startRow - 1;
+            numFetched = 0;
+        }
 
         @Override
         public long numRows() { return target.rows; }
