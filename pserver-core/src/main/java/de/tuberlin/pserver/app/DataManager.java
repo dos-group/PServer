@@ -457,7 +457,9 @@ public class DataManager extends EventDispatcher {
         }
         try {
             finishedLoadingLatch.await();
-        } catch (InterruptedException e) { }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
