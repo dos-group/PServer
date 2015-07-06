@@ -7,7 +7,7 @@ public class GenerateLocalTestData {
     public static final int ROWS_SPARSE_DATASET = 5;
     public static final int COLS_SPARSE_DATASET = 1000000;
 
-    public static final int ROWS_ROWCOLVAL_DATASET = 100000;
+    public static final int ROWS_ROWCOLVAL_DATASET = 10000;
     public static final int COLS_ROWCOLVAL_DATASET = 400;
 
     public static final int ROWS_DEMO_DATASET = 50;

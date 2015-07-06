@@ -22,6 +22,7 @@ import java.util.List;
 
 public final class ThreadedMatrixLoaderTestJob extends PServerJob {
 
+    private static final int NUM_NODES = 4;
 
     // ---------------------------------------------------
     // Public Methods.
@@ -39,15 +40,14 @@ public final class ThreadedMatrixLoaderTestJob extends PServerJob {
 
     }
 
-    private boolean isOwnPartition(int row, int col) {
-        double numOfRowsPerInstance = (double) GenerateLocalTestData.ROWS_ROWCOLVAL_DATASET / GenerateLocalTestData.COLS_ROWCOLVAL_DATASET;
+    private boolean isOwnPartition(int row, int col, int numNodes) {
+        double numOfRowsPerInstance = (double) GenerateLocalTestData.ROWS_ROWCOLVAL_DATASET / NUM_NODES;
         double partition = row / numOfRowsPerInstance;
-        return Utils.toInt((long) (partition % 5)) == ctx.instanceID;
+        return Utils.toInt((long) (partition % NUM_NODES)) == ctx.instanceID;
     }
 
     @Override
     public void compute() {
-        System.out.println(ctx.instanceID);
         final Matrix matrix = dataManager.getObject("datasets/rowcolval_dataset.csv");
         BufferedReader br = null;
         try {
@@ -58,8 +58,12 @@ public final class ThreadedMatrixLoaderTestJob extends PServerJob {
                 int row = Integer.parseInt(parts[0]);
                 int col = Integer.parseInt(parts[1]);
                 double val = Double.parseDouble(parts[2]);
-                if(isOwnPartition(row, col)) {
+                if(isOwnPartition(row, col, NUM_NODES)) {
                     double matrixVal = matrix.get(row, col);
+                    if(matrixVal != val) {
+                        //throw new RuntimeException(ctx.instanceID + ": matrix("+row+","+col+") is "+matrixVal+" but should be "+val);
+                        System.out.println(ctx.instanceID + ": matrix("+row+","+col+") is "+matrixVal+" but should be "+val);
+                    }
                     assert(matrixVal == val);
                 }
             }
@@ -84,6 +88,8 @@ public final class ThreadedMatrixLoaderTestJob extends PServerJob {
     public static void main(final String[] args) {
 
         final List<List<Serializable>> res = Lists.newArrayList();
+
+        System.setProperty("simulation.numNodes", String.valueOf(NUM_NODES));
 
         PServerExecutor.LOCAL
                 .run(ThreadedMatrixLoaderTestJob.class, 1) // <-- enable multi-threading, 2 threads per compute node.

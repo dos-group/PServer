@@ -417,7 +417,7 @@ public class DataManager extends EventDispatcher {
             while (fileIterator.hasNext()) {
                 final IRecord record = fileIterator.next();
                 // iterate through entries in record
-                ReusableMatrixEntry reusable = new MutableMatrixEntry(0, 0, 0);
+                ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
                 synchronized (matrix) {
                     while (record.hasNext()) {
                         MatrixEntry entry = record.next(reusable);
@@ -449,7 +449,9 @@ public class DataManager extends EventDispatcher {
         }
         try {
             finishedLoadingLatch.await();
-        } catch (InterruptedException e) { }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
