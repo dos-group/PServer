@@ -3,7 +3,6 @@ package de.tuberlin.pserver.math;
 import de.tuberlin.pserver.math.exceptions.IncompatibleShapeException;
 import de.tuberlin.pserver.math.exceptions.SingularMatrixException;
 import de.tuberlin.pserver.math.stuff.DoubleDoubleFunction;
-import de.tuberlin.pserver.math.stuff.UnaryHigherOrderFunction;
 import de.tuberlin.pserver.math.stuff.VectorFunction;
 
 import java.util.function.DoubleBinaryOperator;
@@ -151,7 +150,7 @@ public interface Matrix extends MObject {
 
     // ---------------------------------------------------
 
-    public abstract double aggregate(final DoubleDoubleFunction combiner, final UnaryHigherOrderFunction mapper);
+    public abstract double aggregate(final DoubleBinaryOperator combiner, final DoubleUnaryOperator mapper);
 
     public abstract Vector aggregateRows(final VectorFunction f);
 
