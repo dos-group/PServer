@@ -122,7 +122,7 @@ public abstract class AbstractVector implements Vector {
     }
 
     @Override
-    public double zSum() {
+    public double sum() {
         double result = 0;
         for(long i = 0; i < length; i++) {
             result += get(i);
@@ -206,6 +206,34 @@ public abstract class AbstractVector implements Vector {
 
     protected void checkDimensions(Vector arg) {
         Preconditions.checkArgument(length == arg.length(), String.format("Can not apply operation because supplied vector length (%d) differs from base vector length (%d)",arg.length(), length));
+    }
+
+    @Override
+    public Vector applyOnElements(final VectorFunction1Arg vf) {
+        final Vector res = copy();
+        for (int i = 0; i < res.length(); ++i) {
+            res.set(i, vf.operation(this.get(i)));
+        }
+        return res;
+    }
+
+    @Override
+    public Vector applyOnElements(final Vector v2, final VectorFunction1Arg vf) {
+        final Vector res = copy();
+        for (int i = 0; i < res.length(); ++i) {
+            res.set(i, vf.operation(v2.get(i)));
+        }
+        return res;
+    }
+
+    @Override
+    public Vector applyOnElements(final Vector v2, final VectorFunction2Arg vf) {
+        final Vector res = copy();
+        Preconditions.checkState(v2.length() == res.length());
+        for (int i = 0; i < res.length(); ++i) {
+            res.set(i, vf.operation(this.get(i), v2.get(i)));
+        }
+        return res;
     }
 
     // ---------------------------------------------------

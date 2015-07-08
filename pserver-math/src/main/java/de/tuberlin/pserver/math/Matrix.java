@@ -24,6 +24,57 @@ public interface Matrix extends MObject {
         COLUMN_LAYOUT
     }
 
+    // ---------------------------------------------------
+    // Inner Interfaces/Classes.
+    // ---------------------------------------------------
+
+    public static interface RowIterator { // ...for ROW_LAYOUT
+
+        public abstract boolean hasNextRow();
+
+        public abstract void nextRow();
+
+        public abstract void nextRandomRow();
+
+        public abstract double getValueOfColumn(final int col);
+
+        public abstract Vector getAsVector();
+
+        public abstract Vector getAsVector(int from, int size);
+
+        public abstract void reset();
+
+        public abstract long numRows();
+
+        public abstract long numCols();
+    }
+
+    public static interface ColumnIterator { // ...for COLUMN_LAYOUT
+
+        public abstract boolean hasNextColumn();
+
+        public abstract void nextColumn();
+
+        public abstract double getValueOfRow(final int row);
+
+        public abstract void reset();
+
+        public abstract long numRows();
+
+        public abstract long numCols();
+    }
+
+    public static interface MatrixFunction1Arg {
+
+        public abstract double operation(double element);
+    }
+
+    public static interface MatrixFunction2Arg {
+
+        public abstract double operation(double e1, double e2);
+    }
+
+
     public static class PartitionShape {
 
         final long rows;
@@ -65,46 +116,6 @@ public interface Matrix extends MObject {
         public boolean contains(long row, long col) {
             return row < rows && col < cols;
         }
-    }
-
-    // ---------------------------------------------------
-    // Inner Interfaces/Classes.
-    // ---------------------------------------------------
-
-    public static interface RowIterator { // ...for ROW_LAYOUT
-
-        public abstract boolean hasNextRow();
-
-        public abstract void nextRow();
-
-        public abstract void nextRandomRow();
-
-        public abstract double getValueOfColumn(final int col);
-
-        public abstract Vector getAsVector();
-
-        public abstract Vector getAsVector(int from, int size);
-
-        public abstract void reset();
-
-        public abstract long numRows();
-
-        public abstract long numCols();
-    }
-
-    public static interface ColumnIterator { // ...for COLUMN_LAYOUT
-
-        public abstract boolean hasNextColumn();
-
-        public abstract void nextColumn();
-
-        public abstract double getValueOfRow(final int row);
-
-        public abstract void reset();
-
-        public abstract long numRows();
-
-        public abstract long numCols();
     }
 
     // ---------------------------------------------------
@@ -182,4 +193,18 @@ public interface Matrix extends MObject {
     public abstract Matrix assignColumn(final long col, final Vector v);
 
     public abstract Matrix copy();
+
+
+
+    public abstract Matrix applyOnElements(final MatrixFunction1Arg mf);
+
+    public abstract Matrix applyOnElements(final Matrix m2, final MatrixFunction1Arg mf);
+
+    public abstract Matrix applyOnElements(final Matrix m2, final MatrixFunction2Arg mf);
+
+    public abstract Matrix addVectorToRows(final Vector v);
+
+    public abstract Matrix addVectorToCols(final Vector v);
+
+    public abstract Matrix zeroDiagonal();
 }

@@ -107,7 +107,7 @@ public class DVector implements Vector, Serializable {
 
     @Override public double minValue() { return vectorOpDelegate.minValue(this); }
 
-    @Override public double zSum() { return vectorOpDelegate.zSum(this); }
+    @Override public double sum() { return vectorOpDelegate.zSum(this); }
 
     // ---------------------------------------------------
     // Public Methods.

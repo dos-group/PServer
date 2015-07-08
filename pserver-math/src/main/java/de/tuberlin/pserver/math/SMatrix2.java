@@ -235,5 +235,4 @@ public class SMatrix2 extends AbstractMatrix {
             return rowVec;
         }
     }
-
 }

@@ -77,17 +77,17 @@ public final class EJMLMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
     public Matrix transpose(final Matrix A) {
         final DenseMatrix64F a = convertDMatrixToDenseMatrix64F(A);
         // if matrix is square, EJML does not change the buffer. Dimensions stay the same also, so we can return the same object
-        if(A.numRows() == A.numCols()) {
+        /*if(A.numRows() == A.numCols()) {
             TransposeAlgs.square(a);
             return A;
-        }
+        }*/
         // however, if the matrix is not square, dimensions and buffer change. So let's create a new object
-        else {
+        //else {
             // (also EJML requires a second buffer for cpu cache line optimization. worth it?)
             final DenseMatrix64F b = DenseMatrix64F.wrap((int)A.numCols(), (int)A.numRows(), new double[A.toArray().length]);
             DenseMatrix64F res = CommonOps.transpose(a,b);
             return new DMatrix(A.numCols(), A.numRows(), res.getData());
-        }
+        //}
     }
 
     @Override

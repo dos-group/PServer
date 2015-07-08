@@ -83,7 +83,7 @@ public abstract class AbstractVectorClassifier {
      */
     public Vector classifyFull(Vector r, Vector instance) {
         r.viewPart(1, numCategories() - 1).assign(classify(instance));
-        r.set(0, 1.0 - r.zSum());
+        r.set(0, 1.0 - r.sum());
         return r;
     }
 
@@ -159,7 +159,7 @@ public abstract class AbstractVectorClassifier {
             if (actual > 0) {
                 return Math.max(-100.0, Math.log(p.get(actual - 1)));
             } else {
-                return Math.max(-100.0, Math.log1p(-p.zSum()));
+                return Math.max(-100.0, Math.log1p(-p.sum()));
             }
         }
     }
