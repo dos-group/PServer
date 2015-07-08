@@ -115,6 +115,34 @@ public class DVector implements Vector, Serializable {
 
     @Override public long sizeOf() { return data.length * Double.BYTES; }
 
+    @Override
+    public Vector applyOnElements(final VectorFunction1Arg vf) {
+        final Vector res = copy();
+        for (int i = 0; i < res.length(); ++i) {
+            res.set(i, vf.operation(this.get(i)));
+        }
+        return res;
+    }
+
+    @Override
+    public Vector applyOnElements(final Vector v2, final VectorFunction1Arg vf) {
+        final Vector res = copy();
+        for (int i = 0; i < res.length(); ++i) {
+            res.set(i, vf.operation(v2.get(i)));
+        }
+        return res;
+    }
+
+    @Override
+    public Vector applyOnElements(final Vector v2, final VectorFunction2Arg vf) {
+        final Vector res = copy();
+        Preconditions.checkState(v2.length() == res.length());
+        for (int i = 0; i < res.length(); ++i) {
+            res.set(i, vf.operation(this.get(i), v2.get(i)));
+        }
+        return res;
+    }
+
     @Override public long length() { return data.length; }
 
     @Override public Layout layout() { return type; }
