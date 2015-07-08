@@ -85,49 +85,45 @@ public abstract class AbstractMatrix implements Matrix {
 
     @Override
     public Matrix applyOnElements(final MatrixFunction1Arg mf) {
-        final Matrix res = copy();
-        for (int i = 0; i < res.numRows(); ++i) {
-            for (int j = 0; j < res.numCols(); ++j) {
-                res.set(i, j, mf.operation(this.get(i, j)));
+        for (int i = 0; i < numRows(); ++i) {
+            for (int j = 0; j < numCols(); ++j) {
+                set(i, j, mf.operation(this.get(i, j)));
             }
         }
-        return res;
+        return this;
     }
 
     @Override
     public Matrix applyOnElements(final Matrix m2, final MatrixFunction1Arg mf) {
-        final Matrix res = copy();
-        for (int i = 0; i < res.numRows(); ++i) {
-            for (int j = 0; j < res.numCols(); ++j) {
-                res.set(i, j, mf.operation(m2.get(i, j)));
+        for (int i = 0; i < numRows(); ++i) {
+            for (int j = 0; j < numCols(); ++j) {
+                set(i, j, mf.operation(m2.get(i, j)));
             }
         }
-        return res;
+        return this;
     }
 
     @Override
     public Matrix applyOnElements(final Matrix m2, final MatrixFunction2Arg mf) {
-        final Matrix res = copy();
-        Preconditions.checkState(m2.numRows() == res.numRows());
-        Preconditions.checkState(m2.numCols() == res.numCols());
-        for (int i = 0; i < res.numRows(); ++i) {
-            for (int j = 0; j < res.numCols(); ++j) {
-                res.set(i, j, mf.operation(this.get(i, j), m2.get(i, j)));
+        Preconditions.checkState(m2.numRows() == this.numRows());
+        Preconditions.checkState(m2.numCols() == this.numCols());
+        for (int i = 0; i < numRows(); ++i) {
+            for (int j = 0; j < numCols(); ++j) {
+                set(i, j, mf.operation(this.get(i, j), m2.get(i, j)));
             }
         }
-        return res;
+        return this;
     }
 
     @Override
     public Matrix addVectorToRows(final Vector v) {
-        final Matrix res = copy();
         Preconditions.checkArgument(v.length() == numCols());
-        for (int i = 0; i < res.numRows(); ++i) {
-            for (int j = 0; j < res.numCols(); ++j) {
-                res.set(i, j, this.get(i, j) + v.get(j));
+        for (int i = 0; i < numRows(); ++i) {
+            for (int j = 0; j < numCols(); ++j) {
+                set(i, j, this.get(i, j) + v.get(j));
             }
         }
-        return res;
+        return this;
     }
 
     @Override
