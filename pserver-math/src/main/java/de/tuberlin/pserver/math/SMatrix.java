@@ -132,23 +132,23 @@ public class SMatrix extends AbstractMatrix {
     // Matrix Operation Delegates.
     // ---------------------------------------------------
 
-    @Override public Matrix add(final Matrix B) { return matrixOpDelegate.add(B, this); }
-
-    @Override public Matrix sub(final Matrix B) { return matrixOpDelegate.sub(B, this); }
-
-    @Override public Matrix mul(final Matrix B) { return matrixOpDelegate.mul(this, B); }
-
-    @Override public Vector mul(final Vector v) { return matrixOpDelegate.mul(this, v); }
-
-    @Override public void mul(final Vector x, final Vector y) { matrixOpDelegate.mul(this, x, y); }
-
-    @Override public Matrix scale(final double alpha) { return matrixOpDelegate.scale(alpha, this); }
-
-    @Override public Matrix transpose() { return matrixOpDelegate.transpose(this); }
-
-    @Override public void transpose(final Matrix B) { matrixOpDelegate.transpose(this, B); }
-
-    @Override public boolean invert() { return matrixOpDelegate.invert(this); }
+//    @Override public Matrix add(final Matrix B) { return matrixOpDelegate.add(B, this); }
+//
+//    @Override public Matrix sub(final Matrix B) { return matrixOpDelegate.sub(B, this); }
+//
+//    @Override public Matrix mul(final Matrix B) { return matrixOpDelegate.mul(this, B); }
+//
+//    @Override public Vector mul(final Vector v) { return matrixOpDelegate.mul(this, v); }
+//
+//    @Override public void mul(final Vector x, final Vector y) { matrixOpDelegate.mul(this, x, y); }
+//
+//    @Override public Matrix scale(final double alpha) { return matrixOpDelegate.scale(alpha, this); }
+//
+//    @Override public Matrix transpose() { return matrixOpDelegate.transpose(this); }
+//
+//    @Override public void transpose(final Matrix B) { matrixOpDelegate.transpose(this, B); }
+//
+//    @Override public boolean invert() { return matrixOpDelegate.invert(this); }
 
     @Override
     public Matrix assign(Matrix v) {

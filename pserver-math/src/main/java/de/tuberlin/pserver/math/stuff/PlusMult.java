@@ -1,5 +1,7 @@
 package de.tuberlin.pserver.math.stuff;
 
+import java.util.function.DoubleBinaryOperator;
+
 /**
  * Only for performance tuning of compute intensive linear algebraic computations.
  * Constructs functions that return one of
@@ -13,7 +15,7 @@ package de.tuberlin.pserver.math.stuff;
  * Intended to be passed to <tt>matrix.assign(otherMatrix,function)</tt> methods.
  */
 
-public final class PlusMult implements DoubleDoubleFunction {
+public final class PlusMult implements DoubleBinaryOperator {
 
     private double multiplicator;
 
@@ -23,7 +25,7 @@ public final class PlusMult implements DoubleDoubleFunction {
 
     /** Returns the result of the function evaluation. */
     @Override
-    public double apply(double a, double b) {
+    public double applyAsDouble(double a, double b) {
         return a + b * multiplicator;
     }
 

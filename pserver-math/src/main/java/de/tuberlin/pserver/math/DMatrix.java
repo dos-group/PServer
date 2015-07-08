@@ -171,7 +171,7 @@ public class DMatrix extends AbstractMatrix implements Matrix, Serializable {
     public RowIterator rowIterator(final int startRow, final int endRow) { return new RowIterator(this, startRow, endRow); }
 
     @Override
-    public double aggregate(DoubleDoubleFunction combiner, DoubleFunction mapper) {
+    public double aggregate(DoubleDoubleFunction combiner, UnaryHigherOrderFunction mapper) {
         return aggregateRows(new VectorFunction() {
             @Override
             public double apply(Vector v) {
@@ -194,25 +194,25 @@ public class DMatrix extends AbstractMatrix implements Matrix, Serializable {
     // Matrix Operation Delegates.
     // ---------------------------------------------------
 
-    @Override public Matrix axpy(final double alpha, final Matrix B) { return null; }
-
-    @Override public Matrix add(final Matrix B) { return matrixOpDelegate.add(B, this); }
-
-    @Override public Matrix sub(final Matrix B) { return matrixOpDelegate.sub(B, this); }
-
-    @Override public Matrix mul(final Matrix B) { return matrixOpDelegate.mul(this, B); }
-
-    @Override public Vector mul(final Vector v) { return matrixOpDelegate.mul(this, v); }
-
-    @Override public void mul(final Vector x, final Vector y) { matrixOpDelegate.mul(this, x, y); }
-
-    @Override public Matrix scale(final double alpha) { return matrixOpDelegate.scale(alpha, this); }
-
-    @Override public Matrix transpose() { return matrixOpDelegate.transpose(this); }
-
-    @Override public void transpose(final Matrix B) { matrixOpDelegate.transpose(this, B); }
-
-    @Override public boolean invert() { return matrixOpDelegate.invert(this); }
+//    @Override public Matrix axpy(final double alpha, final Matrix B) { return null; }
+//
+//    @Override public Matrix add(final Matrix B) { return matrixOpDelegate.add(B, this); }
+//
+//    @Override public Matrix sub(final Matrix B) { return matrixOpDelegate.sub(B, this); }
+//
+//    @Override public Matrix mul(final Matrix B) { return matrixOpDelegate.mul(this, B); }
+//
+//    @Override public Vector mul(final Vector v) { return matrixOpDelegate.mul(this, v); }
+//
+//    @Override public void mul(final Vector x, final Vector y) { matrixOpDelegate.mul(this, x, y); }
+//
+//    @Override public Matrix scale(final double alpha) { return matrixOpDelegate.scale(alpha, this); }
+//
+//    @Override public Matrix transpose() { return matrixOpDelegate.transpose(this); }
+//
+//    @Override public void transpose(final Matrix B) { matrixOpDelegate.transpose(this, B); }
+//
+//    @Override public boolean invert() { return matrixOpDelegate.invert(this); }
 
     // ---------------------------------------------------
 

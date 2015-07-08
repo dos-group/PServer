@@ -2,7 +2,6 @@ package de.tuberlin.pserver.math;
 
 import de.tuberlin.pserver.math.exceptions.IncompatibleShapeException;
 import de.tuberlin.pserver.math.exceptions.SingularMatrixException;
-import de.tuberlin.pserver.math.stuff.DoubleDoubleFunction;
 import de.tuberlin.pserver.math.stuff.VectorFunction;
 
 import java.util.function.DoubleBinaryOperator;
@@ -67,17 +66,6 @@ public interface Matrix extends MObject {
 
         public abstract long numCols();
     }
-
-    public static interface MatrixFunction1Arg {
-
-        public abstract double operation(double element);
-    }
-
-    public static interface MatrixFunction2Arg {
-
-        public abstract double operation(double e1, double e2);
-    }
-
 
     public static class PartitionShape {
 
@@ -217,10 +205,11 @@ public interface Matrix extends MObject {
      * Called on Matrix A. Computes Matrix-Vector-Multiplication c = A * b and returns c. <br>
      * <strong>Note: A is wlog. of shape n x m. Vector b has to be of size m and c of size n</strong>
      * @param b Vector to multiply with A
-     * @param c c after computing c = A * b
+     * @param c Vector to store the result in
+     * @return c after computing c = A * b
      * @throws IncompatibleShapeException If b.length() != A.numRows() or c.length() != A.numRows()
      */
-    public abstract void mul(final Vector b, final Vector c);
+    public abstract Vector mul(final Vector b, final Vector c);
 
     /**
      * Called on Matrix A. Computes Matrix-Scalar-Multiplication A *= a
@@ -352,7 +341,7 @@ public interface Matrix extends MObject {
      * Called on Matrix A. Sets the diagonal entries of A to zero.
      * @return A after setting its diagonal entries to zero.
      */
-    public abstract Matrix setDiagonalToZero();
+    public abstract Matrix setDiagonalsToZero();
 
     // ---------------------------------------------------
 

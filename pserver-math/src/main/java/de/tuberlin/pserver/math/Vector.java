@@ -1,9 +1,8 @@
 package de.tuberlin.pserver.math;
 
-import de.tuberlin.pserver.math.stuff.DoubleDoubleFunction;
-import de.tuberlin.pserver.math.stuff.DoubleFunction;
-
 import java.util.Iterator;
+import java.util.function.DoubleBinaryOperator;
+import java.util.function.DoubleUnaryOperator;
 
 public interface Vector extends MObject {
 
@@ -87,9 +86,9 @@ public interface Vector extends MObject {
 
     public abstract Vector assign(final double v);
 
-    public abstract Vector assign(final DoubleFunction df);
+    public abstract Vector assign(final DoubleUnaryOperator df);
 
-    public abstract Vector assign(final Vector v, DoubleDoubleFunction df);
+    public abstract Vector assign(final Vector v, DoubleBinaryOperator df);
 
     public abstract Vector viewPart(final long s, final long e);
 
@@ -97,7 +96,7 @@ public interface Vector extends MObject {
 
     public abstract Iterator<Element> iterateNonZero();
 
-    public abstract double aggregate(DoubleDoubleFunction aggregator, DoubleFunction map);
+    public abstract double aggregate(DoubleBinaryOperator aggregator, DoubleUnaryOperator map);
 
     public abstract Vector copy();
 

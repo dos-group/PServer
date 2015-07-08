@@ -6,6 +6,8 @@ import de.tuberlin.pserver.math.stuff.*;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.DoubleBinaryOperator;
+import java.util.function.DoubleUnaryOperator;
 
 public abstract class AbstractMatrix implements Matrix {
 
@@ -56,7 +58,7 @@ public abstract class AbstractMatrix implements Matrix {
     @Override  public abstract RowIterator rowIterator(int startRow, int endRow);
 
     @Override
-    public double aggregate(DoubleDoubleFunction combiner, DoubleFunction mapper) {
+    public double aggregate(DoubleBinaryOperator combiner, DoubleUnaryOperator mapper) {
         return aggregateRows(new VectorFunction() {
             @Override
             public double apply(Vector v) {
@@ -82,40 +84,108 @@ public abstract class AbstractMatrix implements Matrix {
     public void unlock() { lock.unlock(); }
 
     // ---------------------------------------------------
+    // Operations. Default Implementations.
+    // ---------------------------------------------------
+
 
     @Override
-    public Matrix applyOnElements(final MatrixFunction1Arg mf) {
-        final Matrix res = copy();
-        for (int i = 0; i < res.numRows(); ++i) {
-            for (int j = 0; j < res.numCols(); ++j) {
-                res.set(i, j, mf.operation(this.get(i, j)));
-            }
-        }
-        return res;
+    public Matrix add(Matrix B) {
+        return add(B, this);
     }
 
     @Override
-    public Matrix applyOnElements(final Matrix m2, final MatrixFunction1Arg mf) {
-        final Matrix res = copy();
-        for (int i = 0; i < res.numRows(); ++i) {
-            for (int j = 0; j < res.numCols(); ++j) {
-                res.set(i, j, mf.operation(m2.get(i, j)));
-            }
-        }
-        return res;
+    public Matrix add(Matrix B, Matrix C) {
+        // TODO: range check
+        return this.applyOnElements((x, y) -> x + y, B, C);
     }
 
     @Override
-    public Matrix applyOnElements(final Matrix m2, final MatrixFunction2Arg mf) {
-        final Matrix res = copy();
-        Preconditions.checkState(m2.numRows() == res.numRows());
-        Preconditions.checkState(m2.numCols() == res.numCols());
-        for (int i = 0; i < res.numRows(); ++i) {
-            for (int j = 0; j < res.numCols(); ++j) {
-                res.set(i, j, mf.operation(this.get(i, j), m2.get(i, j)));
+    public Matrix sub(Matrix B) {
+        return sub(B, this);
+    }
+
+    @Override
+    public Matrix sub(Matrix B, Matrix C) {
+        // TODO: range check
+        return this.applyOnElements((x, y) -> x - y, B, C);
+    }
+
+    @Override
+    public Matrix mul(Matrix B) {
+        return this.applyOnElements((x, y) -> x * y, B);
+    }
+
+    @Override
+    public Matrix mul(Matrix B, Matrix C) {
+        return null;
+    }
+
+    @Override
+    public Vector mul(Vector b, Vector c) {
+        return null;
+    }
+
+    @Override
+    public Matrix scale(double a) {
+        return null;
+    }
+
+    @Override
+    public Matrix scale(double a, Matrix B) {
+        return null;
+    }
+
+    @Override
+    public Matrix transpose() {
+        return null;
+    }
+
+    @Override
+    public Matrix transpose(Matrix B) {
+        return null;
+    }
+
+    @Override
+    public Matrix applyOnElements(final DoubleUnaryOperator f) {
+        for (int i = 0; i < numRows(); ++i) {
+            for (int j = 0; j < numCols(); ++j) {
+                this.set(i, j, f.applyAsDouble(this.get(i, j)));
             }
         }
-        return res;
+        return this;
+    }
+
+    @Override
+    public Matrix applyOnElements(final DoubleUnaryOperator f, final Matrix target) {
+        // TODO: shape check
+        for (int i = 0; i < target.numRows(); ++i) {
+            for (int j = 0; j < target.numCols(); ++j) {
+                target.set(i, j, f.applyAsDouble(this.get(i, j)));
+            }
+        }
+        return target;
+    }
+
+    @Override
+    public Matrix applyOnElements(final DoubleBinaryOperator f, final Matrix B) {
+        // TODO: shape check
+        for (int i = 0; i < numRows(); ++i) {
+            for (int j = 0; j < numCols(); ++j) {
+                this.set(i, j, f.applyAsDouble(this.get(i, j), B.get(i, j)));
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Matrix applyOnElements(DoubleBinaryOperator f, Matrix B, Matrix C) {
+        // TODO: shape check
+        for (int i = 0; i < numRows(); ++i) {
+            for (int j = 0; j < numCols(); ++j) {
+                C.set(i, j, f.applyAsDouble(this.get(i, j), B.get(i, j)));
+            }
+        }
+        return C;
     }
 
     @Override
@@ -143,14 +213,13 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public Matrix zeroDiagonal() {
-        final Matrix res = copy();
-        for (int i = 0; i < numRows(); ++i) {
-            for (int j = 0; j < numCols(); ++j) {
-                res.set(i, j, (i == j) ? 0.0 : get(i, j));
-            }
+    public Matrix setDiagonalsToZero() {
+        long diag = 0;
+        while(diag < rows && diag < cols) {
+            this.set(diag, diag, 0.);
+            diag++;
         }
-        return res;
+        return this;
     }
 
     // ---------------------------------------------------
@@ -195,7 +264,7 @@ public abstract class AbstractMatrix implements Matrix {
         @Override
         public void nextRandomRow() {
             numFetched++;
-            currentRow = startRow + rand.nextInt(endRow+1);
+            currentRow = startRow + rand.nextInt(endRow + 1);
         }
 
         @Override

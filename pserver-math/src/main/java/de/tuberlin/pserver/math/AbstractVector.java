@@ -1,11 +1,11 @@
 package de.tuberlin.pserver.math;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.stuff.DoubleDoubleFunction;
-import de.tuberlin.pserver.math.stuff.DoubleFunction;
 import de.tuberlin.pserver.math.stuff.Utils;
 
 import java.util.Iterator;
+import java.util.function.DoubleBinaryOperator;
+import java.util.function.DoubleUnaryOperator;
 
 /**
  * An abstract implementation of the Vector interface, that contains default implementations for
@@ -175,17 +175,17 @@ public abstract class AbstractVector implements Vector {
     }
 
     @Override
-    public Vector assign(DoubleFunction df) {
+    public Vector assign(DoubleUnaryOperator df) {
         for(long i = 0; i < length; i++) {
-            set(i, df.apply(get(i)));
+            set(i, df.applyAsDouble(get(i)));
         }
         return this;
     }
 
     @Override
-    public Vector assign(Vector v, DoubleDoubleFunction df) {
+    public Vector assign(Vector v, DoubleBinaryOperator df) {
         for(long i = 0; i < length; i++) {
-            set(i, df.apply(get(i), v.get(i)));
+            set(i, df.applyAsDouble(get(i), v.get(i)));
         }
         return this;
     }
@@ -196,10 +196,10 @@ public abstract class AbstractVector implements Vector {
     }
 
     @Override
-    public double aggregate(DoubleDoubleFunction aggregator, DoubleFunction map) {
+    public double aggregate(DoubleBinaryOperator aggregator, DoubleUnaryOperator map) {
         double result = 0;
         for(long i = 0; i < length; i++) {
-            result += aggregator.apply(result, map.apply(get(i)));
+            result += aggregator.applyAsDouble(result, map.applyAsDouble(get(i)));
         }
         return result;
     }

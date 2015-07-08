@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.DVector;
 import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.Vector;
-import de.tuberlin.pserver.math.stuff.DoubleFunction;
+import de.tuberlin.pserver.math.stuff.UnaryHigherOrderFunction;
 import de.tuberlin.pserver.math.stuff.Functions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -273,7 +273,7 @@ public abstract class AbstractOnlineLogisticRegression extends AbstractVectorCla
     }
 
     public boolean validModel() {
-        double k = beta.aggregate(Functions.PLUS, new DoubleFunction() {
+        double k = beta.aggregate(Functions.PLUS, new UnaryHigherOrderFunction() {
             @Override
             public double apply(double v) {
                 return Double.isNaN(v) || Double.isInfinite(v) ? 1 : 0;
