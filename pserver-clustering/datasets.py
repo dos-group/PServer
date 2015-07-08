@@ -1,6 +1,8 @@
 import numpy
 from sklearn.datasets import load_svmlight_file
 
+from util import create_partitions
+
 RCV1_TRAIN_SET_PATH = "/media/alber/datadisk/packages/datasets/rcv1/rcv1_train.binary"
 #RCV1_TEST_SET_PATH = "/media/alber/datadisk/packages/datasets/rcv1/rcv1_test.binary"
 RCV1_TEST_SET_PATH = "/media/alber/datadisk/packages/datasets/rcv1/rcv1_test.binary.small"
@@ -34,6 +36,50 @@ def fetch_dataset(data_set_name, params):
         Y_train[Y_train != 1] = -1
         Y_test[Y_test != 1] = -1
 
+    if data_set_name.startswith("mv_gaussian"):
+        N_train = params["MV_GAUSSIAN_TRAIN_SAMPLES"]
+        N_test = params["MV_GAUSSIAN_TEST_SAMPLES"]
+        N = N_train + N_test
+        M = params["MV_GAUSSIAN_DIMENSION"]
+        means = [numpy.random.rand(M), numpy.random.rand(M)]
+        covs = [numpy.random.rand(M, M), numpy.random.rand(M, M)]
+        labels = [-1, +1]
+        Ns = [N/2, N-N/2]
+
+        sample_arrs = []
+        label_arrs = []
+        for mean, cov, label, n in zip(means, covs, labels, Ns):
+            sample_arrs.append(
+                numpy.random.multivariate_normal(mean, cov, n))
+            label_arrs.append(numpy.ones((n, 1)) * label)
+
+        samples = numpy.vstack(sample_arrs)
+        labels = numpy.vstack(label_arrs)
+
+        print N, samples.shape, labels.shape
+        indices = numpy.arange(N)
+        numpy.random.shuffle(indices)
+        samples = samples[indices]
+        labels = labels[indices]
+
+        X_train = samples[:N_train]
+        Y_train = labels[:N_train]
+        X_test = samples[N_train:]
+        Y_test = labels[N_train:]
+
+    if data_set_name.startswith("mv_gaussian_sliced"):
+        M = params["MV_GAUSSIAN_DIMENSION"]
+        S = params["MV_GAUSSIAN_SLICES"]
+
+        slices = create_partitions(numpy.arange(M), S)
+        for X, Y in [(X_train, Y_train), (X_test, Y_test)]:
+            for i in range(X.shape[0]):
+                if Y[i] == -1:
+                    slice = slices[numpy.random.randint(0, S)]
+                    x = numpy.zeros(M)
+                    x[slice] = X[i, slice]
+                    X[i] = x
+        pass
 
     assert (
         X_train is not None and

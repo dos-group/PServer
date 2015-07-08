@@ -16,15 +16,25 @@ GLOBAL_PARAMS = {
     # Parallelism of parallel SGD:
     "PARALLELISM": 4,
     # Share weights after each epoch in parallel SGD:
-    "WEIGHT_SHARING": True,
+    "WEIGHT_SHARING": False,
 
     # Print stats on repartitioning
     "PARTITION_SHOW_DIST": True,
     # Repartition after first epoch
     "REPARTITION": "kmeans",
+    # Update partitions each epoch
+    "PARTITIONS_UPDATE": True,
 
     # size of "limited" data sets
     "DS_LIMITED_SIZE": 300,
+    # multivariate gaussian train set size
+    "MV_GAUSSIAN_TRAIN_SAMPLES": 10000,
+    # multivariate gaussian test set size
+    "MV_GAUSSIAN_TEST_SAMPLES": 1000,
+    # multivariate gaussian dimensions
+    "MV_GAUSSIAN_DIMENSION": 1000,
+    # multivariate gaussian slices slice count
+    "MV_GAUSSIAN_SLICES": 5,
 }
 
 

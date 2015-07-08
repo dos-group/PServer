@@ -137,10 +137,13 @@ def run_para_kmeans(X_train, Y_train, X_test, loss, params):
     def post_partitioning_f(epoch, partitions, gradients):
         # update partitions
         if params["REPARTITION"] == "kmeans":
-            partitions2 = repartition(parallelism, partitions, gradients)
+            partitions_ = repartition(parallelism, partitions, gradients)
         if params["PARTITION_SHOW_DIST"]:
-            print partition_label_matching(parallelism, partitions2, Y_train)
-        return partitions
+            print partition_label_matching(parallelism, partitions_, Y_train)
+        if params["PARTITIONS_UPDATE"] is True:
+            return partitions_
+        else:
+            return partitions
     return run_para_default(X_train, Y_train, X_test, loss, params,
                             post_partitioning_f=post_partitioning_f,
                             store_gradients=True)
@@ -152,11 +155,14 @@ def run_para_abskmeans(X_train, Y_train, X_test, loss, params):
     def post_partitioning_f(epoch, partitions, gradients):
         # update partitions
         if params["REPARTITION"] == "kmeans":
-            partitions2 = repartition(parallelism, partitions,
+            partitions_ = repartition(parallelism, partitions,
                                       numpy.abs(gradients))
         if params["PARTITION_SHOW_DIST"]:
-            print partition_label_matching(parallelism, partitions2, Y_train)
-        return partitions
+            print partition_label_matching(parallelism, partitions_, Y_train)
+        if params["PARTITIONS_UPDATE"] is True:
+            return partitions_
+        else:
+            return partitions
     return run_para_default(X_train, Y_train, X_test, loss, params,
                             post_partitioning_f=post_partitioning_f,
                             store_gradients=True)
