@@ -11,6 +11,8 @@ import java.io.Serializable;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.DoubleBinaryOperator;
+import java.util.function.DoubleUnaryOperator;
 
 public class DMatrix extends AbstractMatrix implements Matrix, Serializable {
 
@@ -169,26 +171,6 @@ public class DMatrix extends AbstractMatrix implements Matrix, Serializable {
 
     @Override
     public RowIterator rowIterator(final int startRow, final int endRow) { return new RowIterator(this, startRow, endRow); }
-
-    @Override
-    public double aggregate(DoubleDoubleFunction combiner, UnaryHigherOrderFunction mapper) {
-        return aggregateRows(new VectorFunction() {
-            @Override
-            public double apply(Vector v) {
-                return v.aggregate(combiner, mapper);
-            }
-        }).aggregate(combiner, Functions.IDENTITY);
-    }
-
-    @Override
-    public Vector aggregateRows(final VectorFunction f) {
-        Vector r = new DVector(numRows());
-        long n = numRows();
-        for (int row = 0; row < n; row++) {
-            r.set(row, f.apply(rowAsVector(row)));
-        }
-        return r;
-    }
 
     // ---------------------------------------------------
     // Matrix Operation Delegates.

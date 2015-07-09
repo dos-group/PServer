@@ -76,7 +76,7 @@ public class EJMLDelegationTests {
         }
     }
 
-    @Test
+    /*@Test
     public void matrixVectorMult() {
 
         Random rand = new Random();
@@ -106,7 +106,7 @@ public class EJMLDelegationTests {
             assert(java.util.Arrays.equals(resData, ejmlResData));
 
         }
-    }
+    }*/
 
     @Test
     public void matrixVectorMultResultByReference() {
@@ -221,7 +221,7 @@ public class EJMLDelegationTests {
         }
     }
 
-    @Test
+    /*@Test
     public void matrixInvert() {
 
         Random rand = new Random();
@@ -242,7 +242,7 @@ public class EJMLDelegationTests {
             assert(ejmlRes == res);
             assert(java.util.Arrays.equals(mat1.toArray(), ejmlMat1Data));
         }
-    }
+    }*/
 
     @Test
     public void matrixScale() {

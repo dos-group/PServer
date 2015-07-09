@@ -142,7 +142,7 @@ public interface Matrix extends MObject {
 
     public abstract Vector aggregateRows(final VectorFunction f);
 
-    public abstract Matrix axpy(final double alpha, final Matrix B);        // A = alpha * B + A
+    //public abstract Matrix axpy(final double alpha, final Matrix B);        // A = alpha * B + A
 
     /**
      * Called on Matrix A. Computes Matrix-Matrix-Addition A += B and returns A. <br>
@@ -183,8 +183,10 @@ public interface Matrix extends MObject {
     public abstract Matrix sub(final Matrix B, final Matrix C);
 
     /**
+     * TODO: This only works if B is a lower/left triangular matrix. Do we want do support such rare special cases?
      * Called on Matrix A. Computes Matrix-Matrix-Multiplication A *= B and returns A. <br>
-     * <strong>Note: A is wlog. of shape n x m. B then has to be of shape m x m</strong>
+     * <strong>Note: A is wlog. of shape n x m. B then has to be of shape m x m</strong><br>
+     * <strong>Note: Also B hast to be a lower/left triangular matrix. This is not checked!</strong>
      * @param B Matrix to multiply with A
      * @return A after computing A *= B, or a new Matrix C after computing C = A * B, if the shape of A is not compatible to the resulting shape of A * B
      * @throws IncompatibleShapeException If B is not square with m = A.numCols()

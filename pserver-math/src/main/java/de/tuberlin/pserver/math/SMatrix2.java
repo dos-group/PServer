@@ -102,56 +102,6 @@ public class SMatrix2 extends AbstractMatrix {
     }
 
     @Override
-    public Matrix axpy(double alpha, Matrix B) {
-        return null;
-    }
-
-    @Override
-    public Matrix add(Matrix B) {
-        return null;
-    }
-
-    @Override
-    public Matrix sub(Matrix B) {
-        return null;
-    }
-
-    @Override
-    public Matrix mul(Matrix B) {
-        return null;
-    }
-
-    @Override
-    public Vector mul(Vector B) {
-        return null;
-    }
-
-    @Override
-    public void mul(Vector x, Vector y) {
-
-    }
-
-    @Override
-    public Matrix scale(double alpha) {
-        return null;
-    }
-
-    @Override
-    public Matrix transpose() {
-        return null;
-    }
-
-    @Override
-    public void transpose(Matrix B) {
-
-    }
-
-    @Override
-    public boolean invert() {
-        return false;
-    }
-
-    @Override
     public Vector rowAsVector() {
         return null;
     }

@@ -41,7 +41,7 @@ public class ReferenceTests {
     }
 
     public void testMatrixMatrixMultWithTargetParameter(final Matrix mat1, final Matrix mat2, final Matrix target) {
-        final Matrix result = mat1.sub(mat2, target);
+        final Matrix result = mat1.mul(mat2, target);
         assertTrue("Matrix.mul called on object X with explicit target parameter T must return T", result == target);
     }
 
@@ -133,8 +133,8 @@ public class ReferenceTests {
         long o = 30;
 
         Matrix MN = MatrixGenerator.RandomDMatrix(m, n);
-        Matrix NM = MatrixGenerator.RandomDMatrix(m, n);
-        Matrix MM = MatrixGenerator.RandomDMatrix(m, n);
+        Matrix NM = MatrixGenerator.RandomDMatrix(n, m);
+        Matrix MM = MatrixGenerator.RandomDMatrix(m, m);
         Matrix NO = MatrixGenerator.RandomDMatrix(n, o);
         Matrix MO = MatrixGenerator.RandomDMatrix(m, o);
 
@@ -147,7 +147,7 @@ public class ReferenceTests {
         testMatrixSubWithoutTargetParameter(MN.copy(), MN.copy());
         testMatrixSubWithTargetParameter(MN.copy(), MN.copy(), MN.copy());
 
-        testMatrixMatrixMultWithoutTargetParameter(MN.copy(), MM.copy());
+        testMatrixMatrixMultWithoutTargetParameter(MM.copy(), MM.copy());
         testMatrixMatrixMultWithTargetParameter(MN.copy(), NO.copy(), MO.copy());
 
         testMatrixVectorMult(MN.copy(), N.copy(), M.copy());

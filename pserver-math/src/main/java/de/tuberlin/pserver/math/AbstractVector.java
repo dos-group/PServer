@@ -209,32 +209,34 @@ public abstract class AbstractVector implements Vector {
     }
 
     @Override
-    public Vector applyOnElements(final VectorFunction1Arg vf) {
+    public Vector applyOnElements(final DoubleUnaryOperator vf) {
         final Vector res = copy();
         for (int i = 0; i < res.length(); ++i) {
-            res.set(i, vf.operation(this.get(i)));
+            res.set(i, vf.applyAsDouble(this.get(i)));
         }
         return res;
     }
 
     @Override
-    public Vector applyOnElements(final Vector v2, final VectorFunction1Arg vf) {
+    public Vector applyOnElements(final Vector v2, final DoubleUnaryOperator vf) {
         final Vector res = copy();
         for (int i = 0; i < res.length(); ++i) {
-            res.set(i, vf.operation(v2.get(i)));
+            res.set(i, vf.applyAsDouble(v2.get(i)));
         }
         return res;
     }
 
     @Override
-    public Vector applyOnElements(final Vector v2, final VectorFunction2Arg vf) {
+    public Vector applyOnElements(final Vector v2, final DoubleBinaryOperator vf) {
         final Vector res = copy();
         Preconditions.checkState(v2.length() == res.length());
         for (int i = 0; i < res.length(); ++i) {
-            res.set(i, vf.operation(this.get(i), v2.get(i)));
+            res.set(i, vf.applyAsDouble(this.get(i), v2.get(i)));
         }
         return res;
     }
+
+
 
     // ---------------------------------------------------
     // Inner Classes.

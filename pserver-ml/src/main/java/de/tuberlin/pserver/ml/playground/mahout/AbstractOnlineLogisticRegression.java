@@ -4,12 +4,12 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.DVector;
 import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.Vector;
-import de.tuberlin.pserver.math.stuff.UnaryHigherOrderFunction;
 import de.tuberlin.pserver.math.stuff.Functions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
+import java.util.function.DoubleUnaryOperator;
 
 /**
  * Generic definition of a 1 of n logistic regression classifier that returns probabilities in
@@ -103,7 +103,7 @@ public abstract class AbstractOnlineLogisticRegression extends AbstractVectorCla
         // apply pending regularization to whichever coefficients matter
 
         regularize(instance);
-        return beta.mul(instance);
+        return beta.mul(instance, instance.copy());
     }
 
     public double classifyScalarNoLink(Vector instance) {
@@ -273,9 +273,9 @@ public abstract class AbstractOnlineLogisticRegression extends AbstractVectorCla
     }
 
     public boolean validModel() {
-        double k = beta.aggregate(Functions.PLUS, new UnaryHigherOrderFunction() {
+        double k = beta.aggregate(Functions.PLUS, new DoubleUnaryOperator() {
             @Override
-            public double apply(double v) {
+            public double applyAsDouble(double v) {
                 return Double.isNaN(v) || Double.isInfinite(v) ? 1 : 0;
             }
         });

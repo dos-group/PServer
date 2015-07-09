@@ -9,4 +9,8 @@ public class IncompatibleShapeException extends RuntimeException {
         super(message);
     }
 
+    public IncompatibleShapeException(String message, Object... args) {
+        super(String.format(message, args));
+    }
+
 }

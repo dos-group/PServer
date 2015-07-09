@@ -202,10 +202,6 @@ public class SMatrix extends AbstractMatrix {
         this.data = SMatrix.fromDMatrix(new DMatrix(rows, cols, data, layout), layout, true).getContainer();
     }
 
-    @Override
-    public Matrix axpy(double alpha, Matrix B) {
-        return null;
-    }
 
     public no.uib.cipr.matrix.Matrix getContainer() {
         return data;

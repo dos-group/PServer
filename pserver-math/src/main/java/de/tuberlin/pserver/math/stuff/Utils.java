@@ -2,10 +2,11 @@ package de.tuberlin.pserver.math.stuff;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.Vector;
 
 public class Utils {
 
-    public static final double DEFAULT_EPSILON = 0.0000001;
+    public static final double DEFAULT_EPSILON = 0.001;
 
     public static int getPos(final long row, final long col, Matrix mat) {
         return getPos(row, col, mat.getLayout(), mat.numRows(), mat.numCols());
@@ -44,6 +45,67 @@ public class Utils {
             }
         }
         return data;
+    }
+
+    /**
+     * Checks if two matrices are of the same shape.
+     * @param A of shape m x n
+     * @param B of shape o x p
+     * @return true iff m == o && n == p
+     */
+    public static boolean shapeEqual(Matrix A, Matrix B) {
+        return A.numRows() == B.numRows() && A.numCols() == B.numCols();
+    }
+
+    /**
+     * Checks if two matrices can be multiplied.
+     * @param A of shape m x n
+     * @param B of shape o x p
+     * @return true iff n == o
+     */
+    public static boolean shapeMul2(Matrix A, Matrix B) {
+        return A.numCols() == B.numRows();
+    }
+
+    /**
+     * Checks if A, B and C have valid shapes to multiply A and B and store the result in C.
+     * @param A of shape m x n
+     * @param B of shape o x p
+     * @param C of shape q x r
+     * @return true iff n == o && m == r
+     */
+    public static boolean shapeMatrixMatrixMult(Matrix A, Matrix B, Matrix C) {
+        return A.numCols() == B.numRows() && A.numRows() == C.numRows() && B.numCols() == C.numCols();
+    }
+
+    /**
+     * Checks if A, b and c have valid shapes to multiply A and b and store the result in c.
+     * @param A of shape m x n
+     * @param b of size  o
+     * @param c of size  p
+     * @return true iff n == o && m == p
+     */
+    public static boolean shapeMatrixVectorMult(Matrix A, Vector b, Vector c) {
+        return A.numCols() == b.length() && A.numRows() == c.length();
+    }
+
+    /**
+     * Checks if A is square
+     * @param A of shape m x n
+     * @return true iff m == n
+     */
+    public static boolean shapeSquare(Matrix A) {
+        return A.numRows() == A.numCols();
+    }
+
+    /**
+     * Checks if B can store A transposed.
+     * @param A of shape m x n
+     * @param A of shape o x p
+     * @return true iff m == p && n == o
+     */
+    public static boolean shapeTranspose(Matrix A, Matrix B) {
+        return A.numRows() == B.numCols() && A.numCols() == B.numRows();
     }
 
 }

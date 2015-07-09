@@ -121,7 +121,7 @@ public class TSNEJob extends PServerJob {
             //        squared.set(i, j, Math.pow(Y.get(i, j), 2));
             //    }
             //}
-            squared.applyOnElements(Y, e -> Math.pow(e, 2));
+            squared.applyOnElements(e -> Math.pow(e, 2), Y);
 
             //missing numpy.sum(Y,1)
             //for (int i = 0; i < squared.numRows(); ++i) {
@@ -180,7 +180,7 @@ public class TSNEJob extends PServerJob {
             //    }
             //}
 
-            Matrix num = Y3.zeroDiagonal();
+            Matrix num = Y3.setDiagonalsToZero();
 
             // ---------------------------------------------------
             // (1) GLOBAL OPERATION!!!
@@ -266,7 +266,7 @@ public class TSNEJob extends PServerJob {
             //        dY.set(i, j, dY.get(i,j) * gains.get(i,j));
             //    }
             //}
-            Matrix dY_2 = dY.applyOnElements(gains, (e1, e2) -> e1 * e2);
+            Matrix dY_2 = dY.applyOnElements((e1, e2) -> e1 * e2, gains);
 
 
             iY = iY.scale(momentum).sub(dY_2.scale(eta));
