@@ -13,34 +13,49 @@ import de.tuberlin.pserver.math.VectorBuilder;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Random;
 
 public class GloVeJob extends PServerJob {
+
+    private static final DataManager.Merger<Vector> vectorMerger = (dst, src) -> {
+        for (final Vector b : src) {
+            dst.applyOnElements(b, (e1, e2) -> e1 + e2);
+        }
+
+        dst.applyOnElements(e -> e / (src.size() + 1));
+    };
+
+    private static final DataManager.Merger<Matrix> matrixMerger = (dst, src) -> {
+        for (final Matrix m : src) {
+            dst.applyOnElements(m, (e1, e2) -> e1 + e2);
+        }
+
+        dst.applyOnElements(e -> e / (src.size() + 1));
+    };
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    private static final int NUM_COLS = 1000;
+    /* input data parameter */
+    private static final int NUM_WORDS_IN_COOC_MATRIX = 1000;
+    private static final String INPUT_DATA = "/data/home/fgoessler/cooc-agg.csv";
 
-    private static final int NUM_ROWS = 1000;
-
+    /* hyperparameter */
     private static final int VEC_DIM = 50;
-
-    private static final String INPUT_DATA = "XXX.csv";
-
     private static final double ALPHA = 0.75;
-
     private static final int XMAX = 10;
-
-    private double LearningRate = 0.1;
-
+    private static final double LearningRate = 0.05;
     private static final int MAX_ITER = 15;
 
+    // weight matrix (aka model)
     private Matrix W;
 
-    private Matrix X;
-
+    // biases for the weight matrix
     private Vector B;
+
+    // cooccurrence matrix - every node only gets a part of it (subset of rows)
+    private Matrix X;
 
     // ---------------------------------------------------
     // Public Methods.
@@ -49,56 +64,79 @@ public class GloVeJob extends PServerJob {
     @Override
     public void prologue() {
 
-        dataManager.loadAsMatrix(INPUT_DATA, NUM_ROWS, NUM_COLS,
+        dataManager.loadAsMatrix(INPUT_DATA, NUM_WORDS_IN_COOC_MATRIX, NUM_WORDS_IN_COOC_MATRIX,
                 RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD));
 
         W = new MatrixBuilder()
-                .dimension(VEC_DIM+1, NUM_ROWS * 2)
+                .dimension(VEC_DIM+1, NUM_WORDS_IN_COOC_MATRIX * 2)
                 .format(Matrix.Format.DENSE_MATRIX)
                 .layout(Matrix.Layout.ROW_LAYOUT)
                 .build();
 
-        dataManager.putObject("W", W);
-
         B = new VectorBuilder()
-                .dimension(NUM_ROWS*2)
+                .dimension(NUM_WORDS_IN_COOC_MATRIX * 2)
                 .format(Vector.Format.DENSE_VECTOR)
-                .layout(Vector.Layout.COLUMN_LAYOUT) // ?
+                .layout(Vector.Layout.COLUMN_LAYOUT)
                 .build();
 
+        /* initialize matrix & bias vector */
+        final Random rand = new Random();
+        for (int i = 0; i < W.numRows(); ++i) {
+            for (int j = 0; j < W.numCols(); ++j) {
+                W.set(i, j, (rand.nextDouble() - 0.5) / VEC_DIM);
+            }
+        }
+        for (int i = 0; i < B.length(); i++) {
+            B.set(i, (rand.nextDouble() - 0.5) / VEC_DIM);
+        }
+
+        /* broadcast matrix & bias vector to all nodes */
+        dataManager.putObject("W", W);
         dataManager.putObject("B", B);
     }
 
     @Override
     public void compute() {
 
+        /* get the nodes part of the cooc matrix */
         X = dataManager.getObject(INPUT_DATA);
 
+        /* get broadcasted matrix & bias vector */
         W = dataManager.getObject("W");
-
         B = dataManager.getObject("B");
 
-        int offset = NUM_ROWS/ctx.instanceID;
+        int offset = 0; //TODO offset per node: offset = NUM_WORDS_IN_COOC_MATRIX / num_instances * ctx.instanceID;
 
         int iterations = 0;
 
-        while(iterations++ < MAX_ITER) {
+        while(iterations++ < MAX_ITER /* TODO: abort on convergence criteria ? */) {
+
+            LOG.info("Starting iteration " + (iterations - 1));
 
             double costI = 0;
 
-            for (int ridx = offset; ridx < offset + NUM_ROWS / X.numRows(); ridx++) {
-                for (int cidx = 0; cidx < NUM_COLS; cidx++) {
-                    Double XVal = X.get(ridx, cidx);
+            for (int ridxLocal = offset; ridxLocal < X.numRows(); ridxLocal++) {
+                for (int cidx = 0; cidx < NUM_WORDS_IN_COOC_MATRIX; cidx++) {
+
+                    int wordVecIdx = offset + ridxLocal;
+                    int ctxVecIdx = cidx + NUM_WORDS_IN_COOC_MATRIX;
+
+                    Double xVal = X.get(ridxLocal, cidx);
+
+                    if (xVal == 0)
+                        continue;    // skip 0 values in the cooccurrence matrix cause Math.log(0) = -Infinity
 
                     // word vector
-                    Vector w1 = W.colAsVector(ridx);
-                    Double b1 = B.get(ridx);
+                    Vector w1 = W.colAsVector(wordVecIdx);
+                    Double b1 = B.get(wordVecIdx);
                     // context vector
-                    Vector w2 = W.colAsVector(cidx + NUM_ROWS);
-                    Double b2 = B.get(cidx + NUM_ROWS);
+                    Vector w2 = W.colAsVector(ctxVecIdx);
+                    Double b2 = B.get(ctxVecIdx);
 
-                    double diff = w1.dot(w2) + b1 + b2 - Math.log(XVal);
-                    double fdiff = (XVal > XMAX) ? diff : Math.pow(XVal / XMAX, ALPHA) * diff;
+
+                    /* calculate gradient */
+                    double diff = w1.dot(w2) + b1 + b2 - Math.log(xVal);
+                    double fdiff = (xVal > XMAX) ? diff : Math.pow(xVal / XMAX, ALPHA) * diff;
 
                     // GLOBAL OPERATION - EXCHANGE cost
                     costI += 0.5 * diff * fdiff;
@@ -106,24 +144,21 @@ public class GloVeJob extends PServerJob {
                     Vector grad1 = w2.mul(fdiff);
                     Vector grad2 = w1.mul(fdiff);
 
-                    W.assignColumn(ridx, w1.add(-LearningRate, grad1));
-                    W.assignColumn(cidx + NUM_ROWS, w2.add(-LearningRate, grad2));
+                    W.assignColumn(wordVecIdx, w1.add(-LearningRate, grad1));
+                    W.assignColumn(ctxVecIdx, w2.add(-LearningRate, grad2));
 
-                    B.set(ridx, b1 - LearningRate * fdiff);
-                    B.set(cidx + NUM_ROWS, b2 - LearningRate * fdiff);
+                    B.set(wordVecIdx, b1 - LearningRate * fdiff);
+                    B.set(ctxVecIdx, b2 - LearningRate * fdiff);
                 }
             }
 
-            costI /= X.numRows()*NUM_COLS;
+            costI /= X.numRows() * NUM_WORDS_IN_COOC_MATRIX;
+            LOG.info("Iteration, Cost: " + (iterations - 1) + ", " + costI);
 
-            dataManager.pullMerge(W, (dst, src) -> {
-
-                for (final Matrix m : src) {
-                    dst.applyOnElements(m, (e1, e2) -> e1 + e2);
-                }
-
-                dst.applyOnElements(e -> e / (src.size() + 1));
-            });
+            /* pull data from all other nodes after each iteration */
+            // TODO: intelligent pull - wait for Tobias' "pullRequest" impl with the "preprocessing on sending nodes" feature
+            dataManager.pullMerge(W, matrixMerger);
+            dataManager.pullMerge(B, vectorMerger);
         }
     }
 

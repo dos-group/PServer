@@ -14,12 +14,11 @@ public class PullRequestPrimitiveTestJob extends PServerJob {
     @Override
     public void prologue() {
 
-        dataManager.registerPullRequestHandler("pull-request-value", name -> null);
+        dataManager.registerPullRequestHandler("pull-request-value", name -> new Random().nextDouble());
     }
 
     @Override
     public void compute() {
-
 
         while (true) {
 
@@ -31,13 +30,12 @@ public class PullRequestPrimitiveTestJob extends PServerJob {
 
             if (ctx.instanceID == 0) {
 
-                final Object[] results = dataManager.pullRequest("pull-request-value", new int[] { 1 });
+                final Object[] results = dataManager.pullRequest("pull-request-value");
 
                 for (final Object o : results)
-                    if (o == null)
-                        LOG.info("null");
-                    else
-                        LOG.info(o.toString());
+                    LOG.info(o == null ? "null" : o.toString());
+
+                LOG.info("EXECUTE");
             }
         }
     }

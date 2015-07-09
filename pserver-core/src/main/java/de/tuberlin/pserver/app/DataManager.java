@@ -118,6 +118,8 @@ public class DataManager extends EventDispatcher {
 
     private final int[] instanceIDs;
 
+    private final int[] remoteInstanceIDs;
+
     private CountDownLatch bspSyncBarrier;
 
     // ---------------------------------------------------
@@ -154,6 +156,17 @@ public class DataManager extends EventDispatcher {
         });
 
         this.instanceIDs = IntStream.iterate(0, x -> x + 1).limit(infraManager.getMachines().size()).toArray();
+
+        int numOfRemoteWorkers = infraManager.getMachines().size() - 1;
+        this.remoteInstanceIDs = new int[numOfRemoteWorkers];
+        int i = 0, j = 0;
+        for (MachineDescriptor md : infraManager.getMachines()) {
+            if (!md.equals(infraManager.getMachine())) {
+                remoteInstanceIDs[j] = i;
+                ++j;
+            }
+            ++i;
+        }
     }
 
     // ---------------------------------------------------
@@ -196,17 +209,6 @@ public class DataManager extends EventDispatcher {
         netManager.removeEventListener(PUSH_EVENT_PREFIX + name, handler);
     }
 
-    /*public void awaitEvent(final int n, final String name, final DataEventHandler handler) {
-        handler.initLatch(n);
-        netManager.addEventListener(PUSH_EVENT_PREFIX + name, handler);
-        try {
-            handler.getLatch().await();
-        } catch (InterruptedException e) {
-            LOG.error(e.getLocalizedMessage());
-        }
-        netManager.removeEventListener(PUSH_EVENT_PREFIX + name, handler);
-    }*/
-
     public void registerPullRequestHandler(final String name, final PullRequestHandler handler) {
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(handler);
@@ -219,8 +221,10 @@ public class DataManager extends EventDispatcher {
         });
     }
 
+    public Object[] pullRequest(final String name) { return pullRequest(name, remoteInstanceIDs); }
     public Object[] pullRequest(final String name, final int[] instanceIDs) {
         Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(instanceIDs);
         NetEvents.NetEvent event = new NetEvents.NetEvent(PULL_EVENT_PREFIX + name);
         final Object[] pullResponses = new Object[instanceIDs.length];
         final AtomicInteger responseCounter = new AtomicInteger();
@@ -685,4 +689,15 @@ public class DataManager extends EventDispatcher {
             }
         }
     }
+
+        /*public void awaitEvent(final int n, final String name, final DataEventHandler handler) {
+        handler.initLatch(n);
+        netManager.addEventListener(PUSH_EVENT_PREFIX + name, handler);
+        try {
+            handler.getLatch().await();
+        } catch (InterruptedException e) {
+            LOG.error(e.getLocalizedMessage());
+        }
+        netManager.removeEventListener(PUSH_EVENT_PREFIX + name, handler);
+    }*/
 }

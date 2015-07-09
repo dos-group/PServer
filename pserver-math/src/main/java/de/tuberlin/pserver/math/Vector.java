@@ -39,6 +39,12 @@ public interface Vector extends MObject {
         public abstract double operation(double e1, double e2);
     }
 
+    public abstract Vector applyOnElements(final VectorFunction1Arg vf);
+
+    public abstract Vector applyOnElements(final Vector v2, final VectorFunction1Arg vf);
+
+    public abstract Vector applyOnElements(final Vector v2, final VectorFunction2Arg vf);
+
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
