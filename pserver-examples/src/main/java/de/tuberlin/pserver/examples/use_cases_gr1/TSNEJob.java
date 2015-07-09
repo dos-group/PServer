@@ -30,6 +30,8 @@ public class TSNEJob extends PServerJob {
     @Override
     public void prologue() {
 
+        //todo: Implement computation of affinites, distances etc
+
         dataManager.loadAsMatrix("datasets/mnist_1000.csv", 1000, 1000, RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD));
 
         Y = new MatrixBuilder()
@@ -40,11 +42,13 @@ public class TSNEJob extends PServerJob {
 
         final Random rand = new Random();
 
-        for (int i = 0; i < Y.numRows(); ++i) {
-            for (int j = 0; j < Y.numCols(); ++j) {
-                Y.set(i, j, rand.nextDouble() * 10e-2);
-            }
-        }
+//        for (int i = 0; i < Y.numRows(); ++i) {
+//            for (int j = 0; j < Y.numCols(); ++j) {
+//                Y.set(i, j, rand.nextDouble() * 10e-2);
+//            }
+//        }
+
+        Y.applyOnElements(element -> element = rand.nextDouble());
 
         dataManager.putObject("Y", Y);
     }
@@ -190,9 +194,10 @@ public class TSNEJob extends PServerJob {
             double sumOverNum = 0.0;
             for (int i = 0; i < num.numRows(); ++i) {
                 for (int j = 0; j < num.numCols(); ++j) {
-                    sumOverNum += num.get(i,j);
+                    sumOverNum += num.get(i, j);
                 }
             }
+
 
             // ---------------------------------------------------
 
@@ -244,10 +249,10 @@ public class TSNEJob extends PServerJob {
             //			gains[gains < min_gain] = min_gain;
             for (int i = 0; i < n; ++i) {
                 for (int j = 0; j < d; ++j) {
-                    if ((dY.get(i,j) > 0) != (iY.get(i,j) > 0)) {
-                        gains.set(i,j, Math.max(gains.get(i,j) + 0.2, minGain));
+                    if ((dY.get(i, j) > 0) != (iY.get(i, j) > 0)) {
+                        gains.set(i, j, Math.max(gains.get(i, j) + 0.2, minGain));
                     } else {
-                        gains.set(i,j, Math.max(gains.get(i,j) * 0.8, minGain));
+                        gains.set(i, j, Math.max(gains.get(i, j) * 0.8, minGain));
                     }
                 }
             }
@@ -282,7 +287,6 @@ public class TSNEJob extends PServerJob {
             meanVector.assign(0.0);
 
 
-
             // ---------------------------------------------------
             // (2) GLOBAL OPERATION!!!
             // ---------------------------------------------------
@@ -291,13 +295,13 @@ public class TSNEJob extends PServerJob {
             //global function here !!
             for (int i = 0; i < n; ++i) {
                 for (int j = 0; j < d; ++j) {
-                    meanVector.set(j,meanVector.get(j) + Y.get(i,j));
+                    meanVector.set(j, meanVector.get(j) + Y.get(i, j));
                 }
             }
 
             for (int i = 0; i < n; ++i) {
                 for (int j = 0; j < d; ++j) {
-                    Y.set(i, j, Y.get(i,j) - (meanVector.get(j) / n) );
+                    Y.set(i, j, Y.get(i, j) - (meanVector.get(j) / n));
                 }
             }
 
@@ -309,7 +313,7 @@ public class TSNEJob extends PServerJob {
                 double C = 0.0;
                 for (int i = 0; i < n; ++i) {
                     for (int j = 0; j < d; ++j) {
-                        C += P.get(i,j) * Math.log(P.get(i,j) / Q.get(i,j));
+                        C += P.get(i, j) * Math.log(P.get(i, j) / Q.get(i, j));
                     }
                 }
                 System.out.println("Iteration " + (iter + 1) + ": error is " + C);
