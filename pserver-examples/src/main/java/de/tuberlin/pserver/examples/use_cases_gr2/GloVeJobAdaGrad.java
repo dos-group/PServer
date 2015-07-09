@@ -80,7 +80,7 @@ public class GloVeJobAdaGrad extends PServerJob {
                 W.set(i, j, (rand.nextDouble()-0.5)/VEC_DIM);
                 GradSq.set(i, j, 1.0);
             }
-            B.set(i, j, (rand.nextDouble()-0.5)/VEC_DIM);
+            //B.set(i, j, (rand.nextDouble()-0.5)/VEC_DIM);
         }
 
         dataManager.putObject("W", W);
@@ -130,13 +130,13 @@ public class GloVeJobAdaGrad extends PServerJob {
                     Vector grad1 = w2.mul(fdiff);
                     Vector grad2 = w1.mul(fdiff);
 
-                    W.assignColumn(ridx, w1.add(-1, grad1.applyOnElements(GradSq.colAsVector(ridx, 0, VEC_DIM), (el1, el2) -> el1/Math.sqrt(el2))));
-                    W.assignColumn(cidx + NUM_ROWS, w2.add(-1, grad2.applyOnElements(GradSq.colAsVector(cidx + NUM_ROWS, 0, VEC_DIM), (el1, el2) -> el1/Math.sqrt(el2))));
+                    //W.assignColumn(ridx, w1.add(-1, grad1.applyOnElements(GradSq.colAsVector(ridx, 0, VEC_DIM), (el1, el2) -> el1/Math.sqrt(el2))));
+                    //W.assignColumn(cidx + NUM_ROWS, w2.add(-1, grad2.applyOnElements(GradSq.colAsVector(cidx + NUM_ROWS, 0, VEC_DIM), (el1, el2) -> el1/Math.sqrt(el2))));
 
                     B.set(ridx, b1 - fdiff/Math.sqrt(GradSq.get(ridx,VEC_DIM + 1)));
                     B.set(cidx + NUM_ROWS, b2 - fdiff/Math.sqrt(GradSq.get(cidx+NUM_ROWS,VEC_DIM + 1)));
 
-                    GradSq.assignColumn(ridx, )
+                    //GradSq.assignColumn(ridx, )
                 }
             }
 

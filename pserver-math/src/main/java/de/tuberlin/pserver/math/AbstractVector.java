@@ -208,7 +208,6 @@ public abstract class AbstractVector implements Vector {
         Preconditions.checkArgument(length == arg.length(), String.format("Can not apply operation because supplied vector length (%d) differs from base vector length (%d)",arg.length(), length));
     }
 
-    @Override
     public Vector applyOnElements(final VectorFunction1Arg vf) {
         final Vector res = copy();
         for (int i = 0; i < res.length(); ++i) {
@@ -217,7 +216,6 @@ public abstract class AbstractVector implements Vector {
         return res;
     }
 
-    @Override
     public Vector applyOnElements(final Vector v2, final VectorFunction1Arg vf) {
         final Vector res = copy();
         for (int i = 0; i < res.length(); ++i) {
@@ -226,7 +224,6 @@ public abstract class AbstractVector implements Vector {
         return res;
     }
 
-    @Override
     public Vector applyOnElements(final Vector v2, final VectorFunction2Arg vf) {
         final Vector res = copy();
         Preconditions.checkState(v2.length() == res.length());
