@@ -1,6 +1,8 @@
 package de.tuberlin.pserver.examples.use_cases_gr1;
 
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.AtomicDouble;
+import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
@@ -22,6 +24,8 @@ public class TSNEJob extends PServerJob {
     // ---------------------------------------------------
 
     private Matrix Y;
+    private Matrix Q;
+    private Matrix P;
 
     // ---------------------------------------------------
     // Public Methods.
@@ -32,7 +36,9 @@ public class TSNEJob extends PServerJob {
 
         //todo: Implement computation of affinites, distances etc
 
-        dataManager.loadAsMatrix("datasets/mnist_1000.csv", 1000, 1000, RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD));
+        dataManager.loadAsMatrix("/Users/Chris/Downloads/mnist_1000_jointP.csv", 1000, 1000, RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD));
+        dataManager.registerPullRequestHandler("sumQ",
+                name -> Q.aggregateRows(f -> f.sum()).sum());
 
         Y = new MatrixBuilder()
                 .dimension(1000, 2)
@@ -41,25 +47,21 @@ public class TSNEJob extends PServerJob {
                 .build();
 
         final Random rand = new Random();
-
-//        for (int i = 0; i < Y.numRows(); ++i) {
-//            for (int j = 0; j < Y.numCols(); ++j) {
-//                Y.set(i, j, rand.nextDouble() * 10e-2);
-//            }
-//        }
-
+        // initialize Y by sampling from N(0, 10e-4)
         Y.applyOnElements(element -> element = rand.nextDouble());
 
         dataManager.putObject("Y", Y);
     }
 
 
-    //for loop count: 40 ;-)
     @Override
     public void compute() {
+        P = dataManager.getObject("/Users/Chris/Downloads/mnist_1000_jointP.csv");
         Y = dataManager.getObject("Y");
-        Matrix P = dataManager.getObject("datasets/mnist_1000.csv");
 
+        final AtomicDouble sumQ = new AtomicDouble(0.0);
+
+        // early exaggeration
         P.scale(4.0);
 
         Long n = Y.numRows();
@@ -68,19 +70,13 @@ public class TSNEJob extends PServerJob {
         final double minGain = 0.01;
         final double initial_momentum = 0.5;
         final double final_momentum = 0.8;
-        final double eta = 500;
+        final double eta = 300;
 
         Matrix squared = new MatrixBuilder()
                 .dimension(n, d)
                 .format(Matrix.Format.DENSE_MATRIX)
                 .layout(Matrix.Layout.ROW_LAYOUT)
                 .build();
-
-        //Vector sum_Y = new VectorBuilder()
-        //        .dimension(n)
-        //        .format(Vector.Format.DENSE_VECTOR)
-        //        .layout(Vector.Layout.ROW_LAYOUT)
-        //        .build();
 
         Matrix gains = new MatrixBuilder()
                 .dimension(n, d)
@@ -118,6 +114,8 @@ public class TSNEJob extends PServerJob {
         iY.assign(0.0);
 
         for (int iter = 0; iter < 100; ++iter) {
+
+            // pullrequest check ifinstance == 0 -> pull request for distribution
 
             //Math.square(Y)
             //for (int i = 0; i < Y.numRows(); ++i) {
@@ -184,24 +182,37 @@ public class TSNEJob extends PServerJob {
             //    }
             //}
 
-            Matrix num = Y3.zeroDiagonal();
+            Q = Y3.zeroDiagonal();
 
             // ---------------------------------------------------
             // (1) GLOBAL OPERATION!!!
             // ---------------------------------------------------
             //missing: sum over all elements of a matrix
 
-            double sumOverNum = 0.0;
-            for (int i = 0; i < num.numRows(); ++i) {
-                for (int j = 0; j < num.numCols(); ++j) {
-                    sumOverNum += num.get(i, j);
-                }
-            }
+            dataManager.sync();
 
+            if (ctx.instanceID == 0) {
+                Object[] sumQs = dataManager.pullRequest("sumQ");
+                Double sumOverQ = 0.0;
+                for (Object sum : sumQs) {
+                    sumOverQ += (Double) sum;
+                }
+                sumOverQ += Q.aggregateRows(f -> f.sum()).sum();
+                sumQ.set(sumOverQ);
+                dataManager.pushToAll("sumOverQ", sumOverQ);
+            }
+            else {
+                dataManager.awaitEvent(1, "sumOverQ", new DataManager.DataEventHandler(){
+                    @Override
+                    public void handleDataEvent(int srcInstanceID, Object value) {
+                        sumQ.set((Double) value);
+                    }
+                });
+            }
 
             // ---------------------------------------------------
 
-            Matrix Q = num.scale(1.0 / sumOverNum);
+            Q = Q.scale(1 / sumQ.get());
 
             //missing: element wise Maxnum
             //for (int i = 0; i < Q.numRows(); ++i) {

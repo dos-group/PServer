@@ -43,11 +43,13 @@ public class DataManager extends EventDispatcher {
     // Inner Classes.
     // ---------------------------------------------------
 
-    public abstract class DataEventHandler implements IEventHandler {
+    public abstract static class DataEventHandler implements IEventHandler {
 
         private CountDownLatch latch = null;
 
         public abstract void handleDataEvent(final int srcInstanceID, final Object value);
+
+        public InfrastructureManager infraManager;
 
         @Override
         public void handleEvent(final Event e) {
@@ -234,6 +236,7 @@ public class DataManager extends EventDispatcher {
                 pullResponses[responseCounter.getAndIncrement()] = value;
             }
         };
+        handler.infraManager = infraManager;
         handler.initLatch(instanceIDs.length);
         netManager.addEventListener(PUSH_EVENT_PREFIX + name, handler);
         netManager.sendEvent(instanceIDs, event);
@@ -690,7 +693,8 @@ public class DataManager extends EventDispatcher {
         }
     }
 
-        /*public void awaitEvent(final int n, final String name, final DataEventHandler handler) {
+    public void awaitEvent(final int n, final String name, final DataEventHandler handler) {
+        handler.infraManager = infraManager;
         handler.initLatch(n);
         netManager.addEventListener(PUSH_EVENT_PREFIX + name, handler);
         try {
@@ -699,5 +703,5 @@ public class DataManager extends EventDispatcher {
             LOG.error(e.getLocalizedMessage());
         }
         netManager.removeEventListener(PUSH_EVENT_PREFIX + name, handler);
-    }*/
+    }
 }
