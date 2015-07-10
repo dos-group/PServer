@@ -11,6 +11,7 @@ import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.MatrixBuilder;
 import de.tuberlin.pserver.math.Vector;
 import de.tuberlin.pserver.math.VectorBuilder;
+import sun.rmi.runtime.Log;
 
 import java.io.Serializable;
 import java.util.List;
@@ -23,9 +24,16 @@ public class TSNEJob extends PServerJob {
     // Fields.
     // ---------------------------------------------------
 
-    private Matrix Y;
-    private Matrix Q;
     private Matrix P;
+    private Matrix Q;
+    private Matrix Y;
+
+    private final double MIN_GAIN = 0.01;
+    private final double INITIAL_MOMENTUM = 0.5;
+    private final double FINAL_MOMENTUM = 0.8;
+    private final double ETA = 300.0;
+    private final double EARLY_EXAGGERATION = 4.0;
+    private final int MAX_ITER = 1;
 
     // ---------------------------------------------------
     // Public Methods.
@@ -36,43 +44,49 @@ public class TSNEJob extends PServerJob {
 
         //todo: Implement computation of affinites, distances etc
 
-        dataManager.loadAsMatrix("/Users/Chris/Downloads/mnist_1000_jointP.csv", 1000, 1000, RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD));
-        dataManager.registerPullRequestHandler("sumQ",
-                name -> Q.aggregateRows(f -> f.sum()).sum());
+        dataManager.loadAsMatrix("/Users/Chris/Downloads/mnist_20_jointP.csv", 20, 20,
+                RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD));
+        //dataManager.registerPullRequestHandler("sumQ",
+        //        name -> Q.aggregateRows(f -> f.sum()).sum());
 
-        Y = new MatrixBuilder()
-                .dimension(1000, 2)
+        dataManager.loadAsMatrix("/Users/Chris/Downloads/mnist_20_initY.csv", 20, 2,
+                RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD));
+
+        /*Y = new MatrixBuilder()
+                .dimension(20, 2)
                 .format(Matrix.Format.DENSE_MATRIX)
                 .layout(Matrix.Layout.ROW_LAYOUT)
                 .build();
 
         final Random rand = new Random();
         // initialize Y by sampling from N(0, 10e-4)
-        Y.applyOnElements(element -> element = rand.nextDouble());
-
-        dataManager.putObject("Y", Y);
+        Y.applyOnElements(e -> e = rand.nextDouble() * 1e-2);
+        LOG.info("Y:");
+        LOG.info(Y.toString());
+        dataManager.putObject("Y", Y);*/
     }
 
 
     @Override
     public void compute() {
-        P = dataManager.getObject("/Users/Chris/Downloads/mnist_1000_jointP.csv");
-        Y = dataManager.getObject("Y");
+        P = dataManager.getObject("/Users/Chris/Downloads/mnist_20_jointP.csv");
+        Y = dataManager.getObject("/Users/Chris/Downloads/mnist_20_initY.csv");
 
-        final AtomicDouble sumQ = new AtomicDouble(0.0);
+        //final AtomicDouble sumQ = new AtomicDouble(0.0);
 
         // early exaggeration
-        P.scale(4.0);
+        //P.scale(4.0);
 
         Long n = Y.numRows();
         Long d = Y.numCols();
 
-        final double minGain = 0.01;
-        final double initial_momentum = 0.5;
-        final double final_momentum = 0.8;
-        final double eta = 300;
+        Q = new MatrixBuilder()
+                .dimension(n, n)
+                .format(Matrix.Format.DENSE_MATRIX)
+                .layout(Matrix.Layout.ROW_LAYOUT)
+                .build();
 
-        Matrix squared = new MatrixBuilder()
+        Matrix Y_squared = new MatrixBuilder()
                 .dimension(n, d)
                 .format(Matrix.Format.DENSE_MATRIX)
                 .layout(Matrix.Layout.ROW_LAYOUT)
@@ -84,112 +98,48 @@ public class TSNEJob extends PServerJob {
                 .layout(Matrix.Layout.ROW_LAYOUT)
                 .build();
 
-        //gradient of the last iteration (enriched by fancy regularization)
         Matrix iY = new MatrixBuilder()
                 .dimension(n, d)
                 .format(Matrix.Format.DENSE_MATRIX)
                 .layout(Matrix.Layout.ROW_LAYOUT)
                 .build();
 
-        Vector meanVector = new VectorBuilder()
+        Matrix dY = new MatrixBuilder()
+                .dimension(n, d)
+                .format(Matrix.Format.DENSE_MATRIX)
+                .layout(Matrix.Layout.ROW_LAYOUT)
+                .build();
+
+        Vector mean = new VectorBuilder()
                 .dimension(d)
                 .format(Vector.Format.DENSE_VECTOR)
                 .layout(Vector.Layout.ROW_LAYOUT)
                 .build();
 
-        //missing: fill matrix with value
-        //for (int i = 0; i < n; ++i) {
-        //    for (int j = 0; j < d; ++j) {
-        //        gains.set(i, j, 1.0);
-        //    }
-        //}
         gains.assign(1.0);
-
-        //missing: fill matrix with value
-        //for (int i = 0; i < n; ++i) {
-        //    for (int j = 0; j < d; ++j) {
-        //        iY.set(i,j,0.0);
-        //    }
-        //}
         iY.assign(0.0);
 
-        for (int iter = 0; iter < 100; ++iter) {
+        //
+        for (int iteration = 0; iteration < MAX_ITER; ++iteration) {
+            // sum_Y = Math.sum(Math.square(Y), 1)
+            Y_squared = Y_squared.applyOnElements(Y, e -> Math.pow(e, 2));
+            Vector sum_Y = Y_squared.aggregateRows(f -> f.sum());
 
-            // pullrequest check ifinstance == 0 -> pull request for distribution
+            // num = 1 / (1 + Math.add(Math.add(-2 * Math.dot(Y, Y.T), sum_Y).T, sum_Y))
+            Matrix num = Y.mul(Y.transpose()).scale(-2).addVectorToRows(sum_Y).transpose()
+                    .addVectorToRows(sum_Y);
+            num.applyOnElements(e -> 1.0 / (e + 1.0));
+            // entries i=j must be zero
+            num = num.zeroDiagonal();
 
-            //Math.square(Y)
-            //for (int i = 0; i < Y.numRows(); ++i) {
-            //    for (int j = 0; j < Y.numCols(); ++j) {
-            //        squared.set(i, j, Math.pow(Y.get(i, j), 2));
-            //    }
-            //}
-            squared.applyOnElements(Y, e -> Math.pow(e, 2));
-
-            //missing numpy.sum(Y,1)
-            //for (int i = 0; i < squared.numRows(); ++i) {
-            //    double sum = 0.0;
-            //    for (int j = 0; j < squared.numCols(); ++j) {
-            //        sum += squared.get(i, j);
-            //    }
-            //    sum_Y.set(i,sum);
-            //}
-            Vector sum_Y = squared.aggregateRows(f -> f.sum());
-
-            Matrix Y1 = Y.mul(Y.transpose()).scale(-2); //Math.dot(Y, Y.T) * -2
-
-            //missing matrix.add(vector)
-            //for (int i = 0; i < squared.numRows(); ++i) {
-            //    for (int j = 0; j < squared.numCols(); ++j) {
-            //        Y1.set(i, j, Y1.get(i, j) + sum_Y.get(j));
-            //    }
-            //}
-            Matrix Y1_2 = Y1.addVectorToRows(sum_Y);
-
-            Matrix Y2 = Y1_2.transpose();
-
-            //missing matrix.add(vector)
-            //for (int i = 0; i < Y2.numRows(); ++i) {
-            //    for (int j = 0; j < Y2.numCols(); ++j) {
-            //        Y2.set(i, j, Y2.get(i, j) + sum_Y.get(i));
-            //    }
-            //}
-            Matrix Y2_2 = Y2.addVectorToRows(sum_Y);
-
-            //missing matrix.add(scalar)
-            //for (int i = 0; i < Y2.numRows(); ++i) {
-            //    for (int j = 0; j < Y2.numCols(); ++j) {
-            //        Y2.set(i, j, Y2.get(i, j) + 1);
-            //    }
-            //}
-            //Matrix Y3 = Y2.applyOnElements(e -> e + 1);
-
-            //missing 1 / matrix
-            //for (int i = 0; i < Y2.numRows(); ++i) {
-            //    for (int j = 0; j < Y2.numCols(); ++j) {
-            //        Y2.set(i, j, 1.0 / Y2.get(i, j));
-            //    }
-            //}
-            //Matrix Y3 = Y2.applyOnElements(e -> 1.0 / e);
-
-            Matrix Y3 = Y2.applyOnElements(e -> (e + 1.0) / e);
-
-            //Matrix num = Y3;
-            //for (int i = 0; i < num.numRows(); ++i) {
-            //    for (int j = 0; j < num.numCols(); ++j) {
-            //        if (i == j) {
-            //            num.set(i,j,0.0);
-            //        }
-            //    }
-            //}
-
-            Q = Y3.zeroDiagonal();
+            LOG.info("num:" + num.rowAsVector().toString());
 
             // ---------------------------------------------------
             // (1) GLOBAL OPERATION!!!
             // ---------------------------------------------------
             //missing: sum over all elements of a matrix
 
-            dataManager.sync();
+            /*dataManager.sync();
 
             if (ctx.instanceID == 0) {
                 Object[] sumQs = dataManager.pullRequest("sumQ");
@@ -213,69 +163,54 @@ public class TSNEJob extends PServerJob {
             // ---------------------------------------------------
 
             Q = Q.scale(1 / sumQ.get());
+            */
 
-            //missing: element wise Maxnum
-            //for (int i = 0; i < Q.numRows(); ++i) {
-            //    for (int j = 0; j < Q.numCols(); ++j) {
-            //        Q.set(i,j, Math.max(Q.get(i,j), 1e-12));
-            //    }
-            //}
-            Matrix Q2 = Q.applyOnElements(e -> Math.max(e, 1e-12));
+            Double sumNum = num.aggregateRows(f -> f.sum()).sum();
+            // Q = num / Math.sum(num)
+            Q = num.copy().scale(1.0 / sumNum);
 
-            Matrix PQ = P.sub(Q2);
+            // Math.maximum(Q, 1e-12)
+            Q = Q.applyOnElements(e -> Math.max(e, 1e-12));
 
-            Matrix gradient = new MatrixBuilder()
-                    .dimension(1000, 2)
-                    .format(Matrix.Format.DENSE_MATRIX)
-                    .layout(Matrix.Layout.ROW_LAYOUT)
-                    .build();
+            LOG.info("Q: " + Q.rowAsVector().toString());
+            LOG.info("num2:" + num.rowAsVector().toString());
 
-            //missing element wise vector multiplication = vector * vector
-            for (int i = 0; i < n; ++i) {
+            // PQ = P - Q
+            Matrix PQ = P.sub(Q);
 
+            // dY[i,:] = Math.sum(Math.tile(PQ[:,i] * num[:,i], (no_dims, 1)).T * (Y[i,:] - Y), 0)
+            for (int i=0; i < P.numRows(); ++i) {
                 Vector sumVec = new VectorBuilder()
                         .dimension(d)
                         .format(Vector.Format.DENSE_VECTOR)
                         .layout(Vector.Layout.ROW_LAYOUT)
                         .build();
-
-                //missing fill vector or matrix with zeros, ones, ...
-                //for (int u = 0; u < d; u++) {
-                //    sumVec.set(u, 0.0);
-                //}
                 sumVec.assign(0.0);
 
-                for (int j = 0; j < n; j++) {
-                    sumVec = sumVec.add(Y.rowAsVector(i).mul(PQ.get(i, j) * num.get(i, j)));
+                for (int j=0; j < P.numCols(); ++j) {
+                    final Double pq = PQ.get(i,j);
+                    final Double num_j = num.get(i,j);
+                    LOG.info("pq(" + i + "," + j + "): " + pq);
+                    LOG.info("num_j(" + i + "," + j + "): " + num_j);
+                    // (p - num / sum(q)) * num
+                    // (p - q) * num
+                    sumVec = sumVec.add(Y.rowAsVector(i).sub(Y.rowAsVector(j))
+                                .applyOnElements(e -> e * pq * num_j));
                 }
-
-                gradient.assignRow(i, sumVec);
+                dY.assignRow(i, sumVec);
+                LOG.info("sumVec(" + i + "): " + sumVec.toString());
             }
 
-            Matrix dY = gradient;
-
-            //calculate difference between last gradient
-            // in Python:
-            // 		gains = (gains + 0.2) * ((dY > 0) != (iY > 0)) + (gains * 0.8) * ((dY > 0) == (iY > 0));
-            //			gains[gains < min_gain] = min_gain;
-            for (int i = 0; i < n; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    if ((dY.get(i, j) > 0) != (iY.get(i, j) > 0)) {
-                        gains.set(i, j, Math.max(gains.get(i, j) + 0.2, minGain));
-                    } else {
-                        gains.set(i, j, Math.max(gains.get(i, j) * 0.8, minGain));
-                    }
-                }
-            }
+            LOG.info("dY: " + dY.rowAsVector().toString());
 
             double momentum;
 
-            if (iter < 20) {
-                momentum = initial_momentum;
+            if (iteration < 20) {
+                momentum = INITIAL_MOMENTUM;
             } else {
-                momentum = final_momentum;
+                momentum = FINAL_MOMENTUM;
             }
-
+/*
             //missing element wise matrix multiplication
             //for (int i = 0; i < n; ++i) {
             //    for (int j = 0; j < d; ++j) {
@@ -334,7 +269,7 @@ public class TSNEJob extends PServerJob {
                     P = P.scale(1.0 / 4.0);
                 }
             }
-
+*/
             dataManager.sync();
         }
 
