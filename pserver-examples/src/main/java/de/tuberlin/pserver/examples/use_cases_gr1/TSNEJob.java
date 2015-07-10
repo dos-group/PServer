@@ -13,7 +13,10 @@ import de.tuberlin.pserver.math.Vector;
 import de.tuberlin.pserver.math.VectorBuilder;
 import sun.rmi.runtime.Log;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.io.Serializable;
+import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Random;
 
@@ -31,9 +34,13 @@ public class TSNEJob extends PServerJob {
     private final double MIN_GAIN = 0.01;
     private final double INITIAL_MOMENTUM = 0.5;
     private final double FINAL_MOMENTUM = 0.8;
-    private final double ETA = 300.0;
+    private final double ETA = 350.0;
     private final double EARLY_EXAGGERATION = 4.0;
-    private final int MAX_ITER = 1;
+    private final int MAX_ITER = 300;
+
+    private final String INPUT_MATRIX = "/Users/Chris/Downloads/mnist_500_jointP.csv";
+    private final Integer INPUT_DIMS = 500;
+    private final Integer EMBEDDING_DIMS = 2;
 
     // ---------------------------------------------------
     // Public Methods.
@@ -44,43 +51,49 @@ public class TSNEJob extends PServerJob {
 
         //todo: Implement computation of affinites, distances etc
 
-        dataManager.loadAsMatrix("/Users/Chris/Downloads/mnist_20_jointP.csv", 20, 20,
+        dataManager.loadAsMatrix(INPUT_MATRIX, INPUT_DIMS, INPUT_DIMS,
                 RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD));
         //dataManager.registerPullRequestHandler("sumQ",
         //        name -> Q.aggregateRows(f -> f.sum()).sum());
 
-        dataManager.loadAsMatrix("/Users/Chris/Downloads/mnist_20_initY.csv", 20, 2,
-                RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD));
+        //dataManager.loadAsMatrix("/Users/Chris/Downloads/mnist_20_initY.csv", 20, 2,
+        //        RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD));
 
-        /*Y = new MatrixBuilder()
-                .dimension(20, 2)
+        Y = new MatrixBuilder()
+                .dimension(INPUT_DIMS, EMBEDDING_DIMS)
                 .format(Matrix.Format.DENSE_MATRIX)
                 .layout(Matrix.Layout.ROW_LAYOUT)
                 .build();
 
         final Random rand = new Random();
         // initialize Y by sampling from N(0, 10e-4)
-        Y.applyOnElements(e -> e = rand.nextDouble() * 1e-2);
-        LOG.info("Y:");
-        LOG.info(Y.toString());
-        dataManager.putObject("Y", Y);*/
+        Y.applyOnElements(e -> e = rand.nextDouble());
+
+        dataManager.putObject("Y", Y);
     }
 
 
     @Override
     public void compute() {
-        P = dataManager.getObject("/Users/Chris/Downloads/mnist_20_jointP.csv");
-        Y = dataManager.getObject("/Users/Chris/Downloads/mnist_20_initY.csv");
+        P = dataManager.getObject(INPUT_MATRIX);
+        //Y = dataManager.getObject("/Users/Chris/Downloads/mnist_20_initY.csv");
+        Y = dataManager.getObject("Y");
 
         //final AtomicDouble sumQ = new AtomicDouble(0.0);
 
         // early exaggeration
-        //P.scale(4.0);
+        P = P.scale(EARLY_EXAGGERATION);
 
         Long n = Y.numRows();
         Long d = Y.numCols();
 
         Q = new MatrixBuilder()
+                .dimension(n, n)
+                .format(Matrix.Format.DENSE_MATRIX)
+                .layout(Matrix.Layout.ROW_LAYOUT)
+                .build();
+
+        Matrix PQ = new MatrixBuilder()
                 .dimension(n, n)
                 .format(Matrix.Format.DENSE_MATRIX)
                 .layout(Matrix.Layout.ROW_LAYOUT)
@@ -132,7 +145,7 @@ public class TSNEJob extends PServerJob {
             // entries i=j must be zero
             num = num.zeroDiagonal();
 
-            LOG.info("num:" + num.rowAsVector().toString());
+            LOG.debug("num:" + num.rowAsVector().toString());
 
             // ---------------------------------------------------
             // (1) GLOBAL OPERATION!!!
@@ -172,11 +185,12 @@ public class TSNEJob extends PServerJob {
             // Math.maximum(Q, 1e-12)
             Q = Q.applyOnElements(e -> Math.max(e, 1e-12));
 
-            LOG.info("Q: " + Q.rowAsVector().toString());
-            LOG.info("num2:" + num.rowAsVector().toString());
+            LOG.debug("Q: " + Q.rowAsVector().toString());
+            LOG.debug("num2:" + num.rowAsVector().toString());
+            LOG.debug("P:" + P.rowAsVector().toString());
 
             // PQ = P - Q
-            Matrix PQ = P.sub(Q);
+            PQ = P.copy().sub(Q);
 
             // dY[i,:] = Math.sum(Math.tile(PQ[:,i] * num[:,i], (no_dims, 1)).T * (Y[i,:] - Y), 0)
             for (int i=0; i < P.numRows(); ++i) {
@@ -188,20 +202,17 @@ public class TSNEJob extends PServerJob {
                 sumVec.assign(0.0);
 
                 for (int j=0; j < P.numCols(); ++j) {
-                    final Double pq = PQ.get(i,j);
-                    final Double num_j = num.get(i,j);
-                    LOG.info("pq(" + i + "," + j + "): " + pq);
-                    LOG.info("num_j(" + i + "," + j + "): " + num_j);
+                    final Double pq = PQ.get(i, j);
+                    final Double num_j = num.get(i, j);
                     // (p - num / sum(q)) * num
                     // (p - q) * num
                     sumVec = sumVec.add(Y.rowAsVector(i).sub(Y.rowAsVector(j))
                                 .applyOnElements(e -> e * pq * num_j));
                 }
                 dY.assignRow(i, sumVec);
-                LOG.info("sumVec(" + i + "): " + sumVec.toString());
             }
 
-            LOG.info("dY: " + dY.rowAsVector().toString());
+            LOG.debug("dY: " + dY.rowAsVector().toString());
 
             double momentum;
 
@@ -210,69 +221,67 @@ public class TSNEJob extends PServerJob {
             } else {
                 momentum = FINAL_MOMENTUM;
             }
-/*
-            //missing element wise matrix multiplication
-            //for (int i = 0; i < n; ++i) {
-            //    for (int j = 0; j < d; ++j) {
-            //        dY.set(i, j, dY.get(i,j) * gains.get(i,j));
-            //    }
-            //}
-            Matrix dY_2 = dY.applyOnElements(gains, (e1, e2) -> e1 * e2);
 
+            for (int i=0; i < gains.numRows(); ++i) {
+                for (int j=0; j < gains.numCols(); ++j) {
+                    final Double dY_j = dY.get(i, j);
+                    final Double iY_j = iY.get(i, j);
+                    final Double gain_j = gains.get(i, j);
+                    // gains = (gains + 0.2) * ((dY > 0) != (iY > 0)) + (gains * 0.8) * ((dY > 0) == (iY > 0))
+                    if ((dY_j > 0) == (iY_j > 0)) {
+                        gains.set(i, j, gain_j * 0.8);
+                    }
+                    else {
+                        gains.set(i, j, gain_j + 0.2);
+                    }
+                }
+            }
 
-            iY = iY.scale(momentum).sub(dY_2.scale(eta));
+            // gains[gains < min_gain] = min_gain
+            gains = gains.applyOnElements(e -> Math.max(e, MIN_GAIN));
+
+            // iY = momentum * iY - eta * (gains * dY)
+            iY = iY.scale(momentum).sub(dY.applyOnElements(gains, (e1, e2) -> e1 * e2).scale(ETA));
+
+            // Y = Y + iY
             Y = Y.add(iY);
-
-            //in Python
-            //Y = Y - Math.tile(Math.mean(Y, 0), (n, 1));
-
-            //missing fill vector with value
-            //for (int j = 0; j < d; ++j) {
-            //    meanVector.set(j,0.0);
-            //}
-            meanVector.assign(0.0);
-
 
             // ---------------------------------------------------
             // (2) GLOBAL OPERATION!!!
             // ---------------------------------------------------
 
             //missing: mean per row or column
-            //global function here !!
-            for (int i = 0; i < n; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    meanVector.set(j, meanVector.get(j) + Y.get(i, j));
-                }
-            }
 
-            for (int i = 0; i < n; ++i) {
-                for (int j = 0; j < d; ++j) {
-                    Y.set(i, j, Y.get(i, j) - (meanVector.get(j) / n));
-                }
+            // Y = Y - Math.tile(Math.mean(Y, 0), (n, 1))
+            mean = mean.assign(0.0);
+            for (int i=0; i < Y.numRows(); ++i) {
+                mean.add(Y.rowAsVector(i));
             }
+            mean = mean.div(Y.numRows());
 
-            // ---------------------------------------------------
+            Y = Y.addVectorToRows(mean.mul(-1.0));
 
             // Compute current value of cost function
-            if ((iter + 1) % 10 == 0) {
+            if ((iteration + 1) % 10 == 0) {
                 //C = Math.sum(P * Math.log(P / Q));
                 double C = 0.0;
-                for (int i = 0; i < n; ++i) {
-                    for (int j = 0; j < d; ++j) {
+                for (int i = 0; i < P.numRows(); ++i) {
+                    for (int j = 0; j < P.numCols(); ++j) {
                         C += P.get(i, j) * Math.log(P.get(i, j) / Q.get(i, j));
                     }
                 }
-                System.out.println("Iteration " + (iter + 1) + ": error is " + C);
-
-                // Stop lying about P-values
-                if (iter == 100) {
-                    P = P.scale(1.0 / 4.0);
-                }
+                LOG.info("Iteration " + (iteration + 1) + ", Error: " + C);
             }
-*/
+
+            // Scale back to original values
+            if (iteration == 100) {
+                P = P.scale(1.0 / EARLY_EXAGGERATION);
+            }
+
             dataManager.sync();
         }
-
+        LOG.debug("Y: " + Y.rowAsVector().toString());
+        result(Y);
     }
 
     // ---------------------------------------------------
@@ -282,23 +291,27 @@ public class TSNEJob extends PServerJob {
     public static void main(final String[] args) {
 
         final List<List<Serializable>> res = Lists.newArrayList();
+        PrintWriter writer = null;
 
         PServerExecutor.LOCAL
                 .run(TSNEJob.class)
                 .results(res)
                 .done();
 
-        //missing result to CSV
+        try {
+            writer = new PrintWriter("/Users/Chris/Downloads/pserver_mnist.csv", "UTF-8");
 
-        /*final DecimalFormat numberFormat = new DecimalFormat("0.000");
-        res.forEach(
-                r -> r.forEach(
-                        w -> {
-                            for (double weight : ((Vector)w).toArray())
-                                System.out.print(numberFormat.format(weight) + "\t | ");
-                            System.out.println();
-                        }
-                )
-        );*/
+            final DecimalFormat numberFormat = new DecimalFormat("0.000");
+            Matrix R = (Matrix) res.get(0).get(0);
+            for (int i = 0; i < R.numRows(); ++i) {
+                for (int j = 0; j < R.numCols(); ++j) {
+                    writer.println(i + "," + j + "," + R.get(i, j));
+                }
+            }
+        }
+        catch (Exception e) {}
+        finally {
+            writer.close();
+        }
     }
 }
