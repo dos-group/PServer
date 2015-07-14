@@ -12,6 +12,7 @@ import de.tuberlin.pserver.math.Vector;
 import de.tuberlin.pserver.math.VectorBuilder;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -37,6 +38,8 @@ public class GloVeJobAdaGrad extends PServerJob {
     // Fields.
     // ---------------------------------------------------
 
+    private static final boolean USE_PULL_REQUEST_FEATURE = true;
+
     /* input data parameter */
     private static final int NUM_WORDS_IN_COOC_MATRIX = 1000;
     private static final String INPUT_DATA = "/data/home/fgoessler/cooc-agg.csv";
@@ -47,15 +50,18 @@ public class GloVeJobAdaGrad extends PServerJob {
     private static final int XMAX = 10;
     private static final double LearningRate = 0.05;
     private static final int MAX_ITER = 15;
+    private static final double MATRIX_TRANSMIT_THRESHOLD = 0.5;
 
     // weight matrix (aka model)
     private Matrix W;
+    private Matrix W_old;
 
     // biases for the weight matrix
     private Vector B;
 
     // gradient adjustments for AdaGrad
     private Matrix GradSq;
+    private Matrix GradSq_old;
     private Vector GradSqB;
 
     // cooccurrence matrix - every node only gets a part of it (subset of rows)
@@ -79,12 +85,14 @@ public class GloVeJobAdaGrad extends PServerJob {
                 .format(Matrix.Format.DENSE_MATRIX)
                 .layout(Matrix.Layout.ROW_LAYOUT)
                 .build();
+        W_old = W.copy();
 
         GradSq = new MatrixBuilder()
                 .dimension(VEC_DIM, NUM_WORDS_IN_COOC_MATRIX * 2)
                 .format(Matrix.Format.DENSE_MATRIX)
                 .layout(Matrix.Layout.ROW_LAYOUT)
                 .build();
+        GradSq_old = GradSq.copy();
 
         /* create bias vectors */
         GradSqB = new VectorBuilder()
@@ -112,11 +120,13 @@ public class GloVeJobAdaGrad extends PServerJob {
             GradSqB.set(i, 1.0);
         }
 
-        /* broadcast matrices & bias vectors to all nodes */
+        /* register pull request handlers  */
+        if (USE_PULL_REQUEST_FEATURE) {
+            dataManager.registerPullRequestHandler("WPullRequest", new MatrixPullRequestHandler(W, W_old));
+            dataManager.registerPullRequestHandler("GradSqPullRequest", new MatrixPullRequestHandler(GradSq, GradSq_old));
+        }
 
-        // TODO: THIS IS NOT A BROADCAST, YOU JUST STORE THESE OBJECTS
-        // TODO IN YOUR LOCAL (in-memory) DHT AREA AND MAKE THEM ACCESSIBLE (ON THE WHOLE CLUSTER) VIA NAME!
-
+        /* make matrices & bias vectors available for all nodes */
         dataManager.putObject("W", W);
         dataManager.putObject("B", B);
         dataManager.putObject("GradSq", GradSq);
@@ -129,7 +139,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         /* get the nodes part of the cooc matrix */
         X = dataManager.getObject(INPUT_DATA);
 
-        /* get broadcasted matrices & bias vectors */
+        /* get matrices & bias vectors */
         W = dataManager.getObject("W");
         B = dataManager.getObject("B");
         GradSq = dataManager.getObject("GradSq");
@@ -226,11 +236,84 @@ public class GloVeJobAdaGrad extends PServerJob {
 
             // TODO HAVE A LOOK AT PullRequestPrimitiveTestJob in examples/playground, I HOPE THIS IS THE PRIMITIVE YOU NEED!
 
-            dataManager.pullMerge(W, matrixMerger);
+            if (USE_PULL_REQUEST_FEATURE) {
+                performPullRequest(W, "WPullRequest");
+                W_old = W.copy();
+                performPullRequest(GradSq, "GradSqPullRequest");
+                GradSq_old = GradSq.copy();
+            } else {
+                dataManager.pullMerge(W, matrixMerger);
+                dataManager.pullMerge(GradSq, matrixMerger);
+            }
+
             dataManager.pullMerge(B, vectorMerger);
-            dataManager.pullMerge(GradSq, matrixMerger);
             dataManager.pullMerge(GradSqB, vectorMerger);
         }
+    }
+
+    // ---------------------------------------------------
+    // Pull Request Stuff.
+    // ---------------------------------------------------
+
+    private class MatrixPullRequestHandler implements DataManager.PullRequestHandler {
+
+        private Matrix m;
+        private Matrix m_old;
+
+        public MatrixPullRequestHandler(Matrix m, Matrix m_old) {
+            this.m = m;
+            this.m_old = m_old;
+        }
+
+        @Override
+        public Object handlePullRequest(String name) {
+            Matrix diffMatrix = new MatrixBuilder()
+                    .dimension(VEC_DIM, NUM_WORDS_IN_COOC_MATRIX * 2)
+                    .format(Matrix.Format.SPARSE_MATRIX)
+                    .layout(Matrix.Layout.ROW_LAYOUT)
+                    .build();
+            iterateMatrix(m, (row, col, val) -> {
+                if (Math.abs(m.get(row, col) - m_old.get(row, col)) > MATRIX_TRANSMIT_THRESHOLD) {
+                    diffMatrix.set(row, col, m.get(row, col));
+                }
+            });
+            return diffMatrix;
+        }
+    }
+
+    private void performPullRequest(Matrix m, String pullRequestName) {
+        Object[] m_diffs = dataManager.pullRequest(pullRequestName);
+        Matrix diffCounts = new MatrixBuilder()
+                .dimension(VEC_DIM, NUM_WORDS_IN_COOC_MATRIX * 2)
+                .format(Matrix.Format.SPARSE_MATRIX)
+                .layout(Matrix.Layout.ROW_LAYOUT)
+                .build();
+        for (Object _diff : m_diffs) {
+            Matrix diff = (Matrix) _diff;
+            iterateMatrix(m, (row, col, val) -> {
+                m.set(row, col, diff.get(row, col));
+                diffCounts.set(row, col, diffCounts.get(row, col) + 1);
+            });
+        }
+        m.applyOnElements(diffCounts, (w, d) -> w / d);
+    }
+
+    private static void iterateMatrix(Matrix m, MatrixIterFunctionArg arg) {
+        Matrix.RowIterator rowIterator = m.rowIterator();
+        int row = 0;
+        while(rowIterator.hasNextRow()) {
+            Iterator<Vector.Element> elementIterator = rowIterator.getAsVector().iterateNonZero();
+            while(elementIterator.hasNext()) {
+                Vector.Element element = elementIterator.next();
+                int col = element.index();
+                arg.operation(row, col, m.get(row, col));
+            }
+            row++;
+        }
+    }
+
+    private interface MatrixIterFunctionArg {
+        void operation(int row, int col, double val);
     }
 
     // ---------------------------------------------------
