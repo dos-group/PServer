@@ -333,7 +333,7 @@ public class GloVeJobAdaGrad extends PServerJob {
                 diffCounts.set(row, col, diffCounts.get(row, col) + 1);
             });
         }
-        m.applyOnElements(diffCounts, (w, d) -> w / d);
+        m.applyOnElements(diffCounts, (w, d) -> w / (d + 1));
     }
 
     private void performPullRequest(Vector v, String pullRequestName) {
@@ -353,7 +353,7 @@ public class GloVeJobAdaGrad extends PServerJob {
                 diffCounts.set(col, diffCounts.get(col) + 1);
             }
         }
-        v.applyOnElements(diffCounts, (w, d) -> w / d);
+        v.applyOnElements(diffCounts, (w, d) -> w / (d + 1));
     }
 
     private static void iterateMatrix(Matrix m, MatrixIterFunctionArg arg) {
