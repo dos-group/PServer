@@ -226,7 +226,6 @@ public abstract class AbstractVector implements Vector {
         return res;
     }
 
-    @Override
     public Vector applyOnElements(final Vector v2, final DoubleBinaryOperator vf) {
         final Vector res = copy();
         Preconditions.checkState(v2.length() == res.length());

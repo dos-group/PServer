@@ -77,7 +77,14 @@ public final class InfrastructureManager extends EventDispatcher {
 
     public int getMachineIndex(final MachineDescriptor machine) { return machines.indexOf(Preconditions.checkNotNull(machine)); }
 
-    public MachineDescriptor getMachine(final int machineIndex) { return machines.get(machineIndex); }
+    public MachineDescriptor getMachine(final int machineIndex) {
+
+        if (machineIndex >= machines.size())
+            return null;
+
+
+        return machines.get(machineIndex);
+    }
 
     // ---------------------------------------------------
 
