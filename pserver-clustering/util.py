@@ -26,26 +26,35 @@ def repartition(n, old_partitions, gradients):
     return partitions
 
 
-def partition_label_matching(n, partitions, labels):
+def partition_label_matching(n, partitions, labels, classes=2):
     ret = ""
     for i_partition, partition in enumerate(partitions):
-        cnt = [0, 0]
+        cnt = [0 for x in range(classes)]
         for i in partition:
-            if labels[i] == -1:
-                cnt[0] += 1
-            elif labels[i] == +1:
-                cnt[1] += 1
-            else:
-                assert False
-        cnt_total = cnt[0]+cnt[1]
-        ret += (
-            "partition %2i of %5i elem matches"
-            " -1: %5i(%2.1f), +1: %5i(%.2f)\n" % (
-                i_partition, cnt_total,
-                cnt[0], 1.0*cnt[0]/cnt_total,
-                cnt[1], 1.0*cnt[1]/cnt_total)
-            )
+            if classes == 2:
+                if labels[i] == -1:
+                    cnt[0] += 1
+                elif labels[i] == +1:
+                    cnt[1] += 1
+                else:
+                    assert False
+            if classes > 2:
+                cnt[labels[i]] += 1
+        cnt_total = sum(cnt)
+        if classes == 2:
+            ret += (
+                "partition %2i of %5i elem matches"
+                " -1: %5i(%2.1f), +1: %5i(%.2f)\n" % (
+                    i_partition, cnt_total,
+                    cnt[0], 1.0*cnt[0]/cnt_total,
+                    cnt[1], 1.0*cnt[1]/cnt_total))
+
+        if classes > 2:
+            ret += (
+                "partition %2i of %5i elem matches" % (
+                    i_partition, cnt_total))
+            for i in range(classes):
+                ret += " %2i: %5i(%2.1f), " % (i, cnt[i], 1.0*cnt[i]/cnt_total)
+            ret += "\n"
+
     return ret
-
-
-    

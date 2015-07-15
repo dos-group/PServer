@@ -10,8 +10,28 @@ RCV1_TEST_SET_PATH = "/media/alber/datadisk/packages/datasets/rcv1/rcv1_test.bin
 DOROTHEA_TRAIN_SET_PATH = "/media/alber/datadisk/packages/datasets/dorothea/dorothea_train.svm_light"
 DOROTHEA_TEST_SET_PATH = "/media/alber/datadisk/packages/datasets/dorothea/dorothea_valid.svm_light"
 
-YOUTUBE_TEXT_DESC_TRAIN_SET_PATH = "/media/alber/datadisk/packages/datasets/youtube_multiview_uci/dir_data/train/text_description_unigrams.txt"
-YOUTUBE_TEXT_DESC_TEST_SET_PATH = "/media/alber/datadisk/packages/datasets/youtube_multiview_uci/dir_data/validation/text_description_unigrams.txt"
+YOUTUBE_TRAIN_SET_PATH = "/media/alber/datadisk/packages/datasets/youtube_multiview_uci/dir_data/train/%s.txt"
+YOUTUBE_TEST_SET_PATH = "/media/alber/datadisk/packages/datasets/youtube_multiview_uci/dir_data/validation/%s.txt"
+
+
+# youtube sets: valid ones are:
+youtube_features = {
+    #"audio_mfcc": None,
+    "text_description_unigrams": 12183626,
+    "text_game_lda_1000": None,
+    "text_tag_unigrams": None,
+    "vision_hist_motion_estimate": None,
+}
+
+
+def load_youtube_set(name, n_features=None, class_=1):
+    X_train, Y_train = load_svmlight_file(YOUTUBE_TRAIN_SET_PATH % name,
+                                          n_features=n_features)
+    X_test, Y_test = load_svmlight_file(YOUTUBE_TEST_SET_PATH % name,
+                                        n_features=n_features)
+    Y_train[Y_train != class_] = -1
+    Y_test[Y_test != class_] = -1
+    return X_train, Y_train, X_test, Y_test
 
 
 def fetch_dataset(data_set_name, params):
@@ -27,14 +47,12 @@ def fetch_dataset(data_set_name, params):
     if data_set_name.startswith("dorothea"):
         X_train, Y_train = load_svmlight_file(DOROTHEA_TRAIN_SET_PATH)
         X_test, Y_test = load_svmlight_file(DOROTHEA_TEST_SET_PATH)
-    if data_set_name.startswith("youtube_text_desc"):
-        n_features = 12183626
-        X_train, Y_train = load_svmlight_file(YOUTUBE_TEXT_DESC_TRAIN_SET_PATH,
-                                              n_features=n_features)
-        X_test, Y_test = load_svmlight_file(YOUTUBE_TEXT_DESC_TEST_SET_PATH,
-                                            n_features=n_features)
-        Y_train[Y_train != 1] = -1
-        Y_test[Y_test != 1] = -1
+    if data_set_name.startswith("youtube"):
+        name = data_set_name[len("youtube_"):]
+        X_train, Y_train, X_test, Y_test = load_youtube_set(
+            name,
+            youtube_features[name])
+        print X_train.shape[1], "features"
 
     if data_set_name.startswith("mv_gaussian"):
         N_train = params["MV_GAUSSIAN_TRAIN_SAMPLES"]
