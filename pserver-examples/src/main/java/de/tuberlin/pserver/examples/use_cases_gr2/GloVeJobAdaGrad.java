@@ -58,11 +58,13 @@ public class GloVeJobAdaGrad extends PServerJob {
 
     // biases for the weight matrix
     private Vector B;
+    private Vector B_old;
 
     // gradient adjustments for AdaGrad
     private Matrix GradSq;
     private Matrix GradSq_old;
     private Vector GradSqB;
+    private Vector GradSqB_old;
 
     // cooccurrence matrix - every node only gets a part of it (subset of rows)
     private Matrix X;
@@ -100,12 +102,14 @@ public class GloVeJobAdaGrad extends PServerJob {
                 .format(Vector.Format.DENSE_VECTOR)
                 .layout(Vector.Layout.COLUMN_LAYOUT)
                 .build();
+        GradSqB_old = GradSqB.copy();
 
         B = new VectorBuilder()
                 .dimension(NUM_WORDS_IN_COOC_MATRIX * 2)
                 .format(Vector.Format.DENSE_VECTOR)
                 .layout(Vector.Layout.COLUMN_LAYOUT)
                 .build();
+        B_old = B.copy();
 
         /* initialize matrices & bias vectors */
         final Random rand = new Random();
@@ -124,6 +128,8 @@ public class GloVeJobAdaGrad extends PServerJob {
         if (USE_PULL_REQUEST_FEATURE) {
             dataManager.registerPullRequestHandler("WPullRequest", new MatrixPullRequestHandler(W, W_old));
             dataManager.registerPullRequestHandler("GradSqPullRequest", new MatrixPullRequestHandler(GradSq, GradSq_old));
+            dataManager.registerPullRequestHandler("BPullRequest", new VectorPullRequestHandler(B, B_old));
+            dataManager.registerPullRequestHandler("GradSqBPullRequest", new VectorPullRequestHandler(GradSqB, GradSqB_old));
         }
 
         /* make matrices & bias vectors available for all nodes */
@@ -241,13 +247,16 @@ public class GloVeJobAdaGrad extends PServerJob {
                 W_old = W.copy();
                 performPullRequest(GradSq, "GradSqPullRequest");
                 GradSq_old = GradSq.copy();
+                performPullRequest(B, "BPullRequest");
+                B_old = B.copy();
+                performPullRequest(GradSqB, "GradSqBPullRequest");
+                GradSqB_old = GradSqB.copy();
             } else {
                 dataManager.pullMerge(W, matrixMerger);
                 dataManager.pullMerge(GradSq, matrixMerger);
+                dataManager.pullMerge(B, vectorMerger);
+                dataManager.pullMerge(GradSqB, vectorMerger);
             }
-
-            dataManager.pullMerge(B, vectorMerger);
-            dataManager.pullMerge(GradSqB, vectorMerger);
         }
     }
 
@@ -281,6 +290,35 @@ public class GloVeJobAdaGrad extends PServerJob {
         }
     }
 
+    private class VectorPullRequestHandler implements DataManager.PullRequestHandler {
+
+        private Vector v;
+        private Vector v_old;
+
+        public VectorPullRequestHandler(Vector v, Vector v_old) {
+            this.v = v;
+            this.v_old = v_old;
+        }
+
+        @Override
+        public Object handlePullRequest(String name) {
+            Vector diffVector = new VectorBuilder()
+                    .dimension(NUM_WORDS_IN_COOC_MATRIX * 2)
+                    .format(Vector.Format.SPARSE_VECTOR)
+                    .layout(Vector.Layout.COLUMN_LAYOUT)
+                    .build();
+            Iterator<Vector.Element> elementIterator = v.iterateNonZero();
+            while(elementIterator.hasNext()) {
+                Vector.Element element = elementIterator.next();
+                int col = element.index();
+                if (Math.abs(v.get(col) - v_old.get(col)) > MATRIX_TRANSMIT_THRESHOLD) {
+                    diffVector.set(col, v.get(col));
+                }
+            }
+            return diffVector;
+        }
+    }
+
     private void performPullRequest(Matrix m, String pullRequestName) {
         Object[] m_diffs = dataManager.pullRequest(pullRequestName);
         Matrix diffCounts = new MatrixBuilder()
@@ -296,6 +334,26 @@ public class GloVeJobAdaGrad extends PServerJob {
             });
         }
         m.applyOnElements(diffCounts, (w, d) -> w / d);
+    }
+
+    private void performPullRequest(Vector v, String pullRequestName) {
+        Object[] v_diffs = dataManager.pullRequest(pullRequestName);
+        Vector diffCounts = new VectorBuilder()
+                .dimension(NUM_WORDS_IN_COOC_MATRIX * 2)
+                .format(Vector.Format.SPARSE_VECTOR)
+                .layout(Vector.Layout.COLUMN_LAYOUT)
+                .build();
+        for (Object _diff : v_diffs) {
+            Vector diff = (Vector) _diff;
+            Iterator<Vector.Element> elementIterator = v.iterateNonZero();
+            while(elementIterator.hasNext()) {
+                Vector.Element element = elementIterator.next();
+                int col = element.index();
+                v.set(col, diff.get(col));
+                diffCounts.set(col, diffCounts.get(col) + 1);
+            }
+        }
+        v.applyOnElements(diffCounts, (w, d) -> w / d);
     }
 
     private static void iterateMatrix(Matrix m, MatrixIterFunctionArg arg) {
