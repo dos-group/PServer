@@ -15,6 +15,8 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class GloVeJobAdaGrad extends PServerJob {
 
@@ -38,7 +40,8 @@ public class GloVeJobAdaGrad extends PServerJob {
     // Fields.
     // ---------------------------------------------------
 
-    private static final boolean USE_PULL_REQUEST_FEATURE = true;
+    private static final boolean USE_PULL_REQUEST_FEATURE = false;
+    private static final boolean USE_PUSH = false;
 
     /* input data parameter */
     private static final int NUM_WORDS_IN_COOC_MATRIX = 1000;
@@ -50,21 +53,25 @@ public class GloVeJobAdaGrad extends PServerJob {
     private static final int XMAX = 10;
     private static final double LearningRate = 0.05;
     private static final int MAX_ITER = 15;
-    private static final double MATRIX_TRANSMIT_THRESHOLD = 0.5;
+    private static final double MATRIX_TRANSMIT_THRESHOLD = 0.0;
 
     // weight matrix (aka model)
     private Matrix W;
     private Matrix W_old;
+    private Lock W_lock;
 
     // biases for the weight matrix
     private Vector B;
     private Vector B_old;
+    private Lock B_lock;
 
     // gradient adjustments for AdaGrad
     private Matrix GradSq;
     private Matrix GradSq_old;
+    private Lock GradSq_lock;
     private Vector GradSqB;
     private Vector GradSqB_old;
+    private Lock GradSqB_lock;
 
     // cooccurrence matrix - every node only gets a part of it (subset of rows)
     private Matrix X;
@@ -132,6 +139,18 @@ public class GloVeJobAdaGrad extends PServerJob {
             dataManager.registerPullRequestHandler("GradSqBPullRequest", new VectorPullRequestHandler(GradSqB, GradSqB_old));
         }
 
+        /* register push event handlers */
+        if (USE_PUSH) {
+            W_lock = new ReentrantLock();
+            dataManager.addDataEventListener("W", new MatrixPushEventHandler(W, W_lock));
+            B_lock = new ReentrantLock();
+            dataManager.addDataEventListener("B", new VectorPushEventHandler(B, B_lock));
+            GradSq_lock = new ReentrantLock();
+            dataManager.addDataEventListener("GradSq", new MatrixPushEventHandler(GradSq, GradSq_lock));
+            GradSqB_lock = new ReentrantLock();
+            dataManager.addDataEventListener("GradSqB", new VectorPushEventHandler(GradSqB, GradSqB_lock));
+        }
+
         /* make matrices & bias vectors available for all nodes */
         dataManager.putObject("W", W);
         dataManager.putObject("B", B);
@@ -165,6 +184,16 @@ public class GloVeJobAdaGrad extends PServerJob {
             for (int ridxLocal = 0; ridxLocal < X.numRows(); ridxLocal++) {
                 for (int cidx = 0; cidx < NUM_WORDS_IN_COOC_MATRIX; cidx++) {
 
+                    /* lock all matrices to avoid conflicts with incoming pushes */
+                    // TODO: locking & unlocking for every step might be an performance issue
+                    if (USE_PUSH) {
+                        W_lock.lock();
+                        B_lock.lock();
+                        GradSq_lock.lock();
+                        GradSqB_lock.lock();   
+                    }
+
+                    
                     int wordVecIdx = offset + ridxLocal;
                     int ctxVecIdx = cidx + NUM_WORDS_IN_COOC_MATRIX;
 
@@ -232,6 +261,14 @@ public class GloVeJobAdaGrad extends PServerJob {
                         LOG.info("gradsq b2 nach upd: " + GradSqB.get(ctxVecIdx));
                     }*/
 
+                    /* unlock all matrices to allow incoming pushes */
+                    if (USE_PUSH) {
+                        W_lock.unlock();
+                        B_lock.unlock();
+                        GradSq_lock.unlock();
+                        GradSqB_lock.unlock();
+                    }
+                    
                 }
             }
 
@@ -244,6 +281,8 @@ public class GloVeJobAdaGrad extends PServerJob {
             // TODO HAVE A LOOK AT PullRequestPrimitiveTestJob in examples/playground, I HOPE THIS IS THE PRIMITIVE YOU NEED!
 
             if (USE_PULL_REQUEST_FEATURE) {
+                // TODO: resetting *_old after each pull might be problematic cause it's possible that not all or even
+                // no other node has pulled the significant deltas from this node and so they will get lost
                 performPullRequest(W, "WPullRequest");
                 W_old = W.copy();
                 performPullRequest(GradSq, "GradSqPullRequest");
@@ -252,6 +291,11 @@ public class GloVeJobAdaGrad extends PServerJob {
                 B_old = B.copy();
                 performPullRequest(GradSqB, "GradSqBPullRequest");
                 GradSqB_old = GradSqB.copy();
+            } if (USE_PUSH) {
+                dataManager.pushToAll("W", W);
+                dataManager.pushToAll("GradSq", GradSq);
+                dataManager.pushToAll("B", B);
+                dataManager.pushToAll("GradSqB", GradSqB);
             } else {
                 dataManager.pullMerge(W, matrixMerger);
                 dataManager.pullMerge(GradSq, matrixMerger);
@@ -260,6 +304,47 @@ public class GloVeJobAdaGrad extends PServerJob {
             }
         }
     }
+
+    // ---------------------------------------------------
+    // Push Stuff.
+    // ---------------------------------------------------
+
+    private class MatrixPushEventHandler extends DataManager.DataEventHandler {
+
+        private Matrix m;
+        private Lock lock;
+
+        public MatrixPushEventHandler(Matrix m, Lock lock) {
+            this.m = m;
+            this.lock = lock;
+        }
+
+        @Override
+        public void handleDataEvent(int srcInstanceID, Object value) {
+            lock.lock();
+            m.applyOnElements((Matrix) value, (v1, v2) -> (v1 + v2) / 2.0);
+            lock.unlock();
+        }
+    }
+
+    private class VectorPushEventHandler extends DataManager.DataEventHandler {
+
+        private Vector v;
+        private Lock lock;
+
+        public VectorPushEventHandler(Vector v, Lock lock) {
+            this.v = v;
+            this.lock = lock;
+        }
+
+        @Override
+        public void handleDataEvent(int srcInstanceID, Object value) {
+            lock.lock();
+            v.applyOnElements((Vector) value, (v1, v2) -> (v1 + v2) / 2.0);
+            lock.unlock();
+        }
+    }
+
 
     // ---------------------------------------------------
     // Pull Request Stuff.
