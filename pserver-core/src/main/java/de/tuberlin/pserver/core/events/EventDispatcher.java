@@ -10,6 +10,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class EventDispatcher implements IEventDispatcher {
 
     // ---------------------------------------------------
@@ -37,6 +47,8 @@ public class EventDispatcher implements IEventDispatcher {
 
     private final BlockingQueue<Event> eventQueue;
 
+    private final Map<String,List<Event>> cachedEvents;
+
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
@@ -50,9 +62,10 @@ public class EventDispatcher implements IEventDispatcher {
     public EventDispatcher(boolean useDispatchThread, String name) {
 
         this.listenerMap = new ConcurrentHashMap<>();
+        this.cachedEvents = new ConcurrentHashMap<>();
         this.useDispatchThread = useDispatchThread;
         this.isRunning = new AtomicBoolean(useDispatchThread);
-        this.eventQueue = useDispatchThread ? new LinkedBlockingQueue<Event>() : null;
+        this.eventQueue = useDispatchThread ? new LinkedBlockingQueue<>() : null;
 
         if (useDispatchThread) {
             Runnable runnable = new Runnable() {
@@ -66,10 +79,17 @@ public class EventDispatcher implements IEventDispatcher {
                             // Stop dispatching thread, if a poison pill was received.
                             if (!event.type.equals(InternalEventTypes.KILL_EVENT)) {
                                 if (!dispatch(event)) {
-                                    // TODO: ??
+                                    if (event.isSticky) {
+                                        List<Event> events = cachedEvents.get(event.type);
+                                        if (events == null) {
+                                            events = new ArrayList<>();
+                                            cachedEvents.put(event.type, events);
+                                        }
+                                        events.add(event);
+                                    }
                                 }
                             } else {
-                                LOG.trace("Poison pill received");
+                                LOG.trace("kill dispatcher thread");
                             }
                         } catch (InterruptedException e) {
                             LOG.error(e.getLocalizedMessage(), e);
@@ -99,10 +119,15 @@ public class EventDispatcher implements IEventDispatcher {
         Preconditions.checkNotNull(listener);
         List<IEventHandler> listeners = listenerMap.get(type);
         if (listeners == null) {
-            listeners = Collections.synchronizedList(new LinkedList<IEventHandler>());
+            listeners = Collections.synchronizedList(new LinkedList<>());
             listenerMap.put(type, listeners);
         }
         listeners.add(listener);
+
+        if (cachedEvents.containsKey(type)) {
+            final List<Event> events = cachedEvents.remove(type);
+            events.forEach(this::dispatch);
+        }
     }
 
     @Override
@@ -112,6 +137,12 @@ public class EventDispatcher implements IEventDispatcher {
         for (final String type : types) {
             addEventListener(type, listener);
         }
+    }
+
+    @Override
+    public List<IEventHandler> getEventListener(final String type) {
+        Preconditions.checkNotNull(type);
+        return listenerMap.get(type);
     }
 
     @Override
@@ -146,7 +177,14 @@ public class EventDispatcher implements IEventDispatcher {
             eventQueue.offer(event);
         } else {
             if (!dispatch(event)) {
-                // TODO: ??
+                if (event.isSticky) {
+                    List<Event> events = cachedEvents.get(event.type);
+                    if (events == null) {
+                        events = new ArrayList<>();
+                        cachedEvents.put(event.type, events);
+                    }
+                    events.add(event);
+                }
             }
         }
     }

@@ -41,9 +41,13 @@ public final class NetEvents {
         @GsonUtils.Exclude
         public UUID dstMachineID;
 
-        public NetEvent(final String type) { this(type, null, null); }
+        public NetEvent(final String type) { this(type, null, null, false); }
+        public NetEvent(final String type, final boolean isSticky) { this(type, null, null, isSticky); }
         public NetEvent(final String type, final UUID srcMachineID, final UUID dstMachineID) {
-            super(type);
+            this(type, srcMachineID, dstMachineID, false);
+        }
+        public NetEvent(final String type, final UUID srcMachineID, final UUID dstMachineID, final boolean isSticky) {
+            super(type, isSticky);
             this.srcMachineID = srcMachineID;
             this.dstMachineID = dstMachineID;
         }

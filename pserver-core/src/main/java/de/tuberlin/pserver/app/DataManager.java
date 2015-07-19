@@ -18,6 +18,7 @@ import de.tuberlin.pserver.app.types.*;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
+import de.tuberlin.pserver.core.events.IEventDispatcher;
 import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
@@ -43,23 +44,45 @@ public class DataManager extends EventDispatcher {
     // Inner Classes.
     // ---------------------------------------------------
 
-    public abstract class DataEventHandler implements IEventHandler {
+    public static enum CallType {
+
+        SYNC,
+
+        ASYNC
+    }
+
+    public static abstract class DataEventHandler implements IEventHandler {
 
         private CountDownLatch latch = null;
+
+        private InfrastructureManager infraManager;
+
+        private IEventDispatcher dispatcher;
+
+        private boolean removeAfterAwait;
 
         public abstract void handleDataEvent(final int srcInstanceID, final Object value);
 
         @Override
         public void handleEvent(final Event e) {
-            final NetEvents.NetEvent event = (NetEvents.NetEvent)e;
+            final NetEvents.NetEvent event = (NetEvents.NetEvent) e;
             final int srcInstanceID = infraManager.getInstanceIDFromMachineUID(event.srcMachineID);
             handleDataEvent(srcInstanceID, event.getPayload());
             latch.countDown();
+
+            if (removeAfterAwait && latch.getCount() == 0)
+                dispatcher.removeEventListener(event.type, this);
         }
 
         public void initLatch(final int n) { latch = new CountDownLatch(n); }
 
         public CountDownLatch getLatch() { return latch; }
+
+        public void setDispatcher(final IEventDispatcher dispatcher) { this.dispatcher = dispatcher; }
+
+        public void setInfraManager(final InfrastructureManager infraManager) { this.infraManager = infraManager; }
+
+        public void setRemoveAfterAwait(final boolean removeAfterAwait) { this.removeAfterAwait = removeAfterAwait; }
     }
 
     public static interface PullRequestHandler {
@@ -133,20 +156,20 @@ public class DataManager extends EventDispatcher {
                        final DHT dht) {
         super(true);
 
-        this.config             = Preconditions.checkNotNull(config);
-        this.infraManager       = Preconditions.checkNotNull(infraManager);
-        this.netManager         = Preconditions.checkNotNull(netManager);
-        this.fileSystemManager  = fileSystemManager;
-        this.dht                = Preconditions.checkNotNull(dht);
-        this.instanceID         = infraManager.getInstanceID();
-        this.matrixLoadTasks    = new HashMap<>();
-        this.resultObjects      = new HashMap<>();
-        this.contextResolver    = new ConcurrentHashMap<>();
+        this.config = Preconditions.checkNotNull(config);
+        this.infraManager = Preconditions.checkNotNull(infraManager);
+        this.netManager = Preconditions.checkNotNull(netManager);
+        this.fileSystemManager = fileSystemManager;
+        this.dht = Preconditions.checkNotNull(dht);
+        this.instanceID = infraManager.getInstanceID();
+        this.matrixLoadTasks = new HashMap<>();
+        this.resultObjects = new HashMap<>();
+        this.contextResolver = new ConcurrentHashMap<>();
 
-        fileLoadingSyncBarrier  = new HashMap<>();
-        this.bspSyncBarrier     = new CountDownLatch(infraManager.getMachines().size() - 1);
+        fileLoadingSyncBarrier = new HashMap<>();
+        this.bspSyncBarrier = new CountDownLatch(infraManager.getMachines().size() - 1);
 
-        loadingMatrices         = new HashMap<>();
+        loadingMatrices = new HashMap<>();
 
         this.netManager.addEventListener(BSP_SYNC_BARRIER_EVENT, event -> bspSyncBarrier.countDown());
         this.netManager.addEventListener(Events.MATRIX_ENTRY_PARTITION_EVENT, new MatrixEntryPartitionEventHandler());
@@ -201,51 +224,15 @@ public class DataManager extends EventDispatcher {
     // EVENT HANDLING
     // ---------------------------------------------------
 
-    public void addDataEventListener(final String name, final DataEventHandler handler) {
+    public void addDataEventListener(final int n, final String name, final DataEventHandler handler) {
+        handler.setInfraManager(infraManager);
+        handler.initLatch(n);
         netManager.addEventListener(PUSH_EVENT_PREFIX + name, handler);
     }
 
     public void removeDataEventListener(final String name, final DataEventHandler handler) {
         netManager.removeEventListener(PUSH_EVENT_PREFIX + name, handler);
     }
-
-    public void registerPullRequestHandler(final String name, final PullRequestHandler handler) {
-        Preconditions.checkNotNull(name);
-        Preconditions.checkNotNull(handler);
-        final DataManager self = this;
-        netManager.addEventListener(PULL_EVENT_PREFIX + name, e -> {
-            final NetEvents.NetEvent event = (NetEvents.NetEvent)e;
-            final int srcInstanceID = infraManager.getInstanceIDFromMachineUID(event.srcMachineID);
-            final Object result = handler.handlePullRequest(name);
-            self.pushTo(name, result, new int[]{ srcInstanceID });
-        });
-    }
-
-    public Object[] pullRequest(final String name) { return pullRequest(name, remoteInstanceIDs); }
-    public Object[] pullRequest(final String name, final int[] instanceIDs) {
-        Preconditions.checkNotNull(name);
-        Preconditions.checkNotNull(instanceIDs);
-        NetEvents.NetEvent event = new NetEvents.NetEvent(PULL_EVENT_PREFIX + name);
-        final Object[] pullResponses = new Object[instanceIDs.length];
-        final AtomicInteger responseCounter = new AtomicInteger();
-        DataEventHandler handler = new DataEventHandler() {
-            @Override
-            public void handleDataEvent(int srcInstanceID, final Object value) {
-                pullResponses[responseCounter.getAndIncrement()] = value;
-            }
-        };
-        handler.initLatch(instanceIDs.length);
-        netManager.addEventListener(PUSH_EVENT_PREFIX + name, handler);
-        netManager.sendEvent(instanceIDs, event);
-        try {
-            handler.getLatch().await();
-        } catch (InterruptedException e) {
-            LOG.error(e.getLocalizedMessage());
-        }
-        netManager.removeEventListener(PUSH_EVENT_PREFIX + name, handler);
-        return pullResponses;
-    }
-
 
     // ---------------------------------------------------
     // COMMUNICATION PRIMITIVES
@@ -288,20 +275,87 @@ public class DataManager extends EventDispatcher {
     public void pushTo(final String name, final Object value, final int[] instanceIDs) {
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(instanceIDs);
-        for (final int id : instanceIDs) {
-            final NetEvents.NetEvent event = new NetEvents.NetEvent(PUSH_EVENT_PREFIX + name);
-            event.setPayload(value);
-            netManager.sendEvent(id, event);
+        final NetEvents.NetEvent event = new NetEvents.NetEvent(PUSH_EVENT_PREFIX + name, true);
+        event.setPayload(value);
+        netManager.sendEvent(instanceIDs, event);
+    }
+
+    public void pushTo(final String name, final Object value) {
+        Preconditions.checkNotNull(name);
+        final NetEvents.NetEvent event = new NetEvents.NetEvent(PUSH_EVENT_PREFIX + name, true);
+        event.setPayload(value);
+        // remote instances.
+        netManager.sendEvent(remoteInstanceIDs, event);
+        // local instance.
+        netManager.dispatchEvent(event);
+    }
+
+    public void awaitEvent(final CallType type, final String name, final DataEventHandler handler) {
+        awaitEvent(type, remoteInstanceIDs.length, name, handler); }
+    public void awaitEvent(final CallType type, final int n, final String name, final DataEventHandler handler) {
+        Preconditions.checkNotNull(type);
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(handler);
+        handler.setDispatcher(netManager);
+        handler.setInfraManager(infraManager);
+        handler.setRemoveAfterAwait(true);
+        handler.initLatch(n);
+        netManager.addEventListener(PUSH_EVENT_PREFIX + name, handler);
+        if (type == CallType.SYNC) {
+            try {
+                handler.getLatch().await();
+            } catch (InterruptedException e) {
+                LOG.error(e.getLocalizedMessage());
+            }
         }
     }
 
-    public void pushToAll(final String name, final Object value) {
+    // ---------------------------------------------------
+
+    public void registerPullRequestHandler(final String name, final PullRequestHandler handler) {
         Preconditions.checkNotNull(name);
-        for (final MachineDescriptor md : infraManager.getMachines()) {
-            final NetEvents.NetEvent event = new NetEvents.NetEvent(PUSH_EVENT_PREFIX + name);
-            event.setPayload(value);
-            netManager.sendEvent(md, event);
+        Preconditions.checkNotNull(handler);
+        final DataManager self = this;
+        netManager.addEventListener(PULL_EVENT_PREFIX + name, e -> {
+            final NetEvents.NetEvent event = (NetEvents.NetEvent) e;
+            final int srcInstanceID = infraManager.getInstanceIDFromMachineUID(event.srcMachineID);
+            final Object result = handler.handlePullRequest(name);
+            self.pushTo(name, result, new int[]{srcInstanceID});
+        });
+    }
+
+    public Object[] pullRequest(final String name) { return pullRequest(name, remoteInstanceIDs); }
+    public Object[] pullRequest(final String name, final int[] instanceIDs) {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(instanceIDs);
+
+        final Object[] pullResponses = new Object[instanceIDs.length];
+        final AtomicInteger responseCounter = new AtomicInteger(0);
+
+        final DataEventHandler responseHandler = new DataEventHandler() {
+            @Override
+            public void handleDataEvent(int srcInstanceID, final Object value) {
+                pullResponses[responseCounter.getAndIncrement()] = value;
+            }
+        };
+
+        responseHandler.setDispatcher(netManager);
+        responseHandler.setInfraManager(infraManager);
+        responseHandler.setRemoveAfterAwait(true);
+        responseHandler.initLatch(instanceIDs.length);
+        netManager.addEventListener(PUSH_EVENT_PREFIX + name, responseHandler);
+
+        // send pull request to all instances.
+        NetEvents.NetEvent event = new NetEvents.NetEvent(PULL_EVENT_PREFIX + name, true);
+        netManager.sendEvent(instanceIDs, event);
+
+        try {
+            responseHandler.getLatch().await();
+        } catch (InterruptedException e) {
+            LOG.error(e.getLocalizedMessage());
         }
+
+        return pullResponses;
     }
 
     // ---------------------------------------------------
@@ -360,7 +414,7 @@ public class DataManager extends EventDispatcher {
     }
 
     public <T extends MObject> T getObject(final String name) {
-        return (T)((MObjectValue)getLocal(name)[0]).object;
+        return (T) ((MObjectValue) getLocal(name)[0]).object;
     }
 
     // ---------------------------------------------------
@@ -369,7 +423,7 @@ public class DataManager extends EventDispatcher {
     public <T extends MObject> void pullMerge(final T dstObj,
                                               final Merger<T> merger) {
 
-        pullMerge(((MObjectValue<T>)dstObj.getOwner()).getKey().name, instanceIDs, dstObj, merger);
+        pullMerge(((MObjectValue<T>) dstObj.getOwner()).getKey().name, instanceIDs, dstObj, merger);
     }
 
 
@@ -395,8 +449,8 @@ public class DataManager extends EventDispatcher {
             //    throw new IllegalStateException();
             final List<Value> valueList = Arrays.asList(values);
             Collections.sort(valueList,
-                    (Value o1, Value o2) -> ((Integer)o1.getValueMetadata()).compareTo(((Integer)o2.getValueMetadata())));
-            final List<T> mObjects = valueList.stream().map(v -> ((MObjectValue<T>)v).object).collect(Collectors.toList());
+                    (Value o1, Value o2) -> ((Integer) o1.getValueMetadata()).compareTo(((Integer) o2.getValueMetadata())));
+            final List<T> mObjects = valueList.stream().map(v -> ((MObjectValue<T>) v).object).collect(Collectors.toList());
             merger.merge(dstObj, mObjects);
         } else
             throw new IllegalStateException();
@@ -428,9 +482,9 @@ public class DataManager extends EventDispatcher {
         Preconditions.checkNotNull(matrix);
         final long systemThreadID = Thread.currentThread().getId();
         final PServerContext ctx = contextResolver.get(systemThreadID);
-        final int rowBlock = (int)matrix.numRows() / ctx.perNodeParallelism;
+        final int rowBlock = (int) matrix.numRows() / ctx.perNodeParallelism;
         int end = (ctx.threadID * rowBlock + rowBlock - 1);
-        end = (ctx.threadID == ctx.perNodeParallelism - 1) ?  end + (int)matrix.numRows() % ctx.perNodeParallelism : end;
+        end = (ctx.threadID == ctx.perNodeParallelism - 1) ? end + (int) matrix.numRows() % ctx.perNodeParallelism : end;
         return matrix.rowIterator(ctx.threadID * rowBlock, end);
     }
 
@@ -438,9 +492,13 @@ public class DataManager extends EventDispatcher {
     // Public Methods.
     // ---------------------------------------------------
 
-    public IConfig getConfig() { return config; }
+    public IConfig getConfig() {
+        return config;
+    }
 
-    public DHT getDHT() { return dht; }
+    public DHT getDHT() {
+        return dht;
+    }
 
     // Must be called from the specific execution context!
     public void registerJobContext(final PServerContext ctx) {
@@ -462,6 +520,12 @@ public class DataManager extends EventDispatcher {
         return contextResolver.get(Thread.currentThread().getId());
     }
 
+    public int getInstanceID() { return instanceID; }
+
+    public int[] getRemoteInstanceIDs() { return remoteInstanceIDs; }
+
+    public int getNumberOfInstances() { return instanceIDs.length; }
+
     // ---------------------------------------------------
 
     public void postProloguePhase(final PServerContext ctx) {
@@ -481,10 +545,10 @@ public class DataManager extends EventDispatcher {
     private void loadFilesIntoDHT() {
         finishedLoadingLatch = new CountDownLatch(matrixLoadTasks.size());
         // prepare to read entries that belong to foreign matrix partitions
-        Map<Integer,List<MatrixEntry>> foreignEntries = new HashMap<Integer,List<MatrixEntry>>(); // data structure to hold foreign entries
+        Map<Integer, List<MatrixEntry>> foreignEntries = new HashMap<Integer, List<MatrixEntry>>(); // data structure to hold foreign entries
         int foreignEntriesThreshold = 2048; // threshold that indicates how many entries are gathered before sending
         // iterate through load tasks
-        for(final MatrixLoadTask task : matrixLoadTasks.values()) {
+        for (final MatrixLoadTask task : matrixLoadTasks.values()) {
             // preallocate local matrix partition
             Matrix matrix = getLoadingMatrix(task);
             // iterate through records in file
@@ -520,7 +584,7 @@ public class DataManager extends EventDispatcher {
                 }
             } // </records in file iteration>>
             // send all remaining foreign entries
-            for(Map.Entry<Integer, List<MatrixEntry>> map : foreignEntries.entrySet()) {
+            for (Map.Entry<Integer, List<MatrixEntry>> map : foreignEntries.entrySet()) {
                 sendPartition(map.getKey(), map.getValue(), task);
             }
             netManager.broadcastEvent(new FinishedLoadingFileEvent(fileIterator.getFilePath()));
@@ -537,18 +601,19 @@ public class DataManager extends EventDispatcher {
      * Is called whenever an instance finished processing an input split. This is triggered either by reaching the end
      * of the own input split or by receiving a @link FinishedLoadingFileEvent. If all instances finished processing,
      * the matrix can be put into the DHT.
+     *
      * @param name
      */
     private void instanceFinishedProcessingSplit(String name) {
         int counter;
-        synchronized(fileLoadingSyncBarrier) {
+        synchronized (fileLoadingSyncBarrier) {
             counter = fileLoadingSyncBarrier.get(name).decrementAndGet();
         }
-        if(counter <= 0) {
+        if (counter <= 0) {
             // is it possible that a FinishedLoading event overtakes a SendPartition event?
             // this assumes it is not:
             Matrix matrix;
-            synchronized(loadingMatrices) {
+            synchronized (loadingMatrices) {
                 matrix = Preconditions.checkNotNull(loadingMatrices.get(name));
             }
             synchronized (matrix) {
@@ -561,7 +626,7 @@ public class DataManager extends EventDispatcher {
     private List<MatrixEntry> getSavely(Map<Integer, List<MatrixEntry>> foreignEntries, int partitionId, int threshold) {
         List<MatrixEntry> result = foreignEntries.get(partitionId);
         // if list does not exist yet, create and put it into map
-        if(result == null) {
+        if (result == null) {
             result = new ArrayList<>(threshold);
             foreignEntries.put(partitionId, result);
         }
@@ -569,7 +634,7 @@ public class DataManager extends EventDispatcher {
     }
 
     private void sendPartition(int targetInstanceId, List<MatrixEntry> entries, MatrixLoadTask task) {
-        if(entries != null && ! entries.isEmpty()) {
+        if (entries != null && !entries.isEmpty()) {
             MatrixEntry[] entriesArray = entries.toArray(new MatrixEntry[entries.size()]);
             netManager.sendEvent(targetInstanceId, new MatrixEntryPartitionEvent(entriesArray, task.fileIterator.getFilePath()));
             entries.clear();
@@ -577,14 +642,14 @@ public class DataManager extends EventDispatcher {
     }
 
     private Matrix getLoadingMatrix(MatrixLoadTask task) {
-        synchronized(loadingMatrices) {
+        synchronized (loadingMatrices) {
             String name = task.fileIterator.getFilePath();
             Matrix matrix = loadingMatrices.get(name);
-            if(matrix == null) {
+            if (matrix == null) {
                 Matrix.PartitionShape partitionShape = task.matrixPartitioner.getPartitionShape();
                 matrix = new MatrixBuilder()
                         .dimension(partitionShape.getRows(), partitionShape.getCols())
-                        //.dimension(task.rows, task.cols)
+                                //.dimension(task.rows, task.cols)
                         .format(task.matrixFormat)
                         .layout(task.matrixLayout)
                         .build();
@@ -689,15 +754,4 @@ public class DataManager extends EventDispatcher {
             }
         }
     }
-
-        /*public void awaitEvent(final int n, final String name, final DataEventHandler handler) {
-        handler.initLatch(n);
-        netManager.addEventListener(PUSH_EVENT_PREFIX + name, handler);
-        try {
-            handler.getLatch().await();
-        } catch (InterruptedException e) {
-            LOG.error(e.getLocalizedMessage());
-        }
-        netManager.removeEventListener(PUSH_EVENT_PREFIX + name, handler);
-    }*/
 }
