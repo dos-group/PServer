@@ -151,7 +151,8 @@ public class GloVeJobAdaGrad extends PServerJob {
         GradSq = dataManager.getObject("GradSq");
         GradSqB = dataManager.getObject("GradSqB");
 
-        int offset = 0; //TODO offset per node: offset = NUM_WORDS_IN_COOC_MATRIX / num_instances * ctx.instanceID;
+        int numInstances = ctx.netManager.numberOfMachines();
+        int offset = NUM_WORDS_IN_COOC_MATRIX / numInstances * ctx.instanceID;
 
         int iterations = 0;
 

@@ -190,6 +190,11 @@ public final class NetManager extends EventDispatcher {
         super.deactivate();
     }
 
+    // TODO: just temporarily added this method here for the GloVe algorithm
+    public int numberOfMachines() {
+        return infraManager.getMachines().size();
+    }
+
     // ---------------------------------------------------
     // Private Methods.
     // ---------------------------------------------------
