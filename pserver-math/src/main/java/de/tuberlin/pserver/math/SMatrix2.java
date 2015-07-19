@@ -4,6 +4,7 @@ package de.tuberlin.pserver.math;
 import de.tuberlin.pserver.math.stuff.Utils;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,13 +14,13 @@ public class SMatrix2 extends AbstractMatrix {
     // Inner Classes.
     // ---------------------------------------------------
 
-    public static final class MtxPos {
+    public static final class MtxPos implements Serializable {
 
         public final long row;
 
         public final long col;
 
-        private final HashCodeBuilder hcb = new HashCodeBuilder();
+        private static final HashCodeBuilder hcb = new HashCodeBuilder();
 
         public MtxPos(final long row, final long col) {
             this.row = row;
