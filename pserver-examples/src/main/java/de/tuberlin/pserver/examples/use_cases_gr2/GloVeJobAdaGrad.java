@@ -350,7 +350,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         public Object handlePullRequest(String name) {
             Matrix diffMatrix = new MatrixBuilder()
                     .dimension(VEC_DIM, NUM_WORDS_IN_COOC_MATRIX * 2)
-                    .format(Matrix.Format.SPARSE_MATRIX)
+                    .format(Matrix.Format.DENSE_MATRIX)     //TODO: use SPARSE_MATRIX when it's correctly implemented
                     .layout(Matrix.Layout.ROW_LAYOUT)
                     .build();
             iterateMatrix(m, (row, col, val) -> {
@@ -395,7 +395,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         Object[] m_diffs = dataManager.pullRequest(pullRequestName);
         Matrix diffCounts = new MatrixBuilder()
                 .dimension(VEC_DIM, NUM_WORDS_IN_COOC_MATRIX * 2)
-                .format(Matrix.Format.SPARSE_MATRIX)
+                .format(Matrix.Format.DENSE_MATRIX)     //TODO: use SPARSE_MATRIX when it's correctly implemented
                 .layout(Matrix.Layout.ROW_LAYOUT)
                 .build();
         for (Object _diff : m_diffs) {
@@ -433,6 +433,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         int row = 0;
         while(rowIterator.hasNextRow()) {
             Iterator<Vector.Element> elementIterator = rowIterator.getAsVector().iterateNonZero();
+            rowIterator.nextRow();
             while(elementIterator.hasNext()) {
                 Vector.Element element = elementIterator.next();
                 int col = element.index();
