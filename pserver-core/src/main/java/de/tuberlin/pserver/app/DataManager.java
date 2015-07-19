@@ -224,6 +224,10 @@ public class DataManager extends EventDispatcher {
     // EVENT HANDLING
     // ---------------------------------------------------
 
+
+    public void addDataEventListener(final String name, final DataEventHandler handler) {
+        addDataEventListener(remoteInstanceIDs.length, name, handler);
+    }
     public void addDataEventListener(final int n, final String name, final DataEventHandler handler) {
         handler.setInfraManager(infraManager);
         handler.initLatch(n);
