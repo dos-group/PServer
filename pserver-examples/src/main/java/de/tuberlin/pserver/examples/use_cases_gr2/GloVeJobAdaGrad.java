@@ -20,28 +20,15 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class GloVeJobAdaGrad extends PServerJob {
 
-    private static final DataManager.Merger<Vector> vectorMerger = (dst, src) -> {
-        for (final Vector b : src) {
-            dst.applyOnElements(b, (e1, e2) -> e1 + e2);
-        }
-
-        dst.applyOnElements(e -> e / (src.size() + 1));
-    };
-
-    private static final DataManager.Merger<Matrix> matrixMerger = (dst, src) -> {
-        for (final Matrix m : src) {
-            dst.applyOnElements(m, (e1, e2) -> e1 + e2);
-        }
-
-        dst.applyOnElements(e -> e / (src.size() + 1));
-    };
+    private enum DataExchangeMode {
+        PUSH, DELTA_PULL, PULL
+    }
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    private static final boolean USE_PULL_REQUEST_FEATURE = false;
-    private static final boolean USE_PUSH = false;
+    private static final DataExchangeMode dataExchangeMode = DataExchangeMode.PULL;
 
     /* input data parameter */
     private static final int NUM_WORDS_IN_COOC_MATRIX = 1000;
@@ -132,7 +119,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         }
 
         /* register pull request handlers  */
-        if (USE_PULL_REQUEST_FEATURE) {
+        if (dataExchangeMode == DataExchangeMode.DELTA_PULL) {
             dataManager.registerPullRequestHandler("WPullRequest", new MatrixPullRequestHandler(W, W_old));
             dataManager.registerPullRequestHandler("GradSqPullRequest", new MatrixPullRequestHandler(GradSq, GradSq_old));
             dataManager.registerPullRequestHandler("BPullRequest", new VectorPullRequestHandler(B, B_old));
@@ -140,7 +127,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         }
 
         /* register push event handlers */
-        if (USE_PUSH) {
+        if (dataExchangeMode == DataExchangeMode.PUSH) {
             W_lock = new ReentrantLock();
             dataManager.addDataEventListener("W", new MatrixPushEventHandler(W, W_lock));
             B_lock = new ReentrantLock();
@@ -186,7 +173,7 @@ public class GloVeJobAdaGrad extends PServerJob {
 
                     /* lock all matrices to avoid conflicts with incoming pushes */
                     // TODO: locking & unlocking for every step might be an performance issue
-                    if (USE_PUSH) {
+                    if (dataExchangeMode == DataExchangeMode.PUSH) {
                         W_lock.lock();
                         B_lock.lock();
                         GradSq_lock.lock();
@@ -262,7 +249,7 @@ public class GloVeJobAdaGrad extends PServerJob {
                     }*/
 
                     /* unlock all matrices to allow incoming pushes */
-                    if (USE_PUSH) {
+                    if (dataExchangeMode == DataExchangeMode.PUSH) {
                         W_lock.unlock();
                         B_lock.unlock();
                         GradSq_lock.unlock();
@@ -276,7 +263,7 @@ public class GloVeJobAdaGrad extends PServerJob {
             LOG.info("Iteration, Cost: " + (iterations - 1) + ", " + costI);
 
             /* merge data from/ with other nodes: implemented 3 variants yet: push, pull and delta-pull */
-            if (USE_PULL_REQUEST_FEATURE) {
+            if (dataExchangeMode == DataExchangeMode.DELTA_PULL) {
                 /* pull data from all other nodes after each iteration and allow them to preprocess the data to only send diffs */
                 // TODO: resetting *_old after each pull might be problematic cause it's possible that not all or even
                 // no other node has pulled the significant deltas from this node and so they will get lost
@@ -288,7 +275,7 @@ public class GloVeJobAdaGrad extends PServerJob {
                 B_old = B.copy();
                 performPullRequest(GradSqB, "GradSqBPullRequest");
                 GradSqB_old = GradSqB.copy();
-            } if (USE_PUSH) {
+            } if (dataExchangeMode == DataExchangeMode.PUSH) {
                 /* push the calculations of this node to all other nodes */
                 dataManager.pushToAll("W", W);
                 dataManager.pushToAll("GradSq", GradSq);
@@ -346,7 +333,7 @@ public class GloVeJobAdaGrad extends PServerJob {
 
 
     // ---------------------------------------------------
-    // Pull Request Stuff.
+    // Delta Pull aka Pull Request Stuff.
     // ---------------------------------------------------
 
     private class MatrixPullRequestHandler implements DataManager.PullRequestHandler {
@@ -458,6 +445,26 @@ public class GloVeJobAdaGrad extends PServerJob {
     private interface MatrixIterFunctionArg {
         void operation(int row, int col, double val);
     }
+
+    // ---------------------------------------------------
+    // Pull Stuff.
+    // ---------------------------------------------------
+
+    private static final DataManager.Merger<Vector> vectorMerger = (dst, src) -> {
+        for (final Vector b : src) {
+            dst.applyOnElements(b, (e1, e2) -> e1 + e2);
+        }
+
+        dst.applyOnElements(e -> e / (src.size() + 1));
+    };
+
+    private static final DataManager.Merger<Matrix> matrixMerger = (dst, src) -> {
+        for (final Matrix m : src) {
+            dst.applyOnElements(m, (e1, e2) -> e1 + e2);
+        }
+
+        dst.applyOnElements(e -> e / (src.size() + 1));
+    };
 
     // ---------------------------------------------------
     // Entry Point.
