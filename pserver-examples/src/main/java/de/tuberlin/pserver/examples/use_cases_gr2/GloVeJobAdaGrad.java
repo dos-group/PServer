@@ -275,12 +275,9 @@ public class GloVeJobAdaGrad extends PServerJob {
             costI /= X.numRows() * NUM_WORDS_IN_COOC_MATRIX;
             LOG.info("Iteration, Cost: " + (iterations - 1) + ", " + costI);
 
-            /* pull data from all other nodes after each iteration */
-            // TODO: intelligent pull - wait for Tobias' "pullRequest" impl with the "preprocessing on sending nodes" feature
-
-            // TODO HAVE A LOOK AT PullRequestPrimitiveTestJob in examples/playground, I HOPE THIS IS THE PRIMITIVE YOU NEED!
-
+            /* merge data from/ with other nodes: implemented 3 variants yet: push, pull and delta-pull */
             if (USE_PULL_REQUEST_FEATURE) {
+                /* pull data from all other nodes after each iteration and allow them to preprocess the data to only send diffs */
                 // TODO: resetting *_old after each pull might be problematic cause it's possible that not all or even
                 // no other node has pulled the significant deltas from this node and so they will get lost
                 performPullRequest(W, "WPullRequest");
@@ -292,11 +289,13 @@ public class GloVeJobAdaGrad extends PServerJob {
                 performPullRequest(GradSqB, "GradSqBPullRequest");
                 GradSqB_old = GradSqB.copy();
             } if (USE_PUSH) {
+                /* push the calculations of this node to all other nodes */
                 dataManager.pushToAll("W", W);
                 dataManager.pushToAll("GradSq", GradSq);
                 dataManager.pushToAll("B", B);
                 dataManager.pushToAll("GradSqB", GradSqB);
             } else {
+                /* pull data from all other nodes after each iteration */
                 dataManager.pullMerge(W, matrixMerger);
                 dataManager.pullMerge(GradSq, matrixMerger);
                 dataManager.pullMerge(B, vectorMerger);
