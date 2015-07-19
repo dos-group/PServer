@@ -11,6 +11,7 @@ import de.tuberlin.pserver.math.MatrixBuilder;
 import de.tuberlin.pserver.math.Vector;
 import de.tuberlin.pserver.math.VectorBuilder;
 
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.List;
@@ -33,6 +34,7 @@ public class GloVeJobAdaGrad extends PServerJob {
     /* input data parameter */
     private static final int NUM_WORDS_IN_COOC_MATRIX = 1000;
     private static final String INPUT_DATA = "/data/home/fgoessler/cooc-agg.csv";
+    private static final String OUTPUT_DATA = "/data/home/fgoessler/pserver_glove.csv";
 
     /* hyperparameter */
     private static final int VEC_DIM = 50;
@@ -289,6 +291,8 @@ public class GloVeJobAdaGrad extends PServerJob {
                 dataManager.pullMerge(GradSqB, vectorMerger);
             }
         }
+
+        result(W);
     }
 
     // ---------------------------------------------------
@@ -480,15 +484,42 @@ public class GloVeJobAdaGrad extends PServerJob {
                 .results(res)
                 .done();
 
-        /*final DecimalFormat numberFormat = new DecimalFormat("0.000");
-        res.forEach(
-                r -> r.forEach(
-                        w -> {
-                            for (double weight : ((Vector)w).toArray())
-                                System.out.print(numberFormat.format(weight) + "\t | ");
-                            System.out.println();
-                        }
-                )
-        );*/
+        printMatrix(mergeMatrices(res), OUTPUT_DATA);
+    }
+
+    // Prints the matrix as a csv file. Each line is formatted as "<row>;<col>;<value>".
+    private static void printMatrix(Matrix w_avg, String fileName) {
+        PrintWriter writer = null;
+        try {
+            writer = new PrintWriter(fileName, "UTF-8");
+            for (int i = 0; i < w_avg.numRows(); ++i) {
+                for (int j = 0; j < w_avg.numCols(); ++j) {
+                    writer.println(i + ";" + j + ";" + w_avg.get(i, j));
+                }
+            }
+        } catch (Exception ignored) {
+        } finally {
+            if(writer != null) writer.close();
+        }
+    }
+
+    private static Matrix mergeMatrices(List<List<Serializable>> res) {
+        Matrix W_avg = new MatrixBuilder()
+                .dimension(VEC_DIM, NUM_WORDS_IN_COOC_MATRIX * 2)
+                .format(Matrix.Format.DENSE_MATRIX)
+                .layout(Matrix.Layout.ROW_LAYOUT)
+                .build();
+        int numMergedMatrices = 0;
+        for (int i = 1; i < res.size(); i++) {
+            List<Serializable> r = res.get(i);
+            for (int j = 0; j < r.size(); j++) {
+                Matrix m = (Matrix) r.get(j);
+                W_avg.applyOnElements(m, (e1, e2) -> e1 + e2);
+                numMergedMatrices++;
+            }
+        }
+        final int finalNumMergedMatrices = numMergedMatrices;
+        W_avg.applyOnElements(e -> e / finalNumMergedMatrices);
+        return W_avg;
     }
 }
