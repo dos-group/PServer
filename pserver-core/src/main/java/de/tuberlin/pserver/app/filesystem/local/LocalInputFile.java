@@ -54,18 +54,55 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
                 numLinesPerSection + (totalLines % numLinesPerSection) : numLinesPerSection;
         try {
             final long blockLineOffset = numLinesPerSection * instanceID;
-            final BufferedReader br = new BufferedReader(new FileReader(filePath));
+            BufferedReader br = new BufferedReader(new FileReader(filePath));
+            int eolcc = getLineEndingCharCount(br);
+            br.close();
+            br = new BufferedReader(new FileReader(filePath));
             long startOffset = 0;
             for (int i = 0; i < totalLines; ++i) {
                 if (i < blockLineOffset)
-                    startOffset += br.readLine().length() + 1;
-                else break;
+                    startOffset += br.readLine().length() + eolcc;
+                else
+                    break;
             }
             br.close();
             csvFileSection.set(totalLines, linesToRead, startOffset, blockLineOffset);
         } catch (IOException ioe) {
             throw new IllegalStateException(ioe);
         }
+    }
+
+    private int getLineEndingCharCount(BufferedReader br) {
+        try {
+            char[] buffer = new char[8192];
+            int result = 0;
+            while (result == 0 && br.read(buffer) > 0) {
+                for (int i = 0; i < buffer.length; i++) {
+                    char c = buffer[i];
+                    if(c == '\n' || c == '\r') {
+                        result++;
+                        char c2 = 0;
+                        if(i + 1 < buffer.length) {
+                            c2 = buffer[i + 1];
+                        }
+                        else if(br.read(buffer) > 0) {
+                            c2 = buffer[0];
+                        }
+                        if(c2 > 0 && (c2 == '\n' || c2 == '\r')) {
+                            result++;
+                        }
+                    }
+                    break;
+                }
+            }
+            if(result <= 0 || result > 2) {
+                throw new IllegalStateException("line ending char count = " + result);
+            }
+            return result;
+        } catch (IOException e) {
+             throw new IllegalStateException(e);
+        }
+
     }
 
     @Override

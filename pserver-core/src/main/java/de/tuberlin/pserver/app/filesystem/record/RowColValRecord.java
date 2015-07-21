@@ -3,6 +3,7 @@ package de.tuberlin.pserver.app.filesystem.record;
 import de.tuberlin.pserver.app.types.ImmutableMatrixEntry;
 import de.tuberlin.pserver.app.types.MatrixEntry;
 import de.tuberlin.pserver.app.types.ReusableMatrixEntry;
+import de.tuberlin.pserver.math.stuff.Arrays;
 
 import java.util.NoSuchElementException;
 
@@ -38,13 +39,18 @@ public class RowColValRecord implements IRecord {
             throw new NoSuchElementException();
         }
         isFetched = true;
-        int row    = Integer.parseInt(delegate.get(0));
-        int col    = Integer.parseInt(delegate.get(1));
-        double val = Double.parseDouble(delegate.get(2));
-        if(resuable == null) {
-            new ImmutableMatrixEntry(row, col, val);
+        try {
+            int row = Integer.parseInt(delegate.get(0));
+            int col = Integer.parseInt(delegate.get(1));
+            double val = Double.parseDouble(delegate.get(2));
+            if(resuable == null) {
+                return new ImmutableMatrixEntry(row, col, val);
+            }
+            return resuable.set(row, col, val);
         }
-        return resuable.set(row, col, val);
+        catch(NullPointerException | NumberFormatException | IndexOutOfBoundsException e) {
+            throw new RuntimeException("Record not parsable: " + delegate.toString(), e);
+        }
     }
 
     @Override
