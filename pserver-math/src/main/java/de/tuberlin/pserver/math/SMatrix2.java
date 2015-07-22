@@ -20,7 +20,6 @@ public class SMatrix2 extends AbstractMatrix {
 
         public final long col;
 
-        private static final HashCodeBuilder hcb = new HashCodeBuilder();
 
         public MtxPos(final long row, final long col) {
             this.row = row;
@@ -29,7 +28,7 @@ public class SMatrix2 extends AbstractMatrix {
 
         @Override
         public int hashCode() {
-            return hcb.append(row).append(col).build();
+            return new HashCodeBuilder().append(row).append(col).build();
         }
 
         @Override
