@@ -595,7 +595,7 @@ public class GloVeJobAdaGrad extends PServerJob {
                 .results(res)
                 .done();
 
-        printMatrix(mergeMatrices(res), OUTPUT_DATA);
+        printMatrixPerVector(mergeMatrices(res), OUTPUT_DATA);
     }
 
     // Prints the matrix as a csv file. Each line is formatted as "<row>;<col>;<value>".
@@ -607,6 +607,25 @@ public class GloVeJobAdaGrad extends PServerJob {
                 for (int j = 0; j < w_avg.numCols(); ++j) {
                     writer.println(i + ";" + j + ";" + w_avg.get(i, j));
                 }
+            }
+        } catch (Exception ignored) {
+        } finally {
+            if(writer != null) writer.close();
+        }
+    }
+
+    // Prints the matrix as a csv file. Each line is formatted as "<index>;<col[0]>;<col[1]>;<col[2]>;...". Adds context and word vector.
+    private static void printMatrixPerVector(Matrix w_avg, String fileName) {
+        PrintWriter writer = null;
+        try {
+            writer = new PrintWriter(fileName, "UTF-8");
+            for (int col = 0; col < NUM_WORDS_IN_COOC_MATRIX; ++col) {
+                String vec = "";
+                for (int row = 0; row < w_avg.numRows(); ++row) {
+                    vec = vec + ";" + (w_avg.get(row, col) + w_avg.get(row, col * 2));
+                }
+                LOG.info(col + vec);
+                writer.println(col + vec);
             }
         } catch (Exception ignored) {
         } finally {
