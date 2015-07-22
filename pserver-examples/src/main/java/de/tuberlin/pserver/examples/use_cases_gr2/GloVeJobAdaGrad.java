@@ -375,7 +375,7 @@ public class GloVeJobAdaGrad extends PServerJob {
                 double avgVal = (val + m.get(row, col)) / 2.0;
                 m.set(row, col, avgVal);
             });
-            //TODO: update local significant change matrix?
+            //TODO: update local significant change matrix? Evaluate whether this is only a theoretical problem?
             lock.unlock();
         }
     }
@@ -393,14 +393,16 @@ public class GloVeJobAdaGrad extends PServerJob {
         @Override
         public void handleDataEvent(int srcInstanceID, Object value) {
             lock.lock();
-            v.assign((Vector) value, (v1, v2) -> { //TODO: optimize to use advantage of sparse vector
-                if(v2 > 0.0) {      // sending a 0 in the delta matrix means no significant change
-                    return (v1 + v2) / 2.0;
-                } else {
-                    return v1;
+            Iterator<Vector.Element> iterator = ((Vector) value).iterateNonZero();
+            while(iterator.hasNext()) {
+                Vector.Element ele = iterator.next();
+                double remoteVal = ele.get();
+                if(remoteVal > 0.0) {      // sending a 0 in the delta vector means no significant change
+                    double localVal = this.v.get(ele.index());
+                    this.v.set(ele.index(), (remoteVal + localVal) / 2.0);
                 }
-            });
-            //TODO: update local significant change vector?
+            }
+            //TODO: update local significant change vector? Evaluate whether this is only a theoretical problem?
             lock.unlock();
         }
     }
