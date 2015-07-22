@@ -387,12 +387,9 @@ public class GloVeJobAdaGrad extends PServerJob {
         @Override
         public void handleDataEvent(int srcInstanceID, Object value) {
             lock.lock();
-            m.applyOnElements((Matrix) value, (v1, v2) -> { //TODO: optimize to use advantage of sparse matrix
-                if(v2 > 0.0) {      // sending a 0 in the delta matrix means no significant change
-                    return (v1 + v2) / 2.0;
-                } else {
-                    return v1;
-                }
+            ((Matrix) value).iterateNonZeros((row, col, val) -> {  // sending a 0 in the delta matrix means no significant change
+                double avgVal = (val + m.get(row, col)) / 2.0;
+                m.set(row, col, avgVal);
             });
             //TODO: update local significant change matrix?
             lock.unlock();
@@ -486,9 +483,9 @@ public class GloVeJobAdaGrad extends PServerJob {
                     .format(Matrix.Format.SPARSE_MATRIX)
                     .layout(Matrix.Layout.ROW_LAYOUT)
                     .build();
-            iterateMatrix(m, (row, col, val) -> {
-                if (Math.abs(m.get(row, col) - m_old.get(row, col)) > MATRIX_TRANSMIT_THRESHOLD) {
-                    diffMatrix.set(row, col, m.get(row, col));
+            m.iterate((row, col, val) -> {
+                if (Math.abs(val - m_old.get(row, col)) > MATRIX_TRANSMIT_THRESHOLD) {
+                    diffMatrix.set(row, col, val);
                 }
             });
             return diffMatrix;
@@ -533,7 +530,7 @@ public class GloVeJobAdaGrad extends PServerJob {
                 .build();
         for (Object _diff : m_diffs) {
             Matrix diff = (Matrix) _diff;
-            iterateMatrix(m, (row, col, val) -> {
+            m.iterate((row, col, val) -> {
                 m.set(row, col, diff.get(row, col));
                 diffCounts.set(row, col, diffCounts.get(row, col) + 1);
             });
@@ -559,21 +556,6 @@ public class GloVeJobAdaGrad extends PServerJob {
             }
         }
         v.applyOnElements(diffCounts, (w, d) -> w / (d + 1));
-    }
-
-    private static void iterateMatrix(Matrix m, MatrixIterFunctionArg arg) {
-        Matrix.RowIterator rowIterator = m.rowIterator();
-        int row = 0;
-        while(rowIterator.hasNextRow()) {
-            Iterator<Vector.Element> elementIterator = rowIterator.getAsVector().iterateNonZero();
-            rowIterator.nextRow();
-            while(elementIterator.hasNext()) {
-                Vector.Element element = elementIterator.next();
-                int col = element.index();
-                arg.operation(row, col, m.get(row, col));
-            }
-            row++;
-        }
     }
 
     private interface MatrixIterFunctionArg {
