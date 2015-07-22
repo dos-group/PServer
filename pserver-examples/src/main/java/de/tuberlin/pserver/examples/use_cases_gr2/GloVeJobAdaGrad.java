@@ -332,10 +332,10 @@ public class GloVeJobAdaGrad extends PServerJob {
 
     private void pushDeltaVector(String name, Vector v, Vector significantDeltas) {
         // significantDeltas should only contain 0 or 1
-        significantDeltas.applyOnElements(v, (v1, v2) -> v1 * v2);
+        significantDeltas.assign(v, (v1, v2) -> v1 * v2);
         dataManager.pushTo(name, significantDeltas);
         // reset delta matrix
-        significantDeltas.applyOnElements((v1) -> 0);   // TODO: this can be optimized...
+        significantDeltas.assign((v1) -> 0);   // TODO: this can be optimized...
     }
 
     private void applyOnColumnVectorAndSetDeltaFlagIfSignificant(Matrix m, Matrix deltas, Long col, Vector v, Vector.VectorFunction2Arg func) {
@@ -393,7 +393,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         @Override
         public void handleDataEvent(int srcInstanceID, Object value) {
             lock.lock();
-            v.applyOnElements((Vector) value, (v1, v2) -> { //TODO: optimize to use advantage of sparse vector
+            v.assign((Vector) value, (v1, v2) -> { //TODO: optimize to use advantage of sparse vector
                 if(v2 > 0.0) {      // sending a 0 in the delta matrix means no significant change
                     return (v1 + v2) / 2.0;
                 } else {
@@ -440,7 +440,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         @Override
         public void handleDataEvent(int srcInstanceID, Object value) {
             lock.lock();
-            v.applyOnElements((Vector) value, (v1, v2) -> (v1 + v2) / 2.0);
+            v.assign((Vector) value, (v1, v2) -> (v1 + v2) / 2.0);
             lock.unlock();
         }
     }
@@ -523,7 +523,7 @@ public class GloVeJobAdaGrad extends PServerJob {
                 diffCounts.set(col, diffCounts.get(col) + 1);
             }
         }
-        v.applyOnElements(diffCounts, (w, d) -> w / (d + 1));
+        v.assign(diffCounts, (w, d) -> w / (d + 1));
     }
 
     // ---------------------------------------------------
@@ -532,10 +532,10 @@ public class GloVeJobAdaGrad extends PServerJob {
 
     private static final DataManager.Merger<Vector> vectorMerger = (dst, src) -> {
         for (final Vector b : src) {
-            dst.applyOnElements(b, (e1, e2) -> e1 + e2);
+            dst.assign(b, (e1, e2) -> e1 + e2);
         }
 
-        dst.applyOnElements(e -> e / (src.size() + 1));
+        dst.assign(e -> e / (src.size() + 1));
     };
 
     private static final DataManager.Merger<Matrix> matrixMerger = (dst, src) -> {
