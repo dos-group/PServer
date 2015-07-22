@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
+import java.lang.management.ManagementFactory;
 import java.util.Iterator;
 
 public class LocalInputFile implements ILocalInputFile<IRecord> {
@@ -91,8 +92,8 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
                         if(c2 > 0 && (c2 == '\n' || c2 == '\r')) {
                             result++;
                         }
+                        break;
                     }
-                    break;
                 }
             }
             if(result <= 0 || result > 2) {
