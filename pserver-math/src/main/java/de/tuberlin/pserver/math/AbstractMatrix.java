@@ -149,6 +149,25 @@ public abstract class AbstractMatrix implements Matrix {
         return res;
     }
 
+    @Override
+    public void iterate(MatrixFunctionPos1Arg mf) {
+        for (int i = 0; i < numRows(); ++i) {
+            for (int j = 0; j < numCols(); ++j) {
+                mf.operation(i, j, get(i, j));
+            }
+        }
+    }
+
+    @Override
+    public void iterateNonZeros(MatrixFunctionPos1Arg mf) {
+        for (int i = 0; i < numRows(); ++i) {
+            for (int j = 0; j < numCols(); ++j) {
+                double val = get(i, j);
+                if(val != 0.0) mf.operation(i, j, val);
+            }
+        }
+    }
+
     // ---------------------------------------------------
     // Inner Classes.
     // ---------------------------------------------------

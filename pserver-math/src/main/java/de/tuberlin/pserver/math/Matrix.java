@@ -74,6 +74,11 @@ public interface Matrix extends MObject {
         public abstract double operation(double e1, double e2);
     }
 
+    public static interface MatrixFunctionPos1Arg {
+
+        public abstract void operation(long row, long col, double element);
+    }
+
 
     public static class PartitionShape {
 
@@ -207,4 +212,9 @@ public interface Matrix extends MObject {
     public abstract Matrix addVectorToCols(final Vector v);
 
     public abstract Matrix zeroDiagonal();
+
+    public abstract void iterate(final MatrixFunctionPos1Arg mf);
+
+    public abstract void iterateNonZeros(final MatrixFunctionPos1Arg mf);
+
 }

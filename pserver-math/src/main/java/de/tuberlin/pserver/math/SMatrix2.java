@@ -207,6 +207,11 @@ public class SMatrix2 extends AbstractMatrix {
         throw new NotImplementedException("not impl");
     }
 
+    @Override
+    public void iterateNonZeros(MatrixFunctionPos1Arg mf) {
+        data.forEach((pos, val) -> mf.operation(pos.row, pos.col, val));
+    }
+
     public static class SMatrix2RowIterator extends AbstractRowIterator {
 
         public SMatrix2RowIterator(AbstractMatrix mat) {
