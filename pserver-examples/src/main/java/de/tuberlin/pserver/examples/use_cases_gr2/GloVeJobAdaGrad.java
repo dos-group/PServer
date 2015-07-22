@@ -558,10 +558,6 @@ public class GloVeJobAdaGrad extends PServerJob {
         v.applyOnElements(diffCounts, (w, d) -> w / (d + 1));
     }
 
-    private interface MatrixIterFunctionArg {
-        void operation(int row, int col, double val);
-    }
-
     // ---------------------------------------------------
     // Pull Stuff.
     // ---------------------------------------------------
