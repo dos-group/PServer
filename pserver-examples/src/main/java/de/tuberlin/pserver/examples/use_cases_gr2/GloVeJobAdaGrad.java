@@ -80,38 +80,22 @@ public class GloVeJobAdaGrad extends PServerJob {
                 Matrix.Format.SPARSE_MATRIX, Matrix.Layout.ROW_LAYOUT);
 
         /* create matrices */
-        W = new MatrixBuilder()
-                .dimension(VEC_DIM, NUM_WORDS_IN_COOC_MATRIX * 2)
-                .format(Matrix.Format.DENSE_MATRIX)
-                .layout(Matrix.Layout.ROW_LAYOUT)
-                .build();
-        W_old = W.copy();
-        W_deltas = W.copy();        //TODO: use sparse matrix
+        W = createMatrix(Matrix.Format.DENSE_MATRIX);
+        W_old = createMatrix(Matrix.Format.DENSE_MATRIX);
+        W_deltas = createMatrix(Matrix.Format.SPARSE_MATRIX);
 
-        GradSq = new MatrixBuilder()
-                .dimension(VEC_DIM, NUM_WORDS_IN_COOC_MATRIX * 2)
-                .format(Matrix.Format.DENSE_MATRIX)
-                .layout(Matrix.Layout.ROW_LAYOUT)
-                .build();
-        GradSq_old = GradSq.copy();
-        GradSq_deltas = GradSq.copy();      //TODO: use sparse matrix
+        GradSq = createMatrix(Matrix.Format.DENSE_MATRIX);
+        GradSq_old = createMatrix(Matrix.Format.DENSE_MATRIX);
+        GradSq_deltas = createMatrix(Matrix.Format.SPARSE_MATRIX);
 
         /* create bias vectors */
-        GradSqB = new VectorBuilder()
-                .dimension(NUM_WORDS_IN_COOC_MATRIX * 2)
-                .format(Vector.Format.DENSE_VECTOR)
-                .layout(Vector.Layout.COLUMN_LAYOUT)
-                .build();
-        GradSqB_old = GradSqB.copy();
-        GradSqB_deltas = GradSqB.copy();    //TODO: use sparse vector
+        GradSqB = createVector(Vector.Format.DENSE_VECTOR);
+        GradSqB_old = createVector(Vector.Format.DENSE_VECTOR);
+        GradSqB_deltas = createVector(Vector.Format.SPARSE_VECTOR);
 
-        B = new VectorBuilder()
-                .dimension(NUM_WORDS_IN_COOC_MATRIX * 2)
-                .format(Vector.Format.DENSE_VECTOR)
-                .layout(Vector.Layout.COLUMN_LAYOUT)
-                .build();
-        B_old = B.copy();
-        B_deltas = B.copy();    //TODO: use sparse vector
+        B = createVector(Vector.Format.DENSE_VECTOR);
+        B_old = createVector(Vector.Format.DENSE_VECTOR);
+        B_deltas = createVector(Vector.Format.SPARSE_VECTOR);
 
         /* initialize matrices & bias vectors */
         final Random rand = new Random();
@@ -478,11 +462,7 @@ public class GloVeJobAdaGrad extends PServerJob {
 
         @Override
         public Object handlePullRequest(String name) {
-            Matrix diffMatrix = new MatrixBuilder()
-                    .dimension(VEC_DIM, NUM_WORDS_IN_COOC_MATRIX * 2)
-                    .format(Matrix.Format.SPARSE_MATRIX)
-                    .layout(Matrix.Layout.ROW_LAYOUT)
-                    .build();
+            Matrix diffMatrix = createMatrix(Matrix.Format.SPARSE_MATRIX);
             m.iterate((row, col, val) -> {
                 if (Math.abs(val - m_old.get(row, col)) > MATRIX_TRANSMIT_THRESHOLD) {
                     diffMatrix.set(row, col, val);
@@ -504,11 +484,7 @@ public class GloVeJobAdaGrad extends PServerJob {
 
         @Override
         public Object handlePullRequest(String name) {
-            Vector diffVector = new VectorBuilder()
-                    .dimension(NUM_WORDS_IN_COOC_MATRIX * 2)
-                    .format(Vector.Format.SPARSE_VECTOR)
-                    .layout(Vector.Layout.COLUMN_LAYOUT)
-                    .build();
+            Vector diffVector = createVector(Vector.Format.SPARSE_VECTOR);
             Iterator<Vector.Element> elementIterator = v.iterateNonZero();
             while(elementIterator.hasNext()) {
                 Vector.Element element = elementIterator.next();
@@ -523,11 +499,7 @@ public class GloVeJobAdaGrad extends PServerJob {
 
     private void performPullRequest(Matrix m, String pullRequestName) {
         Object[] m_diffs = dataManager.pullRequest(pullRequestName);
-        Matrix diffCounts = new MatrixBuilder()
-                .dimension(VEC_DIM, NUM_WORDS_IN_COOC_MATRIX * 2)
-                .format(Matrix.Format.SPARSE_MATRIX)
-                .layout(Matrix.Layout.ROW_LAYOUT)
-                .build();
+        Matrix diffCounts = createMatrix(Matrix.Format.SPARSE_MATRIX);
         for (Object _diff : m_diffs) {
             Matrix diff = (Matrix) _diff;
             m.iterate((row, col, val) -> {
@@ -540,11 +512,7 @@ public class GloVeJobAdaGrad extends PServerJob {
 
     private void performPullRequest(Vector v, String pullRequestName) {
         Object[] v_diffs = dataManager.pullRequest(pullRequestName);
-        Vector diffCounts = new VectorBuilder()
-                .dimension(NUM_WORDS_IN_COOC_MATRIX * 2)
-                .format(Vector.Format.SPARSE_VECTOR)
-                .layout(Vector.Layout.COLUMN_LAYOUT)
-                .build();
+        Vector diffCounts = createVector(Vector.Format.SPARSE_VECTOR);
         for (Object _diff : v_diffs) {
             Vector diff = (Vector) _diff;
             Iterator<Vector.Element> elementIterator = v.iterateNonZero();
@@ -630,11 +598,7 @@ public class GloVeJobAdaGrad extends PServerJob {
     }
 
     private static Matrix mergeMatrices(List<List<Serializable>> res) {
-        Matrix W_avg = new MatrixBuilder()
-                .dimension(VEC_DIM, NUM_WORDS_IN_COOC_MATRIX * 2)
-                .format(Matrix.Format.DENSE_MATRIX)
-                .layout(Matrix.Layout.ROW_LAYOUT)
-                .build();
+        Matrix W_avg = createMatrix(Matrix.Format.DENSE_MATRIX);
         int numMergedMatrices = 0;
         for (int i = 1; i < res.size(); i++) {
             List<Serializable> r = res.get(i);
@@ -648,4 +612,25 @@ public class GloVeJobAdaGrad extends PServerJob {
         W_avg.applyOnElements(e -> e / finalNumMergedMatrices);
         return W_avg;
     }
+
+    // ---------------------------------------------------
+    // Other Helper Methods.
+    // ---------------------------------------------------
+
+    private static Matrix createMatrix(Matrix.Format format) {
+        return new MatrixBuilder()
+                .dimension(VEC_DIM, NUM_WORDS_IN_COOC_MATRIX * 2)
+                .format(format)
+                .layout(Matrix.Layout.ROW_LAYOUT)
+                .build();
+    }
+
+    private static Vector createVector(Vector.Format format) {
+        return new VectorBuilder()
+                .dimension(NUM_WORDS_IN_COOC_MATRIX * 2)
+                .format(format)
+                .layout(Vector.Layout.ROW_LAYOUT)
+                .build();
+    }
+
 }
