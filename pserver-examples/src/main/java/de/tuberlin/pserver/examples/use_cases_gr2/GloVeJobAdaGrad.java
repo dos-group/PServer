@@ -22,7 +22,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class GloVeJobAdaGrad extends PServerJob {
 
     private enum DataExchangeMode {
-        PUSH, DELTA_PULL, PULL
+        DELTA_PUSH, PUSH, DELTA_PULL, PULL
     }
 
     // ---------------------------------------------------
@@ -46,21 +46,25 @@ public class GloVeJobAdaGrad extends PServerJob {
 
     // weight matrix (aka model)
     private Matrix W;
-    private Matrix W_old;
-    private Lock W_lock;
+    private Matrix W_old;       // only used for delta-pull
+    private Matrix W_deltas;    // only used for delta-push
+    private Lock W_lock;        // only used for push & delta-push
 
     // biases for the weight matrix
     private Vector B;
-    private Vector B_old;
-    private Lock B_lock;
+    private Vector B_old;       // only used for delta-pull
+    private Vector B_deltas;    // only used for delta-push
+    private Lock B_lock;        // only used for push & delta-push
 
     // gradient adjustments for AdaGrad
     private Matrix GradSq;
-    private Matrix GradSq_old;
-    private Lock GradSq_lock;
+    private Matrix GradSq_old;      // only used for delta-pull
+    private Matrix GradSq_deltas;   // only used for delta-push
+    private Lock GradSq_lock;       // only used for push & delta-push
     private Vector GradSqB;
-    private Vector GradSqB_old;
-    private Lock GradSqB_lock;
+    private Vector GradSqB_old;     // only used for delta-pull
+    private Vector GradSqB_deltas;  // only used for delta-push
+    private Lock GradSqB_lock;      // only used for push & delta-push
 
     // cooccurrence matrix - every node only gets a part of it (subset of rows)
     private Matrix X;
@@ -84,6 +88,7 @@ public class GloVeJobAdaGrad extends PServerJob {
                 .layout(Matrix.Layout.ROW_LAYOUT)
                 .build();
         W_old = W.copy();
+        W_deltas = W.copy();        //TODO: use sparse matrix
 
         GradSq = new MatrixBuilder()
                 .dimension(VEC_DIM, NUM_WORDS_IN_COOC_MATRIX * 2)
@@ -91,6 +96,7 @@ public class GloVeJobAdaGrad extends PServerJob {
                 .layout(Matrix.Layout.ROW_LAYOUT)
                 .build();
         GradSq_old = GradSq.copy();
+        GradSq_deltas = GradSq.copy();      //TODO: use sparse matrix
 
         /* create bias vectors */
         GradSqB = new VectorBuilder()
@@ -99,6 +105,7 @@ public class GloVeJobAdaGrad extends PServerJob {
                 .layout(Vector.Layout.COLUMN_LAYOUT)
                 .build();
         GradSqB_old = GradSqB.copy();
+        GradSqB_deltas = GradSqB.copy();    //TODO: use sparse vector
 
         B = new VectorBuilder()
                 .dimension(NUM_WORDS_IN_COOC_MATRIX * 2)
@@ -106,6 +113,7 @@ public class GloVeJobAdaGrad extends PServerJob {
                 .layout(Vector.Layout.COLUMN_LAYOUT)
                 .build();
         B_old = B.copy();
+        B_deltas = B.copy();    //TODO: use sparse vector
 
         /* initialize matrices & bias vectors */
         final Random rand = new Random();
@@ -138,6 +146,18 @@ public class GloVeJobAdaGrad extends PServerJob {
             dataManager.addDataEventListener("GradSq", new MatrixPushEventHandler(GradSq, GradSq_lock));
             GradSqB_lock = new ReentrantLock();
             dataManager.addDataEventListener("GradSqB", new VectorPushEventHandler(GradSqB, GradSqB_lock));
+        }
+
+        /* register delta-push event handlers */
+        if (dataExchangeMode == DataExchangeMode.DELTA_PUSH) {
+            W_lock = new ReentrantLock();
+            dataManager.addDataEventListener("W", new MatrixDeltaPushEventHandler(W, W_lock));
+            B_lock = new ReentrantLock();
+            dataManager.addDataEventListener("B", new VectorDeltaPushEventHandler(B, B_lock));
+            GradSq_lock = new ReentrantLock();
+            dataManager.addDataEventListener("GradSq", new MatrixDeltaPushEventHandler(GradSq, GradSq_lock));
+            GradSqB_lock = new ReentrantLock();
+            dataManager.addDataEventListener("GradSqB", new VectorDeltaPushEventHandler(GradSqB, GradSqB_lock));
         }
 
         /* make matrices & bias vectors available for all nodes */
@@ -175,7 +195,7 @@ public class GloVeJobAdaGrad extends PServerJob {
 
                     /* lock all matrices to avoid conflicts with incoming pushes */
                     // TODO: locking & unlocking for every step might be an performance issue
-                    if (dataExchangeMode == DataExchangeMode.PUSH) {
+                    if (dataExchangeMode == DataExchangeMode.PUSH || dataExchangeMode == DataExchangeMode.DELTA_PUSH) {
                         W_lock.lock();
                         B_lock.lock();
                         GradSq_lock.lock();
@@ -183,8 +203,8 @@ public class GloVeJobAdaGrad extends PServerJob {
                     }
 
                     
-                    int wordVecIdx = offset + ridxLocal;
-                    int ctxVecIdx = cidx + NUM_WORDS_IN_COOC_MATRIX;
+                    long wordVecIdx = offset + ridxLocal;
+                    long ctxVecIdx = cidx + NUM_WORDS_IN_COOC_MATRIX;
 
                     Double xVal = X.get(ridxLocal, cidx);
 
@@ -223,21 +243,36 @@ public class GloVeJobAdaGrad extends PServerJob {
                     Vector grad1 = w2.mul(fdiff);
                     Vector grad2 = w1.mul(fdiff);
 
-                    W.assignColumn(wordVecIdx, w1.add(-1, grad1.applyOnElements(gs1, (el1, el2) -> el1 / Math.sqrt(el2))));
-                    W.assignColumn(ctxVecIdx, w2.add(-1, grad2.applyOnElements(gs2, (el1, el2) -> el1 / Math.sqrt(el2))));
+                    if (dataExchangeMode == DataExchangeMode.DELTA_PUSH) {
+                        applyOnColumnVectorAndSetDeltaFlagIfSignificant(W, W_deltas, wordVecIdx, grad1.applyOnElements(gs1, (el1, el2) -> el1 / Math.sqrt(el2)), (v1, v2) -> v1 * -1 + v2);
+                        applyOnColumnVectorAndSetDeltaFlagIfSignificant(W, W_deltas, ctxVecIdx, grad2.applyOnElements(gs2, (el1, el2) -> el1 / Math.sqrt(el2)), (v1, v2) -> v1 * -1 + v2);
 
-                    B.set(wordVecIdx, b1 - fdiff / Math.sqrt(GradSqB.get(wordVecIdx)));
-                    B.set(ctxVecIdx, b2 - fdiff / Math.sqrt(GradSqB.get(ctxVecIdx)));
+                        applyOnIndexAndSetDeltaFlagIfSignificant(B, B_deltas, wordVecIdx, fdiff, (v, _fdiff) -> v - _fdiff / Math.sqrt(GradSqB.get(wordVecIdx)));
+                        applyOnIndexAndSetDeltaFlagIfSignificant(B, B_deltas, ctxVecIdx, fdiff, (v, _fdiff) -> v - _fdiff / Math.sqrt(GradSqB.get(ctxVecIdx)));
 
-                    /* update gradient adjustments for AdaGrad */
-                    gs1 = gs1.applyOnElements(grad1, (el1, el2) -> el1 + el2 * el2);
-                    gs2 = gs2.applyOnElements(grad2, (el1, el2) -> el1 + el2 * el2);
+                        /* update gradient adjustments for AdaGrad */
+                        applyOnColumnVectorAndSetDeltaFlagIfSignificant(GradSq, GradSq_deltas, wordVecIdx, grad1, (el1, el2) -> el1 + el2 * el2);
+                        applyOnColumnVectorAndSetDeltaFlagIfSignificant(GradSq, GradSq_deltas, ctxVecIdx, grad2, (el1, el2) -> el1 + el2 * el2);
 
-                    GradSq.assignColumn(wordVecIdx, gs1);
-                    GradSq.assignColumn(ctxVecIdx, gs2);
+                        applyOnIndexAndSetDeltaFlagIfSignificant(GradSqB, GradSqB_deltas, wordVecIdx, fdiff, (v, _fdiff) -> v + _fdiff * _fdiff);
+                        applyOnIndexAndSetDeltaFlagIfSignificant(GradSqB, GradSqB_deltas, ctxVecIdx, fdiff, (v, _fdiff) -> v + _fdiff * _fdiff);
+                    } else {
+                        W.assignColumn(wordVecIdx, w1.add(-1, grad1.applyOnElements(gs1, (el1, el2) -> el1 / Math.sqrt(el2))));
+                        W.assignColumn(ctxVecIdx, w2.add(-1, grad2.applyOnElements(gs2, (el1, el2) -> el1 / Math.sqrt(el2))));
 
-                    GradSqB.set(wordVecIdx, GradSqB.get(wordVecIdx) + fdiff * fdiff);
-                    GradSqB.set(ctxVecIdx, GradSqB.get(ctxVecIdx) + fdiff * fdiff);
+                        B.set(wordVecIdx, b1 - fdiff / Math.sqrt(GradSqB.get(wordVecIdx)));
+                        B.set(ctxVecIdx, b2 - fdiff / Math.sqrt(GradSqB.get(ctxVecIdx)));
+
+                        /* update gradient adjustments for AdaGrad */
+                        gs1 = gs1.applyOnElements(grad1, (el1, el2) -> el1 + el2 * el2);
+                        gs2 = gs2.applyOnElements(grad2, (el1, el2) -> el1 + el2 * el2);
+
+                        GradSq.assignColumn(wordVecIdx, gs1);
+                        GradSq.assignColumn(ctxVecIdx, gs2);
+
+                        GradSqB.set(wordVecIdx, GradSqB.get(wordVecIdx) + fdiff * fdiff);
+                        GradSqB.set(ctxVecIdx, GradSqB.get(ctxVecIdx) + fdiff * fdiff);
+                    }
 
                     /*if (ridxLocal == 0 && cidx < 4) {
                         LOG.info("w1 nach upd: " + W.colAsVector(wordVecIdx));
@@ -251,7 +286,7 @@ public class GloVeJobAdaGrad extends PServerJob {
                     }*/
 
                     /* unlock all matrices to allow incoming pushes */
-                    if (dataExchangeMode == DataExchangeMode.PUSH) {
+                    if (dataExchangeMode == DataExchangeMode.PUSH || dataExchangeMode == DataExchangeMode.DELTA_PUSH) {
                         W_lock.unlock();
                         B_lock.unlock();
                         GradSq_lock.unlock();
@@ -283,6 +318,12 @@ public class GloVeJobAdaGrad extends PServerJob {
                 dataManager.pushTo("GradSq", GradSq);
                 dataManager.pushTo("B", B);
                 dataManager.pushTo("GradSqB", GradSqB);
+            } else if (dataExchangeMode == DataExchangeMode.DELTA_PUSH) {
+                /* push the significant calculations of this node to all other nodes */
+                pushDeltaMatrix("W", W, W_deltas);
+                pushDeltaMatrix("GradSq", GradSq, GradSq_deltas);
+                pushDeltaVector("B", B, B_deltas);
+                pushDeltaVector("GradSqB", GradSqB, GradSqB_deltas);
             } else {
                 /* pull data from all other nodes after each iteration */
                 dataManager.pullMerge(W, matrixMerger);
@@ -293,6 +334,96 @@ public class GloVeJobAdaGrad extends PServerJob {
         }
 
         result(W);
+    }
+
+    // ---------------------------------------------------
+    // Delta Push Stuff.
+    // ---------------------------------------------------
+
+    private void pushDeltaMatrix(String name, Matrix m, Matrix significantDeltas) {
+        // significantDeltas should only contain 0 or 1
+        significantDeltas.applyOnElements(m, (v1, v2) -> v1 * v2);
+        dataManager.pushTo(name, significantDeltas);
+        // reset delta matrix
+        significantDeltas.applyOnElements((v1) -> 0);   // TODO: this can be optimized...
+    }
+
+    private void pushDeltaVector(String name, Vector v, Vector significantDeltas) {
+        // significantDeltas should only contain 0 or 1
+        significantDeltas.applyOnElements(v, (v1, v2) -> v1 * v2);
+        dataManager.pushTo(name, significantDeltas);
+        // reset delta matrix
+        significantDeltas.applyOnElements((v1) -> 0);   // TODO: this can be optimized...
+    }
+
+    private void applyOnColumnVectorAndSetDeltaFlagIfSignificant(Matrix m, Matrix deltas, Long col, Vector v, Vector.VectorFunction2Arg func) {
+        for (int i = 0; i < m.numRows(); i++) {
+            double oldVal = m.get(i, col);
+            double newVal = func.operation(oldVal, v.get(i));
+            if (Math.abs(newVal - oldVal) > MATRIX_TRANSMIT_THRESHOLD) {
+                deltas.set(i, col, 1);
+            }
+            m.set(i, col, newVal);
+        }
+    }
+
+    private void applyOnIndexAndSetDeltaFlagIfSignificant(Vector v, Vector deltas, long idx, double val, Vector.VectorFunction2Arg func) {
+        double oldVal = v.get(idx);
+        double newVal = func.operation(oldVal, val);
+        if (Math.abs(newVal - oldVal) > MATRIX_TRANSMIT_THRESHOLD) {
+            deltas.set(idx, 1);
+        }
+        v.set(idx, newVal);
+    }
+
+    private class MatrixDeltaPushEventHandler extends DataManager.DataEventHandler {
+
+        private Matrix m;
+        private Lock lock;
+
+        public MatrixDeltaPushEventHandler(Matrix m, Lock lock) {
+            this.m = m;
+            this.lock = lock;
+        }
+
+        @Override
+        public void handleDataEvent(int srcInstanceID, Object value) {
+            lock.lock();
+            m.applyOnElements((Matrix) value, (v1, v2) -> { //TODO: optimize to use advantage of sparse matrix
+                if(v2 > 0.0) {      // sending a 0 in the delta matrix means no significant change
+                    return (v1 + v2) / 2.0;
+                } else {
+                    return v1;
+                }
+            });
+            //TODO: update local significant change matrix?
+            lock.unlock();
+        }
+    }
+
+    private class VectorDeltaPushEventHandler extends DataManager.DataEventHandler {
+
+        private Vector v;
+        private Lock lock;
+
+        public VectorDeltaPushEventHandler(Vector v, Lock lock) {
+            this.v = v;
+            this.lock = lock;
+        }
+
+        @Override
+        public void handleDataEvent(int srcInstanceID, Object value) {
+            lock.lock();
+            v.applyOnElements((Vector) value, (v1, v2) -> { //TODO: optimize to use advantage of sparse vector
+                if(v2 > 0.0) {      // sending a 0 in the delta matrix means no significant change
+                    return (v1 + v2) / 2.0;
+                } else {
+                    return v1;
+                }
+            });
+            //TODO: update local significant change vector?
+            lock.unlock();
+        }
     }
 
     // ---------------------------------------------------
