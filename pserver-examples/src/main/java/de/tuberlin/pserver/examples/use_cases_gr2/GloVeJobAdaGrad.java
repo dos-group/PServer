@@ -6,10 +6,7 @@ import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.MatrixBuilder;
-import de.tuberlin.pserver.math.Vector;
-import de.tuberlin.pserver.math.VectorBuilder;
+import de.tuberlin.pserver.math.*;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -79,7 +76,8 @@ public class GloVeJobAdaGrad extends PServerJob {
 
         /* load cooc matrix */
         dataManager.loadAsMatrix(INPUT_DATA, NUM_WORDS_IN_COOC_MATRIX, NUM_WORDS_IN_COOC_MATRIX,
-                RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD));
+                RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD),
+                Matrix.Format.SPARSE_MATRIX, Matrix.Layout.ROW_LAYOUT);
 
         /* create matrices */
         W = new MatrixBuilder()
@@ -485,7 +483,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         public Object handlePullRequest(String name) {
             Matrix diffMatrix = new MatrixBuilder()
                     .dimension(VEC_DIM, NUM_WORDS_IN_COOC_MATRIX * 2)
-                    .format(Matrix.Format.DENSE_MATRIX)     //TODO: use SPARSE_MATRIX when it's correctly implemented
+                    .format(Matrix.Format.SPARSE_MATRIX)
                     .layout(Matrix.Layout.ROW_LAYOUT)
                     .build();
             iterateMatrix(m, (row, col, val) -> {
@@ -530,7 +528,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         Object[] m_diffs = dataManager.pullRequest(pullRequestName);
         Matrix diffCounts = new MatrixBuilder()
                 .dimension(VEC_DIM, NUM_WORDS_IN_COOC_MATRIX * 2)
-                .format(Matrix.Format.DENSE_MATRIX)     //TODO: use SPARSE_MATRIX when it's correctly implemented
+                .format(Matrix.Format.SPARSE_MATRIX)
                 .layout(Matrix.Layout.ROW_LAYOUT)
                 .build();
         for (Object _diff : m_diffs) {
