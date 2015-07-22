@@ -69,7 +69,11 @@ public class SMatrix2 extends AbstractMatrix {
 
     @Override
     public void set(long row, long col, double value) {
-        data.put(new MtxPos(row, col), value);
+        if(value == 0.0) {
+            data.remove(new MtxPos(row, col));
+        } else {
+            data.put(new MtxPos(row, col), value);
+        }
     }
 
     @Override
