@@ -55,6 +55,11 @@ public enum PServerExecutor {
     public PServerExecutor run(final Class<? extends PServerJob> jobClass) { return run(jobClass, 1); }
     public PServerExecutor run(final Class<? extends PServerJob> jobClass, final int perNodeParallelism) {
         client = PServerClientFactory.createPServerClient();
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         currentJob = client.execute(Preconditions.checkNotNull(jobClass), perNodeParallelism);
         return this;
     }
