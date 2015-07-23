@@ -58,7 +58,7 @@ public abstract class AbstractBufferValue extends Value {
     public AbstractBufferValue(final int partitionSize,
                                final boolean allocateMemory) {
 
-        Preconditions.checkArgument(partitionSize > 0);
+//        Preconditions.checkArgument(partitionSize > 0);
         this.partitionSize  = partitionSize;
         this.allocateMemory = allocateMemory;
     }
