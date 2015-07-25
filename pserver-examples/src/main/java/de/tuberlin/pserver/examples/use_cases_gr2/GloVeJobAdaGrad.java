@@ -173,17 +173,17 @@ public class GloVeJobAdaGrad extends PServerJob {
             double costI = 0;
 
             for (int ridxLocal = 0; ridxLocal < X.numRows(); ridxLocal++) {
+
+                /* lock all matrices to avoid conflicts with incoming pushes */
+                // TODO: locking & unlocking for every step might be an performance issue
+                if (dataExchangeMode == DataExchangeMode.PUSH || dataExchangeMode == DataExchangeMode.DELTA_PUSH) {
+                    W_lock.lock();
+                    B_lock.lock();
+                    GradSq_lock.lock();
+                    GradSqB_lock.lock();
+                }
+
                 for (int cidx = 0; cidx < NUM_WORDS_IN_COOC_MATRIX; cidx++) {
-
-                    /* lock all matrices to avoid conflicts with incoming pushes */
-                    // TODO: locking & unlocking for every step might be an performance issue
-                    if (dataExchangeMode == DataExchangeMode.PUSH || dataExchangeMode == DataExchangeMode.DELTA_PUSH) {
-                        W_lock.lock();
-                        B_lock.lock();
-                        GradSq_lock.lock();
-                        GradSqB_lock.lock();   
-                    }
-
                     
                     long wordVecIdx = offset + ridxLocal;
                     long ctxVecIdx = cidx + NUM_WORDS_IN_COOC_MATRIX;
@@ -266,15 +266,15 @@ public class GloVeJobAdaGrad extends PServerJob {
                         LOG.info("gradsqB nach upd: " + GradSqB.get(wordVecIdx));
                         LOG.info("gradsq b2 nach upd: " + GradSqB.get(ctxVecIdx));
                     }*/
-
-                    /* unlock all matrices to allow incoming pushes */
-                    if (dataExchangeMode == DataExchangeMode.PUSH || dataExchangeMode == DataExchangeMode.DELTA_PUSH) {
-                        W_lock.unlock();
-                        B_lock.unlock();
-                        GradSq_lock.unlock();
-                        GradSqB_lock.unlock();
-                    }
                     
+                }
+
+                /* unlock all matrices to allow incoming pushes */
+                if (dataExchangeMode == DataExchangeMode.PUSH || dataExchangeMode == DataExchangeMode.DELTA_PUSH) {
+                    W_lock.unlock();
+                    B_lock.unlock();
+                    GradSq_lock.unlock();
+                    GradSqB_lock.unlock();
                 }
             }
 
