@@ -324,10 +324,14 @@ public class GloVeJobAdaGrad extends PServerJob {
 
     private void pushDeltaMatrix(String name, Matrix m, Matrix significantDeltas) {
         // significantDeltas should only contain 0 or 1
-        significantDeltas.applyOnElements(m, (v1, v2) -> v1 * v2);
+        significantDeltas.iterateNonZeros((row, col, val) -> {
+            significantDeltas.set(row, col, val * m.get(row, col));
+        });
         dataManager.pushTo(name, significantDeltas);
         // reset delta matrix
-        significantDeltas.applyOnElements((v1) -> 0);   // TODO: this can be optimized...
+        significantDeltas.iterateNonZeros((row, col, val) -> {
+            significantDeltas.set(row, col, 0.0);
+        });
     }
 
     private void pushDeltaVector(String name, Vector v, Vector significantDeltas) {
