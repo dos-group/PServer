@@ -39,7 +39,7 @@ public class GloVeJobAdaGrad extends PServerJob {
     private static final int XMAX = 10;
     private static final double LearningRate = 0.05;
     private static final int MAX_ITER = 15;
-    private static final double MATRIX_TRANSMIT_THRESHOLD = 0.0;
+    private static final double MATRIX_TRANSMIT_THRESHOLD = 0.1;
 
     // weight matrix (aka model)
     private Matrix W;
@@ -342,7 +342,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         for (int i = 0; i < m.numRows(); i++) {
             double oldVal = m.get(i, col);
             double newVal = func.operation(oldVal, v.get(i));
-            if (Math.abs(newVal - oldVal) > MATRIX_TRANSMIT_THRESHOLD) {
+            if (Math.abs(newVal - oldVal) / oldVal > MATRIX_TRANSMIT_THRESHOLD) {
                 deltas.set(i, col, 1);
             }
             m.set(i, col, newVal);
@@ -352,7 +352,7 @@ public class GloVeJobAdaGrad extends PServerJob {
     private void applyOnIndexAndSetDeltaFlagIfSignificant(Vector v, Vector deltas, long idx, double val, Vector.VectorFunction2Arg func) {
         double oldVal = v.get(idx);
         double newVal = func.operation(oldVal, val);
-        if (Math.abs(newVal - oldVal) > MATRIX_TRANSMIT_THRESHOLD) {
+        if (Math.abs(newVal - oldVal) / oldVal > MATRIX_TRANSMIT_THRESHOLD) {
             deltas.set(idx, 1);
         }
         v.set(idx, newVal);
@@ -466,7 +466,8 @@ public class GloVeJobAdaGrad extends PServerJob {
         public Object handlePullRequest(String name) {
             Matrix diffMatrix = createMatrix(Matrix.Format.SPARSE_MATRIX);
             m.iterate((row, col, val) -> {
-                if (Math.abs(val - m_old.get(row, col)) > MATRIX_TRANSMIT_THRESHOLD) {
+                double oldVal = m_old.get(row, col);
+                if (Math.abs(val - oldVal) / oldVal > MATRIX_TRANSMIT_THRESHOLD) {
                     diffMatrix.set(row, col, val);
                 }
             });
@@ -491,8 +492,9 @@ public class GloVeJobAdaGrad extends PServerJob {
             while(elementIterator.hasNext()) {
                 Vector.Element element = elementIterator.next();
                 int col = element.index();
-                if (Math.abs(v.get(col) - v_old.get(col)) > MATRIX_TRANSMIT_THRESHOLD) {
-                    diffVector.set(col, v.get(col));
+                double oldVal = v_old.get(col);
+                if (Math.abs(this.v.get(col) - oldVal) / oldVal > MATRIX_TRANSMIT_THRESHOLD) {
+                    diffVector.set(col, this.v.get(col));
                 }
             }
             return diffVector;
