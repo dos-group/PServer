@@ -39,7 +39,7 @@ public class GloVeJobAdaGrad extends PServerJob {
     private static final int XMAX = 10;
     private static final double LearningRate = 0.05;
     private static final int MAX_ITER = 15;
-    private static final double MATRIX_TRANSMIT_THRESHOLD = 0.0;
+    private static final double MATRIX_TRANSMIT_THRESHOLD = 0.1;
 
     // weight matrix (aka model)
     private Matrix W;
@@ -173,17 +173,17 @@ public class GloVeJobAdaGrad extends PServerJob {
             double costI = 0;
 
             for (int ridxLocal = 0; ridxLocal < X.numRows(); ridxLocal++) {
+
+                /* lock all matrices to avoid conflicts with incoming pushes */
+                // TODO: locking & unlocking for every step might be an performance issue
+                if (dataExchangeMode == DataExchangeMode.PUSH || dataExchangeMode == DataExchangeMode.DELTA_PUSH) {
+                    W_lock.lock();
+                    B_lock.lock();
+                    GradSq_lock.lock();
+                    GradSqB_lock.lock();
+                }
+
                 for (int cidx = 0; cidx < NUM_WORDS_IN_COOC_MATRIX; cidx++) {
-
-                    /* lock all matrices to avoid conflicts with incoming pushes */
-                    // TODO: locking & unlocking for every step might be an performance issue
-                    if (dataExchangeMode == DataExchangeMode.PUSH || dataExchangeMode == DataExchangeMode.DELTA_PUSH) {
-                        W_lock.lock();
-                        B_lock.lock();
-                        GradSq_lock.lock();
-                        GradSqB_lock.lock();   
-                    }
-
                     
                     long wordVecIdx = offset + ridxLocal;
                     long ctxVecIdx = cidx + NUM_WORDS_IN_COOC_MATRIX;
@@ -266,15 +266,15 @@ public class GloVeJobAdaGrad extends PServerJob {
                         LOG.info("gradsqB nach upd: " + GradSqB.get(wordVecIdx));
                         LOG.info("gradsq b2 nach upd: " + GradSqB.get(ctxVecIdx));
                     }*/
-
-                    /* unlock all matrices to allow incoming pushes */
-                    if (dataExchangeMode == DataExchangeMode.PUSH || dataExchangeMode == DataExchangeMode.DELTA_PUSH) {
-                        W_lock.unlock();
-                        B_lock.unlock();
-                        GradSq_lock.unlock();
-                        GradSqB_lock.unlock();
-                    }
                     
+                }
+
+                /* unlock all matrices to allow incoming pushes */
+                if (dataExchangeMode == DataExchangeMode.PUSH || dataExchangeMode == DataExchangeMode.DELTA_PUSH) {
+                    W_lock.unlock();
+                    B_lock.unlock();
+                    GradSq_lock.unlock();
+                    GradSqB_lock.unlock();
                 }
             }
 
@@ -342,7 +342,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         for (int i = 0; i < m.numRows(); i++) {
             double oldVal = m.get(i, col);
             double newVal = func.operation(oldVal, v.get(i));
-            if (Math.abs(newVal - oldVal) > MATRIX_TRANSMIT_THRESHOLD) {
+            if (Math.abs(newVal - oldVal) / oldVal > MATRIX_TRANSMIT_THRESHOLD) {
                 deltas.set(i, col, 1);
             }
             m.set(i, col, newVal);
@@ -352,7 +352,7 @@ public class GloVeJobAdaGrad extends PServerJob {
     private void applyOnIndexAndSetDeltaFlagIfSignificant(Vector v, Vector deltas, long idx, double val, Vector.VectorFunction2Arg func) {
         double oldVal = v.get(idx);
         double newVal = func.operation(oldVal, val);
-        if (Math.abs(newVal - oldVal) > MATRIX_TRANSMIT_THRESHOLD) {
+        if (Math.abs(newVal - oldVal) / oldVal > MATRIX_TRANSMIT_THRESHOLD) {
             deltas.set(idx, 1);
         }
         v.set(idx, newVal);
@@ -466,7 +466,8 @@ public class GloVeJobAdaGrad extends PServerJob {
         public Object handlePullRequest(String name) {
             Matrix diffMatrix = createMatrix(Matrix.Format.SPARSE_MATRIX);
             m.iterate((row, col, val) -> {
-                if (Math.abs(val - m_old.get(row, col)) > MATRIX_TRANSMIT_THRESHOLD) {
+                double oldVal = m_old.get(row, col);
+                if (Math.abs(val - oldVal) / oldVal > MATRIX_TRANSMIT_THRESHOLD) {
                     diffMatrix.set(row, col, val);
                 }
             });
@@ -491,8 +492,9 @@ public class GloVeJobAdaGrad extends PServerJob {
             while(elementIterator.hasNext()) {
                 Vector.Element element = elementIterator.next();
                 int col = element.index();
-                if (Math.abs(v.get(col) - v_old.get(col)) > MATRIX_TRANSMIT_THRESHOLD) {
-                    diffVector.set(col, v.get(col));
+                double oldVal = v_old.get(col);
+                if (Math.abs(this.v.get(col) - oldVal) / oldVal > MATRIX_TRANSMIT_THRESHOLD) {
+                    diffVector.set(col, this.v.get(col));
                 }
             }
             return diffVector;
@@ -590,7 +592,6 @@ public class GloVeJobAdaGrad extends PServerJob {
                 for (int row = 0; row < w_avg.numRows(); ++row) {
                     vec = vec + ";" + (w_avg.get(row, col) + w_avg.get(row, col * 2));
                 }
-                LOG.info(col + vec);
                 writer.println(col + vec);
             }
         } catch (Exception ignored) {
