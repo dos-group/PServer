@@ -590,7 +590,6 @@ public class GloVeJobAdaGrad extends PServerJob {
                 for (int row = 0; row < w_avg.numRows(); ++row) {
                     vec = vec + ";" + (w_avg.get(row, col) + w_avg.get(row, col * 2));
                 }
-                LOG.info(col + vec);
                 writer.println(col + vec);
             }
         } catch (Exception ignored) {
