@@ -324,14 +324,10 @@ public class GloVeJobAdaGrad extends PServerJob {
 
     private void pushDeltaMatrix(String name, Matrix m, Matrix significantDeltas) {
         // significantDeltas should only contain 0 or 1
-        significantDeltas.iterateNonZeros((row, col, val) -> {
-            significantDeltas.set(row, col, val * m.get(row, col));
-        });
+        significantDeltas.applyOnNonZeroElements((row, col, val) -> val * m.get(row, col));
         dataManager.pushTo(name, significantDeltas);
         // reset delta matrix
-        significantDeltas.iterateNonZeros((row, col, val) -> {
-            significantDeltas.set(row, col, 0.0);
-        });
+        significantDeltas.applyOnNonZeroElements((row, col, val) -> 0.0);
     }
 
     private void pushDeltaVector(String name, Vector v, Vector significantDeltas) {
@@ -375,9 +371,10 @@ public class GloVeJobAdaGrad extends PServerJob {
         @Override
         public void handleDataEvent(int srcInstanceID, Object value) {
             lock.lock();
-            ((Matrix) value).iterateNonZeros((row, col, val) -> {  // sending a 0 in the delta matrix means no significant change
+            ((Matrix) value).applyOnNonZeroElements((row, col, val) -> {  // sending a 0 in the delta matrix means no significant change
                 double avgVal = (val + m.get(row, col)) / 2.0;
                 m.set(row, col, avgVal);
+                return val;
             });
             //TODO: update local significant change matrix? Evaluate whether this is only a theoretical problem?
             lock.unlock();
@@ -469,11 +466,12 @@ public class GloVeJobAdaGrad extends PServerJob {
         @Override
         public Object handlePullRequest(String name) {
             Matrix diffMatrix = createMatrix(Matrix.Format.SPARSE_MATRIX);
-            m.iterate((row, col, val) -> {
+            m.applyOnElements((row, col, val) -> {
                 double oldVal = m_old.get(row, col);
                 if (Math.abs(val - oldVal) / oldVal > MATRIX_TRANSMIT_THRESHOLD) {
                     diffMatrix.set(row, col, val);
                 }
+                return val;
             });
             return diffMatrix;
         }
@@ -510,9 +508,10 @@ public class GloVeJobAdaGrad extends PServerJob {
         Matrix diffCounts = createMatrix(Matrix.Format.SPARSE_MATRIX);
         for (Object _diff : m_diffs) {
             Matrix diff = (Matrix) _diff;
-            m.iterate((row, col, val) -> {
+            m.applyOnElements((row, col, val) -> {
                 m.set(row, col, diff.get(row, col));
                 diffCounts.set(row, col, diffCounts.get(row, col) + 1);
+                return val;
             });
         }
         m.applyOnElements(diffCounts, (w, d) -> w / (d + 1));

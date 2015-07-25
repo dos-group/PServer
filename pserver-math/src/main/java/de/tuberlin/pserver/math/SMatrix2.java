@@ -212,8 +212,13 @@ public class SMatrix2 extends AbstractMatrix {
     }
 
     @Override
-    public void iterateNonZeros(MatrixFunctionPos1Arg mf) {
-        data.forEach((pos, val) -> mf.operation(pos.row, pos.col, val));
+    public Matrix applyOnNonZeroElements(MatrixFunctionPos1Arg mf) {
+        for (Map.Entry<MtxPos, Double> ele : data.entrySet()) {
+            long row = ele.getKey().row;
+            long col = ele.getKey().col;
+            ele.setValue(mf.operation(row, col, ele.getValue()));
+        }
+        return this;
     }
 
     public static class SMatrix2RowIterator extends AbstractRowIterator {

@@ -150,22 +150,33 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public void iterate(MatrixFunctionPos1Arg mf) {
+    public Matrix applyOnElements(MatrixFunctionPos1Arg mf) {
         for (int i = 0; i < numRows(); ++i) {
             for (int j = 0; j < numCols(); ++j) {
-                mf.operation(i, j, get(i, j));
+                double oldVal = get(i, j);
+                double newVal = mf.operation(i, j, oldVal);
+                if (newVal != oldVal) {
+                    set(i, j, newVal);
+                }
             }
         }
+        return this;
     }
 
     @Override
-    public void iterateNonZeros(MatrixFunctionPos1Arg mf) {
+    public Matrix applyOnNonZeroElements(MatrixFunctionPos1Arg mf) {
         for (int i = 0; i < numRows(); ++i) {
             for (int j = 0; j < numCols(); ++j) {
-                double val = get(i, j);
-                if(val != 0.0) mf.operation(i, j, val);
+                double oldVal = get(i, j);
+                if(oldVal != 0.0) {
+                    double newVal = mf.operation(i, j, oldVal);
+                    if (newVal != oldVal) {
+                        set(i, j, newVal);
+                    }
+                }
             }
         }
+        return this;
     }
 
     // ---------------------------------------------------

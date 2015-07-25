@@ -76,7 +76,7 @@ public interface Matrix extends MObject {
 
     public static interface MatrixFunctionPos1Arg {
 
-        public abstract void operation(long row, long col, double element);
+        public abstract double operation(long row, long col, double element);
     }
 
 
@@ -213,8 +213,8 @@ public interface Matrix extends MObject {
 
     public abstract Matrix zeroDiagonal();
 
-    public abstract void iterate(final MatrixFunctionPos1Arg mf);
+    public abstract Matrix applyOnElements(final MatrixFunctionPos1Arg mf);
 
-    public abstract void iterateNonZeros(final MatrixFunctionPos1Arg mf);
+    public abstract Matrix applyOnNonZeroElements(final MatrixFunctionPos1Arg mf);
 
 }
