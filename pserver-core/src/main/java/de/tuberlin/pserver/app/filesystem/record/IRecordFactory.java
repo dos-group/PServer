@@ -8,16 +8,22 @@ public interface IRecordFactory {
     public IRecord wrap(CSVRecord record, int[] projection, long row);
 
     public static final IRecordFactory ROW_RECORD = new IRecordFactory() {
+
+        private RowRecord reusable = new RowRecord(null, null, 0);
+
         @Override
         public IRecord wrap(CSVRecord record, int[] projection, long row) {
-            return new RowRecord(record, projection, row);
+            return reusable.set(record, projection, row);
         }
     };
 
     public static final IRecordFactory ROWCOLVAL_RECORD = new IRecordFactory() {
+
+        private RowColValRecord reusable = new RowColValRecord(null);
+
         @Override
         public IRecord wrap(CSVRecord record, int[] projection, long row) {
-            return new RowColValRecord(record);
+            return reusable.set(record, projection, row);
         }
     };
 
