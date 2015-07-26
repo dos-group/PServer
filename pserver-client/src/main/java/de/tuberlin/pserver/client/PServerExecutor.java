@@ -41,9 +41,6 @@ public enum PServerExecutor {
     private PServerExecutor(final boolean isLocal) {
         org.apache.log4j.Logger.getRootLogger().addAppender(new ConsoleAppender());
         this.isLocal = isLocal;
-        if(isLocal) {
-            throw new RuntimeException();
-        }
     }
 
     // ---------------------------------------------------
