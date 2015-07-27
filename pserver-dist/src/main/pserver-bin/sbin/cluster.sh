@@ -157,8 +157,19 @@ zookeeper-stop)
         . "${PSERVER_ROOT_DIR}/inc/run_on_all_hosts.sh"
         ;;
 
+clear-logs)
+
+        function run_on_host() {
+            HOST=$1
+            echo "[${HOST}] clearing logs"
+            ssh -n ${PSERVER_SSH_OPTS} ${HOST} -- "rm \"${PSERVER_DESTINATION_LOG_DIR}/\"* 2&>1 > /dev/null; rm ${ZOOKEEPER_LOG_DIR}/* 2&>1 > /dev/null"
+        }
+        HOSTLIST="${SLAVES_FILE}"
+        . "${PSERVER_ROOT_DIR}/inc/run_on_all_hosts.sh"
+        ;;
+
 *)
-        echo "Usage: cluster.sh [pserver-start|pserver-stop|pserver-deploy|fetch-logs|zookeeper-setup|zookeeper-start|zookeeper-stop] [options ...]"
+        echo "Usage: cluster.sh [pserver-start|pserver-stop|pserver-deploy|fetch-logs|zookeeper-setup|zookeeper-start|zookeeper-stop|clear-logs] [options ...]"
         ;;
 
 esac
