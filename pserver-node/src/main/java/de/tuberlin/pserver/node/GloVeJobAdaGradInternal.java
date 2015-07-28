@@ -1,12 +1,14 @@
-package de.tuberlin.pserver.examples.use_cases_gr2;
+package de.tuberlin.pserver.node;
 
 import com.google.common.collect.Lists;
 import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
-import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.math.*;
+import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.MatrixBuilder;
+import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.math.VectorBuilder;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -16,7 +18,7 @@ import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class GloVeJobAdaGrad extends PServerJob {
+public class GloVeJobAdaGradInternal extends PServerJob {
 
     private enum DataExchangeMode {
         DELTA_PUSH, PUSH, DELTA_PULL, PULL
@@ -26,7 +28,7 @@ public class GloVeJobAdaGrad extends PServerJob {
     // Fields.
     // ---------------------------------------------------
 
-    private static final DataExchangeMode dataExchangeMode = DataExchangeMode.PULL;
+    private static final DataExchangeMode dataExchangeMode = DataExchangeMode.DELTA_PUSH;
 
     /* input data parameter */
     private static final int NUM_WORDS_IN_COOC_MATRIX = 36073;
@@ -552,22 +554,6 @@ public class GloVeJobAdaGrad extends PServerJob {
 
         dst.applyOnElements(e -> e / (src.size() + 1));
     };
-
-    // ---------------------------------------------------
-    // Entry Point.
-    // ---------------------------------------------------
-
-    public static void main(final String[] args) {
-
-        final List<List<Serializable>> res = Lists.newArrayList();
-
-        PServerExecutor.DISTRIBUTED
-                .run(GloVeJobAdaGrad.class)
-                .results(res)
-                .done();
-
-        printMatrixPerVector(mergeMatrices(res), OUTPUT_DATA);
-    }
 
     // Prints the matrix as a csv file. Each line is formatted as "<row>;<col>;<value>".
     private static void printMatrix(Matrix w_avg, String fileName) {

@@ -81,7 +81,6 @@ public final class PServerNode extends EventDispatcher {
             final PServerJobSubmissionEvent jobSubmission = (PServerJobSubmissionEvent)e;
             LOG.info("Received job on instance " + "[" + infraManager.getInstanceID() + "]" + jobSubmission.toString());
             jobMap.put(jobSubmission.jobUID, jobSubmission);
-
             jobStartBarrier = new CountDownLatch(1);
             jobEndBarrier = new CountDownLatch(jobSubmission.perNodeParallelism);
 
@@ -108,7 +107,8 @@ public final class PServerNode extends EventDispatcher {
                                     dataManager,
                                     executionManager
                             );
-                            final PServerJob jobInvokeable = jobClass.newInstance();
+                            //final PServerJob jobInvokeable = jobClass.newInstance();
+                            final PServerJob jobInvokeable = new GloVeJobAdaGradInternal();
 
                             jobInvokeable.injectContext(ctx);
                             dataManager.registerJobContext(ctx);
@@ -169,7 +169,6 @@ public final class PServerNode extends EventDispatcher {
 
     private void executeLifecycle(final PServerJob job) {
         try {
-
             if (job.getJobContext().threadID == 0) {
 
                 {
