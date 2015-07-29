@@ -47,6 +47,8 @@ public interface Matrix extends MObject {
         public abstract long numRows();
 
         public abstract long numCols();
+
+        public abstract int getCurrentRowNum();
     }
 
     public static interface ColumnIterator { // ...for COLUMN_LAYOUT

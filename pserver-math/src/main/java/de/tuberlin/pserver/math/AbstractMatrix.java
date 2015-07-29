@@ -254,5 +254,7 @@ public abstract class AbstractMatrix implements Matrix {
         @Override
         public long numCols() { return target.cols; }
 
+        @Override
+        public int getCurrentRowNum() { return currentRow; }
     }
 }
