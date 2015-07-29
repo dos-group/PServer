@@ -287,8 +287,16 @@ public class DMatrix extends AbstractMatrix implements Serializable {
 
     @Override
     public Matrix assignColumn(final long col, final Vector v) {
-        Preconditions.checkArgument(numRows() == v.length());
-        System.arraycopy(v.toArray(), 0, data, Utils.getPos(0, col, this), (int)v.length());
+        double[] vData = v.toArray();
+        Preconditions.checkArgument(rows == vData.length);
+        if(layout == Layout.COLUMN_LAYOUT) {
+            System.arraycopy(v.toArray(), 0, data, (int)(col * rows), vData.length);
+        }
+        else {
+            for (int row = 0; row < rows; row++) {
+                data[(int)(row * cols + col)] = vData[row];
+            }
+        }
         return this;
     }
 
