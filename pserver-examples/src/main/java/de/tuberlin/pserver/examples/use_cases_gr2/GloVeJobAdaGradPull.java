@@ -142,7 +142,6 @@ public class GloVeJobAdaGradPull extends PServerJob {
                     Double b2 = B.get(ctxVecIdx);
                     Vector gs2 = GradSq.colAsVector(ctxVecIdx);
 
-
                     // calculate gradient
                     double diff = w1.dot(w2) + b1 + b2 - Math.log(xVal);
                     double fdiff = (xVal > XMAX) ? diff : Math.pow(xVal / XMAX, ALPHA) * diff;

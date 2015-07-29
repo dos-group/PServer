@@ -85,6 +85,9 @@ public class DMatrix extends AbstractMatrix implements Serializable {
 
         @Override
         public long numCols() { return self.cols; }
+
+        @Override
+        public int getCurrentRowNum() { return currentRowIndex; }
     }
 
     // ---------------------------------------------------
