@@ -558,13 +558,16 @@ public class DataManager extends EventDispatcher {
             // iterate through records in file
             FileDataIterator<? extends IRecord> fileIterator = task.fileIterator;
             Matrix.PartitionShape partitionShape = task.matrixPartitioner.getPartitionShape();
+            ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
             while (fileIterator.hasNext()) {
                 final IRecord record = fileIterator.next();
                 // iterate through entries in record
-                ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
                 synchronized (matrix) {
                     while (record.hasNext()) {
                         MatrixEntry entry = record.next(reusable);
+                        if(entry.getRow() >= task.rows || entry.getCol() >= task.cols) {
+                            continue;
+                        }
                         //System.out.println(instanceID + ": " + entry);
                         // get the partition this record belongs to
                         int targetPartition = task.matrixPartitioner.getPartitionOfEntry(entry);

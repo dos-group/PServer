@@ -110,6 +110,7 @@ public final class UserCodeManager {
         final List<String> dependencies = analyseDependencies
                 ? buildTransitiveDependencyClosure(clazz, new ArrayList<>())
                 : new ArrayList<>();
+        // TODO: multiple classes
         return Triple.of(clazz, dependencies, compressor.compress(loadByteCode(clazz)));
     }
 

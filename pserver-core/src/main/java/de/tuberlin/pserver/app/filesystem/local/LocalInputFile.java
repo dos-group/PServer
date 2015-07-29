@@ -203,10 +203,12 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
             return hasNext;
         }
 
+        IRecord reusable = format.getRecordFactory().wrap(null, null, -1);
+
         @Override
         public IRecord next() {
             final CSVRecord record = csvIterator.next();
-            return format.getRecordFactory().wrap(record, format.getProjection(), csvFileSection.blockLineOffset + currentLine++);
+            return reusable.set(record, format.getProjection(), csvFileSection.blockLineOffset + currentLine++);
         }
 
         // ---------------------------------------------------
