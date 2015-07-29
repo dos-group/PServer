@@ -54,4 +54,13 @@ public class SVector2 extends AbstractVector {
     public Vector copy() {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public double[] toArray() {
+        double[] result = new double[(int)length];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = data.get(i);
+        }
+        return result;
+    }
 }

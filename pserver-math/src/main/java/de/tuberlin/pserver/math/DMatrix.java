@@ -8,7 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.util.Random;
+import java.util.*;
+import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -250,20 +251,27 @@ public class DMatrix extends AbstractMatrix implements Serializable {
 
     @Override
     public Vector colAsVector() {
-        return colAsVector(0, 0, numRows());
+        return colAsVector(0, 0, rows);
     }
 
     @Override
     public Vector colAsVector(final long col) {
-        return colAsVector(col, 0, numRows());
+        return colAsVector(col, 0, rows);
     }
 
     @Override
-    public Vector colAsVector(final long col, final long from, final long to) { // TODO: Optimize with respect to the layout with array copy.
-        Vector r = new DVector(to - from);
-        for (long i = from; i < to; ++i)
-            r.set(i, data[getPos(i, col)]);
-        return r;
+    public Vector colAsVector(final long col, final long from, final long to) {
+        double[] result = new double[(int)(to - from)];
+        if(layout == Layout.COLUMN_LAYOUT) {
+            System.arraycopy(data, (int)(col * rows + from), result, 0, result.length);
+        }
+        else {
+            for (int i = 0; i < result.length; i++) {
+                int row = (int)from+i;
+                result[i] = data[(int)(row * cols + col)];
+            }
+        }
+        return new DVector(result.length, result);
     }
 
     @Override
@@ -276,9 +284,8 @@ public class DMatrix extends AbstractMatrix implements Serializable {
 
     @Override
     public Matrix assignColumn(final long col, final Vector v) {
-        Preconditions.checkNotNull(numRows() == v.length());
-        for (int i = 0; i < v.length(); ++i)
-            data[Utils.getPos(i, col, this)] = v.get(i);
+        Preconditions.checkArgument(numRows() == v.length());
+        System.arraycopy(v.toArray(), 0, data, Utils.getPos(0, col, this), (int)v.length());
         return this;
     }
 

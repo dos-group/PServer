@@ -11,6 +11,7 @@ import de.tuberlin.pserver.math.stuff.PlusMult;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.stream.IntStream;
 
 public class DVector implements Vector, Serializable {
 
@@ -117,30 +118,34 @@ public class DVector implements Vector, Serializable {
 
     @Override
     public Vector applyOnElements(final VectorFunction1Arg vf) {
-        final Vector res = copy();
-        for (int i = 0; i < res.length(); ++i) {
-            res.set(i, vf.operation(this.get(i)));
+        final double[] result = new double[(int)length()];
+        for (int i = 0; i < result.length; ++i) {
+            result[i] =  vf.operation(data[i]);
         }
-        return res;
+        return new DVector(length(), result);
     }
 
     @Override
     public Vector applyOnElements(final Vector v2, final VectorFunction1Arg vf) {
-        final Vector res = copy();
-        for (int i = 0; i < res.length(); ++i) {
-            res.set(i, vf.operation(v2.get(i)));
+        int length = (int) length();
+        final double[] result = new double[length];
+        final double[] v2data = v2.toArray();
+        for (int i = 0; i < length; ++i) {
+            result[i] = vf.operation(v2data[i]);
         }
-        return res;
+        return new DVector(length, result);
     }
 
     @Override
     public Vector applyOnElements(final Vector v2, final VectorFunction2Arg vf) {
-        final Vector res = copy();
-        Preconditions.checkState(v2.length() == res.length());
-        for (int i = 0; i < res.length(); ++i) {
-            res.set(i, vf.operation(this.get(i), v2.get(i)));
+        int length = data.length;
+        Preconditions.checkState(v2.length() == length);
+        final double[] v2data = v2.toArray();
+        final double[] result = Arrays.copyOf(data, length);
+        for (int i = 0; i < length; ++i) {
+            result[i] = vf.operation(result[i], v2data[i]);
         }
-        return res;
+        return new DVector(length, result);
     }
 
     @Override public long length() { return data.length; }

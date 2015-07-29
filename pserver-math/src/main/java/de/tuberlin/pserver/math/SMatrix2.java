@@ -1,9 +1,7 @@
 package de.tuberlin.pserver.math;
 
-
 import de.tuberlin.pserver.math.stuff.Utils;
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -15,7 +13,7 @@ public class SMatrix2 extends AbstractMatrix {
     // Inner Classes.
     // ---------------------------------------------------
 
-    public static final class MtxPos implements Serializable {
+    public final class MtxPos implements Serializable {
 
         public final long row;
 
@@ -29,7 +27,8 @@ public class SMatrix2 extends AbstractMatrix {
 
         @Override
         public int hashCode() {
-            return new HashCodeBuilder().append(row).append(col).build();
+        //    return new HashCodeBuilder().append(row).append(col).build();
+            return (int) (row * cols + col);
         }
 
         @Override

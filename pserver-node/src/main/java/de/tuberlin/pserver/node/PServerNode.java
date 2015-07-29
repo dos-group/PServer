@@ -107,8 +107,7 @@ public final class PServerNode extends EventDispatcher {
                                     dataManager,
                                     executionManager
                             );
-                            //final PServerJob jobInvokeable = jobClass.newInstance();
-                            final PServerJob jobInvokeable = new GloVeJobAdaGradInternal();
+                            final PServerJob jobInvokeable = jobClass.newInstance();
 
                             jobInvokeable.injectContext(ctx);
                             dataManager.registerJobContext(ctx);
