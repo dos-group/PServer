@@ -1,6 +1,5 @@
 package de.tuberlin.pserver.examples.use_cases_gr2;
 
-import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.filesystem.record.IRecordFactory;
@@ -48,6 +47,26 @@ public class GloVeJobAdaGradPull extends PServerJob {
 
     // Co-Occurrence Matrix - every node only gets a part of it (subset of rows).
     private Matrix X;
+
+    // ---------------------------------------------------
+    // Pull Stuff.
+    // ---------------------------------------------------
+
+    private static final DataManager.Merger<Vector> vectorMerger = (dst, src) -> {
+        for (final Vector b : src) {
+            dst.assign(b, (e1, e2) -> e1 + e2);
+        }
+
+        dst.assign(e -> e / (src.size() + 1));
+    };
+
+    private static final DataManager.Merger<Matrix> matrixMerger = (dst, src) -> {
+        for (final Matrix m : src) {
+            dst.applyOnElements(m, (e1, e2) -> e1 + e2);
+        }
+
+        dst.applyOnElements(e -> e / (src.size() + 1));
+    };
 
     // ---------------------------------------------------
     // Public Methods.
@@ -175,46 +194,16 @@ public class GloVeJobAdaGradPull extends PServerJob {
             costI /= X.numRows() * NUM_WORDS_IN_COOC_MATRIX;
             LOG.info("Iteration, Cost: " + (epoch - 1) + ", " + costI);
 
-            // merge data from/ with other nodes: implemented 3 variants yet: push, pull and delta-pull
             // pull data from all other nodes after each iteration
-            dataManager.pullMerge(W, matrixMerger);
-            dataManager.pullMerge(GradSq, matrixMerger);
-            dataManager.pullMerge(B, vectorMerger);
-            dataManager.pullMerge(GradSqB, vectorMerger);
+            if (ctx.threadID == 0) {
+                dataManager.pullMerge(W, matrixMerger);
+                dataManager.pullMerge(GradSq, matrixMerger);
+                dataManager.pullMerge(B, vectorMerger);
+                dataManager.pullMerge(GradSqB, vectorMerger);
+            }
 
             xIter.reset();
         }
-    }
-
-    // ---------------------------------------------------
-    // Pull Stuff.
-    // ---------------------------------------------------
-
-    private static final DataManager.Merger<Vector> vectorMerger = (dst, src) -> {
-        for (final Vector b : src) {
-            dst.assign(b, (e1, e2) -> e1 + e2);
-        }
-
-        dst.assign(e -> e / (src.size() + 1));
-    };
-
-    private static final DataManager.Merger<Matrix> matrixMerger = (dst, src) -> {
-        for (final Matrix m : src) {
-            dst.applyOnElements(m, (e1, e2) -> e1 + e2);
-        }
-
-        dst.applyOnElements(e -> e / (src.size() + 1));
-    };
-
-    // ---------------------------------------------------
-    // Entry Point.
-    // ---------------------------------------------------
-
-    public static void main(final String[] args) {
-
-        PServerExecutor.LOCAL
-                .run(GloVeJobAdaGradPull.class, 8)
-                .done();
     }
 
     // ---------------------------------------------------
@@ -235,5 +224,16 @@ public class GloVeJobAdaGradPull extends PServerJob {
                 .format(format)
                 .layout(Vector.Layout.ROW_LAYOUT)
                 .build();
+    }
+
+    // ---------------------------------------------------
+    // Entry Point.
+    // ---------------------------------------------------
+
+    public static void main(final String[] args) {
+
+        PServerExecutor.LOCAL
+                .run(GloVeJobAdaGradPull.class, 4)
+                .done();
     }
 }
