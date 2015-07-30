@@ -74,7 +74,7 @@ public enum PServerNodeFactory {
         this.memoryManager      = null; //new MemoryManager(config);
         this.infraManager       = new InfrastructureManager(machine, config);
         this.netManager         = new NetManager(machine, infraManager, 16);
-        this.userCodeManager    = new UserCodeManager(this.getClass().getClassLoader(), false);
+        this.userCodeManager    = new UserCodeManager(this.getClass().getClassLoader());
         this.rpcManager         = new RPCManager(netManager);
 
         infraManager.addEventListener(ZookeeperClient.IM_EVENT_NODE_ADDED, event -> {

@@ -1,5 +1,6 @@
 package de.tuberlin.pserver.examples.use_cases_gr2;
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.filesystem.record.IRecordFactory;
@@ -12,7 +13,6 @@ import de.tuberlin.pserver.math.VectorBuilder;
 
 import java.util.Random;
 
-
 public class GloVeJobAdaGradPull extends PServerJob {
 
     // ---------------------------------------------------
@@ -20,9 +20,9 @@ public class GloVeJobAdaGradPull extends PServerJob {
     // ---------------------------------------------------
 
     // Input-Parameter.
-    private static final int NUM_WORDS_IN_COOC_MATRIX = 36073;
+    private static final int        NUM_WORDS_IN_COOC_MATRIX = 36073;
 
-    private static final String INPUT_DATA = "/data/fridtjof.sander/text8_coocc.csv";
+    private static final String     INPUT_DATA = "datasets/text8_coocc.csv";
 
     // Hyper-Parameter.
     private static final int        VEC_DIM = 50;
@@ -170,62 +170,7 @@ public class GloVeJobAdaGradPull extends PServerJob {
                     GradSqB.set(wordVecIdx, GradSqB.get(wordVecIdx) + fdiff * fdiff);
                     GradSqB.set(ctxVecIdx, GradSqB.get(ctxVecIdx) + fdiff * fdiff);
                 }
-
-                xIter.reset();
             }
-
-            /*for (int row = 0; row < X.numRows(); row++) {
-
-                for (int col = 0; col < NUM_WORDS_IN_COOC_MATRIX; col++) {
-                    
-                    long wordVecIdx = offset + row;
-                    long ctxVecIdx = col + NUM_WORDS_IN_COOC_MATRIX;
-
-                    Double xVal = X.get(row, col);
-
-                    if (xVal == 0)
-                        continue;    // skip 0 values in the cooccurrence matrix cause Math.log(0) = -Infinity
-
-                    // word vector
-                    Vector w1 = W.colAsVector(wordVecIdx);
-                    Double b1 = B.get(wordVecIdx);
-                    Vector gs1 = GradSq.colAsVector(wordVecIdx);
-
-                    // context vector
-                    Vector w2 = W.colAsVector(ctxVecIdx);
-                    Double b2 = B.get(ctxVecIdx);
-                    Vector gs2 = GradSq.colAsVector(ctxVecIdx);
-
-
-                    // calculate gradient
-                    double diff = w1.dot(w2) + b1 + b2 - Math.log(xVal);
-                    double fdiff = (xVal > XMAX) ? diff : Math.pow(xVal / XMAX, ALPHA) * diff;
-
-                    // GLOBAL OPERATION - EXCHANGE cost
-                    costI += 0.5 * diff * fdiff;
-
-                    fdiff *= LEARNING_RATE;
-
-                    Vector grad1 = w2.mul(fdiff);
-                    Vector grad2 = w1.mul(fdiff);
-
-                    W.assignColumn(wordVecIdx, w1.add(-1, grad1.applyOnElements(gs1, (el1, el2) -> el1 / Math.sqrt(el2))));
-                    W.assignColumn(ctxVecIdx, w2.add(-1, grad2.applyOnElements(gs2, (el1, el2) -> el1 / Math.sqrt(el2))));
-
-                    B.set(wordVecIdx, b1 - fdiff / Math.sqrt(GradSqB.get(wordVecIdx)));
-                    B.set(ctxVecIdx, b2 - fdiff / Math.sqrt(GradSqB.get(ctxVecIdx)));
-
-                    // Update Gradient Adjustments for AdaGrad.
-                    gs1 = gs1.applyOnElements(grad1, (el1, el2) -> el1 + el2 * el2);
-                    gs2 = gs2.applyOnElements(grad2, (el1, el2) -> el1 + el2 * el2);
-
-                    GradSq.assignColumn(wordVecIdx, gs1);
-                    GradSq.assignColumn(ctxVecIdx, gs2);
-
-                    GradSqB.set(wordVecIdx, GradSqB.get(wordVecIdx) + fdiff * fdiff);
-                    GradSqB.set(ctxVecIdx, GradSqB.get(ctxVecIdx) + fdiff * fdiff);
-                }
-            }*/
 
             costI /= X.numRows() * NUM_WORDS_IN_COOC_MATRIX;
             LOG.info("Iteration, Cost: " + (epoch - 1) + ", " + costI);
@@ -236,6 +181,8 @@ public class GloVeJobAdaGradPull extends PServerJob {
             dataManager.pullMerge(GradSq, matrixMerger);
             dataManager.pullMerge(B, vectorMerger);
             dataManager.pullMerge(GradSqB, vectorMerger);
+
+            xIter.reset();
         }
     }
 
@@ -266,7 +213,7 @@ public class GloVeJobAdaGradPull extends PServerJob {
     public static void main(final String[] args) {
 
         PServerExecutor.LOCAL
-                .run(GloVeJobAdaGradPull.class)
+                .run(GloVeJobAdaGradPull.class, 8)
                 .done();
     }
 

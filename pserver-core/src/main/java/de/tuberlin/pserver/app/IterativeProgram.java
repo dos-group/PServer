@@ -94,7 +94,7 @@ public abstract class IterativeProgram extends PServerJob {
             ++epoch;
 
             if (externalSyncMode == SynchronizationMode.BULK_SYNCHRONOUS_PARALLEL) {
-                ctx.dataManager.sync();
+                ctx.dataManager.sync(0);
             } else if (internalSyncMode == SynchronizationMode.BULK_SYNCHRONOUS_PARALLEL) {
                 try {
                     internalSyncBarrier.await();

@@ -464,17 +464,20 @@ public class DataManager extends EventDispatcher {
     // CONTROL FLOW
     // ---------------------------------------------------
 
-    public void sync() {
-        netManager.broadcastEvent(new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT));
-        try {
-            bspSyncBarrier.await();
-        } catch (InterruptedException e) {
-            LOG.error(e.getMessage());
-        }
-        if (bspSyncBarrier.getCount() == 0) {
-            bspSyncBarrier = new CountDownLatch(infraManager.getMachines().size() - 1);
-        } else {
-            throw new IllegalStateException();
+    //public void sync() { sync(-1); }
+    public void sync(final int staleness) {
+        if (staleness > -1) {
+            netManager.broadcastEvent(new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT));
+            try {
+                bspSyncBarrier.await();
+            } catch (InterruptedException e) {
+                LOG.error(e.getMessage());
+            }
+            if (bspSyncBarrier.getCount() == 0) {
+                bspSyncBarrier = new CountDownLatch(infraManager.getMachines().size() - 1);
+            } else {
+                throw new IllegalStateException();
+            }
         }
     }
 

@@ -35,7 +35,7 @@ public class CFSyncPrimitiveTestJob extends PServerJob {
 
             i++;
 
-            dataManager.sync();
+            dataManager.sync(0);
         }
     }
 

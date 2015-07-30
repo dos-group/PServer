@@ -89,16 +89,16 @@ public final class PServerNode extends EventDispatcher {
             for (int i = 0; i < jobSubmission.perNodeParallelism; ++i) {
                 final int threadID = i;
                 executor.execute(() -> {
+                    final Class<?> clazz = userCodeManager.implantClass(jobSubmission.byteCode);
                     try {
-                        final Class<?> clazz = userCodeManager.implantClass(jobSubmission);
                         if (PServerJob.class.isAssignableFrom(clazz)) {
                             @SuppressWarnings("unchecked")
                             final Class<? extends PServerJob> jobClass = (Class<? extends PServerJob>) clazz;
                             final PServerContext ctx = new PServerContext(
                                     jobSubmission.clientMachine,
                                     jobSubmission.jobUID,
-                                    jobSubmission.className,
-                                    jobSubmission.simpleClassName,
+                                    clazz.getName(),
+                                    clazz.getSimpleName(),
                                     jobSubmission.perNodeParallelism,
                                     infraManager.getInstanceID(),
                                     threadID,
@@ -141,7 +141,7 @@ public final class PServerNode extends EventDispatcher {
                                 machine,
                                 jobSubmission.jobUID,
                                 infraManager.getInstanceID(),
-                                threadID, jobSubmission.simpleClassName,
+                                threadID, clazz.getSimpleName(),
                                 ex.getCause()
                         );
                         netManager.sendEvent(jobSubmission.clientMachine, jfe);

@@ -75,11 +75,11 @@ public enum PServerClientFactory {
             throw new IllegalStateException(e);
         }
 
-        this.userCodeManager = new UserCodeManager(this.getClass().getClassLoader(), false);
-        this.userCodeManager.addStandardDependency("java");
+        this.userCodeManager = new UserCodeManager(this.getClass().getClassLoader());
+        /*this.userCodeManager.addStandardDependency("java");
         this.userCodeManager.addStandardDependency("org/apache/log4j");
         this.userCodeManager.addStandardDependency("io/netty");
-        this.userCodeManager.addStandardDependency("de/tuberlin/aura/core");
+        this.userCodeManager.addStandardDependency("de/tuberlin/aura/core");*/
 
         LOG.info("PServer Client Startup: " + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms");
     }

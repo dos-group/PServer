@@ -1,9 +1,15 @@
-package de.tuberlin.pserver.examples.ml;
+package de.tuberlin.pserver.examples.playground;
 
+import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.IterativeProgram;
+import de.tuberlin.pserver.examples.ml.GenerateLocalTestData;
+import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.ml.models.GeneralLinearModel;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.ml.optimization.SGD.SGDOptimizer;
+
+import java.util.concurrent.CyclicBarrier;
 
 public class IterativeProgramSGD extends IterativeProgram {
 

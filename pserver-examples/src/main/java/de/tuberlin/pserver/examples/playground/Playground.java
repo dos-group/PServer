@@ -1,9 +1,16 @@
 package de.tuberlin.pserver.examples.playground;
 
+import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.app.UserCodeManager;
+import de.tuberlin.pserver.examples.use_cases_gr2.GloVeJobAdaGrad;
 import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.SMatrix2;
 import de.tuberlin.pserver.utils.ObjectSerializer;
+import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 import java.util.Random;
 
 public class Playground {
@@ -23,13 +30,13 @@ public class Playground {
 
     public static void main(final String[] args) {
 
-        Matrix gradientMtx = new SMatrix2(5, 1000000, Matrix.Layout.ROW_LAYOUT);
+        /*Matrix gradientMtx = new SMatrix2(5, 1000000, Matrix.Layout.ROW_LAYOUT);
 
-        /*new MatrixBuilder()
+        new MatrixBuilder()
                 .dimension(5, 1000000)
                 .format(Matrix.MatrixFormat.SPARSE_MATRIX)
                 .layout(Matrix.MemoryLayout.ROW_LAYOUT)
-                .build();*/
+                .build();
 
         Random rand = new Random();
 
@@ -43,7 +50,7 @@ public class Playground {
 
         final byte[] data = serializer.serialize(gradientMtx);
 
-        System.out.println(data.length);
+        System.out.println(data.length);*/
 
         //15012249
         //63000213

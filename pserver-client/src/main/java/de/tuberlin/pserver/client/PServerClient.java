@@ -105,23 +105,22 @@ public final class PServerClient extends EventDispatcher {
         Preconditions.checkArgument(perNodeParallelism >= 1);
 
         final long start = System.nanoTime();
-        final Triple<Class<?>, List<String>, byte[]> classData = userCodeManager.extractClass(jobClass);
         final UUID jopUID = UUID.randomUUID();
+        final List<Pair<String, byte[]>> byteCode = userCodeManager.extractClass(jobClass);
         final PServerJobSubmissionEvent jobSubmission = new PServerJobSubmissionEvent(
                 machine,
                 jopUID,
-                classData.getLeft().getName(),
-                classData.getLeft().getSimpleName(),
+                //classData.getLeft().getName(),
+                //classData.getLeft().getSimpleName(),
                 perNodeParallelism,
-                classData.getMiddle(),
-                classData.getRight()
+                byteCode
         );
 
         final CountDownLatch jobLatch = new CountDownLatch(workers.size());
         activeJobs.put(jopUID, jobLatch);
         //nameUIDMapping.put(jobSubmission.simpleClassName, jopUID);
 
-        LOG.info("Submit Job '" + jobSubmission.simpleClassName + "'.");
+        LOG.info("Submit Job '" + jobClass.getSimpleName() + "'.");
         workers.forEach(md -> netManager.sendEvent(md, jobSubmission));
 
         try {
@@ -130,7 +129,7 @@ public final class PServerClient extends EventDispatcher {
             throw new IllegalStateException(e);
         }
 
-        LOG.info("Job '" + jobSubmission.simpleClassName
+        LOG.info("Job '" + jobClass.getSimpleName()
                 + "' [" + jobSubmission.jobUID +"] finished in "
                 + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms.");
 
