@@ -12,7 +12,7 @@ import de.tuberlin.pserver.math.VectorBuilder;
 
 import java.util.Random;
 
-public class GloVeJobAdaGradPull extends PServerJob {
+public class GloVeJobAdaGradPull_MC extends PServerJob {
 
     // ---------------------------------------------------
     // Fields.
@@ -124,8 +124,8 @@ public class GloVeJobAdaGradPull extends PServerJob {
 
         int numInstances = dataManager.getNumberOfInstances();
 
-        int offset = (NUM_WORDS_IN_COOC_MATRIX / numInstances * ctx.instanceID)
-                + (NUM_WORDS_IN_COOC_MATRIX / numInstances / ctx.perNodeParallelism) * ctx.threadID;
+        int offset = (NUM_WORDS_IN_COOC_MATRIX / numInstances * instanceContext.jobContext.instanceID)
+                + (NUM_WORDS_IN_COOC_MATRIX / numInstances / instanceContext.jobContext.perNodeParallelism) * instanceContext.threadID;
 
         final Matrix.RowIterator xIter = dataManager.createThreadPartitionedRowIterator(X);
 
@@ -195,7 +195,7 @@ public class GloVeJobAdaGradPull extends PServerJob {
             LOG.info("Iteration, Cost: " + (epoch - 1) + ", " + costI);
 
             // pull data from all other nodes after each iteration
-            if (ctx.threadID == 0) {
+            if (instanceContext.threadID == 0) {
                 dataManager.pullMerge(W, matrixMerger);
                 dataManager.pullMerge(GradSq, matrixMerger);
                 dataManager.pullMerge(B, vectorMerger);
@@ -233,7 +233,7 @@ public class GloVeJobAdaGradPull extends PServerJob {
     public static void main(final String[] args) {
 
         PServerExecutor.LOCAL
-                .run(GloVeJobAdaGradPull.class, 4)
+                .run(GloVeJobAdaGradPull_MC.class, 4)
                 .done();
     }
 }

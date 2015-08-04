@@ -105,8 +105,6 @@ public class DataManager extends EventDispatcher {
 
     private static final String PULL_EVENT_PREFIX = "pull__";
 
-    //private static final String PSERVER_LFSM_COMPUTED_FILE_SPLITS  = "PSERVER_LFSM_COMPUTED_FILE_SPLITS";
-
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
@@ -127,7 +125,7 @@ public class DataManager extends EventDispatcher {
 
     private final Map<String, MatrixLoadTask> matrixLoadTasks;
 
-    private final Map<String, AtomicInteger> fileLoadingSyncBarrier;
+    private final Map<String, AtomicInteger> fileLoadingBarrier;
 
     private CountDownLatch finishedLoadingLatch;
 
@@ -135,15 +133,15 @@ public class DataManager extends EventDispatcher {
 
     private final Map<UUID, List<Serializable>> resultObjects;
 
-    private final Map<Long, PServerContext> contextResolver;
+    private final Map<UUID, JobContext> jobContextMap;
+
+    private final Map<Long, InstanceContext> instanceContextMap;
 
     // ---------------------------------------------------
 
     private final int[] instanceIDs;
 
     private final int[] remoteInstanceIDs;
-
-    private CountDownLatch bspSyncBarrier;
 
     // ---------------------------------------------------
     // Constructor.
@@ -156,30 +154,30 @@ public class DataManager extends EventDispatcher {
                        final DHT dht) {
         super(true);
 
-        this.config = Preconditions.checkNotNull(config);
-        this.infraManager = Preconditions.checkNotNull(infraManager);
-        this.netManager = Preconditions.checkNotNull(netManager);
-        this.fileSystemManager = fileSystemManager;
-        this.dht = Preconditions.checkNotNull(dht);
-        this.instanceID = infraManager.getInstanceID();
-        this.matrixLoadTasks = new HashMap<>();
-        this.resultObjects = new HashMap<>();
-        this.contextResolver = new ConcurrentHashMap<>();
+        this.config             = Preconditions.checkNotNull(config);
+        this.infraManager       = Preconditions.checkNotNull(infraManager);
+        this.netManager         = Preconditions.checkNotNull(netManager);
+        this.fileSystemManager  = fileSystemManager;
+        this.dht                = Preconditions.checkNotNull(dht);
+        this.instanceID         = infraManager.getInstanceID();
+        this.matrixLoadTasks    = new HashMap<>();
+        this.resultObjects      = new HashMap<>();
+        this.jobContextMap      = new ConcurrentHashMap<>();
+        this.instanceContextMap = new ConcurrentHashMap<>();
+        this.fileLoadingBarrier = new HashMap<>();
+        this.loadingMatrices    = new HashMap<>();
 
-        fileLoadingSyncBarrier = new HashMap<>();
-        this.bspSyncBarrier = new CountDownLatch(infraManager.getMachines().size() - 1);
-
-        loadingMatrices = new HashMap<>();
-
-        this.netManager.addEventListener(BSP_SYNC_BARRIER_EVENT, event -> bspSyncBarrier.countDown());
         this.netManager.addEventListener(Events.MATRIX_ENTRY_PARTITION_EVENT, new MatrixEntryPartitionEventHandler());
         this.netManager.addEventListener(Events.FINISHED_LOADING_FILE_EVENT, event -> {
             FinishedLoadingFileEvent e = Preconditions.checkNotNull((FinishedLoadingFileEvent) event);
             instanceFinishedProcessingSplit(e.getName());
         });
 
-        this.instanceIDs = IntStream.iterate(0, x -> x + 1).limit(infraManager.getMachines().size()).toArray();
+        this.netManager.addEventListener(BSP_SYNC_BARRIER_EVENT, event -> {
+            jobContextMap.get(event.getPayload()).globalSyncBarrier.countDown();
+        });
 
+        this.instanceIDs = IntStream.iterate(0, x -> x + 1).limit(infraManager.getMachines().size()).toArray();
         int numOfRemoteWorkers = infraManager.getMachines().size() - 1;
         this.remoteInstanceIDs = new int[numOfRemoteWorkers];
         int i = 0, j = 0;
@@ -190,6 +188,36 @@ public class DataManager extends EventDispatcher {
             }
             ++i;
         }
+    }
+
+    // ---------------------------------------------------
+    // JOB MANAGEMENT
+    // ---------------------------------------------------
+
+    public void registerJob(final UUID jobID, final JobContext jobContext) {
+        jobContextMap.put(Preconditions.checkNotNull(jobID), Preconditions.checkNotNull(jobContext));
+    }
+
+    public JobContext getJob(final UUID jobID) {
+        return jobContextMap.get(Preconditions.checkNotNull(jobID));
+    }
+
+    public void unregisterJob(final UUID jobID) {
+        jobContextMap.remove(Preconditions.checkNotNull(jobID));
+    }
+
+    // ------------------------------
+
+    public void registerInstanceContext(final InstanceContext ic) {
+        instanceContextMap.put(Thread.currentThread().getId(), Preconditions.checkNotNull(ic));
+    }
+
+    public InstanceContext getInstanceContext() {
+        return instanceContextMap.get(Thread.currentThread().getId());
+    }
+
+    public void unregisterInstanceContext() {
+        instanceContextMap.remove(Thread.currentThread().getId());
     }
 
     // ---------------------------------------------------
@@ -217,7 +245,7 @@ public class DataManager extends EventDispatcher {
                              IMatrixPartitioner matrixPartitioner) {
         matrixLoadTasks.put(filePath, new MatrixLoadTask(filePath, recordFormat, rows, cols,
                 matrixFormat, matrixLayout, matrixPartitioner));
-        fileLoadingSyncBarrier.put(filePath, new AtomicInteger(instanceIDs.length));
+        fileLoadingBarrier.put(filePath, new AtomicInteger(instanceIDs.length));
     }
 
     // ---------------------------------------------------
@@ -464,20 +492,31 @@ public class DataManager extends EventDispatcher {
     // CONTROL FLOW
     // ---------------------------------------------------
 
-    //public void sync() { sync(-1); }
-    public void sync(final int staleness) {
+    public void globalSync(final int staleness) {
         if (staleness > -1) {
-            netManager.broadcastEvent(new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT));
+            final InstanceContext instanceContext = getInstanceContext();
+            final NetEvents.NetEvent globalSyncEvent = new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT);
+            globalSyncEvent.setPayload(instanceContext.jobContext.jobUID);
+            netManager.broadcastEvent(globalSyncEvent);
             try {
-                bspSyncBarrier.await();
+                instanceContext.jobContext.globalSyncBarrier.await();
             } catch (InterruptedException e) {
                 LOG.error(e.getMessage());
             }
-            if (bspSyncBarrier.getCount() == 0) {
-                bspSyncBarrier = new CountDownLatch(infraManager.getMachines().size() - 1);
+            if (instanceContext.jobContext.globalSyncBarrier.getCount() == 0) {
+                instanceContext.jobContext.globalSyncBarrier.reset();
             } else {
                 throw new IllegalStateException();
             }
+        }
+    }
+
+    public void localSync() {
+        final InstanceContext instanceContext = getInstanceContext();
+        try {
+            instanceContext.jobContext.localSyncBarrier.await();
+        } catch (Exception e) {
+            LOG.error(e.getLocalizedMessage());
         }
     }
 
@@ -487,12 +526,13 @@ public class DataManager extends EventDispatcher {
 
     public Matrix.RowIterator createThreadPartitionedRowIterator(final Matrix matrix) {
         Preconditions.checkNotNull(matrix);
-        final long systemThreadID = Thread.currentThread().getId();
-        final PServerContext ctx = contextResolver.get(systemThreadID);
-        final int rowBlock = (int) matrix.numRows() / ctx.perNodeParallelism;
-        int end = (ctx.threadID * rowBlock + rowBlock - 1);
-        end = (ctx.threadID == ctx.perNodeParallelism - 1) ? end + (int) matrix.numRows() % ctx.perNodeParallelism : end;
-        return matrix.rowIterator(ctx.threadID * rowBlock, end);
+        final InstanceContext instanceContext = getInstanceContext();
+        final int rowBlock = (int) matrix.numRows() / instanceContext.jobContext.perNodeParallelism;
+        int end = (instanceContext.threadID * rowBlock + rowBlock - 1);
+        end = (instanceContext.threadID == instanceContext.jobContext.perNodeParallelism - 1)
+                ? end + (int) matrix.numRows() % instanceContext.jobContext.perNodeParallelism
+                : end;
+        return matrix.rowIterator(instanceContext.threadID * rowBlock, end);
     }
 
     // ---------------------------------------------------
@@ -501,15 +541,6 @@ public class DataManager extends EventDispatcher {
 
     public IConfig getConfig() {
         return config;
-    }
-
-    public DHT getDHT() {
-        return dht;
-    }
-
-    // Must be called from the specific execution context!
-    public void registerJobContext(final PServerContext ctx) {
-        contextResolver.put(Thread.currentThread().getId(), Preconditions.checkNotNull(ctx));
     }
 
     public void setResults(final UUID jobUID, final List<Serializable> results) {
@@ -523,10 +554,6 @@ public class DataManager extends EventDispatcher {
         return resultObjects.get(jobUID);
     }
 
-    public PServerContext getJobContext() {
-        return contextResolver.get(Thread.currentThread().getId());
-    }
-
     public int getInstanceID() { return instanceID; }
 
     public int[] getRemoteInstanceIDs() { return remoteInstanceIDs; }
@@ -535,7 +562,7 @@ public class DataManager extends EventDispatcher {
 
     // ---------------------------------------------------
 
-    public void postProloguePhase(final PServerContext ctx) {
+    public void postProloguePhase(final InstanceContext ctx) {
         Preconditions.checkNotNull(ctx);
         if (fileSystemManager != null) {
             if (ctx.threadID == 0) {
@@ -616,8 +643,8 @@ public class DataManager extends EventDispatcher {
      */
     private void instanceFinishedProcessingSplit(String name) {
         int counter;
-        synchronized (fileLoadingSyncBarrier) {
-            counter = fileLoadingSyncBarrier.get(name).decrementAndGet();
+        synchronized (fileLoadingBarrier) {
+            counter = fileLoadingBarrier.get(name).decrementAndGet();
         }
         if (counter <= 0) {
             // is it possible that a FinishedLoading event overtakes a SendPartition event?

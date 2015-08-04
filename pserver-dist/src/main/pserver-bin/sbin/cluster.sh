@@ -62,7 +62,7 @@ pserver-deploy)
         
         function run_on_host() {
             HOST=$1
-            # stop possibly running pserver instance (just to be safe)
+            # stop possibly running pserver node (just to be safe)
             ssh -n $PSERVER_SSH_OPTS $HOST -- "/bin/bash $PSERVER_DESTINATION_DIRECTORY/$PSERVER_ROOT_DIR_NAME/sbin/local.sh pserver-stop 2>/dev/null" 2>/dev/null || true
             echo "[NOTICE][$HOST] Wiping target directory ..."
             ssh -n $PSERVER_SSH_OPTS ${HOST} -- "rm -rf ${PSERVER_DESTINATION_DIRECTORY}; mkdir -p ${PSERVER_DESTINATION_DIRECTORY}"

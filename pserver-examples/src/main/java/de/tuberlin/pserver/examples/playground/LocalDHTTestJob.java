@@ -33,10 +33,10 @@ public final class LocalDHTTestJob {
         public void compute() {
             final Random r = new Random();
             final UUID uid = UUID.fromString("31bf55a7-2195-4d11-8ebf-0d030032fede");
-            if (ctx.instanceID == 0) {
-                ctx.dht.put(Key.newKey(uid, "test1", Key.DistributionMode.DISTRIBUTED), ByteBufferValue.newValue(false, ByteBufferValue.MAX_SIZE * 4));
+            if (instanceContext.jobContext.instanceID == 0) {
+                instanceContext.jobContext.dht.put(Key.newKey(uid, "test1", Key.DistributionMode.DISTRIBUTED), ByteBufferValue.newValue(false, ByteBufferValue.MAX_SIZE * 4));
             }
-            final Key key = ctx.dht.getKey(uid);
+            final Key key = instanceContext.jobContext.dht.getKey(uid);
             while (true) {
                 final int numOfAccessedSegments = r.nextInt(10);
                 final int segmentIDs[] = new int[numOfAccessedSegments];
@@ -54,7 +54,7 @@ public final class LocalDHTTestJob {
                         final int randOffset = r.nextInt(ByteBufferValue.DEFAULT_SEGMENT_SIZE - 10);
                         buffer.putInt(randOffset, r.nextInt());
                     }
-                    ctx.dht.put(key, segments);
+                    instanceContext.jobContext.dht.put(key, segments);
                 }
             }
         }

@@ -28,7 +28,7 @@ public class PullRequestPrimitiveTestJob extends PServerJob {
                 e.printStackTrace();
             }
 
-            if (ctx.instanceID == 0) {
+            if (instanceContext.jobContext.instanceID == 0) {
 
                 final Object[] results = dataManager.pullRequest("pull-request-value");
 

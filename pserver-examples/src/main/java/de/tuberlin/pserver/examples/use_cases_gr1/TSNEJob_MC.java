@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Random;
 
 
-public class TSNEJob extends PServerJob {
+public class TSNEJob_MC extends PServerJob {
 
     // ---------------------------------------------------
     // Fields.
@@ -50,7 +50,6 @@ public class TSNEJob extends PServerJob {
     private Matrix P;
     private Matrix Q;
     private Matrix Y;
-
 
     // ---------------------------------------------------
     // Public Methods.
@@ -101,8 +100,6 @@ public class TSNEJob extends PServerJob {
 
         P = P.scale(1 / sumP);
 
-        //final AtomicDouble sumQ = new AtomicDouble(0.0);
-
         // early exaggeration
         P = P.scale(EARLY_EXAGGERATION);
 
@@ -150,7 +147,6 @@ public class TSNEJob extends PServerJob {
 
         double momentum;
 
-        //
         for (int iteration = 0; iteration < MAX_ITER; ++iteration) {
             // sum_Y = Math.sum(Math.square(Y), 1)
             Y_squared = Y_squared.applyOnElements(Y, e -> Math.pow(e, 2));
@@ -162,37 +158,6 @@ public class TSNEJob extends PServerJob {
             num.applyOnElements(e -> 1.0 / (e + 1.0));
             // entries i=j must be zero
             num = num.zeroDiagonal();
-
-            // ---------------------------------------------------
-            // (1) GLOBAL OPERATION!!!
-            // ---------------------------------------------------
-            //missing: sum over all elements of a matrix
-
-            /*dataManager.globalSync();
-
-            if (instanceContext.instanceID == 0) {
-                Object[] sumQs = dataManager.pullRequest("sumQ");
-                Double sumOverQ = 0.0;
-                for (Object sum : sumQs) {
-                    sumOverQ += (Double) sum;
-                }
-                sumOverQ += Q.aggregateRows(f -> f.sum()).sum();
-                sumQ.set(sumOverQ);
-                dataManager.pushToAll("sumOverQ", sumOverQ);
-            }
-            else {
-                dataManager.awaitEvent(1, "sumOverQ", new DataManager.DataEventHandler(){
-                    @Override
-                    public void handleDataEvent(int srcInstanceID, Object value) {
-                        sumQ.set((Double) value);
-                    }
-                });
-            }
-
-            // ---------------------------------------------------
-
-            Q = Q.scale(1 / sumQ.get());
-            */
 
             Double sumNum = num.aggregateRows(f -> f.sum()).sum();
             // Q = num / Math.sum(num)
@@ -403,7 +368,7 @@ public class TSNEJob extends PServerJob {
         PrintWriter writer = null;
 
         PServerExecutor.LOCAL
-                .run(TSNEJob.class)
+                .run(TSNEJob_MC.class)
                 .results(res)
                 .done();
 

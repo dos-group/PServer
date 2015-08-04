@@ -28,7 +28,7 @@ public final class FileSystemTestJob extends PServerJob {
 
         final DecimalFormat numberFormat = new DecimalFormat("###.###");
 
-        if (ctx.instanceID == 0) {
+        if (instanceContext.jobContext.instanceID == 0) {
             while (iter.hasNextRow()) {
                 iter.nextRow();
                 for (int i = 0; i < iter.numCols(); ++i) {

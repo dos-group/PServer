@@ -5,16 +5,13 @@ import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.MatrixBuilder;
 import de.tuberlin.pserver.math.Vector;
 import de.tuberlin.pserver.ml.models.GeneralLinearModel;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.ml.optimization.SGD.SGDOptimizer;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.Serializable;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.List;
 
 public final class AsyncSGDTestJob extends PServerJob {
@@ -44,7 +41,7 @@ public final class AsyncSGDTestJob extends PServerJob {
     @Override
     public void prologue() {
 
-        model.createModel(ctx);
+        model.createModel(instanceContext);
 
         dataManager.loadAsMatrix("datasets/demo_dataset.csv", GenerateLocalTestData.ROWS_DEMO_DATASET, GenerateLocalTestData.COLS_DEMO_DATASET);
     }
@@ -60,7 +57,7 @@ public final class AsyncSGDTestJob extends PServerJob {
 
         final PartialLossFunction partialLossFunction = new PartialLossFunction.SquareLoss();
 
-        final Optimizer optimizer = new SGDOptimizer(ctx, SGDOptimizer.TYPE.SGD_SIMPLE, false)
+        final Optimizer optimizer = new SGDOptimizer(instanceContext, SGDOptimizer.TYPE.SGD_SIMPLE, false)
                 .setNumberOfIterations(300)
                 .setLearningRate(0.005)
                 .setLossFunction(new LossFunction.GenericLossFunction(predictionFunction, partialLossFunction))

@@ -3,7 +3,7 @@ package de.tuberlin.pserver.ml.models;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
-import de.tuberlin.pserver.app.PServerContext;
+import de.tuberlin.pserver.app.InstanceContext;
 import de.tuberlin.pserver.utils.GsonUtils;
 
 import java.io.Serializable;
@@ -39,9 +39,9 @@ public abstract class Model<T> implements Serializable {
     // Public Methods.
     // ---------------------------------------------------
 
-    public abstract void createModel(final PServerContext ctx);
+    public abstract void createModel(final InstanceContext ctx);
 
-    public abstract void fetchModel(final PServerContext ctx);
+    public abstract void fetchModel(final InstanceContext ctx);
 
     public abstract T copy();
 

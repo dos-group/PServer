@@ -6,8 +6,6 @@ import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
 
-import java.util.Random;
-
 public class SyncPushPrimitiveTestJob extends PServerJob {
 
     // ---------------------------------------------------
@@ -35,9 +33,9 @@ public class SyncPushPrimitiveTestJob extends PServerJob {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {}
 
-            localValue.set(ctx.instanceID * 10.0);
+            localValue.set(instanceContext.jobContext.instanceID * 10.0);
 
-            if (ctx.instanceID != 0) {
+            if (instanceContext.jobContext.instanceID != 0) {
 
                 dataManager.pushTo("localValue", localValue.get(), new int[] { 0 });
 

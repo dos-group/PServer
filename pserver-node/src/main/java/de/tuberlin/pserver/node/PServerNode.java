@@ -76,66 +76,75 @@ public final class PServerNode extends EventDispatcher {
     // ---------------------------------------------------
 
     private final class PServerJobHandler implements IEventHandler {
+
         @Override
         public void handleEvent(final Event e) {
             final PServerJobSubmissionEvent jobSubmission = (PServerJobSubmissionEvent)e;
             LOG.info("Received job on instance " + "[" + infraManager.getInstanceID() + "]" + jobSubmission.toString());
             jobMap.put(jobSubmission.jobUID, jobSubmission);
             jobStartBarrier = new CountDownLatch(1);
-            jobEndBarrier = new CountDownLatch(jobSubmission.perNodeParallelism);
-
+            jobEndBarrier   = new CountDownLatch(jobSubmission.perNodeParallelism);
             executionManager.createExecutionContext(jobSubmission.jobUID, jobSubmission.perNodeParallelism);
 
-            for (int i = 0; i < jobSubmission.perNodeParallelism; ++i) {
+            final Class<?> clazz = userCodeManager.implantClass(jobSubmission.byteCode);
+
+            if (!PServerJob.class.isAssignableFrom(clazz))
+                throw new IllegalStateException();
+
+            final Class<? extends PServerJob> jobClass = (Class<? extends PServerJob>) clazz;
+
+            final JobContext jobContext = new JobContext(
+                    jobSubmission.clientMachine,
+                    jobSubmission.jobUID,
+                    clazz.getName(),
+                    clazz.getSimpleName(),
+                    infraManager.getMachines().size(),
+                    jobSubmission.perNodeParallelism,
+                    infraManager.getInstanceID(),
+                    netManager,
+                    DHT.getInstance(),
+                    dataManager,
+                    executionManager
+            );
+
+            dataManager.registerJob(jobContext.jobUID, jobContext);
+
+            for (int i = 0; i < jobContext.perNodeParallelism; ++i) {
                 final int threadID = i;
                 executor.execute(() -> {
-                    final Class<?> clazz = userCodeManager.implantClass(jobSubmission.byteCode);
                     try {
-                        if (PServerJob.class.isAssignableFrom(clazz)) {
-                            @SuppressWarnings("unchecked")
-                            final Class<? extends PServerJob> jobClass = (Class<? extends PServerJob>) clazz;
-                            final PServerContext ctx = new PServerContext(
-                                    jobSubmission.clientMachine,
-                                    jobSubmission.jobUID,
-                                    clazz.getName(),
-                                    clazz.getSimpleName(),
-                                    jobSubmission.perNodeParallelism,
-                                    infraManager.getInstanceID(),
-                                    threadID,
-                                    netManager,
-                                    DHT.getInstance(),
-                                    dataManager,
-                                    executionManager
-                            );
-                            final PServerJob jobInvokeable = jobClass.newInstance();
+                        final PServerJob jobInvokeable = jobClass.newInstance();
+                        final InstanceContext instanceContext = new InstanceContext(
+                                jobContext,
+                                threadID,
+                                jobInvokeable
+                        );
 
-                            jobInvokeable.injectContext(ctx);
-                            dataManager.registerJobContext(ctx);
-                            executeLifecycle(jobInvokeable);
+                        dataManager.registerInstanceContext(instanceContext);
+                        jobContext.addInstance(instanceContext);
+                        jobInvokeable.injectContext(instanceContext);
+                        executeLifecycle(jobInvokeable);
 
-                            if (ctx.threadID == 0) {
-
-                                try {
-                                    jobEndBarrier.await();
-                                } catch (InterruptedException ie) {
-                                }
-
-                                final List<Serializable> results = dataManager.getResults(jobSubmission.jobUID);
-
-                                final PServerJobResultEvent jre = new PServerJobResultEvent(
-                                        machine,
-                                        infraManager.getInstanceID(),
-                                        jobSubmission.jobUID,
-                                        results
-                                );
-
-                                netManager.sendEvent(jobSubmission.clientMachine, jre);
-
-                                executionManager.deleteExecutionContext(jobSubmission.jobUID);
+                        if (threadID == 0) {
+                            try {
+                                jobEndBarrier.await();
+                            } catch (InterruptedException ie) {
                             }
+                            final List<Serializable> results = dataManager.getResults(jobSubmission.jobUID);
+                            final PServerJobResultEvent jre = new PServerJobResultEvent(
+                                    machine,
+                                    infraManager.getInstanceID(),
+                                    jobSubmission.jobUID,
+                                    results
+                            );
+                            netManager.sendEvent(jobSubmission.clientMachine, jre);
+                            dataManager.unregisterJob(jobContext.jobUID);
+                            executionManager.deleteExecutionContext(jobSubmission.jobUID);
+                        }
 
-                        } else
-                            throw new IllegalStateException();
+                        jobContext.removeInstance(instanceContext);
+                        dataManager.unregisterInstanceContext();
+
                     } catch (Exception ex) {
                         final PServerJobFailureEvent jfe = new PServerJobFailureEvent(
                                 machine,
@@ -168,20 +177,20 @@ public final class PServerNode extends EventDispatcher {
 
     private void executeLifecycle(final PServerJob job) {
         try {
-            if (job.getJobContext().threadID == 0) {
 
+            if (job.getInstanceContext().threadID == 0) {
                 {
-                    LOG.info("Enter " + job.getJobContext().simpleClassName + " prologue phase.");
+                    LOG.info("Enter " + job.instanceContext.jobContext.simpleClassName + " prologue phase.");
 
                     final long start = System.currentTimeMillis();
 
                     job.prologue();
 
-                    dataManager.postProloguePhase(job.getJobContext());
+                    dataManager.postProloguePhase(job.getInstanceContext());
 
                     final long end = System.currentTimeMillis();
 
-                    LOG.info("Leave " + job.getJobContext().simpleClassName
+                    LOG.info("Leave " + job.instanceContext.jobContext.simpleClassName
                             + " prologue phase [duration: " + (end - start) + " ms].");
                 }
 
@@ -193,7 +202,7 @@ public final class PServerNode extends EventDispatcher {
             jobStartBarrier.await();
 
             {
-                LOG.info("Enter " + job.getJobContext().simpleClassName + " computation phase.");
+                LOG.info("Enter " + job.instanceContext.jobContext.simpleClassName + " computation phase.");
 
                 final long start = System.currentTimeMillis();
 
@@ -201,14 +210,13 @@ public final class PServerNode extends EventDispatcher {
 
                 final long end = System.currentTimeMillis();
 
-                LOG.info("Leave " + job.getJobContext().simpleClassName +
+                LOG.info("Leave " + job.instanceContext.jobContext.simpleClassName +
                         " computation phase [duration: " + (end - start) + " ms].");
             }
 
-            if (job.getJobContext().threadID == 0) {
-
+            if (job.getInstanceContext().threadID == 0) {
                 {
-                    LOG.info("Enter " + job.getJobContext().simpleClassName + " epilogue phase.");
+                    LOG.info("Enter " + job.instanceContext.jobContext.simpleClassName + " epilogue phase.");
 
                     final long start = System.currentTimeMillis();
 
@@ -216,7 +224,7 @@ public final class PServerNode extends EventDispatcher {
 
                     final long end = System.currentTimeMillis();
 
-                    LOG.info("Leave " + job.getJobContext().simpleClassName
+                    LOG.info("Leave " + job.instanceContext.jobContext.simpleClassName
                             + " epilogue phase [duration: " + (end - start) + " ms].");
                 }
             }
