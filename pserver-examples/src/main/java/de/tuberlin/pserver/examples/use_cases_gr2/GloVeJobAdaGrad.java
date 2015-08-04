@@ -161,8 +161,8 @@ public class GloVeJobAdaGrad extends PServerJob {
         GradSq = dataManager.getObject("GradSq");
         GradSqB = dataManager.getObject("GradSqB");
 
-        int numInstances = dataManager.getNumberOfInstances();
-        int offset = NUM_WORDS_IN_COOC_MATRIX / numInstances * instanceContext.jobContext.instanceID;
+        int numInstances = dataManager.getNumberOfNodes();
+        int offset = NUM_WORDS_IN_COOC_MATRIX / numInstances * instanceContext.jobContext.nodeID;
 
         int iterations = 0;
 
@@ -369,7 +369,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         }
 
         @Override
-        public void handleDataEvent(int srcInstanceID, Object value) {
+        public void handleDataEvent(int srcNodeID, Object value) {
             lock.lock();
             ((Matrix) value).applyOnNonZeroElements((row, col, val) -> {  // sending a 0 in the delta matrix means no significant change
                 double avgVal = (val + m.get(row, col)) / 2.0;
@@ -392,7 +392,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         }
 
         @Override
-        public void handleDataEvent(int srcInstanceID, Object value) {
+        public void handleDataEvent(int srcNodeID, Object value) {
             lock.lock();
             Iterator<Vector.Element> iterator = ((Vector) value).iterateNonZero();
             while(iterator.hasNext()) {
@@ -423,7 +423,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         }
 
         @Override
-        public void handleDataEvent(int srcInstanceID, Object value) {
+        public void handleDataEvent(int srcNodeID, Object value) {
             lock.lock();
             m.applyOnElements((Matrix) value, (v1, v2) -> (v1 + v2) / 2.0);
             lock.unlock();
@@ -441,7 +441,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         }
 
         @Override
-        public void handleDataEvent(int srcInstanceID, Object value) {
+        public void handleDataEvent(int srcNodeID, Object value) {
             lock.lock();
             v.assign((Vector) value, (v1, v2) -> (v1 + v2) / 2.0);
             lock.unlock();

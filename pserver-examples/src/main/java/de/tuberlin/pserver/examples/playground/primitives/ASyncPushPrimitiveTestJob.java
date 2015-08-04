@@ -37,9 +37,9 @@ public class ASyncPushPrimitiveTestJob extends PServerJob {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {}
 
-            localValue.set(instanceContext.jobContext.instanceID * 10.0);
+            localValue.set(instanceContext.jobContext.nodeID * 10.0);
 
-            if (instanceContext.jobContext.instanceID != 0) {
+            if (instanceContext.jobContext.nodeID != 0) {
 
                 dataManager.pushTo("localValue", localValue.get(), new int[] { 0 });
 
@@ -48,14 +48,14 @@ public class ASyncPushPrimitiveTestJob extends PServerJob {
                 dataManager.awaitEvent(DataManager.CallType.ASYNC, "localValue", new DataManager.DataEventHandler() {
 
                     @Override
-                    public void handleDataEvent(int srcInstanceID, Object value) {
+                    public void handleDataEvent(int srcNodeID, Object value) {
                         globalValue.addAndGet((Double)value);
                         receiveCnt.incrementAndGet();
                     }
                 });
 
                 // active polling.
-                while (receiveCnt.get() != dataManager.getNumberOfInstances() - 1) {
+                while (receiveCnt.get() != dataManager.getNumberOfNodes() - 1) {
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException e) {}

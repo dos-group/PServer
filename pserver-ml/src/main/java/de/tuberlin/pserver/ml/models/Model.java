@@ -18,7 +18,7 @@ public abstract class Model<T> implements Serializable {
 
     public final String name;
 
-    public final int instanceID;
+    public final int nodeID;
 
     private long startTrainingTime;
 
@@ -28,11 +28,11 @@ public abstract class Model<T> implements Serializable {
     // Constructor.
     // ---------------------------------------------------
 
-    public Model(final String name, final int instanceID) {
+    public Model(final String name, final int nodeID) {
 
         this.name       = Preconditions.checkNotNull(name);
 
-        this.instanceID = instanceID;
+        this.nodeID = nodeID;
     }
 
     // ---------------------------------------------------

@@ -15,7 +15,7 @@ public class ExecutionManager {
 
     public static final class ExecutionDescriptor {
 
-        public final int instanceID;
+        public final int nodeID;
 
         public final int threadID;
 
@@ -23,12 +23,12 @@ public class ExecutionManager {
 
         public final Object stateObj;
 
-        public ExecutionDescriptor(final int instanceID,
+        public ExecutionDescriptor(final int nodeID,
                                    final int threadID,
                                    final Class<?> exeClass,
                                    final Object stateObj) {
 
-            this.instanceID = instanceID;
+            this.nodeID     = nodeID;
             this.threadID   = threadID;
             this.exeClass   = Preconditions.checkNotNull(exeClass);
             this.stateObj   = stateObj;
@@ -69,7 +69,7 @@ public class ExecutionManager {
     public void registerAlgorithm(final Class<?> exeClass, final Object stateObj) {
         final InstanceContext ctx = dataManager.getInstanceContext();
         final ExecutionDescriptor entry = new ExecutionDescriptor(
-                ctx.jobContext.instanceID,
+                ctx.jobContext.nodeID,
                 ctx.threadID,
                 Preconditions.checkNotNull(exeClass),
                 Preconditions.checkNotNull(stateObj));

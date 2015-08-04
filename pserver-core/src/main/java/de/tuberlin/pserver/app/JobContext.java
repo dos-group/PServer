@@ -28,7 +28,7 @@ public class JobContext {
 
     public final int perNodeParallelism;
 
-    public final int instanceID;
+    public final int nodeID;
 
 
     public final NetManager netManager;
@@ -56,7 +56,7 @@ public class JobContext {
                       final String simpleClassName,
                       final int numOfWorkers,
                       final int perNodeParallelism,
-                      final int instanceID,
+                      final int nodeID,
                       final NetManager netManager,
                       final DHT dht,
                       final DataManager dataManager,
@@ -68,7 +68,7 @@ public class JobContext {
         this.simpleClassName    = Preconditions.checkNotNull(simpleClassName);
         this.numOfWorkers       = numOfWorkers;
         this.perNodeParallelism = perNodeParallelism;
-        this.instanceID         = instanceID;
+        this.nodeID             = nodeID;
         this.dht                = Preconditions.checkNotNull(dht);
         this.netManager         = Preconditions.checkNotNull(netManager);
         this.dataManager        = Preconditions.checkNotNull(dataManager);

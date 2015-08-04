@@ -10,7 +10,6 @@ import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetManager;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +84,7 @@ public final class PServerClient extends EventDispatcher {
         @Override
         public void handleEvent(final Event e) {
             final PServerJobResultEvent jre = (PServerJobResultEvent) e;
-            jobResults.put(Pair.of(jre.jobUID, jre.instanceID), jre.resultObjects);
+            jobResults.put(Pair.of(jre.jobUID, jre.nodeID), jre.resultObjects);
             final CountDownLatch jobLatch = activeJobs.get(jre.jobUID);
             if (jobLatch != null) {
                 jobLatch.countDown();
@@ -136,8 +135,8 @@ public final class PServerClient extends EventDispatcher {
         return jopUID;
     }
 
-    public List<Serializable> getResultsFromWorker(final UUID jobUID, final int instanceID) {
-        return jobResults.get(Pair.of(jobUID, instanceID));
+    public List<Serializable> getResultsFromWorker(final UUID jobUID, final int nodeID) {
+        return jobResults.get(Pair.of(jobUID, nodeID));
     }
 
     public IConfig getConfig() { return config; }

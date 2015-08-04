@@ -91,13 +91,13 @@ public enum PServerNodeFactory {
 
         try { Thread.sleep(2000); } catch (Exception e) { throw new IllegalStateException(); }
 
-        this.fileSystemManager = createFileSystem(infraManager.getInstanceID());
+        this.fileSystemManager = createFileSystem(infraManager.getNodeID());
         this.dht = new DHT(this.config, infraManager, netManager);
         this.dataManager = new DataManager(this.config, infraManager, netManager, fileSystemManager, dht);
         this.executionManager = new ExecutionManager(dataManager);
 
         //LOG.info(infraManager.getMachine()
-        //        + " | " + infraManager.getInstanceID()
+        //        + " | " + infraManager.getNodeID()
         //        + " | " + infraManager.getActivePeers().length()
         //        + " | " + infraManager.getMachines().length());
 
@@ -129,12 +129,12 @@ public enum PServerNodeFactory {
         return machine;
     }
 
-    private FileSystemManager createFileSystem(final int instanceID) {
+    private FileSystemManager createFileSystem(final int nodeID) {
         final String type = config.getString("filesystem.type");
         final FileSystemType fsType = FileSystemType.valueOf(type);
         switch (fsType) {
             case HDFS_FILE_SYSTEM:
-                return (config.getInt("filesystem.hdfs.masterNodeIndex") == instanceID)
+                return (config.getInt("filesystem.hdfs.masterNodeIndex") == nodeID)
                         ? new HDFSFileSystemManagerServer(config, infraManager, netManager, rpcManager)
                         : new HDFSFileSystemManagerClient(config, infraManager, netManager, rpcManager);
 

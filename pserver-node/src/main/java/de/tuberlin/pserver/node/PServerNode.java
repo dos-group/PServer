@@ -80,7 +80,7 @@ public final class PServerNode extends EventDispatcher {
         @Override
         public void handleEvent(final Event e) {
             final PServerJobSubmissionEvent jobSubmission = (PServerJobSubmissionEvent)e;
-            LOG.info("Received job on instance " + "[" + infraManager.getInstanceID() + "]" + jobSubmission.toString());
+            LOG.info("Received job on instance " + "[" + infraManager.getNodeID() + "]" + jobSubmission.toString());
             jobMap.put(jobSubmission.jobUID, jobSubmission);
             jobStartBarrier = new CountDownLatch(1);
             jobEndBarrier   = new CountDownLatch(jobSubmission.perNodeParallelism);
@@ -100,7 +100,7 @@ public final class PServerNode extends EventDispatcher {
                     clazz.getSimpleName(),
                     infraManager.getMachines().size(),
                     jobSubmission.perNodeParallelism,
-                    infraManager.getInstanceID(),
+                    infraManager.getNodeID(),
                     netManager,
                     DHT.getInstance(),
                     dataManager,
@@ -133,7 +133,7 @@ public final class PServerNode extends EventDispatcher {
                             final List<Serializable> results = dataManager.getResults(jobSubmission.jobUID);
                             final PServerJobResultEvent jre = new PServerJobResultEvent(
                                     machine,
-                                    infraManager.getInstanceID(),
+                                    infraManager.getNodeID(),
                                     jobSubmission.jobUID,
                                     results
                             );
@@ -149,7 +149,7 @@ public final class PServerNode extends EventDispatcher {
                         final PServerJobFailureEvent jfe = new PServerJobFailureEvent(
                                 machine,
                                 jobSubmission.jobUID,
-                                infraManager.getInstanceID(),
+                                infraManager.getNodeID(),
                                 threadID, clazz.getSimpleName(),
                                 ex.getCause()
                         );

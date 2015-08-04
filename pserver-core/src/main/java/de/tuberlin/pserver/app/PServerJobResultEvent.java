@@ -29,7 +29,7 @@ public final class PServerJobResultEvent extends NetEvents.NetEvent {
 
     public final MachineDescriptor workerMachine;
 
-    public final int instanceID;
+    public final int nodeID;
 
     public final UUID jobUID;
 
@@ -40,14 +40,14 @@ public final class PServerJobResultEvent extends NetEvents.NetEvent {
     // ---------------------------------------------------
 
     public PServerJobResultEvent(final MachineDescriptor workerMachine,
-                                 final int instanceID,
+                                 final int nodeID,
                                  final UUID jobUID,
                                  final List<Serializable> resultObjects) {
 
         super(PSERVER_JOB_RESULT_EVENT);
 
         this.workerMachine  = Preconditions.checkNotNull(workerMachine);
-        this.instanceID     = instanceID;
+        this.nodeID         = nodeID;
         this.jobUID         = Preconditions.checkNotNull(jobUID);
         this.resultObjects  = resultObjects != null ? Collections.unmodifiableList(resultObjects) : null;
     }

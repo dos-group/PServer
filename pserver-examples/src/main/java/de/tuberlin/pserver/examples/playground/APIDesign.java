@@ -70,9 +70,9 @@ public class APIDesign {
 
         private final DataManager dataManager;
 
-        private int fromInstanceID;
+        private int fromNodeID;
 
-        private int toInstanceID;
+        private int toNodeID;
 
         private int formThreadID;
 
@@ -86,13 +86,13 @@ public class APIDesign {
 
         // ---------------------------------------------------
 
-        public Selection node(final int instanceID) {
+        public Selection node(final int nodeID) {
 
 
             return this;
         }
 
-        public Selection node(final int formInstanceID, final int toInstanceID) {
+        public Selection node(final int formNodeID, final int toNodeID) {
 
 
             return this;
@@ -131,13 +131,13 @@ public class APIDesign {
 
         public void execute(final Body body) {
 
-            if (fromInstanceID != -1 && toInstanceID != -1) {
+            if (fromNodeID != -1 && toNodeID != -1) {
 
                 body.body();
 
             } else {
 
-                if (fromInstanceID != -1 && toInstanceID == -1) {
+                if (fromNodeID != -1 && toNodeID == -1) {
 
                     body.body();
 

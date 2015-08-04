@@ -17,13 +17,13 @@ public class Playground {
 
     /*public static int numOfMachines = 4;
 
-    public static UUID createLocalKey(final int instanceID) {
+    public static UUID createLocalKey(final int nodeID) {
         int id, i = 0; UUID uid;
         do {
             i++;
             uid = UUID.randomUUID();
             id = (uid.hashCode() & Integer.MAX_VALUE) % numOfMachines;
-        } while (id != instanceID);
+        } while (id != nodeID);
         System.out.println(i);
         return uid;
     }*/

@@ -61,13 +61,13 @@ public class DataManager extends EventDispatcher {
 
         private boolean removeAfterAwait;
 
-        public abstract void handleDataEvent(final int srcInstanceID, final Object value);
+        public abstract void handleDataEvent(final int srcNodeID, final Object value);
 
         @Override
         public void handleEvent(final Event e) {
             final NetEvents.NetEvent event = (NetEvents.NetEvent) e;
-            final int srcInstanceID = infraManager.getInstanceIDFromMachineUID(event.srcMachineID);
-            handleDataEvent(srcInstanceID, event.getPayload());
+            final int srcNodeID = infraManager.getNodeIDFromMachineUID(event.srcMachineID);
+            handleDataEvent(srcNodeID, event.getPayload());
             latch.countDown();
 
             if (removeAfterAwait && latch.getCount() == 0)
@@ -121,7 +121,7 @@ public class DataManager extends EventDispatcher {
 
     private final DHT dht;
 
-    private final int instanceID;
+    private final int nodeID;
 
     private final Map<String, MatrixLoadTask> matrixLoadTasks;
 
@@ -139,9 +139,9 @@ public class DataManager extends EventDispatcher {
 
     // ---------------------------------------------------
 
-    private final int[] instanceIDs;
+    private final int[] nodeIDs;
 
-    private final int[] remoteInstanceIDs;
+    private final int[] remoteNodeIDs;
 
     // ---------------------------------------------------
     // Constructor.
@@ -159,7 +159,7 @@ public class DataManager extends EventDispatcher {
         this.netManager         = Preconditions.checkNotNull(netManager);
         this.fileSystemManager  = fileSystemManager;
         this.dht                = Preconditions.checkNotNull(dht);
-        this.instanceID         = infraManager.getInstanceID();
+        this.nodeID             = infraManager.getNodeID();
         this.matrixLoadTasks    = new HashMap<>();
         this.resultObjects      = new HashMap<>();
         this.jobContextMap      = new ConcurrentHashMap<>();
@@ -170,20 +170,20 @@ public class DataManager extends EventDispatcher {
         this.netManager.addEventListener(Events.MATRIX_ENTRY_PARTITION_EVENT, new MatrixEntryPartitionEventHandler());
         this.netManager.addEventListener(Events.FINISHED_LOADING_FILE_EVENT, event -> {
             FinishedLoadingFileEvent e = Preconditions.checkNotNull((FinishedLoadingFileEvent) event);
-            instanceFinishedProcessingSplit(e.getName());
+            nodeFinishedProcessingSplit(e.getName());
         });
 
         this.netManager.addEventListener(BSP_SYNC_BARRIER_EVENT, event -> {
             jobContextMap.get(event.getPayload()).globalSyncBarrier.countDown();
         });
 
-        this.instanceIDs = IntStream.iterate(0, x -> x + 1).limit(infraManager.getMachines().size()).toArray();
+        this.nodeIDs = IntStream.iterate(0, x -> x + 1).limit(infraManager.getMachines().size()).toArray();
         int numOfRemoteWorkers = infraManager.getMachines().size() - 1;
-        this.remoteInstanceIDs = new int[numOfRemoteWorkers];
+        this.remoteNodeIDs = new int[numOfRemoteWorkers];
         int i = 0, j = 0;
         for (MachineDescriptor md : infraManager.getMachines()) {
             if (!md.equals(infraManager.getMachine())) {
-                remoteInstanceIDs[j] = i;
+                remoteNodeIDs[j] = i;
                 ++j;
             }
             ++i;
@@ -226,18 +226,18 @@ public class DataManager extends EventDispatcher {
 
     public void loadAsMatrix(final String filePath, long rows, long cols) {
         loadAsMatrix(filePath, rows, cols, RecordFormat.DEFAULT, Matrix.Format.DENSE_MATRIX, Matrix.Layout.ROW_LAYOUT,
-                new MatrixByRowPartitioner(instanceID, instanceIDs.length, rows, cols));
+                new MatrixByRowPartitioner(nodeID, nodeIDs.length, rows, cols));
     }
 
     public void loadAsMatrix(final String filePath, long rows, long cols, RecordFormat recordFormat) {
         loadAsMatrix(filePath, rows, cols, recordFormat, Matrix.Format.DENSE_MATRIX, Matrix.Layout.ROW_LAYOUT,
-                new MatrixByRowPartitioner(instanceID, instanceIDs.length, rows, cols));
+                new MatrixByRowPartitioner(nodeID, nodeIDs.length, rows, cols));
     }
 
     public void loadAsMatrix(final String filePath, long rows, long cols, RecordFormat recordFormat,
                              Matrix.Format matrixFormat, Matrix.Layout matrixLayout) {
         loadAsMatrix(filePath, rows, cols, recordFormat, matrixFormat, matrixLayout,
-                new MatrixByRowPartitioner(instanceID, instanceIDs.length, rows, cols));
+                new MatrixByRowPartitioner(nodeID, nodeIDs.length, rows, cols));
     }
 
     public void loadAsMatrix(final String filePath, long rows, long cols, RecordFormat recordFormat,
@@ -245,7 +245,7 @@ public class DataManager extends EventDispatcher {
                              IMatrixPartitioner matrixPartitioner) {
         matrixLoadTasks.put(filePath, new MatrixLoadTask(filePath, recordFormat, rows, cols,
                 matrixFormat, matrixLayout, matrixPartitioner));
-        fileLoadingBarrier.put(filePath, new AtomicInteger(instanceIDs.length));
+        fileLoadingBarrier.put(filePath, new AtomicInteger(nodeIDs.length));
     }
 
     // ---------------------------------------------------
@@ -254,7 +254,7 @@ public class DataManager extends EventDispatcher {
 
 
     public void addDataEventListener(final String name, final DataEventHandler handler) {
-        addDataEventListener(remoteInstanceIDs.length, name, handler);
+        addDataEventListener(remoteNodeIDs.length, name, handler);
     }
     public void addDataEventListener(final int n, final String name, final DataEventHandler handler) {
         handler.setInfraManager(infraManager);
@@ -270,13 +270,13 @@ public class DataManager extends EventDispatcher {
     // COMMUNICATION PRIMITIVES
     // ---------------------------------------------------
 
-    public Value[] pullFrom(final String name, final int[] instanceIDs) {
+    public Value[] pullFrom(final String name, final int[] nodeIDs) {
         Preconditions.checkNotNull(name);
         int idx = 0;
         final Set<Key> keys = dht.getKey(name);
-        Preconditions.checkState(instanceIDs.length <= keys.size());
-        final Value[] values = new Value[instanceIDs.length];
-        for (final int id : instanceIDs) {
+        Preconditions.checkState(nodeIDs.length <= keys.size());
+        final Value[] values = new Value[nodeIDs.length];
+        for (final int id : nodeIDs) {
             for (final Key key : keys) {
                 if (key.getPartitionDescriptor(id) != null) {
                     values[idx] = dht.get(key)[0];
@@ -304,26 +304,26 @@ public class DataManager extends EventDispatcher {
 
     // ---------------------------------------------------
 
-    public void pushTo(final String name, final Object value, final int[] instanceIDs) {
+    public void pushTo(final String name, final Object value, final int[] nodeIDs) {
         Preconditions.checkNotNull(name);
-        Preconditions.checkNotNull(instanceIDs);
+        Preconditions.checkNotNull(nodeIDs);
         final NetEvents.NetEvent event = new NetEvents.NetEvent(PUSH_EVENT_PREFIX + name, true);
         event.setPayload(value);
-        netManager.sendEvent(instanceIDs, event);
+        netManager.sendEvent(nodeIDs, event);
     }
 
     public void pushTo(final String name, final Object value) {
         Preconditions.checkNotNull(name);
         final NetEvents.NetEvent event = new NetEvents.NetEvent(PUSH_EVENT_PREFIX + name, true);
         event.setPayload(value);
-        // remote instances.
-        netManager.sendEvent(remoteInstanceIDs, event);
-        // local instance.
+        // remote nodes.
+        netManager.sendEvent(remoteNodeIDs, event);
+        // local nodes.
         netManager.dispatchEvent(event);
     }
 
     public void awaitEvent(final CallType type, final String name, final DataEventHandler handler) {
-        awaitEvent(type, remoteInstanceIDs.length, name, handler); }
+        awaitEvent(type, remoteNodeIDs.length, name, handler); }
     public void awaitEvent(final CallType type, final int n, final String name, final DataEventHandler handler) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(name);
@@ -350,23 +350,23 @@ public class DataManager extends EventDispatcher {
         final DataManager self = this;
         netManager.addEventListener(PULL_EVENT_PREFIX + name, e -> {
             final NetEvents.NetEvent event = (NetEvents.NetEvent) e;
-            final int srcInstanceID = infraManager.getInstanceIDFromMachineUID(event.srcMachineID);
+            final int srcNodeID = infraManager.getNodeIDFromMachineUID(event.srcMachineID);
             final Object result = handler.handlePullRequest(name);
-            self.pushTo(name, result, new int[]{srcInstanceID});
+            self.pushTo(name, result, new int[]{srcNodeID});
         });
     }
 
-    public Object[] pullRequest(final String name) { return pullRequest(name, remoteInstanceIDs); }
-    public Object[] pullRequest(final String name, final int[] instanceIDs) {
+    public Object[] pullRequest(final String name) { return pullRequest(name, remoteNodeIDs); }
+    public Object[] pullRequest(final String name, final int[] nodeIDs) {
         Preconditions.checkNotNull(name);
-        Preconditions.checkNotNull(instanceIDs);
+        Preconditions.checkNotNull(nodeIDs);
 
-        final Object[] pullResponses = new Object[instanceIDs.length];
+        final Object[] pullResponses = new Object[nodeIDs.length];
         final AtomicInteger responseCounter = new AtomicInteger(0);
 
         final DataEventHandler responseHandler = new DataEventHandler() {
             @Override
-            public void handleDataEvent(int srcInstanceID, final Object value) {
+            public void handleDataEvent(int srcNodeID, final Object value) {
                 pullResponses[responseCounter.getAndIncrement()] = value;
             }
         };
@@ -374,12 +374,12 @@ public class DataManager extends EventDispatcher {
         responseHandler.setDispatcher(netManager);
         responseHandler.setInfraManager(infraManager);
         responseHandler.setRemoveAfterAwait(true);
-        responseHandler.initLatch(instanceIDs.length);
+        responseHandler.initLatch(nodeIDs.length);
         netManager.addEventListener(PUSH_EVENT_PREFIX + name, responseHandler);
 
-        // send pull request to all instances.
+        // send pull request to all nodes.
         NetEvents.NetEvent event = new NetEvents.NetEvent(PULL_EVENT_PREFIX + name, true);
-        netManager.sendEvent(instanceIDs, event);
+        netManager.sendEvent(nodeIDs, event);
 
         try {
             responseHandler.getLatch().await();
@@ -398,7 +398,7 @@ public class DataManager extends EventDispatcher {
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(value);
         final Key key = dht.createLocalKey(name);
-        value.setValueMetadata(instanceID);
+        value.setValueMetadata(nodeID);
         dht.put(key, value);
         return key;
     }
@@ -408,7 +408,7 @@ public class DataManager extends EventDispatcher {
         Key localKey = null;
         final Set<Key> keys = dht.getKey(name);
         for (final Key k : keys) {
-            if (k.getPartitionDescriptor(instanceID) != null) {
+            if (k.getPartitionDescriptor(nodeID) != null) {
                 localKey = k;
                 break;
             }
@@ -426,7 +426,7 @@ public class DataManager extends EventDispatcher {
         Key localKey = null;
         final Set<Key> keys = dht.getKey(name);
         for (final Key k : keys) {
-            if (k.getPartitionDescriptor(instanceID) != null) {
+            if (k.getPartitionDescriptor(nodeID) != null) {
                 localKey = k;
                 break;
             }
@@ -455,7 +455,7 @@ public class DataManager extends EventDispatcher {
     public <T extends MObject> void pullMerge(final T dstObj,
                                               final Merger<T> merger) {
 
-        pullMerge(((MObjectValue<T>) dstObj.getOwner()).getKey().name, instanceIDs, dstObj, merger);
+        pullMerge(((MObjectValue<T>) dstObj.getOwner()).getKey().name, nodeIDs, dstObj, merger);
     }
 
 
@@ -463,19 +463,19 @@ public class DataManager extends EventDispatcher {
                                               final T dstObj,
                                               final Merger<T> merger) {
 
-        pullMerge(name, instanceIDs, dstObj, merger);
+        pullMerge(name, nodeIDs, dstObj, merger);
     }
 
     public <T extends MObject> void pullMerge(final String name,
-                                              final int[] instanceIDs,
+                                              final int[] nodeIDs,
                                               final T dstObj,
                                               final Merger<T> merger) {
         Preconditions.checkNotNull(name);
-        Preconditions.checkNotNull(instanceIDs);
+        Preconditions.checkNotNull(nodeIDs);
         Preconditions.checkNotNull(dstObj);
         Preconditions.checkNotNull(merger);
 
-        final Value[] values = pullFrom(name, instanceIDs);
+        final Value[] values = pullFrom(name, nodeIDs);
         if (values.length > 0) {
             //if (values.getClass().getComponentType() != dstObj.getClass())
             //    throw new IllegalStateException();
@@ -554,11 +554,11 @@ public class DataManager extends EventDispatcher {
         return resultObjects.get(jobUID);
     }
 
-    public int getInstanceID() { return instanceID; }
+    public int getNodeID() { return nodeID; }
 
-    public int[] getRemoteInstanceIDs() { return remoteInstanceIDs; }
+    public int[] getRemoteNodeIDs() { return remoteNodeIDs; }
 
-    public int getNumberOfInstances() { return instanceIDs.length; }
+    public int getNumberOfNodes() { return nodeIDs.length; }
 
     // ---------------------------------------------------
 
@@ -598,11 +598,11 @@ public class DataManager extends EventDispatcher {
                         if(entry.getRow() >= task.rows || entry.getCol() >= task.cols) {
                             continue;
                         }
-                        //System.out.println(instanceID + ": " + entry);
+                        //System.out.println(nodeID + ": " + entry);
                         // get the partition this record belongs to
                         int targetPartition = task.matrixPartitioner.getPartitionOfEntry(entry);
-                        // if record belongs to own instance, set the value
-                        if (targetPartition == instanceID) {
+                        // if record belongs to own node, set the value
+                        if (targetPartition == nodeID) {
                             // set entry
                             // HOTFIX: partition aware matrix
                             matrix.set(entry.getRow() % partitionShape.getRows(), entry.getCol() % partitionShape.getCols(), entry.getValue());
@@ -610,11 +610,11 @@ public class DataManager extends EventDispatcher {
                         }
                         // otherwise append entry to foreign entries and send them depending on threshold
                         else {
-                            List<MatrixEntry> foreignsOfTargetInstance = getSavely(foreignEntries, targetPartition, foreignEntriesThreshold);
-                            foreignsOfTargetInstance.add(new ImmutableMatrixEntry(entry));
-                            if (foreignsOfTargetInstance.size() >= foreignEntriesThreshold) {
+                            List<MatrixEntry> foreignsOfTargetNode = getSavely(foreignEntries, targetPartition, foreignEntriesThreshold);
+                            foreignsOfTargetNode.add(new ImmutableMatrixEntry(entry));
+                            if (foreignsOfTargetNode.size() >= foreignEntriesThreshold) {
                                 // send them
-                                sendPartition(targetPartition, foreignsOfTargetInstance, task);
+                                sendPartition(targetPartition, foreignsOfTargetNode, task);
                             }
                         } // </partition check>
                     } // </entries in record iteration
@@ -625,7 +625,7 @@ public class DataManager extends EventDispatcher {
                 sendPartition(map.getKey(), map.getValue(), task);
             }
             netManager.broadcastEvent(new FinishedLoadingFileEvent(fileIterator.getFilePath()));
-            instanceFinishedProcessingSplit(fileIterator.getFilePath());
+            nodeFinishedProcessingSplit(fileIterator.getFilePath());
         }
         try {
             finishedLoadingLatch.await();
@@ -635,13 +635,13 @@ public class DataManager extends EventDispatcher {
     }
 
     /**
-     * Is called whenever an instance finished processing an input split. This is triggered either by reaching the end
-     * of the own input split or by receiving a @link FinishedLoadingFileEvent. If all instances finished processing,
+     * Is called whenever an nodes finished processing an input split. This is triggered either by reaching the end
+     * of the own input split or by receiving a @link FinishedLoadingFileEvent. If all nodes finished processing,
      * the matrix can be put into the DHT.
      *
      * @param name
      */
-    private void instanceFinishedProcessingSplit(String name) {
+    private void nodeFinishedProcessingSplit(String name) {
         int counter;
         synchronized (fileLoadingBarrier) {
             counter = fileLoadingBarrier.get(name).decrementAndGet();
@@ -670,10 +670,10 @@ public class DataManager extends EventDispatcher {
         return result;
     }
 
-    private void sendPartition(int targetInstanceId, List<MatrixEntry> entries, MatrixLoadTask task) {
+    private void sendPartition(int targetNodeId, List<MatrixEntry> entries, MatrixLoadTask task) {
         if (entries != null && !entries.isEmpty()) {
             MatrixEntry[] entriesArray = entries.toArray(new MatrixEntry[entries.size()]);
-            netManager.sendEvent(targetInstanceId, new MatrixEntryPartitionEvent(entriesArray, task.fileIterator.getFilePath()));
+            netManager.sendEvent(targetNodeId, new MatrixEntryPartitionEvent(entriesArray, task.fileIterator.getFilePath()));
             entries.clear();
         }
     }
@@ -730,9 +730,9 @@ public class DataManager extends EventDispatcher {
     }
 
     /**
-     * Is send from an instance, that loads "foreign" matrix entries from its input files.<br>
-     * From the perspective of one instance, foreign matrix entries are those belonging to another instance.<br>
-     * Received from an instance, to that the containing entries belong to.
+     * Is send from an node, that loads "foreign" matrix entries from its input files.<br>
+     * From the perspective of one node, foreign matrix entries are those belonging to another node.<br>
+     * Received from an node, to that the containing entries belong to.
      */
     public static final class MatrixEntryPartitionEvent extends NetEvents.NetEvent {
 

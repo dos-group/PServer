@@ -122,9 +122,9 @@ public class GloVeJobAdaGradPull_MC extends PServerJob {
         B       = dataManager.getObject("B");
         GradSqB = dataManager.getObject("GradSqB");
 
-        int numInstances = dataManager.getNumberOfInstances();
+        int numInstances = dataManager.getNumberOfNodes();
 
-        int offset = (NUM_WORDS_IN_COOC_MATRIX / numInstances * instanceContext.jobContext.instanceID)
+        int offset = (NUM_WORDS_IN_COOC_MATRIX / numInstances * instanceContext.jobContext.nodeID)
                 + (NUM_WORDS_IN_COOC_MATRIX / numInstances / instanceContext.jobContext.perNodeParallelism) * instanceContext.threadID;
 
         final Matrix.RowIterator xIter = dataManager.createThreadPartitionedRowIterator(X);

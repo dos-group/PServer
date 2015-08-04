@@ -148,7 +148,7 @@ public final class DHT extends EventDispatcher {
 
     // ---------------------------------------
 
-    private final int instanceID;
+    private final int nodeID;
 
     private final GlobalKeyDirectory globalKeyDirectory;
 
@@ -180,7 +180,7 @@ public final class DHT extends EventDispatcher {
         this.config         = Preconditions.checkNotNull(config);
         this.infraManager   = Preconditions.checkNotNull(infraManager);
         this.netManager     = Preconditions.checkNotNull(netManager);
-        this.instanceID     = infraManager.getInstanceID();
+        this.nodeID = infraManager.getNodeID();
         this.store          = new NonBlockingHashMap<>();
         this.lstore         = new NonBlockingHashMap<>();
 
@@ -223,7 +223,7 @@ public final class DHT extends EventDispatcher {
             // Local put.
             final Key key = globalKeyDirectory.get(request.getLeft().internalUID);
             final AbstractBufferValue value = store.get(key);
-            value.putSegments(request.getValue(), instanceID);
+            value.putSegments(request.getValue(), nodeID);
             logDHTAction(key, DHTAction.PUT_SEGMENT);
         }
     }
@@ -269,7 +269,7 @@ public final class DHT extends EventDispatcher {
                 @SuppressWarnings("unchecked")
                 final Triple<UUID,Key,int[]> segmentsRequest = (Triple<UUID,Key,int[]>) event.getPayload();
                 final Key key = globalKeyDirectory.get(segmentsRequest.getMiddle().internalUID);
-                final AbstractBufferValue.Segment[] segments = store.get(segmentsRequest.getMiddle()).getSegments(segmentsRequest.getRight(), instanceID);
+                final AbstractBufferValue.Segment[] segments = store.get(segmentsRequest.getMiddle()).getSegments(segmentsRequest.getRight(), nodeID);
                 final NetEvents.NetEvent e1 = new NetEvents.NetEvent(DHT_EVENT_GET_SEGMENTS_RESPONSE);
                 e1.setPayload(Pair.of(segmentsRequest.getLeft(), segments));
                 netManager.sendEvent(event.srcMachineID, e1);
@@ -347,7 +347,7 @@ public final class DHT extends EventDispatcher {
                             primaryMachine                              // The machine where the partition is stored.
                     );
             // Add descriptor to the keys' partition directory.
-            key.addPartitionDirectoryEntry(instanceID, ppd);
+            key.addPartitionDirectoryEntry(nodeID, ppd);
 
             // At the moment we does not allow local storage of multiple values...
             if (vals.length > 1 && key.distributionMode == Key.DistributionMode.LOCAL)
@@ -411,7 +411,7 @@ public final class DHT extends EventDispatcher {
         val.setKey(key);
         // Allocate memory for the value.
         if (!val.isAllocated())
-            val.allocateMemory(instanceID);
+            val.allocateMemory(nodeID);
         store.put(key, val);
         logDHTAction(key, DHTAction.PUT_VALUE);
     }
@@ -444,7 +444,7 @@ public final class DHT extends EventDispatcher {
             if (isLocal(e.getKey())) {
                 // Local put.
                 final AbstractBufferValue value = store.get(key);
-                value.putSegments(segs, instanceID);
+                value.putSegments(segs, nodeID);
                 logDHTAction(key, DHTAction.PUT_SEGMENT);
             } else {
                 // Remote put.
@@ -535,7 +535,7 @@ public final class DHT extends EventDispatcher {
         final CountDownLatch operationCompleteLatch = new CountDownLatch(requests.size());
         for (final Map.Entry<MachineDescriptor, List<Integer>> e : requests.entrySet()) {
             if (isLocal(e.getKey())) {
-                final AbstractBufferValue.Segment[] localSegments = store.get(key).getSegments(Ints.toArray(e.getValue()), instanceID);
+                final AbstractBufferValue.Segment[] localSegments = store.get(key).getSegments(Ints.toArray(e.getValue()), nodeID);
                 for (final AbstractBufferValue.Segment localSegment : localSegments) {
                     final int index = ArrayUtils.indexOf(segmentIndices, localSegment.segmentIndex);
                     segments[index] = localSegment;
@@ -632,7 +632,7 @@ public final class DHT extends EventDispatcher {
         do {
             uid = UUID.randomUUID();
             id = (uid.hashCode() & Integer.MAX_VALUE) % infraManager.getMachines().size();
-        } while (id != infraManager.getInstanceID());
+        } while (id != infraManager.getNodeID());
         return uid;
     }
 
@@ -684,6 +684,6 @@ public final class DHT extends EventDispatcher {
 
     private void logDHTAction(final Key key, final DHTAction action) {
         LOG.debug(action + " ON " + infraManager.getMachine() + " => KEY = "
-                + key.internalUID + " | " + "PARTITION = " + key.getPartitionDescriptor(instanceID).partitionIndex);
+                + key.internalUID + " | " + "PARTITION = " + key.getPartitionDescriptor(nodeID).partitionIndex);
     }
 }

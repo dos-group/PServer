@@ -25,11 +25,11 @@ public class GeneralLinearModel extends Model<GeneralLinearModel> {
     }
 
     public GeneralLinearModel(final GeneralLinearModel lm) {
-        this(Preconditions.checkNotNull(lm.name), lm.instanceID, lm.length, Preconditions.checkNotNull(lm.weights).copy());
+        this(Preconditions.checkNotNull(lm.name), lm.nodeID, lm.length, Preconditions.checkNotNull(lm.weights).copy());
     }
 
-    public GeneralLinearModel(final String name, final int instanceID, final long length, final Vector weights) {
-        super(name, instanceID);
+    public GeneralLinearModel(final String name, final int nodeID, final long length, final Vector weights) {
+        super(name, nodeID);
         this.length     = length;
         this.weights    = weights;
     }

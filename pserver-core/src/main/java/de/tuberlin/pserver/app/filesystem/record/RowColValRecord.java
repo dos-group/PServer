@@ -12,17 +12,29 @@ import java.util.NoSuchElementException;
  */
 public class RowColValRecord implements IRecord {
 
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
     private org.apache.commons.csv.CSVRecord delegate;
 
     private boolean isFetched = false;
+
+    // ---------------------------------------------------
+    // Constructor.
+    // ---------------------------------------------------
+
+    public static RowColValRecord wrap(org.apache.commons.csv.CSVRecord record, int[] projection, long row) {
+        return new RowColValRecord(record);
+    }
 
     public RowColValRecord(org.apache.commons.csv.CSVRecord delegate) {
         this.delegate = delegate;
     }
 
-    public static RowColValRecord wrap(org.apache.commons.csv.CSVRecord record, int[] projection, long row) {
-        return new RowColValRecord(record);
-    }
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
 
     @Override
     public int size() {

@@ -131,13 +131,13 @@ public final class NetManager extends EventDispatcher {
         }
     }
 
-    public void sendEvent(final int instanceID, final NetEvents.NetEvent event) {
-        sendEvent(infraManager.getMachine(instanceID), event);
+    public void sendEvent(final int nodeID, final NetEvents.NetEvent event) {
+        sendEvent(infraManager.getMachine(nodeID), event);
     }
 
-    public void sendEvent(final int[] instanceIDs, final NetEvents.NetEvent event) {
-        for (int instanceID : instanceIDs) {
-            final MachineDescriptor md = infraManager.getMachine(instanceID);
+    public void sendEvent(final int[] nodeIDs, final NetEvents.NetEvent event) {
+        for (int nodeID : nodeIDs) {
+            final MachineDescriptor md = infraManager.getMachine(nodeID);
             if (md != null)
                 sendEvent(md, event);
         }

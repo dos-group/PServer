@@ -33,7 +33,7 @@ public final class LocalDHTTestJob {
         public void compute() {
             final Random r = new Random();
             final UUID uid = UUID.fromString("31bf55a7-2195-4d11-8ebf-0d030032fede");
-            if (instanceContext.jobContext.instanceID == 0) {
+            if (instanceContext.jobContext.nodeID == 0) {
                 instanceContext.jobContext.dht.put(Key.newKey(uid, "test1", Key.DistributionMode.DISTRIBUTED), ByteBufferValue.newValue(false, ByteBufferValue.MAX_SIZE * 4));
             }
             final Key key = instanceContext.jobContext.dht.getKey(uid);

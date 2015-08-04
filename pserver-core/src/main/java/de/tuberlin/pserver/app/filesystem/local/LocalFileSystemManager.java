@@ -70,7 +70,7 @@ public final class LocalFileSystemManager implements FileSystemManager {
         inputFileMap.forEach(
                 (k, v) -> v.computeLocalFileSection(
                         infraManager.getMachines().size(),
-                        infraManager.getInstanceID()
+                        infraManager.getNodeID()
                 )
         );
 

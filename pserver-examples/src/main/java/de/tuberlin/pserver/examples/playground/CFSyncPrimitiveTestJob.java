@@ -25,7 +25,7 @@ public class CFSyncPrimitiveTestJob extends PServerJob {
 
         while (true) {
 
-            LOG.info("node [" + instanceContext.jobContext.instanceID + "]: " + i);
+            LOG.info("node [" + instanceContext.jobContext.nodeID + "]: " + i);
 
             try {
                 Thread.sleep((long)(rand.nextDouble() * 5000));

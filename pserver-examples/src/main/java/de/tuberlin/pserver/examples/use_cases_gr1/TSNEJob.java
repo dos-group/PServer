@@ -170,7 +170,7 @@ public class TSNEJob extends PServerJob {
 
             /*dataManager.globalSync();
 
-            if (instanceContext.instanceID == 0) {
+            if (instanceContext.nodeID == 0) {
                 Object[] sumQs = dataManager.pullRequest("sumQ");
                 Double sumOverQ = 0.0;
                 for (Object sum : sumQs) {
