@@ -119,17 +119,12 @@ public class DataManager extends EventDispatcher {
 
     private final FileSystemManager fileSystemManager;
 
+    private final MatrixPartitionManager matrixPartitionManager;
+
     private final DHT dht;
 
     private final int nodeID;
 
-    private final Map<String, MatrixLoadTask> matrixLoadTasks;
-
-    private final Map<String, AtomicInteger> fileLoadingBarrier;
-
-    private CountDownLatch finishedLoadingLatch;
-
-    private final Map<String, Matrix> loadingMatrices;
 
     private final Map<UUID, List<Serializable>> resultObjects;
 
@@ -160,18 +155,17 @@ public class DataManager extends EventDispatcher {
         this.fileSystemManager  = fileSystemManager;
         this.dht                = Preconditions.checkNotNull(dht);
         this.nodeID             = infraManager.getNodeID();
-        this.matrixLoadTasks    = new HashMap<>();
         this.resultObjects      = new HashMap<>();
         this.jobContextMap      = new ConcurrentHashMap<>();
         this.instanceContextMap = new ConcurrentHashMap<>();
-        this.fileLoadingBarrier = new HashMap<>();
-        this.loadingMatrices    = new HashMap<>();
 
-        this.netManager.addEventListener(Events.MATRIX_ENTRY_PARTITION_EVENT, new MatrixEntryPartitionEventHandler());
-        this.netManager.addEventListener(Events.FINISHED_LOADING_FILE_EVENT, event -> {
-            FinishedLoadingFileEvent e = Preconditions.checkNotNull((FinishedLoadingFileEvent) event);
-            nodeFinishedProcessingSplit(e.getName());
-        });
+        this.matrixPartitionManager = new MatrixPartitionManager(
+                config,
+                infraManager,
+                netManager,
+                fileSystemManager,
+                this
+        );
 
         this.netManager.addEventListener(BSP_SYNC_BARRIER_EVENT, event -> {
             jobContextMap.get(event.getPayload()).globalSyncBarrier.countDown();
@@ -188,6 +182,23 @@ public class DataManager extends EventDispatcher {
             }
             ++i;
         }
+    }
+
+    // ---------------------------------------------------
+    // EVENT HANDLING
+    // ---------------------------------------------------
+
+    public void addDataEventListener(final String name, final DataEventHandler handler) {
+        addDataEventListener(remoteNodeIDs.length, name, handler);
+    }
+    public void addDataEventListener(final int n, final String name, final DataEventHandler handler) {
+        handler.setInfraManager(infraManager);
+        handler.initLatch(n);
+        netManager.addEventListener(PUSH_EVENT_PREFIX + name, handler);
+    }
+
+    public void removeDataEventListener(final String name, final DataEventHandler handler) {
+        netManager.removeEventListener(PUSH_EVENT_PREFIX + name, handler);
     }
 
     // ---------------------------------------------------
@@ -243,27 +254,8 @@ public class DataManager extends EventDispatcher {
     public void loadAsMatrix(final String filePath, long rows, long cols, RecordFormat recordFormat,
                              Matrix.Format matrixFormat, Matrix.Layout matrixLayout,
                              IMatrixPartitioner matrixPartitioner) {
-        matrixLoadTasks.put(filePath, new MatrixLoadTask(filePath, recordFormat, rows, cols,
-                matrixFormat, matrixLayout, matrixPartitioner));
-        fileLoadingBarrier.put(filePath, new AtomicInteger(nodeIDs.length));
-    }
 
-    // ---------------------------------------------------
-    // EVENT HANDLING
-    // ---------------------------------------------------
-
-
-    public void addDataEventListener(final String name, final DataEventHandler handler) {
-        addDataEventListener(remoteNodeIDs.length, name, handler);
-    }
-    public void addDataEventListener(final int n, final String name, final DataEventHandler handler) {
-        handler.setInfraManager(infraManager);
-        handler.initLatch(n);
-        netManager.addEventListener(PUSH_EVENT_PREFIX + name, handler);
-    }
-
-    public void removeDataEventListener(final String name, final DataEventHandler handler) {
-        netManager.removeEventListener(PUSH_EVENT_PREFIX + name, handler);
+        matrixPartitionManager.load(filePath, rows, cols, recordFormat, matrixFormat, matrixLayout, matrixPartitioner);
     }
 
     // ---------------------------------------------------
@@ -492,22 +484,20 @@ public class DataManager extends EventDispatcher {
     // CONTROL FLOW
     // ---------------------------------------------------
 
-    public void globalSync(final int staleness) {
-        if (staleness > -1) {
-            final InstanceContext instanceContext = getInstanceContext();
-            final NetEvents.NetEvent globalSyncEvent = new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT);
-            globalSyncEvent.setPayload(instanceContext.jobContext.jobUID);
-            netManager.broadcastEvent(globalSyncEvent);
-            try {
-                instanceContext.jobContext.globalSyncBarrier.await();
-            } catch (InterruptedException e) {
-                LOG.error(e.getMessage());
-            }
-            if (instanceContext.jobContext.globalSyncBarrier.getCount() == 0) {
-                instanceContext.jobContext.globalSyncBarrier.reset();
-            } else {
-                throw new IllegalStateException();
-            }
+    public void globalSync() {
+        final InstanceContext instanceContext = getInstanceContext();
+        final NetEvents.NetEvent globalSyncEvent = new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT);
+        globalSyncEvent.setPayload(instanceContext.jobContext.jobUID);
+        netManager.broadcastEvent(globalSyncEvent);
+        try {
+            instanceContext.jobContext.globalSyncBarrier.await();
+        } catch (InterruptedException e) {
+            LOG.error(e.getMessage());
+        }
+        if (instanceContext.jobContext.globalSyncBarrier.getCount() == 0) {
+            instanceContext.jobContext.globalSyncBarrier.reset();
+        } else {
+            throw new IllegalStateException();
         }
     }
 
@@ -558,6 +548,8 @@ public class DataManager extends EventDispatcher {
 
     public int[] getRemoteNodeIDs() { return remoteNodeIDs; }
 
+    public int[] getNodeIDs() { return nodeIDs; }
+
     public int getNumberOfNodes() { return nodeIDs.length; }
 
     // ---------------------------------------------------
@@ -567,227 +559,7 @@ public class DataManager extends EventDispatcher {
         if (fileSystemManager != null) {
             if (ctx.threadID == 0) {
                 fileSystemManager.computeInputSplitsForRegisteredFiles();
-                loadFilesIntoDHT();
-            }
-        }
-    }
-
-    // ---------------------------------------------------
-    // Private Methods.
-    // ---------------------------------------------------
-
-    private void loadFilesIntoDHT() {
-        finishedLoadingLatch = new CountDownLatch(matrixLoadTasks.size());
-        // prepare to read entries that belong to foreign matrix partitions
-        Map<Integer, List<MatrixEntry>> foreignEntries = new HashMap<Integer, List<MatrixEntry>>(); // data structure to hold foreign entries
-        int foreignEntriesThreshold = 2048; // threshold that indicates how many entries are gathered before sending
-        // iterate through load tasks
-        for (final MatrixLoadTask task : matrixLoadTasks.values()) {
-            // preallocate local matrix partition
-            Matrix matrix = getLoadingMatrix(task);
-            // iterate through records in file
-            FileDataIterator<? extends IRecord> fileIterator = task.fileIterator;
-            Matrix.PartitionShape partitionShape = task.matrixPartitioner.getPartitionShape();
-            ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
-            while (fileIterator.hasNext()) {
-                final IRecord record = fileIterator.next();
-                // iterate through entries in record
-                synchronized (matrix) {
-                    while (record.hasNext()) {
-                        MatrixEntry entry = record.next(reusable);
-                        if(entry.getRow() >= task.rows || entry.getCol() >= task.cols) {
-                            continue;
-                        }
-                        //System.out.println(nodeID + ": " + entry);
-                        // get the partition this record belongs to
-                        int targetPartition = task.matrixPartitioner.getPartitionOfEntry(entry);
-                        // if record belongs to own node, set the value
-                        if (targetPartition == nodeID) {
-                            // set entry
-                            // HOTFIX: partition aware matrix
-                            matrix.set(entry.getRow() % partitionShape.getRows(), entry.getCol() % partitionShape.getCols(), entry.getValue());
-                            //matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
-                        }
-                        // otherwise append entry to foreign entries and send them depending on threshold
-                        else {
-                            List<MatrixEntry> foreignsOfTargetNode = getSavely(foreignEntries, targetPartition, foreignEntriesThreshold);
-                            foreignsOfTargetNode.add(new ImmutableMatrixEntry(entry));
-                            if (foreignsOfTargetNode.size() >= foreignEntriesThreshold) {
-                                // send them
-                                sendPartition(targetPartition, foreignsOfTargetNode, task);
-                            }
-                        } // </partition check>
-                    } // </entries in record iteration
-                }
-            } // </records in file iteration>>
-            // send all remaining foreign entries
-            for (Map.Entry<Integer, List<MatrixEntry>> map : foreignEntries.entrySet()) {
-                sendPartition(map.getKey(), map.getValue(), task);
-            }
-            netManager.broadcastEvent(new FinishedLoadingFileEvent(fileIterator.getFilePath()));
-            nodeFinishedProcessingSplit(fileIterator.getFilePath());
-        }
-        try {
-            finishedLoadingLatch.await();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Is called whenever an nodes finished processing an input split. This is triggered either by reaching the end
-     * of the own input split or by receiving a @link FinishedLoadingFileEvent. If all nodes finished processing,
-     * the matrix can be put into the DHT.
-     *
-     * @param name
-     */
-    private void nodeFinishedProcessingSplit(String name) {
-        int counter;
-        synchronized (fileLoadingBarrier) {
-            counter = fileLoadingBarrier.get(name).decrementAndGet();
-        }
-        if (counter <= 0) {
-            // is it possible that a FinishedLoading event overtakes a SendPartition event?
-            // this assumes it is not:
-            Matrix matrix;
-            synchronized (loadingMatrices) {
-                matrix = Preconditions.checkNotNull(loadingMatrices.get(name));
-            }
-            synchronized (matrix) {
-                putObject(name, matrix);
-                finishedLoadingLatch.countDown();
-            }
-        }
-    }
-
-    private List<MatrixEntry> getSavely(Map<Integer, List<MatrixEntry>> foreignEntries, int partitionId, int threshold) {
-        List<MatrixEntry> result = foreignEntries.get(partitionId);
-        // if list does not exist yet, create and put it into map
-        if (result == null) {
-            result = new ArrayList<>(threshold);
-            foreignEntries.put(partitionId, result);
-        }
-        return result;
-    }
-
-    private void sendPartition(int targetNodeId, List<MatrixEntry> entries, MatrixLoadTask task) {
-        if (entries != null && !entries.isEmpty()) {
-            MatrixEntry[] entriesArray = entries.toArray(new MatrixEntry[entries.size()]);
-            netManager.sendEvent(targetNodeId, new MatrixEntryPartitionEvent(entriesArray, task.fileIterator.getFilePath()));
-            entries.clear();
-        }
-    }
-
-    private Matrix getLoadingMatrix(MatrixLoadTask task) {
-        synchronized (loadingMatrices) {
-            String name = task.fileIterator.getFilePath();
-            Matrix matrix = loadingMatrices.get(name);
-            if (matrix == null) {
-                Matrix.PartitionShape partitionShape = task.matrixPartitioner.getPartitionShape();
-                matrix = new MatrixBuilder()
-                        .dimension(partitionShape.getRows(), partitionShape.getCols())
-                                //.dimension(task.rows, task.cols)
-                        .format(task.matrixFormat)
-                        .layout(task.matrixLayout)
-                        .build();
-                loadingMatrices.put(name, matrix);
-            }
-            return matrix;
-        }
-    }
-
-    private class MatrixLoadTask {
-
-        final FileDataIterator fileIterator;
-        final RecordFormat recordFormat;
-        final long rows;
-        final long cols;
-        final Matrix.Format matrixFormat;
-        final Matrix.Layout matrixLayout;
-        final IMatrixPartitioner matrixPartitioner;
-
-        public MatrixLoadTask(String filePath, RecordFormat recordFormat, long rows, long cols, Matrix.Format matrixFormat, Matrix.Layout matrixLayout, IMatrixPartitioner matrixPartitioner) {
-            this.fileIterator = fileSystemManager.createFileIterator(filePath, recordFormat);
-            this.recordFormat = recordFormat;
-            this.rows = rows;
-            this.cols = cols;
-            this.matrixFormat = matrixFormat;
-            this.matrixLayout = matrixLayout;
-            this.matrixPartitioner = matrixPartitioner;
-        }
-    }
-
-    // -----------------------------------------------------------------------------------------
-    // Events
-    // -----------------------------------------------------------------------------------------
-
-    public static final class Events {
-
-        public static final String FINISHED_LOADING_FILE_EVENT = "FINISHED_LOADING_FILE_EVENT";
-
-        public static final String MATRIX_ENTRY_PARTITION_EVENT = "MATRIX_ENTRY_PARTITION_EVENT";
-
-    }
-
-    /**
-     * Is send from an node, that loads "foreign" matrix entries from its input files.<br>
-     * From the perspective of one node, foreign matrix entries are those belonging to another node.<br>
-     * Received from an node, to that the containing entries belong to.
-     */
-    public static final class MatrixEntryPartitionEvent extends NetEvents.NetEvent {
-
-        private static final long serialVersionUID = -1L;
-
-        private final MatrixEntry[] entries;
-
-        private final String name;
-
-
-        public MatrixEntryPartitionEvent(MatrixEntry[] entries, String name) {
-            super(Events.MATRIX_ENTRY_PARTITION_EVENT);
-            this.entries = Preconditions.checkNotNull(entries);
-            this.name = Preconditions.checkNotNull(name);
-        }
-
-        public MatrixEntry[] getEntries() {
-            return entries;
-        }
-
-        public String getName() {
-            return name;
-        }
-    }
-
-    public static final class FinishedLoadingFileEvent extends NetEvents.NetEvent {
-
-        private static final long serialVersionUID = -1L;
-
-        private final String name;
-
-        public FinishedLoadingFileEvent(String name) {
-            super(Events.FINISHED_LOADING_FILE_EVENT);
-            this.name = Preconditions.checkNotNull(name);
-        }
-
-        public String getName() {
-            return name;
-        }
-    }
-
-    public final class MatrixEntryPartitionEventHandler implements IEventHandler {
-
-        @Override
-        public void handleEvent(Event event) {
-            MatrixEntryPartitionEvent e = Preconditions.checkNotNull((MatrixEntryPartitionEvent) event);
-            MatrixLoadTask task = matrixLoadTasks.get(e.getName());
-            Matrix.PartitionShape partitionShape = task.matrixPartitioner.getPartitionShape();
-            Matrix matrix = getLoadingMatrix(task);
-            synchronized (matrix) {
-                for (MatrixEntry entry : e.getEntries()) {
-                    // HOTFIX: partition aware matrix
-                    matrix.set(entry.getRow() % partitionShape.getRows(), entry.getCol() % partitionShape.getCols(), entry.getValue());
-                    //matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
-                }
+                matrixPartitionManager.loadFilesIntoDHT();
             }
         }
     }

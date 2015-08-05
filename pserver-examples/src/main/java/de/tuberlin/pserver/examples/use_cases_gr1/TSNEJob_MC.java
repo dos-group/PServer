@@ -253,7 +253,7 @@ public class TSNEJob_MC extends PServerJob {
                 P = P.scale(1.0 / EARLY_EXAGGERATION);
             }
             LOG.debug("Y: " + Y.rowAsVector().toString());
-            dataManager.globalSync(0);
+            dataManager.globalSync();
         }
         result(Y);
     }

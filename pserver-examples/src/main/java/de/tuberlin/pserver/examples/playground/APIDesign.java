@@ -169,8 +169,6 @@ public class APIDesign {
 
         private static CyclicBarrier internalSyncBarrier;
 
-        private int staleness = -1;
-
         private int epoch = 0;
 
         // ---------------------------------------------------
@@ -178,14 +176,6 @@ public class APIDesign {
         public Iteration(final DataManager dataManager) {
             this.dataManager = Preconditions.checkNotNull(dataManager);
         }
-
-        // ---------------------------------------------------
-
-        public Iteration stale(final int staleness) { this.staleness = staleness; return this; }
-
-        public Iteration sync() { this.staleness = 1; return this; }
-
-        public Iteration async() { this.staleness = -1; return this; }
 
         // ---------------------------------------------------
 
@@ -236,7 +226,7 @@ public class APIDesign {
         }
 
         private void externalSync() {
-            dataManager.globalSync(staleness);
+            dataManager.globalSync();
         }
     }
 
@@ -269,7 +259,6 @@ public class APIDesign {
             X = DF.get("X");
 
             CF.iterate()
-                    .async()
                     .execute(15, () -> {
 
                         CF.select()
