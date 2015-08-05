@@ -40,7 +40,7 @@ public abstract class PServerJob extends EventDispatcher {
     public InstanceContext getInstanceContext() { return instanceContext; }
 
     public void result(final Serializable... obj) {
-        if (instanceContext.threadID == 0) {
+        if (instanceContext.instanceID == 0) {
             dataManager.setResults(instanceContext.jobContext.jobUID, Arrays.asList(obj));
         }
     }

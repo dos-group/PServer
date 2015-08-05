@@ -178,7 +178,7 @@ public final class PServerNode extends EventDispatcher {
     private void executeLifecycle(final PServerJob job) {
         try {
 
-            if (job.getInstanceContext().threadID == 0) {
+            if (job.getInstanceContext().instanceID == 0) {
                 {
                     LOG.info("Enter " + job.instanceContext.jobContext.simpleClassName + " prologue phase.");
 
@@ -214,7 +214,7 @@ public final class PServerNode extends EventDispatcher {
                         " computation phase [duration: " + (end - start) + " ms].");
             }
 
-            if (job.getInstanceContext().threadID == 0) {
+            if (job.getInstanceContext().instanceID == 0) {
                 {
                     LOG.info("Enter " + job.instanceContext.jobContext.simpleClassName + " epilogue phase.");
 

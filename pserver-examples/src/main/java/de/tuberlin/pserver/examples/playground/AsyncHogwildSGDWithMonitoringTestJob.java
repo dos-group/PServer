@@ -60,7 +60,7 @@ package de.tuberlin.pserver.examples.playground;
     @Override
     public void compute() {
 
-        //if (instanceContext.threadID == 1) {
+        //if (instanceContext.instanceID == 1) {
 
         //    monitorExecution();
 

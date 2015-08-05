@@ -30,7 +30,7 @@ public class SGDOptimizer<TLabel, TFeature, TWeight> implements Optimizer {
 
         private static Gson gson = GsonUtils.createPrettyPrintAndAnnotationExclusionGson();
 
-        public int threadID;
+        public int instanceID;
 
         public int epoch;
 
@@ -175,14 +175,14 @@ public class SGDOptimizer<TLabel, TFeature, TWeight> implements Optimizer {
 
     private GeneralLinearModel simple_sgd(final GeneralLinearModel model, final Matrix.RowIterator dataIterator) {
 
-        if (instanceContext.threadID == 0) {
+        if (instanceContext.instanceID == 0) {
             if (observerThreadSyncedModel) {
                 instanceContext.executionManager.putJobScope("local-sgd-barrier",
                         new CyclicBarrier(instanceContext.perNodeParallelism, () -> updateObserver(model)));
             }
         }
 
-        state.threadID = instanceContext.threadID;
+        state.instanceID = instanceContext.instanceID;
 
         state.alpha = alpha;
 
@@ -239,7 +239,7 @@ public class SGDOptimizer<TLabel, TFeature, TWeight> implements Optimizer {
     }
 
     private void updateObserver(final GeneralLinearModel model) {
-        if (instanceContext.threadID == 0) {
+        if (instanceContext.instanceID == 0) {
             ExecutionManager.ExecutionDescriptor[] descriptors
                     = instanceContext.executionManager.getExecutionDescriptors(instanceContext.jobUID);
             //final TWeight[] gradientSums = new Matrix[instanceContext.perNodeParallelism];

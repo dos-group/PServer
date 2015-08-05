@@ -125,7 +125,7 @@ public class GloVeJobAdaGradPull_MC extends PServerJob {
         int numInstances = dataManager.getNumberOfNodes();
 
         int offset = (NUM_WORDS_IN_COOC_MATRIX / numInstances * instanceContext.jobContext.nodeID)
-                + (NUM_WORDS_IN_COOC_MATRIX / numInstances / instanceContext.jobContext.perNodeParallelism) * instanceContext.threadID;
+                + (NUM_WORDS_IN_COOC_MATRIX / numInstances / instanceContext.jobContext.perNodeParallelism) * instanceContext.instanceID;
 
         final Matrix.RowIterator xIter = dataManager.createThreadPartitionedRowIterator(X);
 
@@ -195,7 +195,7 @@ public class GloVeJobAdaGradPull_MC extends PServerJob {
             LOG.info("Iteration, Cost: " + (epoch - 1) + ", " + costI);
 
             // pull data from all other nodes after each iteration
-            if (instanceContext.threadID == 0) {
+            if (instanceContext.instanceID == 0) {
                 dataManager.pullMerge(W, matrixMerger);
                 dataManager.pullMerge(GradSq, matrixMerger);
                 dataManager.pullMerge(B, vectorMerger);

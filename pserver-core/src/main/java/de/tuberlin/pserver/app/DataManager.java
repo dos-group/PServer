@@ -6,15 +6,11 @@ import de.tuberlin.pserver.app.dht.DHT;
 import de.tuberlin.pserver.app.dht.Key;
 import de.tuberlin.pserver.app.dht.Value;
 import de.tuberlin.pserver.app.dht.valuetypes.AbstractBufferValue;
-import de.tuberlin.pserver.app.filesystem.FileDataIterator;
 import de.tuberlin.pserver.app.filesystem.FileSystemManager;
-import de.tuberlin.pserver.app.filesystem.record.IRecord;
 import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.app.partitioning.IMatrixPartitioner;
-import de.tuberlin.pserver.app.types.ImmutableMatrixEntry;
 import de.tuberlin.pserver.app.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.app.types.MObjectValue;
-import de.tuberlin.pserver.app.types.*;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
@@ -26,7 +22,6 @@ import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.math.MObject;
 import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.MatrixBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -518,11 +513,11 @@ public class DataManager extends EventDispatcher {
         Preconditions.checkNotNull(matrix);
         final InstanceContext instanceContext = getInstanceContext();
         final int rowBlock = (int) matrix.numRows() / instanceContext.jobContext.perNodeParallelism;
-        int end = (instanceContext.threadID * rowBlock + rowBlock - 1);
-        end = (instanceContext.threadID == instanceContext.jobContext.perNodeParallelism - 1)
+        int end = (instanceContext.instanceID * rowBlock + rowBlock - 1);
+        end = (instanceContext.instanceID == instanceContext.jobContext.perNodeParallelism - 1)
                 ? end + (int) matrix.numRows() % instanceContext.jobContext.perNodeParallelism
                 : end;
-        return matrix.rowIterator(instanceContext.threadID * rowBlock, end);
+        return matrix.rowIterator(instanceContext.instanceID * rowBlock, end);
     }
 
     // ---------------------------------------------------
@@ -557,7 +552,7 @@ public class DataManager extends EventDispatcher {
     public void postProloguePhase(final InstanceContext ctx) {
         Preconditions.checkNotNull(ctx);
         if (fileSystemManager != null) {
-            if (ctx.threadID == 0) {
+            if (ctx.instanceID == 0) {
                 fileSystemManager.computeInputSplitsForRegisteredFiles();
                 matrixPartitionManager.loadFilesIntoDHT();
             }

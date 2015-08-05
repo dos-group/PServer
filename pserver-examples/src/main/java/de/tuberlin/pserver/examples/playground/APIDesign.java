@@ -74,9 +74,9 @@ public class APIDesign {
 
         private int toNodeID;
 
-        private int formThreadID;
+        private int formInstanceID;
 
-        private int toThreadID;
+        private int toInstanceID;
 
         // ---------------------------------------------------
 
@@ -104,19 +104,19 @@ public class APIDesign {
             return this;
         }
 
-        public Selection core(final int threadID) {
+        public Selection instance(final int instanceID) {
 
 
             return this;
         }
 
-        public Selection core(final int formThreadID, final int toThreadID) {
+        public Selection instance(final int formInstanceID, final int toInstanceID) {
 
 
             return this;
         }
 
-        public Selection allCores() {
+        public Selection allInstances() {
 
 
             return this;
@@ -263,7 +263,7 @@ public class APIDesign {
 
                         CF.select()
                                 .allNodes()
-                                .core(0)
+                                .instance(0)
                                 .execute(() -> {
 
                                     CF.iterate()

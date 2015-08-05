@@ -176,14 +176,14 @@ public class SGDOptimizer implements Optimizer {
 
     private GeneralLinearModel simple_sgd(final GeneralLinearModel model, final Matrix.RowIterator dataIterator) {
 
-        if (ctx.threadID == 0) {
+        if (ctx.instanceID == 0) {
             if (observerThreadSyncedModel) {
                 ctx.jobContext.executionManager.putJobScope("local-sgd-barrier",
                         new CyclicBarrier(ctx.jobContext.perNodeParallelism, () -> updateObserver(model)));
             }
         }
 
-        state.threadID = ctx.threadID;
+        state.threadID = ctx.instanceID;
 
         state.alpha = alpha;
 
@@ -240,7 +240,7 @@ public class SGDOptimizer implements Optimizer {
     }
 
     private void updateObserver(final GeneralLinearModel model) {
-        if (ctx.threadID == 0) {
+        if (ctx.instanceID == 0) {
             ExecutionManager.ExecutionDescriptor[] descriptors
                     = ctx.jobContext.executionManager.getExecutionDescriptors(ctx.jobContext.jobUID);
             final Vector[] gradientSums = new Vector[ctx.jobContext.perNodeParallelism];

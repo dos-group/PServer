@@ -17,19 +17,19 @@ public class ExecutionManager {
 
         public final int nodeID;
 
-        public final int threadID;
+        public final int instanceID;
 
         public final Class<?> exeClass;
 
         public final Object stateObj;
 
         public ExecutionDescriptor(final int nodeID,
-                                   final int threadID,
+                                   final int instanceID,
                                    final Class<?> exeClass,
                                    final Object stateObj) {
 
             this.nodeID     = nodeID;
-            this.threadID   = threadID;
+            this.instanceID = instanceID;
             this.exeClass   = Preconditions.checkNotNull(exeClass);
             this.stateObj   = stateObj;
         }
@@ -70,21 +70,21 @@ public class ExecutionManager {
         final InstanceContext ctx = dataManager.getInstanceContext();
         final ExecutionDescriptor entry = new ExecutionDescriptor(
                 ctx.jobContext.nodeID,
-                ctx.threadID,
+                ctx.instanceID,
                 Preconditions.checkNotNull(exeClass),
                 Preconditions.checkNotNull(stateObj));
 
         final ExecutionDescriptor[] descriptors = jobExeDesc.get(ctx.jobContext.jobUID);
-        Preconditions.checkState(descriptors[ctx.threadID] == null);
-        descriptors[ctx.threadID] = entry;
+        Preconditions.checkState(descriptors[ctx.instanceID] == null);
+        descriptors[ctx.instanceID] = entry;
     }
 
     // Must be called in the thread where the algorithm is executed.
     public void unregisterAlgorithm() {
         final InstanceContext ctx = dataManager.getInstanceContext();
         final ExecutionDescriptor[] descriptors = jobExeDesc.get(ctx.jobContext.jobUID);
-        Preconditions.checkState(descriptors[ctx.threadID] != null);
-        descriptors[ctx.threadID] = null;
+        Preconditions.checkState(descriptors[ctx.instanceID] != null);
+        descriptors[ctx.instanceID] = null;
     }
 
     public void deleteExecutionContext(final UUID jobID) {
@@ -99,7 +99,7 @@ public class ExecutionManager {
     public ExecutionDescriptor[] getExecutionDescriptors(final UUID jobID) {
         final InstanceContext ctx = dataManager.getInstanceContext();
         final ExecutionDescriptor[] descriptors = jobExeDesc.get(ctx.jobContext.jobUID);
-        Preconditions.checkState(descriptors[ctx.threadID] != null);
+        Preconditions.checkState(descriptors[ctx.instanceID] != null);
         return descriptors;
     }
 
