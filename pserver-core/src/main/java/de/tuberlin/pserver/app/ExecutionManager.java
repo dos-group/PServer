@@ -15,23 +15,21 @@ public class ExecutionManager {
 
     public static final class ExecutionDescriptor {
 
+        public final int nodeID;
+
         public final int instanceID;
-
-        public final int threadID;
-
-        //public final PServerJob instance;
 
         public final Class<?> exeClass;
 
         public final Object stateObj;
 
-        public ExecutionDescriptor(final int instanceID,
-                                   final int threadID,
+        public ExecutionDescriptor(final int nodeID,
+                                   final int instanceID,
                                    final Class<?> exeClass,
                                    final Object stateObj) {
 
+            this.nodeID     = nodeID;
             this.instanceID = instanceID;
-            this.threadID   = threadID;
             this.exeClass   = Preconditions.checkNotNull(exeClass);
             this.stateObj   = stateObj;
         }
@@ -69,55 +67,55 @@ public class ExecutionManager {
 
     // Must be called in the thread where the algorithm is executed.
     public void registerAlgorithm(final Class<?> exeClass, final Object stateObj) {
-        final PServerContext ctx = dataManager.getJobContext();
+        final InstanceContext ctx = dataManager.getInstanceContext();
         final ExecutionDescriptor entry = new ExecutionDescriptor(
+                ctx.jobContext.nodeID,
                 ctx.instanceID,
-                ctx.threadID,
                 Preconditions.checkNotNull(exeClass),
                 Preconditions.checkNotNull(stateObj));
 
-        final ExecutionDescriptor[] descriptors = jobExeDesc.get(ctx.jobUID);
-        Preconditions.checkState(descriptors[ctx.threadID] == null);
-        descriptors[ctx.threadID] = entry;
+        final ExecutionDescriptor[] descriptors = jobExeDesc.get(ctx.jobContext.jobUID);
+        Preconditions.checkState(descriptors[ctx.instanceID] == null);
+        descriptors[ctx.instanceID] = entry;
     }
 
     // Must be called in the thread where the algorithm is executed.
     public void unregisterAlgorithm() {
-        final PServerContext ctx = dataManager.getJobContext();
-        final ExecutionDescriptor[] descriptors = jobExeDesc.get(ctx.jobUID);
-        Preconditions.checkState(descriptors[ctx.threadID] != null);
-        descriptors[ctx.threadID] = null;
+        final InstanceContext ctx = dataManager.getInstanceContext();
+        final ExecutionDescriptor[] descriptors = jobExeDesc.get(ctx.jobContext.jobUID);
+        Preconditions.checkState(descriptors[ctx.instanceID] != null);
+        descriptors[ctx.instanceID] = null;
     }
 
     public void deleteExecutionContext(final UUID jobID) {
         Preconditions.checkNotNull(jobID);
-        final PServerContext ctx = dataManager.getJobContext();
-        final ExecutionDescriptor[] descriptors = jobExeDesc.get(ctx.jobUID);
+        final InstanceContext ctx = dataManager.getInstanceContext();
+        final ExecutionDescriptor[] descriptors = jobExeDesc.get(ctx.jobContext.jobUID);
         for (final ExecutionDescriptor ed : descriptors)
             Preconditions.checkState(ed == null);
         jobExeDesc.remove(jobID);
     }
 
     public ExecutionDescriptor[] getExecutionDescriptors(final UUID jobID) {
-        final PServerContext ctx = dataManager.getJobContext();
-        final ExecutionDescriptor[] descriptors = jobExeDesc.get(ctx.jobUID);
-        Preconditions.checkState(descriptors[ctx.threadID] != null);
+        final InstanceContext ctx = dataManager.getInstanceContext();
+        final ExecutionDescriptor[] descriptors = jobExeDesc.get(ctx.jobContext.jobUID);
+        Preconditions.checkState(descriptors[ctx.instanceID] != null);
         return descriptors;
     }
 
     public void putJobScope(final String name, final Object obj) {
-        final PServerContext ctx = dataManager.getJobContext();
-        Map<String, Object> objs = jobScopeObjects.get(ctx.jobUID);
+        final InstanceContext ctx = dataManager.getInstanceContext();
+        Map<String, Object> objs = jobScopeObjects.get(ctx.jobContext.jobUID);
         if (objs == null) {
             objs = new NonBlockingHashMap<>();
-            jobScopeObjects.put(ctx.jobUID, objs);
+            jobScopeObjects.put(ctx.jobContext.jobUID, objs);
         }
         objs.put(Preconditions.checkNotNull(name), obj);
     }
 
     public Object getJobScope(final String name) {
-        final PServerContext ctx = dataManager.getJobContext();
-        Map<String, Object> objs = jobScopeObjects.get(ctx.jobUID);
+        final InstanceContext ctx = dataManager.getInstanceContext();
+        Map<String, Object> objs = jobScopeObjects.get(ctx.jobContext.jobUID);
         return objs.get(name);
     }
 }

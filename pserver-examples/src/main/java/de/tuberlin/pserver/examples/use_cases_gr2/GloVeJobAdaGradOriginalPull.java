@@ -13,7 +13,6 @@ import de.tuberlin.pserver.math.VectorBuilder;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
@@ -123,8 +122,8 @@ public class GloVeJobAdaGradOriginalPull extends PServerJob {
         GradSq = dataManager.getObject("GradSq");
         GradSqB = dataManager.getObject("GradSqB");
 
-        int numInstances = dataManager.getNumberOfInstances();
-        int offset = NUM_WORDS_IN_COOC_MATRIX / numInstances * ctx.instanceID;
+        int numInstances = dataManager.getNumberOfNodes();
+        int offset = NUM_WORDS_IN_COOC_MATRIX / numInstances * instanceContext.jobContext.nodeID;
 
         int iterations = 0;
 

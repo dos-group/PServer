@@ -2,48 +2,17 @@ package de.tuberlin.pserver.app;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.Compressor;
-import org.apache.bcel.Repository;
-import org.apache.bcel.classfile.*;
-import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Modifier;
 import java.util.*;
 
 public final class UserCodeManager {
 
     // ---------------------------------------------------
     // Inner Classes.
-    // ---------------------------------------------------
-
-    private static final class DependencyEmitter extends EmptyVisitor {
-
-        private final JavaClass javaClass;
-
-        private final List<String> dependencies;
-
-        public DependencyEmitter(final JavaClass javaClass) {
-            this.javaClass = javaClass;
-            this.dependencies = new ArrayList<>();
-        }
-
-        @Override
-        public void visitConstantClass(final ConstantClass obj) {
-            final ConstantPool cp = javaClass.getConstantPool();
-            String bytes = obj.getBytes(cp);
-            dependencies.add(bytes);
-        }
-
-        public static List<String> analyze(final Class<?> clazz) {
-            final JavaClass javaClass = Repository.lookupClass(clazz);
-            final DependencyEmitter visitor = new DependencyEmitter(javaClass);
-            (new DescendingVisitor(javaClass, visitor)).visit();
-            return visitor.dependencies;
-        }
-    }
-
     // ---------------------------------------------------
 
     private static final class DynamicClassLoader extends ClassLoader {
@@ -76,10 +45,6 @@ public final class UserCodeManager {
     // Fields.
     // ---------------------------------------------------
 
-    private final List<String> standardDependencies;
-
-    private final boolean analyseDependencies;
-
     private final DynamicClassLoader classLoader;
 
     private final Compressor compressor = Compressor.Factory.create(Compressor.CompressionType.JAVA_COMPRESSION);
@@ -88,9 +53,7 @@ public final class UserCodeManager {
     // Constructor.
     // ---------------------------------------------------
 
-    public UserCodeManager(final ClassLoader cl, boolean analyseDependencies) {
-        this.standardDependencies = new ArrayList<>();
-        this.analyseDependencies = analyseDependencies;
+    public UserCodeManager(final ClassLoader cl) {
         this.classLoader = new DynamicClassLoader(Preconditions.checkNotNull(cl));
     }
 
@@ -98,35 +61,27 @@ public final class UserCodeManager {
     // Public Methods.
     // ---------------------------------------------------
 
-    public UserCodeManager addStandardDependency(final String path) {
-        this.standardDependencies.add(Preconditions.checkNotNull(path));
-        return this;
-    }
-
-    public Triple<Class<?>, List<String>, byte[]> extractClass(final Class<?> clazz) {
+    public List<Pair<String, byte[]>> extractClass(final Class<?> clazz) { return extractClass(clazz, new LinkedList<>()); }
+    public List<Pair<String, byte[]>> extractClass(final Class<?> clazz, final List<Pair<String, byte[]>> clazzesBC) {
         Preconditions.checkNotNull(clazz);
-        if (clazz.isMemberClass() && !Modifier.isStatic(clazz.getModifiers()))
-            throw new IllegalStateException();
-        final List<String> dependencies = analyseDependencies
-                ? buildTransitiveDependencyClosure(clazz, new ArrayList<>())
-                : new ArrayList<>();
-        // TODO: multiple classes
-        return Triple.of(clazz, dependencies, compressor.compress(loadByteCode(clazz)));
+        for (final Class<?> declaredClazz : clazz.getDeclaredClasses()) {
+            extractClass(declaredClazz, clazzesBC);
+        }
+        clazzesBC.add(Pair.of(clazz.getName(), compressor.compress(readByteCode(clazz))));
+        return clazzesBC;
     }
 
-    public Class<?> implantClass(final PServerJobSubmissionEvent userCode) {
-        Preconditions.checkNotNull(userCode);
-        try {
-            for (final String dependency : userCode.classDependencies)
-                Class.forName(dependency, false, classLoader);
-        } catch (ClassNotFoundException e) {
-            throw new IllegalStateException(e);
-        }
-        Class<?> clazz;
-        try {
-            clazz = Class.forName(userCode.className);
-        } catch (ClassNotFoundException e) {
-            clazz = classLoader.buildClassFromByteArray(userCode.className, compressor.decompress(userCode.classByteCode));
+    public Class<?> implantClass(final List<Pair<String, byte[]>> byteCode) {
+        Preconditions.checkNotNull(byteCode);
+        Class<?> clazz = null;
+        for (final Pair<String, byte[]> c : byteCode) {
+            final String className = c.getLeft();
+            final byte[] compressedBinary = c.getRight();
+            try {
+                clazz = Class.forName(className);
+            } catch (ClassNotFoundException e) {
+                clazz = classLoader.buildClassFromByteArray(className, compressor.decompress(compressedBinary));
+            }
         }
         return clazz;
     }
@@ -135,40 +90,7 @@ public final class UserCodeManager {
     // Private Methods.
     // ---------------------------------------------------
 
-    private List<String> buildTransitiveDependencyClosure(final Class<?> clazz, final List<String> globalDependencies) {
-        final String fullQualifiedPath = clazz.getCanonicalName();
-        final List<String> levelDependencies = DependencyEmitter.analyze(clazz);
-        for (String dependency : levelDependencies) {
-            boolean isNewDependency = true;
-            for (final String sd : standardDependencies)
-                isNewDependency &= !dependency.contains(sd);
-            if (isNewDependency) {
-                final String dp1 = dependency.replace("/", ".");
-                final String dp2 = dp1.replace("$", ".");
-                boolean isTransitiveEnclosingClass = false;
-                for (final String dp : globalDependencies)
-                    if (dp.contains(dp2)) {
-                        isTransitiveEnclosingClass = true;
-                        break;
-                    }
-                if (!fullQualifiedPath.contains(dp2) && !isTransitiveEnclosingClass) {
-                    globalDependencies.add(dp2);
-                    final Class<?> dependencyClass;
-                    try {
-                        dependencyClass = Class.forName(dp1, false, clazz.getClassLoader());
-                    } catch (ClassNotFoundException e) {
-                        throw new IllegalStateException(e);
-                    }
-                    if (!dependencyClass.isArray() && !dependencyClass.isPrimitive())
-                        buildTransitiveDependencyClosure(dependencyClass, globalDependencies);
-                }
-            }
-        }
-
-        return globalDependencies;
-    }
-
-    private byte[] loadByteCode(final Class<?> clazz) {
+    private byte[] readByteCode(final Class<?> clazz) {
         String topLevelClazzName = null;
         Class<?> enclosingClazz = clazz.getEnclosingClass();
         while (enclosingClazz != null) {

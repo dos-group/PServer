@@ -106,8 +106,8 @@ public class Key implements Serializable, Comparable<Key> {
     // Public Methods.
     // ---------------------------------------------------
 
-    public PartitionDescriptor getPartitionDescriptor(final int instanceID) {
-        return partitionDirectory.get(instanceID);
+    public PartitionDescriptor getPartitionDescriptor(final int nodeID) {
+        return partitionDirectory.get(nodeID);
     }
 
     public void addPartitionDirectoryEntry(final int index, final PartitionDescriptor pd) {

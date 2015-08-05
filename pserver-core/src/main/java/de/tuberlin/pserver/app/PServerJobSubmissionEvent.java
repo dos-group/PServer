@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.utils.GsonUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Collections;
 import java.util.List;
@@ -30,17 +31,14 @@ public final class PServerJobSubmissionEvent extends NetEvents.NetEvent {
 
     public final UUID jobUID;
 
-    public final String className;
-
-    public final String simpleClassName;
-
     public final int perNodeParallelism;
 
-    @GsonUtils.Exclude
-    public final List<String> classDependencies;
+    //public final String className;
+
+    //public final String simpleClassName;
 
     @GsonUtils.Exclude
-    public final byte[] classByteCode;
+    public final List<Pair<String, byte[]>> byteCode;
 
     // ---------------------------------------------------
     // Constructors.
@@ -48,20 +46,18 @@ public final class PServerJobSubmissionEvent extends NetEvents.NetEvent {
 
     public PServerJobSubmissionEvent(final MachineDescriptor clientMachine,
                                      final UUID jobUID,
-                                     final String className,
-                                     final String simpleClassName,
+                                     //final String className,
+                                     //final String simpleClassName,
                                      final int perNodeParallelism,
-                                     final List<String> classDependencies,
-                                     final byte[] byteCode) {
+                                     final List<Pair<String, byte[]>> byteCode) {
 
         super(PSERVER_JOB_SUBMISSION_EVENT);
 
         this.clientMachine      = Preconditions.checkNotNull(clientMachine);
         this.jobUID             = Preconditions.checkNotNull(jobUID);
-        this.className          = Preconditions.checkNotNull(className);
-        this.simpleClassName    = Preconditions.checkNotNull(simpleClassName);
-        this.classDependencies  = Collections.unmodifiableList(Preconditions.checkNotNull(classDependencies));
-        this.classByteCode      = Preconditions.checkNotNull(byteCode);
+        //this.className          = Preconditions.checkNotNull(className);
+        //this.simpleClassName    = Preconditions.checkNotNull(simpleClassName);
+        this.byteCode           = Collections.unmodifiableList(Preconditions.checkNotNull(byteCode));
         this.perNodeParallelism = perNodeParallelism;
     }
 

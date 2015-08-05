@@ -10,17 +10,31 @@ import org.apache.commons.csv.CSVRecord;
  */
 public class RowRecord implements IRecord {
 
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
     private int[] projection;
+
     private int currentIndex = 0;
+
     private long row;
 
     private org.apache.commons.csv.CSVRecord delegate;
+
+    // ---------------------------------------------------
+    // Constructor.
+    // ---------------------------------------------------
 
     public RowRecord(CSVRecord delegate, int[] projection, long row) {
         this.delegate = delegate;
         this.projection = projection;
         this.row = row;
     }
+
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
 
     @Override
     public int size() {

@@ -39,13 +39,18 @@ public final class ThreadedMatrixLoaderTestJob extends PServerJob {
     private boolean isOwnPartition(int row, int col, int numNodes) {
         double numOfRowsPerInstance = (double) GenerateLocalTestData.ROWS_ROWCOLVAL_DATASET / numNodes;
         double partition = row / numOfRowsPerInstance;
-        return Utils.toInt((long) (partition % numNodes)) == ctx.instanceID;
+        return Utils.toInt((long) (partition % numNodes)) == instanceContext.jobContext.nodeID;
     }
 
     @Override
     public void compute() {
         final Matrix matrix = dataManager.getObject(FILE);
-        Matrix.PartitionShape shape = new MatrixByRowPartitioner(ctx.instanceID, NUM_NODES, GenerateLocalTestData.ROWS_ROWCOLVAL_DATASET, GenerateLocalTestData.COLS_ROWCOLVAL_DATASET).getPartitionShape();
+        Matrix.PartitionShape shape = new MatrixByRowPartitioner(
+                instanceContext.jobContext.nodeID,
+                NUM_NODES,
+                GenerateLocalTestData.ROWS_ROWCOLVAL_DATASET,
+                GenerateLocalTestData.COLS_ROWCOLVAL_DATASET
+        ).getPartitionShape();
         BufferedReader br = null;
         try {
             br = new BufferedReader(new FileReader(FILE));
@@ -58,8 +63,8 @@ public final class ThreadedMatrixLoaderTestJob extends PServerJob {
                 if(isOwnPartition(row, col, NUM_NODES)) {
                     double matrixVal = matrix.get(row % shape.getRows(), col % shape.getCols());
                     if(matrixVal != val) {
-                        //throw new RuntimeException(ctx.instanceID + ": matrix("+row+","+col+") is "+matrixVal+" but should be "+val);
-                        System.out.println(ctx.instanceID + ": matrix("+row+" % "+shape.getRows()+","+col+" % "+shape.getCols()+") is "+matrixVal+" but should be "+val);
+                        //throw new RuntimeException(instanceContext.nodeID + ": matrix("+row+","+col+") is "+matrixVal+" but should be "+val);
+                        System.out.println(instanceContext.jobContext.nodeID + ": matrix("+row+" % "+shape.getRows()+","+col+" % "+shape.getCols()+") is "+matrixVal+" but should be "+val);
                     }
                 }
             }

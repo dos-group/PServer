@@ -24,7 +24,7 @@ public final class LocalFileSystemManager implements FileSystemManager {
     // Fields.
     // ---------------------------------------------------
 
-    public static final long SYNC_TIME = 2000; // 2s to sync. all simulation workers.
+    public static final long SYNC_TIME = 2000; // 2s to globalSync. all simulation workers.
 
     // ---------------------------------------------------
     // Fields.
@@ -70,7 +70,7 @@ public final class LocalFileSystemManager implements FileSystemManager {
         inputFileMap.forEach(
                 (k, v) -> v.computeLocalFileSection(
                         infraManager.getMachines().size(),
-                        infraManager.getInstanceID()
+                        infraManager.getNodeID()
                 )
         );
 
@@ -80,7 +80,7 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
         final long end = System.currentTimeMillis();
 
-        // We need to sync. here in simulation mode.
+        // We need to globalSync. here in simulation mode.
         if (end - start < SYNC_TIME) {
             try {
                 Thread.sleep(SYNC_TIME - (end - start));

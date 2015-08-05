@@ -57,7 +57,7 @@ public final class AsyncMatrixPullTestJob extends PServerJob {
        for (int i = 0; i < 9000; ++i) {
             randomUpdate(m);
             if (i % 1000 == 0)
-                ctx.dataManager.pullMerge(m, merger);
+                instanceContext.jobContext.dataManager.pullMerge(m, merger);
         }
     }
 
