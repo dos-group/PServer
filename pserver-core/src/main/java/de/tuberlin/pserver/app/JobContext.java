@@ -24,9 +24,9 @@ public class JobContext {
 
     public final String simpleClassName;
 
-    public final int numOfWorkers;
+    public final int numOfNodes;
 
-    public final int perNodeParallelism;
+    public final int numOfInstances;
 
     public final int nodeID;
 
@@ -54,8 +54,8 @@ public class JobContext {
                       final UUID jobUID,
                       final String className,
                       final String simpleClassName,
-                      final int numOfWorkers,
-                      final int perNodeParallelism,
+                      final int numOfNodes,
+                      final int numOfInstances,
                       final int nodeID,
                       final NetManager netManager,
                       final DHT dht,
@@ -66,15 +66,15 @@ public class JobContext {
         this.jobUID             = Preconditions.checkNotNull(jobUID);
         this.className          = Preconditions.checkNotNull(className);
         this.simpleClassName    = Preconditions.checkNotNull(simpleClassName);
-        this.numOfWorkers       = numOfWorkers;
-        this.perNodeParallelism = perNodeParallelism;
+        this.numOfNodes         = numOfNodes;
+        this.numOfInstances     = numOfInstances;
         this.nodeID             = nodeID;
         this.dht                = Preconditions.checkNotNull(dht);
         this.netManager         = Preconditions.checkNotNull(netManager);
         this.dataManager        = Preconditions.checkNotNull(dataManager);
         this.executionManager   = Preconditions.checkNotNull(executionManager);
-        this.globalSyncBarrier  = new ResettableCountDownLatch(numOfWorkers);
-        this.localSyncBarrier   = new CyclicBarrier(perNodeParallelism);
+        this.globalSyncBarrier  = new ResettableCountDownLatch(numOfNodes);
+        this.localSyncBarrier   = new CyclicBarrier(numOfInstances);
         this.instanceContextList = new ArrayList<>();
     }
 

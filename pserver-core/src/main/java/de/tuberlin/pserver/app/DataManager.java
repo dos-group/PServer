@@ -512,10 +512,10 @@ public class DataManager extends EventDispatcher {
     public Matrix.RowIterator createThreadPartitionedRowIterator(final Matrix matrix) {
         Preconditions.checkNotNull(matrix);
         final InstanceContext instanceContext = getInstanceContext();
-        final int rowBlock = (int) matrix.numRows() / instanceContext.jobContext.perNodeParallelism;
+        final int rowBlock = (int) matrix.numRows() / instanceContext.jobContext.numOfInstances;
         int end = (instanceContext.instanceID * rowBlock + rowBlock - 1);
-        end = (instanceContext.instanceID == instanceContext.jobContext.perNodeParallelism - 1)
-                ? end + (int) matrix.numRows() % instanceContext.jobContext.perNodeParallelism
+        end = (instanceContext.instanceID == instanceContext.jobContext.numOfInstances - 1)
+                ? end + (int) matrix.numRows() % instanceContext.jobContext.numOfInstances
                 : end;
         return matrix.rowIterator(instanceContext.instanceID * rowBlock, end);
     }

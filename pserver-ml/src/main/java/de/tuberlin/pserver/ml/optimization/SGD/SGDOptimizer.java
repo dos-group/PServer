@@ -179,7 +179,7 @@ public class SGDOptimizer implements Optimizer {
         if (ctx.instanceID == 0) {
             if (observerThreadSyncedModel) {
                 ctx.jobContext.executionManager.putJobScope("local-sgd-barrier",
-                        new CyclicBarrier(ctx.jobContext.perNodeParallelism, () -> updateObserver(model)));
+                        new CyclicBarrier(ctx.jobContext.numOfInstances, () -> updateObserver(model)));
             }
         }
 
@@ -243,8 +243,8 @@ public class SGDOptimizer implements Optimizer {
         if (ctx.instanceID == 0) {
             ExecutionManager.ExecutionDescriptor[] descriptors
                     = ctx.jobContext.executionManager.getExecutionDescriptors(ctx.jobContext.jobUID);
-            final Vector[] gradientSums = new Vector[ctx.jobContext.perNodeParallelism];
-            for (int i = 0; i < ctx.jobContext.perNodeParallelism; ++i) {
+            final Vector[] gradientSums = new Vector[ctx.jobContext.numOfInstances];
+            for (int i = 0; i < ctx.jobContext.numOfInstances; ++i) {
                 final SGDOptimizerState state = (SGDOptimizerState)descriptors[i].stateObj;
                 gradientSums[i] = state.gradientSum;
                 state.gradientSum.assign(0.0);

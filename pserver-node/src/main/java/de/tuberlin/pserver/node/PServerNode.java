@@ -109,7 +109,7 @@ public final class PServerNode extends EventDispatcher {
 
             dataManager.registerJob(jobContext.jobUID, jobContext);
 
-            for (int i = 0; i < jobContext.perNodeParallelism; ++i) {
+            for (int i = 0; i < jobContext.numOfInstances; ++i) {
                 final int threadID = i;
                 executor.execute(() -> {
                     try {
