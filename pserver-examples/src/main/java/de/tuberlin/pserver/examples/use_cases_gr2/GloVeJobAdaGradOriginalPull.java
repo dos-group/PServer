@@ -215,7 +215,7 @@ public class GloVeJobAdaGradOriginalPull extends PServerJob {
 
     private static final DataManager.Merger<Matrix> matrixMerger = (dst, src) -> {
         for (final Matrix m : src) {
-            dst.applyOnElements(m, (e1, e2) -> e1 + e2);
+            dst.applyOnElements((e1, e2) -> e1 + e2, m);
         }
 
         dst.applyOnElements(e -> e / (src.size() + 1));
@@ -246,7 +246,7 @@ public class GloVeJobAdaGradOriginalPull extends PServerJob {
             List<Serializable> r = res.get(i);
             for (int j = 0; j < r.size(); j++) {
                 Matrix m = (Matrix) r.get(j);
-                W_avg.applyOnElements(m, (e1, e2) -> e1 + e2);
+                W_avg.applyOnElements((e1, e2) -> e1 + e2, m);
                 numMergedMatrices++;
             }
         }

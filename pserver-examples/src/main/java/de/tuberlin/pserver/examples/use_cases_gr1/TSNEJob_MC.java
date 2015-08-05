@@ -149,7 +149,7 @@ public class TSNEJob_MC extends PServerJob {
 
         for (int iteration = 0; iteration < MAX_ITER; ++iteration) {
             // sum_Y = Math.sum(Math.square(Y), 1)
-            Y_squared = Y_squared.applyOnElements(Y, e -> Math.pow(e, 2));
+            Y_squared = Y_squared.applyOnElements(e -> Math.pow(e, 2), Y);
             Vector sum_Y = Y_squared.aggregateRows(f -> f.sum());
 
             // num = 1 / (1 + Math.add(Math.add(-2 * Math.dot(Y, Y.T), sum_Y).T, sum_Y))
@@ -157,7 +157,7 @@ public class TSNEJob_MC extends PServerJob {
                     .addVectorToRows(sum_Y);
             num.applyOnElements(e -> 1.0 / (e + 1.0));
             // entries i=j must be zero
-            num = num.zeroDiagonal();
+            num = num.setDiagonalsToZero();
 
             Double sumNum = num.aggregateRows(f -> f.sum()).sum();
             // Q = num / Math.sum(num)
@@ -214,7 +214,7 @@ public class TSNEJob_MC extends PServerJob {
             gains = gains.applyOnElements(e -> Math.max(e, MIN_GAIN));
 
             // iY = momentum * iY - eta * (gains * dY)
-            iY = iY.scale(momentum).sub(dY.applyOnElements(gains, (e1, e2) -> e1 * e2).scale(LEARNING_RATE));
+            iY = iY.scale(momentum).sub(dY.applyOnElements((e1, e2) -> e1 * e2, gains).scale(LEARNING_RATE));
 
             // Y = Y + iY
             Y = Y.add(iY);
@@ -284,7 +284,7 @@ public class TSNEJob_MC extends PServerJob {
         beta.assign(1.0);
 
         // compute the distances between all x_i
-        Xsquared = Xsquared.applyOnElements(X, e -> Math.pow(e, 2));
+        Xsquared = Xsquared.applyOnElements(e -> Math.pow(e, 2), X);
         Vector sumX = Xsquared.aggregateRows(f -> f.sum());
 
         Matrix D = X.mul(X.transpose()).scale(-2).addVectorToRows(sumX).transpose()

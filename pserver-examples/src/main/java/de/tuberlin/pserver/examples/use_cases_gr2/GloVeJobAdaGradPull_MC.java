@@ -62,7 +62,7 @@ public class GloVeJobAdaGradPull_MC extends PServerJob {
 
     private static final DataManager.Merger<Matrix> matrixMerger = (dst, src) -> {
         for (final Matrix m : src) {
-            dst.applyOnElements(m, (e1, e2) -> e1 + e2);
+            dst.applyOnElements((e1, e2) -> e1 + e2, m);
         }
 
         dst.applyOnElements(e -> e / (src.size() + 1));

@@ -148,12 +148,9 @@ public class TSNEJob extends PServerJob {
         gains.assign(1.0);
         iY.assign(0.0);
 
-<<<<<<< HEAD
-=======
         double momentum;
 
         //
->>>>>>> TSNEJob
         for (int iteration = 0; iteration < MAX_ITER; ++iteration) {
             // sum_Y = Math.sum(Math.square(Y), 1)
             Y_squared = Y_squared.applyOnElements(e -> Math.pow(e, 2), Y);
@@ -253,11 +250,7 @@ public class TSNEJob extends PServerJob {
             gains = gains.applyOnElements(e -> Math.max(e, MIN_GAIN));
 
             // iY = momentum * iY - eta * (gains * dY)
-<<<<<<< HEAD
-            iY = iY.scale(momentum).sub(dY.applyOnElements((e1, e2) -> e1 * e2, gains).scale(ETA));
-=======
-            iY = iY.scale(momentum).sub(dY.applyOnElements(gains, (e1, e2) -> e1 * e2).scale(LEARNING_RATE));
->>>>>>> TSNEJob
+            iY = iY.scale(momentum).sub(dY.applyOnElements((e1, e2) -> e1 * e2, gains).scale(LEARNING_RATE));
 
             // Y = Y + iY
             Y = Y.add(iY);
@@ -327,7 +320,7 @@ public class TSNEJob extends PServerJob {
         beta.assign(1.0);
 
         // compute the distances between all x_i
-        Xsquared = Xsquared.applyOnElements(X, e -> Math.pow(e, 2));
+        Xsquared = Xsquared.applyOnElements(e -> Math.pow(e, 2), X);
         Vector sumX = Xsquared.aggregateRows(f -> f.sum());
 
         Matrix D = X.mul(X.transpose()).scale(-2).addVectorToRows(sumX).transpose()

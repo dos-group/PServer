@@ -100,7 +100,7 @@ public abstract class AbstractMatrix implements Matrix {
 
     @Override
     public Matrix add(Matrix B, Matrix C) {
-        return this.applyOnElements((x, y) -> x + y, B, C);
+        return this.applyOnElements(B, (x, y) -> x + y, C);
     }
 
     @Override
@@ -110,7 +110,7 @@ public abstract class AbstractMatrix implements Matrix {
 
     @Override
     public Matrix sub(Matrix B, Matrix C) {
-        return this.applyOnElements((x, y) -> x - y, B, C);
+        return this.applyOnElements(B, (x, y) -> x - y, C);
     }
 
     @Override
@@ -212,11 +212,11 @@ public abstract class AbstractMatrix implements Matrix {
 
     @Override
     public Matrix applyOnElements(final DoubleBinaryOperator f, final Matrix B) {
-        return applyOnElements(f, B, this);
+        return applyOnElements(B, f, this);
     }
 
     @Override
-    public Matrix applyOnElements(DoubleBinaryOperator f, Matrix B, Matrix C) {
+    public Matrix applyOnElements(Matrix B, DoubleBinaryOperator f, Matrix C) {
         if(Utils.shapeEqual(this, B) && Utils.shapeEqual(B, C)) {
             for (int i = 0; i < numRows(); ++i) {
                 for (int j = 0; j < numCols(); ++j) {
@@ -229,19 +229,39 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
+    public Matrix applyOnElements(final MatrixElementUnaryOperator f) {
+        return applyOnElements(f, this);
+    }
+
+    @Override
+    public Matrix applyOnElements(final MatrixElementUnaryOperator f, final Matrix B) {
+        if(Utils.shapeEqual(this, B)) {
+            for (int i = 0; i < B.numRows(); ++i) {
+                for (int j = 0; j < B.numCols(); ++j) {
+                    B.set(i, j, f.apply(i, j, this.get(i, j)));
+                }
+            }
+            return B;
+        }
+        throw new IncompatibleShapeException("Required: A: m x n, B: m x n. Given: A: %d x %d, B: %d x %d", rows, cols, B.numRows(), B.numCols());
+    }
+
+    @Override
     public Matrix addVectorToRows(final Vector v) {
         return addVectorToRows(v, this);
     }
 
     @Override
     public Matrix addVectorToRows(Vector v, Matrix B) {
-        // TODO: shape check: A == B && A: m x n -> v: n
-        for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < cols; col++) {
-                B.set(row, col, this.get(row, col) + v.get(col));
+        if(Utils.shapeEqual(this, B) && this.numCols() == v.length()) {
+            for (int row = 0; row < rows; row++) {
+                for (int col = 0; col < cols; col++) {
+                    B.set(row, col, this.get(row, col) + v.get(col));
+                }
             }
+            return B;
         }
-        return B;
+        throw new IncompatibleShapeException("Required: A: m x n, B: m x n, v: n. Given: A: %d x %d, B: %d x %d, v: %d", rows, cols, B.numRows(), B.numCols(), v.length());
     }
 
     @Override
@@ -251,13 +271,15 @@ public abstract class AbstractMatrix implements Matrix {
 
     @Override
     public Matrix addVectorToCols(Vector v, Matrix B) {
-        // TODO: shape check: A == B && A: m x n -> v: m
-        for (int col = 0; col < cols; col++) {
-            for (int row = 0; row < rows; row++) {
-                B.set(row, col, this.get(row, col) + v.get(row));
+        if(Utils.shapeEqual(this, B) && this.numRows() == v.length()) {
+            for (int col = 0; col < cols; col++) {
+                for (int row = 0; row < rows; row++) {
+                    B.set(row, col, this.get(row, col) + v.get(row));
+                }
             }
+            return B;
         }
-        return B;
+        throw new IncompatibleShapeException("Required: A: m x n, B: m x n, v: m. Given: A: %d x %d, B: %d x %d, v: %d", rows, cols, B.numRows(), B.numCols(), v.length());
     }
 
     @Override
@@ -271,12 +293,12 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public Matrix applyOnNonZeroElements(MatrixFunctionPos1Arg mf) {
+    public Matrix applyOnNonZeroElements(MatrixElementUnaryOperator mf) {
         for (int i = 0; i < numRows(); ++i) {
             for (int j = 0; j < numCols(); ++j) {
                 double oldVal = get(i, j);
                 if(oldVal != 0.0) {
-                    double newVal = mf.operation(i, j, oldVal);
+                    double newVal = mf.apply(i, j, oldVal);
                     if (newVal != oldVal) {
                         set(i, j, newVal);
                     }

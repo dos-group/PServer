@@ -186,11 +186,11 @@ public class SMatrix2 extends AbstractMatrix {
     }
 
     @Override
-    public Matrix applyOnNonZeroElements(MatrixFunctionPos1Arg mf) {
+    public Matrix applyOnNonZeroElements(MatrixElementUnaryOperator mf) {
         for (Map.Entry<MtxPos, Double> ele : data.entrySet()) {
             long row = ele.getKey().row;
             long col = ele.getKey().col;
-            ele.setValue(mf.operation(row, col, ele.getValue()));
+            ele.setValue(mf.apply(row, col, ele.getValue()));
         }
         return this;
     }

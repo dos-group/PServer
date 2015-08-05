@@ -96,8 +96,18 @@ public class ReferenceTests {
     }
 
     public void testMatrixBinaryApplyOnElementsWithTargetParameter(final Matrix mat, final Matrix B, final Matrix target) {
-        final Matrix result = mat.applyOnElements((x, y) -> x + y, B, target);
+        final Matrix result = mat.applyOnElements(B, (x, y) -> x + y, target);
         assertTrue("Matrix.applyOnElements (binary) called on object X with explicit target parameter T must return T", result == target);
+    }
+
+    public void testMatrixElementApplyOnElementsWithoutTargetParameter(final Matrix mat) {
+        final Matrix result = mat.applyOnElements((row, col, val) -> val);
+        assertTrue("Matrix.applyOnElements (Element) called on object X without target parameter must return X", result == mat);
+    }
+
+    public void testMatrixElementApplyOnElementsWithTargetParameter(final Matrix mat, final Matrix target) {
+        final Matrix result = mat.applyOnElements((row, col, val) -> val, target);
+        assertTrue("Matrix.applyOnElements (Element) called on object X with explicit target parameter T must return T", result == target);
     }
 
     public void testMatrixAddVectorToRowsWithoutTargetParameter(final Matrix mat, final Vector b) {
@@ -165,6 +175,9 @@ public class ReferenceTests {
         testMatrixUnaryApplyOnElementsWithTargetParameter(MN.copy(), MN.copy());
         testMatrixBinaryApplyOnElementsWithoutTargetParameter(MN.copy(), MN.copy());
         testMatrixBinaryApplyOnElementsWithTargetParameter(MN.copy(), MN.copy(), MN.copy());
+
+        testMatrixElementApplyOnElementsWithoutTargetParameter(MN.copy());
+        testMatrixElementApplyOnElementsWithTargetParameter(MN.copy(), MN.copy());
 
         testMatrixAddVectorToRowsWithoutTargetParameter(MN.copy(), N.copy());
         testMatrixAddVectorToRowsWithTargetParameter(MN.copy(), N.copy(), MN.copy());

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.DoubleBinaryOperator;
 
 public class GloVeJobAdaGrad extends PServerJob {
 
@@ -338,10 +339,10 @@ public class GloVeJobAdaGrad extends PServerJob {
         significantDeltas.assign((v1) -> 0);   // TODO: this can be optimized...
     }
 
-    private void applyOnColumnVectorAndSetDeltaFlagIfSignificant(Matrix m, Matrix deltas, Long col, Vector v, Vector.VectorFunction2Arg func) {
+    private void applyOnColumnVectorAndSetDeltaFlagIfSignificant(Matrix m, Matrix deltas, Long col, Vector v, DoubleBinaryOperator func) {
         for (int i = 0; i < m.numRows(); i++) {
             double oldVal = m.get(i, col);
-            double newVal = func.operation(oldVal, v.get(i));
+            double newVal = func.applyAsDouble(oldVal, v.get(i));
             if (Math.abs(newVal - oldVal) / oldVal > MATRIX_TRANSMIT_THRESHOLD) {
                 deltas.set(i, col, 1);
             }
@@ -349,9 +350,9 @@ public class GloVeJobAdaGrad extends PServerJob {
         }
     }
 
-    private void applyOnIndexAndSetDeltaFlagIfSignificant(Vector v, Vector deltas, long idx, double val, Vector.VectorFunction2Arg func) {
+    private void applyOnIndexAndSetDeltaFlagIfSignificant(Vector v, Vector deltas, long idx, double val, DoubleBinaryOperator func) {
         double oldVal = v.get(idx);
-        double newVal = func.operation(oldVal, val);
+        double newVal = func.applyAsDouble(oldVal, val);
         if (Math.abs(newVal - oldVal) / oldVal > MATRIX_TRANSMIT_THRESHOLD) {
             deltas.set(idx, 1);
         }
@@ -425,7 +426,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         @Override
         public void handleDataEvent(int srcNodeID, Object value) {
             lock.lock();
-            m.applyOnElements((Matrix) value, (v1, v2) -> (v1 + v2) / 2.0);
+            m.applyOnElements((v1, v2) -> (v1 + v2) / 2.0, (Matrix) value);
             lock.unlock();
         }
     }
@@ -514,7 +515,7 @@ public class GloVeJobAdaGrad extends PServerJob {
                 return val;
             });
         }
-        m.applyOnElements(diffCounts, (w, d) -> w / (d + 1));
+        m.applyOnElements((w, d) -> w / (d + 1), diffCounts);
     }
 
     private void performPullRequest(Vector v, String pullRequestName) {
@@ -547,7 +548,7 @@ public class GloVeJobAdaGrad extends PServerJob {
 
     private static final DataManager.Merger<Matrix> matrixMerger = (dst, src) -> {
         for (final Matrix m : src) {
-            dst.applyOnElements(m, (e1, e2) -> e1 + e2);
+            dst.applyOnElements((e1, e2) -> e1 + e2, m);
         }
 
         dst.applyOnElements(e -> e / (src.size() + 1));
@@ -610,7 +611,7 @@ public class GloVeJobAdaGrad extends PServerJob {
             List<Serializable> r = res.get(i);
             for (int j = 0; j < r.size(); j++) {
                 Matrix m = (Matrix) r.get(j);
-                W_avg.applyOnElements(m, (e1, e2) -> e1 + e2);
+                W_avg.applyOnElements((e1, e2) -> e1 + e2, m);
                 numMergedMatrices++;
             }
         }

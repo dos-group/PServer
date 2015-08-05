@@ -13,14 +13,14 @@ public interface Matrix extends MObject {
     // Constants.
     // ---------------------------------------------------
 
-    public enum Format {
+    enum Format {
 
         SPARSE_MATRIX,
 
         DENSE_MATRIX
     }
 
-    public enum Layout {
+    enum Layout {
 
         ROW_LAYOUT,
 
@@ -31,50 +31,50 @@ public interface Matrix extends MObject {
     // Inner Interfaces/Classes.
     // ---------------------------------------------------
 
-    public static interface RowIterator { // ...for ROW_LAYOUT
+    interface RowIterator { // ...for ROW_LAYOUT
 
-        public abstract boolean hasNextRow();
+        boolean hasNextRow();
 
-        public abstract void nextRow();
+        void nextRow();
 
-        public abstract void nextRandomRow();
+        void nextRandomRow();
 
-        public abstract double getValueOfColumn(final int col);
+        double getValueOfColumn(final int col);
 
-        public abstract Vector getAsVector();
+        Vector getAsVector();
 
-        public abstract Vector getAsVector(int from, int size);
+        Vector getAsVector(int from, int size);
 
-        public abstract void reset();
+        void reset();
 
-        public abstract long numRows();
+        long numRows();
 
-        public abstract long numCols();
+        long numCols();
 
-        public abstract int getCurrentRowNum();
+        int getCurrentRowNum();
     }
 
-    public static interface ColumnIterator { // ...for COLUMN_LAYOUT
+    interface ColumnIterator { // ...for COLUMN_LAYOUT
 
-        public abstract boolean hasNextColumn();
+        boolean hasNextColumn();
 
-        public abstract void nextColumn();
+        void nextColumn();
 
-        public abstract double getValueOfRow(final int row);
+        double getValueOfRow(final int row);
 
-        public abstract void reset();
+        void reset();
 
-        public abstract long numRows();
+        long numRows();
 
-        public abstract long numCols();
+        long numCols();
     }
 
-    public static interface MatrixFunctionPos1Arg {
+    interface MatrixElementUnaryOperator {
 
-        public abstract double operation(long row, long col, double element);
+        double apply(long row, long col, double element);
     }
 
-    public static class PartitionShape {
+    class PartitionShape {
 
         final long rows;
         final long cols;
@@ -119,37 +119,35 @@ public interface Matrix extends MObject {
 
     // ---------------------------------------------------
 
-    public abstract void lock();
+    void lock();
 
-    public abstract void unlock();
+    void unlock();
 
-    public Layout getLayout();
-
-    // ---------------------------------------------------
-
-    public abstract long numRows();
-
-    public abstract long numCols();
-
-    public abstract double get(final long row, final long col);
-
-    public abstract void set(final long row, final long col, final double value);
-
-    public abstract double atomicGet(final long row, final long col);
-
-    public abstract void atomicSet(final long row, final long col, final double value);
-
-    public abstract RowIterator rowIterator();
-
-    public abstract RowIterator rowIterator(final int startRow, final int endRow);
+    Layout getLayout();
 
     // ---------------------------------------------------
 
-    public abstract double aggregate(final DoubleBinaryOperator combiner, final DoubleUnaryOperator mapper);
+    long numRows();
 
-    public abstract Vector aggregateRows(final VectorFunction f);
+    long numCols();
 
-    //public abstract Matrix axpy(final double alpha, final Matrix B);        // A = alpha * B + A
+    double get(final long row, final long col);
+
+    void set(final long row, final long col, final double value);
+
+    double atomicGet(final long row, final long col);
+
+    void atomicSet(final long row, final long col, final double value);
+
+    RowIterator rowIterator();
+
+    RowIterator rowIterator(final int startRow, final int endRow);
+
+    // ---------------------------------------------------
+
+    double aggregate(final DoubleBinaryOperator combiner, final DoubleUnaryOperator mapper);
+
+    Vector aggregateRows(final VectorFunction f);
 
     /**
      * Called on Matrix A. Computes Matrix-Matrix-Addition A += B and returns A. <br>
@@ -158,7 +156,7 @@ public interface Matrix extends MObject {
      * @return A after computing A += B
      * @throws IncompatibleShapeException If the shapes of B and A are not equal
      */
-    public abstract Matrix add(final Matrix B);
+    Matrix add(final Matrix B);
 
     /**
      * Called on Matrix A. Computes Matrix-Matrix-Addition C = A + B and returns C. <br>
@@ -168,7 +166,7 @@ public interface Matrix extends MObject {
      * @return C after computing C = A + B
      * @throws IncompatibleShapeException If the shapes of C, B and A are not equal
      */
-    public abstract Matrix add(final Matrix B, final Matrix C);
+    Matrix add(final Matrix B, final Matrix C);
 
     /**
      * Called on Matrix A. Computes Matrix-Matrix-Subtraction A -= B and returns A. <br>
@@ -177,7 +175,7 @@ public interface Matrix extends MObject {
      * @return A after computing A -= B
      * @throws IncompatibleShapeException If the shapes of B and A are not equal
      */
-    public abstract Matrix sub(final Matrix B);
+    Matrix sub(final Matrix B);
 
     /**
      * Called on Matrix A. Computes Matrix-Matrix-Subtraction C = A - B and returns C. <br>
@@ -187,18 +185,18 @@ public interface Matrix extends MObject {
      * @return C after computing C = A - B
      * @throws IncompatibleShapeException If the shapes of C, B and A are not equal
      */
-    public abstract Matrix sub(final Matrix B, final Matrix C);
+    Matrix sub(final Matrix B, final Matrix C);
 
     /**
      * TODO: This only works if B is a lower/left triangular matrix. Do we want do support such rare special cases?
      * Called on Matrix A. Computes Matrix-Matrix-Multiplication A *= B and returns A. <br>
      * <strong>Note: A is wlog. of shape n x m. B then has to be of shape m x m</strong><br>
      * <strong>Note: Also B hast to be a lower/left triangular matrix. This is not checked!</strong>
-     * @param B Matrix to multiply with A
-     * @return A after computing A *= B, or a new Matrix C after computing C = A * B, if the shape of A is not compatible to the resulting shape of A * B
+     * @param B Matrix to multiply with A. B has to be square with m = A.numCols()
+     * @return A after computing A *= B
      * @throws IncompatibleShapeException If B is not square with m = A.numCols()
      */
-    public abstract Matrix mul(final Matrix B);
+    Matrix mul(final Matrix B);
 
     /**
      * Called on Matrix A. Computes Matrix-Matrix-Multiplication C = A * B and returns C. <br>
@@ -208,7 +206,7 @@ public interface Matrix extends MObject {
      * @return C after computing C = A * B
      * @throws IncompatibleShapeException If A.numCols() != B.numRows() or A.numRows() != C.numRows() or B.numCols() != C.numCols()
      */
-    public abstract Matrix mul(final Matrix B, final Matrix C);
+    Matrix mul(final Matrix B, final Matrix C);
 
     /**
      * Called on Matrix A. Computes Matrix-Vector-Multiplication c = A * b and returns c. <br>
@@ -218,14 +216,14 @@ public interface Matrix extends MObject {
      * @return c after computing c = A * b
      * @throws IncompatibleShapeException If b.length() != A.numRows() or c.length() != A.numRows()
      */
-    public abstract Vector mul(final Vector b, final Vector c);
+    Vector mul(final Vector b, final Vector c);
 
     /**
      * Called on Matrix A. Computes Matrix-Scalar-Multiplication A *= a
      * @param a Scalar to multiply with A
      * @return A after computing A *= a
      */
-    public abstract Matrix scale(final double a);
+    Matrix scale(final double a);
 
     /**
      * Called on Matrix A. Computes Matrix-Scalar-Multiplication B = A * a. <br>
@@ -235,7 +233,7 @@ public interface Matrix extends MObject {
      * @return B after computing B = A * a
      * @throws IncompatibleShapeException If the shapes of B and A are not equal
      */
-    public abstract Matrix scale(final double a, final Matrix B);
+    Matrix scale(final double a, final Matrix B);
 
     /**
      * Called on Matrix A. Computes transpose of A: A = A<sup>T</sup><br>
@@ -243,7 +241,7 @@ public interface Matrix extends MObject {
      * @return A after computing A<sup>T</sup>
      * @throws IncompatibleShapeException If A is not quadratic
      */
-    public abstract Matrix transpose();
+    Matrix transpose();
 
     /**
      * Called on Matrix A. Computes transpose of A: B = A<sup>T</sup>. <br>
@@ -252,7 +250,7 @@ public interface Matrix extends MObject {
      * @return B after computing B = A<sup>T</sup>
      * @throws IncompatibleShapeException If A.numRows() != B.numCols() or A.numCols() != B.numRows()
      */
-    public abstract Matrix transpose(final Matrix B);
+    Matrix transpose(final Matrix B);
 
     /**
      * Called on Matrix A. Computes inverse of A: A = A<sup>-1</sup>. <br>
@@ -261,7 +259,7 @@ public interface Matrix extends MObject {
      * @throws IllegalStateException If A is singular an its inverse can not be computed
      * @throws IncompatibleShapeException If A is not quadratic
      */
-    public abstract Matrix invert();
+    Matrix invert();
 
     /**
      * Called on Matrix A. Computes inverse of A: B = A<sup>-1</sup>. <br>
@@ -271,7 +269,7 @@ public interface Matrix extends MObject {
      * @throws IncompatibleShapeException If A.numRows() != B.numCols() or A.numCols() != B.numRows()
      * @throws SingularMatrixException If A is singular an its inverse can not be computed
      */
-    public abstract Matrix invert(final Matrix B);
+    Matrix invert(final Matrix B);
 
 
     /**
@@ -279,7 +277,7 @@ public interface Matrix extends MObject {
      * @param f Unary higher order function f: x -> y
      * @return A after computing  A = f(A) element-wise.
      */
-    public abstract Matrix applyOnElements(final DoubleUnaryOperator f);
+    Matrix applyOnElements(final DoubleUnaryOperator f);
 
     /**
      * Called on Matrix A. Computes B = f(A) element-wise. <br>
@@ -289,7 +287,7 @@ public interface Matrix extends MObject {
      * @return B after computing B = f(A) element-wise.
      * @throws IncompatibleShapeException If the shapes of B and A are not equal
      */
-    public abstract Matrix applyOnElements(final DoubleUnaryOperator f, final Matrix B);
+    Matrix applyOnElements(final DoubleUnaryOperator f, final Matrix B);
 
     /**
      * Called on Matrix A. Computes A = f(A, B) element-wise. <br>
@@ -299,83 +297,110 @@ public interface Matrix extends MObject {
      * @return A after computing  A = f(A, B) element-wise.
      * @throws IncompatibleShapeException If the shape of B is smaller than the one of A in any dimension
      */
-    public abstract Matrix applyOnElements(final DoubleBinaryOperator f, final Matrix B);
+    Matrix applyOnElements(final DoubleBinaryOperator f, final Matrix B);
 
     /**
      * Called on Matrix A. Computes C = f(A, B) element-wise.<br>
      * <strong>Note: A and B are wlog. of shape n x m and o x p respectively. It has to hold that n <= o and m <= p. Also the shape of A an C have to be the same.</strong
-     * @param f Binary higher order function f: x, y -> z
      * @param B Matrix containing the elements that are used as second arguments in f
+     * @param f Binary higher order function f: x, y -> z
      * @param C to store the result in
      * @return A after computing  C = f(A, B) element-wise.
      * @throws IncompatibleShapeException If the shape of B is smaller than the one of A in any dimension or if the shapes of C and A are not equal
      */
-    public abstract Matrix applyOnElements(final DoubleBinaryOperator f, final Matrix B, final Matrix C);
+    Matrix applyOnElements(final Matrix B, final DoubleBinaryOperator f, final Matrix C);
 
     /**
-     * // TODO: @throws and shape requirements
-     * Called on Matrix A. Computes a += v for each row-vector in A.
+     * Called on Matrix A. Computes A = f(A) element-wise.
+     * @param f Unary higher order function f: (row, col, val) -> new_val
+     * @return A after computing  A = f(A) element-wise.
+     */
+    Matrix applyOnElements(final MatrixElementUnaryOperator f);
+
+    /**
+     * Called on Matrix A. Computes B = f(A) element-wise. <br>
+     * <strong>Note: A and B have to be of the same shape</strong>
+     * @param f Unary higher order function f: (row, col, val) -> new_val
+     * @param B Matrix to store the result in
+     * @return B after computing B = f(A) element-wise.
+     * @throws IncompatibleShapeException If the shapes of B and A are not equal
+     */
+    Matrix applyOnElements(final MatrixElementUnaryOperator f, final Matrix B);
+
+    /**
+     * TODO: refactor sparse applyOnElements to implement this functionality
+     * Called on Matrix A. Computes A = f(A) element-wise.
+     * @param f Unary higher order function f: (row, col, val) -> new_val
+     * @return A after computing  A = f(A) element-wise.
+     */
+    Matrix applyOnNonZeroElements(final MatrixElementUnaryOperator f);
+
+    /**
+     * Called on Matrix A. Computes a += v for each row-vector a in A.
+     * <strong>Note: It has to hold that A.numCols() == v.length()</strong
      * @param v Vector to add on each row-vector in A
      * @return A after computing a += v for each row-vector in A.
+     * @throws IncompatibleShapeException If A.numCols() != v.length()
      */
-    public abstract Matrix addVectorToRows(final Vector v);
+    Matrix addVectorToRows(final Vector v);
 
     /**
-     * // TODO: @throws and shape requirements
-     * Called on Matrix A. Computes a += v for each row-vector in A.
+     * Called on Matrix A. Computes b = a + v for each row-vector a and b in A and B respectively.
+     * <strong>Note: It has to hold that A.numCols() == v.length(). Also, A and B have to be of the same shape.</strong
      * @param v Vector to add on each row-vector in A
      * @param B to store the result in
-     * @return A after computing a += v for each row-vector in A.
+     * @return B after computing b = a + v for each row-vector a and b in A and B respectively.
+     * @throws IncompatibleShapeException If A.numCols() != v.length() or if A and B are of different shapes.
      */
-    public abstract Matrix addVectorToRows(final Vector v, final Matrix B);
+    Matrix addVectorToRows(final Vector v, final Matrix B);
 
     /**
-     * // TODO: @throws and shape requirements
      * Called on Matrix A. Computes a += v for each col-vector in A.
+     * <strong>Note: It has to hold that A.numRows() == v.length()</strong
      * @param v Vector to add on each col-vector in A
      * @return A after computing a += v for each col-vector in A.
+     * @throws IncompatibleShapeException If A.numRows() != v.length()
      */
-    public abstract Matrix addVectorToCols(final Vector v);
+    Matrix addVectorToCols(final Vector v);
 
     /**
-     * // TODO: @throws and shape requirements
-     * Called on Matrix A. Computes a += v for each col-vector in A.
+     * Called on Matrix A. Computes b = a + v for each column-vector a and b in A and B respectively.
+     * <strong>Note: It has to hold that A.numRows() == v.length(). Also, A and B have to be of the same shape.</strong
      * @param v Vector to add on each col-vector in A
      * @param B to store the result in
-     * @return A after computing a += v for each col-vector in A.
+     * @return B after computing b = a + v for each column-vector a and b in A and B respectively.
+     * @throws IncompatibleShapeException If A.numRows() != v.length() or if A and B are of different shapes.
      */
-    public abstract Matrix addVectorToCols(final Vector v, final Matrix B);
+    Matrix addVectorToCols(final Vector v, final Matrix B);
 
     /**
      * Called on Matrix A. Sets the diagonal entries of A to zero.
      * @return A after setting its diagonal entries to zero.
      */
-    public abstract Matrix setDiagonalsToZero();
+    Matrix setDiagonalsToZero();
 
     // ---------------------------------------------------
 
-    public Vector rowAsVector();
+    Vector rowAsVector();
 
-    public Vector rowAsVector(final long row);
+    Vector rowAsVector(final long row);
 
-    public Vector rowAsVector(final long row, final long from, final long to);
+    Vector rowAsVector(final long row, final long from, final long to);
 
-    public Vector colAsVector();
+    Vector colAsVector();
 
-    public Vector colAsVector(final long col);
+    Vector colAsVector(final long col);
 
-    public Vector colAsVector(final long col, final long from, final long to);
+    Vector colAsVector(final long col, final long from, final long to);
 
-    public abstract Matrix assign(final Matrix v);
+    Matrix assign(final Matrix v);
 
-    public abstract Matrix assign(final double v);
+    Matrix assign(final double v);
 
-    public abstract Matrix assignRow(final long row, final Vector v);
+    Matrix assignRow(final long row, final Vector v);
 
-    public abstract Matrix assignColumn(final long col, final Vector v);
+    Matrix assignColumn(final long col, final Vector v);
 
-    public abstract Matrix copy();
-
-    public abstract Matrix applyOnNonZeroElements(final MatrixFunctionPos1Arg mf);
+    Matrix copy();
 
 }

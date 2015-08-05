@@ -10,14 +10,14 @@ public interface Vector extends MObject {
     // Constants.
     // ---------------------------------------------------
 
-    public enum Format {
+    enum Format {
 
         SPARSE_VECTOR,
 
         DENSE_VECTOR
     }
 
-    public enum Layout {
+    enum Layout {
 
         ROW_LAYOUT,
 
@@ -25,66 +25,66 @@ public interface Vector extends MObject {
     }
 
     // ---------------------------------------------------
-    // Public Methods.
+    // Methods.
     // ---------------------------------------------------
 
-    public abstract long length();
+    long length();
 
-    public abstract Format format();
+    Format format();
 
-    public abstract Layout layout();
+    Layout layout();
 
-    public abstract void set(final long index, final double value);
+    void set(final long index, final double value);
 
-    public abstract double get(final long index);
+    double get(final long index);
     
-    public abstract double atomicGet(final long index);
+    double atomicGet(final long index);
 
-    public abstract void atomicSet(final long index, final double value);
+    void atomicSet(final long index, final double value);
 
-    public abstract Vector mul(final double alpha);                 // x = alpha * x
+    Vector mul(final double alpha);                 // x = alpha * x
 
-    public abstract Vector div(final double alpha);
+    Vector div(final double alpha);
 
-    public abstract Vector add(final Vector y);                       // x = y + x
+    Vector add(final Vector y);                       // x = y + x
 
-    public abstract Vector sub(final Vector y);                       // x = y - x
+    Vector sub(final Vector y);                       // x = y - x
 
-    public abstract Vector add(final double alpha, final Vector y);   // x = alpha * y + x
+    Vector add(final double alpha, final Vector y);   // x = alpha * y + x
 
-    public abstract double dot(final Vector y);                       // x = x^T * y
+    double dot(final Vector y);                       // x = x^T * y
 
-    public abstract double sum();
+    double sum();
 
-    public abstract double norm(final double v);
+    double norm(final double v);
 
-    public abstract double maxValue();
+    double maxValue();
 
-    public abstract double minValue();
+    double minValue();
 
-    public abstract Vector applyOnElements(final DoubleUnaryOperator vf);
+    Vector applyOnElements(final DoubleUnaryOperator vf);
 
-    public abstract Vector applyOnElements(final Vector v2, final DoubleUnaryOperator vf);
+    Vector applyOnElements(final Vector v2, final DoubleUnaryOperator vf);
 
-    public abstract Vector applyOnElements(final Vector v2, final DoubleBinaryOperator vf);
+    Vector applyOnElements(final Vector v2, final DoubleBinaryOperator vf);
 
-    public abstract Vector assign(final Vector v);
+    Vector assign(final Vector v);
 
-    public abstract Vector assign(final double v);
+    Vector assign(final double v);
 
-    public abstract Vector assign(final DoubleUnaryOperator df);
+    Vector assign(final DoubleUnaryOperator df);
 
-    public abstract Vector assign(final Vector v, DoubleBinaryOperator df);
+    Vector assign(final Vector v, DoubleBinaryOperator df);
 
-    public abstract Vector viewPart(final long s, final long e);
+    Vector viewPart(final long s, final long e);
 
-    public abstract Vector like();
+    Vector like();
 
-    public abstract Iterator<Element> iterateNonZero();
+    Iterator<Element> iterateNonZero();
 
-    public abstract double aggregate(DoubleBinaryOperator aggregator, DoubleUnaryOperator map);
+    double aggregate(DoubleBinaryOperator aggregator, DoubleUnaryOperator map);
 
-    public abstract Vector copy();
+    Vector copy();
 
     /**
      * A holder for information about a specific item in the Vector. <p/> When using with an Iterator, the implementation
