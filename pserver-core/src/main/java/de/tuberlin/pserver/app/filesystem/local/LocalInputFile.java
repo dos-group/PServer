@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
+import java.lang.management.ManagementFactory;
 import java.util.Iterator;
 
 public class LocalInputFile implements ILocalInputFile<IRecord> {
@@ -47,19 +48,23 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
     // ---------------------------------------------------
 
     @Override
-    public void computeLocalFileSection(final int numNodes, final int instanceID) {
+    public void computeLocalFileSection(final int numNodes, final int nodeID) {
         final long totalLines = getNumberOfLines();
         final long numLinesPerSection = totalLines / numNodes;
-        final long linesToRead = (instanceID == (numNodes - 1)) ?
+        final long linesToRead = (nodeID == (numNodes - 1)) ?
                 numLinesPerSection + (totalLines % numLinesPerSection) : numLinesPerSection;
         try {
-            final long blockLineOffset = numLinesPerSection * instanceID;
-            final BufferedReader br = new BufferedReader(new FileReader(filePath));
+            final long blockLineOffset = numLinesPerSection * nodeID;
+            BufferedReader br = new BufferedReader(new FileReader(filePath));
+            int eolcc = getLineEndingCharCount(br);
+            br.close();
+            br = new BufferedReader(new FileReader(filePath));
             long startOffset = 0;
             for (int i = 0; i < totalLines; ++i) {
                 if (i < blockLineOffset)
-                    startOffset += br.readLine().length() + 1;
-                else break;
+                    startOffset += br.readLine().length() + eolcc;
+                else
+                    break;
             }
             br.close();
             csvFileSection.set(totalLines, linesToRead, startOffset, blockLineOffset);
@@ -106,6 +111,38 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
             this.linesToRead = linesToRead;
             this.startOffset = startOffset;
             this.blockLineOffset = blockLineOffset;
+        }
+    }
+
+    private int getLineEndingCharCount(BufferedReader br) {
+        try {
+            char[] buffer = new char[8192];
+            int result = 0;
+            while (result == 0 && br.read(buffer) > 0) {
+                for (int i = 0; i < buffer.length; i++) {
+                    char c = buffer[i];
+                    if(c == '\n' || c == '\r') {
+                        result++;
+                        char c2 = 0;
+                        if(i + 1 < buffer.length) {
+                            c2 = buffer[i + 1];
+                        }
+                        else if(br.read(buffer) > 0) {
+                            c2 = buffer[0];
+                        }
+                        if(c2 > 0 && (c2 == '\n' || c2 == '\r')) {
+                            result++;
+                        }
+                        break;
+                    }
+                }
+            }
+            if(result <= 0 || result > 2) {
+                throw new IllegalStateException("line ending char count = " + result);
+            }
+            return result;
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
         }
     }
 
@@ -165,10 +202,12 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
             return hasNext;
         }
 
+        IRecord reusable = format.getRecordFactory().wrap(null, null, -1);
+
         @Override
         public IRecord next() {
             final CSVRecord record = csvIterator.next();
-            return format.getRecordFactory().wrap(record, format.getProjection(), csvFileSection.blockLineOffset + currentLine++);
+            return reusable.set(record, format.getProjection(), csvFileSection.blockLineOffset + currentLine++);
         }
 
         // ---------------------------------------------------

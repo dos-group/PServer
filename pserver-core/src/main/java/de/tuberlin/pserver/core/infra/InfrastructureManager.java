@@ -57,7 +57,7 @@ public final class InfrastructureManager extends EventDispatcher {
         LOG.debug("Started InfrastructureManager at " + machine);
     }
 
-    public int getInstanceIDFromMachineUID(final UUID machineUID) {
+    public int getNodeIDFromMachineUID(final UUID machineUID) {
         Preconditions.checkNotNull(machineUID);
         for (int i = 0; i < machines.size(); ++i) {
             if (machines.get(i).machineID.equals(machineUID))
@@ -73,7 +73,7 @@ public final class InfrastructureManager extends EventDispatcher {
 
     public List<MachineDescriptor> getMachines() { return Collections.unmodifiableList(machines); }
 
-    public int getInstanceID() { return machines.indexOf(machine); }
+    public int getNodeID() { return machines.indexOf(machine); }
 
     public int getMachineIndex(final MachineDescriptor machine) { return machines.indexOf(Preconditions.checkNotNull(machine)); }
 

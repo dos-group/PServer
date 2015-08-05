@@ -115,6 +115,41 @@ public class DVector implements Vector, Serializable {
 
     @Override public long sizeOf() { return data.length * Double.BYTES; }
 
+    @Override
+    public Vector applyOnElements(final DoubleUnaryOperator vf) {
+        final double[] result = new double[(int)length()];
+        for (int i = 0; i < result.length; ++i) {
+            result[i] =  vf.applyAsDouble(data[i]);
+        }
+        // TODO: this is only for backwards capability! This should operate on the vector itself!
+        return new DVector(length(), result);
+    }
+
+    @Override
+    public Vector applyOnElements(final Vector v2, final DoubleUnaryOperator vf) {
+        int length = (int) length();
+        final double[] result = new double[length];
+        final double[] v2data = v2.toArray();
+        for (int i = 0; i < length; ++i) {
+            result[i] = vf.applyAsDouble(v2data[i]);
+        }
+        // TODO: this is only for backwards capability! This should operate on the vector itself!
+        return new DVector(length, result);
+    }
+
+    @Override
+    public Vector applyOnElements(final Vector v2, final DoubleBinaryOperator vf) {
+        int length = data.length;
+        Preconditions.checkState(v2.length() == length);
+        final double[] v2data = v2.toArray();
+        final double[] result = Arrays.copyOf(data, length);
+        for (int i = 0; i < length; ++i) {
+            result[i] = vf.applyAsDouble(result[i], v2data[i]);
+        }
+        // TODO: this is only for backwards capability! This should operate on the vector itself!
+        return new DVector(length, result);
+    }
+
     @Override public long length() { return data.length; }
 
     @Override public Layout layout() { return type; }
@@ -224,31 +259,4 @@ public class DVector implements Vector, Serializable {
         return sb.toString();
     }
 
-    @Override
-    public Vector applyOnElements(final DoubleUnaryOperator vf) {
-        final Vector res = copy();
-        for (int i = 0; i < res.length(); ++i) {
-            res.set(i, vf.applyAsDouble(this.get(i)));
-        }
-        return res;
-    }
-
-    @Override
-    public Vector applyOnElements(final Vector v2, final DoubleUnaryOperator vf) {
-        final Vector res = copy();
-        for (int i = 0; i < res.length(); ++i) {
-            res.set(i, vf.applyAsDouble(v2.get(i)));
-        }
-        return res;
-    }
-
-    @Override
-    public Vector applyOnElements(final Vector v2, final DoubleBinaryOperator vf) {
-        final Vector res = copy();
-        Preconditions.checkState(v2.length() == res.length());
-        for (int i = 0; i < res.length(); ++i) {
-            res.set(i, vf.applyAsDouble(this.get(i), v2.get(i)));
-        }
-        return res;
-    }
 }

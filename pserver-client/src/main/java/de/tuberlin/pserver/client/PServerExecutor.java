@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 public enum PServerExecutor {
+
     LOCAL(true),
 
     DISTRIBUTED(false);
@@ -25,7 +26,9 @@ public enum PServerExecutor {
 
     private static final Logger LOG = LoggerFactory.getLogger(PServerExecutor.class);
 
-    private final ClusterSimulator simulator;
+    private final boolean isLocal;
+
+    private ClusterSimulator simulator;
 
     private PServerClient client;
 
@@ -36,16 +39,8 @@ public enum PServerExecutor {
     // ---------------------------------------------------
 
     private PServerExecutor(final boolean isLocal) {
-
         org.apache.log4j.Logger.getRootLogger().addAppender(new ConsoleAppender());
-
-        if (isLocal) {
-            simulator = new ClusterSimulator(
-                    IConfigFactory.load(IConfig.Type.PSERVER_SIMULATION),
-                    PServerMain.class
-            );
-        } else
-            simulator = null;
+        this.isLocal = isLocal;
     }
 
     // ---------------------------------------------------
@@ -54,6 +49,14 @@ public enum PServerExecutor {
 
     public PServerExecutor run(final Class<? extends PServerJob> jobClass) { return run(jobClass, 1); }
     public PServerExecutor run(final Class<? extends PServerJob> jobClass, final int perNodeParallelism) {
+        if (isLocal) {
+            simulator = new ClusterSimulator(
+                    IConfigFactory.load(IConfig.Type.PSERVER_SIMULATION),
+                    PServerMain.class
+            );
+        } else
+            simulator = null;
+
         client = PServerClientFactory.createPServerClient();
         currentJob = client.execute(Preconditions.checkNotNull(jobClass), perNodeParallelism);
         return this;

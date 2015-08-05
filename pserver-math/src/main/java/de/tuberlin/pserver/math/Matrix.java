@@ -50,6 +50,8 @@ public interface Matrix extends MObject {
         public abstract long numRows();
 
         public abstract long numCols();
+
+        public abstract int getCurrentRowNum();
     }
 
     public static interface ColumnIterator { // ...for COLUMN_LAYOUT
@@ -65,6 +67,11 @@ public interface Matrix extends MObject {
         public abstract long numRows();
 
         public abstract long numCols();
+    }
+
+    public static interface MatrixFunctionPos1Arg {
+
+        public abstract double operation(long row, long col, double element);
     }
 
     public static class PartitionShape {
@@ -369,7 +376,6 @@ public interface Matrix extends MObject {
 
     public abstract Matrix copy();
 
-
-
+    public abstract Matrix applyOnNonZeroElements(final MatrixFunctionPos1Arg mf);
 
 }

@@ -58,7 +58,7 @@ public abstract class AbstractBufferValue extends Value {
     public AbstractBufferValue(final int partitionSize,
                                final boolean allocateMemory) {
 
-        Preconditions.checkArgument(partitionSize > 0);
+//        Preconditions.checkArgument(partitionSize > 0);
         this.partitionSize  = partitionSize;
         this.allocateMemory = allocateMemory;
     }
@@ -67,15 +67,15 @@ public abstract class AbstractBufferValue extends Value {
     // Public Methods.
     // ---------------------------------------------------
 
-    public abstract void allocateMemory(final int instanceID);
+    public abstract void allocateMemory(final int nodeID);
 
     public abstract void compress();
 
     public abstract void decompress();
 
-    public abstract Segment[] getSegments(final int[] segmentIndices, final int instanceID);
+    public abstract Segment[] getSegments(final int[] segmentIndices, final int nodeID);
 
-    public abstract void putSegments(final Segment[] segments, final int instanceID);
+    public abstract void putSegments(final Segment[] segments, final int nodeID);
 
     // ---------------------------------------------------
 

@@ -407,7 +407,7 @@ public class NonBlockingIdentityHashMap<TypeK, TypeV>
       NonBlockingIdentityHashMap<TypeK,TypeV> t = (NonBlockingIdentityHashMap<TypeK,TypeV>) super.clone();
       // But I don't have an atomic clone operation - the underlying _kvs
       // structure is undergoing rapid change.  If I just clone the _kvs
-      // field, the CHM in _kvs[0] won't be in sync.
+      // field, the CHM in _kvs[0] won't be in globalSync.
       //
       // Wipe out the cloned array (it was shallow anyways).
       t.clear();

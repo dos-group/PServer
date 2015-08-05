@@ -105,7 +105,7 @@ public class GloVeJob extends PServerJob {
         W = dataManager.getObject("W");
         B = dataManager.getObject("B");
 
-        int offset = 0; //TODO offset per node: offset = NUM_WORDS_IN_COOC_MATRIX / num_instances * ctx.instanceID;
+        int offset = 0; //TODO offset per node: offset = NUM_WORDS_IN_COOC_MATRIX / num_instances * instanceContext.nodeID;
 
         int iterations = 0;
 

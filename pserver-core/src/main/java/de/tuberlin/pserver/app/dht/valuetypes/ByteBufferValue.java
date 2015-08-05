@@ -40,17 +40,17 @@ public class ByteBufferValue extends AbstractBufferValue {
     public void decompress() { buffer.decompress(); }
 
     @Override
-    public void allocateMemory(final int instanceID) {
+    public void allocateMemory(final int nodeID) {
         Preconditions.checkState(allocateMemory == false && buffer == null);
-        buffer = new Buffer(Preconditions.checkNotNull(key).getPartitionDescriptor(instanceID).partitionSize);
+        buffer = new Buffer(Preconditions.checkNotNull(key).getPartitionDescriptor(nodeID).partitionSize);
     }
 
     @Override
-    public Segment[] getSegments(final int[] segmentIndices, final int instanceID) {
+    public Segment[] getSegments(final int[] segmentIndices, final int nodeID) {
         Preconditions.checkNotNull(segmentIndices);
         final Segment[] segments = new Segment[segmentIndices.length];
         int j = 0;
-        final Key.PartitionDescriptor pd = key.getPartitionDescriptor(instanceID);
+        final Key.PartitionDescriptor pd = key.getPartitionDescriptor(nodeID);
         for (final int segmentIndex : segmentIndices) {
             final int normalizedIndex = segmentIndex - pd.segmentBaseIndex;
             final byte[] segmentData = new byte[pd.segmentSize];
@@ -61,9 +61,9 @@ public class ByteBufferValue extends AbstractBufferValue {
     }
 
     @Override
-    public void putSegments(final Segment[] segments, final int instanceID) {
+    public void putSegments(final Segment[] segments, final int nodeID) {
         Preconditions.checkNotNull(segments);
-        final Key.PartitionDescriptor pd = key.getPartitionDescriptor(instanceID);
+        final Key.PartitionDescriptor pd = key.getPartitionDescriptor(nodeID);
         for (final Segment segment : segments) {
             final int normalizedIndex = segment.segmentIndex - pd.segmentBaseIndex;
             System.arraycopy(segment.data, 0, buffer.getRawData(), normalizedIndex * pd.segmentSize, pd.segmentSize);

@@ -8,13 +8,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.util.Random;
+import java.util.*;
+import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
 
-public class DMatrix extends AbstractMatrix implements Matrix, Serializable {
+public class DMatrix extends AbstractMatrix implements Serializable {
 
     // ---------------------------------------------------
     // Inner Classes.
@@ -86,6 +87,9 @@ public class DMatrix extends AbstractMatrix implements Matrix, Serializable {
 
         @Override
         public long numCols() { return self.cols; }
+
+        @Override
+        public int getCurrentRowNum() { return currentRowIndex; }
     }
 
     // ---------------------------------------------------
@@ -232,20 +236,27 @@ public class DMatrix extends AbstractMatrix implements Matrix, Serializable {
 
     @Override
     public Vector colAsVector() {
-        return colAsVector(0, 0, numRows());
+        return colAsVector(0, 0, rows);
     }
 
     @Override
     public Vector colAsVector(final long col) {
-        return colAsVector(col, 0, numRows());
+        return colAsVector(col, 0, rows);
     }
 
     @Override
-    public Vector colAsVector(final long col, final long from, final long to) { // TODO: Optimize with respect to the layout with array copy.
-        Vector r = new DVector(to - from);
-        for (long i = from; i < to; ++i)
-            r.set(i, data[getPos(i, col)]);
-        return r;
+    public Vector colAsVector(final long col, final long from, final long to) {
+        double[] result = new double[(int)(to - from)];
+        if(layout == Layout.COLUMN_LAYOUT) {
+            System.arraycopy(data, (int)(col * rows + from), result, 0, result.length);
+        }
+        else {
+            for (int i = 0; i < result.length; i++) {
+                int row = (int)from+i;
+                result[i] = data[(int)(row * cols + col)];
+            }
+        }
+        return new DVector(result.length, result);
     }
 
     @Override
@@ -258,9 +269,16 @@ public class DMatrix extends AbstractMatrix implements Matrix, Serializable {
 
     @Override
     public Matrix assignColumn(final long col, final Vector v) {
-        Preconditions.checkNotNull(numRows() == v.length());
-        for (int i = 0; i < v.length(); ++i)
-            data[Utils.getPos(i, col, this)] = v.get(i);
+        double[] vData = v.toArray();
+        Preconditions.checkArgument(rows == vData.length);
+        if(layout == Layout.COLUMN_LAYOUT) {
+            System.arraycopy(v.toArray(), 0, data, (int)(col * rows), vData.length);
+        }
+        else {
+            for (int row = 0; row < rows; row++) {
+                data[(int)(row * cols + col)] = vData[row];
+            }
+        }
         return this;
     }
 

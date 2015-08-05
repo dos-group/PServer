@@ -52,7 +52,7 @@ public class Key implements Serializable, Comparable<Key> {
                                    final MachineDescriptor machine) {
 
             Preconditions.checkArgument(partitionIndex >= 0);
-            Preconditions.checkArgument(partitionSize > 0);
+            //Preconditions.checkArgument(partitionSize > 0);
             Preconditions.checkArgument(globalOffset >= 0);
             Preconditions.checkArgument(segmentBaseIndex >= 0);
             Preconditions.checkArgument(segmentSize >= 0 && segmentSize % ByteBufferValue.DEFAULT_ALIGNMENT_SIZE == 0);
@@ -106,8 +106,8 @@ public class Key implements Serializable, Comparable<Key> {
     // Public Methods.
     // ---------------------------------------------------
 
-    public PartitionDescriptor getPartitionDescriptor(final int instanceID) {
-        return partitionDirectory.get(instanceID);
+    public PartitionDescriptor getPartitionDescriptor(final int nodeID) {
+        return partitionDirectory.get(nodeID);
     }
 
     public void addPartitionDirectoryEntry(final int index, final PartitionDescriptor pd) {

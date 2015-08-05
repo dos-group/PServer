@@ -22,7 +22,7 @@ public final class ClusterSimulator implements Deactivatable {
     // Constants.
     // ---------------------------------------------------
 
-    private final static int CLUSTER_SIMULATOR_BOOTSTRAP_TIME = 5000; // in ms
+    private final static int CLUSTER_SIMULATOR_BOOTSTRAP_TIME = 6000; // in ms
 
     // ---------------------------------------------------
     // Fields.

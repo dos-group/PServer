@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.examples.playground;
+package de.tuberlin.pserver.examples.playground.primitives;
 
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
@@ -28,14 +28,14 @@ public class PullRequestPrimitiveTestJob extends PServerJob {
                 e.printStackTrace();
             }
 
-            if (ctx.instanceID == 0) {
+            if (instanceContext.jobContext.nodeID == 0) {
 
                 final Object[] results = dataManager.pullRequest("pull-request-value");
 
                 for (final Object o : results)
                     LOG.info(o == null ? "null" : o.toString());
 
-                LOG.info("EXECUTE");
+                LOG.info("------------");
             }
         }
     }

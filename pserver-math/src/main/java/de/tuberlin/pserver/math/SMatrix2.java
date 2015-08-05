@@ -1,9 +1,9 @@
 package de.tuberlin.pserver.math;
 
-
 import de.tuberlin.pserver.math.stuff.Utils;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.NotImplementedException;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,13 +13,12 @@ public class SMatrix2 extends AbstractMatrix {
     // Inner Classes.
     // ---------------------------------------------------
 
-    public static final class MtxPos {
+    public final class MtxPos implements Serializable {
 
         public final long row;
 
         public final long col;
 
-        private final HashCodeBuilder hcb = new HashCodeBuilder();
 
         public MtxPos(final long row, final long col) {
             this.row = row;
@@ -28,7 +27,8 @@ public class SMatrix2 extends AbstractMatrix {
 
         @Override
         public int hashCode() {
-            return hcb.append(row).append(col).build();
+        //    return new HashCodeBuilder().append(row).append(col).build();
+            return (int) (row * cols + col);
         }
 
         @Override
@@ -68,17 +68,21 @@ public class SMatrix2 extends AbstractMatrix {
 
     @Override
     public void set(long row, long col, double value) {
-        data.put(new MtxPos(row, col), value);
+        if(value == 0.0) {
+            data.remove(new MtxPos(row, col));
+        } else {
+            data.put(new MtxPos(row, col), value);
+        }
     }
 
     @Override
     public double atomicGet(long row, long col) {
-        return 0;
+        throw new NotImplementedException("not impl");
     }
 
     @Override
     public void atomicSet(long row, long col, double value) {
-
+        throw new NotImplementedException("not impl");
     }
 
     @Override
@@ -88,7 +92,7 @@ public class SMatrix2 extends AbstractMatrix {
 
     @Override
     public void setArray(double[] data) {
-
+        throw new NotImplementedException("not impl");
     }
 
     @Override
@@ -102,58 +106,93 @@ public class SMatrix2 extends AbstractMatrix {
     }
 
     @Override
+    public Matrix add(Matrix B) {
+        throw new NotImplementedException("not impl");
+    }
+
+    @Override
+    public Matrix sub(Matrix B) {
+        throw new NotImplementedException("not impl");
+    }
+
+    @Override
+    public Matrix mul(Matrix B) {
+        throw new NotImplementedException("not impl");
+    }
+
+    @Override
+    public Matrix scale(double alpha) {
+        throw new NotImplementedException("not impl");
+    }
+
+    @Override
+    public Matrix transpose() {
+        throw new NotImplementedException("not impl");
+    }
+
+    @Override
     public Vector rowAsVector() {
-        return null;
+        throw new NotImplementedException("not impl");
     }
 
     @Override
     public Vector rowAsVector(long row) {
-        return null;
+        throw new NotImplementedException("not impl");
     }
 
     @Override
     public Vector rowAsVector(long row, long from, long to) {
-        return null;
+        throw new NotImplementedException("not impl");
     }
 
     @Override
     public Vector colAsVector() {
-        return null;
+        throw new NotImplementedException("not impl");
     }
 
     @Override
     public Vector colAsVector(long col) {
-        return null;
+        throw new NotImplementedException("not impl");
     }
 
     @Override
     public Vector colAsVector(long col, long from, long to) {
-        return null;
+        throw new NotImplementedException("not impl");
     }
 
     @Override
     public Matrix assign(Matrix v) {
-        return null;
+        throw new NotImplementedException("not impl");
     }
 
     @Override
     public Matrix assign(double v) {
-        return null;
+        throw new NotImplementedException("not impl");
     }
 
     @Override
     public Matrix assignRow(long row, Vector v) {
-        return null;
+        throw new NotImplementedException("not impl");
     }
 
     @Override
     public Matrix assignColumn(long col, Vector v) {
-        return null;
+        throw new NotImplementedException("not impl");
     }
 
     @Override
     public Matrix copy() {
-        return null;
+        throw new NotImplementedException("not impl");
+    }
+
+    @Override
+    public Matrix applyOnNonZeroElements(MatrixFunctionPos1Arg mf) {
+        for (Map.Entry<MtxPos, Double> ele : data.entrySet()) {
+            long row = ele.getKey().row;
+            long col = ele.getKey().col;
+            ele.setValue(mf.operation(row, col, ele.getValue()));
+        }
+        return this;
     }
 
     public static class SMatrix2RowIterator extends AbstractRowIterator {

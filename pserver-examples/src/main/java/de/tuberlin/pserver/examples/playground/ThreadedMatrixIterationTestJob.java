@@ -25,7 +25,7 @@ public final class ThreadedMatrixIterationTestJob extends PServerJob {
 
         final Matrix.RowIterator iter = dataManager.createThreadPartitionedRowIterator(data);
 
-        if (ctx.instanceID == 0 && ctx.threadID == 1) {
+        if (instanceContext.jobContext.nodeID == 0 && instanceContext.instanceID == 1) {
             final DecimalFormat numberFormat = new DecimalFormat("0.000");
             while (iter.hasNextRow()) {
                 iter.nextRow();

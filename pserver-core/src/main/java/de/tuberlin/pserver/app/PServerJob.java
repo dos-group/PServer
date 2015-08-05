@@ -16,9 +16,9 @@ public abstract class PServerJob extends EventDispatcher {
 
     protected static final Logger LOG = LoggerFactory.getLogger(PServerJob.class);
 
-    protected PServerContext ctx;
-
     protected DataManager dataManager;
+
+    public InstanceContext instanceContext;
 
     // ---------------------------------------------------
     // Constructors.
@@ -32,16 +32,16 @@ public abstract class PServerJob extends EventDispatcher {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void injectContext(final PServerContext ctx) {
-        this.ctx = Preconditions.checkNotNull(ctx);
-        this.dataManager = ctx.dataManager;
+    public void injectContext(final InstanceContext ctx) {
+        this.instanceContext = Preconditions.checkNotNull(ctx);
+        this.dataManager = ctx.jobContext.dataManager;
     }
 
-    public PServerContext getJobContext() { return ctx; }
+    public InstanceContext getInstanceContext() { return instanceContext; }
 
     public void result(final Serializable... obj) {
-        if (ctx.threadID == 0) {
-            dataManager.setResults(ctx.jobUID, Arrays.asList(obj));
+        if (instanceContext.instanceID == 0) {
+            dataManager.setResults(instanceContext.jobContext.jobUID, Arrays.asList(obj));
         }
     }
 

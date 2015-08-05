@@ -128,7 +128,7 @@ zookeeper-setup)
 		WIPE=1
 		if [ $WIPE -eq 1  ]; then
 			echo "[NOTICE][$(hostname)] Wiping zookeeper installation ..."
-			# stop possibly running zookeeper instance first
+			# stop possibly running zookeeper node first
 			if [ -f "${ZOOKEEPER_DATA_DIR}/zookeeper_server.pid" ]; then
 				echo "[NOTICE][$(hostname)] Zookeeper pid exists. Stopping ..."
 				${ACTUAL_ZOOKEEPER_INSTALL_DIR}/bin/zkServer.sh stop 2>&1 | xargs -L 1 -I '{}' echo [NOTICE][$(hostname)] {}
