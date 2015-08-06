@@ -9,7 +9,7 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
-import de.tuberlin.pserver.playground.exp1.tuples.Tuple2;
+import de.tuberlin.pserver.math.tuples.Tuple2;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
