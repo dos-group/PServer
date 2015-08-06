@@ -15,7 +15,6 @@ import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Random;
 
@@ -23,32 +22,32 @@ import java.util.Random;
 public class TSNEJob_MC_DSL extends JobExecutable {
 
     // ---------------------------------------------------
+    // Constants.
+    // ---------------------------------------------------
+
+    private static final boolean DEBUG = true;
+
+    private static final String INPUT_MATRIX = "/Users/Chris/Downloads/mnist_10_X.csv";
+    private static final String Y_INIT_MATRIX = "/Users/Chris/Downloads/mnist_10_initY.csv";
+
+    private static final int INPUT_ROWS = 10;
+    private static final int INPUT_COLS = 28 * 28;
+    private static final int EMBEDDING_DIMENSION = 2;
+
+    private static final int NUM_EPOCHS = 200;
+    private static final double PERPLEXITY = 2.0;
+    private static final double LEARNING_RATE = 350.0;
+    private static final double EARLY_EXAGGERATION = 1.0;
+
+    private static final double INITIAL_MOMENTUM = 0.5;
+    private static final double FINAL_MOMENTUM = 0.8;
+    private static final double MIN_GAIN = 0.01;
+    private static final double TOL = 1e-5;
+
+    // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    private final boolean DEBUG = true;
-
-    private final String INPUT_MATRIX = "/Users/Chris/Downloads/mnist_10_X.csv";
-    private final String Y_INIT_MATRIX = "/Users/Chris/Downloads/mnist_10_initY.csv";
-    private final String OUTPUT_MATRIX = "/Users/Chris/Downloads/pserver_mnist_result.csv";
-
-    private final Integer INPUT_ROWS = 10;
-    private final Integer INPUT_COLS = 28*28;
-    private final Integer EMBEDDING_DIMENSION = 2;
-
-    // Algorithm parameters
-
-    private final int NUM_EPOCHS = 200;
-    private final double PERPLEXITY = 2.0;
-    private final double LEARNING_RATE = 350.0;
-    private final double EARLY_EXAGGERATION = 1.0;
-
-    private final double INITIAL_MOMENTUM = 0.5;
-    private final double FINAL_MOMENTUM = 0.8;
-    private final double MIN_GAIN = 0.01;
-    private final double TOL = 1e-5;
-
-    private Matrix X;
     private Matrix P;
     private Matrix Q;
     private Matrix Y;
@@ -91,7 +90,7 @@ public class TSNEJob_MC_DSL extends JobExecutable {
 
     @Override
     public void compute() {
-        X = dataManager.getObject(INPUT_MATRIX);
+        Matrix x = dataManager.getObject(INPUT_MATRIX);
 
         if (DEBUG) {
             Y = dataManager.getObject(Y_INIT_MATRIX);
@@ -99,13 +98,13 @@ public class TSNEJob_MC_DSL extends JobExecutable {
             Y = dataManager.getObject("Y");
         }
 
-        P = binarySearch(X, TOL, PERPLEXITY);
+        P = binarySearch(x, TOL, PERPLEXITY);
         P = P.add(P.transpose());
 
         // ---------------------------------------------------
         // (1) GLOBAL OPERATION!!!
         // ---------------------------------------------------
-        double sumP = P.aggregateRows(f -> f.sum()).sum();
+        double sumP = P.aggregateRows(Vector::sum).sum();
 
         P = P.scale(1 / sumP);
 
@@ -162,7 +161,7 @@ public class TSNEJob_MC_DSL extends JobExecutable {
 
                     Y_squared.assign( Y_squared.applyOnElements(Y, e -> Math.pow(e, 2)) );
 
-                    final Vector sum_Y = Y_squared.aggregateRows(f -> f.sum());
+                    final Vector sum_Y = Y_squared.aggregateRows(Vector::sum);
 
                     final Matrix num = Y.mul( Y.transpose() )
                             .scale(-2)
@@ -173,7 +172,7 @@ public class TSNEJob_MC_DSL extends JobExecutable {
 
                     num.assign(num.zeroDiagonal());
 
-                    final double sumNum = num.aggregateRows(f -> f.sum()).sum();
+                    final double sumNum = num.aggregateRows(Vector::sum).sum();
 
                     Q.assign(num.copy().scale(1.0 / sumNum));
 
@@ -290,7 +289,7 @@ public class TSNEJob_MC_DSL extends JobExecutable {
 
         // compute the distances between all x_i
         Xsquared = Xsquared.applyOnElements(X, e -> Math.pow(e, 2));
-        Vector sumX = Xsquared.aggregateRows(f -> f.sum());
+        Vector sumX = Xsquared.aggregateRows(Vector::sum);
 
         Matrix D = X.mul(X.transpose()).scale(-2).addVectorToRows(sumX).transpose()
                 .addVectorToRows(sumX);
@@ -370,26 +369,23 @@ public class TSNEJob_MC_DSL extends JobExecutable {
     public static void main(final String[] args) {
 
         final List<List<Serializable>> res = Lists.newArrayList();
-        PrintWriter writer = null;
 
         PServerExecutor.LOCAL
                 .run(TSNEJob_MC_DSL.class)
                 .results(res)
                 .done();
 
-        try {
-            writer = new PrintWriter("/Users/Chris/Downloads/pserver_mnist.csv", "UTF-8");
-            final DecimalFormat numberFormat = new DecimalFormat("0.000");
+        try (PrintWriter writer = new PrintWriter("/Users/Chris/Downloads/pserver_mnist.csv", "UTF-8")) {
+
             Matrix R = (Matrix) res.get(0).get(0);
             for (int i = 0; i < R.numRows(); ++i) {
                 for (int j = 0; j < R.numCols(); ++j) {
                     writer.println(i + "," + j + "," + R.get(i, j));
                 }
             }
-        }
-        catch (Exception e) {}
-        finally {
-            writer.close();
+
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
         }
     }
 }
