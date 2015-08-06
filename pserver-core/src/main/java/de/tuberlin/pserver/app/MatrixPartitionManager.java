@@ -187,11 +187,12 @@ public final class MatrixPartitionManager {
                      final RecordFormat recordFormat,
                      final Matrix.Format matrixFormat,
                      final Matrix.Layout matrixLayout,
-                     final IMatrixPartitioner matrixPartitioner) {
+                     final IMatrixPartitioner matrixPartitioner,
+                     final JobContext jobContext) {
 
         matrixLoadTasks.put(filePath, new MatrixLoadTask(filePath, recordFormat, rows, cols,
                 matrixFormat, matrixLayout, matrixPartitioner));
-        fileLoadingBarrier.put(filePath, new AtomicInteger(dataManager.getNodeIDs().length));
+        fileLoadingBarrier.put(filePath, new AtomicInteger(jobContext.numOfNodes));
     }
 
     public void loadFilesIntoDHT() {

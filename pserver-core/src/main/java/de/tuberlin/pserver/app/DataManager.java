@@ -36,7 +36,7 @@ import java.util.stream.IntStream;
 public class DataManager extends EventDispatcher {
 
     // ---------------------------------------------------
-    // Inner Classes.
+    // Constants.
     // ---------------------------------------------------
 
     public static enum CallType {
@@ -45,6 +45,10 @@ public class DataManager extends EventDispatcher {
 
         ASYNC
     }
+
+    // ---------------------------------------------------
+    // Inner Classes.
+    // ---------------------------------------------------
 
     public static abstract class DataEventHandler implements IEventHandler {
 
@@ -231,17 +235,20 @@ public class DataManager extends EventDispatcher {
     // ---------------------------------------------------
 
     public void loadAsMatrix(final String filePath, long rows, long cols) {
+
         loadAsMatrix(filePath, rows, cols, RecordFormat.DEFAULT, Matrix.Format.DENSE_MATRIX, Matrix.Layout.ROW_LAYOUT,
                 new MatrixByRowPartitioner(nodeID, nodeIDs.length, rows, cols));
     }
 
     public void loadAsMatrix(final String filePath, long rows, long cols, RecordFormat recordFormat) {
+
         loadAsMatrix(filePath, rows, cols, recordFormat, Matrix.Format.DENSE_MATRIX, Matrix.Layout.ROW_LAYOUT,
                 new MatrixByRowPartitioner(nodeID, nodeIDs.length, rows, cols));
     }
 
     public void loadAsMatrix(final String filePath, long rows, long cols, RecordFormat recordFormat,
                              Matrix.Format matrixFormat, Matrix.Layout matrixLayout) {
+
         loadAsMatrix(filePath, rows, cols, recordFormat, matrixFormat, matrixLayout,
                 new MatrixByRowPartitioner(nodeID, nodeIDs.length, rows, cols));
     }
@@ -250,7 +257,8 @@ public class DataManager extends EventDispatcher {
                              Matrix.Format matrixFormat, Matrix.Layout matrixLayout,
                              IMatrixPartitioner matrixPartitioner) {
 
-        matrixPartitionManager.load(filePath, rows, cols, recordFormat, matrixFormat, matrixLayout, matrixPartitioner);
+        final InstanceContext instanceContext = getInstanceContext();
+        matrixPartitionManager.load(filePath, rows, cols, recordFormat, matrixFormat, matrixLayout, matrixPartitioner, instanceContext.jobContext);
     }
 
     // ---------------------------------------------------
@@ -328,8 +336,6 @@ public class DataManager extends EventDispatcher {
             }
         }
     }
-
-    // ---------------------------------------------------
 
     public void registerPullRequestHandler(final String name, final PullRequestHandler handler) {
         Preconditions.checkNotNull(name);
@@ -524,10 +530,6 @@ public class DataManager extends EventDispatcher {
     // Public Methods.
     // ---------------------------------------------------
 
-    public IConfig getConfig() {
-        return config;
-    }
-
     public void setResults(final UUID jobUID, final List<Serializable> results) {
         Preconditions.checkNotNull(jobUID);
         Preconditions.checkNotNull(results);
@@ -538,16 +540,6 @@ public class DataManager extends EventDispatcher {
         Preconditions.checkNotNull(jobUID);
         return resultObjects.get(jobUID);
     }
-
-    public int getNodeID() { return nodeID; }
-
-    public int[] getRemoteNodeIDs() { return remoteNodeIDs; }
-
-    public int[] getNodeIDs() { return nodeIDs; }
-
-    public int getNumberOfNodes() { return nodeIDs.length; }
-
-    // ---------------------------------------------------
 
     public void postProloguePhase(final InstanceContext ctx) {
         Preconditions.checkNotNull(ctx);

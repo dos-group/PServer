@@ -122,7 +122,7 @@ public class GloVeJobAdaGradPull_MC extends PServerJob {
         B       = dataManager.getObject("B");
         GradSqB = dataManager.getObject("GradSqB");
 
-        int numInstances = dataManager.getNumberOfNodes();
+        int numInstances = instanceContext.jobContext.numOfNodes;
 
         int offset = (NUM_WORDS_IN_COOC_MATRIX / numInstances * instanceContext.jobContext.nodeID)
                 + (NUM_WORDS_IN_COOC_MATRIX / numInstances / instanceContext.jobContext.numOfInstances) * instanceContext.instanceID;

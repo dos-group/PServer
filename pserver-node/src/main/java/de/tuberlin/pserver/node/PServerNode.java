@@ -178,21 +178,20 @@ public final class PServerNode extends EventDispatcher {
     private void executeLifecycle(final PServerJob job) {
         try {
 
-            if (job.getInstanceContext().instanceID == 0) {
-                {
-                    LOG.info("Enter " + job.instanceContext.jobContext.simpleClassName + " prologue phase.");
+            if (job.instanceContext.instanceID == 0) {
 
-                    final long start = System.currentTimeMillis();
+                LOG.info("Enter " + job.instanceContext.jobContext.simpleClassName + " prologue phase.");
 
-                    job.prologue();
+                final long start = System.currentTimeMillis();
 
-                    dataManager.postProloguePhase(job.getInstanceContext());
+                job.prologue();
 
-                    final long end = System.currentTimeMillis();
+                dataManager.postProloguePhase(job.instanceContext);
 
-                    LOG.info("Leave " + job.instanceContext.jobContext.simpleClassName
-                            + " prologue phase [duration: " + (end - start) + " ms].");
-                }
+                final long end = System.currentTimeMillis();
+
+                LOG.info("Leave " + job.instanceContext.jobContext.simpleClassName
+                        + " prologue phase [duration: " + (end - start) + " ms].");
 
                 Thread.sleep(5000); // TODO: Not very elegant...
 
@@ -214,19 +213,18 @@ public final class PServerNode extends EventDispatcher {
                         " computation phase [duration: " + (end - start) + " ms].");
             }
 
-            if (job.getInstanceContext().instanceID == 0) {
-                {
-                    LOG.info("Enter " + job.instanceContext.jobContext.simpleClassName + " epilogue phase.");
+            if (job.instanceContext.instanceID == 0) {
 
-                    final long start = System.currentTimeMillis();
+                LOG.info("Enter " + job.instanceContext.jobContext.simpleClassName + " epilogue phase.");
 
-                    job.epilogue();
+                final long start = System.currentTimeMillis();
 
-                    final long end = System.currentTimeMillis();
+                job.epilogue();
 
-                    LOG.info("Leave " + job.instanceContext.jobContext.simpleClassName
-                            + " epilogue phase [duration: " + (end - start) + " ms].");
-                }
+                final long end = System.currentTimeMillis();
+
+                LOG.info("Leave " + job.instanceContext.jobContext.simpleClassName
+                        + " epilogue phase [duration: " + (end - start) + " ms].");
             }
 
             jobEndBarrier.countDown();

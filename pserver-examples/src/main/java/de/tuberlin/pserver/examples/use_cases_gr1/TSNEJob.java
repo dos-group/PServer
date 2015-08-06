@@ -377,7 +377,7 @@ public class TSNEJob extends PServerJob {
 
         P.set(index, 0.0);
 
-        // execute over all elements i != j
+        // executePartitioned over all elements i != j
         for (long i=0; i < P.length(); ++i) {
             if (i != index) {
                 P.set(i, Math.exp(-1 * d.get(i) * beta));
