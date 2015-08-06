@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.utils;
+package de.tuberlin.pserver.commons.ds;
 
 // by R. Sedgewick...the algorithm dude...
 

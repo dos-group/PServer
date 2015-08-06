@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.app.memmng;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.utils.IntervalTree;
+import de.tuberlin.pserver.commons.ds.IntervalTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

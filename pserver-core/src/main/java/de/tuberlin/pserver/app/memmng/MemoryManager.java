@@ -2,7 +2,7 @@ package de.tuberlin.pserver.app.memmng;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.commons.UnsafeOp;
+import de.tuberlin.pserver.commons.unsafe.UnsafeOp;
 import de.tuberlin.pserver.core.config.IConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

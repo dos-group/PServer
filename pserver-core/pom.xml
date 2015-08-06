@@ -25,6 +25,10 @@
         <!-- PROJECT DEPENDENCIES -->
         <dependency>
             <groupId>de.tuberlin.pserver</groupId>
+            <artifactId>pserver-commons</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.tuberlin.pserver</groupId>
             <artifactId>pserver-math</artifactId>
         </dependency>
 
@@ -43,10 +47,6 @@
             <artifactId>config</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
         </dependency>
@@ -54,10 +54,6 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.esotericsoftware</groupId>
-            <artifactId>kryo</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.zookeeper</groupId>

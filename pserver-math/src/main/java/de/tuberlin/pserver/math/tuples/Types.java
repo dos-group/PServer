@@ -2,7 +2,7 @@ package de.tuberlin.pserver.math.tuples;
 
 import com.google.common.base.Preconditions;
 
-import de.tuberlin.pserver.commons.UnsafeOp;
+import de.tuberlin.pserver.commons.unsafe.UnsafeOp;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 

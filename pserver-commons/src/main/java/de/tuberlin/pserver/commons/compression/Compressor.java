@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.commons;
+package de.tuberlin.pserver.commons.compression;
 
 import com.google.common.base.Preconditions;
 import net.jpountz.lz4.LZ4Compressor;

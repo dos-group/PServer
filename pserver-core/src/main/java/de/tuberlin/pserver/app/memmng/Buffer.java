@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.app.memmng;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.commons.Compressor;
-import de.tuberlin.pserver.commons.UnsafeOp;
+import de.tuberlin.pserver.commons.compression.Compressor;
+import de.tuberlin.pserver.commons.unsafe.UnsafeOp;
 
 import java.io.Serializable;
 

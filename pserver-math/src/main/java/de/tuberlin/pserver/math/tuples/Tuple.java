@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.math.tuples;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.commons.UnsafeOp;
+import de.tuberlin.pserver.commons.unsafe.UnsafeOp;
 
 import java.io.Serializable;
 import java.util.Iterator;

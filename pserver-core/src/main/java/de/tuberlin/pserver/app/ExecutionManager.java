@@ -2,7 +2,7 @@ package de.tuberlin.pserver.app;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.utils.nbhm.NonBlockingHashMap;
+import de.tuberlin.pserver.commons.hashtable.NonBlockingHashMap;
 
 import java.util.Map;
 import java.util.UUID;

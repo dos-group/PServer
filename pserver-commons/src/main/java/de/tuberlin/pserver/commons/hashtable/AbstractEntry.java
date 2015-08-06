@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.utils.nbhm;
+package de.tuberlin.pserver.commons.hashtable;
 import java.util.Map;
 
 /*

@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.app.memmng;
 
-import de.tuberlin.pserver.utils.IntervalTree;
+import de.tuberlin.pserver.commons.ds.IntervalTree;
 
 final class LockToken {
 

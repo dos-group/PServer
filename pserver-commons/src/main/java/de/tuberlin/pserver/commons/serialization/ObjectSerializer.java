@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.utils;
+package de.tuberlin.pserver.commons.serialization;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;

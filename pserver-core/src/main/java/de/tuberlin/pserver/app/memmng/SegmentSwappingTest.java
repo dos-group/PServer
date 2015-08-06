@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.app.memmng;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.commons.Compressor;
+import de.tuberlin.pserver.commons.compression.Compressor;
 import de.tuberlin.pserver.core.common.Deactivatable;
 import org.apache.commons.lang3.tuple.Pair;
 

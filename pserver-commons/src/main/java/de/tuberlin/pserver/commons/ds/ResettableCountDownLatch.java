@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.utils;
+package de.tuberlin.pserver.commons.ds;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;

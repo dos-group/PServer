@@ -11,7 +11,7 @@ import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.ml.common.LabeledVector;
 import de.tuberlin.pserver.ml.models.GeneralLinearModel;
 import de.tuberlin.pserver.ml.optimization.*;
-import de.tuberlin.pserver.utils.GsonUtils;
+import de.tuberlin.pserver.commons.json.GsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

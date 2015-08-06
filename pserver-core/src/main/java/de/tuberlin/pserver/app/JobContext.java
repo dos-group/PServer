@@ -5,7 +5,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.dht.DHT;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.utils.ResettableCountDownLatch;
+import de.tuberlin.pserver.commons.ds.ResettableCountDownLatch;
 
 import java.util.*;
 import java.util.concurrent.CyclicBarrier;

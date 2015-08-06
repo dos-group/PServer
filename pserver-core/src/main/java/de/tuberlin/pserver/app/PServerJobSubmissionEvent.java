@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
-import de.tuberlin.pserver.utils.GsonUtils;
+import de.tuberlin.pserver.commons.json.GsonUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Collections;
