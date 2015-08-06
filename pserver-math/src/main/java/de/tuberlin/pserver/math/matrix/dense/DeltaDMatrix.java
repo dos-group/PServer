@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.math.matrix;
+package de.tuberlin.pserver.math.matrix.dense;
 
 public class DeltaDMatrix {
 
