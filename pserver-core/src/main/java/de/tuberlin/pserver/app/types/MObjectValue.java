@@ -1,9 +1,9 @@
 package de.tuberlin.pserver.app.types;
 
 import de.tuberlin.pserver.app.dht.valuetypes.AbstractBufferValue;
-import de.tuberlin.pserver.math.MObject;
+import de.tuberlin.pserver.math.SharedObject;
 
-public class MObjectValue<T extends MObject> extends AbstractBufferValue {
+public class MObjectValue<T extends SharedObject> extends AbstractBufferValue {
 
     // ---------------------------------------------------
     // Fields.
@@ -32,9 +32,9 @@ public class MObjectValue<T extends MObject> extends AbstractBufferValue {
 
     @Override public void decompress() { throw new UnsupportedOperationException(); }
 
-    @Override public void allocateMemory(int instanceID) {}
+    @Override public void allocateMemory(int nodeID) {}
 
-    @Override public Segment[] getSegments(int[] segmentIndices, int instanceID) { throw new UnsupportedOperationException(); }
+    @Override public Segment[] getSegments(int[] segmentIndices, int nodeID) { throw new UnsupportedOperationException(); }
 
-    @Override public void putSegments(Segment[] segments, int instanceID) { throw new UnsupportedOperationException(); }
+    @Override public void putSegments(Segment[] segments, int nodeID) { throw new UnsupportedOperationException(); }
 }

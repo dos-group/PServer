@@ -3,6 +3,8 @@ package de.tuberlin.pserver.math;
 import de.tuberlin.pserver.math.generators.BufferGenerator;
 import de.tuberlin.pserver.math.generators.MatrixGenerator;
 import de.tuberlin.pserver.math.generators.VectorGenerator;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.vector.Vector;
 import org.junit.Test;
 
 public class DMatrixTests {

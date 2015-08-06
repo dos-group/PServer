@@ -57,12 +57,12 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
  * iterators are designed to be used by only one thread at a time.
  *
  * <p> Very full tables, or tables with high reprobe rates may trigger an
- * internal resize operation to move into a larger table.  Resizing is not
+ * internal resize apply to move into a larger table.  Resizing is not
  * terribly expensive, but it is not free either; during resize operations
  * table throughput may drop somewhat.  All threads that visit the table
  * during a resize will 'help' the resizing but will still be allowed to
- * complete their operation before the resize is finished (i.e., a simple
- * 'get' operation on a million-entry table undergoing resizing will not need
+ * complete their apply before the resize is finished (i.e., a simple
+ * 'get' apply on a million-entry table undergoing resizing will not need
  * to block until the entire million entries are copied).
  *
  * <p>This class and its views and iterators implement all of the
@@ -387,7 +387,7 @@ public class NonBlockingHashMapLong<TypeV>
   }
 
   // --- help_copy -----------------------------------------------------------
-  // Help along an existing resize operation.  This is just a fast cut-out
+  // Help along an existing resize apply.  This is just a fast cut-out
   // wrapper, to encourage inlining for the fast no-copy-in-progress case.  We
   // always help the top-most table copy, even if there are nested table
   // copies in progress.
@@ -426,7 +426,7 @@ public class NonBlockingHashMapLong<TypeV>
 
     // ---
     // New mappings, used during resizing.
-    // The 'next' CHM - created during a resize operation.  This represents
+    // The 'next' CHM - created during a resize apply.  This represents
     // the new table being copied from the old one.  It's the volatile
     // variable that is read as we cross from one table to the next, to get
     // the required memory orderings.  It monotonically transits from null to
@@ -716,7 +716,7 @@ public class NonBlockingHashMapLong<TypeV>
         }
       }
 
-      // Last (re)partitionSize operation was very recent?  Then double again; slows
+      // Last (re)partitionSize apply was very recent?  Then double again; slows
       // down resize operations for tables subject to a high key churn rate.
       long tm = System.currentTimeMillis();
       if( newsz <= oldlen &&    // New table would shrink or hold steady?
@@ -798,7 +798,7 @@ public class NonBlockingHashMapLong<TypeV>
       AtomicLongFieldUpdater.newUpdater(CHM.class, "_copyDone");
 
     // --- help_copy_impl ----------------------------------------------------
-    // Help along an existing resize operation.  We hope its the top-level
+    // Help along an existing resize apply.  We hope its the top-level
     // copy (it was when we started) but this CHM might have been promoted out
     // of the top position.
     private final void help_copy_impl( final boolean copy_all ) {
@@ -862,7 +862,7 @@ public class NonBlockingHashMapLong<TypeV>
     // typically because the caller has found a Prime, and has not yet read
     // the _newchm volatile - which must have changed from null-to-not-null
     // before any Prime appears.  So the caller needs to read the _newchm
-    // field to retry his operation in the new table, but probably has not
+    // field to retry his apply in the new table, but probably has not
     // read it yet.
     private final CHM copy_slot_and_check( int idx, Object should_help ) {
       // We're only here because the caller saw a Prime, which implies a

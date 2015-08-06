@@ -6,7 +6,11 @@ import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.math.*;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.MatrixBuilder;
+import de.tuberlin.pserver.math.utils.DoubleFunction2Arg;
+import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.vector.VectorBuilder;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -161,8 +165,8 @@ public class GloVeJobAdaGrad extends PServerJob {
         GradSq = dataManager.getObject("GradSq");
         GradSqB = dataManager.getObject("GradSqB");
 
-        int numInstances = dataManager.getNumberOfInstances();
-        int offset = NUM_WORDS_IN_COOC_MATRIX / numInstances * ctx.instanceID;
+        int numInstances = instanceContext.jobContext.numOfNodes;
+        int offset = NUM_WORDS_IN_COOC_MATRIX / numInstances * instanceContext.jobContext.nodeID;
 
         int iterations = 0;
 
@@ -338,10 +342,10 @@ public class GloVeJobAdaGrad extends PServerJob {
         significantDeltas.assign((v1) -> 0);   // TODO: this can be optimized...
     }
 
-    private void applyOnColumnVectorAndSetDeltaFlagIfSignificant(Matrix m, Matrix deltas, Long col, Vector v, Vector.VectorFunction2Arg func) {
+    private void applyOnColumnVectorAndSetDeltaFlagIfSignificant(Matrix m, Matrix deltas, Long col, Vector v, DoubleFunction2Arg func) {
         for (int i = 0; i < m.numRows(); i++) {
             double oldVal = m.get(i, col);
-            double newVal = func.operation(oldVal, v.get(i));
+            double newVal = func.apply(oldVal, v.get(i));
             if (Math.abs(newVal - oldVal) / oldVal > MATRIX_TRANSMIT_THRESHOLD) {
                 deltas.set(i, col, 1);
             }
@@ -349,9 +353,9 @@ public class GloVeJobAdaGrad extends PServerJob {
         }
     }
 
-    private void applyOnIndexAndSetDeltaFlagIfSignificant(Vector v, Vector deltas, long idx, double val, Vector.VectorFunction2Arg func) {
+    private void applyOnIndexAndSetDeltaFlagIfSignificant(Vector v, Vector deltas, long idx, double val, DoubleFunction2Arg func) {
         double oldVal = v.get(idx);
-        double newVal = func.operation(oldVal, val);
+        double newVal = func.apply(oldVal, val);
         if (Math.abs(newVal - oldVal) / oldVal > MATRIX_TRANSMIT_THRESHOLD) {
             deltas.set(idx, 1);
         }
@@ -369,7 +373,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         }
 
         @Override
-        public void handleDataEvent(int srcInstanceID, Object value) {
+        public void handleDataEvent(int srcNodeID, Object value) {
             lock.lock();
             ((Matrix) value).applyOnNonZeroElements((row, col, val) -> {  // sending a 0 in the delta matrix means no significant change
                 double avgVal = (val + m.get(row, col)) / 2.0;
@@ -392,7 +396,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         }
 
         @Override
-        public void handleDataEvent(int srcInstanceID, Object value) {
+        public void handleDataEvent(int srcNodeID, Object value) {
             lock.lock();
             Iterator<Vector.Element> iterator = ((Vector) value).iterateNonZero();
             while(iterator.hasNext()) {
@@ -423,7 +427,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         }
 
         @Override
-        public void handleDataEvent(int srcInstanceID, Object value) {
+        public void handleDataEvent(int srcNodeID, Object value) {
             lock.lock();
             m.applyOnElements((Matrix) value, (v1, v2) -> (v1 + v2) / 2.0);
             lock.unlock();
@@ -441,7 +445,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         }
 
         @Override
-        public void handleDataEvent(int srcInstanceID, Object value) {
+        public void handleDataEvent(int srcNodeID, Object value) {
             lock.lock();
             v.assign((Vector) value, (v1, v2) -> (v1 + v2) / 2.0);
             lock.unlock();

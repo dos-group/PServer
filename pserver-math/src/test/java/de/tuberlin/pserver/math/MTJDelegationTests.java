@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.math;
 
 import de.tuberlin.pserver.math.generators.MatrixGenerator;
+import de.tuberlin.pserver.math.matrix.Matrix;
 import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.sparse.FlexCompColMatrix;
 import org.junit.Test;

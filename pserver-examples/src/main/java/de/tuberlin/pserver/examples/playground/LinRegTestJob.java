@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.examples.ml.GenerateLocalTestData;
-import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.ml.algorithms.linreg.LinRegAlgorithm;
 import de.tuberlin.pserver.ml.algorithms.linreg.LinRegModel;
 
@@ -29,13 +29,13 @@ public final class LinRegTestJob extends PServerJob {
     @Override
     public void prologue() {
         dataManager.loadAsMatrix("datasets/demo_dataset.csv", GenerateLocalTestData.ROWS_DEMO_DATASET, GenerateLocalTestData.COLS_DEMO_DATASET);
-        model.createModel(ctx);
+        model.createModel(instanceContext);
     }
 
     @Override
     public void compute() {
         final Matrix data = dataManager.getObject("demo_dataset.csv");
-        linreg = new LinRegAlgorithm(ctx);
+        linreg = new LinRegAlgorithm(instanceContext);
         linreg.register();
         linreg.train(model, data);
         linreg.unregister();

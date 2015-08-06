@@ -3,7 +3,7 @@ package de.tuberlin.pserver.examples.playground;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.examples.ml.GenerateLocalTestData;
-import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix;
 
 import java.text.DecimalFormat;
 
@@ -25,7 +25,7 @@ public final class ThreadedMatrixIterationTestJob extends PServerJob {
 
         final Matrix.RowIterator iter = dataManager.createThreadPartitionedRowIterator(data);
 
-        if (ctx.instanceID == 0 && ctx.threadID == 1) {
+        if (instanceContext.jobContext.nodeID == 0 && instanceContext.instanceID == 1) {
             final DecimalFormat numberFormat = new DecimalFormat("0.000");
             while (iter.hasNextRow()) {
                 iter.nextRow();

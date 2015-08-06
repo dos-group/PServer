@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.ml.algorithms.linreg;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.app.PServerContext;
-import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.app.InstanceContext;
+import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.ml.algorithms.MLAlgorithm;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.ml.optimization.SGD.SGDOptimizer;
@@ -27,7 +27,7 @@ public class LinRegAlgorithm extends MLAlgorithm<LinRegModel> {
     // Constructor.
     // ---------------------------------------------------
 
-    public LinRegAlgorithm(final PServerContext ctx) {
+    public LinRegAlgorithm(final InstanceContext ctx) {
         super(ctx);
 
         final PredictionFunction predictionFunction = new PredictionFunction.LinearPredictionFunction();
@@ -50,7 +50,7 @@ public class LinRegAlgorithm extends MLAlgorithm<LinRegModel> {
     @Override
     public void train(final LinRegModel model, final Matrix data) {
 
-        final Matrix.RowIterator dataIterator = ctx.dataManager.createThreadPartitionedRowIterator(data);
+        final Matrix.RowIterator dataIterator = ctx.jobContext.dataManager.createThreadPartitionedRowIterator(data);
 
         optimizer.optimize(model, dataIterator);
     }

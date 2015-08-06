@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.math;
 
-import de.tuberlin.pserver.math.stuff.Utils;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.utils.Utils;
 
 public class TestUtils {
 

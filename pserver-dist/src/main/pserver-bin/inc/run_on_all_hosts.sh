@@ -24,7 +24,7 @@ if [ -z ${ENV+x} ] || [ -z "${ENV}" ]; then
     . "${PSERVER_ROOT_DIR}/env/env.sh"
 fi
 
-# ${HOSTLIST} may be set to the zookeepers file to "iterate" over zookeeper hosts
+# ${HOSTLIST} may be set to the zookeepers file to "executePartitioned" over zookeeper hosts
 if [ -z ${HOSTLIST+x} ] || [ -z "${HOSTLIST}" ]; then
     HOSTLIST="${SLAVES_FILE}"
 fi

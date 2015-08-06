@@ -144,11 +144,11 @@ public class PagedDMatrixValue {/*extends AbstractBufferValue implements DMatrix
 
     public void decompress() { throw new UnsupportedOperationException(); }
 
-    public void allocateMemory(final int instanceID) {}
+    public void allocateMemory(final int nodeID) {}
 
-    public Segment[] getSegments(int[] segmentIndices, int instanceID) { throw new UnsupportedOperationException(); }
+    public Segment[] getSegments(int[] segmentIndices, int nodeID) { throw new UnsupportedOperationException(); }
 
-    public void putSegments(Segment[] segments, int instanceID) { throw new UnsupportedOperationException(); }
+    public void putSegments(Segment[] segments, int nodeID) { throw new UnsupportedOperationException(); }
 
     // ---------------------------------------------------
 

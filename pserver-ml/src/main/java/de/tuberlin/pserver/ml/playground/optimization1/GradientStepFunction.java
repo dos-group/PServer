@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.ml.playground.optimization1;
 
 import de.tuberlin.pserver.commons.UnsafeOp;
-import de.tuberlin.pserver.math.DMatrix;
-import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.matrix.dense.DMatrix;
+import de.tuberlin.pserver.math.matrix.Matrix;
 
 public interface GradientStepFunction {
 

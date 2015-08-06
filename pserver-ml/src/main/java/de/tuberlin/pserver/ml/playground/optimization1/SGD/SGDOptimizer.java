@@ -12,7 +12,7 @@ public class SGDOptimizer {} /*implements Optimizer {
 
         private static Gson gson = GsonUtils.createPrettyPrintAndAnnotationExclusionGson();
 
-        public int threadID;
+        public int instanceID;
 
         public int epoch;
 
@@ -47,7 +47,7 @@ public class SGDOptimizer {} /*implements Optimizer {
 
     //private int labelColumnIndex = -1;
 
-    private final PServerContext ctx;
+    private final PServerContext instanceContext;
 
     private TYPE sgdType;
 
@@ -76,9 +76,9 @@ public class SGDOptimizer {} /*implements Optimizer {
     // Constructor.
     // ---------------------------------------------------
 
-    public SGDOptimizer(final PServerContext ctx, final TYPE type, final boolean useLogging) {
+    public SGDOptimizer(final PServerContext instanceContext, final TYPE type, final boolean useLogging) {
 
-        this.ctx = Preconditions.checkNotNull(ctx);
+        this.instanceContext = Preconditions.checkNotNull(instanceContext);
 
         this.sgdType = Preconditions.checkNotNull(type);
 
@@ -105,7 +105,7 @@ public class SGDOptimizer {} /*implements Optimizer {
     public GeneralLinearModel optimize(GeneralLinearModel model, Matrix.RowIterator dataIterator) {
         Preconditions.checkNotNull(model);
 
-        model.fetchModel(ctx);
+        model.fetchModel(instanceContext);
 
         switch (sgdType) {
             case SGD_SIMPLE:
@@ -121,12 +121,12 @@ public class SGDOptimizer {} /*implements Optimizer {
 
     @Override
     public void register() {
-        ctx.executionManager.registerAlgorithm(this.getClass(), state);
+        instanceContext.executionManager.registerAlgorithm(this.getClass(), state);
     }
 
     @Override
     public void unregister() {
-        ctx.executionManager.unregisterAlgorithm();
+        instanceContext.executionManager.unregisterAlgorithm();
     }
 
     // ---------------------------------------------------
@@ -156,14 +156,14 @@ public class SGDOptimizer {} /*implements Optimizer {
 
     private GeneralLinearModel simple_sgd(final GeneralLinearModel model, final Matrix.RowIterator dataIterator) {
 
-        if (ctx.threadID == 0) {
+        if (instanceContext.instanceID == 0) {
             if (observerThreadSyncedModel) {
-                ctx.executionManager.putJobScope("local-sgd-barrier",
-                        new CyclicBarrier(ctx.perNodeParallelism, () -> updateObserver(model)));
+                instanceContext.executionManager.putJobScope("local-sgd-barrier",
+                        new CyclicBarrier(instanceContext.numOfInstances, () -> updateObserver(model)));
             }
         }
 
-        state.threadID = ctx.threadID;
+        state.instanceID = instanceContext.instanceID;
 
         state.alpha = alpha;
 
@@ -206,7 +206,7 @@ public class SGDOptimizer {} /*implements Optimizer {
             if (observer != null && state.epoch % period == 0) {
                 if (observerThreadSyncedModel) {
                     try {
-                        ((CyclicBarrier) ctx.executionManager.getJobScope("local-sgd-barrier")).await();
+                        ((CyclicBarrier) instanceContext.executionManager.getJobScope("local-sgd-barrier")).await();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -222,11 +222,11 @@ public class SGDOptimizer {} /*implements Optimizer {
     }
 
     private void updateObserver(final GeneralLinearModel model) {
-        if (ctx.threadID == 0) {
+        if (instanceContext.instanceID == 0) {
             ExecutionManager.ExecutionDescriptor[] descriptors
-                    = ctx.executionManager.getExecutionDescriptors(ctx.jobUID);
-            final Matrix[] gradientSums = new Matrix[ctx.perNodeParallelism];
-            for (int i = 0; i < ctx.perNodeParallelism; ++i) {
+                    = instanceContext.executionManager.getExecutionDescriptors(instanceContext.jobUID);
+            final Matrix[] gradientSums = new Matrix[instanceContext.numOfInstances];
+            for (int i = 0; i < instanceContext.numOfInstances; ++i) {
                 final SGDOptimizerState state = (SGDOptimizerState)descriptors[i].stateObj;
                 gradientSums[i] = state.gradientSum;
                 state.gradientSum.assign(0.0);

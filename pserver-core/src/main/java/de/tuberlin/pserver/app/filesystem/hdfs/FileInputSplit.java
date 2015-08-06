@@ -3,6 +3,10 @@ package de.tuberlin.pserver.app.filesystem.hdfs;
 
 public class FileInputSplit implements InputSplit {
 
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
     private static final long serialVersionUID = 1L;
 
     private static final String[] EMPTY_ARR = new String[0];
@@ -17,7 +21,9 @@ public class FileInputSplit implements InputSplit {
 
     private long length;
 
-    // --------------------------------------------------------------------------------------------
+    // ---------------------------------------------------
+    // Constructor.
+    // ---------------------------------------------------
 
     public FileInputSplit(int num, String file, long start, long length, String[] hosts) {
         this.splitNumber = num;
@@ -27,7 +33,9 @@ public class FileInputSplit implements InputSplit {
         this.length = length;
     }
 
-    // --------------------------------------------------------------------------------------------
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
 
     @Override
     public int getSplitNumber() { return this.splitNumber; }

@@ -3,8 +3,8 @@ package de.tuberlin.pserver.examples.playground;
 import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.MatrixBuilder;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 
 import java.util.Random;
 
@@ -57,7 +57,7 @@ public final class AsyncMatrixPullTestJob extends PServerJob {
        for (int i = 0; i < 9000; ++i) {
             randomUpdate(m);
             if (i % 1000 == 0)
-                ctx.dataManager.pullMerge(m, merger);
+                instanceContext.jobContext.dataManager.pullMerge(m, merger);
         }
     }
 

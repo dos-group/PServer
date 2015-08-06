@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.math.delegates;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.delegates.sparse.mtj.MTJMatrixOps;
 
 public class MathLibFactory {

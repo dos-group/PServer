@@ -30,9 +30,9 @@ public final class PServerJobFailureEvent extends NetEvents.NetEvent {
 
     public final UUID jobUID;
 
-    public final int instanceID;
+    public final int nodeID;
 
-    public final int threadID;
+    public final int instanceID;
 
     public final String jobName;
 
@@ -45,8 +45,8 @@ public final class PServerJobFailureEvent extends NetEvents.NetEvent {
 
     public PServerJobFailureEvent(final MachineDescriptor machine,
                                   final UUID jobUID,
+                                  final int nodeID,
                                   final int instanceID,
-                                  final int threadID,
                                   final String jobName,
                                   final Throwable exception) {
 
@@ -54,8 +54,8 @@ public final class PServerJobFailureEvent extends NetEvents.NetEvent {
 
         this.machine    = Preconditions.checkNotNull(machine);
         this.jobUID     = Preconditions.checkNotNull(jobUID);
+        this.nodeID     = nodeID;
         this.instanceID = instanceID;
-        this.threadID   = threadID;
         this.jobName    = Preconditions.checkNotNull(jobName);
         this.stackTrace = ExceptionUtils.getStackTrace(Preconditions.checkNotNull(exception));
     }

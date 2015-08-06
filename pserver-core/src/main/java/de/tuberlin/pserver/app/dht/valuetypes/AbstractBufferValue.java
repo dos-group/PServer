@@ -67,15 +67,15 @@ public abstract class AbstractBufferValue extends Value {
     // Public Methods.
     // ---------------------------------------------------
 
-    public abstract void allocateMemory(final int instanceID);
+    public abstract void allocateMemory(final int nodeID);
 
     public abstract void compress();
 
     public abstract void decompress();
 
-    public abstract Segment[] getSegments(final int[] segmentIndices, final int instanceID);
+    public abstract Segment[] getSegments(final int[] segmentIndices, final int nodeID);
 
-    public abstract void putSegments(final Segment[] segments, final int instanceID);
+    public abstract void putSegments(final Segment[] segments, final int nodeID);
 
     // ---------------------------------------------------
 

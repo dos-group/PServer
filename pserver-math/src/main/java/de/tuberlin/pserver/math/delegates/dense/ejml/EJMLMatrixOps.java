@@ -1,11 +1,10 @@
 package de.tuberlin.pserver.math.delegates.dense.ejml;
 
-import de.tuberlin.pserver.math.DMatrix;
-import de.tuberlin.pserver.math.DVector;
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.math.matrix.dense.DMatrix;
+import de.tuberlin.pserver.math.vector.dense.DVector;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
-import org.ejml.alg.dense.misc.TransposeAlgs;
 import org.ejml.alg.dense.mult.MatrixVectorMult;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;

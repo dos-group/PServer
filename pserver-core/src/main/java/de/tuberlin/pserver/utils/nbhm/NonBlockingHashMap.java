@@ -49,12 +49,12 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
  * iterators are designed to be used by only one thread at a time.
  *
  * <p> Very full tables, or tables with high reprobe rates may trigger an
- * internal resize operation to move into a larger table.  Resizing is not
+ * internal resize apply to move into a larger table.  Resizing is not
  * terribly expensive, but it is not free either; during resize operations
  * table throughput may drop somewhat.  All threads that visit the table
  * during a resize will 'help' the resizing but will still be allowed to
- * complete their operation before the resize is finished (i.e., a simple
- * 'get' operation on a million-entry table undergoing resizing will not need
+ * complete their apply before the resize is finished (i.e., a simple
+ * 'get' apply on a million-entry table undergoing resizing will not need
  * to block until the entire million entries are copied).
  *
  * <p>This class and its views and iterators implement all of the
@@ -410,7 +410,7 @@ public class NonBlockingHashMap<TypeK, TypeV>
   /**
    * Creates a shallow copy of this hashtable. All the structure of the
    * hashtable itself is copied, but the keys and values are not cloned.
-   * This is a relatively expensive operation.
+   * This is a relatively expensive apply.
    *
    * @return  a clone of the hashtable.
    */
@@ -420,9 +420,9 @@ public class NonBlockingHashMap<TypeK, TypeV>
       // Must clone, to get the class right; NBHM might have been
       // extended so it would be wrong to just make a new NBHM.
       NonBlockingHashMap<TypeK,TypeV> t = (NonBlockingHashMap<TypeK,TypeV>) super.clone();
-      // But I don't have an atomic clone operation - the underlying _kvs
+      // But I don't have an atomic clone apply - the underlying _kvs
       // structure is undergoing rapid change.  If I just clone the _kvs
-      // field, the CHM in _kvs[0] won't be in sync.
+      // field, the CHM in _kvs[0] won't be in globalSync.
       //
       // Wipe out the cloned array (it was shallow anyways).
       t.clear();
@@ -769,7 +769,7 @@ public class NonBlockingHashMap<TypeK, TypeV>
   }
 
   // --- help_copy ---------------------------------------------------------
-  // Help along an existing resize operation.  This is just a fast cut-out
+  // Help along an existing resize apply.  This is just a fast cut-out
   // wrapper, to encourage inlining for the fast no-copy-in-progress case.  We
   // always help the top-most table copy, even if there are nested table
   // copies in progress.
@@ -807,7 +807,7 @@ public class NonBlockingHashMap<TypeK, TypeV>
 
     // ---
     // New mappings, used during resizing.
-    // The 'new KVs' array - created during a resize operation.  This
+    // The 'new KVs' array - created during a resize apply.  This
     // represents the new table being copied from the old one.  It's the
     // volatile variable that is read as we cross from one table to the next,
     // to get the required memory orderings.  It monotonically transits from
@@ -894,7 +894,7 @@ public class NonBlockingHashMap<TypeK, TypeV>
       //if( sz >= (oldlen>>1) ) // If we are >50% full of keys then...
       //  newsz = oldlen<<1;    // Double partitionSize
 
-      // Last (re)partitionSize operation was very recent?  Then double again; slows
+      // Last (re)partitionSize apply was very recent?  Then double again; slows
       // down resize operations for tables subject to a high key churn rate.
       long tm = System.currentTimeMillis();
       long q=0;
@@ -978,7 +978,7 @@ public class NonBlockingHashMap<TypeK, TypeV>
       AtomicLongFieldUpdater.newUpdater(CHM.class, "_copyDone");
 
     // --- help_copy_impl ----------------------------------------------------
-    // Help along an existing resize operation.  We hope its the top-level
+    // Help along an existing resize apply.  We hope its the top-level
     // copy (it was when we started) but this CHM might have been promoted out
     // of the top position.
     private final void help_copy_impl( NonBlockingHashMap topmap, Object[] oldkvs, boolean copy_all ) {
@@ -1042,7 +1042,7 @@ public class NonBlockingHashMap<TypeK, TypeV>
     // typically because the caller has found a Prime, and has not yet read
     // the _newkvs volatile - which must have changed from null-to-not-null
     // before any Prime appears.  So the caller needs to read the _newkvs
-    // field to retry his operation in the new table, but probably has not
+    // field to retry his apply in the new table, but probably has not
     // read it yet.
     private final Object[] copy_slot_and_check( NonBlockingHashMap topmap, Object[] oldkvs, int idx, Object should_help ) {
       assert chm(oldkvs) == this;
@@ -1383,7 +1383,7 @@ public class NonBlockingHashMap<TypeK, TypeV>
    * thread.  This implies that a simple flag cannot make the Set immutable,
    * because a late-arriving update in another thread might see immutable flag
    * not set yet, then mutate the Set after the {@link #readOnly} call returns.
-   * This call can be called concurrently (and indeed until the operation
+   * This call can be called concurrently (and indeed until the apply
    * completes, all calls on the Set from any thread either complete normally
    * or epilogue up calling {@link #readOnly} internally).
    *

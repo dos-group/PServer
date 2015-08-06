@@ -4,10 +4,10 @@ package de.tuberlin.pserver.ml.optimization.SGD;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import de.tuberlin.pserver.app.ExecutionManager;
-import de.tuberlin.pserver.app.PServerContext;
-import de.tuberlin.pserver.math.DVector;
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.app.InstanceContext;
+import de.tuberlin.pserver.math.vector.dense.DVector;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.ml.common.LabeledVector;
 import de.tuberlin.pserver.ml.models.GeneralLinearModel;
 import de.tuberlin.pserver.ml.optimization.*;
@@ -63,7 +63,7 @@ public class SGDOptimizer implements Optimizer {
 
     //private int labelColumnIndex = -1;
 
-    private final PServerContext ctx;
+    private final InstanceContext ctx;
 
     private TYPE sgdType;
 
@@ -91,7 +91,7 @@ public class SGDOptimizer implements Optimizer {
     // Constructor.
     // ---------------------------------------------------
 
-    public SGDOptimizer(final PServerContext ctx, final TYPE type, final boolean useLogging) {
+    public SGDOptimizer(final InstanceContext ctx, final TYPE type, final boolean useLogging) {
 
         this.ctx = Preconditions.checkNotNull(ctx);
 
@@ -141,12 +141,12 @@ public class SGDOptimizer implements Optimizer {
 
     @Override
     public void register() {
-        ctx.executionManager.registerAlgorithm(this.getClass(), state);
+        ctx.jobContext.executionManager.registerAlgorithm(this.getClass(), state);
     }
 
     @Override
     public void unregister() {
-        ctx.executionManager.unregisterAlgorithm();
+        ctx.jobContext.executionManager.unregisterAlgorithm();
     }
 
     // ---------------------------------------------------
@@ -176,14 +176,14 @@ public class SGDOptimizer implements Optimizer {
 
     private GeneralLinearModel simple_sgd(final GeneralLinearModel model, final Matrix.RowIterator dataIterator) {
 
-        if (ctx.threadID == 0) {
+        if (ctx.instanceID == 0) {
             if (observerThreadSyncedModel) {
-                ctx.executionManager.putJobScope("local-sgd-barrier",
-                        new CyclicBarrier(ctx.perNodeParallelism, () -> updateObserver(model)));
+                ctx.jobContext.executionManager.putJobScope("local-sgd-barrier",
+                        new CyclicBarrier(ctx.jobContext.numOfInstances, () -> updateObserver(model)));
             }
         }
 
-        state.threadID = ctx.threadID;
+        state.threadID = ctx.instanceID;
 
         state.alpha = alpha;
 
@@ -224,7 +224,7 @@ public class SGDOptimizer implements Optimizer {
             if (observer != null && state.epoch % period == 0) {
                 if (observerThreadSyncedModel) {
                     try {
-                        ((CyclicBarrier) ctx.executionManager.getJobScope("local-sgd-barrier")).await();
+                        ((CyclicBarrier) ctx.jobContext.executionManager.getJobScope("local-sgd-barrier")).await();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -240,11 +240,11 @@ public class SGDOptimizer implements Optimizer {
     }
 
     private void updateObserver(final GeneralLinearModel model) {
-        if (ctx.threadID == 0) {
+        if (ctx.instanceID == 0) {
             ExecutionManager.ExecutionDescriptor[] descriptors
-                    = ctx.executionManager.getExecutionDescriptors(ctx.jobUID);
-            final Vector[] gradientSums = new Vector[ctx.perNodeParallelism];
-            for (int i = 0; i < ctx.perNodeParallelism; ++i) {
+                    = ctx.jobContext.executionManager.getExecutionDescriptors(ctx.jobContext.jobUID);
+            final Vector[] gradientSums = new Vector[ctx.jobContext.numOfInstances];
+            for (int i = 0; i < ctx.jobContext.numOfInstances; ++i) {
                 final SGDOptimizerState state = (SGDOptimizerState)descriptors[i].stateObj;
                 gradientSums[i] = state.gradientSum;
                 state.gradientSum.assign(0.0);

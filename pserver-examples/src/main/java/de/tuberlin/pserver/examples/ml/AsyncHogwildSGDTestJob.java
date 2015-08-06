@@ -4,8 +4,8 @@ import com.google.common.collect.Lists;
 import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.ml.models.GeneralLinearModel;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.ml.optimization.SGD.SGDOptimizer;
@@ -43,7 +43,7 @@ public final class AsyncHogwildSGDTestJob extends PServerJob {
 
         dataManager.loadAsMatrix("datasets/sparse_dataset.csv", GenerateLocalTestData.ROWS_SPARSE_DATASET, GenerateLocalTestData.COLS_SPARSE_DATASET);
 
-        model.createModel(ctx);
+        model.createModel(instanceContext);
     }
 
     @Override
@@ -55,7 +55,7 @@ public final class AsyncHogwildSGDTestJob extends PServerJob {
 
         final PartialLossFunction partialLossFunction = new PartialLossFunction.SquareLoss();
 
-        final Optimizer optimizer = new SGDOptimizer(ctx, SGDOptimizer.TYPE.SGD_SIMPLE, false)
+        final Optimizer optimizer = new SGDOptimizer(instanceContext, SGDOptimizer.TYPE.SGD_SIMPLE, false)
                 .setNumberOfIterations(1000)
                 .setLearningRate(0.00005)
                 .setLossFunction(new LossFunction.GenericLossFunction(predictionFunction, partialLossFunction))

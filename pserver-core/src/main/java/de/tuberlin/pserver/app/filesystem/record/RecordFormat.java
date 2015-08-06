@@ -2,10 +2,12 @@ package de.tuberlin.pserver.app.filesystem.record;
 
 import org.apache.commons.csv.CSVFormat;
 
-/**
- * Created by fsander on 29.06.15.
- */
+
 public class RecordFormat {
+
+    // ---------------------------------------------------
+    // Constants.
+    // ---------------------------------------------------
 
     public static final char DEFAULT_RECORD_SEPARATOR  = '\n';
     public static final char DEFAULT_DELIMITER         = ',';
@@ -14,11 +16,19 @@ public class RecordFormat {
 
     public static final RecordFormat DEFAULT = new RecordFormat(DEFAULT_PROJECTION, DEFAULT_DELIMITER, DEFAULT_RECORD_SEPARATOR);
 
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
     private final CSVFormat csvFormat;
 
     private final int[] projection;
 
     private IRecordFactory recordFactory;
+
+    // ---------------------------------------------------
+    // Constructor.
+    // ---------------------------------------------------
 
     public RecordFormat(int[] projection, char delimiter, char recordSeparator, IRecordFactory recordFactory) {
         this.projection = projection;
@@ -29,6 +39,10 @@ public class RecordFormat {
     public RecordFormat(int[] projection, char delimiter, char recordSeparator) {
         this(projection, delimiter, recordSeparator, IRecordFactory.ROW_RECORD);
     }
+
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
 
     public RecordFormat(int[] projection, char delimiter) {
         this(projection, delimiter, DEFAULT_RECORD_SEPARATOR);

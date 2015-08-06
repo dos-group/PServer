@@ -1,22 +1,37 @@
 package de.tuberlin.pserver.app.partitioning;
 
 import de.tuberlin.pserver.app.types.MatrixEntry;
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.stuff.Utils;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.utils.Utils;
 
 public class MatrixByRowPartitioner implements IMatrixPartitioner {
 
-    private final int instanceId;
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
+    private final int nodeID;
+
     private final int numNodes;
+
     private final long rows;
+
     private final long cols;
 
-    public MatrixByRowPartitioner(int instanceId, int numNodes, long rows, long cols) {
-        this.instanceId = instanceId;
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
+
+    public MatrixByRowPartitioner(int nodeID, int numNodes, long rows, long cols) {
+        this.nodeID = nodeID;
         this.numNodes = numNodes;
         this.rows = rows;
         this.cols = cols;
     }
+
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
 
     @Override
     public int getPartitionOfEntry(MatrixEntry entry) {
@@ -28,7 +43,7 @@ public class MatrixByRowPartitioner implements IMatrixPartitioner {
 
     @Override
     public Matrix.PartitionShape getPartitionShape() {
-        if(instanceId + 1 >= numNodes) {
+        if(nodeID + 1 >= numNodes) {
             return new Matrix.PartitionShape(rows / numNodes + rows % numNodes, cols);
         }
         return new Matrix.PartitionShape(rows / numNodes, cols);

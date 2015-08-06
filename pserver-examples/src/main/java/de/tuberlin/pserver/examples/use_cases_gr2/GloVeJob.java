@@ -6,10 +6,10 @@ import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.MatrixBuilder;
-import de.tuberlin.pserver.math.Vector;
-import de.tuberlin.pserver.math.VectorBuilder;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.MatrixBuilder;
+import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.vector.VectorBuilder;
 
 import java.io.Serializable;
 import java.util.List;
@@ -105,7 +105,7 @@ public class GloVeJob extends PServerJob {
         W = dataManager.getObject("W");
         B = dataManager.getObject("B");
 
-        int offset = 0; //TODO offset per node: offset = NUM_WORDS_IN_COOC_MATRIX / num_instances * ctx.instanceID;
+        int offset = 0; //TODO offset per node: offset = NUM_WORDS_IN_COOC_MATRIX / num_instances * instanceContext.nodeID;
 
         int iterations = 0;
 

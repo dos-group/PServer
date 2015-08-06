@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.ml.generators;
 
-import de.tuberlin.pserver.math.DVector;
-import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.math.vector.dense.DVector;
+import de.tuberlin.pserver.math.vector.Vector;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.ArrayUtils;
@@ -10,7 +10,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 

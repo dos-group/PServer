@@ -1,35 +1,29 @@
 package de.tuberlin.pserver.examples.playground;
 
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.SMatrix2;
-import de.tuberlin.pserver.utils.ObjectSerializer;
-
-import java.util.Random;
-
 public class Playground {
 
     /*public static int numOfMachines = 4;
 
-    public static UUID createLocalKey(final int instanceID) {
+    public static UUID createLocalKey(final int nodeID) {
         int id, i = 0; UUID uid;
         do {
             i++;
             uid = UUID.randomUUID();
             id = (uid.hashCode() & Integer.MAX_VALUE) % numOfMachines;
-        } while (id != instanceID);
+        } while (id != nodeID);
         System.out.println(i);
         return uid;
     }*/
 
     public static void main(final String[] args) {
 
-        Matrix gradientMtx = new SMatrix2(5, 1000000, Matrix.Layout.ROW_LAYOUT);
+        /*Matrix gradientMtx = new SMatrix2(5, 1000000, Matrix.Layout.ROW_LAYOUT);
 
-        /*new MatrixBuilder()
+        new MatrixBuilder()
                 .dimension(5, 1000000)
                 .format(Matrix.MatrixFormat.SPARSE_MATRIX)
                 .layout(Matrix.MemoryLayout.ROW_LAYOUT)
-                .build();*/
+                .build();
 
         Random rand = new Random();
 
@@ -43,7 +37,7 @@ public class Playground {
 
         final byte[] data = serializer.serialize(gradientMtx);
 
-        System.out.println(data.length);
+        System.out.println(data.length);*/
 
         //15012249
         //63000213

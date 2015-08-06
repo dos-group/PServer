@@ -48,13 +48,13 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
     // ---------------------------------------------------
 
     @Override
-    public void computeLocalFileSection(final int numNodes, final int instanceID) {
+    public void computeLocalFileSection(final int numNodes, final int nodeID) {
         final long totalLines = getNumberOfLines();
         final long numLinesPerSection = totalLines / numNodes;
-        final long linesToRead = (instanceID == (numNodes - 1)) ?
+        final long linesToRead = (nodeID == (numNodes - 1)) ?
                 numLinesPerSection + (totalLines % numLinesPerSection) : numLinesPerSection;
         try {
-            final long blockLineOffset = numLinesPerSection * instanceID;
+            final long blockLineOffset = numLinesPerSection * nodeID;
             BufferedReader br = new BufferedReader(new FileReader(filePath));
             int eolcc = getLineEndingCharCount(br);
             br.close();
@@ -71,39 +71,6 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
         } catch (IOException ioe) {
             throw new IllegalStateException(ioe);
         }
-    }
-
-    private int getLineEndingCharCount(BufferedReader br) {
-        try {
-            char[] buffer = new char[8192];
-            int result = 0;
-            while (result == 0 && br.read(buffer) > 0) {
-                for (int i = 0; i < buffer.length; i++) {
-                    char c = buffer[i];
-                    if(c == '\n' || c == '\r') {
-                        result++;
-                        char c2 = 0;
-                        if(i + 1 < buffer.length) {
-                            c2 = buffer[i + 1];
-                        }
-                        else if(br.read(buffer) > 0) {
-                            c2 = buffer[0];
-                        }
-                        if(c2 > 0 && (c2 == '\n' || c2 == '\r')) {
-                            result++;
-                        }
-                        break;
-                    }
-                }
-            }
-            if(result <= 0 || result > 2) {
-                throw new IllegalStateException("line ending char count = " + result);
-            }
-            return result;
-        } catch (IOException e) {
-             throw new IllegalStateException(e);
-        }
-
     }
 
     @Override
@@ -144,6 +111,38 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
             this.linesToRead = linesToRead;
             this.startOffset = startOffset;
             this.blockLineOffset = blockLineOffset;
+        }
+    }
+
+    private int getLineEndingCharCount(BufferedReader br) {
+        try {
+            char[] buffer = new char[8192];
+            int result = 0;
+            while (result == 0 && br.read(buffer) > 0) {
+                for (int i = 0; i < buffer.length; i++) {
+                    char c = buffer[i];
+                    if(c == '\n' || c == '\r') {
+                        result++;
+                        char c2 = 0;
+                        if(i + 1 < buffer.length) {
+                            c2 = buffer[i + 1];
+                        }
+                        else if(br.read(buffer) > 0) {
+                            c2 = buffer[0];
+                        }
+                        if(c2 > 0 && (c2 == '\n' || c2 == '\r')) {
+                            result++;
+                        }
+                        break;
+                    }
+                }
+            }
+            if(result <= 0 || result > 2) {
+                throw new IllegalStateException("line ending char count = " + result);
+            }
+            return result;
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
         }
     }
 
