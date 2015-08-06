@@ -2,7 +2,7 @@ package de.tuberlin.pserver.examples.playground;
 
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.examples.ml.GenerateLocalTestData;
+import de.tuberlin.pserver.examples.experiments.sgd.GenerateLocalTestData;
 import de.tuberlin.pserver.math.matrix.Matrix;
 
 import java.text.DecimalFormat;

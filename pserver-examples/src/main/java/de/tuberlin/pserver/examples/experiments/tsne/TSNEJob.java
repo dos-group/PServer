@@ -1,17 +1,15 @@
-package de.tuberlin.pserver.examples.use_cases_gr1;
+package de.tuberlin.pserver.examples.experiments.tsne;
 
 import com.google.common.collect.Lists;
 import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.cf.Iteration;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
 import de.tuberlin.pserver.math.tuples.Tuple2;
-import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -20,7 +18,7 @@ import java.util.List;
 import java.util.Random;
 
 
-public class TSNEJob_MC_DSL extends PServerJob {
+public class TSNEJob extends PServerJob {
 
     // ---------------------------------------------------
     // Fields.
@@ -38,7 +36,7 @@ public class TSNEJob_MC_DSL extends PServerJob {
 
     // Algorithm parameters
 
-    private final int NUM_EPOCHS = 200;
+    private final int MAX_ITER = 200;
     private final double PERPLEXITY = 2.0;
     private final double LEARNING_RATE = 350.0;
     private final double EARLY_EXAGGERATION = 1.0;
@@ -53,6 +51,7 @@ public class TSNEJob_MC_DSL extends PServerJob {
     private Matrix Q;
     private Matrix Y;
 
+
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
@@ -60,21 +59,13 @@ public class TSNEJob_MC_DSL extends PServerJob {
     @Override
     public void prologue() {
 
-        dataManager.loadAsMatrix(
-                INPUT_MATRIX,
-                INPUT_ROWS,
-                INPUT_COLS,
-                RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD)
-        );
+        dataManager.loadAsMatrix(INPUT_MATRIX, INPUT_ROWS, INPUT_COLS,
+                RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD));
 
         // if debugging is enabled, use a fixed initialization for Y
         if (DEBUG) {
-            dataManager.loadAsMatrix(
-                    Y_INIT_MATRIX,
-                    INPUT_ROWS,
-                    EMBEDDING_DIMENSION,
-                    RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD)
-            );
+            dataManager.loadAsMatrix(Y_INIT_MATRIX, INPUT_ROWS, EMBEDDING_DIMENSION,
+                    RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD));
         } else {
             Y = new MatrixBuilder()
                 .dimension(INPUT_ROWS, EMBEDDING_DIMENSION)
@@ -88,6 +79,7 @@ public class TSNEJob_MC_DSL extends PServerJob {
             dataManager.putObject("Y", Y);
         }
     }
+
 
     @Override
     public void compute() {
@@ -109,11 +101,13 @@ public class TSNEJob_MC_DSL extends PServerJob {
 
         P = P.scale(1 / sumP);
 
+        //final AtomicDouble sumQ = new AtomicDouble(0.0);
+
         // early exaggeration
         P = P.scale(EARLY_EXAGGERATION);
 
-        final long n = Y.numRows();
-        final long d = Y.numCols();
+        Long n = Y.numRows();
+        Long d = Y.numCols();
 
         Q = new MatrixBuilder()
                 .dimension(n, n)
@@ -139,13 +133,13 @@ public class TSNEJob_MC_DSL extends PServerJob {
                 .layout(Matrix.Layout.ROW_LAYOUT)
                 .build();
 
-        final Matrix dY = new MatrixBuilder()
+        Matrix dY = new MatrixBuilder()
                 .dimension(n, d)
                 .format(Matrix.Format.DENSE_MATRIX)
                 .layout(Matrix.Layout.ROW_LAYOUT)
                 .build();
 
-        final Vector mean = new VectorBuilder()
+        Vector mean = new VectorBuilder()
                 .dimension(d)
                 .format(Vector.Format.DENSE_VECTOR)
                 .layout(Vector.Layout.ROW_LAYOUT)
@@ -154,112 +148,148 @@ public class TSNEJob_MC_DSL extends PServerJob {
         gains.assign(1.0);
         iY.assign(0.0);
 
-        final MutableDouble momentum = new MutableDouble(0.0);
+        double momentum;
 
-        CF.iterate()
-                .sync(Iteration.GLOBAL | Iteration.LOCAL)
-                .execute(NUM_EPOCHS, (epoch) -> {
+        //
+        for (int iteration = 0; iteration < MAX_ITER; ++iteration) {
+            // sum_Y = Math.sum(Math.square(Y), 1)
+            Y_squared = Y_squared.applyOnElements(Y, e -> Math.pow(e, 2));
+            Vector sum_Y = Y_squared.aggregateRows(f -> f.sum());
 
-                    Y_squared.assign( Y_squared.applyOnElements(Y, e -> Math.pow(e, 2)) );
+            // num = 1 / (1 + Math.add(Math.add(-2 * Math.dot(Y, Y.T), sum_Y).T, sum_Y))
+            Matrix num = Y.mul(Y.transpose()).scale(-2).addVectorToRows(sum_Y).transpose()
+                    .addVectorToRows(sum_Y);
+            num.applyOnElements(e -> 1.0 / (e + 1.0));
+            // entries i=j must be zero
+            num = num.zeroDiagonal();
 
-                    final Vector sum_Y = Y_squared.aggregateRows(f -> f.sum());
+            // ---------------------------------------------------
+            // (1) GLOBAL OPERATION!!!
+            // ---------------------------------------------------
+            //missing: sum over all elements of a matrix
 
-                    final Matrix num = Y.mul( Y.transpose() )
-                            .scale(-2)
-                            .addVectorToRows(sum_Y)
-                            .transpose()
-                            .addVectorToRows(sum_Y)
-                            .applyOnElements(e -> 1.0 / (e + 1.0));
+            /*dataManager.globalSync();
 
-                    num.assign(num.zeroDiagonal());
-
-                    final double sumNum = num.aggregateRows(f -> f.sum()).sum();
-
-                    Q.assign(num.copy().scale(1.0 / sumNum));
-
-                    Q.assign(Q.applyOnElements(e -> Math.max(e, 1e-12)));
-
-                    final Matrix PQ = P.copy().sub(Q);
-
-                    CF.iterate()
-                            .execute(P.numRows(), (i) -> {
-
-                                final Vector sumVec = new VectorBuilder()
-                                        .dimension(d)
-                                        .format(Vector.Format.DENSE_VECTOR)
-                                        .layout(Vector.Layout.ROW_LAYOUT)
-                                        .build();
-
-                                CF.iterate()
-                                        .execute(P.numCols(), (j) -> {
-
-                                            final Double pq = PQ.get(i, j);
-                                            final Double num_j = num.get(i, j);
-
-                                            sumVec.assign(
-                                                    sumVec.add(
-                                                            Y.rowAsVector(i)
-                                                                    .sub(Y.rowAsVector(j))
-                                                                    .applyOnElements(e -> e * pq * num_j)
-                                                    )
-                                            );
-
-                                        });
-
-                                dY.assignRow(i, sumVec);
-                            });
-
-                    momentum.setValue( (epoch < 20) ? INITIAL_MOMENTUM : FINAL_MOMENTUM);
-
-                    CF.iterate()
-                            .execute(gains, (i, j, v) -> {
-
-                                final Double dY_j = dY.get(i, j);
-                                final Double iY_j = iY.get(i, j);
-                                final Double gain_j = gains.get(i, j);
-
-                                gains.set(i, j, (dY_j > 0) == (iY_j > 0) ? gain_j * 0.8 : gain_j + 0.2);
-                            });
-
-                    gains.assign(gains.applyOnElements(e -> Math.max(e, MIN_GAIN)));
-
-                    iY.assign(
-                            iY.scale(momentum.getValue())
-                                    .sub(dY.applyOnElements(gains, (e1, e2) -> e1 * e2).scale(LEARNING_RATE))
-                    );
-
-                    Y.assign(Y.add(iY));
-
-                    mean.assign(0.0);
-
-                    for (int i = 0; i < Y.numRows(); ++i)
-                        mean.add(Y.rowAsVector(i));
-
-                    mean.assign(mean.div(Y.numRows()));
-
-                    Y.assign(Y.addVectorToRows(mean.mul(-1.0)));
-
-                    if ((epoch + 1) % 10 == 0) {
-
-                        double C = 0.0;
-                        for (int i = 0; i < P.numRows(); ++i) {
-                            for (int j = 0; j < P.numCols(); ++j) {
-                                if (i != j) {
-                                    C += P.get(i, j) * Math.log(P.get(i, j) / Q.get(i, j));
-                                }
-                            }
-                        }
-
-                        LOG.info("Iteration " + (epoch + 1) + ", Error: " + C);
+            if (instanceContext.nodeID == 0) {
+                Object[] sumQs = dataManager.pullRequest("sumQ");
+                Double sumOverQ = 0.0;
+                for (Object sum : sumQs) {
+                    sumOverQ += (Double) sum;
+                }
+                sumOverQ += Q.aggregateRows(f -> f.sum()).sum();
+                sumQ.set(sumOverQ);
+                dataManager.pushToAll("sumOverQ", sumOverQ);
+            }
+            else {
+                dataManager.awaitEvent(1, "sumOverQ", new DataManager.DataEventHandler(){
+                    @Override
+                    public void handleDataEvent(int srcInstanceID, Object value) {
+                        sumQ.set((Double) value);
                     }
-
-                    if (epoch == 100) {
-                        P.assign(P.scale(1.0 / EARLY_EXAGGERATION));
-                    }
-
-                    LOG.debug("Y: " + Y.rowAsVector().toString());
                 });
+            }
 
+            // ---------------------------------------------------
+
+            Q = Q.scale(1 / sumQ.get());
+            */
+
+            Double sumNum = num.aggregateRows(f -> f.sum()).sum();
+            // Q = num / Math.sum(num)
+            Q = num.copy().scale(1.0 / sumNum);
+
+            // Math.maximum(Q, 1e-12)
+            Q = Q.applyOnElements(e -> Math.max(e, 1e-12));
+
+            // PQ = P - Q
+            Matrix PQ = P.copy().sub(Q);
+
+            // dY[i,:] = Math.sum(Math.tile(PQ[:,i] * num[:,i], (no_dims, 1)).T * (Y[i,:] - Y), 0)
+            for (int i=0; i < P.numRows(); ++i) {
+                Vector sumVec = new VectorBuilder()
+                        .dimension(d)
+                        .format(Vector.Format.DENSE_VECTOR)
+                        .layout(Vector.Layout.ROW_LAYOUT)
+                        .build();
+                sumVec.assign(0.0);
+
+                for (int j=0; j < P.numCols(); ++j) {
+                    final Double pq = PQ.get(i, j);
+                    final Double num_j = num.get(i, j);
+                    // (p - num / sum(q)) * num
+                    // (p - q) * num
+                    sumVec = sumVec.add(Y.rowAsVector(i).sub(Y.rowAsVector(j))
+                                .applyOnElements(e -> e * pq * num_j));
+                }
+                dY.assignRow(i, sumVec);
+            }
+
+            if (iteration < 20) {
+                momentum = INITIAL_MOMENTUM;
+            } else {
+                momentum = FINAL_MOMENTUM;
+            }
+
+            for (int i=0; i < gains.numRows(); ++i) {
+                for (int j=0; j < gains.numCols(); ++j) {
+                    final Double dY_j = dY.get(i, j);
+                    final Double iY_j = iY.get(i, j);
+                    final Double gain_j = gains.get(i, j);
+                    // gains = (gains + 0.2) * ((dY > 0) != (iY > 0)) + (gains * 0.8) * ((dY > 0) == (iY > 0))
+                    if ((dY_j > 0) == (iY_j > 0)) {
+                        gains.set(i, j, gain_j * 0.8);
+                    }
+                    else {
+                        gains.set(i, j, gain_j + 0.2);
+                    }
+                }
+            }
+
+            // gains[gains < min_gain] = min_gain
+            gains = gains.applyOnElements(e -> Math.max(e, MIN_GAIN));
+
+            // iY = momentum * iY - eta * (gains * dY)
+            iY = iY.scale(momentum).sub(dY.applyOnElements(gains, (e1, e2) -> e1 * e2).scale(LEARNING_RATE));
+
+            // Y = Y + iY
+            Y = Y.add(iY);
+
+            // ---------------------------------------------------
+            // (2) GLOBAL OPERATION!!!
+            // ---------------------------------------------------
+
+            //missing: mean per row or column
+
+            // Y = Y - Math.tile(Math.mean(Y, 0), (n, 1))
+            mean = mean.assign(0.0);
+            for (int i=0; i < Y.numRows(); ++i) {
+                mean.add(Y.rowAsVector(i));
+            }
+            mean = mean.div(Y.numRows());
+
+            Y = Y.addVectorToRows(mean.mul(-1.0));
+
+            // Compute current value of cost function
+            if ((iteration + 1) % 10 == 0) {
+                //C = Math.sum(P * Math.log(P / Q));
+                double C = 0.0;
+                for (int i = 0; i < P.numRows(); ++i) {
+                    for (int j = 0; j < P.numCols(); ++j) {
+                        if (i != j) {
+                            C += P.get(i, j) * Math.log(P.get(i, j) / Q.get(i, j));
+                        }
+                    }
+                }
+                LOG.info("Iteration " + (iteration + 1) + ", Error: " + C);
+            }
+
+            // Scale back to original values
+            if (iteration == 100) {
+                P = P.scale(1.0 / EARLY_EXAGGERATION);
+            }
+            LOG.debug("Y: " + Y.rowAsVector().toString());
+            dataManager.globalSync();
+        }
         result(Y);
     }
 
@@ -373,12 +403,13 @@ public class TSNEJob_MC_DSL extends PServerJob {
         PrintWriter writer = null;
 
         PServerExecutor.LOCAL
-                .run(TSNEJob_MC_DSL.class)
+                .run(TSNEJob.class)
                 .results(res)
                 .done();
 
         try {
             writer = new PrintWriter("/Users/Chris/Downloads/pserver_mnist.csv", "UTF-8");
+
             final DecimalFormat numberFormat = new DecimalFormat("0.000");
             Matrix R = (Matrix) res.get(0).get(0);
             for (int i = 0; i < R.numRows(); ++i) {

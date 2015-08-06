@@ -6,7 +6,7 @@ import de.tuberlin.pserver.app.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.app.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.examples.ml.GenerateLocalTestData;
+import de.tuberlin.pserver.examples.experiments.sgd.GenerateLocalTestData;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
 

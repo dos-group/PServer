@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.examples.use_cases_gr2;
+package de.tuberlin.pserver.examples.experiments.glove;
 
 import de.tuberlin.pserver.app.DataManager;
 import de.tuberlin.pserver.app.PServerJob;
