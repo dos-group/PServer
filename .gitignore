@@ -60,3 +60,6 @@ logs/
 */slaves
 
 datasets/
+
+# python object files
+*.pyc
