@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.dsl.cf;
+package de.tuberlin.pserver.dsl.controlflow;
 
 public interface IterationTermination {
 

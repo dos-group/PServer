@@ -2,8 +2,8 @@ package de.tuberlin.pserver.app;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.events.EventDispatcher;
-import de.tuberlin.pserver.dsl.cf.ControlFlow;
-import de.tuberlin.pserver.dsl.df.DataFlow;
+import de.tuberlin.pserver.dsl.controlflow.ControlFlow;
+import de.tuberlin.pserver.dsl.dataflow.DataFlow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
