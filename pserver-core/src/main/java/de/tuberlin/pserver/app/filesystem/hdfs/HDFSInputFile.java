@@ -29,7 +29,7 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
     protected static final long READ_WHOLE_SPLIT_FLAG = -1L;
 
     // --------------------------------------------------------------------------------------------
-    //  Variables for internal operation.
+    //  Variables for internal apply.
     // --------------------------------------------------------------------------------------------
 
     private transient final IConfig config;

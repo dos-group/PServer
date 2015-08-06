@@ -2,7 +2,7 @@ package de.tuberlin.pserver.dsl.cf;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.InstanceContext;
-import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix;
 
 public final class Iteration {
 

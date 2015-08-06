@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.math.generators;
 
-import de.tuberlin.pserver.math.DVector;
-import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.math.vector.dense.DVector;
+import de.tuberlin.pserver.math.vector.Vector;
 
 import java.util.Random;
 

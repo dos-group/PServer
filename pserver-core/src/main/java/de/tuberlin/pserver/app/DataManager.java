@@ -20,8 +20,8 @@ import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.math.MObject;
-import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.SharedObject;
+import de.tuberlin.pserver.math.matrix.Matrix;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,7 +89,7 @@ public class DataManager extends EventDispatcher {
         public abstract Object handlePullRequest(final String name);
     }
 
-    public interface Merger<T extends MObject> {
+    public interface Merger<T extends SharedObject> {
 
         public abstract void merge(final T dst, final List<T> src);
     }
@@ -434,32 +434,32 @@ public class DataManager extends EventDispatcher {
 
     // ---------------------------------------------------
 
-    public <T extends MObject> Key putObject(final String name, final T obj) {
+    public <T extends SharedObject> Key putObject(final String name, final T obj) {
         return putLocal(name, new MObjectValue<T>(obj));
     }
 
-    public <T extends MObject> T getObject(final String name) {
+    public <T extends SharedObject> T getObject(final String name) {
         return (T) ((MObjectValue) getLocal(name)[0]).object;
     }
 
     // ---------------------------------------------------
 
 
-    public <T extends MObject> void pullMerge(final T dstObj,
+    public <T extends SharedObject> void pullMerge(final T dstObj,
                                               final Merger<T> merger) {
 
         pullMerge(((MObjectValue<T>) dstObj.getOwner()).getKey().name, nodeIDs, dstObj, merger);
     }
 
 
-    public <T extends MObject> void pullMerge(final String name,
+    public <T extends SharedObject> void pullMerge(final String name,
                                               final T dstObj,
                                               final Merger<T> merger) {
 
         pullMerge(name, nodeIDs, dstObj, merger);
     }
 
-    public <T extends MObject> void pullMerge(final String name,
+    public <T extends SharedObject> void pullMerge(final String name,
                                               final int[] nodeIDs,
                                               final T dstObj,
                                               final Merger<T> merger) {

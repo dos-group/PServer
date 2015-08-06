@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.app.partitioning;
 
 import de.tuberlin.pserver.app.types.MatrixEntry;
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.stuff.Utils;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.utils.Utils;
 
 public class MatrixByRowPartitioner implements IMatrixPartitioner {
 

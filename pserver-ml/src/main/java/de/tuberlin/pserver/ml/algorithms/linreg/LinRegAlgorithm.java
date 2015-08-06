@@ -2,7 +2,7 @@ package de.tuberlin.pserver.ml.algorithms.linreg;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.InstanceContext;
-import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.ml.algorithms.MLAlgorithm;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.ml.optimization.SGD.SGDOptimizer;

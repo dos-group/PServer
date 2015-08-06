@@ -316,8 +316,8 @@ public final class DHT extends EventDispatcher {
     // ---------------------------------------------------
 
     /**
-     * The put operation stores, according to a given key, a <code>Value</code> object in the distributed hash table.
-     * The operation also accept a array of values, so-called value partitions. These partitions are distributed over
+     * The put apply stores, according to a given key, a <code>Value</code> object in the distributed hash table.
+     * The apply also accept a array of values, so-called value partitions. These partitions are distributed over
      * the nodes in the cluster. The key provides the complete metadata of all distributed partitions, the so-called
      * partition directory.
      * @param key The key that is associated with the value object.

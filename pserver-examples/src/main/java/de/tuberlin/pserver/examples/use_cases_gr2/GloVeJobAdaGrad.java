@@ -6,7 +6,11 @@ import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.math.*;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.MatrixBuilder;
+import de.tuberlin.pserver.math.utils.DoubleFunction2Arg;
+import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.vector.VectorBuilder;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -338,10 +342,10 @@ public class GloVeJobAdaGrad extends PServerJob {
         significantDeltas.assign((v1) -> 0);   // TODO: this can be optimized...
     }
 
-    private void applyOnColumnVectorAndSetDeltaFlagIfSignificant(Matrix m, Matrix deltas, Long col, Vector v, Vector.VectorFunction2Arg func) {
+    private void applyOnColumnVectorAndSetDeltaFlagIfSignificant(Matrix m, Matrix deltas, Long col, Vector v, DoubleFunction2Arg func) {
         for (int i = 0; i < m.numRows(); i++) {
             double oldVal = m.get(i, col);
-            double newVal = func.operation(oldVal, v.get(i));
+            double newVal = func.apply(oldVal, v.get(i));
             if (Math.abs(newVal - oldVal) / oldVal > MATRIX_TRANSMIT_THRESHOLD) {
                 deltas.set(i, col, 1);
             }
@@ -349,9 +353,9 @@ public class GloVeJobAdaGrad extends PServerJob {
         }
     }
 
-    private void applyOnIndexAndSetDeltaFlagIfSignificant(Vector v, Vector deltas, long idx, double val, Vector.VectorFunction2Arg func) {
+    private void applyOnIndexAndSetDeltaFlagIfSignificant(Vector v, Vector deltas, long idx, double val, DoubleFunction2Arg func) {
         double oldVal = v.get(idx);
-        double newVal = func.operation(oldVal, val);
+        double newVal = func.apply(oldVal, val);
         if (Math.abs(newVal - oldVal) / oldVal > MATRIX_TRANSMIT_THRESHOLD) {
             deltas.set(idx, 1);
         }

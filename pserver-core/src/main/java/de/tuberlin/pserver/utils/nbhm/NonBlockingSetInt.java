@@ -240,7 +240,7 @@ public class NonBlockingSetInt extends AbstractSet<Integer> implements Serializa
     }
 
     private transient final AtomicInteger _copyIdx;   // Used to count bits started copying
-    private transient final AtomicInteger _copyDone;  // Used to count words copied in a resize operation
+    private transient final AtomicInteger _copyDone;  // Used to count words copied in a resize apply
     private transient final int _sum_bits_length; // Sum of all nested _bits.lengths
 
     private static final long mask( int i ) { return 1L<<(i&63); }

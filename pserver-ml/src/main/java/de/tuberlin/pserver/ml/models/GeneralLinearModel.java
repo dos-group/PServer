@@ -3,8 +3,8 @@ package de.tuberlin.pserver.ml.models;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.app.InstanceContext;
-import de.tuberlin.pserver.math.Vector;
-import de.tuberlin.pserver.math.VectorBuilder;
+import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.vector.VectorBuilder;
 
 public class GeneralLinearModel extends Model<GeneralLinearModel> {
 

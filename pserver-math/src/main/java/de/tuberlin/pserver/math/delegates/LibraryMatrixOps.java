@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.math.delegates;
 
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.vector.Vector;
 
 public interface LibraryMatrixOps<TM extends Matrix, TV extends Vector> {
 

@@ -2,7 +2,7 @@ package de.tuberlin.pserver.app.types.experimental;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix;
 
 import java.io.Serializable;
 

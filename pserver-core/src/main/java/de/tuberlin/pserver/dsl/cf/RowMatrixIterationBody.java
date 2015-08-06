@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.dsl.cf;
 
-import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix;
 
 public interface RowMatrixIterationBody {
 
