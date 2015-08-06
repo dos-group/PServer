@@ -92,98 +92,86 @@ public abstract class AbstractMatrix implements Matrix {
     // Operations. Default Implementations.
     // ---------------------------------------------------
 
+    protected abstract Matrix newInstance(long rows, long cols);
 
     @Override
-    public Matrix add(Matrix B) {
-        return add(B, this);
+    public final Matrix add(Matrix B) {
+        return add(B, newInstance(this.rows, this.cols));
     }
 
     @Override
     public Matrix add(Matrix B, Matrix C) {
+        Utils.checkShapeEqual(this, B, C);
         return this.applyOnElements(B, (x, y) -> x + y, C);
     }
 
     @Override
-    public Matrix sub(Matrix B) {
-        return sub(B, this);
+    public final Matrix sub(Matrix B) {
+        return sub(B, newInstance(this.rows, this.cols));
     }
 
     @Override
     public Matrix sub(Matrix B, Matrix C) {
+        Utils.checkShapeEqual(this, B, C);
         return this.applyOnElements(B, (x, y) -> x - y, C);
     }
 
     @Override
-    public Matrix mul(Matrix B) {
-        return mul(B, this);
+    public final Matrix mul(Matrix B) {
+        return mul(B, newInstance(this.rows, B.numCols()));
     }
 
     @Override
     public Matrix mul(Matrix B, Matrix C) {
-        if(Utils.shapeMatrixMatrixMult(this, B, C)) {
-            for (int row = 0; row < C.numRows(); row++) {
-                for (int col = 0; col < C.numCols(); col++) {
-                    C.set(row, col, this.rowAsVector(row).dot(B.colAsVector(col)));
-                }
+        Utils.checkShapeMatrixMatrixMult(this, B, C);
+        for (int row = 0; row < C.numRows(); row++) {
+            for (int col = 0; col < C.numCols(); col++) {
+                C.set(row, col, this.rowAsVector(row).dot(B.colAsVector(col)));
             }
-            return C;
         }
-        throw new IncompatibleShapeException("Required: A: m x n, B: n x o, C: m x o. Given: A: %d x %d, B: %d x %d, C: %d x %d", rows, cols, B.numRows(), B.numCols(), C.numRows(), C.numCols());
+        return C;
     }
 
     @Override
     public Vector mul(Vector b, Vector c) {
-        if(Utils.shapeMatrixVectorMult(this, b, c)) {
-            for (int i = 0; i < c.length(); i++) {
-                c.set(i, this.rowAsVector(i).dot(b));
-            }
-            return c;
+        Utils.checkShapeMatrixVectorMult(this, b, c);
+        for (int i = 0; i < c.length(); i++) {
+            c.set(i, this.rowAsVector(i).dot(b));
         }
-        throw new IncompatibleShapeException("Required: A: m x n, b: n, c: m. Given: A: %d x %d, b: %d, c: %d", rows, cols, b.length(), c.length());
+        return c;
     }
 
     @Override
-    public Matrix scale(double a) {
-        return scale(a, this);
+    public final Matrix scale(double a) {
+        return scale(a, newInstance(rows, cols));
     }
 
     @Override
     public Matrix scale(double a, Matrix B) {
+        Utils.checkShapeEqual(this, B);
         return applyOnElements(x -> a * x, B);
     }
 
     @Override
-    public Matrix transpose() {
-        if(Utils.shapeSquare(this)) {
-            for (int row = 1; row < rows; row++) {
-                for (int col = row; col < cols; col++) {
-                    double swap = this.get(row, col);
-                    this.set(row, col, this.get(col, row));
-                    this.set(col, row, swap);
-                }
-            }
-            return this;
-        }
-        throw new IncompatibleShapeException("Required: A: m x m. Given: A: %d x %d", rows, cols);
+    public final Matrix transpose() {
+        return transpose(newInstance(cols, rows));
     }
 
     @Override
     public Matrix transpose(Matrix B) {
-        if(Utils.shapeTranspose(this, B)) {
-            for (int row = 0; row < rows; row++) {
-                for (int col = 0; col < cols; col++) {
-                    B.set(col, row, this.get(row, col));
-                }
+        Utils.checkShapeTranspose(this, B);
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                B.set(col, row, this.get(row, col));
             }
-            return B;
         }
-        throw new IncompatibleShapeException("Required: A: m x n, B: n x m. Given: A: %d x %d, B: %d x %d", rows, cols, B.numRows(), B.numCols());
+        return B;
     }
 
     @Override
     public Matrix invert() {
         LOG.warn("invert() has not been overridden by effective subclass. This implementation does nothing.");
-        return this;
+        return newInstance(rows, cols);
     }
 
     @Override
@@ -193,114 +181,115 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public Matrix applyOnElements(final DoubleUnaryOperator f) {
-        return applyOnElements(f, this);
+    public final Matrix applyOnElements(final DoubleUnaryOperator f) {
+        return applyOnElements(f, newInstance(rows, cols));
     }
 
     @Override
     public Matrix applyOnElements(final DoubleUnaryOperator f, final Matrix B) {
-        if(Utils.shapeEqual(this, B)) {
-            for (int i = 0; i < B.numRows(); ++i) {
-                for (int j = 0; j < B.numCols(); ++j) {
-                    B.set(i, j, f.applyAsDouble(this.get(i, j)));
-                }
+        Utils.checkShapeEqual(this, B);
+        for (int i = 0; i < B.numRows(); ++i) {
+            for (int j = 0; j < B.numCols(); ++j) {
+                B.set(i, j, f.applyAsDouble(this.get(i, j)));
             }
-            return B;
         }
-        throw new IncompatibleShapeException("Required: A: m x n, B: m x n. Given: A: %d x %d, B: %d x %d", rows, cols, B.numRows(), B.numCols());
+        return B;
     }
 
     @Override
-    public Matrix applyOnElements(final DoubleBinaryOperator f, final Matrix B) {
-        return applyOnElements(B, f, this);
+    public final Matrix applyOnElements(final Matrix B, final DoubleBinaryOperator f) {
+        return applyOnElements(B, f, newInstance(rows, cols));
     }
 
     @Override
     public Matrix applyOnElements(Matrix B, DoubleBinaryOperator f, Matrix C) {
-        if(Utils.shapeEqual(this, B) && Utils.shapeEqual(B, C)) {
-            for (int i = 0; i < numRows(); ++i) {
-                for (int j = 0; j < numCols(); ++j) {
-                    C.set(i, j, f.applyAsDouble(this.get(i, j), B.get(i, j)));
-                }
+        Utils.checkShapeEqual(this, B, C);
+        for (int i = 0; i < numRows(); ++i) {
+            for (int j = 0; j < numCols(); ++j) {
+                C.set(i, j, f.applyAsDouble(this.get(i, j), B.get(i, j)));
             }
-            return C;
         }
-        throw new IncompatibleShapeException("Required: A: m x n, B: m x n, C: m x n. Given: A: %d x %d, B: %d x %d, B: %d x %d", rows, cols, B.numRows(), B.numCols(), C.numRows(), C.numCols());
+        return C;
     }
 
     @Override
-    public Matrix applyOnElements(final MatrixElementUnaryOperator f) {
-        return applyOnElements(f, this);
+    public final Matrix applyOnElements(final MatrixElementUnaryOperator f) {
+        return applyOnElements(f, newInstance(rows, cols));
     }
 
     @Override
     public Matrix applyOnElements(final MatrixElementUnaryOperator f, final Matrix B) {
-        if(Utils.shapeEqual(this, B)) {
-            for (int i = 0; i < B.numRows(); ++i) {
-                for (int j = 0; j < B.numCols(); ++j) {
-                    B.set(i, j, f.apply(i, j, this.get(i, j)));
-                }
+        Utils.checkShapeEqual(this, B);
+        for (int i = 0; i < B.numRows(); ++i) {
+            for (int j = 0; j < B.numCols(); ++j) {
+                B.set(i, j, f.apply(i, j, this.get(i, j)));
             }
-            return B;
         }
-        throw new IncompatibleShapeException("Required: A: m x n, B: m x n. Given: A: %d x %d, B: %d x %d", rows, cols, B.numRows(), B.numCols());
+        return B;
     }
 
     @Override
-    public Matrix addVectorToRows(final Vector v) {
-        return addVectorToRows(v, this);
+    public final Matrix addVectorToRows(final Vector v) {
+        return addVectorToRows(v, newInstance(rows, cols));
     }
 
     @Override
     public Matrix addVectorToRows(Vector v, Matrix B) {
-        if(Utils.shapeEqual(this, B) && this.numCols() == v.length()) {
-            for (int row = 0; row < rows; row++) {
-                for (int col = 0; col < cols; col++) {
-                    B.set(row, col, this.get(row, col) + v.get(col));
-                }
+        Utils.checkApplyVectorToRows(this, v, B);
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                B.set(row, col, this.get(row, col) + v.get(col));
             }
-            return B;
         }
-        throw new IncompatibleShapeException("Required: A: m x n, B: m x n, v: n. Given: A: %d x %d, B: %d x %d, v: %d", rows, cols, B.numRows(), B.numCols(), v.length());
+        return B;
     }
 
     @Override
-    public Matrix addVectorToCols(final Vector v) {
-        return addVectorToCols(v, this);
+    public final Matrix addVectorToCols(final Vector v) {
+        return addVectorToCols(v, newInstance(rows, cols));
     }
 
     @Override
     public Matrix addVectorToCols(Vector v, Matrix B) {
-        if(Utils.shapeEqual(this, B) && this.numRows() == v.length()) {
-            for (int col = 0; col < cols; col++) {
-                for (int row = 0; row < rows; row++) {
-                    B.set(row, col, this.get(row, col) + v.get(row));
-                }
+        Utils.checkApplyVectorToCols(this, v, B);
+        for (int col = 0; col < cols; col++) {
+            for (int row = 0; row < rows; row++) {
+                B.set(row, col, this.get(row, col) + v.get(row));
             }
-            return B;
         }
-        throw new IncompatibleShapeException("Required: A: m x n, B: m x n, v: m. Given: A: %d x %d, B: %d x %d, v: %d", rows, cols, B.numRows(), B.numCols(), v.length());
+        return B;
     }
 
     @Override
-    public Matrix setDiagonalsToZero() {
+    public final Matrix setDiagonalsToZero() {
+        return setDiagonalsToZero(this.copy());
+    }
+
+    @Override
+    public Matrix setDiagonalsToZero(Matrix B) {
         long diag = 0;
         while(diag < rows && diag < cols) {
-            this.set(diag, diag, 0.);
+            B.set(diag, diag, 0.);
             diag++;
         }
-        return this;
+        return B;
     }
 
     @Override
-    public Matrix applyOnNonZeroElements(MatrixElementUnaryOperator mf) {
-        for (int i = 0; i < numRows(); ++i) {
-            for (int j = 0; j < numCols(); ++j) {
-                double oldVal = get(i, j);
+    public final Matrix applyOnNonZeroElements(MatrixElementUnaryOperator f) {
+        return applyOnNonZeroElements(f, newInstance(rows, cols));
+    }
+
+    @Override
+    public Matrix applyOnNonZeroElements(MatrixElementUnaryOperator f, Matrix B) {
+        Utils.checkShapeEqual(this, B);
+        for (int row = 0; row < numRows(); ++row) {
+            for (int col = 0; col < numCols(); ++col) {
+                double oldVal = get(row, col);
                 if(oldVal != 0.0) {
-                    double newVal = mf.apply(i, j, oldVal);
+                    double newVal = f.apply(row, col, oldVal);
                     if (newVal != oldVal) {
-                        set(i, j, newVal);
+                        B.set(row, col, newVal);
                     }
                 }
             }

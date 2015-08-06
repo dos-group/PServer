@@ -426,7 +426,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         @Override
         public void handleDataEvent(int srcNodeID, Object value) {
             lock.lock();
-            m.applyOnElements((v1, v2) -> (v1 + v2) / 2.0, (Matrix) value);
+            m.applyOnElements((Matrix) value, (v1, v2) -> (v1 + v2) / 2.0);
             lock.unlock();
         }
     }
@@ -515,7 +515,7 @@ public class GloVeJobAdaGrad extends PServerJob {
                 return val;
             });
         }
-        m.applyOnElements((w, d) -> w / (d + 1), diffCounts);
+        m.applyOnElements(diffCounts, (w, d) -> w / (d + 1));
     }
 
     private void performPullRequest(Vector v, String pullRequestName) {
@@ -548,7 +548,7 @@ public class GloVeJobAdaGrad extends PServerJob {
 
     private static final DataManager.Merger<Matrix> matrixMerger = (dst, src) -> {
         for (final Matrix m : src) {
-            dst.applyOnElements((e1, e2) -> e1 + e2, m);
+            dst.applyOnElements(m, (e1, e2) -> e1 + e2);
         }
 
         dst.applyOnElements(e -> e / (src.size() + 1));
@@ -611,7 +611,7 @@ public class GloVeJobAdaGrad extends PServerJob {
             List<Serializable> r = res.get(i);
             for (int j = 0; j < r.size(); j++) {
                 Matrix m = (Matrix) r.get(j);
-                W_avg.applyOnElements((e1, e2) -> e1 + e2, m);
+                W_avg.applyOnElements(m, (e1, e2) -> e1 + e2);
                 numMergedMatrices++;
             }
         }

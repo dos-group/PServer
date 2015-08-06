@@ -17,7 +17,7 @@ public class ReferenceTests {
 
     public void testMatrixAddWithoutTargetParameter(final Matrix mat1, final Matrix mat2) {
         final Matrix result = mat1.add(mat2);
-        assertTrue("Matrix.add called on object X without target parameter must return X", result == mat1);
+        assertTrue("Matrix.add called on object X without target parameter must not return X", result != mat1);
     }
 
     public void testMatrixAddWithTargetParameter(final Matrix mat1, final Matrix mat2, final Matrix target) {
@@ -27,7 +27,7 @@ public class ReferenceTests {
 
     public void testMatrixSubWithoutTargetParameter(final Matrix mat1, final Matrix mat2) {
         final Matrix result = mat1.sub(mat2);
-        assertTrue("Matrix.sub called on object X without target parameter must return X", result == mat1);
+        assertTrue("Matrix.sub called on object X without target parameter must not return X", result != mat1);
     }
 
     public void testMatrixSubWithTargetParameter(final Matrix mat1, final Matrix mat2, final Matrix target) {
@@ -37,7 +37,7 @@ public class ReferenceTests {
 
     public void testMatrixMatrixMultWithoutTargetParameter(final Matrix mat1, final Matrix mat2) {
         final Matrix result = mat1.mul(mat2);
-        assertTrue("Matrix.mul called on object X without target parameter must return X", result == mat1);
+        assertTrue("Matrix.mul called on object X without target parameter must not return X", result != mat1);
     }
 
     public void testMatrixMatrixMultWithTargetParameter(final Matrix mat1, final Matrix mat2, final Matrix target) {
@@ -52,7 +52,7 @@ public class ReferenceTests {
 
     public void testMatrixScaleWithoutTargetParameter(final Matrix mat, double a) {
         final Matrix result = mat.scale(a);
-        assertTrue("Matrix.scale called on object X without target parameter must return X", result == mat);
+        assertTrue("Matrix.scale called on object X without target parameter must not return X", result != mat);
     }
 
     public void testMatrixScaleWithTargetParameter(final Matrix mat, double a, final Matrix target) {
@@ -62,7 +62,7 @@ public class ReferenceTests {
 
     public void testMatrixTransposeWithoutTargetParameter(final Matrix mat) {
         final Matrix result = mat.transpose();
-        assertTrue("Matrix.transpose called on object X without target parameter must return X", result == mat);
+        assertTrue("Matrix.transpose called on object X without target parameter must not return X", result != mat);
     }
 
     public void testMatrixTransposeWithTargetParameter(final Matrix mat, final Matrix target) {
@@ -72,7 +72,7 @@ public class ReferenceTests {
 
     public void testMatrixInvertWithoutTargetParameter(final Matrix mat) {
         final Matrix result = mat.invert();
-        assertTrue("Matrix.invert called on object X without target parameter must return X", result == mat);
+        assertTrue("Matrix.invert called on object X without target parameter must not return X", result != mat);
     }
 
     public void testMatrixInvertWithTargetParameter(final Matrix mat, final Matrix target) {
@@ -82,7 +82,7 @@ public class ReferenceTests {
 
     public void testMatrixUnaryApplyOnElementsWithoutTargetParameter(final Matrix mat) {
         final Matrix result = mat.applyOnElements(DoubleUnaryOperator.identity());
-        assertTrue("Matrix.applyOnElements (unary) called on object X without target parameter must return X", result == mat);
+        assertTrue("Matrix.applyOnElements (unary) called on object X without target parameter must not return X", result != mat);
     }
 
     public void testMatrixUnaryApplyOnElementsWithTargetParameter(final Matrix mat, final Matrix target) {
@@ -91,8 +91,8 @@ public class ReferenceTests {
     }
 
     public void testMatrixBinaryApplyOnElementsWithoutTargetParameter(final Matrix mat, final Matrix B) {
-        final Matrix result = mat.applyOnElements((x, y) -> x + y, B);
-        assertTrue("Matrix.applyOnElements (binary) called on object X without target parameter must return X", result == mat);
+        final Matrix result = mat.applyOnElements(B, (x, y) -> x + y);
+        assertTrue("Matrix.applyOnElements (binary) called on object X without target parameter must not return X", result != mat);
     }
 
     public void testMatrixBinaryApplyOnElementsWithTargetParameter(final Matrix mat, final Matrix B, final Matrix target) {
@@ -102,7 +102,7 @@ public class ReferenceTests {
 
     public void testMatrixElementApplyOnElementsWithoutTargetParameter(final Matrix mat) {
         final Matrix result = mat.applyOnElements((row, col, val) -> val);
-        assertTrue("Matrix.applyOnElements (Element) called on object X without target parameter must return X", result == mat);
+        assertTrue("Matrix.applyOnElements (Element) called on object X without target parameter must not return X", result != mat);
     }
 
     public void testMatrixElementApplyOnElementsWithTargetParameter(final Matrix mat, final Matrix target) {
@@ -112,7 +112,7 @@ public class ReferenceTests {
 
     public void testMatrixAddVectorToRowsWithoutTargetParameter(final Matrix mat, final Vector b) {
         final Matrix result = mat.addVectorToRows(b);
-        assertTrue("Matrix.addVectorToRows called on object X without target parameter must return X", result == mat);
+        assertTrue("Matrix.addVectorToRows called on object X without target parameter must not return X", result != mat);
     }
 
     public void testMatrixAddVectorToRowsWithTargetParameter(final Matrix mat, final Vector b, final Matrix target) {
@@ -122,7 +122,7 @@ public class ReferenceTests {
 
     public void testMatrixAddVectorToColsWithoutTargetParameter(final Matrix mat, final Vector b) {
         final Matrix result = mat.addVectorToCols(b);
-        assertTrue("Matrix.addVectorToCols called on object X without target parameter must return X", result == mat);
+        assertTrue("Matrix.addVectorToCols called on object X without target parameter must not return X", result != mat);
     }
 
     public void testMatrixAddVectorToColsWithTargetParameter(final Matrix mat, final Vector b, final Matrix target) {
@@ -132,7 +132,7 @@ public class ReferenceTests {
 
     public void testSetDiagonalsToZero(final Matrix mat) {
         final Matrix result = mat.setDiagonalsToZero();
-        assertTrue("Matrix.testsetDiagonalsToZero called on object X must return X", result == mat);
+        assertTrue("Matrix.testsetDiagonalsToZero called on object X must not return X", result != mat);
     }
 
     @Test

@@ -106,23 +106,8 @@ public class SMatrix2 extends AbstractMatrix {
     }
 
     @Override
-    public Matrix add(Matrix B) {
-        throw new NotImplementedException("not impl");
-    }
-
-    @Override
-    public Matrix sub(Matrix B) {
-        throw new NotImplementedException("not impl");
-    }
-
-    @Override
-    public Matrix mul(Matrix B) {
-        throw new NotImplementedException("not impl");
-    }
-
-    @Override
-    public Matrix scale(double alpha) {
-        throw new NotImplementedException("not impl");
+    protected Matrix newInstance(long rows, long cols) {
+        return new SMatrix2(rows, cols, Layout.ROW_LAYOUT);
     }
 
     @Override
@@ -186,11 +171,11 @@ public class SMatrix2 extends AbstractMatrix {
     }
 
     @Override
-    public Matrix applyOnNonZeroElements(MatrixElementUnaryOperator mf) {
+    public Matrix applyOnNonZeroElements(MatrixElementUnaryOperator f, Matrix B) {
         for (Map.Entry<MtxPos, Double> ele : data.entrySet()) {
             long row = ele.getKey().row;
             long col = ele.getKey().col;
-            ele.setValue(mf.apply(row, col, ele.getValue()));
+            B.set(row, col, f.apply(row, col, ele.getValue()));
         }
         return this;
     }

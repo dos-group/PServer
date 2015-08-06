@@ -214,7 +214,7 @@ public class TSNEJob_MC extends PServerJob {
             gains = gains.applyOnElements(e -> Math.max(e, MIN_GAIN));
 
             // iY = momentum * iY - eta * (gains * dY)
-            iY = iY.scale(momentum).sub(dY.applyOnElements((e1, e2) -> e1 * e2, gains).scale(LEARNING_RATE));
+            iY = iY.scale(momentum).sub(dY.applyOnElements(gains, (e1, e2) -> e1 * e2).scale(LEARNING_RATE));
 
             // Y = Y + iY
             Y = Y.add(iY);

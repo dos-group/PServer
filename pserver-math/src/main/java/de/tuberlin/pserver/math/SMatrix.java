@@ -217,6 +217,11 @@ public class SMatrix extends AbstractMatrix {
         return new SparseRowIterator(this, startRow, endRow);
     }
 
+    @Override
+    protected Matrix newInstance(long rows, long cols) {
+        return new SMatrix(rows, cols, Layout.ROW_LAYOUT);
+    }
+
 
     @Override
     public Vector rowAsVector() {

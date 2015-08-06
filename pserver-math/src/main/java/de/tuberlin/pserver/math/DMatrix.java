@@ -176,6 +176,11 @@ public class DMatrix extends AbstractMatrix implements Serializable {
     @Override
     public RowIterator rowIterator(final int startRow, final int endRow) { return new RowIterator(this, startRow, endRow); }
 
+    @Override
+    protected Matrix newInstance(long rows, long cols) {
+        return new DMatrix(rows, cols);
+    }
+
     // ---------------------------------------------------
     // Matrix Operation Delegates.
     // ---------------------------------------------------

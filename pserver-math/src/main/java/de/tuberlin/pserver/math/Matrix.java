@@ -72,6 +72,7 @@ public interface Matrix extends MObject {
     interface MatrixElementUnaryOperator {
 
         double apply(long row, long col, double element);
+
     }
 
     class PartitionShape {
@@ -306,13 +307,14 @@ public interface Matrix extends MObject {
     Matrix applyOnElements(final MatrixElementUnaryOperator f, final Matrix B);
 
     /**
-     * TODO: refactor sparse applyOnElements to implement this functionality. --- Not really possible... only if f(0) = 0
-     * Called on Matrix A. Computes A = f(A) element-wise.
-     *
-     * @param f Unary higher order function f: (row, col, val) -> new_val
-     * @return A after computing  A = f(A) element-wise.
+     * Identical to {@link #applyOnElements(DoubleUnaryOperator)} but only on non-zero elements.
      */
     Matrix applyOnNonZeroElements(final MatrixElementUnaryOperator f);
+
+    /**
+     * Identical to {@link #applyOnElements(DoubleUnaryOperator, Matrix)} but only on non-zero elements.
+     */
+    Matrix applyOnNonZeroElements(final MatrixElementUnaryOperator f, Matrix B);
 
     /**
      * Identical to {@link #addVectorToRows(Vector, Matrix)} but automatically creates the resulting <code>Matrix B</code>.

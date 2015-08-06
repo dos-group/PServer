@@ -3,6 +3,7 @@ package de.tuberlin.pserver.math.stuff;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.Matrix;
 import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.math.exceptions.IncompatibleShapeException;
 
 public class Utils {
 
@@ -51,10 +52,25 @@ public class Utils {
      * Checks if two matrices are of the same shape.
      * @param A of shape m x n
      * @param B of shape o x p
-     * @return true iff m == o && n == p
+     * @throws IncompatibleShapeException if not (m == o && n == p)
      */
-    public static boolean shapeEqual(Matrix A, Matrix B) {
-        return A.numRows() == B.numRows() && A.numCols() == B.numCols();
+    public static void checkShapeEqual(Matrix A, Matrix B) {
+        if( ! (A.numRows() == B.numRows() && A.numCols() == B.numCols())) {
+            throw new IncompatibleShapeException("Required: A: m x n, B: m x n. Given: A: %d x %d, B: %d x %d", A.numRows(), A.numCols(), B.numRows(), B.numCols());
+        }
+    }
+
+    /**
+     * Checks if three matrices are of the same shape.
+     * @param A of shape m x n
+     * @param B of shape o x p
+     * @param C of shape q x e
+     * @throws IncompatibleShapeException if not (m == o == q && n == p == e)
+     */
+    public static void checkShapeEqual(Matrix A, Matrix B, Matrix C) {
+        if( ! (A.numRows() == B.numRows() && A.numRows() == C.numRows() && A.numCols() == B.numCols() && A.numCols() == C.numCols())) {
+            throw new IncompatibleShapeException("Required: A: m x n, B: m x n, B: m x n. Given: A: %d x %d, B: %d x %d, C: %d x %d", A.numRows(), A.numCols(), B.numRows(), B.numCols(), C.numRows(), C.numCols());
+        }
     }
 
     /**
@@ -72,10 +88,12 @@ public class Utils {
      * @param A of shape m x n
      * @param B of shape o x p
      * @param C of shape q x r
-     * @return true iff n == o && m == r
+     * @throws IncompatibleShapeException if not (n == o && m == r)
      */
-    public static boolean shapeMatrixMatrixMult(Matrix A, Matrix B, Matrix C) {
-        return A.numCols() == B.numRows() && A.numRows() == C.numRows() && B.numCols() == C.numCols();
+    public static void checkShapeMatrixMatrixMult(Matrix A, Matrix B, Matrix C) {
+        if( ! (A.numCols() == B.numRows() && A.numRows() == C.numRows() && B.numCols() == C.numCols())) {
+            throw new IncompatibleShapeException("Required: A: m x n, B: n x o, C: m x o. Given: A: %d x %d, B: %d x %d, C: %d x %d", A.numRows(), A.numCols(), B.numRows(), B.numCols(), C.numRows(), C.numCols());
+        }
     }
 
     /**
@@ -83,29 +101,61 @@ public class Utils {
      * @param A of shape m x n
      * @param b of size  o
      * @param c of size  p
-     * @return true iff n == o && m == p
+     * @throws IncompatibleShapeException if not (n == o && m == p)
      */
-    public static boolean shapeMatrixVectorMult(Matrix A, Vector b, Vector c) {
-        return A.numCols() == b.length() && A.numRows() == c.length();
+    public static void checkShapeMatrixVectorMult(Matrix A, Vector b, Vector c) {
+        if( ! (A.numCols() == b.length() && A.numRows() == c.length())) {
+            throw new IncompatibleShapeException("Required: A: m x n, b: n, c: m. Given: A: %d x %d, b: %d, c: %d", A.numRows(), A.numCols(), b.length(), c.length());
+        }
     }
 
     /**
      * Checks if A is square
      * @param A of shape m x n
-     * @return true iff m == n
+     * @throws IncompatibleShapeException if not (m == n)
      */
-    public static boolean shapeSquare(Matrix A) {
-        return A.numRows() == A.numCols();
+    public static void checkShapeSquare(Matrix A) {
+        if( ! (A.numRows() == A.numCols())) {
+            throw new IncompatibleShapeException("Required: A: m x m. Given: A: %d x %d", A.numRows(), A.numCols());
+        }
     }
 
     /**
      * Checks if B can store A transposed.
      * @param A of shape m x n
      * @param A of shape o x p
-     * @return true iff m == p && n == o
+     * @throws IncompatibleShapeException if not (m == p && n == o)
      */
-    public static boolean shapeTranspose(Matrix A, Matrix B) {
-        return A.numRows() == B.numCols() && A.numCols() == B.numRows();
+    public static void checkShapeTranspose(Matrix A, Matrix B) {
+        if( ! (A.numRows() == B.numCols() && A.numCols() == B.numRows())) {
+            throw new IncompatibleShapeException("Required: A: m x n, B: n x m. Given: A: %d x %d, B: %d x %d", A.numRows(), A.numCols(), B.numRows(), B.numCols());
+        }
+    }
+
+    /**
+     * Checks if v can be applied to the rows of A, and if the result can be stored in B.
+     * @param A of shape m x n
+     * @param v of shape o
+     * @param B of shape p x q
+     * @throws IncompatibleShapeException if not (n == o && m == p && n == q)
+     */
+    public static void checkApplyVectorToRows(Matrix A, Vector v, Matrix B) {
+        if( ! (A.numRows() == B.numRows() && A.numCols() == B.numCols()) && A.numCols() == v.length()) {
+            throw new IncompatibleShapeException("Required: A: m x n, v: n, B: m x n. Given: A: %d x %d, v: %d, B: %d x %d", A.numRows(), A.numCols(), v.length(), B.numRows(), B.numCols());
+        }
+    }
+
+    /**
+     * Checks if v can be applied to the cols of A, and if the result can be stored in B.
+     * @param A of shape m x n
+     * @param v of shape o
+     * @param B of shape p x q
+     * @throws IncompatibleShapeException if not (m == o && m == p && n == q)
+     */
+    public static void checkApplyVectorToCols(Matrix A, Vector v, Matrix B) {
+        if( ! (A.numRows() == B.numRows() && A.numCols() == B.numCols()) && A.numRows() == v.length()) {
+            throw new IncompatibleShapeException("Required: A: m x n, v: m, B: m x n. Given: A: %d x %d, v: %d, B: %d x %d", A.numRows(), A.numCols(), v.length(), B.numRows(), B.numCols());
+        }
     }
 
 }
