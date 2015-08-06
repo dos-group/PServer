@@ -5,23 +5,38 @@ import de.tuberlin.pserver.math.Vector;
 
 public interface LibraryMatrixOps<TM extends Matrix, TV extends Vector> {
 
-    public abstract TM axpy(final double alpha, final TM B, final TM A);
+    /**
+     * Computes Matrix-Matrix-Addition C = A + B and returns C.
+     */
+    TM add(final TM A, final TM B, final TM C);
 
-    public abstract TM add(final TM B, final TM A);             // A = B + A
+    /**
+     * Computes Matrix-Matrix-Subtraction C = A - B and returns C.
+     */
+    TM sub(final TM A, final TM B, final TM C);
 
-    public abstract TM sub(final TM B, final TM A);             // A = B - A
+    /**
+     * Computes Matrix-Matrix-Multiplication C = A * B and returns C.
+     */
+    TM mul(final TM A, final TM B, final TM C);
 
-    public abstract TV mul(final TM A, final TV x);
+    /**
+     * Computes Matrix-Vector-Multiplication c = A * b and returns c.
+     */
+    TV mul(final TM A, final TV b, final TV c);
 
-    public abstract TM mul(final TM A, final TM B);
+    /**
+     * Computes Matrix-Scalar-Multiplication B = A * a.
+     */
+    TM scale(final TM A, final double alpha, final TM B);
 
-    public abstract void mul(final TM A, final TV x, final TV y); // y = A * x
+    /**
+     * Computes transpose of A: B = A<sup>T</sup>.
+     */
+    TM transpose(final TM A, final TM B);
 
-    public abstract TM scale(final double alpha, final TM A);   // A = alpha * A
-
-    public abstract TM transpose(final TM A);                   // A = A^T
-
-    public abstract void transpose(final TM A, final TM B);       // B = A^T
-
-    public abstract boolean invert(final TM A);                 // A = A^-1
+    /**
+     * Computes inverse of A: B = A<sup>-1</sup>.
+     */
+    boolean invert(final TM A, final TM B);
 }

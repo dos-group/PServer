@@ -9,16 +9,47 @@ import no.uib.cipr.matrix.Matrices;
 import no.uib.cipr.matrix.MatrixSingularException;
 import no.uib.cipr.matrix.sparse.FlexCompColMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class MTJMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
 
     @Override
-    public Matrix axpy(double alpha, Matrix B, Matrix A) {
-        return null; // ???
+    public Matrix add(Matrix A, Matrix B, Matrix C) {
+        throw new NotImplementedException();
     }
 
     @Override
-    public Matrix add(Matrix B, Matrix A) {
+    public Matrix sub(Matrix A, Matrix B, Matrix C) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public Matrix mul(Matrix A, Matrix B, Matrix C) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public Vector mul(Matrix A, Vector b, Vector c) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public Matrix scale(Matrix A, double alpha, Matrix B) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public Matrix transpose(Matrix A, Matrix B) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public boolean invert(Matrix A, Matrix B) {
+        throw new NotImplementedException();
+    }
+
+/*@Override
+    public Matrix add(Matrix A, Matrix B, Matrix C) {
         return MTJUtils.toPserverMatrix(MTJUtils.toLibMatrix(B, true).add(MTJUtils.toLibMatrix(A)));
     }
 
@@ -84,6 +115,6 @@ public class MTJMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
         }
         MTJUtils.toLibMatrix(A).set(AI);
         return true;
-    }
+    }*/
 
 }

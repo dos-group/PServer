@@ -111,7 +111,7 @@ public class SMatrix2 extends AbstractMatrix {
     }
 
     @Override
-    public Matrix transpose() {
+    public Matrix transpose(Matrix A) {
         throw new NotImplementedException("not impl");
     }
 

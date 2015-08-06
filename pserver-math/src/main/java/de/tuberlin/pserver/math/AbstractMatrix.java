@@ -169,9 +169,8 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public Matrix invert() {
-        LOG.warn("invert() has not been overridden by effective subclass. This implementation does nothing.");
-        return newInstance(rows, cols);
+    public final Matrix invert() {
+        return invert(newInstance(cols, rows));
     }
 
     @Override

@@ -35,7 +35,7 @@ public class EJMLDelegationTests {
             DenseMatrix64F ejmlRes = DenseMatrix64F.wrap(a, b, ejmlResData);
             CommonOps.add(ejmlMat1, ejmlMat2, ejmlRes);
 
-            Matrix res = mat1.add(mat2);
+            Matrix res = mat1.add(mat2, mat1);
             double[] resData = res.toArray();
 
             assert(mat1.toArray() == matData1);
@@ -66,7 +66,7 @@ public class EJMLDelegationTests {
             DenseMatrix64F ejmlRes = DenseMatrix64F.wrap(a, b, ejmlResData);
             CommonOps.sub(ejmlMat1, ejmlMat2, ejmlRes);
 
-            Matrix res = mat1.sub(mat2);
+            Matrix res = mat1.sub(mat2, mat1);
             double[] resData = res.toArray();
 
             assert(mat1.toArray() == matData1);
@@ -214,7 +214,8 @@ public class EJMLDelegationTests {
 
             CommonOps.transpose(ejmlMat1, ejmlRes);
 
-            mat1.transpose(res);
+            Matrix test = mat1.transpose(res);
+            assert(test == res);
             double[] resData = res.toArray();
 
             assert(java.util.Arrays.equals(resData, ejmlResData));
@@ -260,7 +261,8 @@ public class EJMLDelegationTests {
 
             CommonOps.scale(scale, ejmlMat);
 
-            Matrix res = mat.scale(scale);
+            Matrix res = mat.scale(scale, mat);
+            assert(res == mat);
             double[] resData = res.toArray();
 
             assert(resData == matData);

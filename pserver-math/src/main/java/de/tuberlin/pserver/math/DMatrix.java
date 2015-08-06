@@ -185,7 +185,45 @@ public class DMatrix extends AbstractMatrix implements Serializable {
     // Matrix Operation Delegates.
     // ---------------------------------------------------
 
-//    @Override public Matrix axpy(final double alpha, final Matrix B) { return null; }
+    @Override
+    public Matrix add(Matrix B, Matrix C) {
+        Utils.checkShapeEqual(this, B, C);
+        return matrixOpDelegate.add(this, B, C);
+    }
+
+    @Override
+    public Matrix sub(Matrix B, Matrix C) {
+        Utils.checkShapeEqual(this, B, C);
+        return matrixOpDelegate.sub(this, B, C);
+    }
+
+    @Override
+    public Matrix mul(Matrix B, Matrix C) {
+        Utils.checkShapeMatrixMatrixMult(this, B, C);
+        return matrixOpDelegate.mul(this, B, C);
+    }
+
+    @Override
+    public Vector mul(Vector b, Vector c) {
+        return super.mul(b, c);
+    }
+
+    @Override
+    public Matrix scale(double a, Matrix B) {
+        return super.scale(a, B);
+    }
+
+    @Override
+    public Matrix transpose(Matrix B) {
+        return super.transpose(B);
+    }
+
+    @Override
+    public Matrix invert(Matrix B) {
+        return super.invert(B);
+    }
+
+
 //
 //    @Override public Matrix add(final Matrix B) { return matrixOpDelegate.add(B, this); }
 //
@@ -235,7 +273,7 @@ public class DMatrix extends AbstractMatrix implements Serializable {
     public Vector rowAsVector(final long row, final long from, final long to) { // TODO: Optimize with respect to the layout with array copy.
         Vector r = new DVector(to - from);
         for (long i = from; i < to; ++i)
-            r.set(i, data[getPos(row, i)]);
+            r.set(i, data[Utils.getPos(row, i, this)]);
         return r;
     }
 
@@ -292,15 +330,4 @@ public class DMatrix extends AbstractMatrix implements Serializable {
         return new DMatrix(this);
     }
 
-    // ---------------------------------------------------
-    // Private Methods.
-    // ---------------------------------------------------
-
-    private int getPos(final long row, final long col) {
-        switch (layout) {
-            case ROW_LAYOUT: return (int)(row * cols + col);
-            case COLUMN_LAYOUT: return (int)(col * rows + row);
-        }
-        throw new IllegalStateException();
-    }
 }
