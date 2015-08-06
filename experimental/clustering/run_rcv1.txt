@@ -1,0 +1,117 @@
+alber@alberTU:/media/alber/datadisk/work/devel/parameter_server/PServer/pserver-clustering$ python main.py rcv1 log  para_default  para_kmeans para_abskmeans
+=================> start para_default
+partition  0 of  5060 elem matches -1:  2199(0.4), +1:  2861(0.57)
+partition  1 of  5060 elem matches -1:  2659(0.5), +1:  2401(0.47)
+partition  2 of  5060 elem matches -1:  2388(0.5), +1:  2672(0.53)
+partition  3 of  5062 elem matches -1:  2505(0.5), +1:  2557(0.51)
+
+epoch  0 loss:  [[ 0.52137107]]
+epoch  1 loss:  [[ 0.2136775]]
+epoch  2 loss:  [[ 0.15701076]]
+epoch  3 loss:  [[ 0.12723645]]
+epoch  4 loss:  [[ 0.10804799]]
+             precision    recall  f1-score   support
+
+       -1.0       0.94      0.95      0.94      4987
+        1.0       0.95      0.94      0.94      5013
+
+avg / total       0.94      0.94      0.94     10000
+
+[[4720  267]
+ [ 295 4718]]
+0.9438
+=================> stopped para_default  time:  62.410531044
+=================> start para_kmeans
+partition  0 of  5060 elem matches -1:  2199(0.4), +1:  2861(0.57)
+partition  1 of  5060 elem matches -1:  2659(0.5), +1:  2401(0.47)
+partition  2 of  5060 elem matches -1:  2388(0.5), +1:  2672(0.53)
+partition  3 of  5062 elem matches -1:  2505(0.5), +1:  2557(0.51)
+
+epoch  0 loss:  [[ 0.52314403]]
+partition  0 of 14847 elem matches -1:  4356(0.3), +1: 10491(0.71)
+partition  1 of  5270 elem matches -1:  5270(1.0), +1:     0(0.00)
+partition  2 of    45 elem matches -1:    45(1.0), +1:     0(0.00)
+partition  3 of    80 elem matches -1:    80(1.0), +1:     0(0.00)
+
+epoch  1 loss:  [[ 0.12383303]]
+partition  0 of  2761 elem matches -1:  2761(1.0), +1:     0(0.00)
+partition  1 of 17052 elem matches -1:  6988(0.4), +1: 10064(0.59)
+partition  2 of     2 elem matches -1:     2(1.0), +1:     0(0.00)
+partition  3 of   427 elem matches -1:     0(0.0), +1:   427(1.00)
+
+epoch  2 loss:  [[ 0.16350036]]
+partition  0 of     7 elem matches -1:     7(1.0), +1:     0(0.00)
+partition  1 of     1 elem matches -1:     1(1.0), +1:     0(0.00)
+partition  2 of   821 elem matches -1:   821(1.0), +1:     0(0.00)
+partition  3 of 19413 elem matches -1:  8922(0.5), +1: 10491(0.54)
+
+epoch  3 loss:  [[ 0.15858367]]
+partition  0 of  2055 elem matches -1:     0(0.0), +1:  2055(1.00)
+partition  1 of     2 elem matches -1:     2(1.0), +1:     0(0.00)
+partition  2 of     1 elem matches -1:     1(1.0), +1:     0(0.00)
+partition  3 of 18184 elem matches -1:  9748(0.5), +1:  8436(0.46)
+
+epoch  4 loss:  [[ 0.1022336]]
+partition  0 of   336 elem matches -1:   336(1.0), +1:     0(0.00)
+partition  1 of 19904 elem matches -1:  9415(0.5), +1: 10489(0.53)
+partition  2 of     1 elem matches -1:     0(0.0), +1:     1(1.00)
+partition  3 of     1 elem matches -1:     0(0.0), +1:     1(1.00)
+
+             precision    recall  f1-score   support
+
+       -1.0       0.92      0.96      0.94      4987
+        1.0       0.95      0.92      0.93      5013
+
+avg / total       0.94      0.94      0.94     10000
+
+[[4765  222]
+ [ 425 4588]]
+0.9353
+=================> stopped para_kmeans  time:  298.407795191
+=================> start para_abskmeans
+partition  0 of  5060 elem matches -1:  2199(0.4), +1:  2861(0.57)
+partition  1 of  5060 elem matches -1:  2659(0.5), +1:  2401(0.47)
+partition  2 of  5060 elem matches -1:  2388(0.5), +1:  2672(0.53)
+partition  3 of  5062 elem matches -1:  2505(0.5), +1:  2557(0.51)
+
+epoch  0 loss:  [[ 0.52224932]]
+partition  0 of  2378 elem matches -1:  2233(0.9), +1:   145(0.06)
+partition  1 of  1618 elem matches -1:  1148(0.7), +1:   470(0.29)
+partition  2 of 16242 elem matches -1:  6366(0.4), +1:  9876(0.61)
+partition  3 of     4 elem matches -1:     4(1.0), +1:     0(0.00)
+
+epoch  1 loss:  [[ 0.18752291]]
+partition  0 of  1562 elem matches -1:   742(0.5), +1:   820(0.52)
+partition  1 of     1 elem matches -1:     0(0.0), +1:     1(1.00)
+partition  2 of     9 elem matches -1:     9(1.0), +1:     0(0.00)
+partition  3 of 18670 elem matches -1:  9000(0.5), +1:  9670(0.52)
+
+epoch  2 loss:  [[ 0.17633177]]
+partition  0 of 18376 elem matches -1:  8881(0.5), +1:  9495(0.52)
+partition  1 of    47 elem matches -1:    40(0.9), +1:     7(0.15)
+partition  2 of     1 elem matches -1:     1(1.0), +1:     0(0.00)
+partition  3 of  1818 elem matches -1:   829(0.5), +1:   989(0.54)
+
+epoch  3 loss:  [[ 0.1732641]]
+partition  0 of   879 elem matches -1:   439(0.5), +1:   440(0.50)
+partition  1 of 19300 elem matches -1:  9287(0.5), +1: 10013(0.52)
+partition  2 of    62 elem matches -1:    25(0.4), +1:    37(0.60)
+partition  3 of     1 elem matches -1:     0(0.0), +1:     1(1.00)
+
+epoch  4 loss:  [[ 0.1683158]]
+partition  0 of  1641 elem matches -1:   811(0.5), +1:   830(0.51)
+partition  1 of     3 elem matches -1:     3(1.0), +1:     0(0.00)
+partition  2 of 18595 elem matches -1:  8937(0.5), +1:  9658(0.52)
+partition  3 of     3 elem matches -1:     0(0.0), +1:     3(1.00)
+
+             precision    recall  f1-score   support
+
+       -1.0       0.94      0.95      0.95      4987
+        1.0       0.95      0.94      0.95      5013
+
+avg / total       0.95      0.95      0.95     10000
+
+[[4730  257]
+ [ 277 4736]]
+0.9466
+=================> stopped para_abskmeans  time:  298.499006033
