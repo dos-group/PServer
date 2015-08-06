@@ -3,15 +3,15 @@ package de.tuberlin.pserver.ml.optimization.SGD;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
-import de.tuberlin.pserver.app.ExecutionManager;
-import de.tuberlin.pserver.app.InstanceContext;
-import de.tuberlin.pserver.math.vector.dense.DVector;
+import de.tuberlin.pserver.commons.json.GsonUtils;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.vector.dense.DVector;
 import de.tuberlin.pserver.ml.common.LabeledVector;
 import de.tuberlin.pserver.ml.models.GeneralLinearModel;
 import de.tuberlin.pserver.ml.optimization.*;
-import de.tuberlin.pserver.commons.json.GsonUtils;
+import de.tuberlin.pserver.runtime.ExecutionManager;
+import de.tuberlin.pserver.runtime.InstanceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

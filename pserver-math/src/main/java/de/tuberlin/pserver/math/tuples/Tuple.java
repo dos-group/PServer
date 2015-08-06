@@ -49,6 +49,7 @@ public abstract class Tuple
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static Tuple fromList(final List<Object> elements) {
         final Tuple at = createTuple(elements.size());
         for (int i = 0; i < elements.size(); ++i) {
@@ -97,6 +98,7 @@ public abstract class Tuple
         return size;
     }
 
+    @SuppressWarnings("unchecked")
     private static int toByteArray0(final byte[] ba, int offset, final Tuple tuple) {
         final int oldOffset = offset;
         for (final Object o : tuple) {
@@ -104,28 +106,28 @@ public abstract class Tuple
                 offset += toByteArray0(ba, offset, (Tuple)o);
             } else {
                 if (o instanceof Boolean) {
-                    UnsafeOp.unsafe.putBoolean(ba, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset), ((Boolean)o).booleanValue());
+                    UnsafeOp.unsafe.putBoolean(ba, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset), (Boolean) o);
                     offset += Types.PrimitiveType.BOOLEAN.size;
                 } else if (o instanceof Character) {
-                    UnsafeOp.unsafe.putChar(ba, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset), ((Character) o).charValue());
+                    UnsafeOp.unsafe.putChar(ba, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset), (Character) o);
                     offset += Types.PrimitiveType.CHAR.size;
                 } else if (o instanceof Byte) {
-                    UnsafeOp.unsafe.putByte(ba, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset), ((Byte) o).byteValue());
+                    UnsafeOp.unsafe.putByte(ba, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset), (Byte) o);
                     offset += Types.PrimitiveType.BYTE.size;
                 } else if (o instanceof Short) {
-                    UnsafeOp.unsafe.putShort(ba, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset), ((Short) o).shortValue());
+                    UnsafeOp.unsafe.putShort(ba, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset), (Short) o);
                     offset += Types.PrimitiveType.SHORT.size;
                 } else if (o instanceof Integer) {
-                    UnsafeOp.unsafe.putInt(ba, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset), ((Integer) o).intValue());
+                    UnsafeOp.unsafe.putInt(ba, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset), (Integer) o);
                     offset += Types.PrimitiveType.INT.size;
                 } else if (o instanceof Long) {
-                    UnsafeOp.unsafe.putLong(ba, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset), ((Long) o).longValue());
+                    UnsafeOp.unsafe.putLong(ba, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset), (Long) o);
                     offset += Types.PrimitiveType.LONG.size;
                 } else if (o instanceof Float) {
-                    UnsafeOp.unsafe.putFloat(ba, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset), ((Float) o).floatValue());
+                    UnsafeOp.unsafe.putFloat(ba, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset), (Float) o);
                     offset += Types.PrimitiveType.FLOAT.size;
                 } else if (o instanceof Double) {
-                    UnsafeOp.unsafe.putDouble(ba, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset), ((Double) o).doubleValue());
+                    UnsafeOp.unsafe.putDouble(ba, (long)(UnsafeOp.BYTE_ARRAY_OFFSET + offset), (Double) o);
                     offset += Types.PrimitiveType.DOUBLE.size;
                 } else
                     throw new IllegalStateException();

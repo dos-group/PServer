@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.client;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.app.*;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
@@ -9,6 +8,11 @@ import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetManager;
+import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.events.PServerJobFailureEvent;
+import de.tuberlin.pserver.runtime.events.PServerJobResultEvent;
+import de.tuberlin.pserver.runtime.events.PServerJobSubmissionEvent;
+import de.tuberlin.pserver.runtime.usercode.UserCodeManager;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,8 +102,8 @@ public final class PServerClient extends EventDispatcher {
     // Public Methods.
     // ---------------------------------------------------
 
-    public UUID execute(final Class<? extends PServerJob> jobClass) { return execute(jobClass, 1); }
-    public UUID execute(final Class<? extends PServerJob> jobClass, final int perNodeParallelism) {
+    public UUID execute(final Class<? extends JobExecutable> jobClass) { return execute(jobClass, 1); }
+    public UUID execute(final Class<? extends JobExecutable> jobClass, final int perNodeParallelism) {
         Preconditions.checkNotNull(jobClass);
         Preconditions.checkArgument(perNodeParallelism >= 1);
 

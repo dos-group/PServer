@@ -1,18 +1,18 @@
 package de.tuberlin.pserver.examples.experiments.glove;
 
-import de.tuberlin.pserver.app.DataManager;
-import de.tuberlin.pserver.app.PServerJob;
-import de.tuberlin.pserver.app.filesystem.record.IRecordFactory;
-import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
+import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.filesystem.record.IRecordFactory;
+import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
 
 import java.util.Random;
 
-public class GloVeJobAdaGradPull_MC extends PServerJob {
+public class GloVeJobAdaGradPull_MC extends JobExecutable {
 
     // ---------------------------------------------------
     // Fields.

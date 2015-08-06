@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.core.net;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.commons.json.GsonUtils;
+import de.tuberlin.pserver.core.events.Event;
 import io.netty.channel.Channel;
 
 import java.util.UUID;

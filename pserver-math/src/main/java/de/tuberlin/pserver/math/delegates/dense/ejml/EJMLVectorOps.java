@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.math.delegates.dense.ejml;
 
 
-import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.delegates.LibraryVectorOps;
+import de.tuberlin.pserver.math.vector.Vector;
 import org.ejml.alg.dense.mult.VectorVectorMult;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;

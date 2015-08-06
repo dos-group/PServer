@@ -1,11 +1,11 @@
 package de.tuberlin.pserver.examples.playground;
 
-import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.runtime.JobExecutable;
 
 import java.util.Random;
 
-public class CFSyncPrimitiveTestJob extends PServerJob {
+public class CFSyncPrimitiveTestJob extends JobExecutable {
 
     // ---------------------------------------------------
     // Public Methods.

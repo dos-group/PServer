@@ -345,6 +345,7 @@ public class NonBlockingIdentityHashMap<TypeK, TypeV>
     return putIfMatch( key, newValue, oldValue ) == oldValue;
   }
 
+  @SuppressWarnings("unchecked")
   private final TypeV putIfMatch( Object key, Object newVal, Object oldVal ) {
     if (oldVal == null || newVal == null) throw new NullPointerException();
     final Object res = putIfMatch( this, _kvs, key, newVal, oldVal );
@@ -400,6 +401,7 @@ public class NonBlockingIdentityHashMap<TypeK, TypeV>
    * @return  a clone of the hashtable.
    */
   @Override
+  @SuppressWarnings("unchecked")
   public Object clone() {
     try {
       // Must clone, to get the class right; NBHM might have been
@@ -466,6 +468,7 @@ public class NonBlockingIdentityHashMap<TypeK, TypeV>
    * @throws NullPointerException if the specified key is null */
   // Never returns a Prime nor a Tombstone.
   @Override
+  @SuppressWarnings("unchecked")
   public TypeV get( Object key ) {
     final Object V = get_impl(this,_kvs,key);
     assert !(V instanceof Prime); // Never return a Prime
@@ -1140,6 +1143,7 @@ public class NonBlockingIdentityHashMap<TypeK, TypeV>
   }
 
   // --- keySet --------------------------------------------------------------
+  @SuppressWarnings("unchecked")
   private class SnapshotK implements Iterator<TypeK>, Enumeration<TypeK> {
     final SnapshotV _ss;
     public SnapshotK() { _ss = new SnapshotV(); }
@@ -1195,6 +1199,7 @@ public class NonBlockingIdentityHashMap<TypeK, TypeV>
     final SnapshotV _ss;
     public SnapshotE() { _ss = new SnapshotV(); }
     public void remove() { _ss.remove(); }
+    @SuppressWarnings("unchecked")
     public Map.Entry<TypeK,TypeV> next() { _ss.next(); return new NBHMEntry((TypeK)_ss._prevK,_ss._prevV); }
     public boolean hasNext() { return _ss.hasNext(); }
   }
@@ -1255,6 +1260,7 @@ public class NonBlockingIdentityHashMap<TypeK, TypeV>
 
   // --- readObject --------------------------------------------------------
   // Read a CHM from a stream
+  @SuppressWarnings("unchecked")
   private void readObject(java.io.ObjectInputStream s) throws IOException, ClassNotFoundException {
     s.defaultReadObject();      // Read nothing
     initialize(MIN_SIZE);

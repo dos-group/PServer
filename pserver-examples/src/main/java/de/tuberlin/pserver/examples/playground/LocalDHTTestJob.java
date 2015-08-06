@@ -1,11 +1,11 @@
 package de.tuberlin.pserver.examples.playground;
 
-import de.tuberlin.pserver.app.PServerJob;
-import de.tuberlin.pserver.app.dht.DHT;
-import de.tuberlin.pserver.app.dht.Key;
-import de.tuberlin.pserver.app.dht.valuetypes.ByteBufferValue;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.app.memmng.Buffer;
+import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.dht.DHTKey;
+import de.tuberlin.pserver.runtime.dht.DHTManager;
+import de.tuberlin.pserver.runtime.dht.types.ByteBufferedDHTObject;
+import de.tuberlin.pserver.runtime.memory.ManagedBuffer;
 
 import java.util.Random;
 import java.util.UUID;
@@ -18,7 +18,7 @@ public final class LocalDHTTestJob {
     // Jobs.
     // ---------------------------------------------------
 
-    public static final class DHTTestJob extends PServerJob {
+    public static final class DHTTestJob extends JobExecutable {
 
         private boolean detectDuplicates(final int[] a) {
             boolean duplicates = false;
@@ -34,9 +34,9 @@ public final class LocalDHTTestJob {
             final Random r = new Random();
             final UUID uid = UUID.fromString("31bf55a7-2195-4d11-8ebf-0d030032fede");
             if (instanceContext.jobContext.nodeID == 0) {
-                instanceContext.jobContext.dht.put(Key.newKey(uid, "test1", Key.DistributionMode.DISTRIBUTED), ByteBufferValue.newValue(false, ByteBufferValue.MAX_SIZE * 4));
+                instanceContext.jobContext.dht.put(DHTKey.newKey(uid, "test1", DHTKey.DistributionMode.DISTRIBUTED), ByteBufferedDHTObject.newValue(false, ByteBufferedDHTObject.MAX_SIZE * 4));
             }
-            final Key key = instanceContext.jobContext.dht.getKey(uid);
+            final DHTKey key = instanceContext.jobContext.dht.getKey(uid);
             while (true) {
                 final int numOfAccessedSegments = r.nextInt(10);
                 final int segmentIDs[] = new int[numOfAccessedSegments];
@@ -44,14 +44,14 @@ public final class LocalDHTTestJob {
                     segmentIDs[i] = r.nextInt((20480 * 4) - 1);
 
                 if (!detectDuplicates(segmentIDs)) {
-                    final ByteBufferValue.Segment[] segments = DHT.getInstance().get(key, segmentIDs);
+                    final ByteBufferedDHTObject.Segment[] segments = DHTManager.getInstance().get(key, segmentIDs);
                     for (int i = 0; i < segmentIDs.length; ++i) {
                         if (segments[i] == null)
                             throw new IllegalStateException("segment == null => segmentID = " + segmentIDs[i]);
                     }
                     for (int i = 0; i < segmentIDs.length; ++i) {
-                        final Buffer buffer = new Buffer(segments[i].data);
-                        final int randOffset = r.nextInt(ByteBufferValue.DEFAULT_SEGMENT_SIZE - 10);
+                        final ManagedBuffer buffer = new ManagedBuffer(segments[i].data);
+                        final int randOffset = r.nextInt(ByteBufferedDHTObject.DEFAULT_SEGMENT_SIZE - 10);
                         buffer.putInt(randOffset, r.nextInt());
                     }
                     instanceContext.jobContext.dht.put(key, segments);

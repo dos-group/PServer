@@ -1,14 +1,14 @@
 package de.tuberlin.pserver.examples.playground;
 
-import de.tuberlin.pserver.app.DataManager;
-import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
+import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.JobExecutable;
 
 import java.util.Random;
 
-public final class AsyncMatrixPullTestJob extends PServerJob {
+public final class AsyncMatrixPullTestJob extends JobExecutable {
 
     // ---------------------------------------------------
     // Constants.

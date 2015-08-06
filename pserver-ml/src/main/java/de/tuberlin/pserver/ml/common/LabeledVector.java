@@ -3,8 +3,8 @@ package de.tuberlin.pserver.ml.common;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
-import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.commons.json.GsonUtils;
+import de.tuberlin.pserver.math.vector.Vector;
 
 import java.io.Serializable;
 

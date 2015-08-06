@@ -10,16 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 public class EventDispatcher implements IEventDispatcher {
 
     // ---------------------------------------------------
@@ -53,9 +43,6 @@ public class EventDispatcher implements IEventDispatcher {
     // Constructors.
     // ---------------------------------------------------
 
-    public EventDispatcher() {
-        this(false, null);
-    }
     public EventDispatcher(boolean useDispatchThread) {
         this(useDispatchThread, null);
     }
@@ -164,9 +151,7 @@ public class EventDispatcher implements IEventDispatcher {
 
     @Override
     public synchronized void removeAllEventListener() {
-        for (final List<IEventHandler> listeners : listenerMap.values()) {
-            listeners.clear();
-        }
+        listenerMap.values().forEach(List<IEventHandler>::clear);
         listenerMap.clear();
     }
 
@@ -233,7 +218,7 @@ public class EventDispatcher implements IEventDispatcher {
         Preconditions.checkNotNull(event);
         List<IEventHandler> listeners = listenerMap.get(event.type);
         if (listeners != null) {
-            List<IEventHandler> l = new ArrayList(listeners);
+            List<IEventHandler> l = new ArrayList<>(listeners);
             for (final IEventHandler el : l) {
                 try {
                     el.handleEvent(event);

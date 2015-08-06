@@ -2,11 +2,11 @@ package de.tuberlin.pserver.examples.playground.primitives;
 
 
 import com.google.common.util.concurrent.AtomicDouble;
-import de.tuberlin.pserver.app.DataManager;
-import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.JobExecutable;
 
-public class SyncPushPrimitiveTestJob extends PServerJob {
+public class SyncPushPrimitiveTestJob extends JobExecutable {
 
     // ---------------------------------------------------
     // Fields.

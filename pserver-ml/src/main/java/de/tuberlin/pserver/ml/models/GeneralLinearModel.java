@@ -2,9 +2,9 @@ package de.tuberlin.pserver.ml.models;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.app.InstanceContext;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
+import de.tuberlin.pserver.runtime.InstanceContext;
 
 public class GeneralLinearModel extends Model<GeneralLinearModel> {
 

@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.dsl.controlflow;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.app.InstanceContext;
+import de.tuberlin.pserver.runtime.InstanceContext;
 
 
 public final class Selection {

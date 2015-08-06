@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.math;
 
 import de.tuberlin.pserver.math.generators.BufferGenerator;
-import de.tuberlin.pserver.math.matrix.dense.DMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.dense.DMatrix;
 import de.tuberlin.pserver.math.matrix.sparse.SMatrix;
 import org.junit.Test;
 

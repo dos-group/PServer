@@ -1,16 +1,6 @@
 package de.tuberlin.pserver.node;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.app.DataManager;
-import de.tuberlin.pserver.app.ExecutionManager;
-import de.tuberlin.pserver.app.UserCodeManager;
-import de.tuberlin.pserver.app.dht.DHT;
-import de.tuberlin.pserver.app.filesystem.FileSystemManager;
-import de.tuberlin.pserver.app.filesystem.FileSystemType;
-import de.tuberlin.pserver.app.filesystem.hdfs.HDFSFileSystemManagerClient;
-import de.tuberlin.pserver.app.filesystem.hdfs.HDFSFileSystemManagerServer;
-import de.tuberlin.pserver.app.filesystem.local.LocalFileSystemManager;
-import de.tuberlin.pserver.app.memmng.MemoryManager;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.config.IConfigFactory;
 import de.tuberlin.pserver.core.infra.InetHelper;
@@ -19,6 +9,16 @@ import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.infra.ZookeeperClient;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.core.net.RPCManager;
+import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.ExecutionManager;
+import de.tuberlin.pserver.runtime.dht.DHTManager;
+import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
+import de.tuberlin.pserver.runtime.filesystem.FileSystemType;
+import de.tuberlin.pserver.runtime.filesystem.hdfs.HDFSFileSystemManagerClient;
+import de.tuberlin.pserver.runtime.filesystem.hdfs.HDFSFileSystemManagerServer;
+import de.tuberlin.pserver.runtime.filesystem.local.LocalFileSystemManager;
+import de.tuberlin.pserver.runtime.memory.MemoryManager;
+import de.tuberlin.pserver.runtime.usercode.UserCodeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +53,7 @@ public enum PServerNodeFactory {
 
     public final UserCodeManager userCodeManager;
 
-    public final DHT dht;
+    public final DHTManager dht;
 
     public final DataManager dataManager;
 
@@ -92,7 +92,7 @@ public enum PServerNodeFactory {
         try { Thread.sleep(2000); } catch (Exception e) { throw new IllegalStateException(); }
 
         this.fileSystemManager = createFileSystem(infraManager.getNodeID());
-        this.dht = new DHT(this.config, infraManager, netManager);
+        this.dht = new DHTManager(this.config, infraManager, netManager);
         this.dataManager = new DataManager(this.config, infraManager, netManager, fileSystemManager, dht);
         this.executionManager = new ExecutionManager(dataManager);
 
