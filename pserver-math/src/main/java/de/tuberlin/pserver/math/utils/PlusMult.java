@@ -1,6 +1,21 @@
 package de.tuberlin.pserver.math.utils;
 
-public final class PlusMult implements DoubleFunction2Arg {
+import java.util.function.DoubleBinaryOperator;
+
+/**
+ * Only for performance tuning of compute intensive linear algebraic computations.
+ * Constructs functions that return one of
+ * <ul>
+ * <li><tt>a + b*constant</tt>
+ * <li><tt>a - b*constant</tt>
+ * <li><tt>a + b/constant</tt>
+ * <li><tt>a - b/constant</tt>
+ * </ul>
+ * <tt>a</tt> and <tt>b</tt> are variables, <tt>constant</tt> is fixed, but for performance reasons publicly accessible.
+ * Intended to be passed to <tt>matrix.assign(otherMatrix,function)</tt> methods.
+ */
+
+public final class PlusMult implements DoubleBinaryOperator {
 
     private double multiplicator;
 
@@ -10,7 +25,7 @@ public final class PlusMult implements DoubleFunction2Arg {
 
     /** Returns the result of the function evaluation. */
     @Override
-    public double apply(double a, double b) {
+    public double applyAsDouble(double a, double b) {
         return a + b * multiplicator;
     }
 

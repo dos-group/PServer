@@ -159,7 +159,8 @@ public class TSNEJob_MC_DSL extends JobExecutable {
                 .sync(Iteration.GLOBAL | Iteration.LOCAL)
                 .execute(NUM_EPOCHS, (epoch) -> {
 
-                    Y_squared.assign( Y_squared.applyOnElements(Y, e -> Math.pow(e, 2)) );
+                    // ! compare git diff
+                    Y.applyOnElements(e -> Math.pow(e, 2), Y_squared);
 
                     final Vector sum_Y = Y_squared.aggregateRows(Vector::sum);
 
@@ -170,7 +171,7 @@ public class TSNEJob_MC_DSL extends JobExecutable {
                             .addVectorToRows(sum_Y)
                             .applyOnElements(e -> 1.0 / (e + 1.0));
 
-                    num.assign(num.zeroDiagonal());
+                    num.setDiagonalsToZero(num);
 
                     final double sumNum = num.aggregateRows(Vector::sum).sum();
 
@@ -288,7 +289,7 @@ public class TSNEJob_MC_DSL extends JobExecutable {
         beta.assign(1.0);
 
         // compute the distances between all x_i
-        Xsquared = Xsquared.applyOnElements(X, e -> Math.pow(e, 2));
+        Xsquared = Xsquared.applyOnElements(e -> Math.pow(e, 2), X);
         Vector sumX = Xsquared.aggregateRows(Vector::sum);
 
         Matrix D = X.mul(X.transpose()).scale(-2).addVectorToRows(sumX).transpose()

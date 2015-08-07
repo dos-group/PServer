@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
-import de.tuberlin.pserver.math.utils.DoubleFunction2Arg;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
 import de.tuberlin.pserver.runtime.DataManager;
@@ -19,6 +18,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.DoubleBinaryOperator;
 
 public class GloVeJobAdaGrad extends JobExecutable {
 
@@ -342,10 +342,10 @@ public class GloVeJobAdaGrad extends JobExecutable {
         significantDeltas.assign((v1) -> 0);   // TODO: this can be optimized...
     }
 
-    private void applyOnColumnVectorAndSetDeltaFlagIfSignificant(Matrix m, Matrix deltas, Long col, Vector v, DoubleFunction2Arg func) {
+    private void applyOnColumnVectorAndSetDeltaFlagIfSignificant(Matrix m, Matrix deltas, Long col, Vector v, DoubleBinaryOperator func) {
         for (int i = 0; i < m.numRows(); i++) {
             double oldVal = m.get(i, col);
-            double newVal = func.apply(oldVal, v.get(i));
+            double newVal = func.applyAsDouble(oldVal, v.get(i));
             if (Math.abs(newVal - oldVal) / oldVal > MATRIX_TRANSMIT_THRESHOLD) {
                 deltas.set(i, col, 1);
             }
@@ -353,9 +353,9 @@ public class GloVeJobAdaGrad extends JobExecutable {
         }
     }
 
-    private void applyOnIndexAndSetDeltaFlagIfSignificant(Vector v, Vector deltas, long idx, double val, DoubleFunction2Arg func) {
+    private void applyOnIndexAndSetDeltaFlagIfSignificant(Vector v, Vector deltas, long idx, double val, DoubleBinaryOperator func) {
         double oldVal = v.get(idx);
-        double newVal = func.apply(oldVal, val);
+        double newVal = func.applyAsDouble(oldVal, val);
         if (Math.abs(newVal - oldVal) / oldVal > MATRIX_TRANSMIT_THRESHOLD) {
             deltas.set(idx, 1);
         }

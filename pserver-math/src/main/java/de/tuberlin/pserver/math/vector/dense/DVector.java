@@ -4,14 +4,14 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
 import de.tuberlin.pserver.math.delegates.LibraryVectorOps;
 import de.tuberlin.pserver.math.delegates.MathLibFactory;
-import de.tuberlin.pserver.math.utils.DoubleFunction1Arg;
-import de.tuberlin.pserver.math.utils.DoubleFunction2Arg;
 import de.tuberlin.pserver.math.utils.PlusMult;
 import de.tuberlin.pserver.math.vector.Vector;
 
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.function.DoubleBinaryOperator;
+import java.util.function.DoubleUnaryOperator;
 
 public class DVector implements Vector, Serializable {
 
@@ -117,34 +117,37 @@ public class DVector implements Vector, Serializable {
     @Override public long sizeOf() { return data.length * Double.BYTES; }
 
     @Override
-    public Vector applyOnElements(final DoubleFunction1Arg vf) {
+    public Vector applyOnElements(final DoubleUnaryOperator vf) {
         final double[] result = new double[(int)length()];
         for (int i = 0; i < result.length; ++i) {
-            result[i] =  vf.apply(data[i]);
+            result[i] =  vf.applyAsDouble(data[i]);
         }
+        // TODO: this is only for backwards capability! This should operate on the vector itself!
         return new DVector(length(), result);
     }
 
     @Override
-    public Vector applyOnElements(final Vector v2, final DoubleFunction1Arg vf) {
+    public Vector applyOnElements(final Vector v2, final DoubleUnaryOperator vf) {
         int length = (int) length();
         final double[] result = new double[length];
         final double[] v2data = v2.toArray();
         for (int i = 0; i < length; ++i) {
-            result[i] = vf.apply(v2data[i]);
+            result[i] = vf.applyAsDouble(v2data[i]);
         }
+        // TODO: this is only for backwards capability! This should operate on the vector itself!
         return new DVector(length, result);
     }
 
     @Override
-    public Vector applyOnElements(final Vector v2, final DoubleFunction2Arg vf) {
+    public Vector applyOnElements(final Vector v2, final DoubleBinaryOperator vf) {
         int length = data.length;
         Preconditions.checkState(v2.length() == length);
         final double[] v2data = v2.toArray();
         final double[] result = Arrays.copyOf(data, length);
         for (int i = 0; i < length; ++i) {
-            result[i] = vf.apply(result[i], v2data[i]);
+            result[i] = vf.applyAsDouble(result[i], v2data[i]);
         }
+        // TODO: this is only for backwards capability! This should operate on the vector itself!
         return new DVector(length, result);
     }
 
@@ -180,26 +183,26 @@ public class DVector implements Vector, Serializable {
     }
 
     @Override
-    public Vector assign(final DoubleFunction1Arg df) {
+    public Vector assign(final DoubleUnaryOperator df) {
         for (int i = 0; i < length(); i++) {
-            data[i] = df.apply(data[i]);
+            data[i] = df.applyAsDouble(data[i]);
         }
         return this;
     }
 
     @Override
-    public Vector assign(final Vector other, final DoubleFunction2Arg function) {
+    public Vector assign(final Vector other, final DoubleBinaryOperator function) {
         Preconditions.checkState(length() == other.length());
-        // is there some other way to know if function.apply(0, x) = x for all x?
+        // is there some other way to know if function.applyAsDouble(0, x) = x for all x?
         if (function instanceof PlusMult) {
             Iterator<Element> it = other.iterateNonZero();
             Element e;
             while (it.hasNext() && (e = it.next()) != null) {
-                data[e.index()] = function.apply(data[e.index()], e.get());
+                data[e.index()] = function.applyAsDouble(data[e.index()], e.get());
             }
         } else {
             for (int i = 0; i < length(); i++) {
-                data[i] = function.apply(data[i], other.get(i));
+                data[i] = function.applyAsDouble(data[i], other.get(i));
             }
         }
         //lengthSquared = -1;
@@ -226,11 +229,11 @@ public class DVector implements Vector, Serializable {
     }
 
     @Override
-    public double aggregate(final DoubleFunction2Arg aggregator, final DoubleFunction1Arg map) {
+    public double aggregate(final DoubleBinaryOperator aggregator, final DoubleUnaryOperator map) {
         Preconditions.checkArgument(data.length >= 1);
-        double result = map.apply(get(0));
+        double result = map.applyAsDouble(get(0));
         for (int i = 1; i < data.length; i++)
-            result = aggregator.apply(result, map.apply(get(i)));
+            result = aggregator.applyAsDouble(result, map.applyAsDouble(get(i)));
         return result;
     }
 
@@ -256,4 +259,5 @@ public class DVector implements Vector, Serializable {
             sb.append("^T");
         return sb.toString();
     }
+
 }

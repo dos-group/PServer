@@ -1,11 +1,13 @@
 package de.tuberlin.pserver.math.matrix;
 
-
 import de.tuberlin.pserver.math.SharedObject;
-import de.tuberlin.pserver.math.utils.DoubleFunction1Arg;
-import de.tuberlin.pserver.math.utils.DoubleFunction2Arg;
+import de.tuberlin.pserver.math.exceptions.IncompatibleShapeException;
+import de.tuberlin.pserver.math.exceptions.SingularMatrixException;
 import de.tuberlin.pserver.math.utils.VectorFunction;
 import de.tuberlin.pserver.math.vector.Vector;
+
+import java.util.function.DoubleBinaryOperator;
+import java.util.function.DoubleUnaryOperator;
 
 public interface Matrix extends SharedObject {
 
@@ -13,14 +15,14 @@ public interface Matrix extends SharedObject {
     // Constants.
     // ---------------------------------------------------
 
-    public enum Format {
+    enum Format {
 
         SPARSE_MATRIX,
 
         DENSE_MATRIX
     }
 
-    public enum Layout {
+    enum Layout {
 
         ROW_LAYOUT,
 
@@ -31,51 +33,51 @@ public interface Matrix extends SharedObject {
     // Inner Interfaces/Classes.
     // ---------------------------------------------------
 
-    public static interface RowIterator { // ...for ROW_LAYOUT
+    interface RowIterator { // ...for ROW_LAYOUT
 
-        public abstract boolean hasNextRow();
+        boolean hasNextRow();
 
-        public abstract void nextRow();
+        void nextRow();
 
-        public abstract void nextRandomRow();
+        void nextRandomRow();
 
-        public abstract double getValueOfColumn(final int col);
+        double getValueOfColumn(final int col);
 
-        public abstract Vector getAsVector();
+        Vector getAsVector();
 
-        public abstract Vector getAsVector(int from, int size);
+        Vector getAsVector(int from, int size);
 
-        public abstract void reset();
+        void reset();
 
-        public abstract long numRows();
+        long numRows();
 
-        public abstract long numCols();
+        long numCols();
 
-        public abstract int getCurrentRowNum();
+        int getCurrentRowNum();
     }
 
-    public static interface ColumnIterator { // ...for COLUMN_LAYOUT
+    interface ColumnIterator { // ...for COLUMN_LAYOUT
 
-        public abstract boolean hasNextColumn();
+        boolean hasNextColumn();
 
-        public abstract void nextColumn();
+        void nextColumn();
 
-        public abstract double getValueOfRow(final int row);
+        double getValueOfRow(final int row);
 
-        public abstract void reset();
+        void reset();
 
-        public abstract long numRows();
+        long numRows();
 
-        public abstract long numCols();
+        long numCols();
     }
 
-    public static interface MatrixFunctionPos1Arg {
+    interface MatrixElementUnaryOperator {
 
-        public abstract double apply(long row, long col, double element);
+        double apply(long row, long col, double element);
+
     }
 
-
-    public static class PartitionShape {
+    class PartitionShape {
 
         final long rows;
         final long cols;
@@ -120,96 +122,268 @@ public interface Matrix extends SharedObject {
 
     // ---------------------------------------------------
 
-    public abstract void lock();
+    void lock();
 
-    public abstract void unlock();
+    void unlock();
 
-    public Layout getLayout();
-
-    // ---------------------------------------------------
-
-    public abstract long numRows();
-
-    public abstract long numCols();
-
-    public abstract double get(final long row, final long col);
-
-    public abstract void set(final long row, final long col, final double value);
-
-    public abstract double atomicGet(final long row, final long col);
-
-    public abstract void atomicSet(final long row, final long col, final double value);
-
-    public abstract RowIterator rowIterator();
-
-    public abstract RowIterator rowIterator(final int startRow, final int endRow);
+    Layout getLayout();
 
     // ---------------------------------------------------
 
-    public abstract double aggregate(final DoubleFunction2Arg combiner, final DoubleFunction1Arg mapper);
+    long numRows();
 
-    public abstract Vector aggregateRows(final VectorFunction f);
+    long numCols();
 
-    public abstract Matrix axpy(final double alpha, final Matrix B);        // A = alpha * B + A
+    double get(final long row, final long col);
 
-    public abstract Matrix add(final Matrix B);                             // A = B + A
+    void set(final long row, final long col, final double value);
 
-    public abstract Matrix sub(final Matrix B);                                             // A = B - A
+    double atomicGet(final long row, final long col);
 
-    public abstract Matrix mul(final Matrix B);                                             // A = B * A
+    void atomicSet(final long row, final long col, final double value);
 
-    public abstract Vector mul(final Vector B);                                             //
+    RowIterator rowIterator();
 
-    public abstract void mul(final Vector x, final Vector y);                               // y = A * x
-
-    public abstract Matrix scale(final double alpha);                                       // A = alpha * A
-
-    public abstract Matrix transpose();                                                     // A = A^T
-
-    public abstract void transpose(final Matrix B);                                         // B = A^T
-
-    public abstract boolean invert();                                                       // A = A^-1
+    RowIterator rowIterator(final int startRow, final int endRow);
 
     // ---------------------------------------------------
 
-    public Vector rowAsVector();
+    double aggregate(final DoubleBinaryOperator combiner, final DoubleUnaryOperator mapper);
 
-    public Vector rowAsVector(final long row);
+    Vector aggregateRows(final VectorFunction f);
 
-    public Vector rowAsVector(final long row, final long from, final long to);
+    /**
+     * Identical to {@link #add(Matrix, Matrix)} but automatically creates the resulting <code>Matrix C</code>.
+     */
+    Matrix add(final Matrix B);
 
-    public Vector colAsVector();
+    /**
+     * Called on Matrix A. Computes Matrix-Matrix-Addition C = A + B and returns C. <br>
+     * <strong>Note: A, B and C have to be of the same shape</strong>
+     *
+     * @param B Matrix to add on A
+     * @param C Matrix to store the result in
+     * @return C after computing C = A + B
+     * @throws IncompatibleShapeException If the shapes of C, B and A are not equal
+     */
+    Matrix add(final Matrix B, final Matrix C);
 
-    public Vector colAsVector(final long col);
+    /**
+     * Identical to {@link #sub(Matrix, Matrix)} but automatically creates the resulting <code>Matrix C</code>.
+     */
+    Matrix sub(final Matrix B);
 
-    public Vector colAsVector(final long col, final long from, final long to);
+    /**
+     * Called on Matrix A. Computes Matrix-Matrix-Subtraction C = A - B and returns C. <br>
+     * <strong>Note: A, B and C have to be of the same shape</strong>
+     *
+     * @param B Matrix to subtract from A
+     * @param C Matrix to store the result in
+     * @return C after computing C = A - B
+     * @throws IncompatibleShapeException If the shapes of C, B and A are not equal
+     */
+    Matrix sub(final Matrix B, final Matrix C);
 
-    public abstract Matrix assign(final Matrix v);
+    /**
+     * Identical to {@link #mul(Matrix, Matrix)} but automatically creates the resulting <code>Matrix C</code>.
+     */
+    Matrix mul(final Matrix B);
 
-    public abstract Matrix assign(final double v);
+    /**
+     * Called on Matrix A. Computes Matrix-Matrix-Multiplication C = A * B and returns C. <br>
+     * <strong>Note: A, B and C have to be of shapes n x m, m x o and n x o respectively</strong>
+     *
+     * @param B Matrix to multiply with A. Of shape m x o
+     * @param C Matrix to store the result in. Of shape n x o
+     * @return C after computing C = A * B
+     * @throws IncompatibleShapeException If A.numCols() != B.numRows() or A.numRows() != C.numRows() or B.numCols() != C.numCols()
+     */
+    Matrix mul(final Matrix B, final Matrix C);
 
-    public abstract Matrix assignRow(final long row, final Vector v);
+    /**
+     * Called on Matrix A. Computes Matrix-Vector-Multiplication c = A * b and returns c. <br>
+     * <strong>Note: A is wlog. of shape n x m. Vector b has to be of size m and c of size n</strong>
+     *
+     * @param b Vector to multiply with A
+     * @param c Vector to store the result in
+     * @return c after computing c = A * b
+     * @throws IncompatibleShapeException If b.length() != A.numRows() or c.length() != A.numRows()
+     */
+    Vector mul(final Vector b, final Vector c);
 
-    public abstract Matrix assignColumn(final long col, final Vector v);
+    /**
+     * Identical to {@link #scale(double, Matrix)} but automatically creates the resulting <code>Matrix B</code>.
+     */
+    Matrix scale(final double a);
 
-    public abstract Matrix copy();
+    /**
+     * Called on Matrix A. Computes Matrix-Scalar-Multiplication B = A * a. <br>
+     * <strong>Note: A and B have to be of the same shape</strong>
+     *
+     * @param a Scalar to multiply with A
+     * @param B Matrix to store the result in
+     * @return B after computing B = A * a
+     * @throws IncompatibleShapeException If the shapes of B and A are not equal
+     */
+    Matrix scale(final double a, final Matrix B);
+
+    /**
+     * Identical to {@link #transpose(Matrix)} but automatically creates the resulting <code>Matrix B</code>.
+     */
+    Matrix transpose();
+
+    /**
+     * Called on Matrix A. Computes transpose of A: B = A<sup>T</sup>. <br>
+     * <strong>Note: A is wlog. of shape n x m. B has to be of shape m x n</strong>
+     *
+     * @param B to store the result in
+     * @return B after computing B = A<sup>T</sup>
+     * @throws IncompatibleShapeException If A.numRows() != B.numCols() or A.numCols() != B.numRows()
+     */
+    Matrix transpose(final Matrix B);
+
+    /**
+     * Identical to {@link #invert(Matrix)} but automatically creates the resulting <code>Matrix B</code>.
+     */
+    Matrix invert();
+
+    /**
+     * Called on Matrix A. Computes inverse of A: B = A<sup>-1</sup>. <br>
+     * <strong>Note: A is wlog. of shape n x m. B has to be of shape m x n</strong
+     *
+     * @param B to store the result in
+     * @return B after computing B = A<sup>-1</sup>
+     * @throws IncompatibleShapeException If A.numRows() != B.numCols() or A.numCols() != B.numRows()
+     * @throws SingularMatrixException    If A is singular an its inverse can not be computed
+     */
+    Matrix invert(final Matrix B);
 
 
+    /**
+     * Identical to {@link #applyOnElements(DoubleUnaryOperator, Matrix)} but automatically creates the resulting <code>Matrix B</code>.
+     */
+    Matrix applyOnElements(final DoubleUnaryOperator f);
 
-    public abstract Matrix applyOnElements(final DoubleFunction1Arg mf);
+    /**
+     * Called on Matrix A. Computes B = f(A) element-wise. <br>
+     * <strong>Note: A and B have to be of the same shape</strong>
+     *
+     * @param f Unary higher order function f: x -> y
+     * @param B Matrix to store the result in
+     * @return B after computing B = f(A) element-wise.
+     * @throws IncompatibleShapeException If the shapes of B and A are not equal
+     */
+    Matrix applyOnElements(final DoubleUnaryOperator f, final Matrix B);
 
-    public abstract Matrix applyOnElements(final Matrix m2, final DoubleFunction1Arg mf);
+    /**
+     * Identical to {@link #applyOnElements(Matrix, DoubleBinaryOperator, Matrix)} but automatically creates the resulting <code>Matrix C</code>.
+     */
+    Matrix applyOnElements(final Matrix B, final DoubleBinaryOperator f);
 
-    public abstract Matrix applyOnElements(final Matrix m2, final DoubleFunction2Arg mf);
+    /**
+     * Called on Matrix A. Computes C = f(A, B) element-wise.<br>
+     * <strong>Note: A and B are wlog. of shape n x m and o x p respectively. It has to hold that n <= o and m <= p. Also the shape of A an C have to be the same.</strong
+     *
+     * @param B Matrix containing the elements that are used as second arguments in f
+     * @param f Binary higher order function f: x, y -> z
+     * @param C to store the result in
+     * @return A after computing  C = f(A, B) element-wise.
+     * @throws IncompatibleShapeException If the shape of B is smaller than the one of A in any dimension or if the shapes of C and A are not equal
+     */
+    Matrix applyOnElements(final Matrix B, final DoubleBinaryOperator f, final Matrix C);
 
-    public abstract Matrix addVectorToRows(final Vector v);
+    /**
+     * Identical to {@link #applyOnElements(MatrixElementUnaryOperator)} but automatically creates the resulting <code>Matrix B</code>.
+     */
+    Matrix applyOnElements(final MatrixElementUnaryOperator f);
 
-    public abstract Matrix addVectorToCols(final Vector v);
+    /**
+     * Called on Matrix A. Computes B = f(A) element-wise. <br>
+     * <strong>Note: A and B have to be of the same shape</strong>
+     *
+     * @param f Unary higher order function f: (row, col, val) -> new_val
+     * @param B Matrix to store the result in
+     * @return B after computing B = f(A) element-wise.
+     * @throws IncompatibleShapeException If the shapes of B and A are not equal
+     */
+    Matrix applyOnElements(final MatrixElementUnaryOperator f, final Matrix B);
 
-    public abstract Matrix zeroDiagonal();
+    /**
+     * Identical to {@link #applyOnElements(DoubleUnaryOperator)} but only on non-zero elements.
+     */
+    Matrix applyOnNonZeroElements(final MatrixElementUnaryOperator f);
 
-    public abstract Matrix applyOnElements(final MatrixFunctionPos1Arg mf);
+    /**
+     * Identical to {@link #applyOnElements(DoubleUnaryOperator, Matrix)} but only on non-zero elements.
+     */
+    Matrix applyOnNonZeroElements(final MatrixElementUnaryOperator f, Matrix B);
 
-    public abstract Matrix applyOnNonZeroElements(final MatrixFunctionPos1Arg mf);
+    /**
+     * Identical to {@link #addVectorToRows(Vector, Matrix)} but automatically creates the resulting <code>Matrix B</code>.
+     */
+    Matrix addVectorToRows(final Vector v);
+
+    /**
+     * Called on Matrix A. Computes b = a + v for each row-vector a and b in A and B respectively.
+     * <strong>Note: It has to hold that A.numCols() == v.length(). Also, A and B have to be of the same shape.</strong
+     *
+     * @param v Vector to add on each row-vector in A
+     * @param B to store the result in
+     * @return B after computing b = a + v for each row-vector a and b in A and B respectively.
+     * @throws IncompatibleShapeException If A.numCols() != v.length() or if A and B are of different shapes.
+     */
+    Matrix addVectorToRows(final Vector v, final Matrix B);
+
+    /**
+     * Identical to {@link #addVectorToCols(Vector, Matrix)} but automatically creates the resulting <code>Matrix B</code>.
+     */
+    Matrix addVectorToCols(final Vector v);
+
+    /**
+     * Called on Matrix A. Computes b = a + v for each column-vector a and b in A and B respectively.
+     * <strong>Note: It has to hold that A.numRows() == v.length(). Also, A and B have to be of the same shape.</strong
+     *
+     * @param v Vector to add on each col-vector in A
+     * @param B to store the result in
+     * @return B after computing b = a + v for each column-vector a and b in A and B respectively.
+     * @throws IncompatibleShapeException If A.numRows() != v.length() or if A and B are of different shapes.
+     */
+    Matrix addVectorToCols(final Vector v, final Matrix B);
+
+    /**
+     * Identical to {@link #setDiagonalsToZero(Matrix)} but automatically creates the resulting <code>Matrix B</code>.
+     */
+    Matrix setDiagonalsToZero();
+
+    /**
+     * Called on Matrix A. Sets B = A with diagonal entries equal to zero.
+     * @param B to store the result in
+     * @return B after setting B = A with diagonal entries equal to zero.
+     */
+    Matrix setDiagonalsToZero(Matrix B);
+
+    // ---------------------------------------------------
+
+    Vector rowAsVector();
+
+    Vector rowAsVector(final long row);
+
+    Vector rowAsVector(final long row, final long from, final long to);
+
+    Vector colAsVector();
+
+    Vector colAsVector(final long col);
+
+    Vector colAsVector(final long col, final long from, final long to);
+
+    Matrix assign(final Matrix v);
+
+    Matrix assign(final double v);
+
+    Matrix assignRow(final long row, final Vector v);
+
+    Matrix assignColumn(final long col, final Vector v);
+
+    Matrix copy();
 
 }

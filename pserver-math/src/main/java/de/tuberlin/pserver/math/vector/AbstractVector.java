@@ -1,11 +1,11 @@
 package de.tuberlin.pserver.math.vector;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.utils.DoubleFunction1Arg;
-import de.tuberlin.pserver.math.utils.DoubleFunction2Arg;
 import de.tuberlin.pserver.math.utils.Utils;
 
 import java.util.Iterator;
+import java.util.function.DoubleBinaryOperator;
+import java.util.function.DoubleUnaryOperator;
 
 /**
  * An abstract implementation of the Vector interface, that contains default implementations for
@@ -175,17 +175,17 @@ public abstract class AbstractVector implements Vector {
     }
 
     @Override
-    public Vector assign(DoubleFunction1Arg df) {
+    public Vector assign(DoubleUnaryOperator df) {
         for(long i = 0; i < length; i++) {
-            set(i, df.apply(get(i)));
+            set(i, df.applyAsDouble(get(i)));
         }
         return this;
     }
 
     @Override
-    public Vector assign(Vector v, DoubleFunction2Arg df) {
+    public Vector assign(Vector v, DoubleBinaryOperator df) {
         for(long i = 0; i < length; i++) {
-            set(i, df.apply(get(i), v.get(i)));
+            set(i, df.applyAsDouble(get(i), v.get(i)));
         }
         return this;
     }
@@ -196,10 +196,10 @@ public abstract class AbstractVector implements Vector {
     }
 
     @Override
-    public double aggregate(DoubleFunction2Arg aggregator, DoubleFunction1Arg map) {
+    public double aggregate(DoubleBinaryOperator aggregator, DoubleUnaryOperator map) {
         double result = 0;
         for(long i = 0; i < length; i++) {
-            result += aggregator.apply(result, map.apply(get(i)));
+            result += aggregator.applyAsDouble(result, map.applyAsDouble(get(i)));
         }
         return result;
     }
@@ -208,30 +208,34 @@ public abstract class AbstractVector implements Vector {
         Preconditions.checkArgument(length == arg.length(), String.format("Can not apply apply because supplied vector length (%d) differs from base vector length (%d)",arg.length(), length));
     }
 
-    public Vector applyOnElements(final DoubleFunction1Arg vf) {
+    @Override
+    public Vector applyOnElements(final DoubleUnaryOperator vf) {
         final Vector res = copy();
         for (int i = 0; i < res.length(); ++i) {
-            res.set(i, vf.apply(this.get(i)));
+            res.set(i, vf.applyAsDouble(this.get(i)));
         }
         return res;
     }
 
-    public Vector applyOnElements(final Vector v2, final DoubleFunction1Arg vf) {
+    @Override
+    public Vector applyOnElements(final Vector v2, final DoubleUnaryOperator vf) {
         final Vector res = copy();
         for (int i = 0; i < res.length(); ++i) {
-            res.set(i, vf.apply(v2.get(i)));
+            res.set(i, vf.applyAsDouble(v2.get(i)));
         }
         return res;
     }
 
-    public Vector applyOnElements(final Vector v2, final DoubleFunction2Arg vf) {
+    public Vector applyOnElements(final Vector v2, final DoubleBinaryOperator vf) {
         final Vector res = copy();
         Preconditions.checkState(v2.length() == res.length());
         for (int i = 0; i < res.length(); ++i) {
-            res.set(i, vf.apply(this.get(i), v2.get(i)));
+            res.set(i, vf.applyAsDouble(this.get(i), v2.get(i)));
         }
         return res;
     }
+
+
 
     // ---------------------------------------------------
     // Inner Classes.

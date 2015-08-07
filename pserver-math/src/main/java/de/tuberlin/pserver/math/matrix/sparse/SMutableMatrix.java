@@ -110,52 +110,12 @@ public class SMutableMatrix extends AbstractMatrix {
     }
 
     @Override
-    public Matrix axpy(double alpha, Matrix B) {
-        throw new NotImplementedException("not impl");
+    protected Matrix newInstance(long rows, long cols) {
+        return new SMutableMatrix(rows, cols, Layout.ROW_LAYOUT);
     }
 
     @Override
-    public Matrix add(Matrix B) {
-        throw new NotImplementedException("not impl");
-    }
-
-    @Override
-    public Matrix sub(Matrix B) {
-        throw new NotImplementedException("not impl");
-    }
-
-    @Override
-    public Matrix mul(Matrix B) {
-        throw new NotImplementedException("not impl");
-    }
-
-    @Override
-    public Vector mul(Vector B) {
-        throw new NotImplementedException("not impl");
-    }
-
-    @Override
-    public void mul(Vector x, Vector y) {
-        throw new NotImplementedException("not impl");
-    }
-
-    @Override
-    public Matrix scale(double alpha) {
-        throw new NotImplementedException("not impl");
-    }
-
-    @Override
-    public Matrix transpose() {
-        throw new NotImplementedException("not impl");
-    }
-
-    @Override
-    public void transpose(Matrix B) {
-        throw new NotImplementedException("not impl");
-    }
-
-    @Override
-    public boolean invert() {
+    public Matrix transpose(Matrix A) {
         throw new NotImplementedException("not impl");
     }
 
@@ -215,11 +175,11 @@ public class SMutableMatrix extends AbstractMatrix {
     }
 
     @Override
-    public Matrix applyOnNonZeroElements(MatrixFunctionPos1Arg mf) {
+    public Matrix applyOnNonZeroElements(MatrixElementUnaryOperator f, Matrix B) {
         for (Map.Entry<MtxPos, Double> ele : data.entrySet()) {
             long row = ele.getKey().row;
             long col = ele.getKey().col;
-            ele.setValue(mf.apply(row, col, ele.getValue()));
+            B.set(row, col, f.apply(row, col, ele.getValue()));
         }
         return this;
     }

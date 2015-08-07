@@ -1,10 +1,10 @@
 package de.tuberlin.pserver.math.vector;
 
 import de.tuberlin.pserver.math.SharedObject;
-import de.tuberlin.pserver.math.utils.DoubleFunction1Arg;
-import de.tuberlin.pserver.math.utils.DoubleFunction2Arg;
 
 import java.util.Iterator;
+import java.util.function.DoubleBinaryOperator;
+import java.util.function.DoubleUnaryOperator;
 
 public interface Vector extends SharedObject {
 
@@ -12,14 +12,14 @@ public interface Vector extends SharedObject {
     // Constants.
     // ---------------------------------------------------
 
-    public enum Format {
+    enum Format {
 
         SPARSE_VECTOR,
 
         DENSE_VECTOR
     }
 
-    public enum Layout {
+    enum Layout {
 
         ROW_LAYOUT,
 
@@ -27,70 +27,66 @@ public interface Vector extends SharedObject {
     }
 
     // ---------------------------------------------------
-    // Inner Classes.
+    // Methods.
     // ---------------------------------------------------
 
-    public abstract Vector applyOnElements(final DoubleFunction1Arg vf);
+    long length();
 
-    public abstract Vector applyOnElements(final Vector v2, final DoubleFunction1Arg vf);
+    Format format();
 
-    public abstract Vector applyOnElements(final Vector v2, final DoubleFunction2Arg vf);
+    Layout layout();
 
-    // ---------------------------------------------------
-    // Public Methods.
-    // ---------------------------------------------------
+    void set(final long index, final double value);
 
-    public abstract long length();
-
-    public abstract Format format();
-
-    public abstract Layout layout();
-
-    public abstract void set(final long index, final double value);
-
-    public abstract double get(final long index);
+    double get(final long index);
     
-    public abstract double atomicGet(final long index);
+    double atomicGet(final long index);
 
-    public abstract void atomicSet(final long index, final double value);
+    void atomicSet(final long index, final double value);
 
-    public abstract Vector mul(final double alpha);                 // x = alpha * x
+    Vector mul(final double alpha);                 // x = alpha * x
 
-    public abstract Vector div(final double alpha);
+    Vector div(final double alpha);
 
-    public abstract Vector add(final Vector y);                       // x = y + x
+    Vector add(final Vector y);                       // x = y + x
 
-    public abstract Vector sub(final Vector y);                       // x = y - x
+    Vector sub(final Vector y);                       // x = y - x
 
-    public abstract Vector add(final double alpha, final Vector y);   // x = alpha * y + x
+    Vector add(final double alpha, final Vector y);   // x = alpha * y + x
 
-    public abstract double dot(final Vector y);                       // x = x^T * y
+    double dot(final Vector y);                       // x = x^T * y
 
-    public abstract double sum();
+    double sum();
 
-    public abstract double norm(final double v);
+    double norm(final double v);
 
-    public abstract double maxValue();
+    double maxValue();
 
-    public abstract double minValue();
+    double minValue();
 
-    public abstract Vector assign(final Vector v);
+    Vector applyOnElements(final DoubleUnaryOperator vf);
 
-    public abstract Vector assign(final double v);
+    Vector applyOnElements(final Vector v2, final DoubleUnaryOperator vf);
 
-    public abstract Vector assign(final DoubleFunction1Arg df);
+    Vector applyOnElements(final Vector v2, final DoubleBinaryOperator vf);
 
-    public abstract Vector assign(final Vector v, DoubleFunction2Arg df);
+    Vector assign(final Vector v);
 
-    public abstract Vector viewPart(final long s, final long e);
+    Vector assign(final double v);
 
-    public abstract Vector like();
+    Vector assign(final DoubleUnaryOperator df);
 
-    public abstract Iterator<Element> iterateNonZero();
+    Vector assign(final Vector v, DoubleBinaryOperator df);
 
-    public abstract double aggregate(final DoubleFunction2Arg aggregator, DoubleFunction1Arg map);
+    Vector viewPart(final long s, final long e);
 
-    public abstract Vector copy();
+    Vector like();
+
+    Iterator<Element> iterateNonZero();
+
+    double aggregate(DoubleBinaryOperator aggregator, DoubleUnaryOperator map);
+
+    Vector copy();
 
     /**
      * A holder for information about a specific item in the Vector. <p/> When using with an Iterator, the implementation

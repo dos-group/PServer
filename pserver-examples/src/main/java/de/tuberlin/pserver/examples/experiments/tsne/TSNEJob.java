@@ -153,7 +153,7 @@ public class TSNEJob extends JobExecutable {
         //
         for (int iteration = 0; iteration < MAX_ITER; ++iteration) {
             // sum_Y = Math.sum(Math.square(Y), 1)
-            Y_squared = Y_squared.applyOnElements(Y, e -> Math.pow(e, 2));
+            Y_squared = Y_squared.applyOnElements(e -> Math.pow(e, 2), Y);
             Vector sum_Y = Y_squared.aggregateRows(f -> f.sum());
 
             // num = 1 / (1 + Math.add(Math.add(-2 * Math.dot(Y, Y.T), sum_Y).T, sum_Y))
@@ -161,7 +161,7 @@ public class TSNEJob extends JobExecutable {
                     .addVectorToRows(sum_Y);
             num.applyOnElements(e -> 1.0 / (e + 1.0));
             // entries i=j must be zero
-            num = num.zeroDiagonal();
+            num = num.setDiagonalsToZero();
 
             // ---------------------------------------------------
             // (1) GLOBAL OPERATION!!!
@@ -229,6 +229,7 @@ public class TSNEJob extends JobExecutable {
             } else {
                 momentum = FINAL_MOMENTUM;
             }
+
 
             for (int i=0; i < gains.numRows(); ++i) {
                 for (int j=0; j < gains.numCols(); ++j) {
@@ -319,7 +320,7 @@ public class TSNEJob extends JobExecutable {
         beta.assign(1.0);
 
         // compute the distances between all x_i
-        Xsquared = Xsquared.applyOnElements(X, e -> Math.pow(e, 2));
+        Xsquared = Xsquared.applyOnElements(e -> Math.pow(e, 2), X);
         Vector sumX = Xsquared.aggregateRows(f -> f.sum());
 
         Matrix D = X.mul(X.transpose()).scale(-2).addVectorToRows(sumX).transpose()

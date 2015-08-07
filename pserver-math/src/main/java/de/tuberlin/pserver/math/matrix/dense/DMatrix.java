@@ -15,6 +15,8 @@ import java.io.Serializable;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.DoubleBinaryOperator;
+import java.util.function.DoubleUnaryOperator;
 
 public class DMatrix extends AbstractMatrix implements Serializable {
 
@@ -178,48 +180,71 @@ public class DMatrix extends AbstractMatrix implements Serializable {
     public RowIterator rowIterator(final int startRow, final int endRow) { return new RowIterator(this, startRow, endRow); }
 
     @Override
-    public double aggregate(DoubleFunction2Arg combiner, DoubleFunction1Arg mapper) {
-        return aggregateRows(new VectorFunction() {
-            @Override
-            public double apply(de.tuberlin.pserver.math.vector.Vector v) {
-                return v.aggregate(combiner, mapper);
-            }
-        }).aggregate(combiner, Functions.IDENTITY);
-    }
-
-    @Override
-    public de.tuberlin.pserver.math.vector.Vector aggregateRows(final VectorFunction f) {
-        de.tuberlin.pserver.math.vector.Vector r = new DVector(numRows());
-        long n = numRows();
-        for (int row = 0; row < n; row++) {
-            r.set(row, f.apply(rowAsVector(row)));
-        }
-        return r;
+    protected Matrix newInstance(long rows, long cols) {
+        return new DMatrix(rows, cols);
     }
 
     // ---------------------------------------------------
     // Matrix Operation Delegates.
     // ---------------------------------------------------
 
-    @Override public Matrix axpy(final double alpha, final Matrix B) { return null; }
+    @Override
+    public Matrix add(Matrix B, Matrix C) {
+        Utils.checkShapeEqual(this, B, C);
+        return matrixOpDelegate.add(this, B, C);
+    }
 
-    @Override public Matrix add(final Matrix B) { return matrixOpDelegate.add(B, this); }
+    @Override
+    public Matrix sub(Matrix B, Matrix C) {
+        Utils.checkShapeEqual(this, B, C);
+        return matrixOpDelegate.sub(this, B, C);
+    }
 
-    @Override public Matrix sub(final Matrix B) { return matrixOpDelegate.sub(B, this); }
+    @Override
+    public Matrix mul(Matrix B, Matrix C) {
+        Utils.checkShapeMatrixMatrixMult(this, B, C);
+        return matrixOpDelegate.mul(this, B, C);
+    }
 
-    @Override public Matrix mul(final Matrix B) { return matrixOpDelegate.mul(this, B); }
+    @Override
+    public Vector mul(Vector b, Vector c) {
+        return super.mul(b, c);
+    }
 
-    @Override public de.tuberlin.pserver.math.vector.Vector mul(final de.tuberlin.pserver.math.vector.Vector v) { return matrixOpDelegate.mul(this, v); }
+    @Override
+    public Matrix scale(double a, Matrix B) {
+        return super.scale(a, B);
+    }
 
-    @Override public void mul(final de.tuberlin.pserver.math.vector.Vector x, final de.tuberlin.pserver.math.vector.Vector y) { matrixOpDelegate.mul(this, x, y); }
+    @Override
+    public Matrix transpose(Matrix B) {
+        return super.transpose(B);
+    }
 
-    @Override public Matrix scale(final double alpha) { return matrixOpDelegate.scale(alpha, this); }
+    @Override
+    public Matrix invert(Matrix B) {
+        return super.invert(B);
+    }
 
-    @Override public Matrix transpose() { return matrixOpDelegate.transpose(this); }
 
-    @Override public void transpose(final Matrix B) { matrixOpDelegate.transpose(this, B); }
-
-    @Override public boolean invert() { return matrixOpDelegate.invert(this); }
+//
+//    @Override public Matrix add(final Matrix B) { return matrixOpDelegate.add(B, this); }
+//
+//    @Override public Matrix sub(final Matrix B) { return matrixOpDelegate.sub(B, this); }
+//
+//    @Override public Matrix mul(final Matrix B) { return matrixOpDelegate.mul(this, B); }
+//
+//    @Override public Vector mul(final Vector v) { return matrixOpDelegate.mul(this, v); }
+//
+//    @Override public void mul(final Vector x, final Vector y) { matrixOpDelegate.mul(this, x, y); }
+//
+//    @Override public Matrix scale(final double alpha) { return matrixOpDelegate.scale(alpha, this); }
+//
+//    @Override public Matrix transpose() { return matrixOpDelegate.transpose(this); }
+//
+//    @Override public void transpose(final Matrix B) { matrixOpDelegate.transpose(this, B); }
+//
+//    @Override public boolean invert() { return matrixOpDelegate.invert(this); }
 
     // ---------------------------------------------------
 
@@ -251,7 +276,7 @@ public class DMatrix extends AbstractMatrix implements Serializable {
     public de.tuberlin.pserver.math.vector.Vector rowAsVector(final long row, final long from, final long to) { // TODO: Optimize with respect to the layout with array copy.
         de.tuberlin.pserver.math.vector.Vector r = new DVector(to - from);
         for (long i = from; i < to; ++i)
-            r.set(i, data[getPos(row, i)]);
+            r.set(i, data[Utils.getPos(row, i, this)]);
         return r;
     }
 
@@ -308,15 +333,4 @@ public class DMatrix extends AbstractMatrix implements Serializable {
         return new DMatrix(this);
     }
 
-    // ---------------------------------------------------
-    // Private Methods.
-    // ---------------------------------------------------
-
-    private int getPos(final long row, final long col) {
-        switch (layout) {
-            case ROW_LAYOUT: return (int)(row * cols + col);
-            case COLUMN_LAYOUT: return (int)(col * rows + row);
-        }
-        throw new IllegalStateException();
-    }
 }

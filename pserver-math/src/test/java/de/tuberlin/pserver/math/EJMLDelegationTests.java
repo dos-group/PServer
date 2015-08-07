@@ -38,7 +38,7 @@ public class EJMLDelegationTests {
             DenseMatrix64F ejmlRes = DenseMatrix64F.wrap(a, b, ejmlResData);
             CommonOps.add(ejmlMat1, ejmlMat2, ejmlRes);
 
-            Matrix res = mat1.add(mat2);
+            Matrix res = mat1.add(mat2, mat1);
             double[] resData = res.toArray();
 
             assert(mat1.toArray() == matData1);
@@ -69,7 +69,7 @@ public class EJMLDelegationTests {
             DenseMatrix64F ejmlRes = DenseMatrix64F.wrap(a, b, ejmlResData);
             CommonOps.sub(ejmlMat1, ejmlMat2, ejmlRes);
 
-            Matrix res = mat1.sub(mat2);
+            Matrix res = mat1.sub(mat2, mat1);
             double[] resData = res.toArray();
 
             assert(mat1.toArray() == matData1);
@@ -79,7 +79,7 @@ public class EJMLDelegationTests {
         }
     }
 
-    @Test
+    /*@Test
     public void matrixVectorMult() {
 
         Random rand = new Random();
@@ -109,7 +109,7 @@ public class EJMLDelegationTests {
             assert(java.util.Arrays.equals(resData, ejmlResData));
 
         }
-    }
+    }*/
 
     @Test
     public void matrixVectorMultResultByReference() {
@@ -217,14 +217,15 @@ public class EJMLDelegationTests {
 
             CommonOps.transpose(ejmlMat1, ejmlRes);
 
-            mat1.transpose(res);
+            Matrix test = mat1.transpose(res);
+            assert(test == res);
             double[] resData = res.toArray();
 
             assert(java.util.Arrays.equals(resData, ejmlResData));
         }
     }
 
-    @Test
+    /*@Test
     public void matrixInvert() {
 
         Random rand = new Random();
@@ -245,7 +246,7 @@ public class EJMLDelegationTests {
             assert(ejmlRes == res);
             assert(java.util.Arrays.equals(mat1.toArray(), ejmlMat1Data));
         }
-    }
+    }*/
 
     @Test
     public void matrixScale() {
@@ -263,7 +264,8 @@ public class EJMLDelegationTests {
 
             CommonOps.scale(scale, ejmlMat);
 
-            Matrix res = mat.scale(scale);
+            Matrix res = mat.scale(scale, mat);
+            assert(res == mat);
             double[] resData = res.toArray();
 
             assert(resData == matData);
