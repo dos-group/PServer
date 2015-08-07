@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.runtime.mtxpartitioning.mtxentries;
+package de.tuberlin.pserver.runtime.partitioning.mtxentries;
 
 /**
  * Created by fsander on 30.06.15.

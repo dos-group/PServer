@@ -1,9 +1,12 @@
-package de.tuberlin.pserver.dsl.controlflow;
+package de.tuberlin.pserver.dsl.dataflow;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.InstanceContext;
+import de.tuberlin.pserver.runtime.dht.DHTKey;
 
-public final class ControlFlow {
+
+public final class DataFlowFactory {
 
     // ---------------------------------------------------
     // Fields.
@@ -15,7 +18,7 @@ public final class ControlFlow {
     // Constructor.
     // ---------------------------------------------------
 
-    public ControlFlow(final InstanceContext instanceContext) {
+    public DataFlowFactory(final InstanceContext instanceContext) {
         this.instanceContext = Preconditions.checkNotNull(instanceContext);
     }
 
@@ -23,11 +26,11 @@ public final class ControlFlow {
     // Public Methods.
     // ---------------------------------------------------
 
-    public int numNodes() { return instanceContext.jobContext.numOfNodes; }
+    public <T extends SharedObject> DHTKey put(final String name, final T obj) {
+        return instanceContext.jobContext.dataManager.putObject(name, obj);
+    }
 
-    public int numInstances() { return instanceContext.jobContext.numOfInstances; }
-
-    public Iteration iterate() { return new Iteration(instanceContext); }
-
-    public Selection select() { return new Selection(instanceContext); }
+    public <T extends SharedObject> T get(final String name) {
+        return instanceContext.jobContext.dataManager.getObject(name);
+    }
 }

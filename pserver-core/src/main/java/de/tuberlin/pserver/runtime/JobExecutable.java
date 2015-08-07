@@ -2,8 +2,8 @@ package de.tuberlin.pserver.runtime;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.events.EventDispatcher;
-import de.tuberlin.pserver.dsl.controlflow.ControlFlow;
-import de.tuberlin.pserver.dsl.dataflow.DataFlow;
+import de.tuberlin.pserver.dsl.controlflow.ControlFlowFactory;
+import de.tuberlin.pserver.dsl.dataflow.DataFlowFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,9 +20,9 @@ public abstract class JobExecutable extends EventDispatcher {
 
     protected DataManager dataManager;
 
-    protected ControlFlow CF;
+    protected ControlFlowFactory CF;
 
-    protected DataFlow DF;
+    protected DataFlowFactory DF;
 
     public InstanceContext instanceContext;
 
@@ -41,8 +41,8 @@ public abstract class JobExecutable extends EventDispatcher {
     public void injectContext(final InstanceContext ctx) {
         instanceContext = Preconditions.checkNotNull(ctx);
         dataManager = ctx.jobContext.dataManager;
-        CF = new ControlFlow(instanceContext);
-        DF = new DataFlow(instanceContext);
+        CF = new ControlFlowFactory(instanceContext);
+        DF = new DataFlowFactory(instanceContext);
     }
 
     public void result(final Serializable... obj) {

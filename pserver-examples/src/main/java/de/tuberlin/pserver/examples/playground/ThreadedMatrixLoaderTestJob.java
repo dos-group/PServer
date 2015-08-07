@@ -8,7 +8,7 @@ import de.tuberlin.pserver.math.utils.Utils;
 import de.tuberlin.pserver.runtime.JobExecutable;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
-import de.tuberlin.pserver.runtime.mtxpartitioning.MatrixByRowPartitioner;
+import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 
 import java.io.*;
 import java.util.List;

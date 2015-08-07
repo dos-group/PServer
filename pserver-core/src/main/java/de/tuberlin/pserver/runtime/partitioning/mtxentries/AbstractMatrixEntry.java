@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.runtime.mtxpartitioning.mtxentries;
+package de.tuberlin.pserver.runtime.partitioning.mtxentries;
 
 public abstract class AbstractMatrixEntry implements MatrixEntry {
 

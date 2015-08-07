@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.runtime.filesystem.record;
 
-import de.tuberlin.pserver.runtime.mtxpartitioning.mtxentries.ImmutableMatrixEntry;
-import de.tuberlin.pserver.runtime.mtxpartitioning.mtxentries.MatrixEntry;
-import de.tuberlin.pserver.runtime.mtxpartitioning.mtxentries.ReusableMatrixEntry;
+import de.tuberlin.pserver.runtime.partitioning.mtxentries.ImmutableMatrixEntry;
+import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
+import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
 import org.apache.commons.csv.CSVRecord;
 
 /**

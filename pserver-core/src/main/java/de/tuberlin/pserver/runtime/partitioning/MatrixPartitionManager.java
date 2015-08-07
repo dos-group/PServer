@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.runtime.mtxpartitioning;
+package de.tuberlin.pserver.runtime.partitioning;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.config.IConfig;
@@ -15,10 +15,10 @@ import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
-import de.tuberlin.pserver.runtime.mtxpartitioning.mtxentries.ImmutableMatrixEntry;
-import de.tuberlin.pserver.runtime.mtxpartitioning.mtxentries.MatrixEntry;
-import de.tuberlin.pserver.runtime.mtxpartitioning.mtxentries.MutableMatrixEntry;
-import de.tuberlin.pserver.runtime.mtxpartitioning.mtxentries.ReusableMatrixEntry;
+import de.tuberlin.pserver.runtime.partitioning.mtxentries.ImmutableMatrixEntry;
+import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
+import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
+import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
 
 import java.util.ArrayList;
 import java.util.HashMap;

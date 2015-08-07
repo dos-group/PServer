@@ -20,9 +20,9 @@ import de.tuberlin.pserver.runtime.dht.types.AbstractBufferedDHTObject;
 import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
-import de.tuberlin.pserver.runtime.mtxpartitioning.IMatrixPartitioner;
-import de.tuberlin.pserver.runtime.mtxpartitioning.MatrixByRowPartitioner;
-import de.tuberlin.pserver.runtime.mtxpartitioning.MatrixPartitionManager;
+import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
+import de.tuberlin.pserver.runtime.partitioning.MatrixPartitionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

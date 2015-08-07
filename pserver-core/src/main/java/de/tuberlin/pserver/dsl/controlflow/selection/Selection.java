@@ -1,6 +1,7 @@
-package de.tuberlin.pserver.dsl.controlflow;
+package de.tuberlin.pserver.dsl.controlflow.selection;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.dsl.controlflow.Body;
 import de.tuberlin.pserver.runtime.InstanceContext;
 
 

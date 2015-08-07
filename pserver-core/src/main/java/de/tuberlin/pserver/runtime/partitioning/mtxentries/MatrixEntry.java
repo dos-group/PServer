@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.runtime.mtxpartitioning.mtxentries;
+package de.tuberlin.pserver.runtime.partitioning.mtxentries;
 
 import java.io.Serializable;
 
