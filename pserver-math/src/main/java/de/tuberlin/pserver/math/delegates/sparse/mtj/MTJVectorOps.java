@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.math.delegates.sparse.mtj;
 
-import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.delegates.LibraryVectorOps;
+import de.tuberlin.pserver.math.vector.Vector;
 
 public class MTJVectorOps implements LibraryVectorOps<Vector> {
 

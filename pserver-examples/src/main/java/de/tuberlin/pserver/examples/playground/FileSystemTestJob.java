@@ -1,14 +1,14 @@
 package de.tuberlin.pserver.examples.playground;
 
-import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.examples.ml.GenerateLocalTestData;
+import de.tuberlin.pserver.examples.experiments.sgd.GenerateLocalTestData;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.runtime.JobExecutable;
 
 import java.text.DecimalFormat;
 
 
-public final class FileSystemTestJob extends PServerJob {
+public final class FileSystemTestJob extends JobExecutable {
 
     // ---------------------------------------------------
     // Public Methods.

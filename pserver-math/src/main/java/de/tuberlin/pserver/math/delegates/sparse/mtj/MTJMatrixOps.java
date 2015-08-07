@@ -1,9 +1,9 @@
 package de.tuberlin.pserver.math.delegates.sparse.mtj;
 
-import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
+import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
+import de.tuberlin.pserver.math.vector.Vector;
 import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.Matrices;
 import no.uib.cipr.matrix.MatrixSingularException;

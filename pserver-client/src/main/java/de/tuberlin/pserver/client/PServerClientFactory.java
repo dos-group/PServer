@@ -2,7 +2,6 @@ package de.tuberlin.pserver.client;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.app.UserCodeManager;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.config.IConfigFactory;
 import de.tuberlin.pserver.core.infra.InetHelper;
@@ -10,6 +9,7 @@ import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.infra.ZookeeperClient;
 import de.tuberlin.pserver.core.net.NetManager;
+import de.tuberlin.pserver.runtime.usercode.UserCodeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

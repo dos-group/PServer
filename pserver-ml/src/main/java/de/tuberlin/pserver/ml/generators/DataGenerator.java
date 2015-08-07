@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.ml.generators;
 
-import de.tuberlin.pserver.math.vector.dense.DVector;
 import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.vector.dense.DVector;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.ArrayUtils;

@@ -64,11 +64,11 @@ public final class RPCManager {
         calleeProxy.registerProtocol(protocolImplementation, protocolInterface);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T getRPCProtocolProxy(final Class<T> protocolInterface, final MachineDescriptor dstMachine) {
         Preconditions.checkNotNull(protocolInterface);
         Preconditions.checkNotNull(dstMachine);
         final Pair<Class<?>, UUID> proxyKey =  (Pair)Pair.of(protocolInterface, dstMachine.machineID);
-        @SuppressWarnings("unchecked")
         T proxy = (T) cachedProxies.get(proxyKey);
         if (proxy == null) {
             proxy = ProtocolCallerProxy.createProtocolProxy(5000, dstMachine.machineID, protocolInterface, netManager);

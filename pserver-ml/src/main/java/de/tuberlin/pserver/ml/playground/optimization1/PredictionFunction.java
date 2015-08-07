@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.ml.playground.optimization1;
 
-import de.tuberlin.pserver.math.vector.dense.DVector;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.vector.dense.DVector;
 
 public interface PredictionFunction {
 

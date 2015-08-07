@@ -2,8 +2,8 @@ package de.tuberlin.pserver.math;
 
 import de.tuberlin.pserver.math.generators.MatrixGenerator;
 import de.tuberlin.pserver.math.generators.VectorGenerator;
-import de.tuberlin.pserver.math.matrix.dense.DMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.dense.DMatrix;
 import de.tuberlin.pserver.math.vector.Vector;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;

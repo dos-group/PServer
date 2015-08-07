@@ -1,18 +1,18 @@
 package de.tuberlin.pserver.examples.playground;
 
 import com.google.common.collect.Lists;
-import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.examples.ml.GenerateLocalTestData;
+import de.tuberlin.pserver.examples.experiments.sgd.GenerateLocalTestData;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.ml.algorithms.linreg.LinRegAlgorithm;
 import de.tuberlin.pserver.ml.algorithms.linreg.LinRegModel;
+import de.tuberlin.pserver.runtime.JobExecutable;
 
 import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.util.List;
 
-public final class LinRegTestJob extends PServerJob {
+public final class LinRegTestJob extends JobExecutable {
 
     // ---------------------------------------------------
     // Fields.

@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.ml.optimization;
 
-import de.tuberlin.pserver.commons.UnsafeOp;
+import de.tuberlin.pserver.commons.unsafe.UnsafeOp;
 import de.tuberlin.pserver.math.vector.Vector;
 
 public interface GradientStepFunction {

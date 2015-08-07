@@ -1,11 +1,11 @@
 package de.tuberlin.pserver.examples.playground.primitives;
 
-import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.runtime.JobExecutable;
 
 import java.util.Random;
 
-public class PullRequestPrimitiveTestJob extends PServerJob {
+public class PullRequestPrimitiveTestJob extends JobExecutable {
 
     // ---------------------------------------------------
     // Public Methods.

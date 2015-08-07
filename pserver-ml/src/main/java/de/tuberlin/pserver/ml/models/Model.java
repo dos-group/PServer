@@ -3,8 +3,8 @@ package de.tuberlin.pserver.ml.models;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
-import de.tuberlin.pserver.app.InstanceContext;
-import de.tuberlin.pserver.utils.GsonUtils;
+import de.tuberlin.pserver.commons.json.GsonUtils;
+import de.tuberlin.pserver.runtime.InstanceContext;
 
 import java.io.Serializable;
 

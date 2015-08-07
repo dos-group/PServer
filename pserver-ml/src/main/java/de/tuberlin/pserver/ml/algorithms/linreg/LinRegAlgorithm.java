@@ -1,11 +1,11 @@
 package de.tuberlin.pserver.ml.algorithms.linreg;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.app.InstanceContext;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.ml.algorithms.MLAlgorithm;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.ml.optimization.SGD.SGDOptimizer;
+import de.tuberlin.pserver.runtime.InstanceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

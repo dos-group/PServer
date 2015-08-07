@@ -1,19 +1,19 @@
 package de.tuberlin.pserver.examples.playground;
 
 import com.google.common.collect.Lists;
-import de.tuberlin.pserver.app.PServerJob;
-import de.tuberlin.pserver.app.filesystem.record.IRecordFactory;
-import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
-import de.tuberlin.pserver.app.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.examples.ml.GenerateLocalTestData;
+import de.tuberlin.pserver.examples.experiments.sgd.GenerateLocalTestData;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
+import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.filesystem.record.IRecordFactory;
+import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
+import de.tuberlin.pserver.runtime.mtxpartitioning.MatrixByRowPartitioner;
 
 import java.io.*;
 import java.util.List;
 
-public final class ThreadedMatrixLoaderTestJob extends PServerJob {
+public final class ThreadedMatrixLoaderTestJob extends JobExecutable {
 
     private static final int NUM_NODES = 4;
 

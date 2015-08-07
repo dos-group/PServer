@@ -1,22 +1,22 @@
 package de.tuberlin.pserver.node;
 
-import de.tuberlin.pserver.app.*;
-import de.tuberlin.pserver.app.dht.DHT;
-import de.tuberlin.pserver.app.filesystem.FileSystemManager;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
 import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetManager;
+import de.tuberlin.pserver.runtime.*;
+import de.tuberlin.pserver.runtime.dht.DHTManager;
+import de.tuberlin.pserver.runtime.events.PServerJobFailureEvent;
+import de.tuberlin.pserver.runtime.events.PServerJobResultEvent;
+import de.tuberlin.pserver.runtime.events.PServerJobSubmissionEvent;
+import de.tuberlin.pserver.runtime.usercode.UserCodeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,8 +35,6 @@ public final class PServerNode extends EventDispatcher {
 
     private final NetManager netManager;
 
-    private final FileSystemManager fileSystemManager;
-
     private final UserCodeManager userCodeManager;
 
     private final DataManager dataManager;
@@ -45,7 +43,7 @@ public final class PServerNode extends EventDispatcher {
 
     private final ExecutorService executor;
 
-    private final Map<UUID,PServerJobSubmissionEvent> jobMap;
+    //private final Map<UUID,PServerJobSubmissionEvent> jobMap;
 
     private CountDownLatch jobStartBarrier = null;
 
@@ -61,11 +59,10 @@ public final class PServerNode extends EventDispatcher {
         this.machine            = factory.machine;
         this.infraManager       = factory.infraManager;
         this.netManager         = factory.netManager;
-        this.fileSystemManager  = factory.fileSystemManager;
         this.userCodeManager    = factory.userCodeManager;
         this.dataManager        = factory.dataManager;
         this.executionManager   = factory.executionManager;
-        this.jobMap             = new HashMap<>();
+        //this.jobMap             = new HashMap<>();
         this.executor           = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
         netManager.addEventListener(PServerJobSubmissionEvent.PSERVER_JOB_SUBMISSION_EVENT, new PServerJobHandler());
@@ -81,17 +78,18 @@ public final class PServerNode extends EventDispatcher {
         public void handleEvent(final Event e) {
             final PServerJobSubmissionEvent jobSubmission = (PServerJobSubmissionEvent)e;
             LOG.info("Received job on instance " + "[" + infraManager.getNodeID() + "]" + jobSubmission.toString());
-            jobMap.put(jobSubmission.jobUID, jobSubmission);
+            //jobMap.put(jobSubmission.jobUID, jobSubmission);
             jobStartBarrier = new CountDownLatch(1);
             jobEndBarrier   = new CountDownLatch(jobSubmission.perNodeParallelism);
             executionManager.createExecutionContext(jobSubmission.jobUID, jobSubmission.perNodeParallelism);
 
             final Class<?> clazz = userCodeManager.implantClass(jobSubmission.byteCode);
 
-            if (!PServerJob.class.isAssignableFrom(clazz))
+            if (!JobExecutable.class.isAssignableFrom(clazz))
                 throw new IllegalStateException();
 
-            final Class<? extends PServerJob> jobClass = (Class<? extends PServerJob>) clazz;
+            @SuppressWarnings("unchecked")
+            final Class<? extends JobExecutable> jobClass = (Class<? extends JobExecutable>) clazz;
 
             final JobContext jobContext = new JobContext(
                     jobSubmission.clientMachine,
@@ -102,7 +100,7 @@ public final class PServerNode extends EventDispatcher {
                     jobSubmission.perNodeParallelism,
                     infraManager.getNodeID(),
                     netManager,
-                    DHT.getInstance(),
+                    DHTManager.getInstance(),
                     dataManager,
                     executionManager
             );
@@ -113,7 +111,7 @@ public final class PServerNode extends EventDispatcher {
                 final int threadID = i;
                 executor.execute(() -> {
                     try {
-                        final PServerJob jobInvokeable = jobClass.newInstance();
+                        final JobExecutable jobInvokeable = jobClass.newInstance();
                         final InstanceContext instanceContext = new InstanceContext(
                                 jobContext,
                                 threadID,
@@ -129,6 +127,7 @@ public final class PServerNode extends EventDispatcher {
                             try {
                                 jobEndBarrier.await();
                             } catch (InterruptedException ie) {
+                                LOG.error(ie.getMessage());
                             }
                             final List<Serializable> results = dataManager.getResults(jobSubmission.jobUID);
                             final PServerJobResultEvent jre = new PServerJobResultEvent(
@@ -175,7 +174,7 @@ public final class PServerNode extends EventDispatcher {
     // Private Methods.
     // ---------------------------------------------------
 
-    private void executeLifecycle(final PServerJob job) {
+    private void executeLifecycle(final JobExecutable job) {
         try {
 
             if (job.instanceContext.instanceID == 0) {

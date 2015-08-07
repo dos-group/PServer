@@ -107,6 +107,11 @@
             <!-- PROJECT DEPENDENCIES -->
             <dependency>
                 <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-commons</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
                 <artifactId>pserver-math</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -320,6 +325,7 @@
     <!-- ================================= -->
 
     <modules>
+        <module>pserver-commons</module>
         <module>pserver-math</module>
         <module>pserver-core</module>
         <module>pserver-client</module>

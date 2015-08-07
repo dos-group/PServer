@@ -3,8 +3,8 @@ package de.tuberlin.pserver.math.matrix.sparse;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
-import de.tuberlin.pserver.math.vector.dense.DVector;
 import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.vector.dense.DVector;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.io.Serializable;
