@@ -6,7 +6,10 @@ import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.math.*;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.MatrixBuilder;
+import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.vector.VectorBuilder;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -162,7 +165,7 @@ public class GloVeJobAdaGrad extends PServerJob {
         GradSq = dataManager.getObject("GradSq");
         GradSqB = dataManager.getObject("GradSqB");
 
-        int numInstances = dataManager.getNumberOfNodes();
+        int numInstances = instanceContext.jobContext.numOfNodes;
         int offset = NUM_WORDS_IN_COOC_MATRIX / numInstances * instanceContext.jobContext.nodeID;
 
         int iterations = 0;

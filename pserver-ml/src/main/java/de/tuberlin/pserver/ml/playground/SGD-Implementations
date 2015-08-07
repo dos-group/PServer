@@ -7,8 +7,8 @@ https://github.com/apache/mahout/tree/34800682e119975183b3f24c20366acf692d128d/m
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.DMatrix;
-import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.matrix.dense.DMatrix;
+import de.tuberlin.pserver.math.matrix.Matrix;
 
 public class SGDOptimizerOLD implements Optimizer {
 

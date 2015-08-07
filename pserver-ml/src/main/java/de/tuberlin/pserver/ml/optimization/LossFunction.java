@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.ml.optimization;
 
-import de.tuberlin.pserver.math.DVector;
-import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.math.vector.dense.DVector;
+import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.ml.common.LabeledVector;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;

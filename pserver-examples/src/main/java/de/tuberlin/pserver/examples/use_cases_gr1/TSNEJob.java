@@ -5,11 +5,11 @@ import de.tuberlin.pserver.app.PServerJob;
 import de.tuberlin.pserver.app.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.MatrixBuilder;
-import de.tuberlin.pserver.math.Vector;
-import de.tuberlin.pserver.math.VectorBuilder;
-import de.tuberlin.pserver.playground.exp1.tuples.Tuple2;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.MatrixBuilder;
+import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.vector.VectorBuilder;
+import de.tuberlin.pserver.math.tuples.Tuple2;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -378,7 +378,7 @@ public class TSNEJob extends PServerJob {
 
         P.set(index, 0.0);
 
-        // execute over all elements i != j
+        // executePartitioned over all elements i != j
         for (long i=0; i < P.length(); ++i) {
             if (i != index) {
                 P.set(i, Math.exp(-1 * d.get(i) * beta));

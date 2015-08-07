@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.app.partitioning;
 
 import de.tuberlin.pserver.app.types.MatrixEntry;
-import de.tuberlin.pserver.math.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix;
 
 public interface IMatrixPartitioner {
 

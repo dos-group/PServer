@@ -2,6 +2,8 @@ package de.tuberlin.pserver.app;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.events.EventDispatcher;
+import de.tuberlin.pserver.dsl.cf.ControlFlow;
+import de.tuberlin.pserver.dsl.df.DataFlow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +20,10 @@ public abstract class PServerJob extends EventDispatcher {
 
     protected DataManager dataManager;
 
+    protected ControlFlow CF;
+
+    protected DataFlow DF;
+
     public InstanceContext instanceContext;
 
     // ---------------------------------------------------
@@ -33,11 +39,11 @@ public abstract class PServerJob extends EventDispatcher {
     // ---------------------------------------------------
 
     public void injectContext(final InstanceContext ctx) {
-        this.instanceContext = Preconditions.checkNotNull(ctx);
-        this.dataManager = ctx.jobContext.dataManager;
+        instanceContext = Preconditions.checkNotNull(ctx);
+        dataManager = ctx.jobContext.dataManager;
+        CF = new ControlFlow(instanceContext);
+        DF = new DataFlow(instanceContext);
     }
-
-    public InstanceContext getInstanceContext() { return instanceContext; }
 
     public void result(final Serializable... obj) {
         if (instanceContext.instanceID == 0) {

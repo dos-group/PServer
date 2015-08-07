@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.math.generators;
 
-import de.tuberlin.pserver.math.DMatrix;
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.SMatrix;
+import de.tuberlin.pserver.math.matrix.dense.DMatrix;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.sparse.SMatrix;
 
 import java.util.Random;
 

@@ -7,8 +7,8 @@ import de.tuberlin.pserver.app.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.app.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.examples.ml.GenerateLocalTestData;
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.stuff.Utils;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.utils.Utils;
 
 import java.io.*;
 import java.util.List;

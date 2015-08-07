@@ -16,8 +16,8 @@ import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.MatrixBuilder;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -187,11 +187,12 @@ public final class MatrixPartitionManager {
                      final RecordFormat recordFormat,
                      final Matrix.Format matrixFormat,
                      final Matrix.Layout matrixLayout,
-                     final IMatrixPartitioner matrixPartitioner) {
+                     final IMatrixPartitioner matrixPartitioner,
+                     final JobContext jobContext) {
 
         matrixLoadTasks.put(filePath, new MatrixLoadTask(filePath, recordFormat, rows, cols,
                 matrixFormat, matrixLayout, matrixPartitioner));
-        fileLoadingBarrier.put(filePath, new AtomicInteger(dataManager.getNodeIDs().length));
+        fileLoadingBarrier.put(filePath, new AtomicInteger(jobContext.numOfNodes));
     }
 
     public void loadFilesIntoDHT() {

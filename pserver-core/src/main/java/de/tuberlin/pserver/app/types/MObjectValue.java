@@ -1,9 +1,9 @@
 package de.tuberlin.pserver.app.types;
 
 import de.tuberlin.pserver.app.dht.valuetypes.AbstractBufferValue;
-import de.tuberlin.pserver.math.MObject;
+import de.tuberlin.pserver.math.SharedObject;
 
-public class MObjectValue<T extends MObject> extends AbstractBufferValue {
+public class MObjectValue<T extends SharedObject> extends AbstractBufferValue {
 
     // ---------------------------------------------------
     // Fields.

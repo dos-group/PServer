@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.ml.optimization.ADMM;
 
 
-import de.tuberlin.pserver.math.Matrix;
-import de.tuberlin.pserver.math.Vector;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.ml.models.GeneralLinearModel;
 import de.tuberlin.pserver.ml.optimization.Optimizer;
 import org.slf4j.Logger;

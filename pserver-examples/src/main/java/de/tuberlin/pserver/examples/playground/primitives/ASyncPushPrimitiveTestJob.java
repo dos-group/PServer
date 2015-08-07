@@ -55,7 +55,7 @@ public class ASyncPushPrimitiveTestJob extends PServerJob {
                 });
 
                 // active polling.
-                while (receiveCnt.get() != dataManager.getNumberOfNodes() - 1) {
+                while (receiveCnt.get() != instanceContext.jobContext.numOfNodes - 1) {
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException e) {}
