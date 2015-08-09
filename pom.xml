@@ -245,7 +245,7 @@
             <dependency>
                 <groupId>com.googlecode.efficient-java-currentState-library</groupId>
                 <artifactId>ejml</artifactId>
-                <version>${ejml.version}</version>
+                <version>{ejml.version}</version>
             </dependency>
 
             <dependency>

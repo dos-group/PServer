@@ -3,13 +3,16 @@ package de.tuberlin.pserver.math.matrix;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.exceptions.IncompatibleShapeException;
 import de.tuberlin.pserver.math.exceptions.SingularMatrixException;
+import de.tuberlin.pserver.math.operations.ApplyOnDoubleElements;
 import de.tuberlin.pserver.math.utils.VectorFunction;
 import de.tuberlin.pserver.math.vector.Vector;
 
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
-public interface Matrix extends SharedObject {
+public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
 
     // ---------------------------------------------------
     // Constants.
@@ -75,6 +78,24 @@ public interface Matrix extends SharedObject {
 
         double apply(long row, long col, double element);
 
+    }
+
+    class Test implements UnaryOperator<Double> {
+
+        @Override
+        public Double apply(Double aDouble) {
+            return null;
+        }
+
+        @Override
+        public <V> Function<V, Double> compose(Function<? super V, ? extends Double> before) {
+            return null;
+        }
+
+        @Override
+        public <V> Function<Double, V> andThen(Function<? super Double, ? extends V> after) {
+            return null;
+        }
     }
 
     class PartitionShape {
@@ -258,40 +279,6 @@ public interface Matrix extends SharedObject {
      */
     Matrix invert(final Matrix B);
 
-
-    /**
-     * Identical to {@link #applyOnElements(DoubleUnaryOperator, Matrix)} but automatically creates the resulting <code>Matrix B</code>.
-     */
-    Matrix applyOnElements(final DoubleUnaryOperator f);
-
-    /**
-     * Called on Matrix A. Computes B = f(A) element-wise. <br>
-     * <strong>Note: A and B have to be of the same shape</strong>
-     *
-     * @param f Unary higher order function f: x -> y
-     * @param B Matrix to store the result in
-     * @return B after computing B = f(A) element-wise.
-     * @throws IncompatibleShapeException If the shapes of B and A are not equal
-     */
-    Matrix applyOnElements(final DoubleUnaryOperator f, final Matrix B);
-
-    /**
-     * Identical to {@link #applyOnElements(Matrix, DoubleBinaryOperator, Matrix)} but automatically creates the resulting <code>Matrix C</code>.
-     */
-    Matrix applyOnElements(final Matrix B, final DoubleBinaryOperator f);
-
-    /**
-     * Called on Matrix A. Computes C = f(A, B) element-wise.<br>
-     * <strong>Note: A and B are wlog. of shape n x m and o x p respectively. It has to hold that n <= o and m <= p. Also the shape of A an C have to be the same.</strong
-     *
-     * @param B Matrix containing the elements that are used as second arguments in f
-     * @param f Binary higher order function f: x, y -> z
-     * @param C to store the result in
-     * @return A after computing  C = f(A, B) element-wise.
-     * @throws IncompatibleShapeException If the shape of B is smaller than the one of A in any dimension or if the shapes of C and A are not equal
-     */
-    Matrix applyOnElements(final Matrix B, final DoubleBinaryOperator f, final Matrix C);
-
     /**
      * Identical to {@link #applyOnElements(MatrixElementUnaryOperator)} but automatically creates the resulting <code>Matrix B</code>.
      */
@@ -386,5 +373,4 @@ public interface Matrix extends SharedObject {
 
     Matrix copy();
 
-    Matrix clear();
 }

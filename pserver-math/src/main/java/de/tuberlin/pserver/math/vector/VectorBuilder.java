@@ -3,6 +3,7 @@ package de.tuberlin.pserver.math.vector;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.vector.dense.DVector;
+import de.tuberlin.pserver.math.vector.sparse.SVector;
 
 public class VectorBuilder {
 
@@ -61,7 +62,7 @@ public class VectorBuilder {
         switch (format) {
             case SPARSE_VECTOR:
                 if (mutable)
-                    throw new UnsupportedOperationException("");
+                    return new SVector(length, layout);
                 else
                     throw new UnsupportedOperationException("");
             case DENSE_VECTOR:

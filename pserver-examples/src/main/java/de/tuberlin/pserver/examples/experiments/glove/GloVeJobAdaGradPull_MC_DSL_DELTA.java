@@ -63,8 +63,8 @@ public class GloVeJobAdaGradPull_MC_DSL_DELTA extends JobExecutable {
 
     private static final DataManager.Merger<Vector> vectorMerger = (dst, src) -> {
         for (final Vector b : src)
-            dst.assign(b, (e1, e2) -> e1 + e2);
-        dst.assign(e -> e / (src.size() + 1));
+            dst.applyOnElements(b, (e1, e2) -> e1 + e2, dst);
+        dst.applyOnElements(e -> e / (src.size() + 1), dst);
     };
 
     private static final DataManager.Merger<Matrix> matrixMerger = (dst, src) -> {
@@ -139,84 +139,80 @@ public class GloVeJobAdaGradPull_MC_DSL_DELTA extends JobExecutable {
                 * instanceContext.instanceID;
 
         CF.iterate()
-            .sync(Iteration.ASYNC)
-            .execute(NUM_EPOCHS, (epoch) -> {
+                .sync(Iteration.ASYNC)
+                .execute(NUM_EPOCHS, (epoch) -> {
 
-                LOG.info("Starting iteration " + epoch);
+                    LOG.info("Starting iteration " + epoch);
 
-                final MutableDouble costI = new MutableDouble(0.0);
+                    final MutableDouble costI = new MutableDouble(0.0);
 
-                W_previous.assign(W);
+                    CF.iterate()
+                            .executePartitioned(X, (xIter) ->
 
-                CF.iterate()
-                    .executePartitioned(X, (xIter) ->
+                                            CF.iterate()
+                                                    .sync(Iteration.ASYNC)
+                                                    .execute(NUM_WORDS_IN_COOC_MATRIX, (col) -> {
 
-                            CF.iterate()
-                                    .sync(Iteration.ASYNC)
-                                    .execute(NUM_WORDS_IN_COOC_MATRIX, (col) -> {
+                                                        long wordVecIdx = offset + xIter.getCurrentRowNum();
+                                                        long ctxVecIdx = col + NUM_WORDS_IN_COOC_MATRIX;
 
-                                        long wordVecIdx = offset + xIter.getCurrentRowNum();
-                                        long ctxVecIdx = col + NUM_WORDS_IN_COOC_MATRIX;
+                                                        Double xVal = xIter.getValueOfColumn((int) col);
 
-                                        Double xVal = xIter.getValueOfColumn((int) col);
+                                                        if (xVal == 0)
+                                                            return;
 
-                                        if (xVal == 0)
-                                            return;
+                                                        Vector w1 = W.colAsVector(wordVecIdx);
+                                                        Double b1 = B.get(wordVecIdx);
+                                                        Vector gs1 = GradSq.colAsVector(wordVecIdx);
 
-                                        Vector w1 = W.colAsVector(wordVecIdx);
-                                        Double b1 = B.get(wordVecIdx);
-                                        Vector gs1 = GradSq.colAsVector(wordVecIdx);
+                                                        Vector w2 = W.colAsVector(ctxVecIdx);
+                                                        Double b2 = B.get(ctxVecIdx);
+                                                        Vector gs2 = GradSq.colAsVector(ctxVecIdx);
 
-                                        Vector w2 = W.colAsVector(ctxVecIdx);
-                                        Double b2 = B.get(ctxVecIdx);
-                                        Vector gs2 = GradSq.colAsVector(ctxVecIdx);
+                                                        double diff = w1.dot(w2) + b1 + b2 - Math.log(xVal);
+                                                        double fdiff = (xVal > X_MAX) ? diff : Math.pow(xVal / X_MAX, ALPHA) * diff;
 
-                                        double diff = w1.dot(w2) + b1 + b2 - Math.log(xVal);
-                                        double fdiff = (xVal > X_MAX) ? diff : Math.pow(xVal / X_MAX, ALPHA) * diff;
+                                                        costI.add(0.5 * diff * fdiff);
 
-                                        costI.add(0.5 * diff * fdiff);
+                                                        fdiff *= LEARNING_RATE;
 
-                                        fdiff *= LEARNING_RATE;
+                                                        Vector grad1 = w2.mul(fdiff);
+                                                        Vector grad2 = w1.mul(fdiff);
 
-                                        Vector grad1 = w2.mul(fdiff);
-                                        Vector grad2 = w1.mul(fdiff);
+                                                        W.assignColumn(wordVecIdx, w1.add(-1, grad1.applyOnElements(gs1, (el1, el2) -> el1 / Math.sqrt(el2))));
+                                                        W.assignColumn(ctxVecIdx, w2.add(-1, grad2.applyOnElements(gs2, (el1, el2) -> el1 / Math.sqrt(el2))));
 
+                                                        B.set(wordVecIdx, b1 - fdiff / Math.sqrt(GradSqB.get(wordVecIdx)));
+                                                        B.set(ctxVecIdx, b2 - fdiff / Math.sqrt(GradSqB.get(ctxVecIdx)));
 
-                                        final Vector v1 = w1.add(-1, grad1.applyOnElements(gs1, (el1, el2) -> el1 / Math.sqrt(el2)));
-                                        final Vector v2 = w2.add(-1, grad2.applyOnElements(gs2, (el1, el2) -> el1 / Math.sqrt(el2)));
+                                                        gs1 = gs1.applyOnElements(grad1, (el1, el2) -> el1 + el2 * el2);
+                                                        gs2 = gs2.applyOnElements(grad2, (el1, el2) -> el1 + el2 * el2);
 
-                                        W.assignColumn(wordVecIdx, v1);
-                                        W.assignColumn(ctxVecIdx, v2);
+                                                        GradSq.assignColumn(wordVecIdx, gs1);
+                                                        GradSq.assignColumn(ctxVecIdx, gs2);
 
-                                        B.set(wordVecIdx, b1 - fdiff / Math.sqrt(GradSqB.get(wordVecIdx)));
-                                        B.set(ctxVecIdx, b2 - fdiff / Math.sqrt(GradSqB.get(ctxVecIdx)));
-
-                                        gs1 = gs1.applyOnElements(grad1, (el1, el2) -> el1 + el2 * el2);
-                                        gs2 = gs2.applyOnElements(grad2, (el1, el2) -> el1 + el2 * el2);
-
-                                        GradSq.assignColumn(wordVecIdx, gs1);
-                                        GradSq.assignColumn(ctxVecIdx, gs2);
-
-                                        GradSqB.set(wordVecIdx, GradSqB.get(wordVecIdx) + fdiff * fdiff);
-                                        GradSqB.set(ctxVecIdx, GradSqB.get(ctxVecIdx) + fdiff * fdiff);
-                                    })
-                    );
+                                                        GradSqB.set(wordVecIdx, GradSqB.get(wordVecIdx) + fdiff * fdiff);
+                                                        GradSqB.set(ctxVecIdx, GradSqB.get(ctxVecIdx) + fdiff * fdiff);
+                                                    })
+                            );
 
                     CF.select()
-                        .instance(0)
-                        .execute(() -> {
-                            dataManager.pullMerge(W,       matrixMerger);
-                            dataManager.pullMerge(GradSq,  matrixMerger);
-                            dataManager.pullMerge(B,       vectorMerger);
-                            dataManager.pullMerge(GradSqB, vectorMerger);
-                        });
+                            .instance(0)
+                            .execute(() -> {
+                                dataManager.pullMerge(W, matrixMerger);
+                                dataManager.pullMerge(GradSq, matrixMerger);
+                                dataManager.pullMerge(B, vectorMerger);
+                                dataManager.pullMerge(GradSqB, vectorMerger);
+                            });
+
 
                     int deltaSize = deltaExtractor.extractDeltas(instanceContext.jobContext.numOfInstances, instanceContext.instanceID).getMiddle();
 
-                    System.out.println("delta(W) => " + (((double)deltaSize / (VEC_DIM * NUM_WORDS_IN_COOC_MATRIX * 2.0 * Double.BYTES)) * 100.0) + " %");
+                    System.out.println("delta(W) => " + (((double) deltaSize / (VEC_DIM * NUM_WORDS_IN_COOC_MATRIX * 2.0 * Double.BYTES)) * 100.0) + " %");
 
                     System.out.println();
-            });
+                });
+
     }
 
     // ---------------------------------------------------

@@ -336,10 +336,10 @@ public class GloVeJobAdaGrad extends JobExecutable {
 
     private void pushDeltaVector(String name, Vector v, Vector significantDeltas) {
         // significantDeltas should only contain 0 or 1
-        significantDeltas.assign(v, (v1, v2) -> v1 * v2);
+        significantDeltas.applyOnElements(v, (v1, v2) -> v1 * v2, significantDeltas);
         dataManager.pushTo(name, significantDeltas);
         // reset delta matrix
-        significantDeltas.assign((v1) -> 0);   // TODO: this can be optimized...
+        significantDeltas.assign(0);   // TODO: this can be optimized...
     }
 
     private void applyOnColumnVectorAndSetDeltaFlagIfSignificant(Matrix m, Matrix deltas, Long col, Vector v, DoubleBinaryOperator func) {
@@ -447,7 +447,7 @@ public class GloVeJobAdaGrad extends JobExecutable {
         @Override
         public void handleDataEvent(int srcNodeID, Object value) {
             lock.lock();
-            v.assign((Vector) value, (v1, v2) -> (v1 + v2) / 2.0);
+            v.applyOnElements((Vector) value, (v1, v2) -> (v1 + v2) / 2.0, v);
             lock.unlock();
         }
     }
@@ -534,7 +534,7 @@ public class GloVeJobAdaGrad extends JobExecutable {
                 diffCounts.set(col, diffCounts.get(col) + 1);
             }
         }
-        v.assign(diffCounts, (w, d) -> w / (d + 1));
+        v.applyOnElements(diffCounts, (w, d) -> w / (d + 1), v);
     }
 
     // ---------------------------------------------------
@@ -543,10 +543,10 @@ public class GloVeJobAdaGrad extends JobExecutable {
 
     private static final DataManager.Merger<Vector> vectorMerger = (dst, src) -> {
         for (final Vector b : src) {
-            dst.assign(b, (e1, e2) -> e1 + e2);
+            dst.applyOnElements(b, (e1, e2) -> e1 + e2, dst);
         }
 
-        dst.assign(e -> e / (src.size() + 1));
+        dst.applyOnElements(e -> e / (src.size() + 1), dst);
     };
 
     private static final DataManager.Merger<Matrix> matrixMerger = (dst, src) -> {

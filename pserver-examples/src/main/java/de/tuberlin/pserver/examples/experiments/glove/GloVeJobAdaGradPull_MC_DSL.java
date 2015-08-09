@@ -54,8 +54,8 @@ public class GloVeJobAdaGradPull_MC_DSL extends JobExecutable {
 
     private static final DataManager.Merger<Vector> vectorMerger = (dst, src) -> {
         for (final Vector b : src)
-            dst.assign(b, (e1, e2) -> e1 + e2);
-        dst.assign(e -> e / (src.size() + 1));
+            dst.applyOnElements(b, (e1, e2) -> e1 + e2, dst);
+        dst.applyOnElements(e -> e / (src.size() + 1), dst);
     };
 
     private static final DataManager.Merger<Matrix> matrixMerger = (dst, src) -> {

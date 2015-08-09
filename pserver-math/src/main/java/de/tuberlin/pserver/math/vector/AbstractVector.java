@@ -77,37 +77,68 @@ public abstract class AbstractVector implements Vector {
         }
     }
 
+    protected abstract Vector newInstance(long length);
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // Operations
+    // -----------------------------------------------------------------------------------------------------------------
+
     @Override
     public Vector mul(double alpha) {
+        return mul(alpha, newInstance(length));
+    }
+
+    @Override
+    public Vector mul(double alpha, final Vector y) {
         for(long i = 0; i < length; i++) {
-            set(i, get(i) * alpha);
+            y.set(i, get(i) * alpha);
         }
         return this;
     }
 
     @Override
     public Vector div(double alpha) {
+        return div(alpha, newInstance(length));
+    }
+
+    @Override
+    public Vector div(double alpha, final Vector y) {
         for(long i = 0; i < length; i++) {
-            set(i, get(i) / alpha);
+            y.set(i, get(i) / alpha);
         }
         return this;
     }
 
     @Override
     public Vector add(Vector y) {
-        return add(1, y);
+        return add(1, y, newInstance(length));
+    }
+
+    @Override
+    public Vector add(Vector y, Vector z) {
+        return add(1, y, z);
     }
 
     @Override
     public Vector sub(Vector y) {
-        return add(-1, y);
+        return add(-1, y, newInstance(length));
+    }
+
+    @Override
+     public Vector sub(Vector y, Vector z) {
+        return add(-1, y, z);
     }
 
     @Override
     public Vector add(double alpha, Vector y) {
-        checkDimensions(y);
+        return add(alpha, y, newInstance(length));
+    }
+
+    @Override
+    public Vector add(double alpha, Vector y, Vector z) {
+        Utils.checkShapeEqual(this, y);
         for(long i = 0; i < length; i++) {
-            set(i, alpha * y.get(i) + get(i));
+            z.set(i, alpha * y.get(i) + get(i));
         }
         return this;
     }
@@ -159,7 +190,7 @@ public abstract class AbstractVector implements Vector {
 
     @Override
     public Vector assign(Vector v) {
-        checkDimensions(v);
+        Utils.checkShapeEqual(this, v);
         for(long i = 0; i < length; i++) {
             set(i, v.get(i));
         }
@@ -170,22 +201,6 @@ public abstract class AbstractVector implements Vector {
     public Vector assign(double v) {
         for(long i = 0; i < length; i++) {
             set(i, v);
-        }
-        return this;
-    }
-
-    @Override
-    public Vector assign(DoubleUnaryOperator df) {
-        for(long i = 0; i < length; i++) {
-            set(i, df.applyAsDouble(get(i)));
-        }
-        return this;
-    }
-
-    @Override
-    public Vector assign(Vector v, DoubleBinaryOperator df) {
-        for(long i = 0; i < length; i++) {
-            set(i, df.applyAsDouble(get(i), v.get(i)));
         }
         return this;
     }
@@ -204,38 +219,37 @@ public abstract class AbstractVector implements Vector {
         return result;
     }
 
-    protected void checkDimensions(Vector arg) {
-        Preconditions.checkArgument(length == arg.length(), String.format("Can not apply apply because supplied vector length (%d) differs from base vector length (%d)",arg.length(), length));
+    // -----------------------------------------------------------------------------------------------------------------
+    // ApplyOnDoubleElements
+    // -----------------------------------------------------------------------------------------------------------------
+
+    @Override
+    public Vector applyOnElements(final DoubleUnaryOperator f) {
+        return applyOnElements(f, newInstance(length));
     }
 
     @Override
-    public Vector applyOnElements(final DoubleUnaryOperator vf) {
-        final Vector res = copy();
-        for (int i = 0; i < res.length(); ++i) {
-            res.set(i, vf.applyAsDouble(this.get(i)));
+    public Vector applyOnElements(final DoubleUnaryOperator f, final Vector B) {
+        Utils.checkShapeEqual(this, B);
+        for (int i = 0; i < B.length(); ++i) {
+            B.set(i, f.applyAsDouble(B.get(i)));
         }
-        return res;
+        return B;
     }
 
     @Override
-    public Vector applyOnElements(final Vector v2, final DoubleUnaryOperator vf) {
-        final Vector res = copy();
-        for (int i = 0; i < res.length(); ++i) {
-            res.set(i, vf.applyAsDouble(v2.get(i)));
-        }
-        return res;
+    public Vector applyOnElements(final Vector B, final DoubleBinaryOperator f) {
+        return applyOnElements(B, f, newInstance(length));
     }
 
-    public Vector applyOnElements(final Vector v2, final DoubleBinaryOperator vf) {
-        final Vector res = copy();
-        Preconditions.checkState(v2.length() == res.length());
-        for (int i = 0; i < res.length(); ++i) {
-            res.set(i, vf.applyAsDouble(this.get(i), v2.get(i)));
+    @Override
+    public Vector applyOnElements(final Vector B, final DoubleBinaryOperator f, final Vector C) {
+        Utils.checkShapeEqual(this, B, C);
+        for (int i = 0; i < C.length(); ++i) {
+            C.set(i, f.applyAsDouble(this.get(i), B.get(i)));
         }
-        return res;
+        return C;
     }
-
-
 
     // ---------------------------------------------------
     // Inner Classes.

@@ -66,4 +66,9 @@ public class SMutableVector extends AbstractVector {
         }
         return result;
     }
+
+    @Override
+    protected Vector newInstance(long length) {
+        return new SMutableVector(length, type);
+    }
 }

@@ -98,7 +98,7 @@ public abstract class AbstractMatrix implements Matrix {
     protected abstract Matrix newInstance(long rows, long cols);
 
     @Override
-    public final Matrix add(Matrix B) {
+    public Matrix add(Matrix B) {
         return add(B, newInstance(this.rows, this.cols));
     }
 
@@ -109,7 +109,7 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public final Matrix sub(Matrix B) {
+    public Matrix sub(Matrix B) {
         return sub(B, newInstance(this.rows, this.cols));
     }
 
@@ -120,7 +120,7 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public final Matrix mul(Matrix B) {
+    public Matrix mul(Matrix B) {
         return mul(B, newInstance(this.rows, B.numCols()));
     }
 
@@ -145,7 +145,7 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public final Matrix scale(double a) {
+    public Matrix scale(double a) {
         return scale(a, newInstance(rows, cols));
     }
 
@@ -156,7 +156,7 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public final Matrix transpose() {
+    public Matrix transpose() {
         return transpose(newInstance(cols, rows));
     }
 
@@ -172,7 +172,7 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public final Matrix invert() {
+    public Matrix invert() {
         return invert(newInstance(cols, rows));
     }
 
@@ -183,7 +183,7 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public final Matrix applyOnElements(final DoubleUnaryOperator f) {
+    public Matrix applyOnElements(final DoubleUnaryOperator f) {
         return applyOnElements(f, newInstance(rows, cols));
     }
 
@@ -199,7 +199,7 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public final Matrix applyOnElements(final Matrix B, final DoubleBinaryOperator f) {
+    public Matrix applyOnElements(final Matrix B, final DoubleBinaryOperator f) {
         return applyOnElements(B, f, newInstance(rows, cols));
     }
 
@@ -215,7 +215,7 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public final Matrix applyOnElements(final MatrixElementUnaryOperator f) {
+    public Matrix applyOnElements(final MatrixElementUnaryOperator f) {
         return applyOnElements(f, newInstance(rows, cols));
     }
 
@@ -231,7 +231,7 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public final Matrix addVectorToRows(final Vector v) {
+    public Matrix addVectorToRows(final Vector v) {
         return addVectorToRows(v, newInstance(rows, cols));
     }
 
@@ -247,7 +247,7 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public final Matrix addVectorToCols(final Vector v) {
+    public Matrix addVectorToCols(final Vector v) {
         return addVectorToCols(v, newInstance(rows, cols));
     }
 
@@ -263,7 +263,7 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public final Matrix setDiagonalsToZero() {
+    public Matrix setDiagonalsToZero() {
         return setDiagonalsToZero(this.copy());
     }
 
@@ -278,7 +278,7 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public final Matrix applyOnNonZeroElements(MatrixElementUnaryOperator f) {
+    public Matrix applyOnNonZeroElements(MatrixElementUnaryOperator f) {
         return applyOnNonZeroElements(f, newInstance(rows, cols));
     }
 

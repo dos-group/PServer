@@ -34,12 +34,14 @@
             <artifactId>jblas</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.googlecode.currentState-toolkits-java</groupId>
+            <groupId>com.googlecode.matrix-toolkits-java</groupId>
             <artifactId>mtj</artifactId>
+            <version>1.0.2</version>
         </dependency>
         <dependency>
-            <groupId>com.googlecode.efficient-java-currentState-library</groupId>
+            <groupId>com.googlecode.efficient-java-matrix-library</groupId>
             <artifactId>ejml</artifactId>
+            <version>0.25</version>
         </dependency>
         <dependency>
             <groupId>org.ujmp</groupId>

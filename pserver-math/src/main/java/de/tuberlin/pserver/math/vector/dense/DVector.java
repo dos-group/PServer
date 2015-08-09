@@ -5,6 +5,8 @@ import com.google.common.collect.AbstractIterator;
 import de.tuberlin.pserver.math.delegates.LibraryVectorOps;
 import de.tuberlin.pserver.math.delegates.MathLibFactory;
 import de.tuberlin.pserver.math.utils.PlusMult;
+import de.tuberlin.pserver.math.utils.Utils;
+import de.tuberlin.pserver.math.vector.AbstractVector;
 import de.tuberlin.pserver.math.vector.Vector;
 
 import java.io.Serializable;
@@ -13,7 +15,7 @@ import java.util.Iterator;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
 
-public class DVector implements Vector, Serializable {
+public class DVector extends AbstractVector {
 
     // ---------------------------------------------------
     // Inner Classes.
@@ -73,6 +75,7 @@ public class DVector implements Vector, Serializable {
     // Copy Constructor.
     public DVector(final DVector v) { this(v, v.type); }
     public DVector(final DVector v, final Layout type) {
+        super(v.data.length, type);
         this.data = new double[v.data.length];
         System.arraycopy(v.data, 0, this.data, 0, v.data.length);
         this.type = type;
@@ -82,6 +85,7 @@ public class DVector implements Vector, Serializable {
     public DVector(final long size, final Layout type) { this(size, null, type); }
     public DVector(final long size, final double[] data) { this(size, data, Layout.ROW_LAYOUT); }
     public DVector(final long size, final double[] data, final Layout type) {
+        super(size, type);
         this.data = (data == null) ? new double[(int)size] : data;
         this.type = Preconditions.checkNotNull(type);
     }
@@ -90,15 +94,15 @@ public class DVector implements Vector, Serializable {
     // Matrix Operation Delegates.
     // ---------------------------------------------------
 
-    @Override public Vector mul(final double alpha) { return vectorOpDelegate.mul(this, alpha); }
+    @Override public Vector mul(final double alpha, final Vector y) { return vectorOpDelegate.mul(this, alpha, y); }
 
-    @Override public Vector div(final double alpha) { return vectorOpDelegate.div(this, alpha); }
+    @Override public Vector div(final double alpha, final Vector y) { return vectorOpDelegate.div(this, alpha, y); }
 
-    @Override public Vector add(final Vector y) { return vectorOpDelegate.add(this, y); }
+    @Override public Vector add(final Vector y, final Vector z) { return vectorOpDelegate.add(this, y, z); }
 
-    @Override public Vector sub(final Vector y) { return vectorOpDelegate.sub(this, y); }
+    @Override public Vector sub(final Vector y, final Vector z) { return vectorOpDelegate.sub(this, y, z); }
 
-    @Override public Vector add(final double alpha, final Vector y) { return vectorOpDelegate.add(this, alpha, y); }
+    @Override public Vector add(final double alpha, final Vector y, final Vector z) { return vectorOpDelegate.add(this, alpha, y, z); }
 
     @Override public double dot(final Vector y) { return vectorOpDelegate.dot(this, y); }
 
@@ -116,39 +120,37 @@ public class DVector implements Vector, Serializable {
 
     @Override public long sizeOf() { return data.length * Double.BYTES; }
 
+    // -----------------------------------------------------------------------------------------------------------------
+    // ApplyOnDoubleElements
+    // -----------------------------------------------------------------------------------------------------------------
+
+
     @Override
-    public Vector applyOnElements(final DoubleUnaryOperator vf) {
-        final double[] result = new double[(int)length()];
-        for (int i = 0; i < result.length; ++i) {
-            result[i] =  vf.applyAsDouble(data[i]);
-        }
-        // TODO: this is only for backwards capability! This should operate on the vector itself!
-        return new DVector(length(), result);
+    protected Vector newInstance(long length) {
+        return new DVector(length);
     }
 
     @Override
-    public Vector applyOnElements(final Vector v2, final DoubleUnaryOperator vf) {
+    public Vector applyOnElements(final DoubleUnaryOperator f, final Vector B) {
+        Utils.checkShapeEqual(this, B);
         int length = (int) length();
-        final double[] result = new double[length];
-        final double[] v2data = v2.toArray();
+        final double[] result = B.toArray();
         for (int i = 0; i < length; ++i) {
-            result[i] = vf.applyAsDouble(v2data[i]);
+            result[i] = f.applyAsDouble(data[i]);
         }
-        // TODO: this is only for backwards capability! This should operate on the vector itself!
-        return new DVector(length, result);
+        return B;
     }
 
     @Override
-    public Vector applyOnElements(final Vector v2, final DoubleBinaryOperator vf) {
+    public Vector applyOnElements(final Vector B, final DoubleBinaryOperator f, final Vector C) {
+        Utils.checkShapeEqual(this, B, C);
         int length = data.length;
-        Preconditions.checkState(v2.length() == length);
-        final double[] v2data = v2.toArray();
-        final double[] result = Arrays.copyOf(data, length);
+        final double[] bData = B.toArray();
+        final double[] result = C.toArray();
         for (int i = 0; i < length; ++i) {
-            result[i] = vf.applyAsDouble(result[i], v2data[i]);
+            result[i] = f.applyAsDouble(data[i], bData[i]);
         }
-        // TODO: this is only for backwards capability! This should operate on the vector itself!
-        return new DVector(length, result);
+        return C;
     }
 
     @Override public long length() { return data.length; }
@@ -179,33 +181,6 @@ public class DVector implements Vector, Serializable {
     public Vector assign(final double value) {
         //this.lengthSquared = -1;
         Arrays.fill(data, value);
-        return this;
-    }
-
-    @Override
-    public Vector assign(final DoubleUnaryOperator df) {
-        for (int i = 0; i < length(); i++) {
-            data[i] = df.applyAsDouble(data[i]);
-        }
-        return this;
-    }
-
-    @Override
-    public Vector assign(final Vector other, final DoubleBinaryOperator function) {
-        Preconditions.checkState(length() == other.length());
-        // is there some other way to know if function.applyAsDouble(0, x) = x for all x?
-        if (function instanceof PlusMult) {
-            Iterator<Element> it = other.iterateNonZero();
-            Element e;
-            while (it.hasNext() && (e = it.next()) != null) {
-                data[e.index()] = function.applyAsDouble(data[e.index()], e.get());
-            }
-        } else {
-            for (int i = 0; i < length(); i++) {
-                data[i] = function.applyAsDouble(data[i], other.get(i));
-            }
-        }
-        //lengthSquared = -1;
         return this;
     }
 

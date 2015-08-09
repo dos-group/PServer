@@ -2,61 +2,36 @@ package de.tuberlin.pserver.math.delegates.sparse.mtj;
 
 import de.tuberlin.pserver.math.delegates.LibraryVectorOps;
 import de.tuberlin.pserver.math.vector.Vector;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class MTJVectorOps implements LibraryVectorOps<Vector> {
-
     @Override
-    public Vector mul(Vector x, double alpha) {
-        return null;
+    public Vector mul(Vector x, double alpha, Vector z) {
+        throw new NotImplementedException();
     }
 
     @Override
-    public Vector div(Vector x, double alpha) {
-        return null;
+    public Vector div(Vector x, double alpha, Vector z) {
+        throw new NotImplementedException();
     }
 
     @Override
-    public Vector add(Vector x, Vector y) {
-        return null;
+    public Vector add(Vector x, Vector y, Vector z) {
+        throw new NotImplementedException();
     }
 
     @Override
-    public Vector sub(Vector x, Vector y) {
-        return null;
+    public Vector sub(Vector x, Vector y, Vector z) {
+        throw new NotImplementedException();
     }
 
     @Override
-    public Vector add(Vector x, double alpha, Vector y) {
-        return null;
+    public Vector add(Vector x, double alpha, Vector y, Vector z) {
+        throw new NotImplementedException();
     }
 
+/*
     @Override
-    public double dot(Vector x, Vector y) {
-        return 0;
-    }
-
-    @Override
-    public double norm(Vector x, double power) {
-        return 0;
-    }
-
-    @Override
-    public double maxValue(Vector x) {
-        return 0;
-    }
-
-    @Override
-    public double minValue(Vector x) {
-        return 0;
-    }
-
-    @Override
-    public double zSum(Vector x) {
-        return 0;
-    }
-
-
-    /*@Override
     public Vector mul(Vector x, double alpha) {
         return MTJUtils.toPserverVector(MTJUtils.toLibVector(x).scale(alpha), x.layout());
     }
@@ -80,6 +55,7 @@ public class MTJVectorOps implements LibraryVectorOps<Vector> {
     public Vector add(Vector x, double alpha, Vector y) {
         return null;
     }
+    */
 
     @Override
     public double dot(Vector x, Vector y) {
@@ -114,5 +90,5 @@ public class MTJVectorOps implements LibraryVectorOps<Vector> {
     @Override
     public double zSum(Vector x) {
         throw new UnsupportedOperationException();
-    }*/
+    }
 }
