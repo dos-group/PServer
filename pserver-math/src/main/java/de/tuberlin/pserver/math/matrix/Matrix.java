@@ -386,4 +386,5 @@ public interface Matrix extends SharedObject {
 
     Matrix copy();
 
+    Matrix clear();
 }

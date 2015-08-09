@@ -5,7 +5,7 @@ import de.tuberlin.pserver.math.utils.Utils;
 
 public class TestUtils {
 
-    public static void checkValues(Matrix mat1, Matrix mat2) {
+    /*public static void checkValues(Matrix mat1, Matrix mat2) {
         assert(mat1.numRows() == mat2.numRows());
         assert(mat1.numCols() == mat2.numCols());
         for(long row = 0; row < mat1.numRows(); row++) {
@@ -23,6 +23,6 @@ public class TestUtils {
                 assert( Utils.closeTo(mat1.get(row, col), mat2.get(Utils.toInt(row), Utils.toInt(col))) );
             }
         }
-    }
+    }*/
 
 }

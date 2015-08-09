@@ -238,12 +238,12 @@
                 <version>${jblas.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.googlecode.matrix-toolkits-java</groupId>
+                <groupId>com.googlecode.currentState-toolkits-java</groupId>
                 <artifactId>mtj</artifactId>
                 <version>${mtj.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.googlecode.efficient-java-matrix-library</groupId>
+                <groupId>com.googlecode.efficient-java-currentState-library</groupId>
                 <artifactId>ejml</artifactId>
                 <version>${ejml.version}</version>
             </dependency>

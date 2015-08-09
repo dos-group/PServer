@@ -12,13 +12,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
 
-public class DMatrix extends AbstractMatrix implements Serializable {
+public class DMatrix extends AbstractMatrix {
 
     // ---------------------------------------------------
     // Inner Classes.
@@ -331,6 +332,12 @@ public class DMatrix extends AbstractMatrix implements Serializable {
     @Override
     public Matrix copy() {
         return new DMatrix(this);
+    }
+
+    @Override
+    public Matrix clear() {
+        Arrays.fill(data, 0.0);
+        return this;
     }
 
 }

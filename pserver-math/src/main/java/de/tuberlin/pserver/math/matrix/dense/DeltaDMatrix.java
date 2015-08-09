@@ -2,6 +2,8 @@ package de.tuberlin.pserver.math.matrix.dense;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.ds.Buffer;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.vector.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,14 +20,16 @@ public class DeltaDMatrix {
 
     public static interface DeltaPolicy {
 
-        public abstract boolean eval(double o, double n);
+        public abstract boolean eval(int row, int col, double o, double n);
     }
 
     public static final class MatrixDelta {
 
+        private static final int NUM_OF_ENTRIES_PER_BUFFER = 4096 * 16;
+
         private static final int ENTRY_SIZE = Integer.BYTES + Integer.BYTES + Double.BYTES;
 
-        private static final int DELTA_BUFFER_SIZE = ENTRY_SIZE * 4096;
+        private static final int DELTA_BUFFER_SIZE = ENTRY_SIZE * NUM_OF_ENTRIES_PER_BUFFER;
 
         private List<byte[]> deltaBufferList = new ArrayList<>();
 
@@ -86,11 +90,11 @@ public class DeltaDMatrix {
     public DeltaDMatrix(final int rows, final int cols,
                         final int numOfWriters,
                         final boolean storeDeltaHistory,
-                        final DeltaPolicy deltaPolicy) {
+                        final DeltaPolicy deltaPolicy, final double[] data) {
 
         Preconditions.checkArgument(rows * cols < Integer.MAX_VALUE);
 
-        this.data = new double[rows * cols];
+        this.data = data == null ? new double[rows * cols] : data;
         this.rows = rows;
         this.cols = cols;
 
@@ -129,15 +133,27 @@ public class DeltaDMatrix {
     }
 
     public void set(int writerID, int row, int col, double val) {
-        if (deltaPolicy.eval(data[row * cols + col], val)) {
-            currentDelta[writerID].addDelta(row, col, val - data[row * cols + col]);
+        if (deltaPolicy.eval(row, col, data[row * cols + col], val)) {
+            currentDelta[writerID].addDelta(row, col, val);
         }
         data[row * cols + col] = val;
+    }
+
+    public void assignColumn(int writerID, final int col, final Vector v) {
+        double[] vData = v.toArray();
+        Preconditions.checkArgument(rows == vData.length);
+        for (int row = 0; row < rows; row++) {
+            if (deltaPolicy.eval(row, col, data[row * cols + col], vData[row]))
+                currentDelta[writerID].addDelta(row, col, vData[row]);
+            data[row * cols + col] = vData[row];
+        }
     }
 
     public double get(int row, int col) { return data[row * cols + col]; }
 
     public MatrixDelta getDelta(int epoch, int writerID) { return versionedDeltas.get(epoch)[writerID]; }
+
+    public MatrixDelta getCurrentDelta(int writerID) { return currentDelta[writerID]; }
 
     // ---------------------------------------------------
     // Entry Point.
@@ -153,9 +169,9 @@ public class DeltaDMatrix {
 
         final int NUM_OF_EPOCHS = 8;
 
-        final DeltaPolicy dp = (o, n) -> Math.abs(o - n) > 0.3;
+        final DeltaPolicy dp = (row, col, o, n) -> Math.abs(o - n) > 0.3;
 
-        final DeltaDMatrix m = new DeltaDMatrix(MTX_ROWS, MTX_COLS, NUM_OF_WRITERS, true, dp);
+        final DeltaDMatrix m = new DeltaDMatrix(MTX_ROWS, MTX_COLS, NUM_OF_WRITERS, true, dp, null);
 
         final ExecutorService executor = Executors.newFixedThreadPool(NUM_OF_WRITERS);
 

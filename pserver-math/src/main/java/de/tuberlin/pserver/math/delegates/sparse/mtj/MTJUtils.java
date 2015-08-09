@@ -2,19 +2,19 @@ package de.tuberlin.pserver.math.delegates.sparse.mtj;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.dense.DMatrix;
-import de.tuberlin.pserver.math.matrix.sparse.SMatrix;
+//import de.tuberlin.pserver.math.matrix.sparse.SMatrix;
 import de.tuberlin.pserver.math.utils.Utils;
 import de.tuberlin.pserver.math.vector.AbstractVector;
 import de.tuberlin.pserver.math.vector.dense.DVector;
-import de.tuberlin.pserver.math.vector.sparse.SVector;
-import no.uib.cipr.matrix.DenseMatrix;
-import no.uib.cipr.matrix.DenseVector;
-import no.uib.cipr.matrix.Matrix;
-import no.uib.cipr.matrix.Vector;
-import no.uib.cipr.matrix.sparse.*;
+//import de.tuberlin.pserver.math.vector.sparse.SVector;
+//import no.uib.cipr.matrix.DenseMatrix;
+//import no.uib.cipr.matrix.DenseVector;
+//import no.uib.cipr.matrix.Matrix;
+//import no.uib.cipr.matrix.Vector;
+//import no.uib.cipr.matrix.sparse.*;
 
 public class MTJUtils {
-
+/*
     public static boolean isSparse(Matrix m) {
         return !(m instanceof DenseMatrix);
     }
@@ -160,6 +160,6 @@ public class MTJUtils {
         }
         // Preconditions.checkState(result != null, "Unable to convert vector");
         return result;
-    }
+    }*/
 
 }

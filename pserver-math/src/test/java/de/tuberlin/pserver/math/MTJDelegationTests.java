@@ -2,8 +2,8 @@ package de.tuberlin.pserver.math;
 
 import de.tuberlin.pserver.math.generators.MatrixGenerator;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import no.uib.cipr.matrix.DenseMatrix;
-import no.uib.cipr.matrix.sparse.FlexCompColMatrix;
+//import no.uib.cipr.matrix.DenseMatrix;
+//import no.uib.cipr.matrix.sparse.FlexCompColMatrix;
 import org.junit.Test;
 
 import java.util.Random;
@@ -13,7 +13,7 @@ import java.util.Random;
  * Errors here indicate, that a delegation is faulty.
  */
 public class MTJDelegationTests {
-
+/*
     @Test
     public void matrixMatrixAdd() {
 

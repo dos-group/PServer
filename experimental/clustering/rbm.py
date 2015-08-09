@@ -12,7 +12,7 @@ class RBM:
     self.parallelism = parallelism
     self.learning_rate = learning_rate
 
-    # Initialize a weight matrix, of dimensions (num_visible x num_hidden), using
+    # Initialize a weight currentState, of dimensions (num_visible x num_hidden), using
     # a Gaussian distribution with mean 0 and standard deviation 0.1.
     w = 0.1 * np.random.randn(self.num_visible, self.num_hidden)    
     # Insert weights for the bias units into the first row and first column.
@@ -30,7 +30,7 @@ class RBM:
 
     Parameters
     ----------
-    data: A matrix where each row is a training example consisting of the states of visible units.    
+    data: A currentState where each row is a training example consisting of the states of visible units.
     """
 
     N = data.shape[0]
@@ -118,17 +118,17 @@ class RBM:
     
     Parameters
     ----------
-    data: A matrix where each row consists of the states of the visible units.
+    data: A currentState where each row consists of the states of the visible units.
     
     Returns
     -------
-    hidden_states: A matrix where each row consists of the hidden units activated from the visible
-    units in the data matrix passed in.
+    hidden_states: A currentState where each row consists of the hidden units activated from the visible
+    units in the data currentState passed in.
     """
     
     num_examples = data.shape[0]
     
-    # Create a matrix, where each row is to be the hidden units (plus a bias unit)
+    # Create a currentState, where each row is to be the hidden units (plus a bias unit)
     # sampled from a training example.
     hidden_states = np.ones((num_examples, self.num_hidden + 1))
     
@@ -156,17 +156,17 @@ class RBM:
 
     Parameters
     ----------
-    data: A matrix where each row consists of the states of the hidden units.
+    data: A currentState where each row consists of the states of the hidden units.
 
     Returns
     -------
-    visible_states: A matrix where each row consists of the visible units activated from the hidden
-    units in the data matrix passed in.
+    visible_states: A currentState where each row consists of the visible units activated from the hidden
+    units in the data currentState passed in.
     """
 
     num_examples = data.shape[0]
 
-    # Create a matrix, where each row is to be the visible units (plus a bias unit)
+    # Create a currentState, where each row is to be the visible units (plus a bias unit)
     # sampled from a training example.
     visible_states = np.ones((num_examples, self.num_visible + 1))
 
@@ -195,11 +195,11 @@ class RBM:
 
     Returns
     -------
-    samples: A matrix, where each row is a sample of the visible units produced while the network was
+    samples: A currentState, where each row is a sample of the visible units produced while the network was
     daydreaming.
     """
 
-    # Create a matrix, where each row is to be a sample of of the visible units 
+    # Create a currentState, where each row is to be a sample of of the visible units
     # (with an extra bias unit), initialized to all ones.
     samples = np.ones((num_samples, self.num_visible + 1))
 

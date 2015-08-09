@@ -11,6 +11,7 @@ import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
+import de.tuberlin.pserver.dsl.controlflow.iteration.MatrixElementIterationBody;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.dht.DHTKey;
@@ -524,6 +525,22 @@ public class DataManager extends EventDispatcher {
                 ? end + (int) matrix.numRows() % instanceContext.jobContext.numOfInstances
                 : end;
         return matrix.rowIterator(instanceContext.instanceID * rowBlock, end);
+    }
+
+    public void iterateMatrixParallel(final Matrix m, final MatrixElementIterationBody b) {
+        Preconditions.checkNotNull(m);
+        Preconditions.checkNotNull(b);
+        final InstanceContext instanceContext = getInstanceContext();
+        final double[] data = m.toArray();
+        final int parLength = data.length / instanceContext.jobContext.numOfInstances;
+        final int s = parLength * instanceContext.instanceID;
+        final int e = (instanceContext.instanceID == instanceContext.jobContext.numOfInstances - 1)
+                ? data.length - 1 : s + parLength;
+        for (int i = s; i < e; ++i) {
+            final int row = i / (int)m.numCols();
+            final int col = i % (int)m.numCols();
+            b.body(row, col, data[s]);
+        }
     }
 
     // ---------------------------------------------------

@@ -3,18 +3,67 @@ package de.tuberlin.pserver.math.delegates.dense.ejml;
 
 import de.tuberlin.pserver.math.delegates.LibraryVectorOps;
 import de.tuberlin.pserver.math.vector.Vector;
-import org.ejml.alg.dense.mult.VectorVectorMult;
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
-import org.ejml.ops.NormOps;
+//import org.ejml.alg.dense.mult.VectorVectorMult;
+//import org.ejml.data.DenseMatrix64F;
+//import org.ejml.ops.CommonOps;
+//import org.ejml.ops.NormOps;
 
 public class EJMLVectorOps implements LibraryVectorOps<Vector> {
+    @Override
+    public Vector mul(Vector x, double alpha) {
+        return null;
+    }
+
+    @Override
+    public Vector div(Vector x, double alpha) {
+        return null;
+    }
+
+    @Override
+    public Vector add(Vector x, Vector y) {
+        return null;
+    }
+
+    @Override
+    public Vector sub(Vector x, Vector y) {
+        return null;
+    }
+
+    @Override
+    public Vector add(Vector x, double alpha, Vector y) {
+        return null;
+    }
+
+    @Override
+    public double dot(Vector x, Vector y) {
+        return 0;
+    }
+
+    @Override
+    public double norm(Vector x, double power) {
+        return 0;
+    }
+
+    @Override
+    public double maxValue(Vector x) {
+        return 0;
+    }
+
+    @Override
+    public double minValue(Vector x) {
+        return 0;
+    }
+
+    @Override
+    public double zSum(Vector x) {
+        return 0;
+    }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    @Override
+    /*@Override
     public Vector mul(final Vector X, final double alpha) {
         final DenseMatrix64F x = convertDVectorToDenseVector64F(X);
         CommonOps.scale(alpha, x);
@@ -95,5 +144,5 @@ public class EJMLVectorOps implements LibraryVectorOps<Vector> {
                 return DenseMatrix64F.wrap(1, (int)vector.length(), vector.toArray());
         }
         throw new IllegalStateException();
-    }
+    }*/
 }

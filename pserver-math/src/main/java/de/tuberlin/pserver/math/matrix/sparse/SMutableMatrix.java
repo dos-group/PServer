@@ -49,7 +49,7 @@ public class SMutableMatrix extends AbstractMatrix {
     // Fields.
     // ---------------------------------------------------
 
-    private final Map<MtxPos, Double> data;
+    public final Map<MtxPos, Double> data;
 
     // ---------------------------------------------------
     // Constructors.
@@ -172,6 +172,12 @@ public class SMutableMatrix extends AbstractMatrix {
     @Override
     public Matrix copy() {
         throw new NotImplementedException("not impl");
+    }
+
+    @Override
+    public Matrix clear() {
+        data.clear();
+        return this;
     }
 
     @Override

@@ -5,8 +5,8 @@ import de.tuberlin.pserver.math.generators.VectorGenerator;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.dense.DMatrix;
 import de.tuberlin.pserver.math.vector.Vector;
-import org.ejml.data.DenseMatrix64F;
-import org.ejml.ops.CommonOps;
+//import org.ejml.data.DenseMatrix64F;
+//import org.ejml.ops.CommonOps;
 import org.junit.Test;
 
 import java.util.Random;
@@ -16,7 +16,7 @@ import java.util.Random;
  * Errors here indicate, that a delegation is faulty.
  */
 public class EJMLDelegationTests {
-
+/*
     @Test
     public void matrixMatrixAdd() {
 
@@ -109,7 +109,7 @@ public class EJMLDelegationTests {
             assert(java.util.Arrays.equals(resData, ejmlResData));
 
         }
-    }*/
+    }
 
     @Test
     public void matrixVectorMultResultByReference() {
@@ -246,7 +246,7 @@ public class EJMLDelegationTests {
             assert(ejmlRes == res);
             assert(java.util.Arrays.equals(mat1.toArray(), ejmlMat1Data));
         }
-    }*/
+    }
 
     @Test
     public void matrixScale() {
@@ -270,7 +270,7 @@ public class EJMLDelegationTests {
 
             assert(resData == matData);
         }
-    }
+    }*/
 
 //    @Test
 //    public void matrixVectorMultBufferOptimization() {

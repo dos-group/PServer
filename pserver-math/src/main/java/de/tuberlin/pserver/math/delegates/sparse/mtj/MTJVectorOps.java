@@ -5,8 +5,58 @@ import de.tuberlin.pserver.math.vector.Vector;
 
 public class MTJVectorOps implements LibraryVectorOps<Vector> {
 
+    @Override
+    public Vector mul(Vector x, double alpha) {
+        return null;
+    }
 
     @Override
+    public Vector div(Vector x, double alpha) {
+        return null;
+    }
+
+    @Override
+    public Vector add(Vector x, Vector y) {
+        return null;
+    }
+
+    @Override
+    public Vector sub(Vector x, Vector y) {
+        return null;
+    }
+
+    @Override
+    public Vector add(Vector x, double alpha, Vector y) {
+        return null;
+    }
+
+    @Override
+    public double dot(Vector x, Vector y) {
+        return 0;
+    }
+
+    @Override
+    public double norm(Vector x, double power) {
+        return 0;
+    }
+
+    @Override
+    public double maxValue(Vector x) {
+        return 0;
+    }
+
+    @Override
+    public double minValue(Vector x) {
+        return 0;
+    }
+
+    @Override
+    public double zSum(Vector x) {
+        return 0;
+    }
+
+
+    /*@Override
     public Vector mul(Vector x, double alpha) {
         return MTJUtils.toPserverVector(MTJUtils.toLibVector(x).scale(alpha), x.layout());
     }
@@ -64,5 +114,5 @@ public class MTJVectorOps implements LibraryVectorOps<Vector> {
     @Override
     public double zSum(Vector x) {
         throw new UnsupportedOperationException();
-    }
+    }*/
 }

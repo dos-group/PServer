@@ -7,8 +7,8 @@ https://github.com/apache/mahout/tree/34800682e119975183b3f24c20366acf692d128d/m
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.matrix.dense.DMatrix;
-import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.currentState.dense.DMatrix;
+import de.tuberlin.pserver.math.currentState.Matrix;
 
 public class SGDOptimizerOLD implements Optimizer {
 
@@ -33,7 +33,7 @@ public class SGDOptimizerOLD implements Optimizer {
     // ---------------------------------------------------
 
     public SGDOptimizerOLD() {
-        // Per default label is the last column in the data matrix.
+        // Per default label is the last column in the data currentState.
         // Then the labelIndex will be set in the optimize call.
         labelIndex = -1;
     }
