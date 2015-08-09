@@ -15,41 +15,46 @@ public class EJMLVectorOps implements LibraryVectorOps<Vector> {
     // ---------------------------------------------------
 
     @Override
-    public Vector mul(final Vector X, final double alpha) {
-        final DenseMatrix64F x = convertDVectorToDenseVector64F(X);
-        CommonOps.scale(alpha, x);
-        return X;
-    }
-
-    @Override
-    public Vector div(final Vector X, final double alpha) {
-        final DenseMatrix64F x = convertDVectorToDenseVector64F(X);
-        CommonOps.scale(1. / alpha, x);
-        return X;
-    }
-
-    @Override
-    public Vector add(final Vector X, final Vector Y) {
+    public Vector mul(final Vector X, final double alpha, Vector Y) {
         final DenseMatrix64F x = convertDVectorToDenseVector64F(X);
         final DenseMatrix64F y = convertDVectorToDenseVector64F(Y);
-        CommonOps.add(x, y, x);
-        return X;
+        CommonOps.scale(alpha, x, y);
+        return Y;
     }
 
     @Override
-    public Vector sub(final Vector X, final Vector Y) {
+    public Vector div(final Vector X, final double alpha, Vector Y) {
         final DenseMatrix64F x = convertDVectorToDenseVector64F(X);
         final DenseMatrix64F y = convertDVectorToDenseVector64F(Y);
-        CommonOps.sub(x, y, x);
-        return X;
+        CommonOps.scale(1. / alpha, x, y);
+        return Y;
     }
 
     @Override
-    public Vector add(final Vector X, final double beta, final Vector Y) {
+    public Vector add(final Vector X, final Vector Y, final Vector Z) {
         final DenseMatrix64F x = convertDVectorToDenseVector64F(X);
         final DenseMatrix64F y = convertDVectorToDenseVector64F(Y);
-        CommonOps.add(x, beta, y, x);
-        return X;
+        final DenseMatrix64F z = convertDVectorToDenseVector64F(Z);
+        CommonOps.add(x, y, z);
+        return Z;
+    }
+
+    @Override
+    public Vector sub(final Vector X, final Vector Y, final Vector Z) {
+        final DenseMatrix64F x = convertDVectorToDenseVector64F(X);
+        final DenseMatrix64F y = convertDVectorToDenseVector64F(Y);
+        final DenseMatrix64F z = convertDVectorToDenseVector64F(Z);
+        CommonOps.sub(x, y, z);
+        return Z;
+    }
+
+    @Override
+    public Vector add(final Vector X, final double beta, final Vector Y, final Vector Z) {
+        final DenseMatrix64F x = convertDVectorToDenseVector64F(X);
+        final DenseMatrix64F y = convertDVectorToDenseVector64F(Y);
+        final DenseMatrix64F z = convertDVectorToDenseVector64F(Z);
+        CommonOps.add(x, beta, y, z);
+        return Z;
     }
 
     @Override

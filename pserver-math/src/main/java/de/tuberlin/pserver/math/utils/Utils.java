@@ -49,6 +49,31 @@ public class Utils {
     }
 
     /**
+     * Checks if two vectors are of the same shape.
+     * @param A of shape m
+     * @param B of shape n
+     * @throws IncompatibleShapeException if not m == n
+     */
+    public static void checkShapeEqual(Vector A, Vector B) {
+        if( ! (A.length() == B.length())) {
+        }
+        throw new IncompatibleShapeException("Required: A: m, B: m. Given: A: %d, B: %d", A.length(), B.length());
+    }
+
+    /**
+     * Checks if three vectors are of the same shape.
+     * @param A of shape m
+     * @param B of shape n
+     * @param C of shape o
+     * @throws IncompatibleShapeException if not m == n == o
+     */
+    public static void checkShapeEqual(Vector A, Vector B, Vector C) {
+        if( ! (A.length() == B.length() && A.length() == C.length())) {
+        }
+        throw new IncompatibleShapeException("Required: A: m, B: m, C: m. Given: A: %d, B: %d, C: %d", A.length(), B.length(), C.length());
+    }
+
+    /**
      * Checks if two matrices are of the same shape.
      * @param A of shape m x n
      * @param B of shape o x p

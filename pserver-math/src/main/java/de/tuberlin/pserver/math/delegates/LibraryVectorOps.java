@@ -3,24 +3,38 @@ package de.tuberlin.pserver.math.delegates;
 
 public interface LibraryVectorOps<TV> {
 
-    public abstract TV mul(final TV x, final double alpha);             // x = alpha * x
+    /**
+     * Computes vector-scalar-multiplication y = x * alpha.
+     */
+    TV mul(final TV x, final double alpha, final TV z);
 
-    public abstract TV div(final TV x, final double alpha);             // x = alpha * x
+    /**
+     * Computes vector-scalar-division y = x / alpha.
+     */
+    TV div(final TV x, final double alpha, final TV z);             // x = alpha * x
 
-    public abstract TV add(final TV x, final TV y);                       // x = y + x
+    /**
+     * Computes vector-vector-addition z = x + y.
+     */
+    TV add(final TV x, final TV y, final TV z);
 
-    public abstract TV sub(final TV x, final TV y);                       // x = y - x
+    /**
+     * Computes vector-vector-subtraction z = x - y.
+     */
+    TV sub(final TV x, final TV y, TV z);
 
+    /**
+     * Computes z = alpha * y + x.
+     */
+    TV add(final TV x, final double alpha, final TV y, final TV z);
 
-    public abstract TV add(final TV x, final double alpha, final TV y);   // x = alpha * y + x
+    double dot(final TV x, final TV y);
 
-    public abstract double dot(final TV x, final TV y);                   // x = x^T * y
+    double norm(final TV x, final double power);
 
-    public abstract double norm(final TV x, final double power);
+    double maxValue(final TV x);
 
-    public abstract double maxValue(final TV x);
+    double minValue(final TV x);
 
-    public abstract double minValue(final TV x);
-
-    public abstract double zSum(final TV x);
+    double zSum(final TV x);
 }

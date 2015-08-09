@@ -77,17 +77,22 @@ public class SVector extends AbstractVector {
     // Matrix Operation Delegates.
     // ---------------------------------------------------
 
-    @Override public Vector mul(final double alpha) { return vectorOpDelegate.mul(this, alpha); }
+    @Override public Vector mul(final double alpha, final Vector y) { return vectorOpDelegate.mul(this, alpha, y); }
 
-    @Override public Vector div(final double alpha) { return vectorOpDelegate.div(this, alpha); }
+    @Override public Vector div(final double alpha, final Vector y) { return vectorOpDelegate.div(this, alpha, y); }
 
-    @Override public Vector add(final Vector y) { return vectorOpDelegate.add(this, y); }
+    @Override public Vector add(final Vector y, final Vector z) { return vectorOpDelegate.add(this, y, z); }
 
-    @Override public Vector sub(final Vector y) { return vectorOpDelegate.sub(this, y); }
+    @Override public Vector sub(final Vector y, final Vector z) { return vectorOpDelegate.sub(this, y, z); }
 
-    @Override public Vector add(final double alpha, final Vector y) { return vectorOpDelegate.add(this, alpha, y); }
+    @Override public Vector add(final double alpha, final Vector y, final Vector z) { return vectorOpDelegate.add(this, alpha, y, z); }
 
     @Override public double dot(final Vector y) { return vectorOpDelegate.dot(this, y); }
 
     @Override public double norm(final double power) { return vectorOpDelegate.norm(this, power); }
+
+    @Override
+    protected Vector newInstance(long length) {
+        return new SVector(length, type);
+    }
 }
