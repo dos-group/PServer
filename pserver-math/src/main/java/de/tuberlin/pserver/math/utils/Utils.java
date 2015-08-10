@@ -56,8 +56,8 @@ public class Utils {
      */
     public static void checkShapeEqual(Vector A, Vector B) {
         if( ! (A.length() == B.length())) {
+            throw new IncompatibleShapeException("Required: A: m, B: m. Given: A: %d, B: %d", A.length(), B.length());
         }
-        throw new IncompatibleShapeException("Required: A: m, B: m. Given: A: %d, B: %d", A.length(), B.length());
     }
 
     /**
@@ -69,8 +69,8 @@ public class Utils {
      */
     public static void checkShapeEqual(Vector A, Vector B, Vector C) {
         if( ! (A.length() == B.length() && A.length() == C.length())) {
+            throw new IncompatibleShapeException("Required: A: m, B: m, C: m. Given: A: %d, B: %d, C: %d", A.length(), B.length(), C.length());
         }
-        throw new IncompatibleShapeException("Required: A: m, B: m, C: m. Given: A: %d, B: %d, C: %d", A.length(), B.length(), C.length());
     }
 
     /**
