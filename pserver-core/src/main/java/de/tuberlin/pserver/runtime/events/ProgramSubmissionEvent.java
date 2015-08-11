@@ -11,13 +11,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-public final class PServerJobSubmissionEvent extends NetEvents.NetEvent {
+public final class ProgramSubmissionEvent extends NetEvents.NetEvent {
 
     // ---------------------------------------------------
     // Constants.
     // ---------------------------------------------------
 
-    public static final String PSERVER_JOB_SUBMISSION_EVENT = "PSERVER_JOB_SUBMISSION_EVENT";
+    public static final String PSERVER_JOB_SUBMISSION_EVENT = "PROGRAM_SUBMISSION_EVENT";
 
     // ---------------------------------------------------
     // Fields.
@@ -29,13 +29,9 @@ public final class PServerJobSubmissionEvent extends NetEvents.NetEvent {
 
     public final MachineDescriptor clientMachine;
 
-    public final UUID jobUID;
+    public final UUID programID;
 
-    public final int perNodeParallelism;
-
-    //public final String className;
-
-    //public final String simpleClassName;
+    public final int perNodeDOP;
 
     @GsonUtils.Exclude
     public final List<Pair<String, byte[]>> byteCode;
@@ -44,21 +40,17 @@ public final class PServerJobSubmissionEvent extends NetEvents.NetEvent {
     // Constructors.
     // ---------------------------------------------------
 
-    public PServerJobSubmissionEvent(final MachineDescriptor clientMachine,
-                                     final UUID jobUID,
-                                     //final String className,
-                                     //final String simpleClassName,
-                                     final int perNodeParallelism,
-                                     final List<Pair<String, byte[]>> byteCode) {
+    public ProgramSubmissionEvent(final MachineDescriptor clientMachine,
+                                  final UUID programID,
+                                  final int perNodeDOP,
+                                  final List<Pair<String, byte[]>> byteCode) {
 
         super(PSERVER_JOB_SUBMISSION_EVENT);
 
         this.clientMachine      = Preconditions.checkNotNull(clientMachine);
-        this.jobUID             = Preconditions.checkNotNull(jobUID);
-        //this.className          = Preconditions.checkNotNull(className);
-        //this.simpleClassName    = Preconditions.checkNotNull(simpleClassName);
+        this.programID          = Preconditions.checkNotNull(programID);
         this.byteCode           = Collections.unmodifiableList(Preconditions.checkNotNull(byteCode));
-        this.perNodeParallelism = perNodeParallelism;
+        this.perNodeDOP         = perNodeDOP;
     }
 
     // ---------------------------------------------------
@@ -66,5 +58,5 @@ public final class PServerJobSubmissionEvent extends NetEvents.NetEvent {
     // ---------------------------------------------------
 
     @Override
-    public String toString() { return "\nPServerJobSubmissionEvent " + gson.toJson(this); }
+    public String toString() { return "\nProgramSubmissionEvent " + gson.toJson(this); }
 }

@@ -4,11 +4,11 @@ package de.tuberlin.pserver.examples.playground.primitives;
 import com.google.common.util.concurrent.AtomicDouble;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.MLProgram;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ASyncPushPrimitiveTestJob extends JobExecutable {
+public class ASyncPushPrimitiveTestJob extends MLProgram {
 
     // ---------------------------------------------------
     // Fields.
@@ -37,9 +37,9 @@ public class ASyncPushPrimitiveTestJob extends JobExecutable {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {}
 
-            localValue.set(slotContext.jobContext.nodeID * 10.0);
+            localValue.set(slotContext.programContext.runtimeContext.nodeID * 10.0);
 
-            if (slotContext.jobContext.nodeID != 0) {
+            if (slotContext.programContext.runtimeContext.nodeID != 0) {
 
                 dataManager.pushTo("localValue", localValue.get(), new int[] { 0 });
 
@@ -55,7 +55,7 @@ public class ASyncPushPrimitiveTestJob extends JobExecutable {
                 });
 
                 // active polling.
-                while (receiveCnt.get() != slotContext.jobContext.numOfNodes - 1) {
+                while (receiveCnt.get() != slotContext.programContext.runtimeContext.numOfNodes - 1) {
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException e) {}

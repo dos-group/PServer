@@ -11,13 +11,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-public final class PServerJobResultEvent extends NetEvents.NetEvent {
+public final class ProgramResultEvent extends NetEvents.NetEvent {
 
     // ---------------------------------------------------
     // Constants.
     // ---------------------------------------------------
 
-    public static final String PSERVER_JOB_RESULT_EVENT = "PSERVER_JOB_RESULT_EVENT";
+    public static final String PSERVER_JOB_RESULT_EVENT = "PROGRAM_RESULT_EVENT";
 
     // ---------------------------------------------------
     // Fields.
@@ -31,7 +31,7 @@ public final class PServerJobResultEvent extends NetEvents.NetEvent {
 
     public final int nodeID;
 
-    public final UUID jobUID;
+    public final UUID programID;
 
     public final List<Serializable> resultObjects;
 
@@ -39,16 +39,16 @@ public final class PServerJobResultEvent extends NetEvents.NetEvent {
     // Constructors.
     // ---------------------------------------------------
 
-    public PServerJobResultEvent(final MachineDescriptor workerMachine,
-                                 final int nodeID,
-                                 final UUID jobUID,
-                                 final List<Serializable> resultObjects) {
+    public ProgramResultEvent(final MachineDescriptor workerMachine,
+                              final int nodeID,
+                              final UUID programID,
+                              final List<Serializable> resultObjects) {
 
         super(PSERVER_JOB_RESULT_EVENT);
 
         this.workerMachine  = Preconditions.checkNotNull(workerMachine);
         this.nodeID         = nodeID;
-        this.jobUID         = Preconditions.checkNotNull(jobUID);
+        this.programID      = Preconditions.checkNotNull(programID);
         this.resultObjects  = resultObjects != null ? Collections.unmodifiableList(resultObjects) : null;
     }
 
@@ -57,5 +57,5 @@ public final class PServerJobResultEvent extends NetEvents.NetEvent {
     // ---------------------------------------------------
 
     @Override
-    public String toString() { return "\nPServerJobSubmissionEvent " + gson.toJson(this); }
+    public String toString() { return "\nProgramResultEvent " + gson.toJson(this); }
 }

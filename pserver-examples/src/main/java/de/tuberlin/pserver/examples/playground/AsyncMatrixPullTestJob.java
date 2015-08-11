@@ -4,11 +4,11 @@ import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.MLProgram;
 
 import java.util.Random;
 
-public final class AsyncMatrixPullTestJob extends JobExecutable {
+public final class AsyncMatrixPullTestJob extends MLProgram {
 
     // ---------------------------------------------------
     // Constants.
@@ -57,7 +57,7 @@ public final class AsyncMatrixPullTestJob extends JobExecutable {
        for (int i = 0; i < 9000; ++i) {
             randomUpdate(m);
             if (i % 1000 == 0)
-                slotContext.jobContext.dataManager.pullMerge(m, merger);
+                slotContext.programContext.runtimeContext.dataManager.pullMerge(m, merger);
         }
     }
 

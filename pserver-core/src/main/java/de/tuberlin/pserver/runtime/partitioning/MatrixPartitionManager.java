@@ -10,7 +10,7 @@ import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.JobContext;
+import de.tuberlin.pserver.runtime.MLProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
@@ -189,11 +189,11 @@ public final class MatrixPartitionManager {
                      final Matrix.Format matrixFormat,
                      final Matrix.Layout matrixLayout,
                      final IMatrixPartitioner matrixPartitioner,
-                     final JobContext jobContext) {
+                     final MLProgramContext programContext) {
 
         matrixLoadTasks.put(filePath, new MatrixLoadTask(filePath, recordFormat, rows, cols,
                 matrixFormat, matrixLayout, matrixPartitioner));
-        fileLoadingBarrier.put(filePath, new AtomicInteger(jobContext.numOfNodes));
+        fileLoadingBarrier.put(filePath, new AtomicInteger(programContext.nodeDOP));
     }
 
     public void loadFilesIntoDHT() {

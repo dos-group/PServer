@@ -10,13 +10,13 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.util.Arrays;
 
-public abstract class JobExecutable extends EventDispatcher {
+public abstract class MLProgram extends EventDispatcher {
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    protected static final Logger LOG = LoggerFactory.getLogger(JobExecutable.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(MLProgram.class);
 
     protected ExecutionManager executionManager;
 
@@ -32,7 +32,7 @@ public abstract class JobExecutable extends EventDispatcher {
     // Constructors.
     // ---------------------------------------------------
 
-    public JobExecutable() {
+    public MLProgram() {
         super(true);
     }
 
@@ -40,17 +40,17 @@ public abstract class JobExecutable extends EventDispatcher {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void injectContext(final SlotContext ctx) {
-        slotContext = Preconditions.checkNotNull(ctx);
-        executionManager = ctx.jobContext.executionManager;
-        dataManager = ctx.jobContext.dataManager;
-        CF = new ControlFlowFactory(slotContext);
-        DF = new DataFlowFactory(slotContext);
+    public void injectContext(final SlotContext slotContext) {
+        this.slotContext = Preconditions.checkNotNull(slotContext);
+        executionManager = slotContext.programContext.runtimeContext.executionManager;
+        dataManager = slotContext.programContext.runtimeContext.dataManager;
+        CF = new ControlFlowFactory(this.slotContext);
+        DF = new DataFlowFactory(this.slotContext);
     }
 
     public void result(final Serializable... obj) {
         if (slotContext.slotID == 0) {
-            dataManager.setResults(slotContext.jobContext.jobUID, Arrays.asList(obj));
+            dataManager.setResults(slotContext.programContext.programID, Arrays.asList(obj));
         }
     }
 

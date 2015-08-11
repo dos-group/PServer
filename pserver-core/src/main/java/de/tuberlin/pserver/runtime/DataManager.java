@@ -216,7 +216,7 @@ public class DataManager extends EventDispatcher {
                              IMatrixPartitioner matrixPartitioner) {
 
         final SlotContext slotContext = executionManager.getSlotContext();
-        matrixPartitionManager.load(filePath, rows, cols, recordFormat, matrixFormat, matrixLayout, matrixPartitioner, slotContext.jobContext);
+        matrixPartitionManager.load(filePath, rows, cols, recordFormat, matrixFormat, matrixLayout, matrixPartitioner, slotContext.programContext);
     }
 
     // ---------------------------------------------------
@@ -456,7 +456,7 @@ public class DataManager extends EventDispatcher {
         return resultObjects.get(jobUID);
     }
 
-    public void postProloguePhase(final SlotContext ctx) {
+    public void loadInputData(final SlotContext ctx) {
         Preconditions.checkNotNull(ctx);
         if (fileSystemManager != null) {
             if (ctx.slotID == 0) {

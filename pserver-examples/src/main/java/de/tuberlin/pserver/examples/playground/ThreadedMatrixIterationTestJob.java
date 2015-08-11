@@ -3,11 +3,11 @@ package de.tuberlin.pserver.examples.playground;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.examples.experiments.sgd.GenerateLocalTestData;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.MLProgram;
 
 import java.text.DecimalFormat;
 
-public final class ThreadedMatrixIterationTestJob extends JobExecutable {
+public final class ThreadedMatrixIterationTestJob extends MLProgram {
 
     // ---------------------------------------------------
     // Public Methods.
@@ -25,7 +25,7 @@ public final class ThreadedMatrixIterationTestJob extends JobExecutable {
 
         final Matrix.RowIterator iter = executionManager.parRowIterator(data);
 
-        if (slotContext.jobContext.nodeID == 0 && slotContext.slotID == 1) {
+        if (slotContext.programContext.runtimeContext.nodeID == 0 && slotContext.slotID == 1) {
             final DecimalFormat numberFormat = new DecimalFormat("0.000");
             while (iter.hasNextRow()) {
                 iter.nextRow();

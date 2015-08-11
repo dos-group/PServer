@@ -10,13 +10,13 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 
 import java.util.UUID;
 
-public final class PServerJobFailureEvent extends NetEvents.NetEvent {
+public final class ProgramFailureEvent extends NetEvents.NetEvent {
 
     // ---------------------------------------------------
     // Constants.
     // ---------------------------------------------------
 
-    public static final String PSERVER_FAILURE_JOB_EVENT = "PSERVER_FAILURE_JOB_EVENT";
+    public static final String PSERVER_FAILURE_JOB_EVENT = "PROGRAM_FAILURE_JOB_EVENT";
 
     // ---------------------------------------------------
     // Fields.
@@ -28,13 +28,13 @@ public final class PServerJobFailureEvent extends NetEvents.NetEvent {
 
     public final MachineDescriptor machine;
 
-    public final UUID jobUID;
+    public final UUID programID;
 
     public final int nodeID;
 
-    public final int instanceID;
+    public final int slotID;
 
-    public final String jobName;
+    public final String programName;
 
     @GsonUtils.Exclude
     public final String stackTrace;
@@ -43,21 +43,21 @@ public final class PServerJobFailureEvent extends NetEvents.NetEvent {
     // Constructors.
     // ---------------------------------------------------
 
-    public PServerJobFailureEvent(final MachineDescriptor machine,
-                                  final UUID jobUID,
-                                  final int nodeID,
-                                  final int instanceID,
-                                  final String jobName,
-                                  final Throwable exception) {
+    public ProgramFailureEvent(final MachineDescriptor machine,
+                               final UUID programID,
+                               final int nodeID,
+                               final int slotID,
+                               final String programName,
+                               final Throwable exception) {
 
         super(PSERVER_FAILURE_JOB_EVENT);
 
-        this.machine    = Preconditions.checkNotNull(machine);
-        this.jobUID     = Preconditions.checkNotNull(jobUID);
-        this.nodeID     = nodeID;
-        this.instanceID = instanceID;
-        this.jobName    = Preconditions.checkNotNull(jobName);
-        this.stackTrace = ExceptionUtils.getStackTrace(Preconditions.checkNotNull(exception));
+        this.machine        = Preconditions.checkNotNull(machine);
+        this.programID      = Preconditions.checkNotNull(programID);
+        this.nodeID         = nodeID;
+        this.slotID         = slotID;
+        this.programName    = Preconditions.checkNotNull(programName);
+        this.stackTrace     = ExceptionUtils.getStackTrace(Preconditions.checkNotNull(exception));
     }
 
     // ---------------------------------------------------
@@ -66,6 +66,6 @@ public final class PServerJobFailureEvent extends NetEvents.NetEvent {
 
     @Override
     public String toString() {
-        return "\nPServerJobFailureEvent " + gson.toJson(this) + "\n ==> JAVA STACK TRACE [\n" + stackTrace + "]";
+        return "\nProgramFailureEvent " + gson.toJson(this) + "\n ==> JAVA STACK TRACE [\n" + stackTrace + "]";
     }
 }

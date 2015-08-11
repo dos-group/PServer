@@ -7,7 +7,7 @@ import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
-import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
 
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Random;
 
 
-public class TSNEJob extends JobExecutable {
+public class TSNEJob extends MLProgram {
 
     // ---------------------------------------------------
     // Fields.

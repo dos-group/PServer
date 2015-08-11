@@ -29,7 +29,7 @@ public final class Selection extends CFStatement {
     public Selection(final SlotContext ic) {
         super(ic);
 
-        exeManager = ic.jobContext.executionManager;
+        exeManager = ic.programContext.runtimeContext.executionManager;
 
         allNodes();
         allInstances();
@@ -47,7 +47,7 @@ public final class Selection extends CFStatement {
 
     public Selection node(final int nodeID) { return node(nodeID, nodeID); }
 
-    public Selection allNodes() { return node(0, slotContext.jobContext.numOfNodes - 1); }
+    public Selection allNodes() { return node(0, slotContext.programContext.nodeDOP - 1); }
 
     // ---------------------------------------------------
     // Instance Selection.
@@ -61,7 +61,7 @@ public final class Selection extends CFStatement {
 
     public Selection instance(final int instanceID) { return instance(instanceID, instanceID); }
 
-    public Selection allInstances() { return instance(0, slotContext.jobContext.numOfInstances - 1); }
+    public Selection allInstances() { return instance(0, slotContext.programContext.perNodeDOP - 1); }
 
     // ---------------------------------------------------
     // Synchronization.
@@ -100,8 +100,8 @@ public final class Selection extends CFStatement {
     // ---------------------------------------------------
 
     private boolean inNodeRange() {
-        return slotContext.jobContext.nodeID >= fromNodeID
-                && slotContext.jobContext.nodeID <= toNodeID;
+        return slotContext.programContext.runtimeContext.nodeID >= fromNodeID
+                && slotContext.programContext.runtimeContext.nodeID <= toNodeID;
     }
 
     private boolean inInstanceRange() {

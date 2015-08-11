@@ -1,11 +1,11 @@
 package de.tuberlin.pserver.examples.playground;
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.MLProgram;
 
 import java.util.Random;
 
-public class CFSyncPrimitiveTestJob extends JobExecutable {
+public class CFSyncPrimitiveTestJob extends MLProgram {
 
     // ---------------------------------------------------
     // Public Methods.
@@ -25,7 +25,7 @@ public class CFSyncPrimitiveTestJob extends JobExecutable {
 
         while (true) {
 
-            LOG.info("node [" + slotContext.jobContext.nodeID + "]: " + i);
+            LOG.info("node [" + slotContext.programContext.runtimeContext.nodeID + "]: " + i);
 
             try {
                 Thread.sleep((long)(rand.nextDouble() * 5000));

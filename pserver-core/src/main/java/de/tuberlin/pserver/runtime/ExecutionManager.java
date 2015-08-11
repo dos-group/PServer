@@ -81,7 +81,7 @@ public final class ExecutionManager {
 
     private final NetManager netManager;
 
-    private final Map<UUID, JobContext> jobContextMap;
+    private final Map<UUID, MLProgramContext> jobContextMap;
 
     private final Map<Long, SlotContext> slotContextMap;
 
@@ -129,11 +129,11 @@ public final class ExecutionManager {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void registerJob(final UUID jobID, final JobContext jobContext) {
-        jobContextMap.put(Preconditions.checkNotNull(jobID), Preconditions.checkNotNull(jobContext));
+    public void registerJob(final UUID jobID, final MLProgramContext programContext) {
+        jobContextMap.put(Preconditions.checkNotNull(jobID), Preconditions.checkNotNull(programContext));
     }
 
-    public JobContext getJob(final UUID jobID) {
+    public MLProgramContext getJob(final UUID jobID) {
         return jobContextMap.get(Preconditions.checkNotNull(jobID));
     }
 
@@ -260,18 +260,18 @@ public final class ExecutionManager {
 
         final NetEvents.NetEvent globalSyncEvent = new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT);
 
-        globalSyncEvent.setPayload(slotContext.jobContext.jobUID);
+        globalSyncEvent.setPayload(slotContext.programContext.programID);
 
         netManager.broadcastEvent(globalSyncEvent);
 
         try {
-            slotContext.jobContext.globalSyncBarrier.await();
+            slotContext.programContext.globalSyncBarrier.await();
         } catch (InterruptedException e) {
             LOG.error(e.getMessage());
         }
 
-        if (slotContext.jobContext.globalSyncBarrier.getCount() == 0) {
-            slotContext.jobContext.globalSyncBarrier.reset();
+        if (slotContext.programContext.globalSyncBarrier.getCount() == 0) {
+            slotContext.programContext.globalSyncBarrier.reset();
         } else {
             throw new IllegalStateException();
         }
@@ -281,7 +281,7 @@ public final class ExecutionManager {
         final SlotContext slotContext = getSlotContext();
 
         try {
-            slotContext.jobContext.localSyncBarrier.await();
+            slotContext.programContext.localSyncBarrier.await();
         } catch (Exception e) {
             LOG.error(e.getLocalizedMessage());
         }
@@ -294,10 +294,10 @@ public final class ExecutionManager {
     public Matrix.RowIterator parRowIterator(final Matrix matrix) {
         Preconditions.checkNotNull(matrix);
         final SlotContext slotContext = getSlotContext();
-        final int rowBlock = (int) matrix.numRows() / slotContext.jobContext.numOfInstances;
+        final int rowBlock = (int) matrix.numRows() / slotContext.programContext.perNodeDOP;
         int end = (slotContext.slotID * rowBlock + rowBlock - 1);
-        end = (slotContext.slotID == slotContext.jobContext.numOfInstances - 1)
-                ? end + (int) matrix.numRows() % slotContext.jobContext.numOfInstances
+        end = (slotContext.slotID == slotContext.programContext.perNodeDOP - 1)
+                ? end + (int) matrix.numRows() % slotContext.programContext.perNodeDOP
                 : end;
         return matrix.rowIterator(slotContext.slotID * rowBlock, end);
     }
@@ -307,9 +307,9 @@ public final class ExecutionManager {
         Preconditions.checkNotNull(b);
         final SlotContext slotContext = getSlotContext();
         final double[] data = m.toArray();
-        final int parLength = data.length / slotContext.jobContext.numOfInstances;
+        final int parLength = data.length / slotContext.jobContext.numOfSlots;
         final int s = parLength * slotContext.slotID;
-        final int e = (slotContext.slotID == slotContext.jobContext.numOfInstances - 1)
+        final int e = (slotContext.slotID == slotContext.jobContext.numOfSlots - 1)
                 ? data.length - 1 : s + parLength;
         for (int i = s; i < e; ++i) {
             final int row = i / (int)m.numCols();

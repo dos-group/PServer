@@ -3,12 +3,12 @@ package de.tuberlin.pserver.examples.playground;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.examples.experiments.sgd.GenerateLocalTestData;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.MLProgram;
 
 import java.text.DecimalFormat;
 
 
-public final class FileSystemTestJob extends JobExecutable {
+public final class FileSystemTestJob extends MLProgram {
 
     // ---------------------------------------------------
     // Public Methods.
@@ -28,7 +28,7 @@ public final class FileSystemTestJob extends JobExecutable {
 
         final DecimalFormat numberFormat = new DecimalFormat("###.###");
 
-        if (slotContext.jobContext.nodeID == 0) {
+        if (slotContext.programContext.runtimeContext.nodeID == 0) {
             while (iter.hasNextRow()) {
                 iter.nextRow();
                 for (int i = 0; i < iter.numCols(); ++i) {

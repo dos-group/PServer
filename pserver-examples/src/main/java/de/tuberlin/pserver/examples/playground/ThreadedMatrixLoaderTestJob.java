@@ -5,7 +5,7 @@ import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.examples.experiments.sgd.GenerateLocalTestData;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
-import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
@@ -13,7 +13,7 @@ import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 import java.io.*;
 import java.util.List;
 
-public final class ThreadedMatrixLoaderTestJob extends JobExecutable {
+public final class ThreadedMatrixLoaderTestJob extends MLProgram {
 
     private static final int NUM_NODES = 4;
 
@@ -39,14 +39,14 @@ public final class ThreadedMatrixLoaderTestJob extends JobExecutable {
     private boolean isOwnPartition(int row, int col, int numNodes) {
         double numOfRowsPerInstance = (double) GenerateLocalTestData.ROWS_ROWCOLVAL_DATASET / numNodes;
         double partition = row / numOfRowsPerInstance;
-        return Utils.toInt((long) (partition % numNodes)) == slotContext.jobContext.nodeID;
+        return Utils.toInt((long) (partition % numNodes)) == slotContext.programContext.runtimeContext.nodeID;
     }
 
     @Override
     public void compute() {
         final Matrix matrix = dataManager.getObject(FILE);
         Matrix.PartitionShape shape = new MatrixByRowPartitioner(
-                slotContext.jobContext.nodeID,
+                slotContext.programContext.runtimeContext.nodeID,
                 NUM_NODES,
                 GenerateLocalTestData.ROWS_ROWCOLVAL_DATASET,
                 GenerateLocalTestData.COLS_ROWCOLVAL_DATASET
@@ -64,7 +64,7 @@ public final class ThreadedMatrixLoaderTestJob extends JobExecutable {
                     double matrixVal = matrix.get(row % shape.getRows(), col % shape.getCols());
                     if(matrixVal != val) {
                         //throw new RuntimeException(slotContext.nodeID + ": matrix("+row+","+col+") is "+matrixVal+" but should be "+val);
-                        System.out.println(slotContext.jobContext.nodeID + ": matrix("+row+" % "+shape.getRows()+","+col+" % "+shape.getCols()+") is "+matrixVal+" but should be "+val);
+                        System.out.println(slotContext.programContext.runtimeContext.nodeID + ": matrix("+row+" % "+shape.getRows()+","+col+" % "+shape.getCols()+") is "+matrixVal+" but should be "+val);
                     }
                 }
             }

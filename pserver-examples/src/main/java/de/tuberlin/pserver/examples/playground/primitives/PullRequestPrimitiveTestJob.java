@@ -1,11 +1,11 @@
 package de.tuberlin.pserver.examples.playground.primitives;
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.MLProgram;
 
 import java.util.Random;
 
-public class PullRequestPrimitiveTestJob extends JobExecutable {
+public class PullRequestPrimitiveTestJob extends MLProgram {
 
     // ---------------------------------------------------
     // Public Methods.
@@ -28,7 +28,7 @@ public class PullRequestPrimitiveTestJob extends JobExecutable {
                 e.printStackTrace();
             }
 
-            if (slotContext.jobContext.nodeID == 0) {
+            if (slotContext.programContext.runtimeContext.nodeID == 0) {
 
                 final Object[] results = dataManager.pullRequest("pull-request-value");
 

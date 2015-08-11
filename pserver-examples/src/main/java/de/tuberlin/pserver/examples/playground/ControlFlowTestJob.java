@@ -1,9 +1,9 @@
 package de.tuberlin.pserver.examples.playground;
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.MLProgram;
 
-public class ControlFlowTestJob extends JobExecutable {
+public class ControlFlowTestJob extends MLProgram {
 
     // ---------------------------------------------------
     // Public Methods.
@@ -23,7 +23,7 @@ public class ControlFlowTestJob extends JobExecutable {
 
                 //CF.select().instance(4, 7).exe(() -> System.out.println("!"));
 
-                final int dop = slotContext.jobContext.executionManager.getDegreeOfParallelism();
+                final int dop = slotContext.programContext.runtimeContext.executionManager.getDegreeOfParallelism();
                 CF.select().instance(0).exe(() -> System.out.println("DOP = " + dop));
             });
 

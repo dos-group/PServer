@@ -137,12 +137,12 @@ public final class Iteration extends CFStatement {
     private void sync() {
         if (!((mode & ASYNC) == ASYNC))
             if ((mode & LOCAL) == LOCAL)
-                slotContext.jobContext.executionManager.localSync();
+                slotContext.programContext.runtimeContext.executionManager.localSync();
             if ((mode & GLOBAL) == GLOBAL && slotContext.slotID == 0)
-                slotContext.jobContext.executionManager.globalSync();
+                slotContext.programContext.runtimeContext.executionManager.globalSync();
     }
 
     private Matrix.RowIterator makeParIterator(final Matrix m) {
-        return slotContext.jobContext.executionManager.parRowIterator(m);
+        return slotContext.programContext.runtimeContext.executionManager.parRowIterator(m);
     }
 }

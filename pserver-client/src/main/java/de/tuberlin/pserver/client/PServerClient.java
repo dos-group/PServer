@@ -8,10 +8,10 @@ import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.runtime.JobExecutable;
-import de.tuberlin.pserver.runtime.events.PServerJobFailureEvent;
-import de.tuberlin.pserver.runtime.events.PServerJobResultEvent;
-import de.tuberlin.pserver.runtime.events.PServerJobSubmissionEvent;
+import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.runtime.events.ProgramFailureEvent;
+import de.tuberlin.pserver.runtime.events.ProgramResultEvent;
+import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
 import de.tuberlin.pserver.runtime.usercode.UserCodeManager;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -68,8 +68,8 @@ public final class PServerClient extends EventDispatcher {
         this.jobResults      = new HashMap<>();
         //this.nameUIDMapping  = new HashMap<>();
 
-        this.netManager.addEventListener(PServerJobFailureEvent.PSERVER_FAILURE_JOB_EVENT, new JobFailureEvent());
-        this.netManager.addEventListener(PServerJobResultEvent.PSERVER_JOB_RESULT_EVENT, new JobResultEvent());
+        this.netManager.addEventListener(ProgramFailureEvent.PSERVER_FAILURE_JOB_EVENT, new JobFailureEvent());
+        this.netManager.addEventListener(ProgramResultEvent.PSERVER_JOB_RESULT_EVENT, new JobResultEvent());
     }
 
     // ---------------------------------------------------
@@ -79,7 +79,7 @@ public final class PServerClient extends EventDispatcher {
     private final class JobFailureEvent implements IEventHandler {
         @Override
         public void handleEvent(final Event e) {
-            final PServerJobFailureEvent jfe = (PServerJobFailureEvent)e;
+            final ProgramFailureEvent jfe = (ProgramFailureEvent)e;
             LOG.error(jfe.toString());
         }
     }
@@ -87,9 +87,9 @@ public final class PServerClient extends EventDispatcher {
     private final class JobResultEvent implements IEventHandler {
         @Override
         public void handleEvent(final Event e) {
-            final PServerJobResultEvent jre = (PServerJobResultEvent) e;
-            jobResults.put(Pair.of(jre.jobUID, jre.nodeID), jre.resultObjects);
-            final CountDownLatch jobLatch = activeJobs.get(jre.jobUID);
+            final ProgramResultEvent jre = (ProgramResultEvent) e;
+            jobResults.put(Pair.of(jre.programID, jre.nodeID), jre.resultObjects);
+            final CountDownLatch jobLatch = activeJobs.get(jre.programID);
             if (jobLatch != null) {
                 jobLatch.countDown();
             } else {
@@ -102,15 +102,15 @@ public final class PServerClient extends EventDispatcher {
     // Public Methods.
     // ---------------------------------------------------
 
-    public UUID execute(final Class<? extends JobExecutable> jobClass) { return execute(jobClass, 1); }
-    public UUID execute(final Class<? extends JobExecutable> jobClass, final int perNodeParallelism) {
+    public UUID execute(final Class<? extends MLProgram> jobClass) { return execute(jobClass, 1); }
+    public UUID execute(final Class<? extends MLProgram> jobClass, final int perNodeParallelism) {
         Preconditions.checkNotNull(jobClass);
         Preconditions.checkArgument(perNodeParallelism >= 1);
 
         final long start = System.nanoTime();
         final UUID jopUID = UUID.randomUUID();
         final List<Pair<String, byte[]>> byteCode = userCodeManager.extractClass(jobClass);
-        final PServerJobSubmissionEvent jobSubmission = new PServerJobSubmissionEvent(
+        final ProgramSubmissionEvent jobSubmission = new ProgramSubmissionEvent(
                 machine,
                 jopUID,
                 //classData.getLeft().getName(),
@@ -133,7 +133,7 @@ public final class PServerClient extends EventDispatcher {
         }
 
         LOG.info("Job '" + jobClass.getSimpleName()
-                + "' [" + jobSubmission.jobUID +"] finished in "
+                + "' [" + jobSubmission.programID +"] finished in "
                 + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms.");
 
         return jopUID;

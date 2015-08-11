@@ -4,9 +4,9 @@ package de.tuberlin.pserver.examples.playground.primitives;
 import com.google.common.util.concurrent.AtomicDouble;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.MLProgram;
 
-public class SyncPushPrimitiveTestJob extends JobExecutable {
+public class SyncPushPrimitiveTestJob extends MLProgram {
 
     // ---------------------------------------------------
     // Fields.
@@ -33,9 +33,9 @@ public class SyncPushPrimitiveTestJob extends JobExecutable {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {}
 
-            localValue.set(slotContext.jobContext.nodeID * 10.0);
+            localValue.set(slotContext.programContext.runtimeContext.nodeID * 10.0);
 
-            if (slotContext.jobContext.nodeID != 0) {
+            if (slotContext.programContext.runtimeContext.nodeID != 0) {
 
                 dataManager.pushTo("localValue", localValue.get(), new int[] { 0 });
 

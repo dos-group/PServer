@@ -9,22 +9,22 @@ public final class SlotContext {
     // Fields.
     // ---------------------------------------------------
 
-    public final JobContext jobContext;
+    public final MLProgramContext programContext;
 
     public final int slotID;
 
-    public final JobExecutable jobInvokeable;
+    public final MLProgram programInvokeable;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    public SlotContext(final JobContext jobContext,
+    public SlotContext(final MLProgramContext programContext,
                        final int slotID,
-                       final JobExecutable jobInvokeable) {
+                       final MLProgram programInvokeable) {
 
-        this.jobContext     = Preconditions.checkNotNull(jobContext);
-        this.slotID         = Preconditions.checkNotNull(slotID);
-        this.jobInvokeable  = Preconditions.checkNotNull(jobInvokeable);
+        this.programContext     = Preconditions.checkNotNull(programContext);
+        this.slotID             = Preconditions.checkNotNull(slotID);
+        this.programInvokeable  = Preconditions.checkNotNull(programInvokeable);
     }
 }

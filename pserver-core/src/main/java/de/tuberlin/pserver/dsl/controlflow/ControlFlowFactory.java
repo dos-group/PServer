@@ -25,9 +25,9 @@ public final class ControlFlowFactory {
     // Public Methods.
     // ---------------------------------------------------
 
-    public int numNodes() { return slotContext.jobContext.numOfNodes; }
+    public int numNodes() { return slotContext.programContext.nodeDOP; }
 
-    public int numInstances() { return slotContext.jobContext.numOfInstances; }
+    public int numInstances() { return slotContext.programContext.perNodeDOP; }
 
     public Iteration iterate() { return new Iteration(slotContext); }
 

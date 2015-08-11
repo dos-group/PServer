@@ -6,13 +6,13 @@ import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
 
 import java.util.Random;
 
-public class GloVeJobAdaGradPull_MC extends JobExecutable {
+public class GloVeJobAdaGradPull_MC extends MLProgram {
 
     // ---------------------------------------------------
     // Fields.
@@ -122,10 +122,10 @@ public class GloVeJobAdaGradPull_MC extends JobExecutable {
         B       = dataManager.getObject("B");
         GradSqB = dataManager.getObject("GradSqB");
 
-        int numInstances = slotContext.jobContext.numOfNodes;
+        int numInstances = slotContext.programContext.perNodeDOP;
 
-        int offset = (NUM_WORDS_IN_COOC_MATRIX / numInstances * slotContext.jobContext.nodeID)
-                + (NUM_WORDS_IN_COOC_MATRIX / numInstances / slotContext.jobContext.numOfInstances) * slotContext.slotID;
+        int offset = (NUM_WORDS_IN_COOC_MATRIX / numInstances * slotContext.programContext.runtimeContext.nodeID)
+                + (NUM_WORDS_IN_COOC_MATRIX / numInstances / slotContext.programContext.perNodeDOP) * slotContext.slotID;
 
         final Matrix.RowIterator xIter = executionManager.parRowIterator(X);
 

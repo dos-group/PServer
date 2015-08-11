@@ -8,13 +8,13 @@ import de.tuberlin.pserver.ml.models.GeneralLinearModel;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.ml.optimization.SGD.SGDOptimizer;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.MLProgram;
 
 import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.util.List;
 
-public final class AsyncHogwildSGDTestJob extends JobExecutable {
+public final class AsyncHogwildSGDTestJob extends MLProgram {
 
     // ---------------------------------------------------
     // Fields.

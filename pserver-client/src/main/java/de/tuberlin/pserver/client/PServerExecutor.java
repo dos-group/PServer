@@ -5,7 +5,7 @@ import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.config.IConfigFactory;
 import de.tuberlin.pserver.core.infra.ClusterSimulator;
 import de.tuberlin.pserver.node.PServerMain;
-import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.MLProgram;
 import org.apache.log4j.ConsoleAppender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,8 +47,8 @@ public enum PServerExecutor {
     // Public Methods.
     // ---------------------------------------------------
 
-    public PServerExecutor run(final Class<? extends JobExecutable> jobClass) { return run(jobClass, 1); }
-    public PServerExecutor run(final Class<? extends JobExecutable> jobClass, final int perNodeParallelism) {
+    public PServerExecutor run(final Class<? extends MLProgram> jobClass) { return run(jobClass, 1); }
+    public PServerExecutor run(final Class<? extends MLProgram> jobClass, final int perNodeParallelism) {
         if (isLocal) {
             simulator = new ClusterSimulator(
                     IConfigFactory.load(IConfig.Type.PSERVER_SIMULATION),

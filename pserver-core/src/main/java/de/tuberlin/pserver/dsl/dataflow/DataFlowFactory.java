@@ -27,10 +27,10 @@ public final class DataFlowFactory {
     // ---------------------------------------------------
 
     public <T extends SharedObject> DHTKey put(final String name, final T obj) {
-        return slotContext.jobContext.dataManager.putObject(name, obj);
+        return slotContext.programContext.runtimeContext.dataManager.putObject(name, obj);
     }
 
     public <T extends SharedObject> T get(final String name) {
-        return slotContext.jobContext.dataManager.getObject(name);
+        return slotContext.programContext.runtimeContext.dataManager.getObject(name);
     }
 }

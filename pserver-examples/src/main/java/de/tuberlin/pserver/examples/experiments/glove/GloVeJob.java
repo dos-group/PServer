@@ -7,7 +7,7 @@ import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
 
@@ -15,7 +15,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Random;
 
-public class GloVeJob extends JobExecutable {
+public class GloVeJob extends MLProgram {
 
     private static final DataManager.Merger<Vector> vectorMerger = (dst, src) -> {
         for (final Vector b : src) {

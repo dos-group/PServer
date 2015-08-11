@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.examples.playground;
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.runtime.dht.DHTKey;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
 import de.tuberlin.pserver.runtime.dht.types.ByteBufferedDHTObject;
@@ -18,7 +18,7 @@ public final class LocalDHTTestJob {
     // Jobs.
     // ---------------------------------------------------
 
-    public static final class DHTTestJob extends JobExecutable {
+    public static final class DHTTestJob extends MLProgram {
 
         private boolean detectDuplicates(final int[] a) {
             boolean duplicates = false;
@@ -33,10 +33,10 @@ public final class LocalDHTTestJob {
         public void compute() {
             final Random r = new Random();
             final UUID uid = UUID.fromString("31bf55a7-2195-4d11-8ebf-0d030032fede");
-            if (slotContext.jobContext.nodeID == 0) {
-                slotContext.jobContext.dht.put(DHTKey.newKey(uid, "test1", DHTKey.DistributionMode.DISTRIBUTED), ByteBufferedDHTObject.newValue(false, ByteBufferedDHTObject.MAX_SIZE * 4));
+            if (slotContext.programContext.runtimeContext.nodeID == 0) {
+                slotContext.programContext.runtimeContext.dht.put(DHTKey.newKey(uid, "test1", DHTKey.DistributionMode.DISTRIBUTED), ByteBufferedDHTObject.newValue(false, ByteBufferedDHTObject.MAX_SIZE * 4));
             }
-            final DHTKey key = slotContext.jobContext.dht.getKey(uid);
+            final DHTKey key = slotContext.programContext.runtimeContext.dht.getKey(uid);
             while (true) {
                 final int numOfAccessedSegments = r.nextInt(10);
                 final int segmentIDs[] = new int[numOfAccessedSegments];
@@ -54,7 +54,7 @@ public final class LocalDHTTestJob {
                         final int randOffset = r.nextInt(ByteBufferedDHTObject.DEFAULT_SEGMENT_SIZE - 10);
                         buffer.putInt(randOffset, r.nextInt());
                     }
-                    slotContext.jobContext.dht.put(key, segments);
+                    slotContext.programContext.runtimeContext.dht.put(key, segments);
                 }
             }
         }

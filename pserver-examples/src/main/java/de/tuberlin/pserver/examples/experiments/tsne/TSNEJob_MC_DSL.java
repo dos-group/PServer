@@ -8,7 +8,7 @@ import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
-import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
 import org.apache.commons.lang3.mutable.MutableDouble;
@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Random;
 
 
-public class TSNEJob_MC_DSL extends JobExecutable {
+public class TSNEJob_MC_DSL extends MLProgram {
 
     // ---------------------------------------------------
     // Constants.

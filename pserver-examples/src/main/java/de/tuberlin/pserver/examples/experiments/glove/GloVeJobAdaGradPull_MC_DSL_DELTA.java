@@ -9,14 +9,14 @@ import de.tuberlin.pserver.math.matrix.dense.DMatrixDeltaExtractor;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.JobExecutable;
+import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
 import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.util.Random;
 
-public class GloVeJobAdaGradPull_MC_DSL_DELTA extends JobExecutable {
+public class GloVeJobAdaGradPull_MC_DSL_DELTA extends MLProgram {
 
     // ---------------------------------------------------
     // Constants.
@@ -133,8 +133,8 @@ public class GloVeJobAdaGradPull_MC_DSL_DELTA extends JobExecutable {
         B       = dataManager.getObject("B");
         GradSqB = dataManager.getObject("GradSqB");
 
-        int offset = (NUM_WORDS_IN_COOC_MATRIX / slotContext.jobContext.numOfNodes * slotContext.jobContext.nodeID)
-                + (NUM_WORDS_IN_COOC_MATRIX / slotContext.jobContext.numOfNodes / slotContext.jobContext.numOfInstances)
+        int offset = (NUM_WORDS_IN_COOC_MATRIX / slotContext.programContext.runtimeContext.numOfNodes * slotContext.programContext.runtimeContext.nodeID)
+                + (NUM_WORDS_IN_COOC_MATRIX / slotContext.programContext.runtimeContext.numOfNodes / slotContext.programContext.perNodeDOP)
                 * slotContext.slotID;
 
         CF.iterate()
@@ -205,7 +205,7 @@ public class GloVeJobAdaGradPull_MC_DSL_DELTA extends JobExecutable {
                             });
 
 
-                    int deltaSize = deltaExtractor.extractDeltas(slotContext.jobContext.numOfInstances, slotContext.slotID).getMiddle();
+                    int deltaSize = deltaExtractor.extractDeltas(slotContext.programContext.perNodeDOP, slotContext.slotID).getMiddle();
 
                     System.out.println("delta(W) => " + (((double) deltaSize / (VEC_DIM * NUM_WORDS_IN_COOC_MATRIX * 2.0 * Double.BYTES)) * 100.0) + " %");
 
