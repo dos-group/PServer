@@ -114,74 +114,74 @@ public class GloVeJobAdaGradPull_MC_DSL extends JobExecutable {
         B       = dataManager.getObject("B");
         GradSqB = dataManager.getObject("GradSqB");
 
-        int offset = (NUM_WORDS_IN_COOC_MATRIX / instanceContext.jobContext.numOfNodes * instanceContext.jobContext.nodeID)
-                + (NUM_WORDS_IN_COOC_MATRIX / instanceContext.jobContext.numOfNodes / instanceContext.jobContext.numOfInstances)
-                * instanceContext.instanceID;
+        int offset = (NUM_WORDS_IN_COOC_MATRIX / slotContext.jobContext.numOfNodes * slotContext.jobContext.nodeID)
+                + (NUM_WORDS_IN_COOC_MATRIX / slotContext.jobContext.numOfNodes / slotContext.jobContext.numOfInstances)
+                * slotContext.slotID;
 
         CF.iterate()
             .sync(Iteration.ASYNC)
-            .execute(NUM_EPOCHS, (epoch) -> {
+            .exe(NUM_EPOCHS, (epoch) -> {
 
                 LOG.info("Starting iteration " + epoch);
 
                 final MutableDouble costI = new MutableDouble(0.0);
 
                 CF.iterate()
-                    .executePartitioned(X, (xIter) ->
+                        .parExe(X, (e, xIter) ->
 
-                                    CF.iterate()
-                                            .sync(Iteration.ASYNC)
-                                            .execute(NUM_WORDS_IN_COOC_MATRIX, (col) -> {
+                                        CF.iterate()
+                                                .sync(Iteration.ASYNC)
+                                                .exe(NUM_WORDS_IN_COOC_MATRIX, (col) -> {
 
-                                                long wordVecIdx = offset + xIter.getCurrentRowNum();
-                                                long ctxVecIdx = col + NUM_WORDS_IN_COOC_MATRIX;
+                                                    long wordVecIdx = offset + xIter.getCurrentRowNum();
+                                                    long ctxVecIdx = col + NUM_WORDS_IN_COOC_MATRIX;
 
-                                                Double xVal = xIter.getValueOfColumn((int) col);
+                                                    Double xVal = xIter.getValueOfColumn((int) col);
 
-                                                if (xVal == 0)
-                                                    return;
+                                                    if (xVal == 0)
+                                                        return;
 
-                                                Vector w1 = W.colAsVector(wordVecIdx);
-                                                Double b1 = B.get(wordVecIdx);
-                                                Vector gs1 = GradSq.colAsVector(wordVecIdx);
+                                                    Vector w1 = W.colAsVector(wordVecIdx);
+                                                    Double b1 = B.get(wordVecIdx);
+                                                    Vector gs1 = GradSq.colAsVector(wordVecIdx);
 
-                                                Vector w2 = W.colAsVector(ctxVecIdx);
-                                                Double b2 = B.get(ctxVecIdx);
-                                                Vector gs2 = GradSq.colAsVector(ctxVecIdx);
+                                                    Vector w2 = W.colAsVector(ctxVecIdx);
+                                                    Double b2 = B.get(ctxVecIdx);
+                                                    Vector gs2 = GradSq.colAsVector(ctxVecIdx);
 
-                                                double diff = w1.dot(w2) + b1 + b2 - Math.log(xVal);
-                                                double fdiff = (xVal > X_MAX) ? diff : Math.pow(xVal / X_MAX, ALPHA) * diff;
+                                                    double diff = w1.dot(w2) + b1 + b2 - Math.log(xVal);
+                                                    double fdiff = (xVal > X_MAX) ? diff : Math.pow(xVal / X_MAX, ALPHA) * diff;
 
-                                                costI.add(0.5 * diff * fdiff);
+                                                    costI.add(0.5 * diff * fdiff);
 
-                                                fdiff *= LEARNING_RATE;
+                                                    fdiff *= LEARNING_RATE;
 
-                                                Vector grad1 = w2.mul(fdiff);
-                                                Vector grad2 = w1.mul(fdiff);
+                                                    Vector grad1 = w2.mul(fdiff);
+                                                    Vector grad2 = w1.mul(fdiff);
 
-                                                W.assignColumn(wordVecIdx, w1.add(-1, grad1.applyOnElements(gs1, (el1, el2) -> el1 / Math.sqrt(el2))));
-                                                W.assignColumn(ctxVecIdx, w2.add(-1, grad2.applyOnElements(gs2, (el1, el2) -> el1 / Math.sqrt(el2))));
+                                                    W.assignColumn(wordVecIdx, w1.add(-1, grad1.applyOnElements(gs1, (el1, el2) -> el1 / Math.sqrt(el2))));
+                                                    W.assignColumn(ctxVecIdx, w2.add(-1, grad2.applyOnElements(gs2, (el1, el2) -> el1 / Math.sqrt(el2))));
 
-                                                B.set(wordVecIdx, b1 - fdiff / Math.sqrt(GradSqB.get(wordVecIdx)));
-                                                B.set(ctxVecIdx, b2 - fdiff / Math.sqrt(GradSqB.get(ctxVecIdx)));
+                                                    B.set(wordVecIdx, b1 - fdiff / Math.sqrt(GradSqB.get(wordVecIdx)));
+                                                    B.set(ctxVecIdx, b2 - fdiff / Math.sqrt(GradSqB.get(ctxVecIdx)));
 
-                                                gs1 = gs1.applyOnElements(grad1, (el1, el2) -> el1 + el2 * el2);
-                                                gs2 = gs2.applyOnElements(grad2, (el1, el2) -> el1 + el2 * el2);
+                                                    gs1 = gs1.applyOnElements(grad1, (el1, el2) -> el1 + el2 * el2);
+                                                    gs2 = gs2.applyOnElements(grad2, (el1, el2) -> el1 + el2 * el2);
 
-                                                GradSq.assignColumn(wordVecIdx, gs1);
-                                                GradSq.assignColumn(ctxVecIdx, gs2);
+                                                    GradSq.assignColumn(wordVecIdx, gs1);
+                                                    GradSq.assignColumn(ctxVecIdx, gs2);
 
-                                                GradSqB.set(wordVecIdx, GradSqB.get(wordVecIdx) + fdiff * fdiff);
-                                                GradSqB.set(ctxVecIdx, GradSqB.get(ctxVecIdx) + fdiff * fdiff);
-                                            })
-                    );
+                                                    GradSqB.set(wordVecIdx, GradSqB.get(wordVecIdx) + fdiff * fdiff);
+                                                    GradSqB.set(ctxVecIdx, GradSqB.get(ctxVecIdx) + fdiff * fdiff);
+                                                })
+                        );
 
-                    CF.select()
+                CF.select()
                         .instance(0)
-                        .execute(() -> {
-                            dataManager.pullMerge(W,       matrixMerger);
-                            dataManager.pullMerge(GradSq,  matrixMerger);
-                            dataManager.pullMerge(B,       vectorMerger);
+                        .exe(() -> {
+                            dataManager.pullMerge(W, matrixMerger);
+                            dataManager.pullMerge(GradSq, matrixMerger);
+                            dataManager.pullMerge(B, vectorMerger);
                             dataManager.pullMerge(GradSqB, vectorMerger);
                         });
             });

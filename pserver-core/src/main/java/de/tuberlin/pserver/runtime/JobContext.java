@@ -44,7 +44,7 @@ public class JobContext {
 
     public final CyclicBarrier localSyncBarrier;
 
-    public final List<InstanceContext> instanceContextList;
+    public final List<SlotContext> slotContextList;
 
     // ---------------------------------------------------
     // Constructors.
@@ -75,18 +75,18 @@ public class JobContext {
         this.executionManager   = Preconditions.checkNotNull(executionManager);
         this.globalSyncBarrier  = new ResettableCountDownLatch(numOfNodes);
         this.localSyncBarrier   = new CyclicBarrier(numOfInstances);
-        this.instanceContextList = new ArrayList<>();
+        this.slotContextList = new ArrayList<>();
     }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    public void addInstance(final InstanceContext ic) {
-        instanceContextList.add(Preconditions.checkNotNull(ic));
+    public void addInstance(final SlotContext ic) {
+        slotContextList.add(Preconditions.checkNotNull(ic));
     }
 
-    public void removeInstance(final InstanceContext ic) {
-        instanceContextList.remove(Preconditions.checkNotNull(ic));
+    public void removeInstance(final SlotContext ic) {
+        slotContextList.remove(Preconditions.checkNotNull(ic));
     }
 }

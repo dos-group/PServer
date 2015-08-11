@@ -93,8 +93,8 @@ public enum PServerNodeFactory {
 
         this.fileSystemManager = createFileSystem(infraManager.getNodeID());
         this.dht = new DHTManager(this.config, infraManager, netManager);
-        this.dataManager = new DataManager(this.config, infraManager, netManager, fileSystemManager, dht);
-        this.executionManager = new ExecutionManager(dataManager);
+        this.executionManager = new ExecutionManager(Runtime.getRuntime().availableProcessors(), netManager);
+        this.dataManager = new DataManager(this.config, infraManager, netManager, executionManager, fileSystemManager, dht);
 
         //LOG.info(infraManager.getMachine()
         //        + " | " + infraManager.getNodeID()

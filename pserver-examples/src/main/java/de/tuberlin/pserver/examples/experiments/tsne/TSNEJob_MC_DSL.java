@@ -157,14 +157,14 @@ public class TSNEJob_MC_DSL extends JobExecutable {
 
         CF.iterate()
                 .sync(Iteration.GLOBAL | Iteration.LOCAL)
-                .execute(NUM_EPOCHS, (epoch) -> {
+                .exe(NUM_EPOCHS, (epoch) -> {
 
                     // ! compare git diff
                     Y.applyOnElements(e -> Math.pow(e, 2), Y_squared);
 
                     final Vector sum_Y = Y_squared.aggregateRows(Vector::sum);
 
-                    final Matrix num = Y.mul( Y.transpose() )
+                    final Matrix num = Y.mul(Y.transpose())
                             .scale(-2)
                             .addVectorToRows(sum_Y)
                             .transpose()
@@ -182,7 +182,7 @@ public class TSNEJob_MC_DSL extends JobExecutable {
                     final Matrix PQ = P.copy().sub(Q);
 
                     CF.iterate()
-                            .execute(P.numRows(), (i) -> {
+                            .exe(P.numRows(), (i) -> {
 
                                 final Vector sumVec = new VectorBuilder()
                                         .dimension(d)
@@ -191,7 +191,7 @@ public class TSNEJob_MC_DSL extends JobExecutable {
                                         .build();
 
                                 CF.iterate()
-                                        .execute(P.numCols(), (j) -> {
+                                        .exe(P.numCols(), (j) -> {
 
                                             final Double pq = PQ.get(i, j);
                                             final Double num_j = num.get(i, j);
@@ -209,10 +209,10 @@ public class TSNEJob_MC_DSL extends JobExecutable {
                                 dY.assignRow(i, sumVec);
                             });
 
-                    momentum.setValue( (epoch < 20) ? INITIAL_MOMENTUM : FINAL_MOMENTUM);
+                    momentum.setValue((epoch < 20) ? INITIAL_MOMENTUM : FINAL_MOMENTUM);
 
                     CF.iterate()
-                            .execute(gains, (i, j, v) -> {
+                            .exe(gains, (e, i, j, v) -> {
 
                                 final Double dY_j = dY.get(i, j);
                                 final Double iY_j = iY.get(i, j);
@@ -347,7 +347,7 @@ public class TSNEJob_MC_DSL extends JobExecutable {
 
         P.set(index, 0.0);
 
-        // executePartitioned over all elements i != j
+        // parExe over all elements i != j
         for (long i=0; i < P.length(); ++i) {
             if (i != index) {
                 P.set(i, Math.exp(-1 * d.get(i) * beta));

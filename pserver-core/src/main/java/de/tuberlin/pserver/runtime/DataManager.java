@@ -11,7 +11,6 @@ import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.dsl.controlflow.iteration.MatrixElementIterationBody;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.dht.DHTKey;
@@ -29,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -100,8 +98,6 @@ public class DataManager extends EventDispatcher {
     // Constants.
     // ---------------------------------------------------
 
-    private static final String BSP_SYNC_BARRIER_EVENT = "bsp_sync_barrier_event";
-
     private static final String PUSH_EVENT_PREFIX = "push__";
 
     private static final String PULL_EVENT_PREFIX = "pull__";
@@ -116,6 +112,8 @@ public class DataManager extends EventDispatcher {
 
     private final NetManager netManager;
 
+    private final ExecutionManager executionManager;
+
     private final FileSystemManager fileSystemManager;
 
     private final MatrixPartitionManager matrixPartitionManager;
@@ -124,12 +122,7 @@ public class DataManager extends EventDispatcher {
 
     private final int nodeID;
 
-
     private final Map<UUID, List<Serializable>> resultObjects;
-
-    private final Map<UUID, JobContext> jobContextMap;
-
-    private final Map<Long, InstanceContext> instanceContextMap;
 
     // ---------------------------------------------------
 
@@ -144,18 +137,18 @@ public class DataManager extends EventDispatcher {
     public DataManager(final IConfig config,
                        final InfrastructureManager infraManager,
                        final NetManager netManager,
+                       final ExecutionManager executionManager,
                        final FileSystemManager fileSystemManager,
                        final DHTManager dht) {
         super(true);
 
         this.infraManager       = Preconditions.checkNotNull(infraManager);
         this.netManager         = Preconditions.checkNotNull(netManager);
+        this.executionManager   = Preconditions.checkNotNull(executionManager);
         this.fileSystemManager  = fileSystemManager;
         this.dht                = Preconditions.checkNotNull(dht);
         this.nodeID             = infraManager.getNodeID();
         this.resultObjects      = new HashMap<>();
-        this.jobContextMap      = new ConcurrentHashMap<>();
-        this.instanceContextMap = new ConcurrentHashMap<>();
 
         this.matrixPartitionManager = new MatrixPartitionManager(
                 config,
@@ -164,10 +157,6 @@ public class DataManager extends EventDispatcher {
                 fileSystemManager,
                 this
         );
-
-        this.netManager.addEventListener(BSP_SYNC_BARRIER_EVENT, event -> {
-            jobContextMap.get((UUID)event.getPayload()).globalSyncBarrier.countDown();
-        });
 
         this.nodeIDs = IntStream.iterate(0, x -> x + 1).limit(infraManager.getMachines().size()).toArray();
         int numOfRemoteWorkers = infraManager.getMachines().size() - 1;
@@ -200,36 +189,6 @@ public class DataManager extends EventDispatcher {
     }
 
     // ---------------------------------------------------
-    // JOB MANAGEMENT
-    // ---------------------------------------------------
-
-    public void registerJob(final UUID jobID, final JobContext jobContext) {
-        jobContextMap.put(Preconditions.checkNotNull(jobID), Preconditions.checkNotNull(jobContext));
-    }
-
-    public JobContext getJob(final UUID jobID) {
-        return jobContextMap.get(Preconditions.checkNotNull(jobID));
-    }
-
-    public void unregisterJob(final UUID jobID) {
-        jobContextMap.remove(Preconditions.checkNotNull(jobID));
-    }
-
-    // ------------------------------
-
-    public void registerInstanceContext(final InstanceContext ic) {
-        instanceContextMap.put(Thread.currentThread().getId(), Preconditions.checkNotNull(ic));
-    }
-
-    public InstanceContext getInstanceContext() {
-        return instanceContextMap.get(Thread.currentThread().getId());
-    }
-
-    public void unregisterInstanceContext() {
-        instanceContextMap.remove(Thread.currentThread().getId());
-    }
-
-    // ---------------------------------------------------
     // DATA LOADING
     // ---------------------------------------------------
 
@@ -256,8 +215,8 @@ public class DataManager extends EventDispatcher {
                              Matrix.Format matrixFormat, Matrix.Layout matrixLayout,
                              IMatrixPartitioner matrixPartitioner) {
 
-        final InstanceContext instanceContext = getInstanceContext();
-        matrixPartitionManager.load(filePath, rows, cols, recordFormat, matrixFormat, matrixLayout, matrixPartitioner, instanceContext.jobContext);
+        final SlotContext slotContext = executionManager.getSlotContext();
+        matrixPartitionManager.load(filePath, rows, cols, recordFormat, matrixFormat, matrixLayout, matrixPartitioner, slotContext.jobContext);
     }
 
     // ---------------------------------------------------
@@ -483,67 +442,6 @@ public class DataManager extends EventDispatcher {
     }
 
     // ---------------------------------------------------
-    // CONTROL FLOW
-    // ---------------------------------------------------
-
-    public void globalSync() {
-        final InstanceContext instanceContext = getInstanceContext();
-        final NetEvents.NetEvent globalSyncEvent = new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT);
-        globalSyncEvent.setPayload(instanceContext.jobContext.jobUID);
-        netManager.broadcastEvent(globalSyncEvent);
-        try {
-            instanceContext.jobContext.globalSyncBarrier.await();
-        } catch (InterruptedException e) {
-            LOG.error(e.getMessage());
-        }
-        if (instanceContext.jobContext.globalSyncBarrier.getCount() == 0) {
-            instanceContext.jobContext.globalSyncBarrier.reset();
-        } else {
-            throw new IllegalStateException();
-        }
-    }
-
-    public void localSync() {
-        final InstanceContext instanceContext = getInstanceContext();
-        try {
-            instanceContext.jobContext.localSyncBarrier.await();
-        } catch (Exception e) {
-            LOG.error(e.getLocalizedMessage());
-        }
-    }
-
-    // ---------------------------------------------------
-    // THREAD PARALLEL PRIMITIVES
-    // ---------------------------------------------------
-
-    public Matrix.RowIterator createThreadPartitionedRowIterator(final Matrix matrix) {
-        Preconditions.checkNotNull(matrix);
-        final InstanceContext instanceContext = getInstanceContext();
-        final int rowBlock = (int) matrix.numRows() / instanceContext.jobContext.numOfInstances;
-        int end = (instanceContext.instanceID * rowBlock + rowBlock - 1);
-        end = (instanceContext.instanceID == instanceContext.jobContext.numOfInstances - 1)
-                ? end + (int) matrix.numRows() % instanceContext.jobContext.numOfInstances
-                : end;
-        return matrix.rowIterator(instanceContext.instanceID * rowBlock, end);
-    }
-
-    public void iterateMatrixParallel(final Matrix m, final MatrixElementIterationBody b) {
-        Preconditions.checkNotNull(m);
-        Preconditions.checkNotNull(b);
-        final InstanceContext instanceContext = getInstanceContext();
-        final double[] data = m.toArray();
-        final int parLength = data.length / instanceContext.jobContext.numOfInstances;
-        final int s = parLength * instanceContext.instanceID;
-        final int e = (instanceContext.instanceID == instanceContext.jobContext.numOfInstances - 1)
-                ? data.length - 1 : s + parLength;
-        for (int i = s; i < e; ++i) {
-            final int row = i / (int)m.numCols();
-            final int col = i % (int)m.numCols();
-            b.body(row, col, data[s]);
-        }
-    }
-
-    // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
@@ -558,10 +456,10 @@ public class DataManager extends EventDispatcher {
         return resultObjects.get(jobUID);
     }
 
-    public void postProloguePhase(final InstanceContext ctx) {
+    public void postProloguePhase(final SlotContext ctx) {
         Preconditions.checkNotNull(ctx);
         if (fileSystemManager != null) {
-            if (ctx.instanceID == 0) {
+            if (ctx.slotID == 0) {
                 fileSystemManager.computeInputSplitsForRegisteredFiles();
                 matrixPartitionManager.loadFilesIntoDHT();
             }

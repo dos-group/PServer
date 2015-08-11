@@ -170,7 +170,7 @@ public class TSNEJob extends JobExecutable {
 
             /*dataManager.globalSync();
 
-            if (instanceContext.nodeID == 0) {
+            if (slotContext.nodeID == 0) {
                 Object[] sumQs = dataManager.pullRequest("sumQ");
                 Double sumOverQ = 0.0;
                 for (Object sum : sumQs) {
@@ -289,7 +289,7 @@ public class TSNEJob extends JobExecutable {
                 P = P.scale(1.0 / EARLY_EXAGGERATION);
             }
             LOG.debug("Y: " + Y.rowAsVector().toString());
-            dataManager.globalSync();
+            executionManager.globalSync();
         }
         result(Y);
     }
@@ -378,7 +378,7 @@ public class TSNEJob extends JobExecutable {
 
         P.set(index, 0.0);
 
-        // executePartitioned over all elements i != j
+        // parExe over all elements i != j
         for (long i=0; i < P.length(); ++i) {
             if (i != index) {
                 P.set(i, Math.exp(-1 * d.get(i) * beta));

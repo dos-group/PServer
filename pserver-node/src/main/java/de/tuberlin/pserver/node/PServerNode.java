@@ -43,8 +43,6 @@ public final class PServerNode extends EventDispatcher {
 
     private final ExecutorService executor;
 
-    //private final Map<UUID,PServerJobSubmissionEvent> jobMap;
-
     private CountDownLatch jobStartBarrier = null;
 
     private CountDownLatch jobEndBarrier = null;
@@ -62,7 +60,6 @@ public final class PServerNode extends EventDispatcher {
         this.userCodeManager    = factory.userCodeManager;
         this.dataManager        = factory.dataManager;
         this.executionManager   = factory.executionManager;
-        //this.jobMap             = new HashMap<>();
         this.executor           = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
         netManager.addEventListener(PServerJobSubmissionEvent.PSERVER_JOB_SUBMISSION_EVENT, new PServerJobHandler());
@@ -78,14 +75,15 @@ public final class PServerNode extends EventDispatcher {
         public void handleEvent(final Event e) {
             final PServerJobSubmissionEvent jobSubmission = (PServerJobSubmissionEvent)e;
             LOG.info("Received job on instance " + "[" + infraManager.getNodeID() + "]" + jobSubmission.toString());
-            //jobMap.put(jobSubmission.jobUID, jobSubmission);
             jobStartBarrier = new CountDownLatch(1);
             jobEndBarrier   = new CountDownLatch(jobSubmission.perNodeParallelism);
-            executionManager.createExecutionContext(jobSubmission.jobUID, jobSubmission.perNodeParallelism);
 
             final Class<?> clazz = userCodeManager.implantClass(jobSubmission.byteCode);
 
             if (!JobExecutable.class.isAssignableFrom(clazz))
+                throw new IllegalStateException();
+
+            if (jobSubmission.perNodeParallelism > executionManager.getNumOfSlots())
                 throw new IllegalStateException();
 
             @SuppressWarnings("unchecked")
@@ -105,22 +103,22 @@ public final class PServerNode extends EventDispatcher {
                     executionManager
             );
 
-            dataManager.registerJob(jobContext.jobUID, jobContext);
+            executionManager.registerJob(jobContext.jobUID, jobContext);
 
             for (int i = 0; i < jobContext.numOfInstances; ++i) {
                 final int threadID = i;
                 executor.execute(() -> {
                     try {
                         final JobExecutable jobInvokeable = jobClass.newInstance();
-                        final InstanceContext instanceContext = new InstanceContext(
+                        final SlotContext slotContext = new SlotContext(
                                 jobContext,
                                 threadID,
                                 jobInvokeable
                         );
 
-                        dataManager.registerInstanceContext(instanceContext);
-                        jobContext.addInstance(instanceContext);
-                        jobInvokeable.injectContext(instanceContext);
+                        executionManager.registerSlotContext(slotContext);
+                        jobContext.addInstance(slotContext);
+                        jobInvokeable.injectContext(slotContext);
                         executeLifecycle(jobInvokeable);
 
                         if (threadID == 0) {
@@ -137,12 +135,11 @@ public final class PServerNode extends EventDispatcher {
                                     results
                             );
                             netManager.sendEvent(jobSubmission.clientMachine, jre);
-                            dataManager.unregisterJob(jobContext.jobUID);
-                            executionManager.deleteExecutionContext(jobSubmission.jobUID);
+                            executionManager.unregisterJob(jobContext.jobUID);
                         }
 
-                        jobContext.removeInstance(instanceContext);
-                        dataManager.unregisterInstanceContext();
+                        jobContext.removeInstance(slotContext);
+                        executionManager.unregisterSlotContext();
 
                     } catch (Exception ex) {
                         final PServerJobFailureEvent jfe = new PServerJobFailureEvent(
@@ -177,19 +174,19 @@ public final class PServerNode extends EventDispatcher {
     private void executeLifecycle(final JobExecutable job) {
         try {
 
-            if (job.instanceContext.instanceID == 0) {
+            if (job.slotContext.slotID == 0) {
 
-                LOG.info("Enter " + job.instanceContext.jobContext.simpleClassName + " prologue phase.");
+                LOG.info("Enter " + job.slotContext.jobContext.simpleClassName + " prologue phase.");
 
                 final long start = System.currentTimeMillis();
 
                 job.prologue();
 
-                dataManager.postProloguePhase(job.instanceContext);
+                dataManager.postProloguePhase(job.slotContext);
 
                 final long end = System.currentTimeMillis();
 
-                LOG.info("Leave " + job.instanceContext.jobContext.simpleClassName
+                LOG.info("Leave " + job.slotContext.jobContext.simpleClassName
                         + " prologue phase [duration: " + (end - start) + " ms].");
 
                 Thread.sleep(5000); // TODO: Not very elegant...
@@ -200,7 +197,7 @@ public final class PServerNode extends EventDispatcher {
             jobStartBarrier.await();
 
             {
-                LOG.info("Enter " + job.instanceContext.jobContext.simpleClassName + " computation phase.");
+                LOG.info("Enter " + job.slotContext.jobContext.simpleClassName + " computation phase.");
 
                 final long start = System.currentTimeMillis();
 
@@ -208,13 +205,13 @@ public final class PServerNode extends EventDispatcher {
 
                 final long end = System.currentTimeMillis();
 
-                LOG.info("Leave " + job.instanceContext.jobContext.simpleClassName +
+                LOG.info("Leave " + job.slotContext.jobContext.simpleClassName +
                         " computation phase [duration: " + (end - start) + " ms].");
             }
 
-            if (job.instanceContext.instanceID == 0) {
+            if (job.slotContext.slotID == 0) {
 
-                LOG.info("Enter " + job.instanceContext.jobContext.simpleClassName + " epilogue phase.");
+                LOG.info("Enter " + job.slotContext.jobContext.simpleClassName + " epilogue phase.");
 
                 final long start = System.currentTimeMillis();
 
@@ -222,7 +219,7 @@ public final class PServerNode extends EventDispatcher {
 
                 final long end = System.currentTimeMillis();
 
-                LOG.info("Leave " + job.instanceContext.jobContext.simpleClassName
+                LOG.info("Leave " + job.slotContext.jobContext.simpleClassName
                         + " epilogue phase [duration: " + (end - start) + " ms].");
             }
 

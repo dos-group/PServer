@@ -39,14 +39,14 @@ public final class ThreadedMatrixLoaderTestJob extends JobExecutable {
     private boolean isOwnPartition(int row, int col, int numNodes) {
         double numOfRowsPerInstance = (double) GenerateLocalTestData.ROWS_ROWCOLVAL_DATASET / numNodes;
         double partition = row / numOfRowsPerInstance;
-        return Utils.toInt((long) (partition % numNodes)) == instanceContext.jobContext.nodeID;
+        return Utils.toInt((long) (partition % numNodes)) == slotContext.jobContext.nodeID;
     }
 
     @Override
     public void compute() {
         final Matrix matrix = dataManager.getObject(FILE);
         Matrix.PartitionShape shape = new MatrixByRowPartitioner(
-                instanceContext.jobContext.nodeID,
+                slotContext.jobContext.nodeID,
                 NUM_NODES,
                 GenerateLocalTestData.ROWS_ROWCOLVAL_DATASET,
                 GenerateLocalTestData.COLS_ROWCOLVAL_DATASET
@@ -63,8 +63,8 @@ public final class ThreadedMatrixLoaderTestJob extends JobExecutable {
                 if(isOwnPartition(row, col, NUM_NODES)) {
                     double matrixVal = matrix.get(row % shape.getRows(), col % shape.getCols());
                     if(matrixVal != val) {
-                        //throw new RuntimeException(instanceContext.nodeID + ": matrix("+row+","+col+") is "+matrixVal+" but should be "+val);
-                        System.out.println(instanceContext.jobContext.nodeID + ": matrix("+row+" % "+shape.getRows()+","+col+" % "+shape.getCols()+") is "+matrixVal+" but should be "+val);
+                        //throw new RuntimeException(slotContext.nodeID + ": matrix("+row+","+col+") is "+matrixVal+" but should be "+val);
+                        System.out.println(slotContext.jobContext.nodeID + ": matrix("+row+" % "+shape.getRows()+","+col+" % "+shape.getCols()+") is "+matrixVal+" but should be "+val);
                     }
                 }
             }

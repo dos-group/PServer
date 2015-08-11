@@ -2,16 +2,17 @@ package de.tuberlin.pserver.dsl.controlflow.selection;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.dsl.controlflow.Body;
-import de.tuberlin.pserver.runtime.InstanceContext;
+import de.tuberlin.pserver.dsl.controlflow.CFStatement;
+import de.tuberlin.pserver.runtime.ExecutionManager;
+import de.tuberlin.pserver.runtime.SlotContext;
 
-
-public final class Selection {
+public final class Selection extends CFStatement {
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    private final InstanceContext instanceContext;
+    private final ExecutionManager exeManager;
 
     private int fromNodeID;
 
@@ -25,8 +26,11 @@ public final class Selection {
     // Constructor.
     // ---------------------------------------------------
 
-    public Selection(final InstanceContext instanceContext) {
-        this.instanceContext = Preconditions.checkNotNull(instanceContext);
+    public Selection(final SlotContext ic) {
+        super(ic);
+
+        exeManager = ic.jobContext.executionManager;
+
         allNodes();
         allInstances();
     }
@@ -43,7 +47,7 @@ public final class Selection {
 
     public Selection node(final int nodeID) { return node(nodeID, nodeID); }
 
-    public Selection allNodes() { return node(0, instanceContext.jobContext.numOfNodes - 1); }
+    public Selection allNodes() { return node(0, slotContext.jobContext.numOfNodes - 1); }
 
     // ---------------------------------------------------
     // Instance Selection.
@@ -57,7 +61,7 @@ public final class Selection {
 
     public Selection instance(final int instanceID) { return instance(instanceID, instanceID); }
 
-    public Selection allInstances() { return instance(0, instanceContext.jobContext.numOfInstances - 1); }
+    public Selection allInstances() { return instance(0, slotContext.jobContext.numOfInstances - 1); }
 
     // ---------------------------------------------------
     // Synchronization.
@@ -69,10 +73,26 @@ public final class Selection {
     // Execution.
     // ---------------------------------------------------
 
-    public void execute(final Body body) {
+    public void exe(final Body body) {
         Preconditions.checkNotNull(body);
-        if (inNodeRange() && inInstanceRange())
+        if (inNodeRange() && inInstanceRange()) {
+
+            final ExecutionManager.SlotAllocation sa = exeManager.allocSlots(fromInstanceID, toInstanceID);
+
+            enter();
+
+            long duration = System.currentTimeMillis();
+
             body.body();
+
+            duration = System.currentTimeMillis() - duration;
+
+            setProfilingData(new ProfilingData(duration));
+
+            leave();
+
+            exeManager.releaseSlots(sa);
+        }
     }
 
     // ---------------------------------------------------
@@ -80,12 +100,12 @@ public final class Selection {
     // ---------------------------------------------------
 
     private boolean inNodeRange() {
-        return instanceContext.jobContext.nodeID >= fromNodeID
-                && instanceContext.jobContext.nodeID <= toNodeID;
+        return slotContext.jobContext.nodeID >= fromNodeID
+                && slotContext.jobContext.nodeID <= toNodeID;
     }
 
     private boolean inInstanceRange() {
-        return instanceContext.instanceID >= fromInstanceID
-                && instanceContext.instanceID <= toInstanceID;
+        return slotContext.slotID >= fromInstanceID
+                && slotContext.slotID <= toInstanceID;
     }
 }

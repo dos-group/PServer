@@ -37,7 +37,7 @@ public class Utils {
     }
 
     public static double[] transposeBufferInplace(double[] data, int rows, int cols, Matrix.Layout layout) {
-        Preconditions.checkArgument(data.length   == rows*cols, "Can not transpose buffer: Invalid input length (%d). Must be equal to rows * cols (%d * %d = %d)", data.length, rows, cols, rows * cols);
+        Preconditions.checkArgument(data.length == rows * cols, "Can not transpose buffer: Invalid input length (%d). Must be equal to rows * cols (%d * %d = %d)", data.length, rows, cols, rows * cols);
         for(int i = 0; i < rows; i++) {
             for(int j = 0; j < cols; j++) {
                 double tmp = data[Utils.getPos(i, j, layout, rows, cols)];
@@ -56,8 +56,8 @@ public class Utils {
      */
     public static void checkShapeEqual(Vector A, Vector B) {
         if( ! (A.length() == B.length())) {
+            throw new IncompatibleShapeException("Required: A: m, B: m. Given: A: %d, B: %d", A.length(), B.length());
         }
-        throw new IncompatibleShapeException("Required: A: m, B: m. Given: A: %d, B: %d", A.length(), B.length());
     }
 
     /**
@@ -69,8 +69,8 @@ public class Utils {
      */
     public static void checkShapeEqual(Vector A, Vector B, Vector C) {
         if( ! (A.length() == B.length() && A.length() == C.length())) {
+            throw new IncompatibleShapeException("Required: A: m, B: m, C: m. Given: A: %d, B: %d, C: %d", A.length(), B.length(), C.length());
         }
-        throw new IncompatibleShapeException("Required: A: m, B: m, C: m. Given: A: %d, B: %d, C: %d", A.length(), B.length(), C.length());
     }
 
     /**

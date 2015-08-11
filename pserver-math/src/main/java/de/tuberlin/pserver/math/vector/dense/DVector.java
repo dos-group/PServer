@@ -234,5 +234,4 @@ public class DVector extends AbstractVector {
             sb.append("^T");
         return sb.toString();
     }
-
 }

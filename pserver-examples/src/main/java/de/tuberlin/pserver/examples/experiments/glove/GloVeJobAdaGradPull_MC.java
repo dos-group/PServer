@@ -122,12 +122,12 @@ public class GloVeJobAdaGradPull_MC extends JobExecutable {
         B       = dataManager.getObject("B");
         GradSqB = dataManager.getObject("GradSqB");
 
-        int numInstances = instanceContext.jobContext.numOfNodes;
+        int numInstances = slotContext.jobContext.numOfNodes;
 
-        int offset = (NUM_WORDS_IN_COOC_MATRIX / numInstances * instanceContext.jobContext.nodeID)
-                + (NUM_WORDS_IN_COOC_MATRIX / numInstances / instanceContext.jobContext.numOfInstances) * instanceContext.instanceID;
+        int offset = (NUM_WORDS_IN_COOC_MATRIX / numInstances * slotContext.jobContext.nodeID)
+                + (NUM_WORDS_IN_COOC_MATRIX / numInstances / slotContext.jobContext.numOfInstances) * slotContext.slotID;
 
-        final Matrix.RowIterator xIter = dataManager.createThreadPartitionedRowIterator(X);
+        final Matrix.RowIterator xIter = executionManager.parRowIterator(X);
 
         int epoch = 0;
 
@@ -195,7 +195,7 @@ public class GloVeJobAdaGradPull_MC extends JobExecutable {
             LOG.info("Iteration, Cost: " + (epoch - 1) + ", " + costI);
 
             // pull data from all other nodes after each iteration
-            if (instanceContext.instanceID == 0) {
+            if (slotContext.slotID == 0) {
                 dataManager.pullMerge(W, matrixMerger);
                 dataManager.pullMerge(GradSq, matrixMerger);
                 dataManager.pullMerge(B, vectorMerger);

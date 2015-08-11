@@ -36,12 +36,4 @@ public class ADMMOptimizer implements Optimizer {
     public Vector optimize(GeneralLinearModel model, Vector example) {
         return null;
     }
-
-    @Override
-    public void register() {
-    }
-
-    @Override
-    public void unregister() {
-    }
 }

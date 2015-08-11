@@ -2,43 +2,16 @@ package de.tuberlin.pserver.ml.optimization.SGD;
 
 
 import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
-import de.tuberlin.pserver.commons.json.GsonUtils;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.vector.Vector;
-import de.tuberlin.pserver.math.vector.dense.DVector;
 import de.tuberlin.pserver.ml.common.LabeledVector;
 import de.tuberlin.pserver.ml.models.GeneralLinearModel;
 import de.tuberlin.pserver.ml.optimization.*;
-import de.tuberlin.pserver.runtime.ExecutionManager;
-import de.tuberlin.pserver.runtime.InstanceContext;
+import de.tuberlin.pserver.runtime.SlotContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CyclicBarrier;
-
 public class SGDOptimizer implements Optimizer {
-
-    // ---------------------------------------------------
-    // Inner Classes.
-    // ---------------------------------------------------
-
-    // Keep the state of a single optimizer instance.
-    public static final class SGDOptimizerState {
-
-        private static Gson gson = GsonUtils.createPrettyPrintAndAnnotationExclusionGson();
-
-        public int threadID;
-
-        public int epoch;
-
-        public double alpha;
-
-        public Vector gradientSum;
-
-        @Override
-        public String toString() { return "\nSGDOptimizerState " + gson.toJson(this); }
-    }
 
     // ---------------------------------------------------
     // Constants.
@@ -63,7 +36,7 @@ public class SGDOptimizer implements Optimizer {
 
     //private int labelColumnIndex = -1;
 
-    private final InstanceContext ctx;
+    private final SlotContext ctx;
 
     private TYPE sgdType;
 
@@ -85,13 +58,11 @@ public class SGDOptimizer implements Optimizer {
 
     private boolean observerThreadSyncedModel;
 
-    private SGDOptimizerState state;
-
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
-    public SGDOptimizer(final InstanceContext ctx, final TYPE type, final boolean useLogging) {
+    public SGDOptimizer(final SlotContext ctx, final TYPE type, final boolean useLogging) {
 
         this.ctx = Preconditions.checkNotNull(ctx);
 
@@ -108,8 +79,6 @@ public class SGDOptimizer implements Optimizer {
         this.gradientStepFunction = new GradientStepFunction.SimpleGradientStep();
 
         this.decayFunction = new DecayFunction.SimpleDecay();
-
-        this.state = new SGDOptimizerState();
     }
 
     // ---------------------------------------------------
@@ -139,16 +108,6 @@ public class SGDOptimizer implements Optimizer {
         return null;
     }
 
-    @Override
-    public void register() {
-        ctx.jobContext.executionManager.registerAlgorithm(this.getClass(), state);
-    }
-
-    @Override
-    public void unregister() {
-        ctx.jobContext.executionManager.unregisterAlgorithm();
-    }
-
     // ---------------------------------------------------
 
     public SGDOptimizer setLearningRate(final double alpha) { this.alpha = alpha; return this; }
@@ -176,24 +135,11 @@ public class SGDOptimizer implements Optimizer {
 
     private GeneralLinearModel simple_sgd(final GeneralLinearModel model, final Matrix.RowIterator dataIterator) {
 
-        if (ctx.instanceID == 0) {
-            if (observerThreadSyncedModel) {
-                ctx.jobContext.executionManager.putJobScope("local-sgd-barrier",
-                        new CyclicBarrier(ctx.jobContext.numOfInstances, () -> updateObserver(model)));
-            }
-        }
-
-        state.threadID = ctx.instanceID;
-
-        state.alpha = alpha;
-
         final int numFeatures = (int)dataIterator.numCols() - 1;
-
-        state.gradientSum = new DVector(model.getWeights().length(), Vector.Layout.COLUMN_LAYOUT);
 
         model.startTraining();
 
-        for (state.epoch = 0; state.epoch < numIterations; ++state.epoch) {
+        for (int epoch = 0; epoch < numIterations; ++epoch) {
 
             while (dataIterator.hasNextRow()) {
 
@@ -210,27 +156,19 @@ public class SGDOptimizer implements Optimizer {
 
                 final Vector gradient = lossFunction.gradient(labeledVector, model.getWeights());
 
-                state.gradientSum.add(gradient);
+                //gradientSum.add(gradient);
 
                 model.updateModel(gradientStepFunction.takeStep(model.getWeights(), gradient, alpha));
             }
 
             if (decayFunction != null) {
-                state.alpha = decayFunction.decayLearningRate(state.epoch, alpha, state.alpha);
+                alpha = decayFunction.decayLearningRate(epoch, alpha, alpha);
             }
 
             dataIterator.reset();
 
-            if (observer != null && state.epoch % period == 0) {
-                if (observerThreadSyncedModel) {
-                    try {
-                        ((CyclicBarrier) ctx.jobContext.executionManager.getJobScope("local-sgd-barrier")).await();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                } else {
+            if (epoch % period == 0) {
                     updateObserver(model);
-                }
             }
         }
 
@@ -240,13 +178,10 @@ public class SGDOptimizer implements Optimizer {
     }
 
     private void updateObserver(final GeneralLinearModel model) {
-        if (ctx.instanceID == 0) {
-            ExecutionManager.ExecutionDescriptor[] descriptors
-                    = ctx.jobContext.executionManager.getExecutionDescriptors(ctx.jobContext.jobUID);
+        /*if (ctx.slotID == 0) {
             final Vector[] gradientSums = new Vector[ctx.jobContext.numOfInstances];
             for (int i = 0; i < ctx.jobContext.numOfInstances; ++i) {
-                final SGDOptimizerState state = (SGDOptimizerState)descriptors[i].stateObj;
-                gradientSums[i] = state.gradientSum;
+                gradientSums[i] = gradientSum;
                 state.gradientSum.assign(0.0);
                 if (useLogging) {
                     LOG.info(state.toString());
@@ -256,6 +191,6 @@ public class SGDOptimizer implements Optimizer {
                 LOG.info("++");
             }
             observer.update(state.epoch, model.getWeights(), null);
-        }
+        }*/
     }
 }

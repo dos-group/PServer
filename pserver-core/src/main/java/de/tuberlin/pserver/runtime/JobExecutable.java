@@ -18,13 +18,15 @@ public abstract class JobExecutable extends EventDispatcher {
 
     protected static final Logger LOG = LoggerFactory.getLogger(JobExecutable.class);
 
+    protected ExecutionManager executionManager;
+
     protected DataManager dataManager;
 
     protected ControlFlowFactory CF;
 
     protected DataFlowFactory DF;
 
-    public InstanceContext instanceContext;
+    public SlotContext slotContext;
 
     // ---------------------------------------------------
     // Constructors.
@@ -38,16 +40,17 @@ public abstract class JobExecutable extends EventDispatcher {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void injectContext(final InstanceContext ctx) {
-        instanceContext = Preconditions.checkNotNull(ctx);
+    public void injectContext(final SlotContext ctx) {
+        slotContext = Preconditions.checkNotNull(ctx);
+        executionManager = ctx.jobContext.executionManager;
         dataManager = ctx.jobContext.dataManager;
-        CF = new ControlFlowFactory(instanceContext);
-        DF = new DataFlowFactory(instanceContext);
+        CF = new ControlFlowFactory(slotContext);
+        DF = new DataFlowFactory(slotContext);
     }
 
     public void result(final Serializable... obj) {
-        if (instanceContext.instanceID == 0) {
-            dataManager.setResults(instanceContext.jobContext.jobUID, Arrays.asList(obj));
+        if (slotContext.slotID == 0) {
+            dataManager.setResults(slotContext.jobContext.jobUID, Arrays.asList(obj));
         }
     }
 

@@ -28,7 +28,7 @@ public class PullRequestPrimitiveTestJob extends JobExecutable {
                 e.printStackTrace();
             }
 
-            if (instanceContext.jobContext.nodeID == 0) {
+            if (slotContext.jobContext.nodeID == 0) {
 
                 final Object[] results = dataManager.pullRequest("pull-request-value");
 

@@ -28,7 +28,7 @@ public final class FileSystemTestJob extends JobExecutable {
 
         final DecimalFormat numberFormat = new DecimalFormat("###.###");
 
-        if (instanceContext.jobContext.nodeID == 0) {
+        if (slotContext.jobContext.nodeID == 0) {
             while (iter.hasNextRow()) {
                 iter.nextRow();
                 for (int i = 0; i < iter.numCols(); ++i) {

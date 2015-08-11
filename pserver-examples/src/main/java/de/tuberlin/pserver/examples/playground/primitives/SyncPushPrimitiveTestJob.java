@@ -33,9 +33,9 @@ public class SyncPushPrimitiveTestJob extends JobExecutable {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {}
 
-            localValue.set(instanceContext.jobContext.nodeID * 10.0);
+            localValue.set(slotContext.jobContext.nodeID * 10.0);
 
-            if (instanceContext.jobContext.nodeID != 0) {
+            if (slotContext.jobContext.nodeID != 0) {
 
                 dataManager.pushTo("localValue", localValue.get(), new int[] { 0 });
 

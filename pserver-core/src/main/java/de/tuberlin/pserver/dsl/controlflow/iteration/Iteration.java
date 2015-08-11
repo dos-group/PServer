@@ -1,10 +1,10 @@
 package de.tuberlin.pserver.dsl.controlflow.iteration;
 
-import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.dsl.controlflow.CFStatement;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.InstanceContext;
+import de.tuberlin.pserver.runtime.SlotContext;
 
-public final class Iteration {
+public final class Iteration extends CFStatement {
 
     // ---------------------------------------------------
     // Constants.
@@ -17,10 +17,25 @@ public final class Iteration {
     public static final int LOCAL   = 4;
 
     // ---------------------------------------------------
-    // Fields.
+    // Inner Classes.
     // ---------------------------------------------------
 
-    private final InstanceContext instanceContext;
+    public static final class IterationProfilingData extends ProfilingData {
+
+        public final long passDuration;
+
+        public final long syncDuration;
+
+        public IterationProfilingData(final long duration, final long passDuration, final long syncDuration) {
+            super(duration);
+            this.passDuration = passDuration;
+            this.syncDuration = syncDuration;
+        }
+    }
+
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
 
     private long epoch;
 
@@ -30,8 +45,8 @@ public final class Iteration {
     // Constructor.
     // ---------------------------------------------------
 
-    public Iteration(final InstanceContext instanceContext) {
-        this.instanceContext = Preconditions.checkNotNull(instanceContext);
+    public Iteration(final SlotContext ic) {
+        super(ic);
     }
 
     // ---------------------------------------------------
@@ -44,78 +59,74 @@ public final class Iteration {
     // Execution.
     // ---------------------------------------------------
 
-    public void execute(final IterationTermination t, final IterationBody b) {
+    public Iteration exe(final long n, final IterationBody b) { return exe(() -> !(epoch < n), b); }
 
+    public Iteration exe(final IterationTermination t, final IterationBody b) {
+
+        enter();
+
+        long duration, passDuration = 0, syncDuration = 0;
+
+        duration = System.currentTimeMillis();
+        
         while (!t.terminate()) {
 
+            long t0 = System.currentTimeMillis();
+            
             b.body(epoch);
 
+            long t1 = System.currentTimeMillis();
+            
             sync();
+
+            syncDuration += System.currentTimeMillis() - t1;
 
             ++epoch;
+
+            passDuration += System.currentTimeMillis() - t0;
         }
+
+        duration = System.currentTimeMillis() - duration;
+
+        setProfilingData(new IterationProfilingData(duration, passDuration / epoch, syncDuration / epoch));
+
+        leave();
+
+        return this;
     }
 
-    public void execute(final long n, final IterationBody b) {
+    // ---------------------------------------------------
 
-        for (epoch = 0; epoch < n; ++epoch) {
+    public Iteration parExe(final Matrix m, final RowMatrixIterationBody b) { return exe(makeParIterator(m), b); }
 
-            b.body(epoch);
-
-            sync();
-        }
+    public Iteration exe(final Matrix m, final RowMatrixIterationBody b) {
+        return exe(m.rowIterator(), b);
     }
 
-    public void executePartitioned(final Matrix m, final RowMatrixIterationBody b) {
-
-        final Matrix.RowIterator iter = instanceContext.jobContext.dataManager.createThreadPartitionedRowIterator(m);
-
-        while (iter.hasNextRow()) {
-
-            iter.nextRow();
-
-            b.body(iter);
-
-            sync();
-
-            ++epoch;
-        }
+    public Iteration exe(final Matrix.RowIterator ri, final RowMatrixIterationBody b) {
+        final IterationBody ib = (epoch) -> b.body(epoch, ri);
+        final IterationTermination it = () -> {
+                final boolean t = !ri.hasNextRow();
+                if (!t) ri.nextRow();
+                return t;
+        };
+        return exe(it, ib);
     }
 
-    public void execute(final Matrix m, final RowMatrixIterationBody b) {
+    // ---------------------------------------------------
 
-        final Matrix.RowIterator iter = m.rowIterator();
-
-        while (iter.hasNextRow()) {
-
-            iter.nextRow();
-
-            b.body(iter);
-
-            sync();
-
-            ++epoch;
-        }
+    private RowMatrixIterationBody toRowMatrixIB(final Matrix m, final MatrixElementIterationBody b) {
+        return (epoch, rit) -> {
+            for (long j = 0; j < m.numCols(); ++j)
+                b.body(epoch, epoch, j, rit.getValueOfColumn((int) j));
+        };
     }
 
-    public void execute(final Matrix m, final MatrixElementIterationBody b) {
+    public Iteration parExe(final Matrix m, final MatrixElementIterationBody b) { return parExe(m, toRowMatrixIB(m, b)); }
 
-        final Matrix.RowIterator iter = m.rowIterator();
+    public Iteration exe(final Matrix m, final MatrixElementIterationBody b) { return exe(m, toRowMatrixIB(m, b)); }
 
-        while (iter.hasNextRow()) {
-
-            iter.nextRow();
-
-            for (long j = 0; j < m.numCols(); ++j) {
-
-                b.body(epoch, j, iter.getValueOfColumn((int)j));
-            }
-
-            sync();
-
-            ++epoch;
-        }
-    }
+    // ---------------------------------------------------
 
     public long getEpoch() { return epoch; }
 
@@ -126,8 +137,12 @@ public final class Iteration {
     private void sync() {
         if (!((mode & ASYNC) == ASYNC))
             if ((mode & LOCAL) == LOCAL)
-                instanceContext.jobContext.dataManager.localSync();
-            if ((mode & GLOBAL) == GLOBAL && instanceContext.instanceID == 0)
-                instanceContext.jobContext.dataManager.globalSync();
+                slotContext.jobContext.executionManager.localSync();
+            if ((mode & GLOBAL) == GLOBAL && slotContext.slotID == 0)
+                slotContext.jobContext.executionManager.globalSync();
+    }
+
+    private Matrix.RowIterator makeParIterator(final Matrix m) {
+        return slotContext.jobContext.executionManager.parRowIterator(m);
     }
 }

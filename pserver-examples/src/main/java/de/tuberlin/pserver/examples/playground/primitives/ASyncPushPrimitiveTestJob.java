@@ -37,9 +37,9 @@ public class ASyncPushPrimitiveTestJob extends JobExecutable {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {}
 
-            localValue.set(instanceContext.jobContext.nodeID * 10.0);
+            localValue.set(slotContext.jobContext.nodeID * 10.0);
 
-            if (instanceContext.jobContext.nodeID != 0) {
+            if (slotContext.jobContext.nodeID != 0) {
 
                 dataManager.pushTo("localValue", localValue.get(), new int[] { 0 });
 
@@ -55,7 +55,7 @@ public class ASyncPushPrimitiveTestJob extends JobExecutable {
                 });
 
                 // active polling.
-                while (receiveCnt.get() != instanceContext.jobContext.numOfNodes - 1) {
+                while (receiveCnt.get() != slotContext.jobContext.numOfNodes - 1) {
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException e) {}

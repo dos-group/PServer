@@ -4,7 +4,7 @@ package de.tuberlin.pserver.ml.models;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
-import de.tuberlin.pserver.runtime.InstanceContext;
+import de.tuberlin.pserver.runtime.SlotContext;
 
 public class GeneralLinearModel extends Model<GeneralLinearModel> {
 
@@ -39,7 +39,7 @@ public class GeneralLinearModel extends Model<GeneralLinearModel> {
     // ---------------------------------------------------
 
     @Override
-    public void createModel(final InstanceContext ctx) {
+    public void createModel(final SlotContext ctx) {
         Preconditions.checkNotNull(ctx);
         Preconditions.checkArgument(length > 0);
 
@@ -53,7 +53,7 @@ public class GeneralLinearModel extends Model<GeneralLinearModel> {
     }
 
     @Override
-    public void fetchModel(final InstanceContext ctx) {
+    public void fetchModel(final SlotContext ctx) {
         Preconditions.checkNotNull(ctx);
         weights = ctx.jobContext.dataManager.getObject(name);
     }

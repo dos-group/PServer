@@ -122,8 +122,8 @@ public class GloVeJobAdaGradOriginalPull extends JobExecutable {
         GradSq = dataManager.getObject("GradSq");
         GradSqB = dataManager.getObject("GradSqB");
 
-        int numInstances = instanceContext.jobContext.numOfNodes;
-        int offset = NUM_WORDS_IN_COOC_MATRIX / numInstances * instanceContext.jobContext.nodeID;
+        int numInstances = slotContext.jobContext.numOfNodes;
+        int offset = NUM_WORDS_IN_COOC_MATRIX / numInstances * slotContext.jobContext.nodeID;
 
         int iterations = 0;
 

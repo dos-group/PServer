@@ -23,9 +23,9 @@ public final class ThreadedMatrixIterationTestJob extends JobExecutable {
 
         final Matrix data = dataManager.getObject("demo_dataset.csv");
 
-        final Matrix.RowIterator iter = dataManager.createThreadPartitionedRowIterator(data);
+        final Matrix.RowIterator iter = executionManager.parRowIterator(data);
 
-        if (instanceContext.jobContext.nodeID == 0 && instanceContext.instanceID == 1) {
+        if (slotContext.jobContext.nodeID == 0 && slotContext.slotID == 1) {
             final DecimalFormat numberFormat = new DecimalFormat("0.000");
             while (iter.hasNextRow()) {
                 iter.nextRow();

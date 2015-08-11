@@ -41,7 +41,7 @@ public final class AsyncSGDTestJob extends JobExecutable {
     @Override
     public void prologue() {
 
-        model.createModel(instanceContext);
+        model.createModel(slotContext);
 
         dataManager.loadAsMatrix("datasets/demo_dataset.csv", GenerateLocalTestData.ROWS_DEMO_DATASET, GenerateLocalTestData.COLS_DEMO_DATASET);
     }
@@ -57,7 +57,7 @@ public final class AsyncSGDTestJob extends JobExecutable {
 
         final PartialLossFunction partialLossFunction = new PartialLossFunction.SquareLoss();
 
-        final Optimizer optimizer = new SGDOptimizer(instanceContext, SGDOptimizer.TYPE.SGD_SIMPLE, false)
+        final Optimizer optimizer = new SGDOptimizer(slotContext, SGDOptimizer.TYPE.SGD_SIMPLE, false)
                 .setNumberOfIterations(300)
                 .setLearningRate(0.005)
                 .setLossFunction(new LossFunction.GenericLossFunction(predictionFunction, partialLossFunction))
@@ -65,9 +65,7 @@ public final class AsyncSGDTestJob extends JobExecutable {
                 .setLearningRateDecayFunction(null)
                 .setWeightsObserver(observer, 100, false);
 
-        optimizer.register();
         optimizer.optimize(model, trainingData.rowIterator());
-        optimizer.unregister();
 
         result(model.getWeights());
     }

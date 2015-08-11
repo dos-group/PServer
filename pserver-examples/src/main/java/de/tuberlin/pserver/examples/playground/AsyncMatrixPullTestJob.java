@@ -57,7 +57,7 @@ public final class AsyncMatrixPullTestJob extends JobExecutable {
        for (int i = 0; i < 9000; ++i) {
             randomUpdate(m);
             if (i % 1000 == 0)
-                instanceContext.jobContext.dataManager.pullMerge(m, merger);
+                slotContext.jobContext.dataManager.pullMerge(m, merger);
         }
     }
 

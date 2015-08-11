@@ -4,5 +4,5 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 
 public interface RowMatrixIterationBody {
 
-    public abstract void body(Matrix.RowIterator iter);
+    public abstract void body(final long epoch, final Matrix.RowIterator iter);
 }

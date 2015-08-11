@@ -3,7 +3,7 @@ package de.tuberlin.pserver.dsl.controlflow;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.dsl.controlflow.iteration.Iteration;
 import de.tuberlin.pserver.dsl.controlflow.selection.Selection;
-import de.tuberlin.pserver.runtime.InstanceContext;
+import de.tuberlin.pserver.runtime.SlotContext;
 
 public final class ControlFlowFactory {
 
@@ -11,25 +11,25 @@ public final class ControlFlowFactory {
     // Fields.
     // ---------------------------------------------------
 
-    private InstanceContext instanceContext;
+    private SlotContext slotContext;
 
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
-    public ControlFlowFactory(final InstanceContext instanceContext) {
-        this.instanceContext = Preconditions.checkNotNull(instanceContext);
+    public ControlFlowFactory(final SlotContext slotContext) {
+        this.slotContext = Preconditions.checkNotNull(slotContext);
     }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    public int numNodes() { return instanceContext.jobContext.numOfNodes; }
+    public int numNodes() { return slotContext.jobContext.numOfNodes; }
 
-    public int numInstances() { return instanceContext.jobContext.numOfInstances; }
+    public int numInstances() { return slotContext.jobContext.numOfInstances; }
 
-    public Iteration iterate() { return new Iteration(instanceContext); }
+    public Iteration iterate() { return new Iteration(slotContext); }
 
-    public Selection select() { return new Selection(instanceContext); }
+    public Selection select() {return new Selection(slotContext); }
 }

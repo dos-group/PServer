@@ -15,7 +15,6 @@ import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
 import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class GloVeJobAdaGradPull_MC_DSL_DELTA extends JobExecutable {
 
@@ -134,24 +133,24 @@ public class GloVeJobAdaGradPull_MC_DSL_DELTA extends JobExecutable {
         B       = dataManager.getObject("B");
         GradSqB = dataManager.getObject("GradSqB");
 
-        int offset = (NUM_WORDS_IN_COOC_MATRIX / instanceContext.jobContext.numOfNodes * instanceContext.jobContext.nodeID)
-                + (NUM_WORDS_IN_COOC_MATRIX / instanceContext.jobContext.numOfNodes / instanceContext.jobContext.numOfInstances)
-                * instanceContext.instanceID;
+        int offset = (NUM_WORDS_IN_COOC_MATRIX / slotContext.jobContext.numOfNodes * slotContext.jobContext.nodeID)
+                + (NUM_WORDS_IN_COOC_MATRIX / slotContext.jobContext.numOfNodes / slotContext.jobContext.numOfInstances)
+                * slotContext.slotID;
 
         CF.iterate()
                 .sync(Iteration.ASYNC)
-                .execute(NUM_EPOCHS, (epoch) -> {
+                .exe(NUM_EPOCHS, (epoch) -> {
 
                     LOG.info("Starting iteration " + epoch);
 
                     final MutableDouble costI = new MutableDouble(0.0);
 
                     CF.iterate()
-                            .executePartitioned(X, (xIter) ->
+                            .parExe(X, (e, xIter) ->
 
                                             CF.iterate()
                                                     .sync(Iteration.ASYNC)
-                                                    .execute(NUM_WORDS_IN_COOC_MATRIX, (col) -> {
+                                                    .exe(NUM_WORDS_IN_COOC_MATRIX, (col) -> {
 
                                                         long wordVecIdx = offset + xIter.getCurrentRowNum();
                                                         long ctxVecIdx = col + NUM_WORDS_IN_COOC_MATRIX;
@@ -198,7 +197,7 @@ public class GloVeJobAdaGradPull_MC_DSL_DELTA extends JobExecutable {
 
                     CF.select()
                             .instance(0)
-                            .execute(() -> {
+                            .exe(() -> {
                                 dataManager.pullMerge(W, matrixMerger);
                                 dataManager.pullMerge(GradSq, matrixMerger);
                                 dataManager.pullMerge(B, vectorMerger);
@@ -206,7 +205,7 @@ public class GloVeJobAdaGradPull_MC_DSL_DELTA extends JobExecutable {
                             });
 
 
-                    int deltaSize = deltaExtractor.extractDeltas(instanceContext.jobContext.numOfInstances, instanceContext.instanceID).getMiddle();
+                    int deltaSize = deltaExtractor.extractDeltas(slotContext.jobContext.numOfInstances, slotContext.slotID).getMiddle();
 
                     System.out.println("delta(W) => " + (((double) deltaSize / (VEC_DIM * NUM_WORDS_IN_COOC_MATRIX * 2.0 * Double.BYTES)) * 100.0) + " %");
 
