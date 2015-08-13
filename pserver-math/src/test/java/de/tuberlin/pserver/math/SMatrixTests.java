@@ -18,8 +18,8 @@ public class SMatrixTests {
             rows = 1 + random.nextInt(500);
             cols = 1 + random.nextInt(500);
             double[] data = BufferGenerator.SparseRandomValues(rows, cols, 0.9);
-            for (Matrix.Layout srcLayout : Matrix.Layout.values()) {
-                for (Matrix.Layout targetLayout : Matrix.Layout.values()) {
+            for (Layout srcLayout : Layout.values()) {
+                for (Layout targetLayout : Layout.values()) {
                     DMatrix dMat = new DMatrix(rows, cols, data, srcLayout);
                     SMatrix sMat = SMatrix.fromDMatrix(dMat, targetLayout);
                     TestUtils.checkValues(dMat, sMat);

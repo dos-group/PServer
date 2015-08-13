@@ -15,7 +15,7 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 public final class AsyncSGDTestJob extends MLProgram {
-
+/*
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
@@ -74,7 +74,7 @@ public final class AsyncSGDTestJob extends MLProgram {
     // Private Methods.
     // ---------------------------------------------------
 
-    /*private List<Pair<Integer,Double>> gradientUpdate(final Vector gradient, final Vector gradientSums, final double updateThreshold) {
+    private List<Pair<Integer,Double>> gradientUpdate(final Vector gradient, final Vector gradientSums, final double updateThreshold) {
         final List<Pair<Integer,Double>> gradientUpdates = new ArrayList<>();
         for (int i = 0; i < gradient.length(); ++i) {
             boolean updatedGradient = Math.abs((gradientSums.get(i) - gradient.get(i)) / gradient.get(i)) > updateThreshold;
@@ -85,7 +85,7 @@ public final class AsyncSGDTestJob extends MLProgram {
                 gradientSums.set(i, gradientSums.get(i) + gradient.get(i));
         }
         return gradientUpdates;
-    }*/
+    }
 
     // ---------------------------------------------------
     // Entry Point.
@@ -110,5 +110,5 @@ public final class AsyncSGDTestJob extends MLProgram {
                         }
                 )
         );
-    }
+    }*/
 }

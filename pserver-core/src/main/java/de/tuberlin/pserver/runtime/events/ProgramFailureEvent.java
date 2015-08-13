@@ -57,7 +57,7 @@ public final class ProgramFailureEvent extends NetEvents.NetEvent {
         this.nodeID         = nodeID;
         this.slotID         = slotID;
         this.programName    = Preconditions.checkNotNull(programName);
-        this.stackTrace     = ExceptionUtils.getStackTrace(Preconditions.checkNotNull(exception));
+        this.stackTrace     = ExceptionUtils.getStackTrace(exception);
     }
 
     // ---------------------------------------------------

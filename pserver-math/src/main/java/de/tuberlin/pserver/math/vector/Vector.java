@@ -1,5 +1,7 @@
 package de.tuberlin.pserver.math.vector;
 
+import de.tuberlin.pserver.math.Format;
+import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.exceptions.IncompatibleShapeException;
 import de.tuberlin.pserver.math.operations.ApplyOnDoubleElements;
@@ -9,24 +11,6 @@ import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
 
 public interface Vector extends SharedObject, ApplyOnDoubleElements<Vector> {
-
-    // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    enum Format {
-
-        SPARSE_VECTOR,
-
-        DENSE_VECTOR
-    }
-
-    enum Layout {
-
-        ROW_LAYOUT,
-
-        COLUMN_LAYOUT
-    }
 
     // ---------------------------------------------------
     // Methods.

@@ -1,5 +1,6 @@
 package de.tuberlin.pserver.math.matrix;
 
+import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.exceptions.IncompatibleShapeException;
 import de.tuberlin.pserver.math.exceptions.SingularMatrixException;
@@ -13,24 +14,6 @@ import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
-
-    // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    enum Format {
-
-        SPARSE_MATRIX,
-
-        DENSE_MATRIX
-    }
-
-    enum Layout {
-
-        ROW_LAYOUT,
-
-        COLUMN_LAYOUT
-    }
 
     // ---------------------------------------------------
     // Inner Interfaces/Classes.
@@ -78,24 +61,6 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
 
         double apply(long row, long col, double element);
 
-    }
-
-    class Test implements UnaryOperator<Double> {
-
-        @Override
-        public Double apply(Double aDouble) {
-            return null;
-        }
-
-        @Override
-        public <V> Function<V, Double> compose(Function<? super V, ? extends Double> before) {
-            return null;
-        }
-
-        @Override
-        public <V> Function<Double, V> andThen(Function<? super Double, ? extends V> after) {
-            return null;
-        }
     }
 
     class PartitionShape {

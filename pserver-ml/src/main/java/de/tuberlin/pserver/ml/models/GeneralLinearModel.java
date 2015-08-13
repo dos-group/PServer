@@ -2,6 +2,8 @@ package de.tuberlin.pserver.ml.models;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.math.Format;
+import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
 import de.tuberlin.pserver.runtime.SlotContext;
@@ -45,8 +47,8 @@ public class GeneralLinearModel extends Model<GeneralLinearModel> {
 
         Vector weights = new VectorBuilder()
                 .dimension(length)
-                .format(Vector.Format.DENSE_VECTOR)
-                .layout(Vector.Layout.COLUMN_LAYOUT)
+                .format(Format.DENSE_FORMAT)
+                .layout(Layout.COLUMN_LAYOUT)
                 .build();
 
         ctx.programContext.runtimeContext.dataManager.putObject(name, weights);

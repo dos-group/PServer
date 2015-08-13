@@ -2,6 +2,7 @@ package de.tuberlin.pserver.runtime.dht.types.experimental;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
 
 import java.io.Serializable;
@@ -69,7 +70,7 @@ public class DistributedMatrix {
 
     private final Partitioning partitioning;
 
-    private final Matrix.Layout layout;
+    private final Layout layout;
 
     // ---------------------------------------------------
     // Constructor.
@@ -77,7 +78,7 @@ public class DistributedMatrix {
 
     public DistributedMatrix(final long rows, final long cols,
                              final Partitioning partitioning,
-                             final Matrix.Layout layout) {
+                             final Layout layout) {
 
         Preconditions.checkArgument(rows >= 0);
         Preconditions.checkArgument(cols >= 0);
@@ -200,7 +201,7 @@ public class DistributedMatrix {
 
     public static void main(final String[] args) {
 
-        final DistributedMatrix dm = new DistributedMatrix(10000, 10000, Partitioning.BLOCK_PARTITIONING, Matrix.Layout.ROW_LAYOUT);
+        final DistributedMatrix dm = new DistributedMatrix(10000, 10000, Partitioning.BLOCK_PARTITIONING, Layout.ROW_LAYOUT);
 
         final MatrixDescriptor[] descriptors = dm.computePartitions(2, 2);
 

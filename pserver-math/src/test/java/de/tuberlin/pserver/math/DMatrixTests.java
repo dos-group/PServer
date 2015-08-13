@@ -13,9 +13,9 @@ public class DMatrixTests {
     public void testMemoryLayoutGetAndSet() {
         int rows = 10;
         int cols = 15;
-        Matrix matRowLayout = MatrixGenerator.RandomDMatrix(rows, cols, Matrix.Layout.ROW_LAYOUT);
+        Matrix matRowLayout = MatrixGenerator.RandomDMatrix(rows, cols, Layout.ROW_LAYOUT);
         double[] dataRowLayout = matRowLayout.toArray();
-        Matrix matColumnLayout = MatrixGenerator.RandomDMatrix(rows, cols, Matrix.Layout.COLUMN_LAYOUT);
+        Matrix matColumnLayout = MatrixGenerator.RandomDMatrix(rows, cols, Layout.COLUMN_LAYOUT);
         double[] dataColumnLayout = matColumnLayout.toArray();
         for(int i = 0; i < rows; i++) {
             for(int j = 0; j < cols; j++) {
@@ -45,9 +45,9 @@ public class DMatrixTests {
     public void testViews() {
         int rows = 10;
         int cols = 15;
-        Matrix matRowLayout = MatrixGenerator.RandomDMatrix(rows, cols, Matrix.Layout.ROW_LAYOUT);
+        Matrix matRowLayout = MatrixGenerator.RandomDMatrix(rows, cols, Layout.ROW_LAYOUT);
         double[] dataRowLayout = matRowLayout.toArray();
-        Matrix matColumnLayout = MatrixGenerator.RandomDMatrix(rows, cols, Matrix.Layout.COLUMN_LAYOUT);
+        Matrix matColumnLayout = MatrixGenerator.RandomDMatrix(rows, cols, Layout.COLUMN_LAYOUT);
         double[] dataColumnLayout = matColumnLayout.toArray();
         for(int i = 0; i < rows; i++) {
             // naive case: get rows from rows-layout
@@ -83,10 +83,10 @@ public class DMatrixTests {
     public void testAssigns() {
         int rows = 10;
         int cols = 15;
-        Matrix matRowLayout = MatrixGenerator.RandomDMatrix(rows, cols, Matrix.Layout.ROW_LAYOUT);
+        Matrix matRowLayout = MatrixGenerator.RandomDMatrix(rows, cols, Layout.ROW_LAYOUT);
         checkRowColumnAssigns(rows, cols, matRowLayout);
         checkUniAndMatrixAssign(rows, cols, matRowLayout);
-        Matrix matColumnLayout = MatrixGenerator.RandomDMatrix(rows, cols, Matrix.Layout.COLUMN_LAYOUT);
+        Matrix matColumnLayout = MatrixGenerator.RandomDMatrix(rows, cols, Layout.COLUMN_LAYOUT);
         checkRowColumnAssigns(rows, cols, matColumnLayout);
         checkUniAndMatrixAssign(rows, cols, matColumnLayout);
     }

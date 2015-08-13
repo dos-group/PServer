@@ -1,5 +1,6 @@
 package de.tuberlin.pserver.ml.optimization;
 
+import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.dense.DVector;
 import de.tuberlin.pserver.ml.common.LabeledVector;
@@ -51,7 +52,7 @@ public interface LossFunction {
 
             double lossDerivative = partialLossFunction.derivative(prediction, v.label);
 
-            Vector gradient = new DVector((DVector)v.vector, Vector.Layout.COLUMN_LAYOUT); // predictionFunction.gradient(v.vector, weights)
+            Vector gradient = new DVector((DVector)v.vector, Layout.COLUMN_LAYOUT); // predictionFunction.gradient(v.vector, weights)
 
             gradient.mul(lossDerivative);
 

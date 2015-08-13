@@ -15,7 +15,7 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 public final class AsyncHogwildSGDTestJob extends MLProgram {
-
+/*
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
@@ -94,5 +94,5 @@ public final class AsyncHogwildSGDTestJob extends MLProgram {
                         }
                 )
         );
-    }
+    }*/
 }

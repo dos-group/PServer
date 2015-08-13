@@ -1,5 +1,6 @@
 package de.tuberlin.pserver.math.generators;
 
+import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.dense.DVector;
 
@@ -11,10 +12,10 @@ public class VectorGenerator {
 
     public static Vector RandomDVector(long size) {
         double[] data = BufferGenerator.RandomValues(size);
-        return new DVector(size, data, Vector.Layout.COLUMN_LAYOUT);
+        return new DVector(size, data, Layout.COLUMN_LAYOUT);
     }
 
-    public static Vector RandomDVector(long size, Vector.Layout type) {
+    public static Vector RandomDVector(long size, Layout type) {
         double[] data = BufferGenerator.RandomValues(size);
         return new DVector(size, data, type);
     }
@@ -24,14 +25,14 @@ public class VectorGenerator {
     }
 
     public static Vector RandomSVector(long size, double sparsity) {
-        return RandomSVector(size, Vector.Layout.COLUMN_LAYOUT, sparsity);
+        return RandomSVector(size, Layout.COLUMN_LAYOUT, sparsity);
     }
 
-    public static Vector RandomSVector(long size, Vector.Layout type) {
+    public static Vector RandomSVector(long size, Layout type) {
         return RandomSVector(size, type, 0.9);
     }
 
-    public static Vector RandomSVector(long size, Vector.Layout type, double sparsity) {
+    public static Vector RandomSVector(long size, Layout type, double sparsity) {
         double[] data = BufferGenerator.SparseRandomValues(size, sparsity);
         return new DVector(size, data, type);
     }

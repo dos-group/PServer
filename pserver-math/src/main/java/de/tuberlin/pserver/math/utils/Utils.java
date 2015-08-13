@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.math.utils;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.exceptions.IncompatibleShapeException;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.vector.Vector;
@@ -13,7 +14,7 @@ public class Utils {
         return getPos(row, col, mat.getLayout(), mat.numRows(), mat.numCols());
     }
 
-    public static int getPos(final long row, final long col, Matrix.Layout layout, long numRows, long numCols) {
+    public static int getPos(final long row, final long col, Layout layout, long numRows, long numCols) {
         switch (layout) {
             case ROW_LAYOUT: return toInt(row * numCols + col);
             case COLUMN_LAYOUT: return toInt(col * numRows + row);
@@ -36,7 +37,7 @@ public class Utils {
         return val > target - eps && val < target + eps;
     }
 
-    public static double[] transposeBufferInplace(double[] data, int rows, int cols, Matrix.Layout layout) {
+    public static double[] transposeBufferInplace(double[] data, int rows, int cols, Layout layout) {
         Preconditions.checkArgument(data.length == rows * cols, "Can not transpose buffer: Invalid input length (%d). Must be equal to rows * cols (%d * %d = %d)", data.length, rows, cols, rows * cols);
         for(int i = 0; i < rows; i++) {
             for(int j = 0; j < cols; j++) {

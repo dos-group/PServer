@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.math.matrix.dense;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
 import de.tuberlin.pserver.math.delegates.MathLibFactory;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
@@ -118,12 +119,12 @@ public class DMatrix extends AbstractMatrix implements Serializable {
 
     // Copy Constructor.
     public DMatrix(final de.tuberlin.pserver.math.vector.Vector m) {
-        super(m.layout() == de.tuberlin.pserver.math.vector.Vector.Layout.COLUMN_LAYOUT ?
+        super(m.layout() == Layout.COLUMN_LAYOUT ?
                 1 : m.length(),
-              m.layout() == de.tuberlin.pserver.math.vector.Vector.Layout.COLUMN_LAYOUT ?
+              m.layout() == Layout.COLUMN_LAYOUT ?
                 m.length() : 1,
-              m.layout() == de.tuberlin.pserver.math.vector.Vector.Layout.COLUMN_LAYOUT ?
-                Matrix.Layout.COLUMN_LAYOUT : Matrix.Layout.ROW_LAYOUT);
+              m.layout() == Layout.COLUMN_LAYOUT ?
+                Layout.COLUMN_LAYOUT : Layout.ROW_LAYOUT);
 
         final double[] md = m.toArray();
         this.data = new double[md.length];
@@ -137,8 +138,8 @@ public class DMatrix extends AbstractMatrix implements Serializable {
         System.arraycopy(m.data, 0, this.data, 0, m.data.length);
     }
 
-    public DMatrix(final long rows, final long cols) { this(rows, cols, null, Matrix.Layout.ROW_LAYOUT); }
-    public DMatrix(final long rows, final long cols, final double[] data) { this(rows, cols, data, Matrix.Layout.ROW_LAYOUT); }
+    public DMatrix(final long rows, final long cols) { this(rows, cols, null, Layout.ROW_LAYOUT); }
+    public DMatrix(final long rows, final long cols, final double[] data) { this(rows, cols, data, Layout.ROW_LAYOUT); }
     public DMatrix(final long rows, final long cols, final double[] data, final Layout layout) {
         super(rows, cols, layout);
         this.data = (data == null) ? new double[(int)(rows * cols)] : Preconditions.checkNotNull(data);

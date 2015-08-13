@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -45,10 +44,6 @@ public final class PServerNode extends EventDispatcher {
 
     private final RuntimeContext runtimeContext;
 
-    private CountDownLatch jobStartBarrier = null;
-
-    private CountDownLatch jobEndBarrier = null;
-
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
@@ -65,6 +60,7 @@ public final class PServerNode extends EventDispatcher {
         this.executor           = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
         this.runtimeContext = new RuntimeContext(
+                machine,
                 infraManager.getMachines().size(),
                 executionManager.getNumOfSlots(),
                 infraManager.getNodeID(),
@@ -87,8 +83,6 @@ public final class PServerNode extends EventDispatcher {
         public void handleEvent(final Event e) {
             final ProgramSubmissionEvent programSubmission = (ProgramSubmissionEvent)e;
             LOG.info("Received job on instance " + "[" + infraManager.getNodeID() + "]" + programSubmission.toString());
-            jobStartBarrier = new CountDownLatch(1);
-            jobEndBarrier   = new CountDownLatch(programSubmission.perNodeDOP);
 
             final Class<?> clazz = userCodeManager.implantClass(programSubmission.byteCode);
 
@@ -111,13 +105,17 @@ public final class PServerNode extends EventDispatcher {
                     programSubmission.perNodeDOP
             );
 
+            LOG.info(programContext.toString());
+
             executionManager.registerJob(programContext.programID, programContext);
 
             for (int i = 0; i < programContext.perNodeDOP; ++i) {
                 final int threadID = i;
                 executor.execute(() -> {
                     try {
+
                         final MLProgram programInvokeable = programClass.newInstance();
+
                         final SlotContext slotContext = new SlotContext(
                                 programContext,
                                 threadID,
@@ -126,24 +124,25 @@ public final class PServerNode extends EventDispatcher {
 
                         executionManager.registerSlotContext(slotContext);
                         programContext.addSlot(slotContext);
-                        programInvokeable.injectContext(slotContext);
-                        executeLifecycle(programInvokeable);
 
-                        if (threadID == 0) {
-                            try {
-                                jobEndBarrier.await();
-                            } catch (InterruptedException ie) {
-                                LOG.error(ie.getMessage());
-                            }
-                            final List<Serializable> results = dataManager.getResults(programSubmission.programID);
+                        programInvokeable.injectContext(slotContext);
+
+                        programInvokeable.run();
+
+                        if (slotContext.slotID == 0) {
+
+                            final List<Serializable> results = dataManager.getResults(slotContext.programContext.programID);
+
                             final ProgramResultEvent jre = new ProgramResultEvent(
-                                    machine,
-                                    infraManager.getNodeID(),
-                                    programSubmission.programID,
+                                    slotContext.programContext.runtimeContext.machine,
+                                    slotContext.programContext.runtimeContext.nodeID,
+                                    slotContext.programContext.programID,
                                     results
                             );
-                            netManager.sendEvent(programSubmission.clientMachine, jre);
-                            executionManager.unregisterJob(programContext.programID);
+
+                            slotContext.programContext.runtimeContext.netManager.sendEvent(slotContext.programContext.clientMachine, jre);
+
+                            executionManager.unregisterJob(slotContext.programContext.programID);
                         }
 
                         programContext.removeSlot(slotContext);
@@ -179,7 +178,7 @@ public final class PServerNode extends EventDispatcher {
     // Private Methods.
     // ---------------------------------------------------
 
-    private void executeLifecycle(final MLProgram program) {
+    /*private void executeLifecycle(final MLProgram program) {
         try {
 
             if (program.slotContext.slotID == 0) {
@@ -236,5 +235,5 @@ public final class PServerNode extends EventDispatcher {
         } catch (Throwable t) {
             throw new IllegalStateException(t);
         }
-    }
+    }*/
 }

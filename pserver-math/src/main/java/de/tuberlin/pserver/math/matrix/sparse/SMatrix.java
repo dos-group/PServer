@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.math.matrix.sparse;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
 import de.tuberlin.pserver.math.delegates.MathLibFactory;
 import de.tuberlin.pserver.math.delegates.sparse.mtj.MTJUtils;
@@ -34,7 +35,7 @@ public class SMatrix extends AbstractMatrix {
     // ---------------------------------------------------
 
     public SMatrix() {
-        super(0, 0, Matrix.Layout.ROW_LAYOUT);
+        super(0, 0, Layout.ROW_LAYOUT);
     }
 
     public SMatrix(no.uib.cipr.matrix.Matrix mat, Layout layout) {
@@ -275,12 +276,12 @@ public class SMatrix extends AbstractMatrix {
 
         @Override
         public Vector getAsVector() {
-            return getAsVector(0, Utils.toInt(target.numCols()), new SVector(target.numCols(), Vector.Layout.COLUMN_LAYOUT));
+            return getAsVector(0, Utils.toInt(target.numCols()), new SVector(target.numCols(), Layout.COLUMN_LAYOUT));
         }
 
         @Override
         public Vector getAsVector(int from, int size) {
-            return getAsVector(from, size, new SVector(size, Vector.Layout.COLUMN_LAYOUT));
+            return getAsVector(from, size, new SVector(size, Layout.COLUMN_LAYOUT));
         }
     }
 }

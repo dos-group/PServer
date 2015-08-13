@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.math.vector;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.utils.Utils;
 
 import java.util.Iterator;

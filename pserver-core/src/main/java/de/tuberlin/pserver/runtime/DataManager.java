@@ -11,8 +11,9 @@ import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
+import de.tuberlin.pserver.math.Format;
+import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.SharedObject;
-import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.dht.DHTKey;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
 import de.tuberlin.pserver.runtime.dht.DHTObject;
@@ -192,31 +193,31 @@ public class DataManager extends EventDispatcher {
     // DATA LOADING
     // ---------------------------------------------------
 
-    public void loadAsMatrix(final String filePath, long rows, long cols) {
+    public void loadAsMatrix(final String filePath, final String name, long rows, long cols) {
 
-        loadAsMatrix(filePath, rows, cols, RecordFormat.DEFAULT, Matrix.Format.DENSE_MATRIX, Matrix.Layout.ROW_LAYOUT,
+        loadAsMatrix(filePath, name,  rows, cols, RecordFormat.DEFAULT, Format.DENSE_FORMAT, Layout.ROW_LAYOUT,
                 new MatrixByRowPartitioner(nodeID, nodeIDs.length, rows, cols));
     }
 
-    public void loadAsMatrix(final String filePath, long rows, long cols, RecordFormat recordFormat) {
+    public void loadAsMatrix(final String filePath, final String name, long rows, long cols, RecordFormat recordFormat) {
 
-        loadAsMatrix(filePath, rows, cols, recordFormat, Matrix.Format.DENSE_MATRIX, Matrix.Layout.ROW_LAYOUT,
+        loadAsMatrix(filePath, name, rows, cols, recordFormat, Format.DENSE_FORMAT, Layout.ROW_LAYOUT,
                 new MatrixByRowPartitioner(nodeID, nodeIDs.length, rows, cols));
     }
 
-    public void loadAsMatrix(final String filePath, long rows, long cols, RecordFormat recordFormat,
-                             Matrix.Format matrixFormat, Matrix.Layout matrixLayout) {
+    public void loadAsMatrix(final String filePath, final String name, long rows, long cols, RecordFormat recordFormat,
+                             Format matrixFormat, Layout matrixLayout) {
 
-        loadAsMatrix(filePath, rows, cols, recordFormat, matrixFormat, matrixLayout,
+        loadAsMatrix(filePath, name, rows, cols, recordFormat, matrixFormat, matrixLayout,
                 new MatrixByRowPartitioner(nodeID, nodeIDs.length, rows, cols));
     }
 
-    public void loadAsMatrix(final String filePath, long rows, long cols, RecordFormat recordFormat,
-                             Matrix.Format matrixFormat, Matrix.Layout matrixLayout,
+    public void loadAsMatrix(final String filePath, final String name, long rows, long cols, RecordFormat recordFormat,
+                             Format matrixFormat, Layout matrixLayout,
                              IMatrixPartitioner matrixPartitioner) {
 
         final SlotContext slotContext = executionManager.getSlotContext();
-        matrixPartitionManager.load(filePath, rows, cols, recordFormat, matrixFormat, matrixLayout, matrixPartitioner, slotContext.programContext);
+        matrixPartitionManager.load(filePath, name, rows, cols, recordFormat, matrixFormat, matrixLayout, matrixPartitioner, slotContext.programContext);
     }
 
     // ---------------------------------------------------
@@ -456,7 +457,7 @@ public class DataManager extends EventDispatcher {
         return resultObjects.get(jobUID);
     }
 
-    public void loadInputData(final SlotContext ctx) {
+    public void loadInputData(final SlotContext ctx) throws Exception{
         Preconditions.checkNotNull(ctx);
         if (fileSystemManager != null) {
             if (ctx.slotID == 0) {

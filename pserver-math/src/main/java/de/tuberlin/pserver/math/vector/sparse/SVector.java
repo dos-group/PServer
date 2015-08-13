@@ -1,6 +1,8 @@
 package de.tuberlin.pserver.math.vector.sparse;
 
 
+import de.tuberlin.pserver.math.Format;
+import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.delegates.LibraryVectorOps;
 import de.tuberlin.pserver.math.delegates.MathLibFactory;
 import de.tuberlin.pserver.math.utils.Utils;
@@ -31,7 +33,7 @@ public class SVector extends AbstractVector {
     }
 
     @Override public Format format() {
-        return Format.SPARSE_VECTOR;
+        return Format.SPARSE_FORMAT;
     }
 
     @Override

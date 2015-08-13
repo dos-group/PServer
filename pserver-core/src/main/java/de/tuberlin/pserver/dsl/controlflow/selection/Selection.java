@@ -32,7 +32,7 @@ public final class Selection extends CFStatement {
         exeManager = ic.programContext.runtimeContext.executionManager;
 
         allNodes();
-        allInstances();
+        allSlots();
     }
 
     // ---------------------------------------------------
@@ -53,15 +53,15 @@ public final class Selection extends CFStatement {
     // Instance Selection.
     // ---------------------------------------------------
 
-    public Selection instance(final int fromInstanceID, final int toInstanceID) {
+    public Selection slot(final int fromInstanceID, final int toInstanceID) {
         this.fromInstanceID = fromInstanceID;
         this.toInstanceID = toInstanceID;
         return this;
     }
 
-    public Selection instance(final int instanceID) { return instance(instanceID, instanceID); }
+    public Selection slot(final int instanceID) { return slot(instanceID, instanceID); }
 
-    public Selection allInstances() { return instance(0, slotContext.programContext.perNodeDOP - 1); }
+    public Selection allSlots() { return slot(0, slotContext.programContext.perNodeDOP - 1); }
 
     // ---------------------------------------------------
     // Synchronization.
@@ -73,7 +73,7 @@ public final class Selection extends CFStatement {
     // Execution.
     // ---------------------------------------------------
 
-    public void exe(final Body body) {
+    public void exe(final Body body) throws Exception {
         Preconditions.checkNotNull(body);
         if (inNodeRange() && inInstanceRange()) {
 

@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.math.matrix;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.utils.*;
 import de.tuberlin.pserver.math.vector.Vector;
 import org.slf4j.Logger;

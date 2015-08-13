@@ -59,9 +59,9 @@ public final class Iteration extends CFStatement {
     // Execution.
     // ---------------------------------------------------
 
-    public Iteration exe(final long n, final IterationBody b) { return exe(() -> !(epoch < n), b); }
+    public Iteration exe(final long n, final IterationBody b) throws Exception { return exe(() -> !(epoch < n), b); }
 
-    public Iteration exe(final IterationTermination t, final IterationBody b) {
+    public Iteration exe(final IterationTermination t, final IterationBody b) throws Exception {
 
         enter();
 
@@ -97,13 +97,13 @@ public final class Iteration extends CFStatement {
 
     // ---------------------------------------------------
 
-    public Iteration parExe(final Matrix m, final RowMatrixIterationBody b) { return exe(makeParIterator(m), b); }
+    public Iteration parExe(final Matrix m, final RowMatrixIterationBody b) throws Exception { return exe(makeParIterator(m), b); }
 
-    public Iteration exe(final Matrix m, final RowMatrixIterationBody b) {
+    public Iteration exe(final Matrix m, final RowMatrixIterationBody b)throws Exception {
         return exe(m.rowIterator(), b);
     }
 
-    public Iteration exe(final Matrix.RowIterator ri, final RowMatrixIterationBody b) {
+    public Iteration exe(final Matrix.RowIterator ri, final RowMatrixIterationBody b) throws Exception {
         final IterationBody ib = (epoch) -> b.body(epoch, ri);
         final IterationTermination it = () -> {
                 final boolean t = !ri.hasNextRow();
@@ -115,16 +115,16 @@ public final class Iteration extends CFStatement {
 
     // ---------------------------------------------------
 
-    private RowMatrixIterationBody toRowMatrixIB(final Matrix m, final MatrixElementIterationBody b) {
+    private RowMatrixIterationBody toRowMatrixIB(final Matrix m, final MatrixElementIterationBody b) throws Exception {
         return (epoch, rit) -> {
             for (long j = 0; j < m.numCols(); ++j)
                 b.body(epoch, epoch, j, rit.getValueOfColumn((int) j));
         };
     }
 
-    public Iteration parExe(final Matrix m, final MatrixElementIterationBody b) { return parExe(m, toRowMatrixIB(m, b)); }
+    public Iteration parExe(final Matrix m, final MatrixElementIterationBody b) throws Exception { return parExe(m, toRowMatrixIB(m, b)); }
 
-    public Iteration exe(final Matrix m, final MatrixElementIterationBody b) { return exe(m, toRowMatrixIB(m, b)); }
+    public Iteration exe(final Matrix m, final MatrixElementIterationBody b) throws Exception { return exe(m, toRowMatrixIB(m, b)); }
 
     // ---------------------------------------------------
 

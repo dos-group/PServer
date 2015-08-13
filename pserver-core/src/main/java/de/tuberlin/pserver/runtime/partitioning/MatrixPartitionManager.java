@@ -7,6 +7,8 @@ import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
+import de.tuberlin.pserver.math.Format;
+import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.runtime.DataManager;
@@ -19,6 +21,9 @@ import de.tuberlin.pserver.runtime.partitioning.mtxentries.ImmutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,19 +40,22 @@ public final class MatrixPartitionManager {
 
     private class MatrixLoadTask {
 
+
+        final String name;
         final FileDataIterator fileIterator;
         final RecordFormat recordFormat;
         final long rows;
         final long cols;
-        final Matrix.Format matrixFormat;
-        final Matrix.Layout matrixLayout;
+        final Format matrixFormat;
+        final Layout matrixLayout;
         final IMatrixPartitioner matrixPartitioner;
 
-        public MatrixLoadTask(String filePath, RecordFormat recordFormat, long rows, long cols,
-                              Matrix.Format matrixFormat, Matrix.Layout matrixLayout,
+        public MatrixLoadTask(String filePath, String name, RecordFormat recordFormat, long rows, long cols,
+                              Format matrixFormat, Layout matrixLayout,
                               IMatrixPartitioner matrixPartitioner) {
 
             this.fileIterator = fileSystemManager.createFileIterator(filePath, recordFormat);
+            this.name = name;
             this.recordFormat = recordFormat;
             this.rows = rows;
             this.cols = cols;
@@ -135,6 +143,8 @@ public final class MatrixPartitionManager {
     // Fields.
     // ---------------------------------------------------
 
+    private static final Logger LOG = LoggerFactory.getLogger(MatrixPartitionManager.class);
+
     private final IConfig config;
 
     private final InfrastructureManager infraManager;
@@ -184,25 +194,28 @@ public final class MatrixPartitionManager {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void load(final String filePath, long rows, long cols,
+    public void load(final String filePath,
+                     final String name,
+                     final long rows, final long cols,
                      final RecordFormat recordFormat,
-                     final Matrix.Format matrixFormat,
-                     final Matrix.Layout matrixLayout,
+                     final Format matrixFormat,
+                     final Layout matrixLayout,
                      final IMatrixPartitioner matrixPartitioner,
                      final MLProgramContext programContext) {
 
-        matrixLoadTasks.put(filePath, new MatrixLoadTask(filePath, recordFormat, rows, cols,
+        matrixLoadTasks.put(filePath, new MatrixLoadTask(filePath, name, recordFormat, rows, cols,
                 matrixFormat, matrixLayout, matrixPartitioner));
         fileLoadingBarrier.put(filePath, new AtomicInteger(programContext.nodeDOP));
     }
 
-    public void loadFilesIntoDHT() {
+    public void loadFilesIntoDHT() throws Exception {
         finishedLoadingLatch = new CountDownLatch(matrixLoadTasks.size());
         // prepare to read entries that belong to foreign matrix partitions
         Map<Integer, List<MatrixEntry>> foreignEntries = new HashMap<Integer, List<MatrixEntry>>(); // data structure to hold foreign entries
         int foreignEntriesThreshold = 2048; // threshold that indicates how many entries are gathered before sending
         // iterate through load tasks
         for (final MatrixLoadTask task : matrixLoadTasks.values()) {
+            //final MatrixLoadTask task = en.getValue();
             // preallocate local matrix partition
             Matrix matrix = getLoadingMatrix(task);
             // iterate through records in file
@@ -241,25 +254,24 @@ public final class MatrixPartitionManager {
                     } // </entries in record iteration
                 }
             } // </records in file iteration>>
+
             // send all remaining foreign entries
             for (Map.Entry<Integer, List<MatrixEntry>> map : foreignEntries.entrySet()) {
                 sendPartition(map.getKey(), map.getValue(), task);
             }
+
             netManager.broadcastEvent(new MatrixPartitionManager.FinishedLoadingFileEvent(fileIterator.getFilePath()));
+
             nodeFinishedProcessingSplit(fileIterator.getFilePath());
         }
-        try {
-            finishedLoadingLatch.await();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        finishedLoadingLatch.await();
     }
 
     // ---------------------------------------------------
     // Private Methods.
     // ---------------------------------------------------
 
-    private Matrix getLoadingMatrix(MatrixLoadTask task) {
+    private Matrix getLoadingMatrix(final MatrixLoadTask task) {
         synchronized (loadingMatrices) {
             String name = task.fileIterator.getFilePath();
             Matrix matrix = loadingMatrices.get(name);
@@ -271,6 +283,7 @@ public final class MatrixPartitionManager {
                         .format(task.matrixFormat)
                         .layout(task.matrixLayout)
                         .build();
+
                 loadingMatrices.put(name, matrix);
             }
             return matrix;

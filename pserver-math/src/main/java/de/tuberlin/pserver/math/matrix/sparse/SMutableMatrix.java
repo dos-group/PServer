@@ -1,5 +1,6 @@
 package de.tuberlin.pserver.math.matrix.sparse;
 
+import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
@@ -205,7 +206,7 @@ public class SMutableMatrix extends AbstractMatrix {
             if(from < 0 || size > numCols()) {
                 throw new IllegalArgumentException();
             }
-            DVector rowVec = new DVector(size, Vector.Layout.ROW_LAYOUT);
+            DVector rowVec = new DVector(size, Layout.ROW_LAYOUT);
             for(long col = from; col < size; col++) {
                 double val = target.get(currentRow, col);
                 rowVec.set(col, val);

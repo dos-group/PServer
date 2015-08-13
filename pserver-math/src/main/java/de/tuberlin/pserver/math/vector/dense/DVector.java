@@ -2,14 +2,14 @@ package de.tuberlin.pserver.math.vector.dense;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.AbstractIterator;
+import de.tuberlin.pserver.math.Format;
+import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.delegates.LibraryVectorOps;
 import de.tuberlin.pserver.math.delegates.MathLibFactory;
-import de.tuberlin.pserver.math.utils.PlusMult;
 import de.tuberlin.pserver.math.utils.Utils;
 import de.tuberlin.pserver.math.vector.AbstractVector;
 import de.tuberlin.pserver.math.vector.Vector;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.DoubleBinaryOperator;
@@ -157,7 +157,7 @@ public class DVector extends AbstractVector {
 
     @Override public Layout layout() { return type; }
 
-    @Override public Format format() { return Format.DENSE_VECTOR; }
+    @Override public Format format() { return Format.DENSE_FORMAT; }
 
     @Override public void setOwner(final Object owner) { this.owner = owner; }
 
