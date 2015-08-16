@@ -24,7 +24,7 @@ public final class SlotContext {
                        final MLProgram programInvokeable) {
 
         this.programContext     = Preconditions.checkNotNull(programContext);
-        this.slotID             = Preconditions.checkNotNull(slotID);
+        this.slotID             = slotID;
         this.programInvokeable  = Preconditions.checkNotNull(programInvokeable);
     }
 }

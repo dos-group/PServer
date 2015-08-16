@@ -11,6 +11,7 @@ import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
+import de.tuberlin.pserver.dsl.state.GlobalScope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.SharedObject;
@@ -21,9 +22,8 @@ import de.tuberlin.pserver.runtime.dht.types.AbstractBufferedDHTObject;
 import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
-import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
-import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.MatrixPartitionManager;
+import de.tuberlin.pserver.types.PartitionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,17 +35,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class DataManager extends EventDispatcher {
-
-    // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    public static enum CallType {
-
-        SYNC,
-
-        ASYNC
-    }
 
     // ---------------------------------------------------
     // Inner Classes.
@@ -150,14 +139,7 @@ public class DataManager extends EventDispatcher {
         this.dht                = Preconditions.checkNotNull(dht);
         this.nodeID             = infraManager.getNodeID();
         this.resultObjects      = new HashMap<>();
-
-        this.matrixPartitionManager = new MatrixPartitionManager(
-                config,
-                infraManager,
-                netManager,
-                fileSystemManager,
-                this
-        );
+        this.matrixPartitionManager = new MatrixPartitionManager(netManager, fileSystemManager, this);
 
         this.nodeIDs = IntStream.iterate(0, x -> x + 1).limit(infraManager.getMachines().size()).toArray();
         int numOfRemoteWorkers = infraManager.getMachines().size() - 1;
@@ -193,31 +175,29 @@ public class DataManager extends EventDispatcher {
     // DATA LOADING
     // ---------------------------------------------------
 
-    public void loadAsMatrix(final String filePath, final String name, long rows, long cols) {
+    public void loadAsMatrix(final SlotContext slotContext,
+                             final String filePath,
+                             final String name,
+                             final long rows,
+                             final long cols,
+                             final GlobalScope globalScope,
+                             final PartitionType partitionType,
+                             final RecordFormat recordFormat,
+                             final Format matrixFormat,
+                             final Layout matrixLayout) {
 
-        loadAsMatrix(filePath, name,  rows, cols, RecordFormat.DEFAULT, Format.DENSE_FORMAT, Layout.ROW_LAYOUT,
-                new MatrixByRowPartitioner(nodeID, nodeIDs.length, rows, cols));
-    }
-
-    public void loadAsMatrix(final String filePath, final String name, long rows, long cols, RecordFormat recordFormat) {
-
-        loadAsMatrix(filePath, name, rows, cols, recordFormat, Format.DENSE_FORMAT, Layout.ROW_LAYOUT,
-                new MatrixByRowPartitioner(nodeID, nodeIDs.length, rows, cols));
-    }
-
-    public void loadAsMatrix(final String filePath, final String name, long rows, long cols, RecordFormat recordFormat,
-                             Format matrixFormat, Layout matrixLayout) {
-
-        loadAsMatrix(filePath, name, rows, cols, recordFormat, matrixFormat, matrixLayout,
-                new MatrixByRowPartitioner(nodeID, nodeIDs.length, rows, cols));
-    }
-
-    public void loadAsMatrix(final String filePath, final String name, long rows, long cols, RecordFormat recordFormat,
-                             Format matrixFormat, Layout matrixLayout,
-                             IMatrixPartitioner matrixPartitioner) {
-
-        final SlotContext slotContext = executionManager.getSlotContext();
-        matrixPartitionManager.load(filePath, name, rows, cols, recordFormat, matrixFormat, matrixLayout, matrixPartitioner, slotContext.programContext);
+        matrixPartitionManager.load(
+                slotContext,
+                filePath,
+                name,
+                rows,
+                cols,
+                globalScope,
+                partitionType,
+                recordFormat,
+                matrixFormat,
+                matrixLayout
+        );
     }
 
     // ---------------------------------------------------
@@ -273,12 +253,12 @@ public class DataManager extends EventDispatcher {
         // remote nodes.
         netManager.sendEvent(remoteNodeIDs, event);
         // local nodes.
-        netManager.dispatchEvent(event);
+        //netManager.dispatchEvent(event);
     }
 
-    public void awaitEvent(final CallType type, final String name, final DataEventHandler handler) {
+    public void awaitEvent(final ExecutionManager.CallType type, final String name, final DataEventHandler handler) {
         awaitEvent(type, remoteNodeIDs.length, name, handler); }
-    public void awaitEvent(final CallType type, final int n, final String name, final DataEventHandler handler) {
+    public void awaitEvent(final ExecutionManager.CallType type, final int n, final String name, final DataEventHandler handler) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(handler);
@@ -287,7 +267,7 @@ public class DataManager extends EventDispatcher {
         handler.setRemoveAfterAwait(true);
         handler.initLatch(n);
         netManager.addEventListener(PUSH_EVENT_PREFIX + name, handler);
-        if (type == CallType.SYNC) {
+        if (type == ExecutionManager.CallType.SYNC) {
             try {
                 handler.getLatch().await();
             } catch (InterruptedException e) {
@@ -461,7 +441,6 @@ public class DataManager extends EventDispatcher {
         Preconditions.checkNotNull(ctx);
         if (fileSystemManager != null) {
             if (ctx.slotID == 0) {
-                fileSystemManager.computeInputSplitsForRegisteredFiles();
                 matrixPartitionManager.loadFilesIntoDHT();
             }
         }

@@ -171,9 +171,9 @@ public class DistributedMatrix {
                                 final long col,
                                 final MatrixDescriptor descriptor) {
         switch (partitioning) {
-            case ROW_PARTITIONING:    return (row * cols + col);
-            case COLUMN_PARTITIONING: return (col * rows + row);
-            case BLOCK_PARTITIONING:  {
+            case ROW_PARTITIONED:    return (row * cols + col);
+            case COLUMN_PARTITIONED: return (col * rows + row);
+            case BLOCK_PARTITIONED:  {
                 final int row_length = descriptor.partitionRows;
                 final int col_length = descriptor.partitionCols;
                 final int row_blocks = descriptor.numHorizontalBlocks;

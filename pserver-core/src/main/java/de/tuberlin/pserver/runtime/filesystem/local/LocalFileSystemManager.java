@@ -9,6 +9,7 @@ import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
+import de.tuberlin.pserver.types.PartitionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,7 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
     private final Map<String,ILocalInputFile<?>> inputFileMap;
 
-    private final Map<String,List<FileDataIterator<?>>> registeredIteratorMap;
+    private final Map<String,List<FileDataIterator<? extends IRecord>>> registeredIteratorMap;
 
     // ---------------------------------------------------
     // Constructors.
@@ -54,6 +55,23 @@ public final class LocalFileSystemManager implements FileSystemManager {
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath,
+                                                                      final RecordFormat recordFormat,
+                                                                      final PartitionType partitionType) {
+
+        ILocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
+        if (inputFile == null) {
+            inputFile = new LocalInputFile(filePath, recordFormat, partitionType);
+            inputFileMap.put(filePath, inputFile);
+            registeredIteratorMap.put(filePath, new ArrayList<>());
+        }
+        final FileDataIterator<T> fileIterator = (FileDataIterator<T>)inputFile.iterator();
+        registeredIteratorMap.get(filePath).add(fileIterator);
+        return fileIterator;
+    }
 
     @Override
     public void computeInputSplitsForRegisteredFiles() {
@@ -99,19 +117,5 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
         netManager.removeEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler);
         LOG.debug("Input splits are computed.");
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath, final RecordFormat recordFormat) {
-        ILocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
-        if (inputFile == null) {
-            inputFile = new LocalInputFile(filePath, recordFormat);
-            inputFileMap.put(filePath, inputFile);
-            registeredIteratorMap.put(filePath, new ArrayList<>());
-        }
-        final FileDataIterator<T> fileIterator = (FileDataIterator<T>)inputFile.iterator();
-        registeredIteratorMap.get(filePath).add(fileIterator);
-        return fileIterator;
     }
 }

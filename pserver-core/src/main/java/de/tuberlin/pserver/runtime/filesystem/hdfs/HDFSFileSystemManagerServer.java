@@ -11,6 +11,7 @@ import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
+import de.tuberlin.pserver.types.PartitionType;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
@@ -33,7 +34,7 @@ public final class HDFSFileSystemManagerServer implements FileSystemManager, Inp
 
     private final Map<UUID, InputSplitAssigner> inputSplitAssignerMap;
 
-    private final Map<String,List<FileDataIterator<?>>> registeredIteratorMap;
+    private final Map<String,List<FileDataIterator<? extends IRecord>>> registeredIteratorMap;
 
     private final Map<String,HDFSInputFile> inputFileMap;
 
@@ -87,7 +88,9 @@ public final class HDFSFileSystemManagerServer implements FileSystemManager, Inp
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath, final RecordFormat recordFormat) {
+    public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath,
+                                                                      final RecordFormat recordFormat,
+                                                                      final PartitionType partitionType) {
         HDFSInputFile inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
         if (inputFile == null) {
             inputFile = new HDFSInputFile(config, netManager, filePath, recordFormat);

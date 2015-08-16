@@ -1,0 +1,66 @@
+
+perplexity: Double
+
+X: Matrix(n, d) <- Input File Data [REPLICATED]
+
+Y: Matrix(n, w) [REPLICATE]
+
+initialization {
+
+    Y <- Random Init
+
+}
+
+process_1 {
+
+    DX: Matrix(n / numNodes, n)  <- Dist(X, nodeID)
+
+    P: Matrix(n / numNodes, n) <- BinarySearch(DX, perplexity)
+
+    _PT <- globalOperation(Sync, P::transpose, Partitioned)
+
+    P = P.add(_PT);
+
+    _p <- globalOperation(P::sum)
+
+    P = P.scale(1 / sumP);
+
+    .
+    .
+    . Local Computation
+    .
+    .
+
+    iteration(SYNC) {
+
+
+        DY: Matrix(n / numNodes, n)  <- Dist(Y, nodeID)
+
+        N <- ....
+
+
+
+        _n <- globalOperation(Sync, N::sum)
+
+        Q: Matrix(n / numNodes, n) <- ....
+
+        .
+        .
+        . Local Computation
+        .
+        .
+
+        pullFuse(Y, (n / numNodes, w), different partitions from all nodes)
+    }
+}
+
+
+
+
+
+
+
+
+
+
+

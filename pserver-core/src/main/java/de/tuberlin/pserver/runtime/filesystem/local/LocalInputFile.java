@@ -5,10 +5,9 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
+import de.tuberlin.pserver.types.PartitionType;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -22,24 +21,26 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
     // Fields.
     // ---------------------------------------------------
 
-    private static final Logger LOG = LoggerFactory.getLogger(LocalInputFile.class);
-
     private final String filePath;
 
     private final RecordFormat format;
 
-    private final LocalCSVFileSection csvFileSection;
+    private final LocalFileSection csvFileSection;
 
-    public LocalInputFile(final String filePath) {
-        this(filePath, RecordFormat.DEFAULT);
-    }
+    private final PartitionType partitionType;
 
-    public LocalInputFile(final String filePath, RecordFormat format) {
-        Preconditions.checkNotNull(filePath);
-        Preconditions.checkNotNull(format);
-        this.filePath = filePath;
-        this.format   = format;
-        this.csvFileSection = new LocalCSVFileSection();
+    // ---------------------------------------------------
+    // Constructor.
+    // ---------------------------------------------------
+
+    public LocalInputFile(final String filePath,
+                          final RecordFormat format,
+                          final PartitionType partitionType) {
+
+        this.filePath       = Preconditions.checkNotNull(filePath);
+        this.format         = Preconditions.checkNotNull(format);
+        this.partitionType  = Preconditions.checkNotNull(partitionType);
+        this.csvFileSection = new LocalFileSection();
     }
 
     // ---------------------------------------------------
@@ -49,24 +50,33 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
     @Override
     public void computeLocalFileSection(final int numNodes, final int nodeID) {
         final long totalLines = getNumberOfLines();
-        final long numLinesPerSection = totalLines / numNodes;
-        final long linesToRead = (nodeID == (numNodes - 1)) ?
-                numLinesPerSection + (totalLines % numLinesPerSection) : numLinesPerSection;
         try {
-            final long blockLineOffset = numLinesPerSection * nodeID;
-            BufferedReader br = new BufferedReader(new FileReader(filePath));
-            int eolcc = getLineEndingCharCount(br);
-            br.close();
-            br = new BufferedReader(new FileReader(filePath));
-            long startOffset = 0;
-            for (int i = 0; i < totalLines; ++i) {
-                if (i < blockLineOffset)
-                    startOffset += br.readLine().length() + eolcc;
-                else
+            switch(partitionType) {
+                case NOT_PARTITIONED:
+                    csvFileSection.set(totalLines, totalLines, 0, totalLines);
                     break;
+                case ROW_PARTITIONED: {
+                    final long numLinesPerSection = totalLines / numNodes;
+                    final long linesToRead = (nodeID == (numNodes - 1)) ?
+                            numLinesPerSection + (totalLines % numLinesPerSection) : numLinesPerSection;
+                    final long blockLineOffset = numLinesPerSection * nodeID;
+                    BufferedReader br = new BufferedReader(new FileReader(filePath));
+                    int eolcc = getLineEndingCharCount(br);
+                    br.close();
+                    br = new BufferedReader(new FileReader(filePath));
+                    long startOffset = 0;
+                    for (int i = 0; i < totalLines; ++i) {
+                        if (i < blockLineOffset)
+                            startOffset += br.readLine().length() + eolcc;
+                        else
+                            break;
+                    }
+                    br.close();
+                    csvFileSection.set(totalLines, linesToRead, startOffset, blockLineOffset);
+                } break;
+                case COLUMN_PARTITIONED: throw new UnsupportedOperationException();
+                case BLOCK_PARTITIONED: throw new UnsupportedOperationException();
             }
-            br.close();
-            csvFileSection.set(totalLines, linesToRead, startOffset, blockLineOffset);
         } catch (IOException ioe) {
             throw new IllegalStateException(ioe);
         }
@@ -95,7 +105,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
     // Inner Classes.
     // ---------------------------------------------------
 
-    private class LocalCSVFileSection {
+    private class LocalFileSection {
 
         public long totalLines  = 0;
 
@@ -155,13 +165,13 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
         private final Iterator<CSVRecord> csvIterator;
 
-        private final LocalCSVFileSection csvFileSection;
+        private final LocalFileSection csvFileSection;
 
         private long currentLine = 0;
 
         // ---------------------------------------------------
 
-        public CSVFileDataIterator(final LocalCSVFileSection csvFileSection) {
+        public CSVFileDataIterator(final LocalFileSection csvFileSection) {
             try {
 
                 this.csvFileSection = Preconditions.checkNotNull(csvFileSection);
@@ -180,8 +190,10 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
         @Override
         public void initialize() {
             try {
-                Preconditions.checkState(csvFileSection != null);
-                fileReader.skip(csvFileSection.startOffset);
+                if (csvFileSection != null)
+                    fileReader.skip(csvFileSection.startOffset);
+                else
+                    throw new IllegalStateException();
             } catch(Exception e) {
                 throw new IllegalStateException(e);
             }
@@ -201,12 +213,12 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
             return hasNext;
         }
 
-        IRecord reusable = format.getRecordFactory().wrap(null, null, -1);
+        IRecord reusableRecord = format.getRecordFactory().wrap(null, null, -1);
 
         @Override
         public IRecord next() {
             final CSVRecord record = csvIterator.next();
-            return reusable.set(record, format.getProjection(), csvFileSection.blockLineOffset + currentLine++);
+            return reusableRecord.set(record, format.getProjection(), csvFileSection.blockLineOffset + currentLine++);
         }
 
         // ---------------------------------------------------
@@ -222,5 +234,4 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
             }
         }
     }
-
 }

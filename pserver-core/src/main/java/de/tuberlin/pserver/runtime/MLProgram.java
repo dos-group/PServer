@@ -4,7 +4,8 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.events.EventDispatcher;
 import de.tuberlin.pserver.dsl.controlflow.ControlFlowFactory;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.dsl.controlflow.program.State;
+import de.tuberlin.pserver.dsl.state.State;
+import de.tuberlin.pserver.dsl.state.StateDeclaration;
 import de.tuberlin.pserver.dsl.dataflow.DataFlowFactory;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
@@ -15,6 +16,8 @@ import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
+import de.tuberlin.pserver.types.DistributedMatrix;
+import de.tuberlin.pserver.types.PartitionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,48 +29,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public abstract class MLProgram extends EventDispatcher {
-
-    // ---------------------------------------------------
-    // Inner Classes.
-    // ---------------------------------------------------
-
-    public static final class StateDeclaration {
-
-        public final String name;
-
-        public final Class<?>  stateType;
-
-        public final int scope;
-
-        public final long rows;
-
-        public final long cols;
-
-        public final Layout layout;
-
-        public final Format format;
-
-        public final String path;
-
-        public StateDeclaration(final String name,
-                                final Class<?>  stateType,
-                                final int scope,
-                                final long rows,
-                                final long cols,
-                                final Layout layout,
-                                final Format format,
-                                final String path) {
-
-            this.name       = name;
-            this.stateType  = stateType;
-            this.scope      = scope;
-            this.rows       = rows;
-            this.cols       = cols;
-            this.layout     = layout;
-            this.format     = format;
-            this.path       = path;
-        }
-    }
 
     // ---------------------------------------------------
     // Fields.
@@ -134,7 +95,7 @@ public abstract class MLProgram extends EventDispatcher {
 
         define(program);
 
-        final List<StateDeclaration> stateDecls  = analyzeStateDecls(this.getClass());
+        final List<StateDeclaration> stateDecls  = extractStateDeclarations(this.getClass());
 
         program.enter();
 
@@ -232,7 +193,7 @@ public abstract class MLProgram extends EventDispatcher {
     // State-Management.
     // ---------------------------------------------------
 
-    private List<StateDeclaration> analyzeStateDecls(final Class<? extends MLProgram> programClass) {
+    private List<StateDeclaration> extractStateDeclarations(final Class<? extends MLProgram> programClass) {
         Preconditions.checkNotNull(programClass);
         final List<StateDeclaration> decls = new ArrayList<>();
         for (final Field field : programClass.getDeclaredFields()) {
@@ -242,7 +203,9 @@ public abstract class MLProgram extends EventDispatcher {
                     final StateDeclaration decl = new StateDeclaration(
                             field.getName(),
                             field.getType(),
-                            properties.scope(),
+                            properties.localScope(),
+                            properties.globalScope(),
+                            properties.partitionType(),
                             properties.rows(),
                             properties.cols(),
                             properties.layout(),
@@ -259,47 +222,74 @@ public abstract class MLProgram extends EventDispatcher {
     private void createStateObjects(final List<StateDeclaration> stateDecls) {
         Preconditions.checkNotNull(stateDecls);
         for (final StateDeclaration decl : stateDecls) {
-
-            if (decl.scope == State.REPLICATED) {
-                final SharedObject so = newSharedObject(decl);
-                dataManager.putObject(decl.name, so);
-            }
-
-            if (decl.scope == State.PARTITIONED_INPUT) {
-                if (decl.path.equals(""))
+            if (decl.stateType == Matrix.class) {
+                switch (decl.globalScope) {
+                    case REPLICATED: {
+                        if ("".equals(decl.path)) {
+                            final SharedObject so = new MatrixBuilder()
+                                    .dimension(decl.rows, decl.cols)
+                                    .format(decl.format)
+                                    .layout(decl.layout)
+                                    .build();
+                            dataManager.putObject(decl.name, so);
+                        } else {
+                            dataManager.loadAsMatrix(
+                                    slotContext,
+                                    decl.path,
+                                    decl.name,
+                                    decl.rows,
+                                    decl.cols,
+                                    decl.globalScope,
+                                    decl.partitionType,
+                                    decl.format == Format.SPARSE_FORMAT
+                                            ? RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD)
+                                            : RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROW_RECORD),
+                                    decl.format,
+                                    decl.layout
+                            );
+                        }
+                    } break;
+                    case PARTITIONED: {
+                        final SharedObject so = new DistributedMatrix(
+                                slotContext,
+                                decl.rows, decl.cols,
+                                PartitionType.ROW_PARTITIONED,
+                                decl.layout,
+                                decl.format
+                        );
+                        dataManager.putObject(decl.name, so);
+                    } break;
+                    default:
+                        throw new UnsupportedOperationException();
+                }
+            } else if (decl.stateType == Vector.class) {
+                if (!"".equals(decl.path))
                     throw new IllegalStateException();
-                dataManager.loadAsMatrix(decl.path, decl.name, decl.rows, decl.cols,
-                        decl.format == Format.SPARSE_FORMAT
-                                ? RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD)
-                                : RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROW_RECORD),
-                        decl.format,
-                        decl.layout);
-            }
+                switch (decl.globalScope) {
+                    case REPLICATED: {
+                        final SharedObject so = new VectorBuilder()
+                                .dimension(decl.layout == Layout.ROW_LAYOUT ? decl.cols : decl.rows)
+                                .format(decl.format)
+                                .layout(decl.layout)
+                                .build();
+
+                        dataManager.putObject(decl.name, so);
+                    } break;
+                    case PARTITIONED: throw new UnsupportedOperationException();
+                    default: throw new UnsupportedOperationException();
+                }
+            } else
+                throw new UnsupportedOperationException();
         }
     }
 
-    private SharedObject newSharedObject(final StateDeclaration decl) {
-        if (decl.stateType == Matrix.class) {
-            return new MatrixBuilder()
-                    .dimension(decl.rows, decl.cols)
-                    .format(decl.format)
-                    .layout(decl.layout)
-                    .build();
-        } else if (decl.stateType == Vector.class) {
-            return new VectorBuilder()
-                    .dimension(decl.layout == Layout.ROW_LAYOUT ? decl.cols : decl.rows)
-                    .format(decl.format)
-                    .layout(decl.layout)
-                    .build();
-        }
-        throw new IllegalStateException();
-    }
-
-    private void fetchState(final Class<? extends MLProgram> programClass, final MLProgram program, final List<StateDeclaration> decls) {
+    private void fetchState(final Class<? extends MLProgram> programClass,
+                            final MLProgram program,
+                            final List<StateDeclaration> decls) {
         try {
             for (final StateDeclaration decl : decls) {
                 final Field f = programClass.getDeclaredField(decl.name);
-                f.set(program, dataManager.getObject(decl.path.equals("") ? decl.name : decl.path));
+                f.set(program, dataManager.getObject(decl.name));
 
                 LOG.info("Fetch object '" + decl.name + "'.");
             }

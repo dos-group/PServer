@@ -9,15 +9,9 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.*;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.dense.DVector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.Random;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.DoubleBinaryOperator;
-import java.util.function.DoubleUnaryOperator;
 
 public class DMatrix extends AbstractMatrix implements Serializable {
 
@@ -59,7 +53,7 @@ public class DMatrix extends AbstractMatrix implements Serializable {
         // ---------------------------------------------------
 
         @Override
-        public boolean hasNextRow() { return globalRowIndex < end /*|| globalRowIndex < self.rows * self.cols*/; }
+        public boolean hasNextRow() { return globalRowIndex < end - self.cols/*|| globalRowIndex < self.rows * self.cols*/; }
 
         @Override
         public void nextRow() { globalRowIndex += self.cols; currentRowIndex = globalRowIndex; }
@@ -74,10 +68,10 @@ public class DMatrix extends AbstractMatrix implements Serializable {
         public double getValueOfColumn(final int col) { return self.data[currentRowIndex + col]; }
 
         @Override
-        public de.tuberlin.pserver.math.vector.Vector getAsVector() { return getAsVector(0, (int)self.cols); }
+        public Vector getAsVector() { return getAsVector(0, (int)self.cols); }
 
         @Override
-        public de.tuberlin.pserver.math.vector.Vector getAsVector(int from, int size) {
+        public Vector getAsVector(int from, int size) {
             final double v[] = new double[size];
             System.arraycopy(self.data, currentRowIndex + from, v, 0, size);
             return new DVector(size, v);
@@ -93,32 +87,26 @@ public class DMatrix extends AbstractMatrix implements Serializable {
         public long numCols() { return self.cols; }
 
         @Override
-        public int getCurrentRowNum() { return currentRowIndex; }
+        public int getCurrentRowNum() { return currentRowIndex / (int)self.cols; }
     }
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    private static final Logger LOG = LoggerFactory.getLogger(DMatrix.class);
+    //private static final Logger LOG = LoggerFactory.getLogger(DMatrix.class);
 
-    private Object owner;
-
-    // ---------------------------------------------------
-
-    private static final LibraryMatrixOps<Matrix, de.tuberlin.pserver.math.vector.Vector> matrixOpDelegate =
+    private static final LibraryMatrixOps<Matrix, Vector> matrixOpDelegate =
             MathLibFactory.delegateDMatrixOpsTo(MathLibFactory.DMathLibrary.EJML_LIBRARY);
 
     private double[] data;
-
-    private Lock lock;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
     // Copy Constructor.
-    public DMatrix(final de.tuberlin.pserver.math.vector.Vector m) {
+    public DMatrix(final Vector m) {
         super(m.layout() == Layout.COLUMN_LAYOUT ?
                 1 : m.length(),
               m.layout() == Layout.COLUMN_LAYOUT ?
@@ -143,8 +131,6 @@ public class DMatrix extends AbstractMatrix implements Serializable {
     public DMatrix(final long rows, final long cols, final double[] data, final Layout layout) {
         super(rows, cols, layout);
         this.data = (data == null) ? new double[(int)(rows * cols)] : Preconditions.checkNotNull(data);
-        //Preconditions.checkState(this.data.length == rows * cols);
-        this.lock = new ReentrantLock();
     }
 
     // ---------------------------------------------------
@@ -227,28 +213,6 @@ public class DMatrix extends AbstractMatrix implements Serializable {
         return super.invert(B);
     }
 
-
-//
-//    @Override public Matrix add(final Matrix B) { return matrixOpDelegate.add(B, this); }
-//
-//    @Override public Matrix sub(final Matrix B) { return matrixOpDelegate.sub(B, this); }
-//
-//    @Override public Matrix mul(final Matrix B) { return matrixOpDelegate.mul(this, B); }
-//
-//    @Override public Vector mul(final Vector v) { return matrixOpDelegate.mul(this, v); }
-//
-//    @Override public void mul(final Vector x, final Vector y) { matrixOpDelegate.mul(this, x, y); }
-//
-//    @Override public Matrix scale(final double alpha) { return matrixOpDelegate.scale(alpha, this); }
-//
-//    @Override public Matrix transpose() { return matrixOpDelegate.transpose(this); }
-//
-//    @Override public void transpose(final Matrix B) { matrixOpDelegate.transpose(this, B); }
-//
-//    @Override public boolean invert() { return matrixOpDelegate.invert(this); }
-
-    // ---------------------------------------------------
-
     @Override
     public Matrix assign(final Matrix v) {
         Preconditions.checkState(v.numRows() * v.numCols() == rows * cols);
@@ -264,35 +228,35 @@ public class DMatrix extends AbstractMatrix implements Serializable {
     }
 
     @Override
-    public de.tuberlin.pserver.math.vector.Vector rowAsVector() {
+    public Vector rowAsVector() {
         return rowAsVector(0, 0, numCols());
     }
 
     @Override
-    public de.tuberlin.pserver.math.vector.Vector rowAsVector(final long row) {
+    public Vector rowAsVector(final long row) {
         return rowAsVector(row, 0, numCols());
     }
 
     @Override
-    public de.tuberlin.pserver.math.vector.Vector rowAsVector(final long row, final long from, final long to) { // TODO: Optimize with respect to the layout with array copy.
-        de.tuberlin.pserver.math.vector.Vector r = new DVector(to - from);
+    public Vector rowAsVector(final long row, final long from, final long to) { // TODO: Optimize with respect to the layout with array copy.
+        Vector r = new DVector(to - from);
         for (long i = from; i < to; ++i)
             r.set(i, data[Utils.getPos(row, i, this)]);
         return r;
     }
 
     @Override
-    public de.tuberlin.pserver.math.vector.Vector colAsVector() {
+    public Vector colAsVector() {
         return colAsVector(0, 0, rows);
     }
 
     @Override
-    public de.tuberlin.pserver.math.vector.Vector colAsVector(final long col) {
+    public Vector colAsVector(final long col) {
         return colAsVector(col, 0, rows);
     }
 
     @Override
-    public de.tuberlin.pserver.math.vector.Vector colAsVector(final long col, final long from, final long to) {
+    public Vector colAsVector(final long col, final long from, final long to) {
         double[] result = new double[(int)(to - from)];
         if(layout == Layout.COLUMN_LAYOUT) {
             System.arraycopy(data, (int)(col * rows + from), result, 0, result.length);
@@ -307,7 +271,7 @@ public class DMatrix extends AbstractMatrix implements Serializable {
     }
 
     @Override
-    public Matrix assignRow(final long row, final de.tuberlin.pserver.math.vector.Vector v) {
+    public Matrix assignRow(final long row, final Vector v) {
         Preconditions.checkNotNull(numCols() == v.length());
         for (int i = 0; i < v.length(); ++i)
             data[Utils.getPos(row, i, this)] = v.get(i);
@@ -334,4 +298,25 @@ public class DMatrix extends AbstractMatrix implements Serializable {
         return new DMatrix(this);
     }
 
+    // ---------------------------------------------------
+
+    //@Override public Matrix add(final Matrix B) { return matrixOpDelegate.add(B, this); }
+
+    //@Override public Matrix sub(final Matrix B) { return matrixOpDelegate.sub(B, this); }
+
+    //@Override public Matrix mul(final Matrix B) { return matrixOpDelegate.mul(this, B); }
+
+    //@Override public Vector mul(final Vector v) { return matrixOpDelegate.mul(this, v); }
+
+    //@Override public void mul(final Vector x, final Vector y) { matrixOpDelegate.mul(this, x, y); }
+
+    //@Override public Matrix scale(final double alpha) { return matrixOpDelegate.scale(alpha, this); }
+
+    //@Override public Matrix transpose() { return matrixOpDelegate.transpose(this); }
+
+    //@Override public void transpose(final Matrix B) { matrixOpDelegate.transpose(this, B); }
+
+    //@Override public boolean invert() { return matrixOpDelegate.invert(this); }
+
+    // ---------------------------------------------------
 }

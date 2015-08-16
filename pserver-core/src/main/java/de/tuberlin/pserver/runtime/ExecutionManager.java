@@ -24,6 +24,13 @@ public final class ExecutionManager {
 
     private static final String BSP_SYNC_BARRIER_EVENT = "bsp_sync_barrier_event";
 
+    public static enum CallType {
+
+        SYNC,
+
+        ASYNC
+    }
+
     // ---------------------------------------------------
     // Inner Classes.
     // ---------------------------------------------------
@@ -81,7 +88,7 @@ public final class ExecutionManager {
 
     private final NetManager netManager;
 
-    private final Map<UUID, MLProgramContext> jobContextMap;
+    private final Map<UUID, MLProgramContext> programContextMap;
 
     private final Map<Long, SlotContext> slotContextMap;
 
@@ -105,12 +112,12 @@ public final class ExecutionManager {
 
         this.netManager = Preconditions.checkNotNull(netManager);
 
-        this.jobContextMap  = new ConcurrentHashMap<>();
+        this.programContextMap = new ConcurrentHashMap<>();
 
         this.slotContextMap = new ConcurrentHashMap<>();
 
         this.netManager.addEventListener(BSP_SYNC_BARRIER_EVENT, event ->
-                jobContextMap.get(event.getPayload()).globalSyncBarrier.countDown());
+                programContextMap.get(event.getPayload()).globalSyncBarrier.countDown());
 
         // DSL Runtime.
 
@@ -130,15 +137,15 @@ public final class ExecutionManager {
     // ---------------------------------------------------
 
     public void registerJob(final UUID jobID, final MLProgramContext programContext) {
-        jobContextMap.put(Preconditions.checkNotNull(jobID), Preconditions.checkNotNull(programContext));
+        programContextMap.put(Preconditions.checkNotNull(jobID), Preconditions.checkNotNull(programContext));
     }
 
     public MLProgramContext getJob(final UUID jobID) {
-        return jobContextMap.get(Preconditions.checkNotNull(jobID));
+        return programContextMap.get(Preconditions.checkNotNull(jobID));
     }
 
     public void unregisterJob(final UUID jobID) {
-        jobContextMap.remove(Preconditions.checkNotNull(jobID));
+        programContextMap.remove(Preconditions.checkNotNull(jobID));
     }
 
     public void registerSlotContext(final SlotContext ic) {

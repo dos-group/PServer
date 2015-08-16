@@ -2,6 +2,7 @@ package de.tuberlin.pserver.runtime.filesystem;
 
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
+import de.tuberlin.pserver.types.PartitionType;
 
 public interface FileSystemManager {
 
@@ -17,5 +18,7 @@ public interface FileSystemManager {
 
     public abstract void computeInputSplitsForRegisteredFiles();
 
-    public abstract <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath, final RecordFormat recordFormat);
+    public abstract <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath,
+                                                                               final RecordFormat recordFormat,
+                                                                               final PartitionType partitionType);
 }

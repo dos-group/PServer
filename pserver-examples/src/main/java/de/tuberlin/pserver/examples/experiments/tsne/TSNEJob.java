@@ -1,27 +1,9 @@
 package de.tuberlin.pserver.examples.experiments.tsne;
 
-import com.google.common.collect.Lists;
-import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.controlflow.iteration.Iteration;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.dsl.controlflow.program.State;
-import de.tuberlin.pserver.math.Format;
-import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.MatrixBuilder;
-import de.tuberlin.pserver.math.tuples.Tuple2;
-import de.tuberlin.pserver.math.vector.Vector;
-import de.tuberlin.pserver.math.vector.VectorBuilder;
 import de.tuberlin.pserver.runtime.MLProgram;
-import org.apache.commons.lang3.mutable.MutableDouble;
-
-import java.io.PrintWriter;
-import java.io.Serializable;
-import java.util.List;
-import java.util.Random;
 
 public class TSNEJob extends MLProgram {
-
+/*
     // ---------------------------------------------------
     // Constants.
     // ---------------------------------------------------
@@ -44,10 +26,10 @@ public class TSNEJob extends MLProgram {
     // Fields.
     // ---------------------------------------------------
 
-    @State(scope = State.PARTITIONED_INPUT, rows = INPUT_ROWS, cols = INPUT_COLS, path = "datasets/mnist_10_X.csv", format = Format.SPARSE_FORMAT, layout = Layout.ROW_LAYOUT)
+    @State(globalScope = State.PARTITIONED_INPUT, rows = INPUT_ROWS, cols = INPUT_COLS, path = "datasets/mnist_10_X.csv", format = Format.SPARSE_FORMAT, layout = Layout.ROW_LAYOUT)
     public Matrix X;
 
-    @State(scope = State.REPLICATED, rows = INPUT_ROWS, cols = EMBEDDING_DIMENSION, layout = Layout.ROW_LAYOUT, format = Format.DENSE_FORMAT)
+    @State(globalScope = State.REPLICATED, rows = INPUT_ROWS, cols = EMBEDDING_DIMENSION, layout = Layout.ROW_LAYOUT, format = Format.DENSE_FORMAT)
     public Matrix Y;
 
     private Matrix P;
@@ -65,6 +47,10 @@ public class TSNEJob extends MLProgram {
             Y.applyOnElements(e -> e = rand.nextDouble());
 
         }).process(() -> {
+
+            Matrix Xsquared = new MatrixBuilder().dimension(X.numRows(), Y.numCols()).build();
+            Vector sumX = Xsquared.aggregateRows(Vector::sum);
+            Matrix D = X.mul(X.transpose()).scale(-2).addVectorToRows(sumX).transpose().addVectorToRows(sumX);
 
             P = binarySearch(X, TOL, PERPLEXITY);
             P = P.add(P.transpose());
@@ -108,7 +94,12 @@ public class TSNEJob extends MLProgram {
                                 .applyOnElements(e -> 1.0 / (e + 1.0));
 
                         num.setDiagonalsToZero(num);
+
+                        // ---------------------------------------------------
+                        // (2) GLOBAL OPERATION!!!
+                        // ---------------------------------------------------
                         final double sumNum = num.aggregateRows(Vector::sum).sum();
+
                         Q.assign(num.copy().scale(1.0 / sumNum));
                         Q.assign(Q.applyOnElements(e -> Math.max(e, 1e-12)));
                         final Matrix PQ = P.copy().sub(Q);
@@ -190,8 +181,7 @@ public class TSNEJob extends MLProgram {
         beta.assign(1.0);
         // compute the distances between all x_i
         Xsquared = Xsquared.applyOnElements(e -> Math.pow(e, 2), X);
-        Vector sumX = Xsquared.aggregateRows(Vector::sum);
-        Matrix D = X.mul(X.transpose()).scale(-2).addVectorToRows(sumX).transpose().addVectorToRows(sumX);
+
         double logU = Math.log(perplexity);
         for (long i=0; i < n; ++i) {
             double betaMin = Double.NEGATIVE_INFINITY;
@@ -269,5 +259,5 @@ public class TSNEJob extends MLProgram {
         } catch (Exception e) {
             LOG.error(e.getMessage());
         }
-    }
+    }*/
 }
