@@ -12,6 +12,7 @@ import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
+import de.tuberlin.pserver.math.matrix.dense.DMatrix;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordFactory;
@@ -222,7 +223,7 @@ public abstract class MLProgram extends EventDispatcher {
     private void createStateObjects(final List<StateDeclaration> stateDecls) {
         Preconditions.checkNotNull(stateDecls);
         for (final StateDeclaration decl : stateDecls) {
-            if (decl.stateType == Matrix.class) {
+            if (Matrix.class.isAssignableFrom(decl.stateType)) {
                 switch (decl.globalScope) {
                     case REPLICATED: {
                         if ("".equals(decl.path)) {
@@ -274,7 +275,7 @@ public abstract class MLProgram extends EventDispatcher {
                     default:
                         throw new UnsupportedOperationException();
                 }
-            } else if (decl.stateType == Vector.class) {
+            } else if (Vector.class.isAssignableFrom(decl.stateType)) {
                 if (!"".equals(decl.path))
                     throw new IllegalStateException();
                 switch (decl.globalScope) {

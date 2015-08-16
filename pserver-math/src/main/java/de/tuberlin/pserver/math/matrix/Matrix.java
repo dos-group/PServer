@@ -1,5 +1,7 @@
 package de.tuberlin.pserver.math.matrix;
 
+import com.google.gson.Gson;
+import de.tuberlin.pserver.commons.json.GsonUtils;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.exceptions.IncompatibleShapeException;
@@ -63,12 +65,14 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
 
     }
 
-    class PartitionShape {
+    public static final class PartitionShape {
 
-        final long rows;
-        final long cols;
-        final long rowOffset;
-        final long colOffset;
+        private transient Gson gson = GsonUtils.createPrettyPrintAndAnnotationExclusionGson();
+
+        public final long rows;
+        public final long cols;
+        public final long rowOffset;
+        public final long colOffset;
 
         public PartitionShape(long rows, long cols) {
             this(rows, cols, 0, 0);
@@ -81,22 +85,6 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
             this.colOffset = colOffset;
         }
 
-        public long getRows() {
-            return rows;
-        }
-
-        public long getCols() {
-            return cols;
-        }
-
-        public long getRowOffset() {
-            return rowOffset;
-        }
-
-        public long getColOffset() {
-            return colOffset;
-        }
-
         public PartitionShape create(long row, long col) {
             return new PartitionShape(row, col);
         }
@@ -104,6 +92,8 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
         public boolean contains(long row, long col) {
             return row < rows && col < cols;
         }
+
+        @Override public String toString() { return "\nPartitionShape " + gson.toJson(this); }
     }
 
     // ---------------------------------------------------

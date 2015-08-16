@@ -2,8 +2,6 @@ package de.tuberlin.pserver.types;
 
 
 import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
-import de.tuberlin.pserver.commons.json.GsonUtils;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
@@ -17,64 +15,6 @@ import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.SlotContext;
 
 public class DistributedMatrix extends AbstractMatrix {
-
-    // ---------------------------------------------------
-    // Inner Classes.
-    // ---------------------------------------------------
-
-    class PartitionShape {
-
-        private transient Gson gson = GsonUtils.createPrettyPrintAndAnnotationExclusionGson();
-
-        final long rows;
-        final long cols;
-        final long rowOffset;
-        final long colOffset;
-
-        public PartitionShape(long rows, long cols) {
-            this(rows, cols, 0, 0);
-        }
-
-        public PartitionShape(long rows, long cols, long rowOffset, long colOffset) {
-            this.rows = rows;
-            this.cols = cols;
-            this.rowOffset = rowOffset;
-            this.colOffset = colOffset;
-        }
-
-        public long getRows() {
-            return rows;
-        }
-
-        public long getCols() {
-            return cols;
-        }
-
-        public long getRowOffset() {
-            return rowOffset;
-        }
-
-        public long getColOffset() {
-            return colOffset;
-        }
-
-        public PartitionShape create(long row, long col) {
-            return new PartitionShape(row, col);
-        }
-
-        public boolean contains(long row, long col) {
-            return row < rows && col < cols;
-        }
-
-        @Override
-        public String toString() {
-            return "\nPartitionShape " + gson.toJson(this);
-        }
-    }
-
-    // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
 
     // ---------------------------------------------------
     // Fields.
@@ -92,14 +32,16 @@ public class DistributedMatrix extends AbstractMatrix {
 
     private final Matrix matrix;
 
-    private final boolean fullAllocated;
+    private final boolean allocateCompleteMatrix;
+
+    //private final AtomicLong opCounter;
 
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
     public DistributedMatrix(final DistributedMatrix m) {
-        this(m.slotContext, m.rows, m.cols, m.partitionType, m.layout, m.format, m.fullAllocated);
+        this(m.slotContext, m.rows, m.cols, m.partitionType, m.layout, m.format, m.allocateCompleteMatrix);
     }
 
     public DistributedMatrix(final SlotContext slotContext,
@@ -107,7 +49,7 @@ public class DistributedMatrix extends AbstractMatrix {
                              final PartitionType partitionType,
                              final Layout layout,
                              final Format format,
-                             final boolean fullAllocated) {
+                             final boolean allocateCompleteMatrix) {
 
         super(rows, cols, layout);
 
@@ -117,83 +59,23 @@ public class DistributedMatrix extends AbstractMatrix {
         this.partitionType  = Preconditions.checkNotNull(partitionType);
         this.shape          = createShape(rows, cols);
         this.format         = format;
-        this.fullAllocated  = fullAllocated;
+        this.allocateCompleteMatrix = allocateCompleteMatrix;
         this.matrix         = allocMatrix();
 
         System.out.println(shape.toString());
     }
 
     // ---------------------------------------------------
-    // Private Methods.
-    // ---------------------------------------------------
-
-    private Matrix allocMatrix() {
-        final long _rows = fullAllocated ? rows : shape.rows;
-        final long _cols = fullAllocated ? cols : shape.cols;
-        return new MatrixBuilder()
-                .dimension(_rows, _cols)
-                .layout(layout)
-                .format(format)
-                .build();
-    }
-
-    private PartitionShape createShape(final long rows, final long cols) {
-        switch (partitionType) {
-            case NOT_PARTITIONED: return new PartitionShape(rows, cols, 0, 0);
-            case ROW_PARTITIONED: {
-                final long _rows = (rows % 2 != 0 && nodeID == nodeDOP - 1) ? (rows / nodeDOP) + 1 : rows / nodeDOP;
-                return new PartitionShape(_rows, cols, rows / nodeDOP * nodeID, 0);
-            }
-            case COLUMN_PARTITIONED: throw new UnsupportedOperationException();
-            case BLOCK_PARTITIONED: throw new UnsupportedOperationException();
-            default: throw new IllegalStateException();
-        }
-    }
-
-    public long translateRow(final long row) {
-        switch (partitionType) {
-            case ROW_PARTITIONED: return fullAllocated ? row : row - shape.rowOffset;
-            case COLUMN_PARTITIONED: throw new UnsupportedOperationException();
-            case BLOCK_PARTITIONED: throw new UnsupportedOperationException();
-            default: throw new IllegalStateException();
-        }
-    }
-
-    public long translateCol(final long col) {
-        switch (partitionType) {
-            case ROW_PARTITIONED: return col;
-            case COLUMN_PARTITIONED: throw new IllegalStateException();
-            case BLOCK_PARTITIONED: throw new IllegalStateException();
-            default: throw new IllegalStateException();
-        }
-    }
-
-    public Matrix.RowIterator createLocalRowIterator(final Matrix.RowIterator iter) {
-        return new Matrix.RowIterator() {
-            @Override public boolean hasNextRow() { return iter.hasNextRow(); }
-            @Override public void nextRow() { iter.nextRow(); }
-            @Override public void nextRandomRow() { iter.nextRandomRow(); }
-            @Override public double getValueOfColumn(int col) { return iter.getValueOfColumn(col); }
-            @Override public Vector getAsVector() { return iter.getAsVector(); }
-            @Override public Vector getAsVector(int from, int size) { return iter.getAsVector(from, size); }
-            @Override public void reset() { iter.reset(); }
-            @Override public long numRows() { return iter.numRows(); }
-            @Override public long numCols() { return iter.numCols(); }
-            @Override public int getCurrentRowNum() { return iter.getCurrentRowNum() + (int)shape.rowOffset; }
-        };
-    }
-
-    // ---------------------------------------------------
     // Public Methods..
     // ---------------------------------------------------
 
-    public long baseRow() { return shape.rowOffset; }
+    /*public long baseRow() { return shape.rowOffset; }
 
     public long baseCol() { return shape.colOffset; }
 
     public long partitionedNumRows() { return shape.rows; }
 
-    public long partitionedNumCols() { return shape.cols; }
+    public long partitionedNumCols() { return shape.cols; }*/
 
     @Override public double get(long row, long col) { return matrix.get(translateRow(row), translateCol(col)); }
 
@@ -219,9 +101,9 @@ public class DistributedMatrix extends AbstractMatrix {
 
     @Override public Matrix assign(double v) { return matrix.assign(v); }
 
-    @Override public Matrix assignRow(long row, Vector v) { return assignRow(translateRow(row), v); }
+    @Override public Matrix assignRow(long row, Vector v) { return matrix.assignRow(translateRow(row), v); }
 
-    @Override public Matrix assignColumn(long col, Vector v) { return assignColumn(translateCol(col), v); }
+    @Override public Matrix assignColumn(long col, Vector v) { return matrix.assignColumn(translateCol(col), v); }
 
     @Override public Matrix copy() { return new DistributedMatrix(this); }
 
@@ -237,9 +119,10 @@ public class DistributedMatrix extends AbstractMatrix {
 
     @Override
     public RowIterator rowIterator() {
-        return createLocalRowIterator(matrix.rowIterator(
+        return createLocalRowIterator(
+                matrix.rowIterator(
                         (int)translateRow(shape.rowOffset),
-                        (int)(translateRow(shape.rowOffset) + shape.rows - 1)
+                        (int)(translateRow(shape.rowOffset) + shape.rows)
                 )
         );
     }
@@ -257,7 +140,7 @@ public class DistributedMatrix extends AbstractMatrix {
     }
 
     // ---------------------------------------------------
-    // Distributed Operations.
+    // Distributed Operations - Synchronous!
     // ---------------------------------------------------
 
     public Vector aggregateRows(final VectorFunction f) {
@@ -296,8 +179,8 @@ public class DistributedMatrix extends AbstractMatrix {
         }
     }
 
-    public DistributedMatrix gatherMatrix() {
-        if (!fullAllocated)
+    public DistributedMatrix syncPartitions() {
+        if (!allocateCompleteMatrix)
             throw new IllegalStateException();
         switch (partitionType) {
             case ROW_PARTITIONED: {
@@ -319,5 +202,67 @@ public class DistributedMatrix extends AbstractMatrix {
             default: throw new IllegalStateException();
         }
         return this;
+    }
+
+    // ---------------------------------------------------
+    // Private Methods.
+    // ---------------------------------------------------
+
+    private Matrix allocMatrix() {
+        final long _rows = allocateCompleteMatrix ? rows : shape.rows;
+        final long _cols = allocateCompleteMatrix ? cols : shape.cols;
+        return new MatrixBuilder()
+                .dimension(_rows, _cols)
+                .layout(layout)
+                .format(format)
+                .build();
+    }
+
+    private PartitionShape createShape(final long rows, final long cols) {
+        switch (partitionType) {
+            case NOT_PARTITIONED: return new PartitionShape(rows, cols, 0, 0);
+            case ROW_PARTITIONED: {
+                final long _rows = (rows % 2 != 0 && nodeID == nodeDOP - 1) ? (rows / nodeDOP) + 1 : rows / nodeDOP;
+                return new PartitionShape(_rows, cols, (rows / nodeDOP) * nodeID, 0);
+            }
+            case COLUMN_PARTITIONED: throw new UnsupportedOperationException();
+            case BLOCK_PARTITIONED: throw new UnsupportedOperationException();
+            default: throw new IllegalStateException();
+        }
+    }
+
+    public long translateRow(final long row) {
+        switch (partitionType) {
+            case ROW_PARTITIONED: return allocateCompleteMatrix ? row : row - shape.rowOffset;
+            case COLUMN_PARTITIONED: throw new UnsupportedOperationException();
+            case BLOCK_PARTITIONED: throw new UnsupportedOperationException();
+            default: throw new IllegalStateException();
+        }
+    }
+
+    public long translateCol(final long col) {
+        switch (partitionType) {
+            case ROW_PARTITIONED: return col;
+            case COLUMN_PARTITIONED: throw new IllegalStateException();
+            case BLOCK_PARTITIONED: throw new IllegalStateException();
+            default: throw new IllegalStateException();
+        }
+    }
+
+    public Matrix.RowIterator createLocalRowIterator(final Matrix.RowIterator iter) {
+        return new Matrix.RowIterator() {
+            @Override public boolean hasNextRow() { return iter.hasNextRow(); }
+            @Override public void nextRow() { iter.nextRow(); }
+            @Override public void nextRandomRow() { iter.nextRandomRow(); }
+            @Override public double getValueOfColumn(int col) { return iter.getValueOfColumn(col); }
+            @Override public Vector getAsVector() { return iter.getAsVector(); }
+            @Override public Vector getAsVector(int from, int size) { return iter.getAsVector(from, size); }
+            @Override public void reset() { iter.reset(); }
+            @Override public long numRows() { return iter.numRows(); }
+            @Override public long numCols() { return iter.numCols(); }
+            @Override public int getCurrentRowNum() { return allocateCompleteMatrix
+                    ? iter.getCurrentRowNum()
+                    : iter.getCurrentRowNum() + (int)shape.rowOffset; }
+        };
     }
 }

@@ -5,22 +5,31 @@ import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.dsl.state.GlobalScope;
 import de.tuberlin.pserver.dsl.state.State;
 import de.tuberlin.pserver.math.Format;
-import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.types.DistributedMatrix;
 import de.tuberlin.pserver.types.PartitionType;
 
 public class DistributedMatrixJob extends MLProgram {
 
-    private static final int COLS = 20;
-
-    @State(globalScope = GlobalScope.REPLICATED, rows = COLS, cols = COLS,
-            path = "datasets/rowcolval_dataset.csv", format = Format.SPARSE_FORMAT)
-    public Matrix X;
+    @State(globalScope = GlobalScope.LOGICALLY_PARTITIONED, partitionType = PartitionType.ROW_PARTITIONED,
+            rows = 20, cols = 20, format = Format.DENSE_FORMAT)
+    public DistributedMatrix X;
 
     @Override
     public void define(final Program program) {
 
         program.process(() -> {
+
+            CF.iterate().exe(X, (i, iter) -> {
+                X.set(iter.getCurrentRowNum(), 0, slotContext.programContext.runtimeContext.nodeID + 1);
+            });
+
+            X.syncPartitions();
+
+            CF.select().node(1).exe(() -> {
+                for (int i = 0; i < X.numRows(); ++i)
+                    System.out.println(X.get(i, 0));
+            });
 
             /*final Matrix.RowIterator iter = X.rowIterator();
             while (iter.hasNextRow()) {
