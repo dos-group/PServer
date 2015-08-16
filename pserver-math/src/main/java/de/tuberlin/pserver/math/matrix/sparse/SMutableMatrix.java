@@ -176,6 +176,16 @@ public class SMutableMatrix extends AbstractMatrix {
     }
 
     @Override
+    public Matrix subMatrix(long row, long col, long rowSize, long colSize) {
+        throw new NotImplementedException("not impl");
+    }
+
+    @Override
+    public Matrix assign(long row, long col, Matrix m) {
+        throw new NotImplementedException("not impl");
+    }
+
+    @Override
     public Matrix applyOnNonZeroElements(MatrixElementUnaryOperator f, Matrix B) {
         for (Map.Entry<MtxPos, Double> ele : data.entrySet()) {
             long row = ele.getKey().row;

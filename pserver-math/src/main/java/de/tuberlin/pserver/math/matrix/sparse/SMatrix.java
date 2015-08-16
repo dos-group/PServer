@@ -16,6 +16,7 @@ import no.uib.cipr.matrix.sparse.CompColMatrix;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.FlexCompColMatrix;
 import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
+import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.Iterator;
 
@@ -132,6 +133,16 @@ public class SMatrix extends AbstractMatrix {
     @Override
     public Matrix copy() {
         return null;
+    }
+
+    @Override
+    public Matrix subMatrix(long row, long col, long rowSize, long colSize) {
+        throw new NotImplementedException("not impl");
+    }
+
+    @Override
+    public Matrix assign(long row, long col, Matrix m) {
+        throw new NotImplementedException("not impl");
     }
 
     // ---------------------------------------------------

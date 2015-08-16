@@ -338,4 +338,9 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
 
     Matrix copy();
 
+    // ---------------------------------------------------
+
+    Matrix subMatrix(final long row, final long col, final long rowSize, final long colSize);
+
+    Matrix assign(final long row, final long col, final Matrix m);
 }

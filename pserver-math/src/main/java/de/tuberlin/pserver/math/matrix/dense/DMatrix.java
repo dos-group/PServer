@@ -298,6 +298,29 @@ public class DMatrix extends AbstractMatrix implements Serializable {
         return new DMatrix(this);
     }
 
+    @Override
+    public Matrix subMatrix(long row, long col, long rows, long cols) {
+        if (layout == Layout.ROW_LAYOUT) {
+            final int length = (int)(rows * cols);
+            final double[] subData = new double[length];
+            System.arraycopy(data, (int)(row * cols + col), subData, 0, length);
+            return new DMatrix(rows, cols, subData, layout);
+        } else
+            throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Matrix assign(final long row, final long col, final Matrix m) {
+        if (layout == Layout.ROW_LAYOUT && m.getLayout() == Layout.ROW_LAYOUT) {
+            if (cols == m.numCols())
+                System.arraycopy(m.toArray(), 0, data, (int)(row * cols + col), m.toArray().length);
+            else
+                throw new IllegalStateException();
+            return this;
+        } else
+            throw new UnsupportedOperationException();
+    }
+
     // ---------------------------------------------------
 
     //@Override public Matrix add(final Matrix B) { return matrixOpDelegate.add(B, this); }

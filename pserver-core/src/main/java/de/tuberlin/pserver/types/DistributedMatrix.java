@@ -92,19 +92,22 @@ public class DistributedMatrix extends AbstractMatrix {
 
     private final Matrix matrix;
 
+    private final boolean fullAllocated;
+
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
     public DistributedMatrix(final DistributedMatrix m) {
-        this(m.slotContext, m.rows, m.cols, m.partitionType, m.layout, m.format);
+        this(m.slotContext, m.rows, m.cols, m.partitionType, m.layout, m.format, m.fullAllocated);
     }
 
     public DistributedMatrix(final SlotContext slotContext,
                              final long rows, final long cols,
                              final PartitionType partitionType,
                              final Layout layout,
-                             final Format format) {
+                             final Format format,
+                             final boolean fullAllocated) {
 
         super(rows, cols, layout);
 
@@ -114,12 +117,8 @@ public class DistributedMatrix extends AbstractMatrix {
         this.partitionType  = Preconditions.checkNotNull(partitionType);
         this.shape          = createShape(rows, cols);
         this.format         = format;
-
-        this.matrix = new MatrixBuilder()
-                .dimension(shape.rows, shape.cols)
-                .layout(layout)
-                .format(format)
-                .build();
+        this.fullAllocated  = fullAllocated;
+        this.matrix         = allocMatrix();
 
         System.out.println(shape.toString());
     }
@@ -127,6 +126,16 @@ public class DistributedMatrix extends AbstractMatrix {
     // ---------------------------------------------------
     // Private Methods.
     // ---------------------------------------------------
+
+    private Matrix allocMatrix() {
+        final long _rows = fullAllocated ? rows : shape.rows;
+        final long _cols = fullAllocated ? cols : shape.cols;
+        return new MatrixBuilder()
+                .dimension(_rows, _cols)
+                .layout(layout)
+                .format(format)
+                .build();
+    }
 
     private PartitionShape createShape(final long rows, final long cols) {
         switch (partitionType) {
@@ -143,7 +152,7 @@ public class DistributedMatrix extends AbstractMatrix {
 
     public long translateRow(final long row) {
         switch (partitionType) {
-            case ROW_PARTITIONED: return row - shape.rowOffset;
+            case ROW_PARTITIONED: return fullAllocated ? row : row - shape.rowOffset;
             case COLUMN_PARTITIONED: throw new UnsupportedOperationException();
             case BLOCK_PARTITIONED: throw new UnsupportedOperationException();
             default: throw new IllegalStateException();
@@ -216,6 +225,10 @@ public class DistributedMatrix extends AbstractMatrix {
 
     @Override public Matrix copy() { return new DistributedMatrix(this); }
 
+    @Override public Matrix subMatrix(long row, long col, long rowSize, long colSize) { return null; }
+
+    @Override public Matrix assign(long row, long col, Matrix m) { return null; }
+
     @Override protected Matrix newInstance(long rows, long cols) { throw new UnsupportedOperationException(); }
 
     @Override public double[] toArray() { return matrix.toArray(); }
@@ -281,5 +294,30 @@ public class DistributedMatrix extends AbstractMatrix {
             case BLOCK_PARTITIONED: throw new IllegalStateException();
             default: throw new IllegalStateException();
         }
+    }
+
+    public DistributedMatrix gatherMatrix() {
+        if (!fullAllocated)
+            throw new IllegalStateException();
+        switch (partitionType) {
+            case ROW_PARTITIONED: {
+                Matrix partialMatrix = matrix.subMatrix(shape.rowOffset, shape.colOffset, shape.rows, shape.cols);
+                slotContext.programContext.runtimeContext.dataManager.pushTo("partialMatrix", partialMatrix);
+                final int n = slotContext.programContext.nodeDOP - 1;
+                slotContext.programContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "partialMatrix",
+                        new DataManager.DataEventHandler() {
+                            @Override
+                            public void handleDataEvent(int srcNodeID, Object value) {
+                                final Matrix remotePartialMatrix = (Matrix)value;
+                                matrix.assign(srcNodeID * shape.rows, 0, remotePartialMatrix);
+                            }
+                        }
+                );
+            } break;
+            case COLUMN_PARTITIONED: throw new IllegalStateException();
+            case BLOCK_PARTITIONED: throw new IllegalStateException();
+            default: throw new IllegalStateException();
+        }
+        return this;
     }
 }

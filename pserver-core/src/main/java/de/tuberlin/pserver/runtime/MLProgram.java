@@ -255,10 +255,22 @@ public abstract class MLProgram extends EventDispatcher {
                                 decl.rows, decl.cols,
                                 PartitionType.ROW_PARTITIONED,
                                 decl.layout,
-                                decl.format
+                                decl.format,
+                                false
                         );
                         dataManager.putObject(decl.name, so);
                     } break;
+                    case LOGICALLY_PARTITIONED:
+                        final SharedObject so = new DistributedMatrix(
+                                slotContext,
+                                decl.rows, decl.cols,
+                                PartitionType.ROW_PARTITIONED,
+                                decl.layout,
+                                decl.format,
+                                true
+                        );
+                        dataManager.putObject(decl.name, so);
+                        break;
                     default:
                         throw new UnsupportedOperationException();
                 }

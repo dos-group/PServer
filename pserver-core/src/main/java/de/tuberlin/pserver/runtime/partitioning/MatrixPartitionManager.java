@@ -190,9 +190,21 @@ public final class MatrixPartitionManager {
                             task.cols,
                             task.partitionType,
                             task.matrixLayout,
-                            task.matrixFormat
+                            task.matrixFormat,
+                            false
                     );
                 } break;
+                case LOGICALLY_PARTITIONED:
+                    matrix = new DistributedMatrix(
+                            task.slotContext,
+                            task.rows,
+                            task.cols,
+                            task.partitionType,
+                            task.matrixLayout,
+                            task.matrixFormat,
+                            true
+                    );
+                    break;
             }
             loadingMatrices.put(task.name, matrix);
         }
