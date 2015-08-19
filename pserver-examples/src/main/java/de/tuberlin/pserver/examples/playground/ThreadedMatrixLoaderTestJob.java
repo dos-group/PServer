@@ -18,6 +18,8 @@ public final class ThreadedMatrixLoaderTestJob extends MLProgram {
     private static final int NUM_NODES = 4;
 
     private static final String FILE = "datasets/rowcolval_dataset_10000_2500.csv";
+    private static final long ROWS = 10000;
+    private static final long COLS = 2500;
 
     // ---------------------------------------------------
     // Public Methods.
@@ -28,8 +30,8 @@ public final class ThreadedMatrixLoaderTestJob extends MLProgram {
 
         dataManager.loadAsMatrix(
                 FILE,
-                GenerateLocalTestData.ROWS_ROWCOLVAL_DATASET,
-                GenerateLocalTestData.COLS_ROWCOLVAL_DATASET,
+                ROWS,
+                COLS,
                 RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD)
                 //Matrix.Format.SPARSE_MATRIX,
                 //Matrix.Layout.ROW_LAYOUT
@@ -37,7 +39,7 @@ public final class ThreadedMatrixLoaderTestJob extends MLProgram {
     }
 
     private boolean isOwnPartition(int row, int col, int numNodes) {
-        double numOfRowsPerInstance = (double) GenerateLocalTestData.ROWS_ROWCOLVAL_DATASET / numNodes;
+        double numOfRowsPerInstance = (double) ROWS / numNodes;
         double partition = row / numOfRowsPerInstance;
         return Utils.toInt((long) (partition % numNodes)) == slotContext.programContext.runtimeContext.nodeID;
     }
@@ -48,8 +50,8 @@ public final class ThreadedMatrixLoaderTestJob extends MLProgram {
         Matrix.PartitionShape shape = new MatrixByRowPartitioner(
                 slotContext.programContext.runtimeContext.nodeID,
                 NUM_NODES,
-                GenerateLocalTestData.ROWS_ROWCOLVAL_DATASET,
-                GenerateLocalTestData.COLS_ROWCOLVAL_DATASET
+                ROWS,
+                COLS
         ).getPartitionShape();
         BufferedReader br = null;
         try {

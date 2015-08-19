@@ -44,9 +44,10 @@ pserver-start)
 
 		JVM_ARGS="$JVM_ARGS -XX:+UseParNewGC -XX:NewRatio=8 -XX:PretenureSizeThreshold=64m -Xms"$PSERVER_NODE_HEAP"m -Xmx"$PSERVER_NODE_HEAP"m"
 
+		# TODO: this is only because profiles are set in code. When profiles are set by params, this can be removed
 		PSERVER_PROFILE="default"
 		if [ ! -z ${PARAM_START_REMOTE+x} ]; then
-			PSERVER_PROFILE="remote"
+			PSERVER_PROFILE=$ENV_PROFILE
 		fi
 
 		mkdir -p "$PSERVER_PID_DIR"
@@ -105,19 +106,20 @@ zookeeper-setup)
 			if [ $# -ge 2 ] && [ ! -z "$2" ]; then
 				LINE_SEPARATOR=$2
 			fi
-			while read HOST; do
+			for HOST in $(cat ${ZOOKEEPERS_FILE}); do
 				if [ ! -z "${HOST}" ]; then
 					if [ $NODE_COUNT -eq 1 ]; then
 						RESULT="server.${NODE_COUNT}=${HOST}:${PORT}"
 					else
 						RESULT="${RESULT}${LINE_SEPARATOR}server.${NODE_COUNT}=${HOST}:${PORT}"
 					fi
-					if [ $NODE_COUNT -ge $PARAM_COUNT_OF_ZOOKEEPER_NODES ]; then
-						break
-					fi
+					# $PARAM_COUNT_OF_ZOOKEEPER_NODES is profile specific
+					# if [ $NODE_COUNT -ge $PARAM_COUNT_OF_ZOOKEEPER_NODES ]; then
+					# 	break
+					# fi
 					NODE_COUNT=$((NODE_COUNT+1))
 				fi
-			done <${ZOOKEEPERS_FILE}
+			done
 			echo -e $RESULT
 		}
 
@@ -193,13 +195,13 @@ pserver-add-zookeeper-config)
 		function create_zookeeper_host_struct {
 			RESULT="zookeeper{servers=["
 			PORT=2181
-			while read HOST; do
+			for HOST in $(cat ${ZOOKEEPERS_FILE}); do
 				if [ ! -z "${HOST}" ]; then
 					RESULT="${RESULT}{host=\"${HOST}\",port=${PORT}}"
 					# currently, the pserver only supports a single zookeeper host
 					break
 				fi
-			done <${ZOOKEEPERS_FILE}
+			done
 			RESULT="${RESULT}]}"
 			echo $RESULT
 		}
@@ -229,3 +231,6 @@ zookeeper-stop)
 
 esac
 
+if [ "$(type -t profile_finish_hook 2>/dev/null)" == "function" ]; then
+	profile_finish_hook
+fi

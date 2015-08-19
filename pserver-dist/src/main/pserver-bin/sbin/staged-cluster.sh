@@ -35,25 +35,28 @@ case ${CMD} in
 
 pserver-start)
 
-        ssh -n $PSERVER_SSH_OPTS ${PSERVER_STAGING_HOST} -- "$PSERVER_STAGING_DIRECTORY/$PSERVER_ROOT_DIR_NAME/sbin/cluster.sh pserver-start ${STAGING_PARAM_FORWARDING}"
+        ssh -n $STAGING_SSH_OPTS ${PSERVER_STAGING_HOST} -- "$PSERVER_STAGING_DIRECTORY/$PSERVER_ROOT_DIR_NAME/sbin/cluster.sh pserver-start ${STAGING_PARAM_FORWARDING}"
         ;;
 
 pserver-stop)
 
-        ssh -n $PSERVER_SSH_OPTS ${PSERVER_STAGING_HOST} -- "$PSERVER_STAGING_DIRECTORY/$PSERVER_ROOT_DIR_NAME/sbin/cluster.sh pserver-stop ${STAGING_PARAM_FORWARDING}"
+        ssh -n $STAGING_SSH_OPTS ${PSERVER_STAGING_HOST} -- "$PSERVER_STAGING_DIRECTORY/$PSERVER_ROOT_DIR_NAME/sbin/cluster.sh pserver-stop ${STAGING_PARAM_FORWARDING}"
         ;;
 
-pserver-deploy)
+pserver-stage|pserver-deploy)
 
 		$PSERVER_ROOT_DIR/sbin/local.sh pserver-package
 		echo "[NOTICE][${PSERVER_STAGING_HOST}] Wiping target directory ..."
-		ssh -n $PSERVER_SSH_OPTS ${PSERVER_STAGING_HOST} -- "rm -rf ${PSERVER_STAGING_DIRECTORY}; mkdir -p ${PSERVER_STAGING_DIRECTORY}"
+		ssh -n $STAGING_SSH_OPTS ${PSERVER_STAGING_HOST} -- "rm -rf ${PSERVER_STAGING_DIRECTORY}; mkdir -p ${PSERVER_STAGING_DIRECTORY}"
 		echo "[NOTICE][${PSERVER_STAGING_HOST}] Transfering archive ..."
-		scp -q $PSERVER_SSH_OPTS ${PSERVER_ROOT_DIR}/../${PSERVER_DIST_ARCHIVE_FILENAME} ${PSERVER_STAGING_HOST}:${PSERVER_STAGING_DIRECTORY}/${PSERVER_DIST_ARCHIVE_FILENAME}
+		scp -q $STAGING_SSH_OPTS ${PSERVER_ROOT_DIR}/../${PSERVER_DIST_ARCHIVE_FILENAME} ${PSERVER_STAGING_HOST}:${PSERVER_STAGING_DIRECTORY}/${PSERVER_DIST_ARCHIVE_FILENAME}
 		echo "[NOTICE][${PSERVER_STAGING_HOST}] Extracting ..."
-		ssh -n $PSERVER_SSH_OPTS ${PSERVER_STAGING_HOST} -- "cd ${PSERVER_STAGING_DIRECTORY}; tar xzf ${PSERVER_DIST_ARCHIVE_FILENAME}"
-		echo "[NOTICE][${PSERVER_STAGING_HOST}] Deploying pserver from staging to nodes ..."
-		ssh -n $PSERVER_SSH_OPTS ${PSERVER_STAGING_HOST} -- "${PSERVER_STAGING_DIRECTORY}/${PSERVER_ROOT_DIR_NAME}/sbin/cluster.sh pserver-deploy -called-from-staging ${STAGING_PARAM_FORWARDING}"
+		ssh -n $STAGING_SSH_OPTS ${PSERVER_STAGING_HOST} -- "cd ${PSERVER_STAGING_DIRECTORY}; tar xzf ${PSERVER_DIST_ARCHIVE_FILENAME} -m"
+		;;
+
+pserver-deploy)
+        echo "[NOTICE][${PSERVER_STAGING_HOST}] Deploying pserver from staging to nodes ..."
+		ssh -n $STAGING_SSH_OPTS ${PSERVER_STAGING_HOST} -- "${PSERVER_STAGING_DIRECTORY}/${PSERVER_ROOT_DIR_NAME}/sbin/cluster.sh pserver-deploy -called-from-staging ${STAGING_PARAM_FORWARDING}"
 		;;
 
 fetch-logs)
@@ -66,9 +69,9 @@ fetch-logs)
             fi
             mkdir -p "${PSERVER_LOG_DIR_TMP}" 2>/dev/null || true
             # gather logs from nodes to staging server
-            ssh -n $PSERVER_SSH_OPTS ${PSERVER_STAGING_HOST} -- "${PSERVER_STAGING_DIRECTORY}/${PSERVER_ROOT_DIR_NAME}/sbin/cluster.sh fetch-logs ${STAGING_PARAM_FORWARDING}"
+            ssh -n $STAGING_SSH_OPTS ${PSERVER_STAGING_HOST} -- "${PSERVER_STAGING_DIRECTORY}/${PSERVER_ROOT_DIR_NAME}/sbin/cluster.sh fetch-logs ${STAGING_PARAM_FORWARDING}"
             # copy log files from staging to local
-            scp -q $PSERVER_SSH_OPTS ${PSERVER_STAGING_HOST}:"${PSERVER_DESTINATION_LOG_DIR}/*" ${PSERVER_LOG_DIR_TMP}/. 2> /dev/null
+            scp -q $STAGING_SSH_OPTS ${PSERVER_STAGING_HOST}:"${PSERVER_DESTINATION_LOG_DIR}/*" ${PSERVER_LOG_DIR_TMP}/. 2> /dev/null
             # now append diffs from tmp files to existing ones
             process_logs
             rm -rf "${PSERVER_LOG_DIR_TMP}" 2>/dev/null || true
@@ -88,17 +91,17 @@ fetch-logs)
 
 zookeeper-setup)
 		
-		ssh -n $PSERVER_SSH_OPTS ${PSERVER_STAGING_HOST} -- "${PSERVER_STAGING_DIRECTORY}/${PSERVER_ROOT_DIR_NAME}/sbin/cluster.sh zookeeper-setup ${STAGING_PARAM_FORWARDING}"
+		ssh -n $STAGING_SSH_OPTS ${PSERVER_STAGING_HOST} -- "${PSERVER_STAGING_DIRECTORY}/${PSERVER_ROOT_DIR_NAME}/sbin/cluster.sh zookeeper-setup ${STAGING_PARAM_FORWARDING}"
 		;;
 
 zookeeper-start)
         
-        ssh -n $PSERVER_SSH_OPTS ${PSERVER_STAGING_HOST} -- "${PSERVER_STAGING_DIRECTORY}/${PSERVER_ROOT_DIR_NAME}/sbin/cluster.sh zookeeper-start ${STAGING_PARAM_FORWARDING}"
+        ssh -n $STAGING_SSH_OPTS ${PSERVER_STAGING_HOST} -- "${PSERVER_STAGING_DIRECTORY}/${PSERVER_ROOT_DIR_NAME}/sbin/cluster.sh zookeeper-start ${STAGING_PARAM_FORWARDING}"
         ;;
 
 zookeeper-stop)
         
-        ssh -n $PSERVER_SSH_OPTS ${PSERVER_STAGING_HOST} -- "${PSERVER_STAGING_DIRECTORY}/${PSERVER_ROOT_DIR_NAME}/sbin/cluster.sh zookeeper-stop ${STAGING_PARAM_FORWARDING}"
+        ssh -n $STAGING_SSH_OPTS ${PSERVER_STAGING_HOST} -- "${PSERVER_STAGING_DIRECTORY}/${PSERVER_ROOT_DIR_NAME}/sbin/cluster.sh zookeeper-stop ${STAGING_PARAM_FORWARDING}"
         ;;
     
 *)
@@ -106,3 +109,7 @@ zookeeper-stop)
         ;;
 
 esac
+
+if [ "$(type -t profile_finish_hook 2>/dev/null)" == "function" ]; then
+	profile_finish_hook
+fi

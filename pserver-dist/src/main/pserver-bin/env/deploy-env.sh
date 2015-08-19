@@ -54,12 +54,13 @@ DEFAULT_PSERVER_STAGING_DIRECTORY="${DEFAULT_PSERVER_DESTINATION_DIRECTORY}"
 DEFAULT_PSERVER_STAGING_HOST="localhost"
 DEFAULT_ZOOKEEPER_INSTALL_DIR="/data/$(whoami)/zookeeper"
 DEFAULT_ZOOKEEPER_DATA_DIR="/data/$(whoami)/zookeeper/data"
-DEFAULT_PSERVER_CONFIG_FILE="pserver.conf"
+DEFAULT_PSERVER_CONFIG_FILE="profile.${ENV_PROFILE}.conf"
 DEFAULT_ZOOKEEPER_DIST_URL="http://archive.apache.org/dist/zookeeper/zookeeper-3.4.5/zookeeper-3.4.5.tar.gz"
-DEFAULT_ZOOKEEPER_FETCH_METHOD="cp"
+DEFAULT_ZOOKEEPER_FETCH_METHOD="wget"
+DEFAULT_STAGING_SSH_OPTS=${PSERVER_SSH_OPTS}
 
 ########################################################################################################################
-# CONFIG KEYS: The default values can be overwritten by the following keys in tools/wally.conf
+# CONFIG KEYS: The default values can be overwritten by the following keys in deploy.conf
 ########################################################################################################################
 
 KEY_PSERVER_DESTINATION_DIRECTORY="deploy.dest.dir"
@@ -70,6 +71,7 @@ KEY_ZOOKEEPER_DATA_DIR="deploy.zookeeper.data.dir"
 KEY_PSERVER_CONFIG_FILE="pserver.config.file"
 KEY_ZOOKEEPER_DIST_URL="zookeeper.dist.url"
 KEY_ZOOKEEPER_FETCH_METHOD="zookeeper.fetch.method"
+KEY_STAGING_SSH_OPTS="staging.ssh.opts"
 
 ########################################################################################################################
 # PATHS AND CONFIG
@@ -125,6 +127,10 @@ fi
 
 if [ -z "${ZOOKEEPER_FETCH_METHOD}" ]; then
     ZOOKEEPER_FETCH_METHOD=$(readFromConfig ${KEY_ZOOKEEPER_FETCH_METHOD} ${DEFAULT_ZOOKEEPER_FETCH_METHOD} ${YAML_DEPLOY_CONF})
+fi
+
+if [ -z "${STAGING_SSH_OPTS}" ]; then
+    STAGING_SSH_OPTS=$(readFromConfig ${KEY_STAGING_SSH_OPTS} "${DEFAULT_STAGING_SSH_OPTS}" ${YAML_DEPLOY_CONF})
 fi
 
 ZOOKEEPER_LOG_DIR=${ZOOKEEPER_INSTALL_DIR}/logs
