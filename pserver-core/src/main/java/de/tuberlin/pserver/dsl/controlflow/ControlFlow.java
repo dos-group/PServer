@@ -5,7 +5,7 @@ import de.tuberlin.pserver.dsl.controlflow.iteration.Iteration;
 import de.tuberlin.pserver.dsl.controlflow.selection.Selection;
 import de.tuberlin.pserver.runtime.SlotContext;
 
-public final class ControlFlowFactory {
+public final class ControlFlow {
 
     // ---------------------------------------------------
     // Fields.
@@ -17,7 +17,7 @@ public final class ControlFlowFactory {
     // Constructor.
     // ---------------------------------------------------
 
-    public ControlFlowFactory(final SlotContext slotContext) {
+    public ControlFlow(final SlotContext slotContext) {
         this.slotContext = Preconditions.checkNotNull(slotContext);
     }
 
@@ -32,4 +32,6 @@ public final class ControlFlowFactory {
     public Iteration iterate() { return new Iteration(slotContext); }
 
     public Selection select() {return new Selection(slotContext); }
+
+    public void syncSlots() { slotContext.programContext.runtimeContext.executionManager.localSync(); }
 }

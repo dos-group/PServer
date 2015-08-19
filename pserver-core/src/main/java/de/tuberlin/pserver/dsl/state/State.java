@@ -13,13 +13,11 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface State {;
 
-    LocalScope localScope() default LocalScope.SHARED;
+    LocalScope localScope() default LocalScope.SHARED; // NO SUPPORT FOR LOCAL SCOPES AT THE MOMENT....
 
     GlobalScope globalScope() default GlobalScope.REPLICATED;
 
     PartitionType partitionType() default PartitionType.ROW_PARTITIONED;
-
-    String path() default "";
 
     long rows() default 0;
 
@@ -28,4 +26,8 @@ public @interface State {;
     Layout layout() default Layout.ROW_LAYOUT;
 
     Format format() default Format.DENSE_FORMAT;
+
+    String path() default "";
+
+    DeltaUpdate delta() default DeltaUpdate.NO_DELTA;
 }

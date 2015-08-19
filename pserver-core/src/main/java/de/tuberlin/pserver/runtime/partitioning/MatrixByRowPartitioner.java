@@ -35,8 +35,8 @@ public class MatrixByRowPartitioner implements IMatrixPartitioner {
 
     @Override
     public int getPartitionOfEntry(MatrixEntry entry) {
-        double numOfRowsPerInstance = (double) rows / numNodes;
-        double partition = entry.getRow() / numOfRowsPerInstance;
+        double numOfRowsPerNode = (double) rows / numNodes;
+        double partition = entry.getRow() / numOfRowsPerNode;
         int result = Utils.toInt((long) (partition % numNodes));
         return result;
     }

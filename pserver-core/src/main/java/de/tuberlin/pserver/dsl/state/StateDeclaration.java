@@ -26,6 +26,8 @@ public final class StateDeclaration {
 
     public final String path;
 
+    public final DeltaUpdate delta;
+
     public StateDeclaration(final String name,
                             final Class<?> stateType,
                             final LocalScope localScope,
@@ -35,7 +37,8 @@ public final class StateDeclaration {
                             final long cols,
                             final Layout layout,
                             final Format format,
-                            final String path) {
+                            final String path,
+                            final DeltaUpdate delta) {
 
         this.name           = name;
         this.stateType      = stateType;
@@ -47,5 +50,6 @@ public final class StateDeclaration {
         this.layout         = layout;
         this.format         = format;
         this.path           = path;
+        this.delta          = delta;
     }
 }

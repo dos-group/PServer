@@ -15,6 +15,8 @@ public interface Compressor extends Serializable {
 
     public abstract byte[] compress(final byte[] data);
 
+    public abstract byte[] compress(final byte[] data, final int srcOffset, final int length);
+
     public abstract byte[] decompress(final byte[] data);
 
     public abstract byte[] decompress(final byte[] data, final int decompressedLength);
@@ -53,6 +55,7 @@ public interface Compressor extends Serializable {
 
     static final class NoCompressor implements Compressor {
         @Override  public byte[] compress(final byte[] data) { return data; }
+        @Override public byte[] compress(byte[] data, int srcOffset, int length) { return data; }
         @Override  public byte[] decompress(final byte[] data) { return data; }
         @Override  public byte[] decompress(byte[] data, int decompressedLength) { return data; }
         @Override  public byte[] decompress(byte[] src, byte[] dst) { System.arraycopy(src, 0, dst, 0, src.length); return dst; }
@@ -75,6 +78,11 @@ public interface Compressor extends Serializable {
             byte[] compressed = new byte[maxCompressedLength];
             compressor.compress(data, 0, data.length, compressed, 0, maxCompressedLength);
             return compressed;
+        }
+
+        public byte[] compress(final byte[] data, final int srcOffset, final int length) {
+            Preconditions.checkNotNull(data);
+            return compressor.compress(data, srcOffset, length);
         }
 
         @Override
@@ -120,6 +128,11 @@ public interface Compressor extends Serializable {
             final byte[] output = baos.toByteArray();
             deflater.end();
             return output;
+        }
+
+        @Override
+        public byte[] compress(byte[] data, int srcOffset, int length) {
+            throw new UnsupportedOperationException();
         }
 
         @Override

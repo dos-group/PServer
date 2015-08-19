@@ -32,7 +32,7 @@ public class DistributedMatrix extends AbstractMatrix {
 
     private final Matrix matrix;
 
-    private final boolean allocateCompleteMatrix;
+    private final boolean completeMatrix;
 
     //private final AtomicLong opCounter;
 
@@ -41,7 +41,7 @@ public class DistributedMatrix extends AbstractMatrix {
     // ---------------------------------------------------
 
     public DistributedMatrix(final DistributedMatrix m) {
-        this(m.slotContext, m.rows, m.cols, m.partitionType, m.layout, m.format, m.allocateCompleteMatrix);
+        this(m.slotContext, m.rows, m.cols, m.partitionType, m.layout, m.format, m.completeMatrix);
     }
 
     public DistributedMatrix(final SlotContext slotContext,
@@ -49,7 +49,7 @@ public class DistributedMatrix extends AbstractMatrix {
                              final PartitionType partitionType,
                              final Layout layout,
                              final Format format,
-                             final boolean allocateCompleteMatrix) {
+                             final boolean completeMatrix) {
 
         super(rows, cols, layout);
 
@@ -59,23 +59,21 @@ public class DistributedMatrix extends AbstractMatrix {
         this.partitionType  = Preconditions.checkNotNull(partitionType);
         this.shape          = createShape(rows, cols);
         this.format         = format;
-        this.allocateCompleteMatrix = allocateCompleteMatrix;
+        this.completeMatrix = completeMatrix;
         this.matrix         = allocMatrix();
-
-        System.out.println(shape.toString());
     }
 
     // ---------------------------------------------------
     // Public Methods..
     // ---------------------------------------------------
 
-    /*public long baseRow() { return shape.rowOffset; }
+    public long partitionBaseRowOffset() { return shape.rowOffset; }
 
-    public long baseCol() { return shape.colOffset; }
+    public long partitionBaseColOffset() { return shape.colOffset; }
 
-    public long partitionedNumRows() { return shape.rows; }
+    public long partitionNumRows() { return shape.rows; }
 
-    public long partitionedNumCols() { return shape.cols; }*/
+    public long partitionNumCols() { return shape.cols; }
 
     @Override public double get(long row, long col) { return matrix.get(translateRow(row), translateCol(col)); }
 
@@ -119,24 +117,16 @@ public class DistributedMatrix extends AbstractMatrix {
 
     @Override
     public RowIterator rowIterator() {
-        return createLocalRowIterator(
-                matrix.rowIterator(
-                        (int)translateRow(shape.rowOffset),
-                        (int)(translateRow(shape.rowOffset) + shape.rows)
-                )
-        );
+        final int start  = (int)translateRow(shape.rowOffset);
+        final int end    = (int)(start + shape.rows);
+        return createLocalRowIterator(matrix.rowIterator(start, end));
     }
 
     @Override
     public RowIterator rowIterator(int startRow, int endRow) {
-        final int localStart = startRow - (int)shape.rowOffset;
-        final int length = endRow - startRow - 1;
-        return createLocalRowIterator(
-                matrix.rowIterator(
-                        (int)translateRow(shape.rowOffset) + localStart,
-                        (int)translateRow(shape.rowOffset) + localStart + length
-                )
-        );
+        final int start  = (int)translateRow(startRow);
+        final int end    = (int)translateRow(endRow);
+        return createLocalRowIterator(matrix.rowIterator(start, end));
     }
 
     // ---------------------------------------------------
@@ -180,7 +170,7 @@ public class DistributedMatrix extends AbstractMatrix {
     }
 
     public DistributedMatrix syncPartitions() {
-        if (!allocateCompleteMatrix)
+        if (!completeMatrix)
             throw new IllegalStateException();
         switch (partitionType) {
             case ROW_PARTITIONED: {
@@ -209,8 +199,8 @@ public class DistributedMatrix extends AbstractMatrix {
     // ---------------------------------------------------
 
     private Matrix allocMatrix() {
-        final long _rows = allocateCompleteMatrix ? rows : shape.rows;
-        final long _cols = allocateCompleteMatrix ? cols : shape.cols;
+        final long _rows = completeMatrix ? rows : shape.rows;
+        final long _cols = completeMatrix ? cols : shape.cols;
         return new MatrixBuilder()
                 .dimension(_rows, _cols)
                 .layout(layout)
@@ -233,7 +223,7 @@ public class DistributedMatrix extends AbstractMatrix {
 
     public long translateRow(final long row) {
         switch (partitionType) {
-            case ROW_PARTITIONED: return allocateCompleteMatrix ? row : row - shape.rowOffset;
+            case ROW_PARTITIONED: return completeMatrix ? row : row - shape.rowOffset;
             case COLUMN_PARTITIONED: throw new UnsupportedOperationException();
             case BLOCK_PARTITIONED: throw new UnsupportedOperationException();
             default: throw new IllegalStateException();
@@ -260,7 +250,7 @@ public class DistributedMatrix extends AbstractMatrix {
             @Override public void reset() { iter.reset(); }
             @Override public long numRows() { return iter.numRows(); }
             @Override public long numCols() { return iter.numCols(); }
-            @Override public int getCurrentRowNum() { return allocateCompleteMatrix
+            @Override public int getCurrentRowNum() { return completeMatrix
                     ? iter.getCurrentRowNum()
                     : iter.getCurrentRowNum() + (int)shape.rowOffset; }
         };

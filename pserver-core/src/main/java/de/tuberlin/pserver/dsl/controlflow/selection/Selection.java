@@ -18,9 +18,9 @@ public final class Selection extends CFStatement {
 
     private int toNodeID;
 
-    private int fromInstanceID;
+    private int fromSlotID;
 
-    private int toInstanceID;
+    private int toSlotID;
 
     // ---------------------------------------------------
     // Constructor.
@@ -28,9 +28,7 @@ public final class Selection extends CFStatement {
 
     public Selection(final SlotContext ic) {
         super(ic);
-
         exeManager = ic.programContext.runtimeContext.executionManager;
-
         allNodes();
         allSlots();
     }
@@ -53,13 +51,13 @@ public final class Selection extends CFStatement {
     // Instance Selection.
     // ---------------------------------------------------
 
-    public Selection slot(final int fromInstanceID, final int toInstanceID) {
-        this.fromInstanceID = fromInstanceID;
-        this.toInstanceID = toInstanceID;
+    public Selection slot(final int fromSlotID, final int toSlotID) {
+        this.fromSlotID = fromSlotID;
+        this.toSlotID = toSlotID;
         return this;
     }
 
-    public Selection slot(final int instanceID) { return slot(instanceID, instanceID); }
+    public Selection slot(final int slotID) { return slot(slotID, slotID); }
 
     public Selection allSlots() { return slot(0, slotContext.programContext.perNodeDOP - 1); }
 
@@ -77,7 +75,7 @@ public final class Selection extends CFStatement {
         Preconditions.checkNotNull(body);
         if (inNodeRange() && inInstanceRange()) {
 
-            final ExecutionManager.SlotAllocation sa = exeManager.allocSlots(fromInstanceID, toInstanceID);
+            final ExecutionManager.SlotAllocation sa = exeManager.allocSlots(fromSlotID, toSlotID);
 
             enter();
 
@@ -105,7 +103,7 @@ public final class Selection extends CFStatement {
     }
 
     private boolean inInstanceRange() {
-        return slotContext.slotID >= fromInstanceID
-                && slotContext.slotID <= toInstanceID;
+        return slotContext.slotID >= fromSlotID
+                && slotContext.slotID <= toSlotID;
     }
 }

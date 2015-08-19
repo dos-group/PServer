@@ -6,11 +6,8 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.dense.DVector;
+import gnu.trove.map.hash.TLongDoubleHashMap;
 import org.apache.commons.lang3.NotImplementedException;
-
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 
 public class SMutableMatrix extends AbstractMatrix {
 
@@ -18,12 +15,11 @@ public class SMutableMatrix extends AbstractMatrix {
     // Inner Classes.
     // ---------------------------------------------------
 
-    public final class MtxPos implements Serializable {
+    /*public final class MtxPos implements Serializable {
 
         public final long row;
 
         public final long col;
-
 
         public MtxPos(final long row, final long col) {
             this.row = row;
@@ -32,7 +28,6 @@ public class SMutableMatrix extends AbstractMatrix {
 
         @Override
         public int hashCode() {
-        //    return new HashCodeBuilder().append(row).append(col).build();
             return (int) (row * cols + col);
         }
 
@@ -44,13 +39,13 @@ public class SMutableMatrix extends AbstractMatrix {
             }
             return false;
         }
-    }
+    }*/
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    private final Map<MtxPos, Double> data;
+    private final TLongDoubleHashMap data;
 
     // ---------------------------------------------------
     // Constructors.
@@ -58,7 +53,7 @@ public class SMutableMatrix extends AbstractMatrix {
 
     public SMutableMatrix(final long rows, final long cols, final Layout layout) {
         super(rows, cols, layout);
-        this.data = new HashMap<>();
+        this.data = new TLongDoubleHashMap();
     }
 
     // ---------------------------------------------------
@@ -67,16 +62,16 @@ public class SMutableMatrix extends AbstractMatrix {
 
     @Override
     public double get(long row, long col) {
-        final Double value = data.get(new MtxPos(row, col));
+        final Double value = data.get(row * cols + col);
         return (value == null) ? 0 : value;
     }
 
     @Override
     public void set(long row, long col, double value) {
         if(value == 0.0) {
-            data.remove(new MtxPos(row, col));
+            data.remove(row * cols + col);
         } else {
-            data.put(new MtxPos(row, col), value);
+            data.put(row * cols + col, value);
         }
     }
 
@@ -187,11 +182,11 @@ public class SMutableMatrix extends AbstractMatrix {
 
     @Override
     public Matrix applyOnNonZeroElements(MatrixElementUnaryOperator f, Matrix B) {
-        for (Map.Entry<MtxPos, Double> ele : data.entrySet()) {
-            long row = ele.getKey().row;
-            long col = ele.getKey().col;
+        /*for (Map.Entry<Long, Double> ele : data.entrySet()) {
+            long row = ele.getKey() / cols;
+            long col = ele.getKey() % cols;
             B.set(row, col, f.apply(row, col, ele.getValue()));
-        }
+        }*/
         return this;
     }
 

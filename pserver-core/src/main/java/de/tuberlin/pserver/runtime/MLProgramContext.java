@@ -4,12 +4,11 @@ package de.tuberlin.pserver.runtime;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import de.tuberlin.pserver.commons.ds.ResettableCountDownLatch;
+import de.tuberlin.pserver.commons.hashtable.NonBlockingHashMap;
 import de.tuberlin.pserver.commons.json.GsonUtils;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 
@@ -57,6 +56,11 @@ public final class MLProgramContext {
     public final CountDownLatch programDoneBarrier;
 
     // ---------------------------------------------------
+
+    @GsonUtils.Exclude
+    private final Map<String, Object> programStore;
+
+    // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
@@ -78,11 +82,12 @@ public final class MLProgramContext {
 
         this.globalSyncBarrier  = new ResettableCountDownLatch(nodeDOP);
         this.localSyncBarrier   = new CyclicBarrier(perNodeDOP);
-        this.slots = new ArrayList<>();
-
+        this.slots              = new ArrayList<>();
         this.programLoadBarrier = new CountDownLatch(1);
         this.programInitBarrier = new CountDownLatch(1);
         this.programDoneBarrier = new CountDownLatch(perNodeDOP);
+
+        this.programStore = new NonBlockingHashMap<>();
     }
 
     // ---------------------------------------------------
@@ -96,6 +101,16 @@ public final class MLProgramContext {
     public void removeSlot(final SlotContext ic) {
         slots.remove(Preconditions.checkNotNull(ic));
     }
+
+    // ---------------------------------------------------
+
+    public void put(final String name, final Object obj) { programStore.put(Preconditions.checkNotNull(name), Preconditions.checkNotNull(obj)); }
+
+    public Object get(final String name) { return programStore.get(Preconditions.checkNotNull(name)); }
+
+    public void delete(final String name) { programStore.remove(Preconditions.checkNotNull(name)); }
+
+    // ---------------------------------------------------
 
     @Override
     public String toString() {

@@ -148,7 +148,6 @@ public final class MatrixPartitionManager {
                 matrixFormat,
                 matrixLayout
         );
-
         matrixLoadTasks.put(name, mlt);
         fileLoadingBarrier.put(name, new AtomicInteger(slotContext.programContext.nodeDOP));
     }

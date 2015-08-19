@@ -3,10 +3,12 @@ package de.tuberlin.pserver.dsl.dataflow;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.delta.LZ4MatrixDeltaExtractor;
+import de.tuberlin.pserver.runtime.delta.MatrixDeltaFilter;
 import de.tuberlin.pserver.runtime.dht.DHTKey;
 
 
-public final class DataFlowFactory {
+public final class DataFlow {
 
     // ---------------------------------------------------
     // Fields.
@@ -18,7 +20,7 @@ public final class DataFlowFactory {
     // Constructor.
     // ---------------------------------------------------
 
-    public DataFlowFactory(final SlotContext slotContext) {
+    public DataFlow(final SlotContext slotContext) {
         this.slotContext = Preconditions.checkNotNull(slotContext);
     }
 
@@ -32,5 +34,13 @@ public final class DataFlowFactory {
 
     public <T extends SharedObject> T get(final String name) {
         return slotContext.programContext.runtimeContext.dataManager.getObject(name);
+    }
+
+    // ---------------------------------------------------
+
+    public void computeDelta(final String name) throws Exception {
+        final LZ4MatrixDeltaExtractor deltaExtractor =
+                (LZ4MatrixDeltaExtractor)slotContext.programContext.get(name + "-Delta-Extractor");
+        deltaExtractor.extractDeltas(slotContext);
     }
 }

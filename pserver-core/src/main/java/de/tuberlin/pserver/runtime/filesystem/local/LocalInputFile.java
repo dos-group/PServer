@@ -2,6 +2,8 @@ package de.tuberlin.pserver.runtime.filesystem.local;
 
 
 import com.google.common.base.Preconditions;
+import com.google.gson.Gson;
+import de.tuberlin.pserver.commons.json.GsonUtils;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
@@ -25,7 +27,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
     private final RecordFormat format;
 
-    private final LocalFileSection csvFileSection;
+    private final LocalFileSection fileSection;
 
     private final PartitionType partitionType;
 
@@ -40,7 +42,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
         this.filePath       = Preconditions.checkNotNull(filePath);
         this.format         = Preconditions.checkNotNull(format);
         this.partitionType  = Preconditions.checkNotNull(partitionType);
-        this.csvFileSection = new LocalFileSection();
+        this.fileSection    = new LocalFileSection();
     }
 
     // ---------------------------------------------------
@@ -53,7 +55,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
         try {
             switch(partitionType) {
                 case NOT_PARTITIONED:
-                    csvFileSection.set(totalLines, totalLines, 0, totalLines);
+                    fileSection.set(totalLines, totalLines, 0, totalLines);
                     break;
                 case ROW_PARTITIONED: {
                     final long numLinesPerSection = totalLines / numNodes;
@@ -72,7 +74,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
                             break;
                     }
                     br.close();
-                    csvFileSection.set(totalLines, linesToRead, startOffset, blockLineOffset);
+                    fileSection.set(totalLines, linesToRead, startOffset, blockLineOffset);
                 } break;
                 case COLUMN_PARTITIONED: throw new UnsupportedOperationException();
                 case BLOCK_PARTITIONED: throw new UnsupportedOperationException();
@@ -83,7 +85,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
     }
 
     @Override
-    public FileDataIterator<IRecord> iterator() { return new CSVFileDataIterator(csvFileSection); }
+    public FileDataIterator<IRecord> iterator() { return new CSVFileDataIterator(fileSection); }
 
     // ---------------------------------------------------
     // Private Methods.
@@ -107,6 +109,8 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
     private class LocalFileSection {
 
+        private transient Gson gson = GsonUtils.createPrettyPrintAndAnnotationExclusionGson();
+
         public long totalLines  = 0;
 
         public long linesToRead = 0;
@@ -121,6 +125,8 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
             this.startOffset = startOffset;
             this.blockLineOffset = blockLineOffset;
         }
+
+        @Override public String toString() { return "\nLocalFileSection " + gson.toJson(this); }
     }
 
     private int getLineEndingCharCount(BufferedReader br) {

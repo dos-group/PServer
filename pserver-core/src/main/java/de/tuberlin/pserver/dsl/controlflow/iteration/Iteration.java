@@ -118,7 +118,7 @@ public final class Iteration extends CFStatement {
     private RowMatrixIterationBody toRowMatrixIB(final Matrix m, final MatrixElementIterationBody b) throws Exception {
         return (epoch, rit) -> {
             for (long j = 0; j < m.numCols(); ++j)
-                b.body(epoch, epoch, j, rit.getValueOfColumn((int) j));
+                b.body(epoch, rit.getCurrentRowNum(), j, rit.getValueOfColumn((int) j));
         };
     }
 

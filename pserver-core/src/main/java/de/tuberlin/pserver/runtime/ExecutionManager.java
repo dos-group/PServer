@@ -7,6 +7,7 @@ import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.dsl.controlflow.CFStatement;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.types.DistributedMatrix;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -207,13 +208,25 @@ public final class ExecutionManager {
         return activeFrame[ic.slotID];
     }
 
-    public int getDegreeOfParallelism() {
+    public int getScopeDOP() {
 
         final SlotContext ic = getSlotContext();
 
         synchronized (monitor) {
 
             return slotAssignment.get(new NestedIntervalTree.Point(ic.slotID)).getRight().size();
+        }
+    }
+
+    public Pair<Integer, Integer> getAvailableSlotRangeForScope() {
+
+        final SlotContext ic = getSlotContext();
+
+        synchronized (monitor) {
+
+            final NestedIntervalTree.Interval slots = slotAssignment.get(new NestedIntervalTree.Point(ic.slotID)).getLeft();
+
+            return Pair.of(slots.low, slots.high);
         }
     }
 
@@ -227,10 +240,10 @@ public final class ExecutionManager {
 
         synchronized (monitor) {
 
-            if (!slotAssignment.isValid(range))
-                throw new IllegalStateException();
-
             if (!slotAssignment.exist(range)) {
+
+                if (!slotAssignment.isValid(range))
+                    throw new IllegalStateException();
 
                 final SlotAllocation sa = new SlotAllocation(range);
 
@@ -240,7 +253,6 @@ public final class ExecutionManager {
                 return sa;
 
             } else {
-
 
                 return slotAssignment.get(range).getRight();
             }
@@ -264,19 +276,14 @@ public final class ExecutionManager {
 
     public void globalSync() {
         final SlotContext slotContext = getSlotContext();
-
         final NetEvents.NetEvent globalSyncEvent = new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT);
-
         globalSyncEvent.setPayload(slotContext.programContext.programID);
-
         netManager.broadcastEvent(globalSyncEvent);
-
         try {
             slotContext.programContext.globalSyncBarrier.await();
         } catch (InterruptedException e) {
             LOG.error(e.getMessage());
         }
-
         if (slotContext.programContext.globalSyncBarrier.getCount() == 0) {
             slotContext.programContext.globalSyncBarrier.reset();
         } else {
@@ -286,7 +293,6 @@ public final class ExecutionManager {
 
     public void localSync() {
         final SlotContext slotContext = getSlotContext();
-
         try {
             slotContext.programContext.localSyncBarrier.await();
         } catch (Exception e) {
@@ -295,18 +301,32 @@ public final class ExecutionManager {
     }
 
     // ---------------------------------------------------
-    // THREAD PARALLEL PRIMITIVES.
+    // SLOT PARALLEL PRIMITIVES.
     // ---------------------------------------------------
 
     public Matrix.RowIterator parRowIterator(final Matrix matrix) {
         Preconditions.checkNotNull(matrix);
         final SlotContext slotContext = getSlotContext();
-        final int rowBlock = (int) matrix.numRows() / slotContext.programContext.perNodeDOP;
-        int end = (slotContext.slotID * rowBlock + rowBlock - 1);
-        end = (slotContext.slotID == slotContext.programContext.perNodeDOP - 1)
-                ? end + (int) matrix.numRows() % slotContext.programContext.perNodeDOP
-                : end;
-        return matrix.rowIterator(slotContext.slotID * rowBlock, end);
+        final int scopeDOP = getScopeDOP();
+        final Pair<Integer, Integer> range = getAvailableSlotRangeForScope();
+        int startOffset, endOffset, blockSize;
+        if (matrix.getClass() == DistributedMatrix.class) {
+            final DistributedMatrix dm = (DistributedMatrix)matrix;
+            blockSize   = (int) dm.partitionNumRows() / scopeDOP;
+            startOffset = (int)(dm.partitionBaseRowOffset() + (slotContext.slotID * blockSize));
+            endOffset   = startOffset + blockSize - 1;
+            endOffset   = (slotContext.slotID == range.getRight())
+                    ? endOffset + (int) dm.partitionNumRows() % scopeDOP
+                    : endOffset;
+        } else {
+            blockSize   = (int) matrix.numRows() / scopeDOP;
+            startOffset = slotContext.slotID * blockSize;
+            endOffset   = (slotContext.slotID * blockSize + blockSize - 1);
+            endOffset   = (slotContext.slotID == range.getRight())
+                    ? endOffset + (int) matrix.numRows() % scopeDOP
+                    : endOffset;
+        }
+        return matrix.rowIterator(startOffset, endOffset);
     }
 
     /*public void iterateMatrixParallel(final Matrix m, final MatrixElementIterationBody b) {

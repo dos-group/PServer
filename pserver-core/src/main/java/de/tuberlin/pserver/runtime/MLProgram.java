@@ -2,11 +2,13 @@ package de.tuberlin.pserver.runtime;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.events.EventDispatcher;
-import de.tuberlin.pserver.dsl.controlflow.ControlFlowFactory;
+import de.tuberlin.pserver.dsl.controlflow.ControlFlow;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.dsl.state.DeltaFilter;
+import de.tuberlin.pserver.dsl.state.DeltaUpdate;
 import de.tuberlin.pserver.dsl.state.State;
 import de.tuberlin.pserver.dsl.state.StateDeclaration;
-import de.tuberlin.pserver.dsl.dataflow.DataFlowFactory;
+import de.tuberlin.pserver.dsl.dataflow.DataFlow;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.SharedObject;
@@ -15,6 +17,9 @@ import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.matrix.dense.DMatrix;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
+import de.tuberlin.pserver.runtime.delta.LZ4MatrixDeltaExtractor;
+import de.tuberlin.pserver.runtime.delta.MatrixDelta;
+import de.tuberlin.pserver.runtime.delta.MatrixDeltaFilter;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.types.DistributedMatrix;
@@ -28,6 +33,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.StringTokenizer;
 
 public abstract class MLProgram extends EventDispatcher {
 
@@ -41,13 +47,15 @@ public abstract class MLProgram extends EventDispatcher {
 
     protected DataManager dataManager;
 
-    protected ControlFlowFactory CF;
-
-    protected DataFlowFactory DF;
-
     public SlotContext slotContext;
 
     private Program program;
+
+    // ---------------------------------------------------
+
+    public ControlFlow CF;
+
+    public DataFlow DF;
 
     // ---------------------------------------------------
     // Constructors.
@@ -69,11 +77,11 @@ public abstract class MLProgram extends EventDispatcher {
 
         this.dataManager = slotContext.programContext.runtimeContext.dataManager;
 
-        this.CF = new ControlFlowFactory(this.slotContext);
-
-        this.DF = new DataFlowFactory(this.slotContext);
-
         this.program = new Program(slotContext);
+
+        this.CF = slotContext.CF;
+
+        this.DF = slotContext.DF;
     }
 
     public void result(final Serializable... obj) {
@@ -96,23 +104,28 @@ public abstract class MLProgram extends EventDispatcher {
 
         define(program);
 
-        final List<StateDeclaration> stateDecls  = extractStateDeclarations(this.getClass());
+        final List<StateDeclaration> stateDecls  = extractStateAnnotations(this.getClass());
+
+        final String slotIDStr = "[" + slotContext.programContext.runtimeContext.nodeID
+                + " | " + slotContext.slotID + "] ";
 
         program.enter();
 
             if (slotContext.slotID == 0) {
 
-                LOG.info("Enter " + program.slotContext.programContext.simpleClassName + " loading phase.");
+                LOG.info(slotIDStr + "Enter " + program.slotContext.programContext.simpleClassName + " loading phase.");
 
                 final long start = System.currentTimeMillis();
 
                 createStateObjects(stateDecls);
 
+                extractAndApplyDeltaFilterAnnotations(this.getClass());
+
                 slotContext.programContext.runtimeContext.dataManager.loadInputData(slotContext);
 
                 final long end = System.currentTimeMillis();
 
-                LOG.info("Leave " + program.slotContext.programContext.simpleClassName
+                LOG.info(slotIDStr + "Leave " + program.slotContext.programContext.simpleClassName
                         + " loading phase [duration: " + (end - start) + " ms].");
 
 
@@ -127,7 +140,7 @@ public abstract class MLProgram extends EventDispatcher {
 
             if (slotContext.slotID == 0) {
 
-                LOG.info("Enter " + program.slotContext.programContext.simpleClassName + " initialization phase.");
+                LOG.info(slotIDStr + "Enter " + program.slotContext.programContext.simpleClassName + " initialization phase.");
 
                 final long start = System.currentTimeMillis();
 
@@ -135,7 +148,7 @@ public abstract class MLProgram extends EventDispatcher {
 
                 final long end = System.currentTimeMillis();
 
-                LOG.info("Leave " + program.slotContext.programContext.simpleClassName
+                LOG.info(slotIDStr + "Leave " + program.slotContext.programContext.simpleClassName
                         + " initialization phase [duration: " + (end - start) + " ms].");
 
                 slotContext.programContext.programInitBarrier.countDown();
@@ -144,7 +157,7 @@ public abstract class MLProgram extends EventDispatcher {
             slotContext.programContext.programInitBarrier.await();
 
             {
-                LOG.info("Enter " + program.slotContext.programContext.simpleClassName + " pre-process phase.");
+                LOG.info(slotIDStr + "Enter " + program.slotContext.programContext.simpleClassName + " pre-process phase.");
 
                 final long start = System.currentTimeMillis();
 
@@ -152,12 +165,12 @@ public abstract class MLProgram extends EventDispatcher {
 
                 final long end = System.currentTimeMillis();
 
-                LOG.info("Leave " + program.slotContext.programContext.simpleClassName
+                LOG.info(slotIDStr + "Leave " + program.slotContext.programContext.simpleClassName
                         + " pre-process phase [duration: " + (end - start) + " ms].");
             }
 
             {
-                LOG.info("Enter " + program.slotContext.programContext.simpleClassName + " process phase.");
+                LOG.info(slotIDStr + "Enter " + program.slotContext.programContext.simpleClassName + " process phase.");
 
                 final long start = System.currentTimeMillis();
 
@@ -165,12 +178,12 @@ public abstract class MLProgram extends EventDispatcher {
 
                 final long end = System.currentTimeMillis();
 
-                LOG.info("Leave " + program.slotContext.programContext.simpleClassName +
+                LOG.info(slotIDStr + "Leave " + program.slotContext.programContext.simpleClassName +
                         " process phase [duration: " + (end - start) + " ms].");
             }
 
             {
-                LOG.info("Enter " + program.slotContext.programContext.simpleClassName + " post-process phase.");
+                LOG.info(slotIDStr + "Enter " + program.slotContext.programContext.simpleClassName + " post-process phase.");
 
                 final long start = System.currentTimeMillis();
 
@@ -178,7 +191,7 @@ public abstract class MLProgram extends EventDispatcher {
 
                 final long end = System.currentTimeMillis();
 
-                LOG.info("Leave " + program.slotContext.programContext.simpleClassName
+                LOG.info(slotIDStr + "Leave " + program.slotContext.programContext.simpleClassName
                         + " post-process phase [duration: " + (end - start) + " ms].");
             }
 
@@ -194,24 +207,25 @@ public abstract class MLProgram extends EventDispatcher {
     // State-Management.
     // ---------------------------------------------------
 
-    private List<StateDeclaration> extractStateDeclarations(final Class<? extends MLProgram> programClass) {
+    private List<StateDeclaration> extractStateAnnotations(final Class<? extends MLProgram> programClass) {
         Preconditions.checkNotNull(programClass);
         final List<StateDeclaration> decls = new ArrayList<>();
         for (final Field field : programClass.getDeclaredFields()) {
             for (final Annotation an : field.getDeclaredAnnotations()) {
                 if (an instanceof State) {
-                    final State properties = (State) an;
+                    final State stateProperties = (State) an;
                     final StateDeclaration decl = new StateDeclaration(
                             field.getName(),
                             field.getType(),
-                            properties.localScope(),
-                            properties.globalScope(),
-                            properties.partitionType(),
-                            properties.rows(),
-                            properties.cols(),
-                            properties.layout(),
-                            properties.format(),
-                            properties.path()
+                            stateProperties.localScope(),
+                            stateProperties.globalScope(),
+                            stateProperties.partitionType(),
+                            stateProperties.rows(),
+                            stateProperties.cols(),
+                            stateProperties.layout(),
+                            stateProperties.format(),
+                            stateProperties.path(),
+                            stateProperties.delta()
                     );
                     decls.add(decl);
                 }
@@ -220,18 +234,52 @@ public abstract class MLProgram extends EventDispatcher {
         return decls;
     }
 
-    private void createStateObjects(final List<StateDeclaration> stateDecls) {
+    private void extractAndApplyDeltaFilterAnnotations(final Class<? extends MLProgram> programClass) throws Exception{
+        Preconditions.checkNotNull(programClass);
+        for (final Field field : programClass.getDeclaredFields()) {
+            for (final Annotation an : field.getDeclaredAnnotations()) {
+                if (an instanceof DeltaFilter) {
+                    final DeltaFilter filterProperties = (DeltaFilter) an;
+                    StringTokenizer st = new StringTokenizer(filterProperties.stateObjects(), ",");
+                    while (st.hasMoreTokens()) {
+                        final String stateObjName = st.nextToken();
+                        final LZ4MatrixDeltaExtractor deltaExtractor =
+                                (LZ4MatrixDeltaExtractor)slotContext.programContext.get(stateObjName + "-Delta-Extractor");
+                        if (deltaExtractor == null)
+                            throw new IllegalStateException();
+                        final MatrixDeltaFilter filter = (MatrixDeltaFilter)field.get(this);
+                        deltaExtractor.setDeltaFilter(filter);
+                    }
+                }
+            }
+        }
+    }
+
+    private void createStateObjects(final List<StateDeclaration> stateDecls) throws Exception {
         Preconditions.checkNotNull(stateDecls);
         for (final StateDeclaration decl : stateDecls) {
             if (Matrix.class.isAssignableFrom(decl.stateType)) {
                 switch (decl.globalScope) {
                     case REPLICATED: {
                         if ("".equals(decl.path)) {
+
                             final SharedObject so = new MatrixBuilder()
                                     .dimension(decl.rows, decl.cols)
                                     .format(decl.format)
                                     .layout(decl.layout)
                                     .build();
+
+                            if (decl.delta == DeltaUpdate.LZ4_DELTA) {
+                                if (decl.format == Format.DENSE_FORMAT) {
+                                    final MatrixDelta delta = new MatrixDelta(slotContext, decl.rows, decl.cols);
+                                    final LZ4MatrixDeltaExtractor deltaExtractor =
+                                            new LZ4MatrixDeltaExtractor((DMatrix)so, delta);
+                                    slotContext.programContext.put(decl.name + "-Delta-Extractor", deltaExtractor);
+                                    dataManager.putObject(decl.name + "-Delta", delta);
+                                } else
+                                    throw new UnsupportedOperationException();
+                            }
+
                             dataManager.putObject(decl.name, so);
                         } else {
                             dataManager.loadAsMatrix(
@@ -251,15 +299,32 @@ public abstract class MLProgram extends EventDispatcher {
                         }
                     } break;
                     case PARTITIONED: {
-                        final SharedObject so = new DistributedMatrix(
-                                slotContext,
-                                decl.rows, decl.cols,
-                                PartitionType.ROW_PARTITIONED,
-                                decl.layout,
-                                decl.format,
-                                false
-                        );
-                        dataManager.putObject(decl.name, so);
+                        if ("".equals(decl.path)) {
+                            final SharedObject so = new DistributedMatrix(
+                                    slotContext,
+                                    decl.rows, decl.cols,
+                                    PartitionType.ROW_PARTITIONED,
+                                    decl.layout,
+                                    decl.format,
+                                    false
+                            );
+                            dataManager.putObject(decl.name, so);
+                        } else {
+                            dataManager.loadAsMatrix(
+                                    slotContext,
+                                    decl.path,
+                                    decl.name,
+                                    decl.rows,
+                                    decl.cols,
+                                    decl.globalScope,
+                                    decl.partitionType,
+                                    decl.format == Format.SPARSE_FORMAT
+                                            ? RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD)
+                                            : RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROW_RECORD),
+                                    decl.format,
+                                    decl.layout
+                            );
+                        }
                     } break;
                     case LOGICALLY_PARTITIONED:
                         final SharedObject so = new DistributedMatrix(
@@ -303,8 +368,7 @@ public abstract class MLProgram extends EventDispatcher {
             for (final StateDeclaration decl : decls) {
                 final Field f = programClass.getDeclaredField(decl.name);
                 f.set(program, dataManager.getObject(decl.name));
-
-                LOG.info("Fetch object '" + decl.name + "'.");
+                //LOG.info("Fetch object '" + decl.name + "'.");
             }
         } catch(Exception e) {
             LOG.error(e.getMessage());

@@ -2,6 +2,8 @@ package de.tuberlin.pserver.runtime;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.dsl.controlflow.ControlFlow;
+import de.tuberlin.pserver.dsl.dataflow.DataFlow;
 
 public final class SlotContext {
 
@@ -16,6 +18,12 @@ public final class SlotContext {
     public final MLProgram programInvokeable;
 
     // ---------------------------------------------------
+
+    public ControlFlow CF;
+
+    public DataFlow DF;
+
+    // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
@@ -26,5 +34,7 @@ public final class SlotContext {
         this.programContext     = Preconditions.checkNotNull(programContext);
         this.slotID             = slotID;
         this.programInvokeable  = Preconditions.checkNotNull(programInvokeable);
+        this.CF                 = new ControlFlow(this);
+        this.DF                 = new DataFlow(this);
     }
 }
