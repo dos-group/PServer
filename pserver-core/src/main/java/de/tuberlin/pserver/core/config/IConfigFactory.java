@@ -50,38 +50,25 @@ public final class IConfigFactory {
         // 0. initial configuration is empty
         Config config = ConfigFactory.empty();
         // 1. merge a config from a classpath entry named 'reference.simulation.conf'
-        LOG.error("loading resource: " + String.format("reference.%s", s));
         config = ConfigFactory.parseResources(String.format("reference.%s", s), opts).withFallback(config);
-        LOG.error(ZookeeperClient.buildServersString(new TypesafeConfig(config.resolve()).getObjectList("zookeeper.servers")));
+        //LOG.error(ZookeeperClient.buildServersString(new TypesafeConfig(config.resolve()).getObjectList("zookeeper.servers")));
         // 2. if rootDir != null, merge a config file in rootDir named 'reference.simulation.conf'
         if(rootDir != null) {
-            LOG.error("loading file: " + String.format("%s/reference.%s", rootDir, s));
-            config = ConfigFactory.parseFile(new File(String.format("%sreference.%s", rootDir, s)), opts).withFallback(config);
-            LOG.error(ZookeeperClient.buildServersString(new TypesafeConfig(config.resolve()).getObjectList("zookeeper.servers")));
+            config = ConfigFactory.parseFile(new File(String.format("%s/reference.%s", rootDir, s)), opts).withFallback(config);
         }
         // 3. merge a config constructed from current system data
-        LOG.error("loading runtime config");
         config = currentRuntimeConfig().withFallback(config);
-        LOG.error(ZookeeperClient.buildServersString(new TypesafeConfig(config.resolve()).getObjectList("zookeeper.servers")));
         // 4. merge a config from a classpath entry named '$profile.{pserver.profile}.conf' or fall back to profile.default.conf
         if (System.getProperty("pserver.profile") == null) {
-            //LOG.warn("No configuration profile specified! Falling back to profile.default.conf.");
-            //LOG.warn("You may want to create a profile for your configuration.");
             System.setProperty("pserver.profile", "default");
         }
-        LOG.error("loading resource: " + String.format("profile.%s.conf", System.getProperty("pserver.profile")));
         config = ConfigFactory.parseResources(String.format("profile.%s.conf", System.getProperty("pserver.profile")), opts).withFallback(config);
-        LOG.error(ZookeeperClient.buildServersString(new TypesafeConfig(config.resolve()).getObjectList("zookeeper.servers")));
         // 5. if rootDir != null, merge a config file in rootDir named '$profile.{pserver.profile}.conf' or fall back to profile.default.conf
         if(rootDir != null) {
-            LOG.error("loading file: " + String.format("%s/profile.%s.conf", rootDir, System.getProperty("pserver.profile")));
-            config = ConfigFactory.parseFile(new File(String.format("%sprofile.%s.conf", rootDir, System.getProperty("pserver.profile"))), opts).withFallback(config);
-            LOG.error(ZookeeperClient.buildServersString(new TypesafeConfig(config.resolve()).getObjectList("zookeeper.servers")));
+            config = ConfigFactory.parseFile(new File(String.format("%s/profile.%s.conf", rootDir, System.getProperty("pserver.profile"))), opts).withFallback(config);
         }
         // 6. merge system properties as configuration
-        LOG.error("loading system properties");
         config = ConfigFactory.systemProperties().withFallback(config);
-        LOG.error(ZookeeperClient.buildServersString(new TypesafeConfig(config.resolve()).getObjectList("zookeeper.servers")));
         // wrap the resolved delegate into a TypesafeConfig new instance and return
         return new TypesafeConfig(config.resolve());
     }
@@ -98,11 +85,6 @@ public final class IConfigFactory {
         runtimeConfig.put("default.io.tcp.port", InetHelper.getFreePort());
         runtimeConfig.put("default.io.rpc.port", InetHelper.getFreePort());
         return ConfigFactory.parseMap(runtimeConfig);
-    }
-
-    public static void main(String[] args) {
-        System.setProperty("pserver.profile", "cloud-7");
-        IConfigFactory.load(IConfig.Type.PSERVER_NODE, "/Users/fsander/workspace/PServer/pserver-dist/target/pserver-dist-1.0-SNAPSHOT-bin/pserver-1.0-SNAPSHOT/profiles/cloud-7/conf");
     }
 
 }
