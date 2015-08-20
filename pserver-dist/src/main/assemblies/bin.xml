@@ -76,7 +76,7 @@
         <fileSet>
             <directory>src/main/pserver-bin/sbin</directory>
             <outputDirectory>sbin</outputDirectory>
-            <fileMode>0744</fileMode>
+            <fileMode>0755</fileMode>
         </fileSet>
 
         <!-- copy profiles -->
@@ -97,7 +97,7 @@
         <fileSet>
             <directory>src/main/pserver-bin/scripts</directory>
             <outputDirectory>scripts</outputDirectory>
-            <fileMode>0744</fileMode>
+            <fileMode>0755</fileMode>
         </fileSet>
 
         <fileSet>

@@ -69,7 +69,7 @@ pserver-deploy)
             echo "[NOTICE][$HOST] Transfering archive file ..."
             scp -q $PSERVER_SSH_OPTS "${ARCHIVE_FILE_ROOT_DIR}/${PSERVER_DIST_ARCHIVE_FILENAME}" ${HOST}:${PSERVER_DESTINATION_DIRECTORY}/${PSERVER_DIST_ARCHIVE_FILENAME}
             echo "[NOTICE][$HOST] Extracting ..."
-            ssh -n $PSERVER_SSH_OPTS ${HOST} -- "cd ${PSERVER_DESTINATION_DIRECTORY}; tar xzf ${PSERVER_DIST_ARCHIVE_FILENAME}"
+            ssh -n $PSERVER_SSH_OPTS ${HOST} -- "cd ${PSERVER_DESTINATION_DIRECTORY}; tar xzf ${PSERVER_DIST_ARCHIVE_FILENAME} -m"
         }
         . "${PSERVER_ROOT_DIR}/inc/run_on_all_hosts.sh"
         ;;
@@ -174,3 +174,6 @@ clear-logs)
 
 esac
 
+if [ "$(type -t profile_finish_hook 2>/dev/null)" == "function" ]; then
+	profile_finish_hook
+fi
