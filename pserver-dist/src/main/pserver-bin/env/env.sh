@@ -17,7 +17,7 @@
 # marker that env has been included
 ENV=1
 # set profile
-ENV_PROFILE="cloud-7"
+ENV_PROFILE="wally"
 
 # set root dir if not done yet
 if [ -z ${PSERVER_ROOT_DIR+x} ] || [ -z "${PSERVER_ROOT_DIR}" ]; then
