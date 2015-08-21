@@ -389,17 +389,11 @@ public class DataManager extends EventDispatcher {
     // ---------------------------------------------------
 
     @SuppressWarnings("unchecked")
-    public <T extends SharedObject> void pullMerge(final T dstObj,
-                                              final Merger<T> merger) {
-
+    public <T extends SharedObject> void pullMerge(final T dstObj, final Merger<T> merger) {
         pullMerge(((EmbeddedDHTObject<T>) dstObj.getOwner()).getKey().name, nodeIDs, dstObj, merger);
     }
 
-
-    public <T extends SharedObject> void pullMerge(final String name,
-                                              final T dstObj,
-                                              final Merger<T> merger) {
-
+    public <T extends SharedObject> void pullMerge(final String name, final T dstObj, final Merger<T> merger) {
         pullMerge(name, nodeIDs, dstObj, merger);
     }
 

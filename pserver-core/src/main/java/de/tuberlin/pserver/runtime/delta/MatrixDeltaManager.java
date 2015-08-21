@@ -50,12 +50,10 @@ public final class MatrixDeltaManager {
 
     public void setRemoteDeltas(final List<MatrixDelta> remoteDeltas) { this.remoteDeltas =  Preconditions.checkNotNull(remoteDeltas); }
 
+    // ---------------------------------------------------
+
     public void extractDeltas(final SlotContext slotContext) throws Exception {
         Preconditions.checkNotNull(filter);
-
-        final String slotIDStr = "[" + slotContext.programContext.runtimeContext.nodeID
-                + " | " + slotContext.slotID + "] ";
-        System.out.println(slotIDStr + " ------> extractDeltas");
 
         slotContext.CF.syncSlots();
 
@@ -72,8 +70,6 @@ public final class MatrixDeltaManager {
         length = (slotContext.slotID == slotContext.programContext.perNodeDOP - 1)
                 ? (length + (delta.buffer.length % 2)) : length;
 
-        ///System.out.println("LZ4 compress( offset = " + offset + ", length = " + length + " )");
-
         synchronized (dhtObject.lock) {
             delta.compressedDeltas.set(slotContext.slotID, compressor.compress(delta.buffer, offset, length)); // TODO: Creates a new buffer...
         }
@@ -85,15 +81,8 @@ public final class MatrixDeltaManager {
     }
 
     public void integrateDelta(final SlotContext slotContext) throws Exception {
-
-        final String slotIDStr = "[" + slotContext.programContext.runtimeContext.nodeID
-                + " | " + slotContext.slotID + "] ";
-        System.out.println(slotIDStr + " ------> integrateDelta");
-
         for (final MatrixDelta remoteDelta : remoteDeltas) {
-
             final byte[] compressedDelta = remoteDelta.compressedDeltas.get(slotContext.slotID);
-
             if (compressedDelta != null) {
 
                 final int offset = (delta.buffer.length / slotContext.programContext.perNodeDOP) * slotContext.slotID;
@@ -102,6 +91,7 @@ public final class MatrixDeltaManager {
                         ? (length + (delta.buffer.length % 2)) : length;
 
                 compressor.decompress(compressedDelta, 0, delta.buffer, offset, length);
+
                 slotContext.CF.iterate().parExe(delta.matrix, (e, i, j, v) -> {
                     final long bufferOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET + ((i * delta.matrix.numCols() + j) * Double.BYTES);
                     final double remoteVal = UnsafeOp.unsafe.getDouble(delta.buffer, bufferOffset);

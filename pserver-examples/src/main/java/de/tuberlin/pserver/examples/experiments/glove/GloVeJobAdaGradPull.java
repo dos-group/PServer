@@ -148,7 +148,7 @@ public final class GloVeJobAdaGradPull extends MLProgram {
     public static void main(final String[] args) {
 
         PServerExecutor.LOCAL
-                .run(GloVeJobAdaGradPull.class)
+                .run(GloVeJobAdaGradPull.class, 4)
                 .done();
     }
 }
