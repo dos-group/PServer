@@ -17,6 +17,8 @@ public interface Compressor extends Serializable {
 
     public abstract byte[] compress(final byte[] data, final int srcOffset, final int length);
 
+    public abstract void decompress(final byte[] src, final int srcOffset, final byte[] dst, final int dstOffset, final int length);
+
     public abstract byte[] decompress(final byte[] data);
 
     public abstract byte[] decompress(final byte[] data, final int decompressedLength);
@@ -56,6 +58,9 @@ public interface Compressor extends Serializable {
     static final class NoCompressor implements Compressor {
         @Override  public byte[] compress(final byte[] data) { return data; }
         @Override public byte[] compress(byte[] data, int srcOffset, int length) { return data; }
+
+        @Override public void decompress(byte[] src, int srcOffset, byte[] dst, int dstOffset, int length) {}
+
         @Override  public byte[] decompress(final byte[] data) { return data; }
         @Override  public byte[] decompress(byte[] data, int decompressedLength) { return data; }
         @Override  public byte[] decompress(byte[] src, byte[] dst) { System.arraycopy(src, 0, dst, 0, src.length); return dst; }
@@ -83,6 +88,11 @@ public interface Compressor extends Serializable {
         public byte[] compress(final byte[] data, final int srcOffset, final int length) {
             Preconditions.checkNotNull(data);
             return compressor.compress(data, srcOffset, length);
+        }
+
+        @Override
+        public void decompress(byte[] src, int srcOffset, byte[] dst, int dstOffset, int length) {
+            decompressor.decompress(src, srcOffset, dst, dstOffset, length);
         }
 
         @Override
@@ -132,6 +142,11 @@ public interface Compressor extends Serializable {
 
         @Override
         public byte[] compress(byte[] data, int srcOffset, int length) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void decompress(byte[] src, int srcOffset, byte[] dst, int dstOffset, int length) {
             throw new UnsupportedOperationException();
         }
 

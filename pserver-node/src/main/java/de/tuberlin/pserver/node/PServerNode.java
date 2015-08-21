@@ -12,6 +12,7 @@ import de.tuberlin.pserver.runtime.events.ProgramFailureEvent;
 import de.tuberlin.pserver.runtime.events.ProgramResultEvent;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
 import de.tuberlin.pserver.runtime.usercode.UserCodeManager;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,9 +112,10 @@ public final class PServerNode extends EventDispatcher {
 
             for (int i = 0; i < programContext.perNodeDOP; ++i) {
                 final int threadID = i;
-                executor.execute(() -> {
-                    try {
 
+                executor.execute(() -> {
+
+                    try {
                         final MLProgram programInvokeable = programClass.newInstance();
 
                         final SlotContext slotContext = new SlotContext(
@@ -148,13 +150,14 @@ public final class PServerNode extends EventDispatcher {
                         programContext.removeSlot(slotContext);
                         executionManager.unregisterSlotContext();
 
-                    } catch (Exception ex) {
+                    } catch (Throwable ex) {
                         final ProgramFailureEvent jfe = new ProgramFailureEvent(
                                 machine,
                                 programSubmission.programID,
                                 infraManager.getNodeID(),
-                                threadID, clazz.getSimpleName(),
-                                ex.getCause()
+                                threadID,
+                                clazz.getSimpleName(),
+                                ExceptionUtils.getStackTrace(ex)
                         );
                         netManager.sendEvent(programSubmission.clientMachine, jfe);
                     }
@@ -166,6 +169,12 @@ public final class PServerNode extends EventDispatcher {
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
+
+    public void tt() throws Exception {
+        throw new IllegalStateException("");
+
+    }
+
 
     @Override
     public void deactivate() {

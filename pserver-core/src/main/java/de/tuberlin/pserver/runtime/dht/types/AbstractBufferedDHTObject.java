@@ -52,6 +52,10 @@ public abstract class AbstractBufferedDHTObject extends DHTObject {
     protected final int partitionSize;
 
     // ---------------------------------------------------
+
+    public transient final Object lock = new Object();
+
+    // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 

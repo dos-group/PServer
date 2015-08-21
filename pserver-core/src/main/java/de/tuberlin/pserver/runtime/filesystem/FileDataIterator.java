@@ -11,4 +11,6 @@ public interface FileDataIterator<T extends IRecord> extends Iterator<T> {
     public abstract void reset();
 
     public abstract String getFilePath();
+
+    public abstract FileSection getFileSection();
 }

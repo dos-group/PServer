@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
+import de.tuberlin.pserver.runtime.filesystem.FileSection;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 
 import java.io.IOException;
@@ -62,6 +63,11 @@ public class HDFSFileDataIterator implements FileDataIterator<IRecord> {
 
     @Override
     public String getFilePath() { return inputFile.getFilePath().getName(); }
+
+    @Override
+    public FileSection getFileSection() {
+        return null;
+    }
 
     @Override
     public boolean hasNext() {

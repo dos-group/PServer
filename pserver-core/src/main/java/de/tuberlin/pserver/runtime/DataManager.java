@@ -118,7 +118,7 @@ public class DataManager extends EventDispatcher {
 
     private final int[] nodeIDs;
 
-    private final int[] remoteNodeIDs;
+    public final int[] remoteNodeIDs;
 
     // ---------------------------------------------------
     // Constructor.
@@ -372,6 +372,10 @@ public class DataManager extends EventDispatcher {
     }
 
     // ---------------------------------------------------
+
+    public <T extends SharedObject> DHTKey putObject(final String name, final EmbeddedDHTObject<T> embeddedObj) {
+        return putLocal(name, embeddedObj);
+    }
 
     public <T extends SharedObject> DHTKey putObject(final String name, final T obj) {
         return putLocal(name, new EmbeddedDHTObject<T>(obj));

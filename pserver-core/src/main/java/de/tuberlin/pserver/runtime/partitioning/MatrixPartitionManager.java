@@ -190,7 +190,8 @@ public final class MatrixPartitionManager {
                             task.partitionType,
                             task.matrixLayout,
                             task.matrixFormat,
-                            false
+                            false,
+                            (int)task.fileIterator.getFileSection().linesToRead
                     );
                 } break;
                 case LOGICALLY_PARTITIONED:

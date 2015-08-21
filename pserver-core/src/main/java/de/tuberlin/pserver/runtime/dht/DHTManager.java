@@ -144,7 +144,7 @@ public final class DHTManager extends EventDispatcher {
 
     private final Map<DHTKey,AbstractBufferedDHTObject> store;
 
-    private final Map<DHTKey,DHTObject> lstore;
+    //private final Map<DHTKey,DHTObject> lstore;
 
     // ---------------------------------------
 
@@ -180,9 +180,9 @@ public final class DHTManager extends EventDispatcher {
         this.config         = Preconditions.checkNotNull(config);
         this.infraManager   = Preconditions.checkNotNull(infraManager);
         this.netManager     = Preconditions.checkNotNull(netManager);
-        this.nodeID = infraManager.getNodeID();
+        this.nodeID         = infraManager.getNodeID();
         this.store          = new NonBlockingHashMap<>();
-        this.lstore         = new NonBlockingHashMap<>();
+        //this.lstore         = new NonBlockingHashMap<>();
 
         this.compressionType = Compressor.CompressionType.valueOf(
                 this.config.getString("dht.compression.compressionType")
@@ -222,7 +222,7 @@ public final class DHTManager extends EventDispatcher {
             final Pair<DHTKey,AbstractBufferedDHTObject.Segment[]> request = (Pair<DHTKey,AbstractBufferedDHTObject.Segment[]>)e.getPayload();
             // Local put.
             final DHTKey key = globalKeyDirectory.get(request.getLeft().internalUID);
-            final AbstractBufferedDHTObject value = store.get(key);
+            final AbstractBufferedDHTObject value = __get(key);
             value.putSegments(request.getValue(), nodeID);
             logDHTAction(key, DHTAction.PUT_SEGMENT);
         }
@@ -237,7 +237,7 @@ public final class DHTManager extends EventDispatcher {
                 final Pair<UUID,DHTKey> request = (Pair<UUID,DHTKey>) event.getPayload();
                 final DHTKey key = globalKeyDirectory.get(request.getRight().internalUID);
                 Preconditions.checkState(key != null);
-                final AbstractBufferedDHTObject value = store.get(key);
+                final AbstractBufferedDHTObject value = __get(key);
                 //value.compress(); // TODO: Compression!
                 final NetEvents.NetEvent e1 = new NetEvents.NetEvent(DHT_EVENT_GET_VALUE_RESPONSE);
                 e1.setPayload(Pair.of(request.getKey(), value));
@@ -269,7 +269,7 @@ public final class DHTManager extends EventDispatcher {
                 @SuppressWarnings("unchecked")
                 final Triple<UUID,DHTKey,int[]> segmentsRequest = (Triple<UUID,DHTKey,int[]>) event.getPayload();
                 final DHTKey key = globalKeyDirectory.get(segmentsRequest.getMiddle().internalUID);
-                final AbstractBufferedDHTObject.Segment[] segments = store.get(segmentsRequest.getMiddle()).getSegments(segmentsRequest.getRight(), nodeID);
+                final AbstractBufferedDHTObject.Segment[] segments = __get(segmentsRequest.getMiddle()).getSegments(segmentsRequest.getRight(), nodeID);
                 final NetEvents.NetEvent e1 = new NetEvents.NetEvent(DHT_EVENT_GET_SEGMENTS_RESPONSE);
                 e1.setPayload(Pair.of(segmentsRequest.getLeft(), segments));
                 netManager.sendEvent(event.srcMachineID, e1);
@@ -298,7 +298,7 @@ public final class DHTManager extends EventDispatcher {
                 final DHTKey key = globalKeyDirectory.get(((DHTKey) event.getPayload()).internalUID);
                 // Local delete.
                 globalKeyDirectory.remove(key);
-                if (store.remove(key) == null)
+                if (__remove(key) == null)
                     throw new IllegalStateException();
                 logDHTAction(key, DHTAction.DELETE_VALUE);
             });
@@ -412,7 +412,7 @@ public final class DHTManager extends EventDispatcher {
         // Allocate memory for the value.
         if (!val.isAllocated())
             val.allocateMemory(nodeID);
-        store.put(key, val);
+        __put(key, val);
         logDHTAction(key, DHTAction.PUT_VALUE);
     }
 
@@ -443,7 +443,7 @@ public final class DHTManager extends EventDispatcher {
             e.getValue().toArray(segs);
             if (isLocal(e.getKey())) {
                 // Local put.
-                final AbstractBufferedDHTObject value = store.get(key);
+                final AbstractBufferedDHTObject value = __get(key);
                 value.putSegments(segs, nodeID);
                 logDHTAction(key, DHTAction.PUT_SEGMENT);
             } else {
@@ -474,7 +474,7 @@ public final class DHTManager extends EventDispatcher {
         for (final Map.Entry<Integer,DHTKey.PartitionDescriptor> entry : key.getPartitionDirectory().entrySet()) {
             final DHTKey.PartitionDescriptor pd = entry.getValue();
             if (isLocal(pd.machine)) {
-                values[pd.partitionIndex] = store.get(key);
+                values[pd.partitionIndex] = __get(key);
                 logDHTAction(key, DHTAction.GET_VALUE);
                 operationCompleteLatch.countDown();
             } else {
@@ -535,7 +535,7 @@ public final class DHTManager extends EventDispatcher {
         final CountDownLatch operationCompleteLatch = new CountDownLatch(requests.size());
         for (final Map.Entry<MachineDescriptor, List<Integer>> e : requests.entrySet()) {
             if (isLocal(e.getKey())) {
-                final AbstractBufferedDHTObject.Segment[] localSegments = store.get(key).getSegments(Ints.toArray(e.getValue()), nodeID);
+                final AbstractBufferedDHTObject.Segment[] localSegments = __get(key).getSegments(Ints.toArray(e.getValue()), nodeID);
                 for (final AbstractBufferedDHTObject.Segment localSegment : localSegments) {
                     final int index = ArrayUtils.indexOf(segmentIndices, localSegment.segmentIndex);
                     segments[index] = localSegment;
@@ -598,7 +598,7 @@ public final class DHTManager extends EventDispatcher {
         for (final DHTKey.PartitionDescriptor pd : k.getPartitionDirectory().values())
             if (isLocal(pd.machine)) {
                 // Local delete.
-                if (/*keyDirectory.remove(key.internalUID) == null ||*/ store.remove(key) == null)
+                if (/*keyDirectory.remove(key.internalUID) == null ||*/ __remove(key) == null)
                     throw new IllegalStateException();
                 logDHTAction(key, DHTAction.DELETE_VALUE);
             } else {
@@ -619,11 +619,33 @@ public final class DHTManager extends EventDispatcher {
 
     // ---------------------------------------------------
 
-    public void lput(final DHTKey k, final DHTObject v) { lstore.put(Preconditions.checkNotNull(k), Preconditions.checkNotNull(v)); }
+    public AbstractBufferedDHTObject __get(final DHTKey key) {
+        final AbstractBufferedDHTObject value = store.get(key);
+        synchronized (value.lock) {
+            return value;
+        }
+    }
+
+    public AbstractBufferedDHTObject __put(final DHTKey key, final AbstractBufferedDHTObject value) {
+        synchronized (value.lock) {
+            return store.put(key, value);
+        }
+    }
+
+    public AbstractBufferedDHTObject __remove(final DHTKey key) {
+        final AbstractBufferedDHTObject value = store.remove(key);
+        synchronized (value.lock) {
+            return value;
+        }
+    }
+
+    // ---------------------------------------------------
+
+    /*public void lput(final DHTKey k, final DHTObject v) { lstore.put(Preconditions.checkNotNull(k), Preconditions.checkNotNull(v)); }
 
     public DHTObject lget(final DHTKey k) { return Preconditions.checkNotNull(lstore.get(k)); }
 
-    public void ldelete(final DHTKey k) { lstore.remove(k); }
+    public void ldelete(final DHTKey k) { lstore.remove(k); }*/
 
     // ---------------------------------------------------
 

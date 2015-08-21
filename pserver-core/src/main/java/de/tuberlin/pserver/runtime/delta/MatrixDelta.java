@@ -1,7 +1,9 @@
 package de.tuberlin.pserver.runtime.delta;
 
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.SharedObject;
+import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.SlotContext;
 
 import java.util.ArrayList;
@@ -13,18 +15,24 @@ public class MatrixDelta implements SharedObject {
     // Fields.
     // ---------------------------------------------------
 
-    public byte[] buffer;
+    private transient Object owner;
 
-    public List<byte[]> compressedDeltas;
+    public transient Matrix matrix;
 
-    private Object owner;
+    public transient final byte[] buffer;
+
+    public final int nodeID;
+
+    public final List<byte[]> compressedDeltas;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    public MatrixDelta(final SlotContext slotContext, final long rows, final long cols) {
-        this.buffer = new byte[(int)(rows * cols * Double.BYTES)];
+    public MatrixDelta(final SlotContext slotContext, final Matrix matrix) {
+        this.matrix = Preconditions.checkNotNull(matrix);
+        this.buffer = new byte[(int)(matrix.numRows() * matrix.numCols() * Double.BYTES)];
+        this.nodeID = slotContext.programContext.runtimeContext.nodeID;
         this.compressedDeltas = new ArrayList<>(slotContext.programContext.perNodeDOP);
         for (int i = 0; i < slotContext.programContext.perNodeDOP; ++i)
             compressedDeltas.add(null);

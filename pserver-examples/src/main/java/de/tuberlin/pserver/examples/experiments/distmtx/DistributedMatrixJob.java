@@ -3,7 +3,7 @@ package de.tuberlin.pserver.examples.experiments.distmtx;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.dsl.state.GlobalScope;
-import de.tuberlin.pserver.dsl.state.State;
+import de.tuberlin.pserver.dsl.state.SharedState;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.types.DistributedMatrix;
@@ -11,7 +11,7 @@ import de.tuberlin.pserver.types.PartitionType;
 
 public class DistributedMatrixJob extends MLProgram {
 
-    @State(globalScope = GlobalScope.LOGICALLY_PARTITIONED, partitionType = PartitionType.ROW_PARTITIONED,
+    @SharedState(globalScope = GlobalScope.LOGICALLY_PARTITIONED, partitionType = PartitionType.ROW_PARTITIONED,
             rows = 20, cols = 20, format = Format.DENSE_FORMAT)
     public DistributedMatrix X;
 
@@ -24,7 +24,7 @@ public class DistributedMatrixJob extends MLProgram {
                 X.set(iter.getCurrentRowNum(), 0, slotContext.programContext.runtimeContext.nodeID + 1);
             });
 
-            X.syncPartitions();
+            X.collectRemotePartitions();
 
             CF.select().node(1).exe(() -> {
                 for (int i = 0; i < X.numRows(); ++i)

@@ -48,7 +48,7 @@ public final class ProgramFailureEvent extends NetEvents.NetEvent {
                                final int nodeID,
                                final int slotID,
                                final String programName,
-                               final Throwable exception) {
+                               final String exceptionMessage) {
 
         super(PSERVER_FAILURE_JOB_EVENT);
 
@@ -57,7 +57,7 @@ public final class ProgramFailureEvent extends NetEvents.NetEvent {
         this.nodeID         = nodeID;
         this.slotID         = slotID;
         this.programName    = Preconditions.checkNotNull(programName);
-        this.stackTrace     = ExceptionUtils.getStackTrace(exception);
+        this.stackTrace     = exceptionMessage;
     }
 
     // ---------------------------------------------------

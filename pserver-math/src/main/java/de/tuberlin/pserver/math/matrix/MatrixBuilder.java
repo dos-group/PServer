@@ -24,6 +24,8 @@ public class MatrixBuilder {
 
     private double[] data;
 
+    private int initialCapacity = -1;
+
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
@@ -62,13 +64,18 @@ public class MatrixBuilder {
         return this;
     }
 
+    public MatrixBuilder initialCapacity(final int initialCapacity) {
+        this.initialCapacity = initialCapacity;
+        return this;
+    }
+
     public Matrix build() {
         switch (format) {
             case SPARSE_FORMAT:
                 if (mutable) {
-                    return new SMutableMatrix(rows, cols, layout);
+                    return new SMutableMatrix(rows, cols, layout, initialCapacity);
                 } else {
-                    return new SMutableMatrix(rows, cols, layout);
+                    return new SMutableMatrix(rows, cols, layout, initialCapacity);
                 }
             case DENSE_FORMAT:
                 if (mutable) {

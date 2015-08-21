@@ -6,6 +6,7 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.dense.DVector;
+import gnu.trove.map.hash.TIntDoubleHashMap;
 import gnu.trove.map.hash.TLongDoubleHashMap;
 import org.apache.commons.lang3.NotImplementedException;
 
@@ -45,15 +46,21 @@ public class SMutableMatrix extends AbstractMatrix {
     // Fields.
     // ---------------------------------------------------
 
-    private final TLongDoubleHashMap data;
+    private final int initialCapacity;
+
+    private final TIntDoubleHashMap data;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    public SMutableMatrix(final long rows, final long cols, final Layout layout) {
+    public SMutableMatrix(final long rows, final long cols, final Layout layout, final int initialCapacity) {
         super(rows, cols, layout);
-        this.data = new TLongDoubleHashMap();
+        this.initialCapacity = initialCapacity;
+        if (initialCapacity == -1)
+            this.data = new TIntDoubleHashMap();//(int)((rows * cols)/10));
+        else
+            this.data = new TIntDoubleHashMap(initialCapacity);
     }
 
     // ---------------------------------------------------
@@ -62,17 +69,13 @@ public class SMutableMatrix extends AbstractMatrix {
 
     @Override
     public double get(long row, long col) {
-        final Double value = data.get(row * cols + col);
+        final Double value = data.get((int)(row * cols + col));
         return (value == null) ? 0 : value;
     }
 
     @Override
     public void set(long row, long col, double value) {
-        if(value == 0.0) {
-            data.remove(row * cols + col);
-        } else {
-            data.put(row * cols + col, value);
-        }
+        data.put((int)(row * cols + col), value);
     }
 
     @Override
@@ -107,7 +110,7 @@ public class SMutableMatrix extends AbstractMatrix {
 
     @Override
     protected Matrix newInstance(long rows, long cols) {
-        return new SMutableMatrix(rows, cols, Layout.ROW_LAYOUT);
+        return new SMutableMatrix(rows, cols, Layout.ROW_LAYOUT, initialCapacity);
     }
 
     @Override

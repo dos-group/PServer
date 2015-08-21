@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface State {;
+public @interface SharedState {;
 
     LocalScope localScope() default LocalScope.SHARED; // NO SUPPORT FOR LOCAL SCOPES AT THE MOMENT....
 

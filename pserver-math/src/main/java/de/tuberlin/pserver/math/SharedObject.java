@@ -14,4 +14,8 @@ public interface SharedObject extends Serializable {
     public abstract double[] toArray();
 
     public abstract void setArray(final double[] data);
+
+    //public abstract void lock();
+
+    //public abstract void unlock();
 }

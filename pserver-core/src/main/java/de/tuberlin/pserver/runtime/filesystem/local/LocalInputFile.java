@@ -2,9 +2,8 @@ package de.tuberlin.pserver.runtime.filesystem.local;
 
 
 import com.google.common.base.Preconditions;
-import com.google.gson.Gson;
-import de.tuberlin.pserver.commons.json.GsonUtils;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
+import de.tuberlin.pserver.runtime.filesystem.FileSection;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.types.PartitionType;
@@ -27,7 +26,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
     private final RecordFormat format;
 
-    private final LocalFileSection fileSection;
+    private final FileSection fileSection;
 
     private final PartitionType partitionType;
 
@@ -42,7 +41,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
         this.filePath       = Preconditions.checkNotNull(filePath);
         this.format         = Preconditions.checkNotNull(format);
         this.partitionType  = Preconditions.checkNotNull(partitionType);
-        this.fileSection    = new LocalFileSection();
+        this.fileSection    = new FileSection();
     }
 
     // ---------------------------------------------------
@@ -107,28 +106,6 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
     // Inner Classes.
     // ---------------------------------------------------
 
-    private class LocalFileSection {
-
-        private transient Gson gson = GsonUtils.createPrettyPrintAndAnnotationExclusionGson();
-
-        public long totalLines  = 0;
-
-        public long linesToRead = 0;
-
-        public long startOffset = 0;
-
-        public long blockLineOffset = 0;
-
-        public void set(long totalLines, long linesToRead, long startOffset, long blockLineOffset) {
-            this.totalLines = totalLines;
-            this.linesToRead = linesToRead;
-            this.startOffset = startOffset;
-            this.blockLineOffset = blockLineOffset;
-        }
-
-        @Override public String toString() { return "\nLocalFileSection " + gson.toJson(this); }
-    }
-
     private int getLineEndingCharCount(BufferedReader br) {
         try {
             char[] buffer = new char[8192];
@@ -171,16 +148,16 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
         private final Iterator<CSVRecord> csvIterator;
 
-        private final LocalFileSection csvFileSection;
+        private final FileSection fileSection;
 
         private long currentLine = 0;
 
         // ---------------------------------------------------
 
-        public CSVFileDataIterator(final LocalFileSection csvFileSection) {
+        public CSVFileDataIterator(final FileSection fileSection) {
             try {
 
-                this.csvFileSection = Preconditions.checkNotNull(csvFileSection);
+                this.fileSection = Preconditions.checkNotNull(fileSection);
                 this.fileReader     = new FileReader(Preconditions.checkNotNull(filePath));
                 this.csvFileParser  = new CSVParser(fileReader, format.getCsvFormat());
                 this.csvIterator    = csvFileParser.iterator();
@@ -196,8 +173,8 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
         @Override
         public void initialize() {
             try {
-                if (csvFileSection != null)
-                    fileReader.skip(csvFileSection.startOffset);
+                if (fileSection != null)
+                    fileReader.skip(fileSection.startOffset);
                 else
                     throw new IllegalStateException();
             } catch(Exception e) {
@@ -212,8 +189,13 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
         public String getFilePath() { return filePath; }
 
         @Override
+        public FileSection getFileSection() {
+            return fileSection;
+        }
+
+        @Override
         public boolean hasNext() {
-            final boolean hasNext = currentLine < csvFileSection.linesToRead && csvIterator.hasNext();
+            final boolean hasNext = currentLine < fileSection.linesToRead && csvIterator.hasNext();
             if (!hasNext)
                 close();
             return hasNext;
@@ -224,7 +206,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
         @Override
         public IRecord next() {
             final CSVRecord record = csvIterator.next();
-            return reusableRecord.set(record, format.getProjection(), csvFileSection.blockLineOffset + currentLine++);
+            return reusableRecord.set(record, format.getProjection(), fileSection.blockLineOffset + currentLine++);
         }
 
         // ---------------------------------------------------

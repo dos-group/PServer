@@ -33,9 +33,7 @@ public class DistributedMatrix extends AbstractMatrix {
     private final Matrix matrix;
 
     private final boolean completeMatrix;
-
-    //private final AtomicLong opCounter;
-
+    
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
@@ -43,13 +41,23 @@ public class DistributedMatrix extends AbstractMatrix {
     public DistributedMatrix(final DistributedMatrix m) {
         this(m.slotContext, m.rows, m.cols, m.partitionType, m.layout, m.format, m.completeMatrix);
     }
-
     public DistributedMatrix(final SlotContext slotContext,
                              final long rows, final long cols,
                              final PartitionType partitionType,
                              final Layout layout,
                              final Format format,
                              final boolean completeMatrix) {
+
+        this(slotContext, rows, cols, partitionType, layout, format, completeMatrix, -1);
+    }
+
+    public DistributedMatrix(final SlotContext slotContext,
+                             final long rows, final long cols,
+                             final PartitionType partitionType,
+                             final Layout layout,
+                             final Format format,
+                             final boolean completeMatrix,
+                             final int initialCapacity) {
 
         super(rows, cols, layout);
 
@@ -60,7 +68,15 @@ public class DistributedMatrix extends AbstractMatrix {
         this.shape          = createShape(rows, cols);
         this.format         = format;
         this.completeMatrix = completeMatrix;
-        this.matrix         = allocMatrix();
+
+        final long _rows = completeMatrix ? rows : shape.rows;
+        final long _cols = completeMatrix ? cols : shape.cols;
+        this.matrix  = new MatrixBuilder()
+                .dimension(_rows, _cols)
+                .layout(layout)
+                .format(format)
+                .initialCapacity(initialCapacity)
+                .build();
     }
 
     // ---------------------------------------------------
@@ -169,7 +185,7 @@ public class DistributedMatrix extends AbstractMatrix {
         }
     }
 
-    public DistributedMatrix syncPartitions() {
+    public DistributedMatrix collectRemotePartitions() {
         if (!completeMatrix)
             throw new IllegalStateException();
         switch (partitionType) {
@@ -197,16 +213,6 @@ public class DistributedMatrix extends AbstractMatrix {
     // ---------------------------------------------------
     // Private Methods.
     // ---------------------------------------------------
-
-    private Matrix allocMatrix() {
-        final long _rows = completeMatrix ? rows : shape.rows;
-        final long _cols = completeMatrix ? cols : shape.cols;
-        return new MatrixBuilder()
-                .dimension(_rows, _cols)
-                .layout(layout)
-                .format(format)
-                .build();
-    }
 
     private PartitionShape createShape(final long rows, final long cols) {
         switch (partitionType) {

@@ -4,10 +4,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.events.EventDispatcher;
 import de.tuberlin.pserver.dsl.controlflow.ControlFlow;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.dsl.state.DeltaFilter;
-import de.tuberlin.pserver.dsl.state.DeltaUpdate;
-import de.tuberlin.pserver.dsl.state.State;
-import de.tuberlin.pserver.dsl.state.StateDeclaration;
+import de.tuberlin.pserver.dsl.state.*;
 import de.tuberlin.pserver.dsl.dataflow.DataFlow;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
@@ -17,9 +14,11 @@ import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.matrix.dense.DMatrix;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
-import de.tuberlin.pserver.runtime.delta.LZ4MatrixDeltaExtractor;
+import de.tuberlin.pserver.runtime.delta.MatrixDeltaManager;
 import de.tuberlin.pserver.runtime.delta.MatrixDelta;
 import de.tuberlin.pserver.runtime.delta.MatrixDeltaFilter;
+import de.tuberlin.pserver.runtime.delta.MatrixDeltaMerger;
+import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
 import de.tuberlin.pserver.types.DistributedMatrix;
@@ -121,13 +120,14 @@ public abstract class MLProgram extends EventDispatcher {
 
                 extractAndApplyDeltaFilterAnnotations(this.getClass());
 
+                extractAndApplyDeltaMergerAnnotations(this.getClass());
+
                 slotContext.programContext.runtimeContext.dataManager.loadInputData(slotContext);
 
                 final long end = System.currentTimeMillis();
 
                 LOG.info(slotIDStr + "Leave " + program.slotContext.programContext.simpleClassName
                         + " loading phase [duration: " + (end - start) + " ms].");
-
 
                 Thread.sleep(5000); // TODO: Wait until all objects are placed in DHT and accessible...
 
@@ -212,8 +212,8 @@ public abstract class MLProgram extends EventDispatcher {
         final List<StateDeclaration> decls = new ArrayList<>();
         for (final Field field : programClass.getDeclaredFields()) {
             for (final Annotation an : field.getDeclaredAnnotations()) {
-                if (an instanceof State) {
-                    final State stateProperties = (State) an;
+                if (an instanceof SharedState) {
+                    final SharedState stateProperties = (SharedState) an;
                     final StateDeclaration decl = new StateDeclaration(
                             field.getName(),
                             field.getType(),
@@ -234,21 +234,40 @@ public abstract class MLProgram extends EventDispatcher {
         return decls;
     }
 
-    private void extractAndApplyDeltaFilterAnnotations(final Class<? extends MLProgram> programClass) throws Exception{
-        Preconditions.checkNotNull(programClass);
-        for (final Field field : programClass.getDeclaredFields()) {
+    private void extractAndApplyDeltaFilterAnnotations(final Class<? extends MLProgram> programClass) throws Exception {
+        for (final Field field : Preconditions.checkNotNull(programClass).getDeclaredFields()) {
             for (final Annotation an : field.getDeclaredAnnotations()) {
                 if (an instanceof DeltaFilter) {
                     final DeltaFilter filterProperties = (DeltaFilter) an;
                     StringTokenizer st = new StringTokenizer(filterProperties.stateObjects(), ",");
                     while (st.hasMoreTokens()) {
-                        final String stateObjName = st.nextToken();
-                        final LZ4MatrixDeltaExtractor deltaExtractor =
-                                (LZ4MatrixDeltaExtractor)slotContext.programContext.get(stateObjName + "-Delta-Extractor");
-                        if (deltaExtractor == null)
+                        final String stateObjName = st.nextToken().replaceAll("\\s+","");
+                        final MatrixDeltaManager deltaManager =
+                                (MatrixDeltaManager)slotContext.programContext.get(stateObjName + "-Delta-Manager");
+                        if (deltaManager == null)
                             throw new IllegalStateException();
                         final MatrixDeltaFilter filter = (MatrixDeltaFilter)field.get(this);
-                        deltaExtractor.setDeltaFilter(filter);
+                        deltaManager.setDeltaFilter(filter);
+                    }
+                }
+            }
+        }
+    }
+
+    private void extractAndApplyDeltaMergerAnnotations(final Class<? extends MLProgram> programClass) throws Exception {
+        for (final Field field : Preconditions.checkNotNull(programClass).getDeclaredFields()) {
+            for (final Annotation an : field.getDeclaredAnnotations()) {
+                if (an instanceof DeltaMerger) {
+                    final DeltaMerger mergerProperties = (DeltaMerger) an;
+                    StringTokenizer st = new StringTokenizer(mergerProperties.stateObjects(), ",");
+                    while (st.hasMoreTokens()) {
+                        final String stateObjName = st.nextToken().replaceAll("\\s+", "");
+                        final MatrixDeltaManager deltaManager =
+                                (MatrixDeltaManager)slotContext.programContext.get(stateObjName + "-Delta-Manager");
+                        if (deltaManager == null)
+                            throw new IllegalStateException();
+                        final MatrixDeltaMerger merger = (MatrixDeltaMerger) field.get(this);
+                        deltaManager.setDeltaMerger(merger);
                     }
                 }
             }
@@ -271,11 +290,12 @@ public abstract class MLProgram extends EventDispatcher {
 
                             if (decl.delta == DeltaUpdate.LZ4_DELTA) {
                                 if (decl.format == Format.DENSE_FORMAT) {
-                                    final MatrixDelta delta = new MatrixDelta(slotContext, decl.rows, decl.cols);
-                                    final LZ4MatrixDeltaExtractor deltaExtractor =
-                                            new LZ4MatrixDeltaExtractor((DMatrix)so, delta);
-                                    slotContext.programContext.put(decl.name + "-Delta-Extractor", deltaExtractor);
-                                    dataManager.putObject(decl.name + "-Delta", delta);
+                                    final MatrixDelta delta = new MatrixDelta(slotContext, (DMatrix)so);
+                                    final EmbeddedDHTObject<MatrixDelta> dhtObjectDelta = new EmbeddedDHTObject<>(delta);
+                                    final MatrixDeltaManager deltaManager =
+                                            new MatrixDeltaManager(dhtObjectDelta);
+                                    slotContext.programContext.put(decl.name + "-Delta-Manager", deltaManager);
+                                    dataManager.putObject(decl.name + "-Delta", dhtObjectDelta);
                                 } else
                                     throw new UnsupportedOperationException();
                             }
