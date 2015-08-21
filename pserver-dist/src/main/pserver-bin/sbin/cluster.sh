@@ -157,12 +157,14 @@ zookeeper-stop)
         . "${PSERVER_ROOT_DIR}/inc/run_on_all_hosts.sh"
         ;;
 
-clear-logs)
+reset)
 
         function run_on_host() {
             HOST=$1
             echo "[${HOST}] clearing logs"
             ssh -n ${PSERVER_SSH_OPTS} ${HOST} -- "rm \"${PSERVER_DESTINATION_LOG_DIR}/\"* 2&>1 > /dev/null; rm ${ZOOKEEPER_LOG_DIR}/* 2&>1 > /dev/null"
+            echo "[${HOST}] clearing zookeeper data"
+            ssh -n ${PSERVER_SSH_OPTS} ${HOST} -- "rm -rf \"${ZOOKEEPER_DATA_DIR}/version-2\" 2&>1 > /dev/null"
         }
         HOSTLIST="${SLAVES_FILE}"
         . "${PSERVER_ROOT_DIR}/inc/run_on_all_hosts.sh"
