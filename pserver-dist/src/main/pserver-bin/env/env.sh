@@ -33,7 +33,7 @@ STAGING_PARAM_FORWARDING=""
 # in the wally profile, this means the script shall create a slaves file containing 5 hosts starting with id 1 before executing the command
 # when this gets staged through 'staged-cluster.sh deploy -f 1 -c 5' the profile-specific parameters 'f' and 'c' need to be forwarded:
 # STAGING_PARAM_FORWARDING="-f 1 -c 5"
-. "${PSERVER_ROOT_DIR}/profiles/${ENV_PROFILE}.sh"
+. "${PSERVER_ROOT_DIR}/profiles/${ENV_PROFILE}/env.sh"
 
 while [ $# -gt 0 ]; do
 	case "${1}" in

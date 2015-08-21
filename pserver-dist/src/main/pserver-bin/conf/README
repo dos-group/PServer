@@ -1,0 +1,3 @@
+The configuration is always profile specific.
+See: profiles/<profile>/conf
+Activate a profile via env/env.sh

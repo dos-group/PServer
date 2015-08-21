@@ -57,12 +57,7 @@ public final class PServerMain {
             parser.parseArgs(args).getAttrs().entrySet().stream()
                     .filter(e -> e.getValue() != null)
                     .forEach(e -> {
-                        if(e.getKey().equals("pserver.profile") && e.getValue().toString().equals("remote")) {
-                            System.setProperty(e.getKey(), "wally");
-                        }
-                        else {
                             System.setProperty(e.getKey(), e.getValue().toString());
-                        }
                     });
 
             PServerNodeFactory.createParameterServerNode();

@@ -117,10 +117,10 @@ PSERVER_LIB_DIR=$PSERVER_ROOT_DIR/lib
 # The above lib path is used by the shell script to retrieve jars in a 
 # directory, so it needs to be unmangled.
 PSERVER_ROOT_DIR_MANGLED=`manglePath $PSERVER_ROOT_DIR`
-PSERVER_CONF_DIR=$PSERVER_ROOT_DIR_MANGLED/conf
+PSERVER_CONF_DIR=$PSERVER_ROOT_DIR_MANGLED/profiles/$ENV_PROFILE/conf
 PSERVER_BIN_DIR=$PSERVER_ROOT_DIR_MANGLED/bin
 PSERVER_LOG_DIR=$PSERVER_ROOT_DIR_MANGLED/log
-YAML_CONF=${PSERVER_CONF_DIR}/pserver.conf
+YAML_CONF=${PSERVER_CONF_DIR}/runtime.conf
 
 ########################################################################################################################
 # ENVIRONMENT VARIABLES
