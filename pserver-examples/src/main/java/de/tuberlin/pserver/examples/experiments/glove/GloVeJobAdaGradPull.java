@@ -7,8 +7,8 @@ import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.runtime.MLProgram;
-import de.tuberlin.pserver.runtime.delta.MatrixDeltaFilter;
-import de.tuberlin.pserver.runtime.delta.MatrixDeltaMerger;
+import de.tuberlin.pserver.runtime.state.filter.MatrixUpdateFilter;
+import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
 import de.tuberlin.pserver.types.PartitionType;
 import org.apache.commons.lang3.mutable.MutableDouble;
 
@@ -36,22 +36,22 @@ public final class GloVeJobAdaGradPull extends MLProgram {
             rows = COLS, cols = COLS, path = "datasets/text8_coocc.csv", format = Format.SPARSE_FORMAT)
     public Matrix X;
 
-    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = COLS * 2, delta = DeltaUpdate.LZ4_DELTA)
+    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = COLS * 2, remoteUpdate = RemoteUpdate.DELTA_MERGE_UPDATE)
     public Matrix W;
 
-    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = COLS * 2, delta = DeltaUpdate.LZ4_DELTA)
+    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = COLS * 2, remoteUpdate = RemoteUpdate.DELTA_MERGE_UPDATE)
     public Matrix GradSq;
 
-    @SharedState(globalScope = GlobalScope.REPLICATED, cols = COLS * 2)
+    @SharedState(globalScope = GlobalScope.REPLICATED, cols = COLS * 2, remoteUpdate = RemoteUpdate.SIMPLE_MERGE_UPDATE)
     public Vector B;
 
-    @SharedState(globalScope = GlobalScope.REPLICATED, cols = COLS * 2)
+    @SharedState(globalScope = GlobalScope.REPLICATED, cols = COLS * 2, remoteUpdate = RemoteUpdate.SIMPLE_MERGE_UPDATE)
     public Vector GradSqB;
 
     // ---------------------------------------------------
 
     @DeltaFilter(stateObjects = "W, GradSq")
-    public final MatrixDeltaFilter deltaFilter = (i, j, o, n) -> {
+    public final MatrixUpdateFilter deltaFilter = (i, j, o, n) -> {
         final double sn = n * 10000;
         final double so = o * 10000;
         final double d = sn > 0 ? sn : 1;
@@ -61,7 +61,7 @@ public final class GloVeJobAdaGradPull extends MLProgram {
     // ---------------------------------------------------
 
     @DeltaMerger(stateObjects = "W, GradSq")
-    public final MatrixDeltaMerger deltaMerger = (i, j, val, remoteVal) -> (val + remoteVal) / 2;
+    public final MatrixUpdateMerger deltaMerger = (i, j, val, remoteVal) -> (val + remoteVal) / 2;
 
     // ---------------------------------------------------
 
@@ -88,8 +88,6 @@ public final class GloVeJobAdaGradPull extends MLProgram {
             CF.iterate().exe(NUM_EPOCHS, (e0) -> {
 
                 final MutableDouble costI = new MutableDouble(0.0);
-
-                CF.syncSlots();
 
                 LOG.info("Epoch = " + e0);
 
@@ -135,8 +133,8 @@ public final class GloVeJobAdaGradPull extends MLProgram {
 
                 });
 
-                DF.computeDelta("W, GradSq");
-                DF.pull("W, GradSq");
+                DF.publishUpdate("W, GradSq");
+                DF.pullUpdate("W, GradSq");
             })
         );
     }

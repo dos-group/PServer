@@ -4,7 +4,6 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.utils.Utils;
 
-import java.util.Iterator;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
 
@@ -207,11 +206,6 @@ public abstract class AbstractVector implements Vector {
     }
 
     @Override
-    public Iterator<Element> iterateNonZero() {
-        return new DefaultIterator(this);
-    }
-
-    @Override
     public double aggregate(DoubleBinaryOperator aggregator, DoubleUnaryOperator map) {
         double result = 0;
         for(long i = 0; i < length; i++) {
@@ -250,56 +244,5 @@ public abstract class AbstractVector implements Vector {
             C.set(i, f.applyAsDouble(this.get(i), B.get(i)));
         }
         return C;
-    }
-
-    // ---------------------------------------------------
-    // Inner Classes.
-    // ---------------------------------------------------
-
-    public class DefaultIterator implements Iterator<Element> {
-
-        private long currentIndex = 0;
-        private final Vector vector;
-
-        public DefaultIterator(Vector vector) {
-            this.vector = vector;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return currentIndex < vector.length();
-        }
-
-        @Override
-        public Element next() {
-            Preconditions.checkState(hasNext(), "Iterator has no more elements.");
-            return new DefaultElement(vector, currentIndex++);
-        }
-    }
-
-    public class DefaultElement implements Element {
-
-        private final Vector vector;
-        private final long index;
-
-        public DefaultElement(Vector vector, long index) {
-            this.vector = vector;
-            this.index = index;
-        }
-
-        @Override
-        public double get() {
-            return vector.get(index);
-        }
-
-        @Override
-        public int index() {
-            return Utils.toInt(index);
-        }
-
-        @Override
-        public void set(double value) {
-            vector.set(index, value);
-        }
     }
 }

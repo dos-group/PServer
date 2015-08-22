@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.math.vector.dense;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.AbstractIterator;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.delegates.LibraryVectorOps;
@@ -11,7 +10,6 @@ import de.tuberlin.pserver.math.vector.AbstractVector;
 import de.tuberlin.pserver.math.vector.Vector;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
 
@@ -21,38 +19,36 @@ public class DVector extends AbstractVector {
     // Inner Classes.
     // ---------------------------------------------------
 
-    private final class DenseElement implements Element {
+    private final class DVectorElementIterator implements ElementIterator {
 
-        int index;
+        private final DVector self;
 
-        @Override public double get() { return data[index]; }
+        private final int end;
 
-        @Override public int index() { return index; }
+        private final int start;
 
-        @Override public void set(double value) { data[index] = value; }
-    }
+        private int index;
 
-    // ---------------------------------------------------
-
-    private final class NonDefaultIterator extends AbstractIterator<Element> {
-
-        private final DenseElement element = new DenseElement();
-
-        private int index = 0;
-
-        @Override
-        protected Element computeNext() {
-            while (index < length() && data[index] == 0.0) {
-                index++;
-            }
-            if (index < length()) {
-                element.index = index;
-                index++;
-                return element;
-            } else {
-                return endOfData();
-            }
+        public DVectorElementIterator(final DVector self, final int start, final int end) {
+            this.self  = Preconditions.checkNotNull(self);
+            this.start = start;
+            this.end   = end;
+            this.index = start - 1;
         }
+
+        @Override public boolean hasNextElement() { return index < end; }
+
+        @Override public void nextElement() { ++index; }
+
+        @Override public void nextRandomElement() { throw new UnsupportedOperationException(); }
+
+        @Override public double value() { return self.data[index]; }
+
+        @Override public void reset() { index = start - 1; }
+
+        @Override public long length() { return self.length(); }
+
+        @Override public int getCurrentElementNum() { return index; }
     }
 
     // ---------------------------------------------------
@@ -199,8 +195,18 @@ public class DVector extends AbstractVector {
     }
 
     @Override
-    public Iterator<Element> iterateNonZero() {
-        return new NonDefaultIterator();
+    public ElementIterator nonZeroElementIterator() {
+        return null;
+    }
+
+    @Override
+    public ElementIterator elementIterator() {
+        return new DVectorElementIterator(this, 0, data.length - 1);
+    }
+
+    @Override
+    public ElementIterator elementIterator(int start, int end) {
+        return new DVectorElementIterator(this, start, end);
     }
 
     @Override

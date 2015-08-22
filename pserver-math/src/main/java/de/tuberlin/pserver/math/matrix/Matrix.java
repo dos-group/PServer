@@ -12,8 +12,6 @@ import de.tuberlin.pserver.math.vector.Vector;
 
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
 
 public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
 
@@ -44,7 +42,9 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
         int getCurrentRowNum();
     }
 
-    interface ColumnIterator { // ...for COLUMN_LAYOUT
+    // ---------------------------------------------------
+
+    /*interface ColumnIterator { // ...for COLUMN_LAYOUT
 
         boolean hasNextColumn();
 
@@ -57,13 +57,16 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
         long numRows();
 
         long numCols();
-    }
+    }*/
+
+    // ---------------------------------------------------
 
     interface MatrixElementUnaryOperator {
 
         double apply(long row, long col, double element);
-
     }
+
+    // ---------------------------------------------------
 
     public static final class PartitionShape {
 
@@ -256,7 +259,7 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
     Matrix applyOnNonZeroElements(final MatrixElementUnaryOperator f);
 
     /**
-     * Identical to {@link #applyOnElements(DoubleUnaryOperator, Matrix)} but only on non-zero elements.
+     * Identical to {@link #applyOnElements(DoubleUnaryOperator)} but only on non-zero elements.
      */
     Matrix applyOnNonZeroElements(final MatrixElementUnaryOperator f, Matrix B);
 

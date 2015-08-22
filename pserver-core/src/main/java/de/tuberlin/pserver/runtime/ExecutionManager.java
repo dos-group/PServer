@@ -7,6 +7,7 @@ import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.dsl.controlflow.CFStatement;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.types.DistributedMatrix;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.tuple.Pair;
@@ -304,7 +305,7 @@ public final class ExecutionManager {
     // SLOT PARALLEL PRIMITIVES.
     // ---------------------------------------------------
 
-    public Matrix.RowIterator parRowIterator(final Matrix matrix) {
+    public Matrix.RowIterator parallelMatrixRowIterator(final Matrix matrix) {
         Preconditions.checkNotNull(matrix);
         final SlotContext slotContext = getSlotContext();
         final int scopeDOP = getScopeDOP();
@@ -329,19 +330,18 @@ public final class ExecutionManager {
         return matrix.rowIterator(startOffset, endOffset);
     }
 
-    /*public void iterateMatrixParallel(final Matrix m, final MatrixElementIterationBody b) {
-        Preconditions.checkNotNull(m);
-        Preconditions.checkNotNull(b);
+    public Vector.ElementIterator parallelVectorElementIterator(final Vector vector) {
+        Preconditions.checkNotNull(vector);
         final SlotContext slotContext = getSlotContext();
-        final double[] data = m.toArray();
-        final int parLength = data.length / slotContext.jobContext.numOfSlots;
-        final int s = parLength * slotContext.slotID;
-        final int e = (slotContext.slotID == slotContext.jobContext.numOfSlots - 1)
-                ? data.length - 1 : s + parLength;
-        for (int i = s; i < e; ++i) {
-            final int row = i / (int)m.numCols();
-            final int col = i % (int)m.numCols();
-            b.body(row, col, data[s]);
-        }
-    }*/
+        final int scopeDOP = getScopeDOP();
+        final Pair<Integer, Integer> range = getAvailableSlotRangeForScope();
+        int startOffset, endOffset, blockSize;
+            blockSize   = (int) vector.length() / scopeDOP;
+            startOffset = slotContext.slotID * blockSize;
+            endOffset   = (slotContext.slotID * blockSize + blockSize - 1);
+            endOffset   = (slotContext.slotID == range.getRight())
+                    ? endOffset + (int) vector.length() % scopeDOP
+                    : endOffset;
+        return vector.elementIterator(startOffset, endOffset);
+    }
 }

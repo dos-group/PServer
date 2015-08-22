@@ -1,63 +1,10 @@
 package de.tuberlin.pserver.math;
 
-import de.tuberlin.pserver.math.generators.MatrixGenerator;
-import de.tuberlin.pserver.math.matrix.Matrix;
-import no.uib.cipr.matrix.DenseMatrix;
-import no.uib.cipr.matrix.sparse.FlexCompColMatrix;
-import org.junit.Test;
-
-import java.util.Random;
-
 /**
  * Tests if direct calls of MTJ produce same result as delegated calls.
  * Errors here indicate, that a delegation is faulty.
  */
 public class MTJDelegationTests {
-
-    @Test
-    public void matrixMatrixAdd() {
-
-        Random rand = new Random();
-
-        for(int i=0; i<1000; i++) {
-            int a = rand.nextInt(500) + 1;
-            int b = rand.nextInt(500) + 1;
-
-            Matrix mat1 = MatrixGenerator.RandomSMatrix(a, b, Layout.COLUMN_LAYOUT);
-            FlexCompColMatrix mtjMat1 = new FlexCompColMatrix(new DenseMatrix(a, b, mat1.toArray(), false));
-
-            Matrix mat2 = MatrixGenerator.RandomSMatrix(a, b, Layout.COLUMN_LAYOUT);
-            FlexCompColMatrix mtjMat2 = new FlexCompColMatrix(new DenseMatrix(a, b, mat2.toArray(), false));
-
-            no.uib.cipr.matrix.Matrix mtjResult = mtjMat1.add(mtjMat2);
-            Matrix res = mat1.add(mat2);
-
-            TestUtils.checkValues(res, mtjResult);
-
-        }
-    }
-
-    @Test
-    public void matrixMatrixSub() {
-
-        Random rand = new Random();
-
-        for(int i=0; i<1000; i++) {
-            int a = rand.nextInt(500) + 1;
-            int b = rand.nextInt(500) + 1;
-
-            Matrix mat1 = MatrixGenerator.RandomSMatrix(a, b, Layout.COLUMN_LAYOUT);
-            FlexCompColMatrix mtjMat1 = new FlexCompColMatrix(new DenseMatrix(a, b, mat1.toArray(), false));
-
-            Matrix mat2 = MatrixGenerator.RandomSMatrix(a, b, Layout.COLUMN_LAYOUT);
-            FlexCompColMatrix mtjMat2 = new FlexCompColMatrix(new DenseMatrix(a, b, mat2.toArray(), false));
-
-            no.uib.cipr.matrix.Matrix mtjResult = mtjMat1.add(mtjMat2.scale(-1));
-            Matrix res = mat1.sub(mat2);
-
-            TestUtils.checkValues(res, mtjResult);
-        }
-    }
 
     /*@Test
     public void matrixVectorMult() {

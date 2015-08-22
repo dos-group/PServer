@@ -6,34 +6,54 @@ import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.exceptions.IncompatibleShapeException;
 import de.tuberlin.pserver.math.operations.ApplyOnDoubleElements;
 
-import java.util.Iterator;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
 
 public interface Vector extends SharedObject, ApplyOnDoubleElements<Vector> {
 
     // ---------------------------------------------------
+    // Inner Interfaces/Classes.
+    // ---------------------------------------------------
+
+    interface ElementIterator {
+
+        boolean hasNextElement();
+
+        void nextElement();
+
+        void nextRandomElement();
+
+        double value();
+
+        void reset();
+
+        long length();
+
+        int getCurrentElementNum();
+    }
+
+    // ---------------------------------------------------
     // Methods.
     // ---------------------------------------------------
 
-    long length();
+    public long length();
 
-    Format format();
+    public Format format();
 
-    Layout layout();
+    public Layout layout();
 
-    void set(final long index, final double value);
+    public void set(final long index, final double value);
 
-    double get(final long index);
-    
-    double atomicGet(final long index);
+    public double get(final long index);
 
-    void atomicSet(final long index, final double value);
+    public double atomicGet(final long index);
+
+    public void atomicSet(final long index, final double value);
 
     /**
      * Identical to {@link #mul(double, Vector)} but automatically creates the resulting <code>vector y</code>.
      */
-    Vector mul(final double alpha);
+    public Vector mul(final double alpha);
 
     /**
      * Called on vector x. Computes vector-scalar-multiplication y = x * alpha. <br>
@@ -43,10 +63,10 @@ public interface Vector extends SharedObject, ApplyOnDoubleElements<Vector> {
      * @return y after computing vector-scalar-multiplication y = x * alpha
      * @throws IncompatibleShapeException If x and y are not of equal length.
      */
-    Vector mul(final double alpha, final Vector y);
+    public Vector mul(final double alpha, final Vector y);
 
 
-    Vector div(final double alpha);
+    public Vector div(final double alpha);
 
     /**
      * Called on Vector x. Computes vector-scalar-division y = x / alpha. <br>
@@ -56,12 +76,12 @@ public interface Vector extends SharedObject, ApplyOnDoubleElements<Vector> {
      * @return y after computing vector-scalar-division y = x / alpha
      * @throws IncompatibleShapeException If x and y are not of equal length.
      */
-    Vector div(final double alpha, final Vector y);
+    public Vector div(final double alpha, final Vector y);
 
     /**
      * Identical to {@link #add(Vector, Vector)} but automatically creates the resulting <code>vector z</code>.
      */
-    Vector add(final Vector y);
+    public Vector add(final Vector y);
 
     /**
      * Called on vector x. Computes vector-vector-addition z = x + y. <br>
@@ -71,12 +91,12 @@ public interface Vector extends SharedObject, ApplyOnDoubleElements<Vector> {
      * @return z after computing vector-vector-addition z = x + y
      * @throws IncompatibleShapeException If x and y are not of equal length.
      */
-    Vector add(final Vector y, final Vector z);
+    public Vector add(final Vector y, final Vector z);
 
     /**
      * Identical to {@link #sub(Vector, Vector)} but automatically creates the resulting <code>vector z</code>.
      */
-    Vector sub(final Vector y);
+    public Vector sub(final Vector y);
 
     /**
      * Called on vector x. Computes vector-vector-subtraction z = x - y. <br>
@@ -86,12 +106,12 @@ public interface Vector extends SharedObject, ApplyOnDoubleElements<Vector> {
      * @return y after computing vector-vector-subtraction z = x - y
      * @throws IncompatibleShapeException If x and y are not of equal length.
      */
-    Vector sub(final Vector y, final Vector z);
+    public Vector sub(final Vector y, final Vector z);
 
     /**
      * Identical to {@link #add(double, Vector, Vector)} but automatically creates the resulting <code>vector z</code>.
      */
-    Vector add(final double alpha, final Vector y);
+    public Vector add(final double alpha, final Vector y);
 
     /**
      * Called on vector x. Computes z = alpha * y + x. <br>
@@ -101,50 +121,38 @@ public interface Vector extends SharedObject, ApplyOnDoubleElements<Vector> {
      * @return y after computing z = alpha * y + x
      * @throws IncompatibleShapeException If x and y are not of equal length.
      */
-    Vector add(final double alpha, final Vector y, Vector z);
+    public Vector add(final double alpha, final Vector y, Vector z);
 
-    Vector assign(final Vector v);
+    public Vector assign(final Vector v);
 
-    Vector assign(final double v);
+    public Vector assign(final double v);
 
-    Vector viewPart(final long s, final long e);
+    public Vector viewPart(final long s, final long e);
 
-    Vector like();
+    public Vector like();
 
-    Vector copy();
+    public Vector copy();
 
-    Iterator<Element> iterateNonZero();
+    public ElementIterator nonZeroElementIterator();
 
-    double aggregate(DoubleBinaryOperator aggregator, DoubleUnaryOperator map);
+    public ElementIterator elementIterator();
+
+    public ElementIterator elementIterator(final int start, final int end);
+
+    public double aggregate(DoubleBinaryOperator aggregator, DoubleUnaryOperator map);
 
     /**
      * Called on vector x. Computes the dot product of x and y.
      * @param y
      * @return dot product of x and y
      */
-    double dot(final Vector y);                       // x = x^T * y
+    public double dot(final Vector y);                       // x = x^T * y
 
-    double sum();
+    public double sum();
 
-    double norm(final double v);
+    public double norm(final double v);
 
-    double maxValue();
+    public double maxValue();
 
-    double minValue();
-
-    /**
-     * A holder for information about a specific item in the Vector. When using with an Iterator, the implementation
-     * may choose to reuse this element, so you may need to make a copy if you want to keep it
-     */
-    interface Element {
-
-        /** @return the value of this vector element. */
-        double get();
-
-        /** @return the index of this vector element. */
-        int index();
-
-        /** @param value Set the current element to value. */
-        void set(double value);
-    }
+    public double minValue();
 }

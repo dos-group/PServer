@@ -2,6 +2,7 @@ package de.tuberlin.pserver.dsl.controlflow.iteration;
 
 import de.tuberlin.pserver.dsl.controlflow.CFStatement;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.runtime.SlotContext;
 
 public final class Iteration extends CFStatement {
@@ -96,14 +97,14 @@ public final class Iteration extends CFStatement {
     }
 
     // ---------------------------------------------------
+    // Matrix Operations.
+    // ---------------------------------------------------
 
-    public Iteration parExe(final Matrix m, final RowMatrixIterationBody b) throws Exception { return exe(makeParIterator(m), b); }
+    public Iteration parExe(final Matrix m, final MatrixRowIterationBody b) throws Exception { return exe(parallelMatrixRowIterator(m), b); }
 
-    public Iteration exe(final Matrix m, final RowMatrixIterationBody b)throws Exception {
-        return exe(m.rowIterator(), b);
-    }
+    public Iteration exe(final Matrix m, final MatrixRowIterationBody b)throws Exception { return exe(m.rowIterator(), b); }
 
-    public Iteration exe(final Matrix.RowIterator ri, final RowMatrixIterationBody b) throws Exception {
+    public Iteration exe(final Matrix.RowIterator ri, final MatrixRowIterationBody b) throws Exception {
         final IterationBody ib = (epoch) -> b.body(epoch, ri);
         final IterationTermination it = () -> {
                 final boolean t = !ri.hasNextRow();
@@ -115,16 +116,34 @@ public final class Iteration extends CFStatement {
 
     // ---------------------------------------------------
 
-    private RowMatrixIterationBody toRowMatrixIB(final Matrix m, final MatrixElementIterationBody b) throws Exception {
+    public Iteration parExe(final Matrix m, final MatrixElementIterationBody b) throws Exception { return parExe(m, toRowMatrixIB(m, b)); }
+
+    public Iteration exe(final Matrix m, final MatrixElementIterationBody b) throws Exception { return exe(m, toRowMatrixIB(m, b)); }
+
+    private MatrixRowIterationBody toRowMatrixIB(final Matrix m, final MatrixElementIterationBody b) throws Exception {
         return (epoch, rit) -> {
             for (long j = 0; j < m.numCols(); ++j)
                 b.body(epoch, rit.getCurrentRowNum(), j, rit.getValueOfColumn((int) j));
         };
     }
 
-    public Iteration parExe(final Matrix m, final MatrixElementIterationBody b) throws Exception { return parExe(m, toRowMatrixIB(m, b)); }
+    // ---------------------------------------------------
+    // Vector Operations.
+    // ---------------------------------------------------
 
-    public Iteration exe(final Matrix m, final MatrixElementIterationBody b) throws Exception { return exe(m, toRowMatrixIB(m, b)); }
+    public Iteration parExe(final Vector v, final VectorElementIterationBody b) throws Exception { return exe(parallelVectorElementIterator(v), b); }
+
+    public Iteration exe(final Vector v, final VectorElementIterationBody b)throws Exception { return exe(v.elementIterator(), b); }
+
+    public Iteration exe(final Vector.ElementIterator ei, final VectorElementIterationBody b) throws Exception {
+        final IterationBody ib = (epoch) -> b.body(epoch, ei);
+        final IterationTermination it = () -> {
+            final boolean t = !ei.hasNextElement();
+            if (!t) ei.nextElement();
+            return t;
+        };
+        return exe(it, ib);
+    }
 
     // ---------------------------------------------------
 
@@ -142,7 +161,11 @@ public final class Iteration extends CFStatement {
                 slotContext.programContext.runtimeContext.executionManager.globalSync();
     }
 
-    private Matrix.RowIterator makeParIterator(final Matrix m) {
-        return slotContext.programContext.runtimeContext.executionManager.parRowIterator(m);
+    private Matrix.RowIterator parallelMatrixRowIterator(final Matrix m) {
+        return slotContext.programContext.runtimeContext.executionManager.parallelMatrixRowIterator(m);
+    }
+
+    private Vector.ElementIterator parallelVectorElementIterator(final Vector v) {
+        return slotContext.programContext.runtimeContext.executionManager.parallelVectorElementIterator(v);
     }
 }

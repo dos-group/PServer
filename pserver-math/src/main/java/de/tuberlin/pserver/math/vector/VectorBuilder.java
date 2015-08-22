@@ -7,7 +7,7 @@ import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.vector.dense.DVector;
 import de.tuberlin.pserver.math.vector.sparse.SVector;
 
-public class VectorBuilder {
+public final class VectorBuilder {
 
     // ---------------------------------------------------
     // Fields.
@@ -18,8 +18,6 @@ public class VectorBuilder {
     private Format format;
 
     private Layout layout;
-
-    private boolean mutable;
 
     private double[] data;
 
@@ -50,11 +48,6 @@ public class VectorBuilder {
         return this;
     }
 
-    public VectorBuilder mutable(final boolean mutable) {
-        this.mutable = mutable;
-        return this;
-    }
-
     public VectorBuilder data(final double[] data) {
         this.data = Preconditions.checkNotNull(data);
         return this;
@@ -63,15 +56,9 @@ public class VectorBuilder {
     public Vector build() {
         switch (format) {
             case SPARSE_FORMAT:
-                if (mutable)
                     return new SVector(length, layout);
-                else
-                    throw new UnsupportedOperationException("");
             case DENSE_FORMAT:
-                if (mutable)
                     return new DVector(length, data, layout);
-                else
-                    throw new UnsupportedOperationException("");
         }
         throw new IllegalStateException();
     }
@@ -84,6 +71,5 @@ public class VectorBuilder {
         length   = -1;
         format  = Format.SPARSE_FORMAT;
         layout  = Layout.ROW_LAYOUT;
-        mutable = true;
     }
 }

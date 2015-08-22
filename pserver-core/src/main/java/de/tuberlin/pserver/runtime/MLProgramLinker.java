@@ -2,22 +2,25 @@ package de.tuberlin.pserver.runtime;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.dsl.state.*;
+import de.tuberlin.pserver.dsl.state.DeltaFilter;
+import de.tuberlin.pserver.dsl.state.DeltaMerger;
+import de.tuberlin.pserver.dsl.state.SharedState;
+import de.tuberlin.pserver.dsl.state.StateDeclaration;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
-import de.tuberlin.pserver.math.matrix.dense.DMatrix;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
-import de.tuberlin.pserver.runtime.delta.MatrixDelta;
-import de.tuberlin.pserver.runtime.delta.MatrixDeltaFilter;
-import de.tuberlin.pserver.runtime.delta.MatrixDeltaManager;
-import de.tuberlin.pserver.runtime.delta.MatrixDeltaMerger;
-import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
+import de.tuberlin.pserver.runtime.state.controller.MatrixDeltaRemoteUpdateController;
+import de.tuberlin.pserver.runtime.state.controller.MatrixRemoteUpdateController;
+import de.tuberlin.pserver.runtime.state.controller.RemoteUpdateController;
+import de.tuberlin.pserver.runtime.state.controller.VectorRemoteUpdateController;
+import de.tuberlin.pserver.runtime.state.filter.MatrixUpdateFilter;
+import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
 import de.tuberlin.pserver.types.DistributedMatrix;
 import de.tuberlin.pserver.types.PartitionType;
 import org.slf4j.Logger;
@@ -85,7 +88,7 @@ public final class MLProgramLinker {
 
             for (final StateDeclaration decl : stateDecls) {
 
-                programContext.put(getStateDeclKey(decl.name), decl);
+                programContext.put(stateDeclarationName(decl.name), decl);
             }
 
             Thread.sleep(5000); // TODO: Wait until all objects are placed in DHT and accessible...
@@ -129,7 +132,7 @@ public final class MLProgramLinker {
                             stateProperties.layout(),
                             stateProperties.format(),
                             stateProperties.path(),
-                            stateProperties.delta()
+                            stateProperties.remoteUpdate()
                     );
                     stateDecls.add(decl);
                 }
@@ -145,12 +148,12 @@ public final class MLProgramLinker {
                     StringTokenizer st = new StringTokenizer(filterProperties.stateObjects(), ",");
                     while (st.hasMoreTokens()) {
                         final String stateObjName = st.nextToken().replaceAll("\\s+","");
-                        final MatrixDeltaManager deltaManager =
-                                (MatrixDeltaManager)programContext.get(getDeltaManagerKey(stateObjName));
-                        if (deltaManager == null)
+                        final RemoteUpdateController remoteUpdateController =
+                                (RemoteUpdateController)programContext.get(remoteUpdateControllerName(stateObjName));
+                        if (remoteUpdateController == null)
                             throw new IllegalStateException();
-                        final MatrixDeltaFilter filter = (MatrixDeltaFilter)field.get(instance);
-                        deltaManager.setDeltaFilter(filter);
+                        final MatrixUpdateFilter filter = (MatrixUpdateFilter)field.get(instance);
+                        remoteUpdateController.setUpdateFilter(filter);
                     }
                 }
             }
@@ -165,12 +168,12 @@ public final class MLProgramLinker {
                     StringTokenizer st = new StringTokenizer(mergerProperties.stateObjects(), ",");
                     while (st.hasMoreTokens()) {
                         final String stateObjName = st.nextToken().replaceAll("\\s+", "");
-                        final MatrixDeltaManager deltaManager =
-                                (MatrixDeltaManager)programContext.get(getDeltaManagerKey(stateObjName));
-                        if (deltaManager == null)
+                        final RemoteUpdateController remoteUpdateController =
+                                (RemoteUpdateController)programContext.get(remoteUpdateControllerName(stateObjName));
+                        if (remoteUpdateController == null)
                             throw new IllegalStateException();
-                        final MatrixDeltaMerger merger = (MatrixDeltaMerger) field.get(instance);
-                        deltaManager.setDeltaMerger(merger);
+                        final MatrixUpdateMerger merger = (MatrixUpdateMerger) field.get(instance);
+                        remoteUpdateController.setUpdateMerger(merger);
                     }
                 }
             }
@@ -191,16 +194,16 @@ public final class MLProgramLinker {
                                     .layout(decl.layout)
                                     .build();
 
-                            if (decl.delta == DeltaUpdate.LZ4_DELTA) {
-                                if (decl.format == Format.DENSE_FORMAT) {
-                                    final MatrixDelta delta = new MatrixDelta(slotContext, (DMatrix)so);
-                                    final EmbeddedDHTObject<MatrixDelta> dhtObjectDelta = new EmbeddedDHTObject<>(delta);
-                                    final MatrixDeltaManager deltaManager =
-                                            new MatrixDeltaManager(dhtObjectDelta);
-                                    programContext.put(getDeltaManagerKey(decl.name), deltaManager);
-                                    dataManager.putObject(getDeltaObjectKey(decl.name), dhtObjectDelta);
-                                } else
-                                    throw new UnsupportedOperationException();
+                            switch (decl.remoteUpdate) {
+                                case NO_UPDATE: break;
+                                case SIMPLE_MERGE_UPDATE:
+                                        programContext.put(remoteUpdateControllerName(decl.name),
+                                                new MatrixRemoteUpdateController(slotContext, decl.name, (Matrix)so));
+                                    break;
+                                case DELTA_MERGE_UPDATE:
+                                        programContext.put(remoteUpdateControllerName(decl.name),
+                                                new MatrixDeltaRemoteUpdateController(slotContext, decl.name, (Matrix)so));
+                                    break;
                             }
 
                             dataManager.putObject(decl.name, so);
@@ -274,6 +277,16 @@ public final class MLProgramLinker {
                                 .layout(decl.layout)
                                 .build();
 
+                        switch (decl.remoteUpdate) {
+                            case NO_UPDATE: break;
+                            case SIMPLE_MERGE_UPDATE:
+                                programContext.put(remoteUpdateControllerName(decl.name),
+                                        new VectorRemoteUpdateController(slotContext, decl.name, (Vector)so));
+                                break;
+                            case DELTA_MERGE_UPDATE:
+                                throw new UnsupportedOperationException();
+                        }
+
                         dataManager.putObject(decl.name, so);
                     } break;
                     case PARTITIONED: throw new UnsupportedOperationException();
@@ -288,19 +301,8 @@ public final class MLProgramLinker {
     // Utility Methods.
     // ---------------------------------------------------
 
-    public static String getStateDeclKey(final String name) { return STATE_DECLARATION_PREFIX + name; }
+    public static String stateDeclarationName(final String name) { return "__state_declaration_" + name; }
 
-    public static String getDeltaManagerKey(final String name) { return DELTA_MANAGER_PREFIX + name; }
+    public static String remoteUpdateControllerName(final String name) { return "__remote_update_controller_" + name; }
 
-    public static String getDeltaObjectKey(final String name) { return DELTA_OBJECT_PREFIX + name; }
-
-    // ---------------------------------------------------
-    // Private Constants.
-    // ---------------------------------------------------
-
-    private static final String DELTA_MANAGER_PREFIX     = "__delta_manager_";
-
-    private static final String DELTA_OBJECT_PREFIX      = "__delta_object_";
-
-    private static final String STATE_DECLARATION_PREFIX = "__state_decl_";
 }

@@ -5,10 +5,10 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.dense.DMatrix;
-import de.tuberlin.pserver.math.matrix.sparse.SMutableMatrix;
+import de.tuberlin.pserver.math.matrix.sparse.SMatrix;
 import de.tuberlin.pserver.math.utils.Utils;
 
-public class MatrixBuilder {
+public final class MatrixBuilder {
 
     // ---------------------------------------------------
     // Fields.
@@ -19,8 +19,6 @@ public class MatrixBuilder {
     private Format format;
 
     private Layout layout;
-
-    private boolean mutable = true;
 
     private double[] data;
 
@@ -54,11 +52,6 @@ public class MatrixBuilder {
         return this;
     }
 
-    public MatrixBuilder mutable(final boolean mutable) {
-        this.mutable = mutable;
-        return this;
-    }
-
     public MatrixBuilder data(final double[] data) {
         this.data = Preconditions.checkNotNull(data);
         return this;
@@ -72,27 +65,18 @@ public class MatrixBuilder {
     public Matrix build() {
         switch (format) {
             case SPARSE_FORMAT:
-                if (mutable) {
-                    return new SMutableMatrix(rows, cols, layout, initialCapacity);
-                } else {
-                    return new SMutableMatrix(rows, cols, layout, initialCapacity);
-                }
+                    return new SMatrix(rows, cols, layout, initialCapacity);
             case DENSE_FORMAT:
-                if (mutable) {
-                    if (data == null) {
+                    if (data == null)
                         return new DMatrix(rows, cols, new double[Utils.toInt(rows * cols)], layout);
-                    }
-                    return new DMatrix(rows, cols, data, layout);
-                }
-                else {
-                    throw new UnsupportedOperationException("");
-                }
+                    else
+                        return new DMatrix(rows, cols, data, layout);
         }
         throw new IllegalStateException();
     }
 
     // ---------------------------------------------------
-    // Public Methods.
+    // Private Methods.
     // ---------------------------------------------------
 
     private void reset() {
@@ -100,6 +84,5 @@ public class MatrixBuilder {
         cols    = -1;
         format  = Format.DENSE_FORMAT;
         layout  = Layout.ROW_LAYOUT;
-        mutable = true;
     }
 }

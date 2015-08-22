@@ -1,18 +1,6 @@
 package de.tuberlin.pserver.examples.experiments.sgd;
 
-import com.google.common.collect.Lists;
-import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.vector.Vector;
-import de.tuberlin.pserver.ml.models.GeneralLinearModel;
-import de.tuberlin.pserver.ml.optimization.*;
-import de.tuberlin.pserver.ml.optimization.SGD.SGDOptimizer;
-import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.MLProgram;
-
-import java.io.Serializable;
-import java.text.DecimalFormat;
-import java.util.List;
 
 public final class AsyncSGDTestJob extends MLProgram {
 /*

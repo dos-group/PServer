@@ -1,11 +1,9 @@
 package de.tuberlin.pserver.core.config;
 
-import com.google.common.base.Preconditions;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import de.tuberlin.pserver.core.infra.InetHelper;
-import de.tuberlin.pserver.core.infra.ZookeeperClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

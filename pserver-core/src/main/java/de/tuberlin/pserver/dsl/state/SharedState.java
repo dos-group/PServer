@@ -29,5 +29,5 @@ public @interface SharedState {;
 
     String path() default "";
 
-    DeltaUpdate delta() default DeltaUpdate.NO_DELTA;
+    RemoteUpdate remoteUpdate() default RemoteUpdate.NO_UPDATE;
 }

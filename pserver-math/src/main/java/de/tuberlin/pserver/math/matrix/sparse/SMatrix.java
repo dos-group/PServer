@@ -1,138 +1,175 @@
 package de.tuberlin.pserver.math.matrix.sparse;
 
-import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
-import de.tuberlin.pserver.math.delegates.MathLibFactory;
-import de.tuberlin.pserver.math.delegates.sparse.mtj.MTJUtils;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.dense.DMatrix;
 import de.tuberlin.pserver.math.utils.Utils;
 import de.tuberlin.pserver.math.vector.Vector;
-import de.tuberlin.pserver.math.vector.sparse.SVector;
-import no.uib.cipr.matrix.MatrixEntry;
-import no.uib.cipr.matrix.sparse.CompColMatrix;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
-import no.uib.cipr.matrix.sparse.FlexCompColMatrix;
-import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
+import de.tuberlin.pserver.math.vector.dense.DVector;
+import gnu.trove.map.hash.TIntDoubleHashMap;
 import org.apache.commons.lang3.NotImplementedException;
 
-import java.util.Iterator;
-
 public class SMatrix extends AbstractMatrix {
+
+    // ---------------------------------------------------
+    // Inner Classes.
+    // ---------------------------------------------------
+
+    /*public final class MtxPos implements Serializable {
+
+        public final long row;
+
+        public final long col;
+
+        public MtxPos(final long row, final long col) {
+            this.row = row;
+            this.col = col;
+        }
+
+        @Override
+        public int hashCode() {
+            return (int) (row * cols + col);
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (o instanceof MtxPos) {
+                MtxPos that = (MtxPos) o;
+                return (this.row == that.row && this.col == that.col);
+            }
+            return false;
+        }
+    }*/
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    protected no.uib.cipr.matrix.Matrix data;
+    private final int initialCapacity;
 
-    private static final LibraryMatrixOps<Matrix, Vector> matrixOpDelegate =
-            MathLibFactory.delegateSMatrixOpsTo(MathLibFactory.SMathLibrary.MTJ_LIBRARY);
+    private final TIntDoubleHashMap data;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    public SMatrix() {
-        super(0, 0, Layout.ROW_LAYOUT);
-    }
-
-    public SMatrix(no.uib.cipr.matrix.Matrix mat, Layout layout) {
-        super(mat.numRows(), mat.numColumns(), layout);
-        data = mat;
-    }
-
-    public SMatrix(final long rows, final long cols, final Layout layout) {
+    public SMatrix(final long rows, final long cols, final Layout layout, final int initialCapacity) {
         super(rows, cols, layout);
-        switch(layout) {
-            case ROW_LAYOUT:
-                data = new FlexCompColMatrix(Utils.toInt(numRows()), Utils.toInt(numCols()));
-                break;
-            case COLUMN_LAYOUT:
-                data = new FlexCompRowMatrix(Utils.toInt(numRows()), Utils.toInt(numCols()));
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown Memory Layout " + getLayout().toString());
-        }
+        this.initialCapacity = initialCapacity;
+        if (initialCapacity == -1)
+            this.data = new TIntDoubleHashMap();//(int)((rows * cols)/10));
+        else
+            this.data = new TIntDoubleHashMap(initialCapacity);
     }
 
-    public static SMatrix fromDMatrix(DMatrix mat) {
-        return fromDMatrix(mat, mat.getLayout(), false);
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
+
+    @Override
+    public double get(long row, long col) {
+        final Double value = data.get((int)(row * cols + col));
+        return (value == null) ? 0 : value;
     }
 
-    public static SMatrix fromDMatrix(DMatrix mat, Layout targetLayout) {
-        return fromDMatrix(mat, targetLayout, false);
+    @Override
+    public void set(long row, long col, double value) {
+        data.put((int)(row * cols + col), value);
     }
 
-    public static SMatrix fromDMatrix(DMatrix mat, boolean mutable) {
-        return fromDMatrix(mat, mat.getLayout(), mutable);
+    @Override
+    public double atomicGet(long row, long col) {
+        throw new NotImplementedException("not impl");
     }
 
-    public static SMatrix fromDMatrix(DMatrix mat, Layout targetLayout, boolean mutable) {
-        no.uib.cipr.matrix.Matrix data = null;
-        if(!mutable) { // create Comp[Row|Col]Matrix
-            switch(targetLayout) {
-                case ROW_LAYOUT:
-                    data = new CompRowMatrix(Utils.toInt(mat.numRows()), Utils.toInt(mat.numCols()), MTJUtils.buildRowBasedNz(mat));
-                    setNonZeroElements(mat, data);
-                    break;
-                case COLUMN_LAYOUT:
-                    data = new CompColMatrix(Utils.toInt(mat.numRows()), Utils.toInt(mat.numCols()), MTJUtils.buildColBasedNz(mat));
-                    setNonZeroElements(mat, data);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unknown Memory Layout " + mat.getLayout().toString());
-            }
-        }
-        else { // create FlexComp[Row|Col]Matrix
-            switch(targetLayout) {
-                case ROW_LAYOUT:
-                    data = new FlexCompColMatrix(Utils.toInt(mat.numRows()), Utils.toInt(mat.numCols()));
-                    setNonZeroElements(mat, data);
-                    break;
-                case COLUMN_LAYOUT:
-                    data = new FlexCompRowMatrix(Utils.toInt(mat.numRows()), Utils.toInt(mat.numCols()));
-                    setNonZeroElements(mat, data);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unknown Memory Layout " + mat.getLayout().toString());
-            }
-        }
-        Preconditions.checkState(data != null, "Can not convert DMatrix to SMatrix");
-        return new SMatrix(data, targetLayout);
+    @Override
+    public void atomicSet(long row, long col, double value) {
+        throw new NotImplementedException("not impl");
     }
 
-    public static void setNonZeroElements(Matrix mat, no.uib.cipr.matrix.Matrix data) {
-        for(long i = 0; i < mat.numRows(); i++) {
-            for(long j = 0; j < mat.numCols(); j++) {
-                if( ! Utils.closeTo(mat.get(i, j), 0.0)) {
-                    data.set(Utils.toInt(i), Utils.toInt(j), mat.get(i, j));
-                }
-            }
-        }
+    @Override
+    public double[] toArray() {
+        return new double[0];
+    }
+
+    @Override
+    public void setArray(double[] data) {
+        throw new NotImplementedException("not impl");
+    }
+
+    @Override
+    public RowIterator rowIterator() {
+        return new SMatrix2RowIterator(this);
+    }
+
+    @Override
+    public RowIterator rowIterator(int startRow, int endRow) {
+        return new SMatrix2RowIterator(this, startRow, endRow);
+    }
+
+    @Override
+    protected Matrix newInstance(long rows, long cols) {
+        return new SMatrix(rows, cols, Layout.ROW_LAYOUT, initialCapacity);
+    }
+
+    @Override
+    public Matrix transpose(Matrix A) {
+        throw new NotImplementedException("not impl");
+    }
+
+    @Override
+    public Vector rowAsVector() {
+        throw new NotImplementedException("not impl");
+    }
+
+    @Override
+    public Vector rowAsVector(long row) {
+        throw new NotImplementedException("not impl");
+    }
+
+    @Override
+    public Vector rowAsVector(long row, long from, long to) {
+        throw new NotImplementedException("not impl");
+    }
+
+    @Override
+    public Vector colAsVector() {
+        throw new NotImplementedException("not impl");
+    }
+
+    @Override
+    public Vector colAsVector(long col) {
+        throw new NotImplementedException("not impl");
+    }
+
+    @Override
+    public Vector colAsVector(long col, long from, long to) {
+        throw new NotImplementedException("not impl");
+    }
+
+    @Override
+    public Matrix assign(Matrix v) {
+        throw new NotImplementedException("not impl");
     }
 
     @Override
     public Matrix assign(double v) {
-        double[] data = new double[Utils.toInt(rows*cols)];
-        return new DMatrix(rows, cols, data);
+        throw new NotImplementedException("not impl");
     }
 
     @Override
     public Matrix assignRow(long row, Vector v) {
-        return null;
+        throw new NotImplementedException("not impl");
     }
 
     @Override
     public Matrix assignColumn(long col, Vector v) {
-        return null;
+        throw new NotImplementedException("not impl");
     }
 
     @Override
     public Matrix copy() {
-        return null;
+        throw new NotImplementedException("not impl");
     }
 
     @Override
@@ -145,154 +182,43 @@ public class SMatrix extends AbstractMatrix {
         throw new NotImplementedException("not impl");
     }
 
-    // ---------------------------------------------------
-    // Matrix Operation Delegates.
-    // ---------------------------------------------------
-
-//    @Override public Matrix add(final Matrix B) { return matrixOpDelegate.add(B, this); }
-//
-//    @Override public Matrix sub(final Matrix B) { return matrixOpDelegate.sub(B, this); }
-//
-//    @Override public Matrix mul(final Matrix B) { return matrixOpDelegate.mul(this, B); }
-//
-//    @Override public Vector mul(final Vector v) { return matrixOpDelegate.mul(this, v); }
-//
-//    @Override public void mul(final Vector x, final Vector y) { matrixOpDelegate.mul(this, x, y); }
-//
-//    @Override public Matrix scale(final double alpha) { return matrixOpDelegate.scale(alpha, this); }
-//
-//    @Override public Matrix transpose() { return matrixOpDelegate.transpose(this); }
-//
-//    @Override public void transpose(final Matrix B) { matrixOpDelegate.transpose(this, B); }
-//
-//    @Override public boolean invert() { return matrixOpDelegate.invert(this); }
-
     @Override
-    public Matrix assign(Matrix v) {
-        return null;
+    public Matrix applyOnNonZeroElements(MatrixElementUnaryOperator f, Matrix B) {
+        /*for (Map.Entry<Long, Double> ele : data.entrySet()) {
+            long row = ele.getKey() / cols;
+            long col = ele.getKey() % cols;
+            B.set(row, col, f.apply(row, col, ele.getValue()));
+        }*/
+        return this;
     }
 
-    @Override
-    public double get(long row, long col) { return data.get(Utils.toInt(row), Utils.toInt(col)); }
+    public static class SMatrix2RowIterator extends AbstractRowIterator {
 
-    @Override
-    public void set(long row, long col, double value) { data.set(Utils.toInt(row), Utils.toInt(col), value); }
-
-    @Override
-    public double atomicGet(long row, long col) {
-        synchronized (data) {
-            return data.get(Utils.toInt(row), Utils.toInt(col));
+        public SMatrix2RowIterator(AbstractMatrix mat) {
+            super(mat);
         }
-    }
 
-    @Override
-    public void atomicSet(long row, long col, double value) {
-        synchronized (data) {
-            data.set(Utils.toInt(row), Utils.toInt(col), value);
-        }
-    }
-
-    @Override
-    public double[] toArray() {
-        double[] result = new double[Utils.toInt(rows*cols)];
-        Iterator<MatrixEntry> iter = data.iterator();
-        while(iter.hasNext()) {
-            MatrixEntry entry = iter.next();
-            result[Utils.getPos(entry.row(), entry.column(), layout, rows, cols)] = entry.get();
-        }
-        return result;
-    }
-
-    public double[] toArray(Layout targetLayout) {
-        double[] result = new double[Utils.toInt(rows*cols)];
-        Iterator<MatrixEntry> iter = data.iterator();
-        while(iter.hasNext()) {
-            MatrixEntry entry = iter.next();
-            result[Utils.getPos(entry.row(), entry.column(), targetLayout, rows, cols)] = entry.get();
-        }
-        return result;
-    }
-
-    @Override
-    public void setArray(double[] data) {
-        Preconditions.checkArgument(data.length == rows * cols, String.format("Wrong length of data array. Excepted: rows * cols = %d * %d = %d. Actual: %d", rows, cols, rows*cols, data.length));
-        this.data = SMatrix.fromDMatrix(new DMatrix(rows, cols, data, layout), layout, true).getContainer();
-    }
-
-
-    public no.uib.cipr.matrix.Matrix getContainer() {
-        return data;
-    }
-
-    @Override
-    public RowIterator rowIterator() {
-        return rowIterator(0, Utils.toInt(rows - 1));
-    }
-
-    @Override
-    public RowIterator rowIterator(int startRow, int endRow) {
-        return new SparseRowIterator(this, startRow, endRow);
-    }
-
-    @Override
-    protected Matrix newInstance(long rows, long cols) {
-        return new SMatrix(rows, cols, Layout.ROW_LAYOUT);
-    }
-
-
-    @Override
-    public Vector rowAsVector() {
-        throw new UnsupportedOperationException("");
-    }
-
-    @Override
-    public Vector rowAsVector(long row) {
-        throw new UnsupportedOperationException("");
-    }
-
-    @Override
-    public Vector rowAsVector(long row, long from, long to) {
-        throw new UnsupportedOperationException("");
-    }
-
-    @Override
-    public Vector colAsVector() {
-        throw new UnsupportedOperationException("");
-    }
-
-    @Override
-    public Vector colAsVector(long col) {
-        throw new UnsupportedOperationException("");
-    }
-
-    @Override
-    public Vector colAsVector(long col, long from, long to) {
-        throw new UnsupportedOperationException("");
-    }
-
-    // ---------------------------------------------------
-    // Inner Classes.
-    // ---------------------------------------------------
-
-    public static final class SparseRowIterator extends AbstractRowIterator {
-
-        public SparseRowIterator(AbstractMatrix mat, int startRow, int endRow) {
+        public SMatrix2RowIterator(AbstractMatrix mat, int startRow, int endRow) {
             super(mat, startRow, endRow);
         }
 
         @Override
-        public void nextRandomRow() {
-            throw new UnsupportedOperationException("");
-        }
-
-        @Override
         public Vector getAsVector() {
-            return getAsVector(0, Utils.toInt(target.numCols()), new SVector(target.numCols(), Layout.COLUMN_LAYOUT));
+            return getAsVector(0, Utils.toInt(numCols()));
         }
 
         @Override
         public Vector getAsVector(int from, int size) {
-            return getAsVector(from, size, new SVector(size, Layout.COLUMN_LAYOUT));
+            System.out.println("curRow:" + currentRow);
+            if(from < 0 || size > numCols()) {
+                throw new IllegalArgumentException();
+            }
+            DVector rowVec = new DVector(size, Layout.ROW_LAYOUT);
+            for(long col = from; col < size; col++) {
+                double val = target.get(currentRow, col);
+                rowVec.set(col, val);
+            }
+            return rowVec;
         }
     }
 }

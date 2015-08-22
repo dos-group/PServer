@@ -1,13 +1,13 @@
 package de.tuberlin.pserver.math.matrix;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.math.utils.*;
+import de.tuberlin.pserver.math.utils.Utils;
+import de.tuberlin.pserver.math.utils.VectorFunction;
 import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.vector.dense.DVector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import de.tuberlin.pserver.math.vector.dense.DVector;
 
 import java.util.Random;
 import java.util.concurrent.locks.Lock;

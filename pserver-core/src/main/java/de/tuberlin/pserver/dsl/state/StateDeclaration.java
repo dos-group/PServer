@@ -6,6 +6,10 @@ import de.tuberlin.pserver.types.PartitionType;
 
 public final class StateDeclaration {
 
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
     public final String name;
 
     public final Class<?>  stateType;
@@ -26,7 +30,11 @@ public final class StateDeclaration {
 
     public final String path;
 
-    public final DeltaUpdate delta;
+    public final RemoteUpdate remoteUpdate;
+
+    // ---------------------------------------------------
+    // Constructors.
+    // ---------------------------------------------------
 
     public StateDeclaration(final String name,
                             final Class<?> stateType,
@@ -38,7 +46,7 @@ public final class StateDeclaration {
                             final Layout layout,
                             final Format format,
                             final String path,
-                            final DeltaUpdate delta) {
+                            final RemoteUpdate remoteUpdate) {
 
         this.name           = name;
         this.stateType      = stateType;
@@ -50,6 +58,6 @@ public final class StateDeclaration {
         this.layout         = layout;
         this.format         = format;
         this.path           = path;
-        this.delta          = delta;
+        this.remoteUpdate   = remoteUpdate;
     }
 }

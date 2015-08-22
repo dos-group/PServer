@@ -1,9 +1,7 @@
 package de.tuberlin.pserver.math.generators;
 
 import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.dense.DMatrix;
-import de.tuberlin.pserver.math.matrix.sparse.SMatrix;
 
 import java.util.Random;
 
@@ -19,20 +17,6 @@ public class MatrixGenerator {
     public static DMatrix RandomDMatrix(long rows, long cols, Layout layout) {
         double[] data = BufferGenerator.RandomValues(rows, cols);
         return new DMatrix(rows, cols, data, layout);
-    }
-
-    public static SMatrix RandomSMatrix(long rows, long cols) {
-        return RandomSMatrix(rows, cols, Layout.ROW_LAYOUT);
-    }
-
-    public static SMatrix RandomSMatrix(long rows, long cols, Layout layout) {
-        double[] data = BufferGenerator.SparseRandomValues(rows, cols);
-        return SMatrix.fromDMatrix(new DMatrix(rows, cols, data, layout));
-    }
-
-    public static SMatrix RandomSMatrix(long rows, long cols, Layout layout, double sparsity) {
-        double[] data = BufferGenerator.SparseRandomValues(rows, cols, sparsity);
-        return SMatrix.fromDMatrix(new DMatrix(rows, cols, data, layout));
     }
 
     public static DMatrix AscendingDMatrix(long rows, long cols) {
