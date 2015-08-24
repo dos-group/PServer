@@ -65,7 +65,9 @@ public class DMatrix extends AbstractMatrix implements Serializable {
         }
 
         @Override
-        public double getValueOfColumn(final int col) { return self.data[currentRowIndex + col]; }
+        public double getValueOfColumn(final int col) {
+            //System.out.println("currentRowIndex = " + currentRowIndex + ", col = " + col + ", " + ((currentRowIndex + col) < self.data.length) + ", v = " + self.data[col]);
+            return self.data[currentRowIndex + col]; }
 
         @Override
         public Vector getAsVector() { return getAsVector(0, (int)self.cols); }

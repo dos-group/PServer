@@ -32,7 +32,7 @@ public class DistributedMatrix extends AbstractMatrix {
 
     private final Matrix matrix;
 
-    private final boolean completeMatrix;
+    public final boolean completeMatrix;
     
     // ---------------------------------------------------
     // Constructor.
@@ -91,9 +91,17 @@ public class DistributedMatrix extends AbstractMatrix {
 
     public long partitionNumCols() { return shape.cols; }
 
+    public Matrix.PartitionShape getPartitionShape() { return shape; }
+
     @Override public double get(long row, long col) { return matrix.get(translateRow(row), translateCol(col)); }
 
-    @Override public void set(long row, long col, double value) { matrix.set(translateRow(row), translateCol(col), value); }
+    @Override public void set(long row, long col, double value) {
+
+        if (value == 0.0)
+            throw new IllegalStateException();
+
+        matrix.set(translateRow(row), translateCol(col), value);
+    }
 
     @Override public double atomicGet(long row, long col) { return 0; }
 

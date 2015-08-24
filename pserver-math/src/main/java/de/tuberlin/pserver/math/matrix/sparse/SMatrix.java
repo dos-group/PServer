@@ -9,6 +9,9 @@ import de.tuberlin.pserver.math.vector.dense.DVector;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 import org.apache.commons.lang3.NotImplementedException;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class SMatrix extends AbstractMatrix {
 
     // ---------------------------------------------------
@@ -47,7 +50,9 @@ public class SMatrix extends AbstractMatrix {
 
     private final int initialCapacity;
 
-    private final TIntDoubleHashMap data;
+    //private final TIntDoubleHashMap data;
+
+    private final Map<Integer, Double> data;
 
     // ---------------------------------------------------
     // Constructors.
@@ -56,10 +61,11 @@ public class SMatrix extends AbstractMatrix {
     public SMatrix(final long rows, final long cols, final Layout layout, final int initialCapacity) {
         super(rows, cols, layout);
         this.initialCapacity = initialCapacity;
-        if (initialCapacity == -1)
-            this.data = new TIntDoubleHashMap();//(int)((rows * cols)/10));
-        else
-            this.data = new TIntDoubleHashMap(initialCapacity);
+        //if (initialCapacity == -1)
+        //    this.data = new TIntDoubleHashMap();//(int)((rows * cols)/10));
+        //else
+        //    this.data = new TIntDoubleHashMap(initialCapacity);
+        data = new HashMap<>();
     }
 
     // ---------------------------------------------------

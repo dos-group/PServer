@@ -91,8 +91,6 @@ public abstract class MLProgram extends EventDispatcher {
 
             programLinker.link(slotContext, this);
 
-            slotContext.programContext.programLoadBarrier.await();
-
             programLinker.fetchStateObjects(this);
 
             CF.select().slot(0).exe(() -> {

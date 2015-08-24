@@ -109,7 +109,8 @@ public final class MLProgramContext {
 
     public void put(final String name, final Object obj) { programStore.put(Preconditions.checkNotNull(name), Preconditions.checkNotNull(obj)); }
 
-    public Object get(final String name) { return programStore.get(Preconditions.checkNotNull(name)); }
+    @SuppressWarnings("unchecked")
+    public <T> T get(final String name) { return (T)programStore.get(Preconditions.checkNotNull(name)); }
 
     public void delete(final String name) { programStore.remove(Preconditions.checkNotNull(name)); }
 

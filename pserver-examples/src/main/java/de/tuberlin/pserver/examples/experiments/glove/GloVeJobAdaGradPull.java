@@ -3,12 +3,12 @@ package de.tuberlin.pserver.examples.experiments.glove;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.dsl.state.*;
-import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.runtime.state.filter.MatrixUpdateFilter;
 import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
+import de.tuberlin.pserver.runtime.state.merger.VectorUpdateMerger;
 import de.tuberlin.pserver.types.PartitionType;
 import org.apache.commons.lang3.mutable.MutableDouble;
 
@@ -33,13 +33,13 @@ public final class GloVeJobAdaGradPull extends MLProgram {
     // ---------------------------------------------------
 
     @SharedState(globalScope = GlobalScope.PARTITIONED, partitionType = PartitionType.ROW_PARTITIONED,
-            rows = COLS, cols = COLS, path = "datasets/text8_coocc.csv", format = Format.SPARSE_FORMAT)
+            rows = COLS, cols = COLS, path = "datasets/text8_coocc.csv")
     public Matrix X;
 
-    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = COLS * 2, remoteUpdate = RemoteUpdate.DELTA_MERGE_UPDATE)
+    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = COLS * 2, remoteUpdate = RemoteUpdate.SIMPLE_MERGE_UPDATE)
     public Matrix W;
 
-    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = COLS * 2, remoteUpdate = RemoteUpdate.DELTA_MERGE_UPDATE)
+    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = COLS * 2, remoteUpdate = RemoteUpdate.SIMPLE_MERGE_UPDATE)
     public Matrix GradSq;
 
     @SharedState(globalScope = GlobalScope.REPLICATED, cols = COLS * 2, remoteUpdate = RemoteUpdate.SIMPLE_MERGE_UPDATE)
@@ -60,8 +60,13 @@ public final class GloVeJobAdaGradPull extends MLProgram {
 
     // ---------------------------------------------------
 
-    @DeltaMerger(stateObjects = "W, GradSq")
-    public final MatrixUpdateMerger deltaMerger = (i, j, val, remoteVal) -> (val + remoteVal) / 2;
+    @StateMerger(stateObjects = "W, GradSq")
+    public final MatrixUpdateMerger matrixMerger = (i, j, val, remoteVal) -> (val + remoteVal) / 2;
+
+    // ---------------------------------------------------
+
+    @StateMerger(stateObjects = "B, GradSqB")
+    public final VectorUpdateMerger vectorMerger = (i, val, remoteVal) -> (val + remoteVal) / 2;
 
     // ---------------------------------------------------
 
@@ -83,7 +88,7 @@ public final class GloVeJobAdaGradPull extends MLProgram {
                 GradSqB.set(i, 1.0);
             }
 
-        }).process(() ->
+        }).process(() -> {
 
             CF.iterate().exe(NUM_EPOCHS, (e0) -> {
 
@@ -91,9 +96,8 @@ public final class GloVeJobAdaGradPull extends MLProgram {
 
                 LOG.info("Epoch = " + e0);
 
-                CF.iterate().parExe(X, (e, i, j, v) -> {
+                CF.iterate().parExe(X, (e, wordVecIdx, j, v) -> {
 
-                    final long wordVecIdx = i;
                     final long ctxVecIdx = j + COLS;
 
                     if (v == 0)
@@ -133,10 +137,10 @@ public final class GloVeJobAdaGradPull extends MLProgram {
 
                 });
 
-                DF.publishUpdate("W, GradSq");
-                DF.pullUpdate("W, GradSq");
-            })
-        );
+                DF.publishUpdate();
+                DF.pullUpdate();
+            });
+        });
     }
 
     // ---------------------------------------------------
@@ -144,9 +148,8 @@ public final class GloVeJobAdaGradPull extends MLProgram {
     // ---------------------------------------------------
 
     public static void main(final String[] args) {
-
         PServerExecutor.LOCAL
-                .run(GloVeJobAdaGradPull.class, 4)
+                .run(GloVeJobAdaGradPull.class, 1)
                 .done();
     }
 }

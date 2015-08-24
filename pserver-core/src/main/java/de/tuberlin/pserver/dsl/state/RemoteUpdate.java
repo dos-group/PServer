@@ -8,4 +8,6 @@ public enum RemoteUpdate {
     SIMPLE_MERGE_UPDATE,
 
     DELTA_MERGE_UPDATE,
+
+    COLLECT_PARTITIONS_UPDATE
 }

@@ -18,7 +18,7 @@ import sun.misc.Unsafe;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MatrixDeltaRemoteUpdateController extends RemoteUpdateController {
+public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
 
     // ---------------------------------------------------
     // Fields.
@@ -36,9 +36,9 @@ public class MatrixDeltaRemoteUpdateController extends RemoteUpdateController {
     // Constructors.
     // ---------------------------------------------------
 
-    public MatrixDeltaRemoteUpdateController(final SlotContext slotContext,
-                                             final String stateName,
-                                             final Matrix matrix) {
+    public MatrixDeltaMergeUpdateController(final SlotContext slotContext,
+                                            final String stateName,
+                                            final Matrix matrix) {
         super(slotContext, stateName);
 
         this.stateMatrix = Preconditions.checkNotNull(matrix);

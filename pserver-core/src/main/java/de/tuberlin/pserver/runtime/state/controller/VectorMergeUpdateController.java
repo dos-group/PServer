@@ -12,7 +12,7 @@ import de.tuberlin.pserver.runtime.state.merger.VectorUpdateMerger;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VectorRemoteUpdateController extends RemoteUpdateController {
+public class VectorMergeUpdateController extends RemoteUpdateController {
 
     // ---------------------------------------------------
     // Fields.
@@ -26,9 +26,9 @@ public class VectorRemoteUpdateController extends RemoteUpdateController {
     // Constructors.
     // ---------------------------------------------------
 
-    public VectorRemoteUpdateController(final SlotContext slotContext,
-                                        final String stateName,
-                                        final Vector vector) {
+    public VectorMergeUpdateController(final SlotContext slotContext,
+                                       final String stateName,
+                                       final Vector vector) {
         super(slotContext, stateName);
 
         this.stateVector = Preconditions.checkNotNull(vector);
@@ -94,7 +94,7 @@ public class VectorRemoteUpdateController extends RemoteUpdateController {
         sc.CF.syncSlots();
 
         @SuppressWarnings("unchecked")
-        final List<Vector> remoteVectors = (List<Vector>) sc.programContext.get(stateName + "-Remote-Vector-List");
+        final List<Vector> remoteVectors = sc.programContext.get(stateName + "-Remote-Vector-List");
 
         for (final Vector remoteVector : remoteVectors) {
 

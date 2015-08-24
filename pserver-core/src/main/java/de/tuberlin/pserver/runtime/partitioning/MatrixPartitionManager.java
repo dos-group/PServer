@@ -245,11 +245,13 @@ public final class MatrixPartitionManager {
         final FileDataIterator<? extends IRecord> fileIterator = task.fileIterator;
         final Matrix matrix = getLoadingMatrix(task);
         ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
+
+        MatrixEntry entry = null;
         while (fileIterator.hasNext()) {
             final IRecord record = fileIterator.next();
             // iterate through entries in record
             while (record.hasNext()) {
-                MatrixEntry entry = record.next(reusable);
+                entry = record.next(reusable);
                 if(entry.getRow() >= task.rows || entry.getCol() >= task.cols)
                     continue;
                 // get the partition this record belongs to
@@ -266,6 +268,12 @@ public final class MatrixPartitionManager {
                     }
                 }
             }
+
+            //final MatrixEntry me = entry;
+            //try {
+            //    task.slotContext.CF.select().node(0).slot(0).exe(() -> {if (me != null) System.out.println("--> " + matrix.get(me.getRow(), 0)); });
+            //} catch (Exception e) {
+            //}
         }
         // send all remaining foreign entries
         for (Map.Entry<Integer, List<MatrixEntry>> map : foreignEntries.entrySet()) {

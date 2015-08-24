@@ -1,14 +1,32 @@
 package de.tuberlin.pserver.examples.experiments.tsne;
 
+import com.google.common.collect.Lists;
+import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.dsl.state.GlobalScope;
+import de.tuberlin.pserver.dsl.state.RemoteUpdate;
+import de.tuberlin.pserver.dsl.state.SharedState;
+import de.tuberlin.pserver.math.Format;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.MatrixBuilder;
+import de.tuberlin.pserver.math.tuples.Tuple2;
+import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.vector.VectorBuilder;
 import de.tuberlin.pserver.runtime.MLProgram;
+import org.apache.commons.lang3.mutable.MutableDouble;
+
+import java.io.PrintWriter;
+import java.io.Serializable;
+import java.util.List;
+import java.util.Random;
 
 public class TSNEJob extends MLProgram {
-/*
+
     // ---------------------------------------------------
     // Constants.
     // ---------------------------------------------------
 
-    private static final int INPUT_ROWS = 10;
+    private static final int ROWS = 10;
     private static final int INPUT_COLS = 28 * 28;
     private static final int EMBEDDING_DIMENSION = 2;
 
@@ -26,13 +44,16 @@ public class TSNEJob extends MLProgram {
     // Fields.
     // ---------------------------------------------------
 
-    @State(globalScope = State.PARTITIONED_INPUT, rows = INPUT_ROWS, cols = INPUT_COLS, path = "datasets/mnist_10_X.csv", format = Format.SPARSE_FORMAT, layout = Layout.ROW_LAYOUT)
+    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = INPUT_COLS,
+            path = "datasets/mnist_10_X.csv", format = Format.SPARSE_FORMAT)
     public Matrix X;
 
-    @State(globalScope = State.REPLICATED, rows = INPUT_ROWS, cols = EMBEDDING_DIMENSION, layout = Layout.ROW_LAYOUT, format = Format.DENSE_FORMAT)
-    public Matrix Y;
+    @SharedState(globalScope = GlobalScope.LOGICALLY_PARTITIONED, rows = ROWS, cols = ROWS,
+            remoteUpdate = RemoteUpdate.COLLECT_PARTITIONS_UPDATE)
+    public Matrix P;
 
-    private Matrix P;
+    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = EMBEDDING_DIMENSION)
+    public Matrix Y;
 
     // ---------------------------------------------------
     // Public Methods.
@@ -48,42 +69,34 @@ public class TSNEJob extends MLProgram {
 
         }).process(() -> {
 
-            Matrix Xsquared = new MatrixBuilder().dimension(X.numRows(), Y.numCols()).build();
-            Vector sumX = Xsquared.aggregateRows(Vector::sum);
-            Matrix D = X.mul(X.transpose()).scale(-2).addVectorToRows(sumX).transpose().addVectorToRows(sumX);
+            P.assign(binarySearch(X, TOL, PERPLEXITY));
+            P.assign(P.add(P.transpose()));
 
-            P = binarySearch(X, TOL, PERPLEXITY);
-            P = P.add(P.transpose());
-
-            // ---------------------------------------------------
-            // (1) GLOBAL OPERATION!!!
-            // ---------------------------------------------------
+           // GLOBAL OPERATION !!!
             double sumP = P.aggregateRows(Vector::sum).sum();
 
-            P = P.scale(1 / sumP);
+            P.assign(P.scale(1 / sumP));
 
             // early exaggeration
-            P = P.scale(EARLY_EXAGGERATION);
+            P.assign(P.scale(EARLY_EXAGGERATION));
 
             final long n = Y.numRows();
             final long d = Y.numCols();
 
-            Matrix Q = new MatrixBuilder().dimension(n, n).build();
-            Matrix Y_squared = new MatrixBuilder().dimension(n, d).build();
-            Matrix gains = new MatrixBuilder().dimension(n, d).build();
-            Matrix iY = new MatrixBuilder().dimension(n, d).build();
-            Matrix dY = new MatrixBuilder().dimension(n, d).build();
-            Vector mean = new VectorBuilder().dimension(d).build();
+            final Matrix Q            = new MatrixBuilder().dimension(n, n).build();
+            final Matrix Y_squared    = new MatrixBuilder().dimension(n, d).build();
+            final Matrix gains        = new MatrixBuilder().dimension(n, d).build();
+            final Matrix iY           = new MatrixBuilder().dimension(n, d).build();
+            final Matrix dY           = new MatrixBuilder().dimension(n, d).build();
+            final Vector mean         = new VectorBuilder().dimension(d).build();
 
             gains.assign(1.0);
-            iY.assign(0.0);
 
             final MutableDouble momentum = new MutableDouble(0.0);
 
             CF.iterate()
-                    .sync(Iteration.GLOBAL | Iteration.LOCAL)
                     .exe(NUM_EPOCHS, (epoch) -> {
-                        // ! compare git diff
+
                         Y.applyOnElements(e -> Math.pow(e, 2), Y_squared);
                         final Vector sum_Y = Y_squared.aggregateRows(Vector::sum);
                         final Matrix num = Y.mul(Y.transpose())
@@ -172,65 +185,83 @@ public class TSNEJob extends MLProgram {
     // ---------------------------------------------------
 
     private Matrix binarySearch(Matrix X, Double tol, Double perplexity) {
+
         long n = X.numRows();
         long d = X.numCols();
-        Matrix Xsquared = new MatrixBuilder().dimension(n, d).build();
-        Matrix P = new MatrixBuilder().dimension(n, n).build();
-        Vector beta = new VectorBuilder().dimension(n).build();
-        P.assign(0.0);
-        beta.assign(1.0);
-        // compute the distances between all x_i
-        Xsquared = Xsquared.applyOnElements(e -> Math.pow(e, 2), X);
 
-        double logU = Math.log(perplexity);
+        final Matrix X_squared  = new MatrixBuilder().dimension(n, d).build();
+        final Matrix P_tmp      = new MatrixBuilder().dimension(n, n).build();
+        final Vector beta       = new VectorBuilder().dimension(n).build();
+
+        beta.assign(1.0);
+
+        // compute the distances between all x_i
+        X_squared.assign(X_squared.applyOnElements(e -> Math.pow(e, 2), X));
+
+        final Vector sumX = X_squared.aggregateRows(Vector::sum);
+        final Matrix D = X.mul(X.transpose()).scale(-2).addVectorToRows(sumX).transpose().addVectorToRows(sumX);
+
+        final double logU = Math.log(perplexity);
+
         for (long i=0; i < n; ++i) {
+
             double betaMin = Double.NEGATIVE_INFINITY;
             double betaMax = Double.POSITIVE_INFINITY;
-            Vector Di = D.rowAsVector(i);
-            Tuple2<Double, Vector> hBeta = HBeta(Di, beta.get(i), i);
+
+            final Vector Di = D.rowAsVector(i);
+
+            Tuple2<Double, Vector> hBeta = computeHBeta(Di, beta.get(i), i);
+
             double H = hBeta._1;
             Vector Pi = hBeta._2;
             // Evaluate whether the perplexity is within tolerance
+
             double HDiff = H - logU;
             int tries = 0;
-            while(Math.abs(HDiff) > tol && tries < 50){
+
+            while(Math.abs(HDiff) > tol && tries++ < 50){
+
                 if (HDiff > 0){
                     betaMin = beta.get(i);
                     if (Double.isInfinite(betaMax))
                         beta.set(i, beta.get(i) * 2);
                     else
                         beta.set(i, (beta.get(i) + betaMax) / 2);
-                } else{
+                } else {
                     betaMax = beta.get(i);
                     if (Double.isInfinite(betaMin))
                         beta.set(i, beta.get(i) / 2);
                     else
                         beta.set(i, (beta.get(i) + betaMin) / 2);
                 }
-                hBeta = HBeta(Di, beta.get(i), i);
+
+                hBeta = computeHBeta(Di, beta.get(i), i);
                 H = hBeta._1;
                 Pi = hBeta._2;
                 HDiff = H - logU;
-                tries = tries + 1;
             }
-            P.assignRow(i, Pi);
+
+            P_tmp.assignRow(i, Pi);
         }
-        return P;
+
+        return P_tmp;
     }
 
-    private Tuple2<Double, Vector> HBeta (Vector d, Double beta, Long index){
-        Vector P = new VectorBuilder().dimension(d.length()).build();
+    private Tuple2<Double, Vector> computeHBeta(Vector d, Double beta, Long index){
+        final Vector P = new VectorBuilder().dimension(d.length()).build();
         P.set(index, 0.0);
+
         // parExe over all elements i != j
-        for (long i=0; i < P.length(); ++i) {
-            if (i != index) {
+        for (long i=0; i < P.length(); ++i)
+            if (i != index)
                 P.set(i, Math.exp(-1 * d.get(i) * beta));
-            }
-        }
-        Vector PD = P.copy().applyOnElements(d, (e1, e2) -> e1 * e2);
-        double sumP = P.sum();
-        double H = Math.log(sumP) + beta * PD.sum() / sumP;
-        P = P.applyOnElements(e -> e / sumP);
+
+        final Vector PD = P.copy().applyOnElements(d, (e1, e2) -> e1 * e2);
+        final double sumP = P.sum();
+        final double H = Math.log(sumP) + beta * PD.sum() / sumP;
+
+        P.assign(P.applyOnElements(e -> e / sumP));
+
         return new Tuple2<>(H, P);
     }
 
@@ -259,5 +290,5 @@ public class TSNEJob extends MLProgram {
         } catch (Exception e) {
             LOG.error(e.getMessage());
         }
-    }*/
+    }
 }

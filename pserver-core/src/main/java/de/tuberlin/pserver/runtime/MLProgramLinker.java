@@ -3,7 +3,7 @@ package de.tuberlin.pserver.runtime;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.dsl.state.DeltaFilter;
-import de.tuberlin.pserver.dsl.state.DeltaMerger;
+import de.tuberlin.pserver.dsl.state.StateMerger;
 import de.tuberlin.pserver.dsl.state.SharedState;
 import de.tuberlin.pserver.dsl.state.StateDeclaration;
 import de.tuberlin.pserver.math.Format;
@@ -15,12 +15,12 @@ import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordFactory;
 import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
-import de.tuberlin.pserver.runtime.state.controller.MatrixDeltaRemoteUpdateController;
-import de.tuberlin.pserver.runtime.state.controller.MatrixRemoteUpdateController;
+import de.tuberlin.pserver.runtime.state.controller.MatrixDeltaMergeUpdateController;
+import de.tuberlin.pserver.runtime.state.controller.MatrixMergeUpdateController;
 import de.tuberlin.pserver.runtime.state.controller.RemoteUpdateController;
-import de.tuberlin.pserver.runtime.state.controller.VectorRemoteUpdateController;
+import de.tuberlin.pserver.runtime.state.controller.VectorMergeUpdateController;
 import de.tuberlin.pserver.runtime.state.filter.MatrixUpdateFilter;
-import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
+import de.tuberlin.pserver.runtime.state.merger.UpdateMerger;
 import de.tuberlin.pserver.types.DistributedMatrix;
 import de.tuberlin.pserver.types.PartitionType;
 import org.slf4j.Logger;
@@ -44,7 +44,7 @@ public final class MLProgramLinker {
 
     private final Class<? extends MLProgram> programClass;
 
-    private final List<StateDeclaration> stateDecls;
+    private List<StateDeclaration> stateDecls;
 
     private final DataManager dataManager;
 
@@ -58,7 +58,6 @@ public final class MLProgramLinker {
         this.programContext   = Preconditions.checkNotNull(programContext);
         this.programClass     = Preconditions.checkNotNull(programClass);
         this.dataManager      = programContext.runtimeContext.dataManager;
-        this.stateDecls       = new ArrayList<>();
     }
 
     // ---------------------------------------------------
@@ -68,6 +67,8 @@ public final class MLProgramLinker {
     public void link(final SlotContext slotContext, final MLProgram instance) throws Exception {
 
         slotContext.CF.select().slot(0).exe(() -> {
+
+            stateDecls = new ArrayList<>();
 
             final String slotIDStr = "[" + slotContext.programContext.runtimeContext.nodeID
                     + " | " + slotContext.slotID + "] ";
@@ -91,6 +92,8 @@ public final class MLProgramLinker {
                 programContext.put(stateDeclarationName(decl.name), decl);
             }
 
+            programContext.put(stateDeclarationListName(), stateDecls);
+
             Thread.sleep(5000); // TODO: Wait until all objects are placed in DHT and accessible...
 
             slotContext.programContext.programLoadBarrier.countDown();
@@ -100,15 +103,23 @@ public final class MLProgramLinker {
             LOG.info(slotIDStr + "Leave " + slotContext.programContext.simpleClassName
                     + " loading linking [duration: " + (end - start) + " ms].");
         });
+
+        slotContext.programContext.programLoadBarrier.await();
     }
 
     public void fetchStateObjects(final MLProgram program) throws Exception {
+
+        stateDecls = programContext.get(stateDeclarationListName());
 
         for (final StateDeclaration decl : stateDecls) {
 
             final Field f = programClass.getDeclaredField(decl.name);
 
-            f.set(program, dataManager.getObject(decl.name));
+            final Object stateObj = dataManager.getObject(decl.name);
+
+            Preconditions.checkState(stateObj != null);
+
+            f.set(program, stateObj);
         }
     }
 
@@ -149,7 +160,7 @@ public final class MLProgramLinker {
                     while (st.hasMoreTokens()) {
                         final String stateObjName = st.nextToken().replaceAll("\\s+","");
                         final RemoteUpdateController remoteUpdateController =
-                                (RemoteUpdateController)programContext.get(remoteUpdateControllerName(stateObjName));
+                                programContext.get(remoteUpdateControllerName(stateObjName));
                         if (remoteUpdateController == null)
                             throw new IllegalStateException();
                         final MatrixUpdateFilter filter = (MatrixUpdateFilter)field.get(instance);
@@ -163,16 +174,16 @@ public final class MLProgramLinker {
     private void analyzeAndWireDeltaMergerAnnotations(final MLProgram instance) throws Exception {
         for (final Field field : Preconditions.checkNotNull(programClass).getDeclaredFields()) {
             for (final Annotation an : field.getDeclaredAnnotations()) {
-                if (an instanceof DeltaMerger) {
-                    final DeltaMerger mergerProperties = (DeltaMerger) an;
+                if (an instanceof StateMerger) {
+                    final StateMerger mergerProperties = (StateMerger) an;
                     StringTokenizer st = new StringTokenizer(mergerProperties.stateObjects(), ",");
                     while (st.hasMoreTokens()) {
                         final String stateObjName = st.nextToken().replaceAll("\\s+", "");
                         final RemoteUpdateController remoteUpdateController =
-                                (RemoteUpdateController)programContext.get(remoteUpdateControllerName(stateObjName));
+                                programContext.get(remoteUpdateControllerName(stateObjName));
                         if (remoteUpdateController == null)
                             throw new IllegalStateException();
-                        final MatrixUpdateMerger merger = (MatrixUpdateMerger) field.get(instance);
+                        final UpdateMerger merger = (UpdateMerger) field.get(instance);
                         remoteUpdateController.setUpdateMerger(merger);
                     }
                 }
@@ -198,11 +209,11 @@ public final class MLProgramLinker {
                                 case NO_UPDATE: break;
                                 case SIMPLE_MERGE_UPDATE:
                                         programContext.put(remoteUpdateControllerName(decl.name),
-                                                new MatrixRemoteUpdateController(slotContext, decl.name, (Matrix)so));
+                                                new MatrixMergeUpdateController(slotContext, decl.name, (Matrix)so));
                                     break;
                                 case DELTA_MERGE_UPDATE:
                                         programContext.put(remoteUpdateControllerName(decl.name),
-                                                new MatrixDeltaRemoteUpdateController(slotContext, decl.name, (Matrix)so));
+                                                new MatrixDeltaMergeUpdateController(slotContext, decl.name, (Matrix)so));
                                     break;
                             }
 
@@ -281,7 +292,7 @@ public final class MLProgramLinker {
                             case NO_UPDATE: break;
                             case SIMPLE_MERGE_UPDATE:
                                 programContext.put(remoteUpdateControllerName(decl.name),
-                                        new VectorRemoteUpdateController(slotContext, decl.name, (Vector)so));
+                                        new VectorMergeUpdateController(slotContext, decl.name, (Vector)so));
                                 break;
                             case DELTA_MERGE_UPDATE:
                                 throw new UnsupportedOperationException();
@@ -300,6 +311,8 @@ public final class MLProgramLinker {
     // ---------------------------------------------------
     // Utility Methods.
     // ---------------------------------------------------
+
+    public static String stateDeclarationListName() { return "__state_declarations__"; }
 
     public static String stateDeclarationName(final String name) { return "__state_declaration_" + name; }
 

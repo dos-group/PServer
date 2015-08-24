@@ -12,7 +12,7 @@ import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MatrixRemoteUpdateController extends RemoteUpdateController {
+public class MatrixMergeUpdateController extends RemoteUpdateController {
 
     // ---------------------------------------------------
     // Fields.
@@ -26,9 +26,9 @@ public class MatrixRemoteUpdateController extends RemoteUpdateController {
     // Constructors.
     // ---------------------------------------------------
 
-    public MatrixRemoteUpdateController(final SlotContext slotContext,
-                                        final String stateName,
-                                        final Matrix matrix) {
+    public MatrixMergeUpdateController(final SlotContext slotContext,
+                                       final String stateName,
+                                       final Matrix matrix) {
         super(slotContext, stateName);
 
         this.stateMatrix = Preconditions.checkNotNull(matrix);
