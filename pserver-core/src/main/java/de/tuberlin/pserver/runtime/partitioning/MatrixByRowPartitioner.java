@@ -34,17 +34,10 @@ public class MatrixByRowPartitioner implements IMatrixPartitioner {
 
     @Override
     public int getPartitionOfEntry(final MatrixEntry entry) {
-        final long pos = entry.getRow() * cols + entry.getCol();
-        final long o = (int)((rows / numNodes) * cols);
-        int partition = 0;
-        for (int p = 0; p < numNodes; ++p) {
-            final long n = ((p == numNodes - 1)
-                    ? ((rows / numNodes) + rows % numNodes)
-                    : (rows / numNodes)) * cols;
-            if (pos >= p * o && pos < p * o + n) {
-                partition = p;
-                break;
-            }
+        double numOfRowsPerInstance = (double) rows / numNodes;
+        int partition = (int) (entry.getRow() / numOfRowsPerInstance);
+        if(partition >= numNodes) {
+            throw new IllegalStateException("The calculated partition id (row = "+entry.getRow()+", rows = "+rows+", numNodes = "+numNodes+") -> " + partition + " must not exceed numNodes.");
         }
         return partition;
     }
