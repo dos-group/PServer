@@ -1,9 +1,10 @@
-package de.tuberlin.pserver.runtime.filesystem.record;
+package de.tuberlin.pserver.runtime.filesystem.record.config;
 
+import de.tuberlin.pserver.runtime.filesystem.record.IRecordFactory;
 import org.apache.commons.csv.CSVFormat;
 
 
-public class RecordFormat {
+public class AbstractRecordFormatConfig {
 
     // ---------------------------------------------------
     // Constants.
@@ -14,7 +15,7 @@ public class RecordFormat {
     // null value here means: do not project, take it all
     public static final int[] DEFAULT_PROJECTION       = null;
 
-    public static final RecordFormat DEFAULT = new RecordFormat(DEFAULT_PROJECTION, DEFAULT_DELIMITER, DEFAULT_RECORD_SEPARATOR);
+    public static final AbstractRecordFormatConfig DEFAULT = new AbstractRecordFormatConfig(DEFAULT_PROJECTION, DEFAULT_DELIMITER, DEFAULT_RECORD_SEPARATOR);
 
     // ---------------------------------------------------
     // Fields.
@@ -30,13 +31,13 @@ public class RecordFormat {
     // Constructor.
     // ---------------------------------------------------
 
-    public RecordFormat(int[] projection, char delimiter, char recordSeparator, IRecordFactory recordFactory) {
+    public AbstractRecordFormatConfig(int[] projection, char delimiter, char recordSeparator, IRecordFactory recordFactory) {
         this.projection = projection;
         this.csvFormat = CSVFormat.DEFAULT.withDelimiter(delimiter).withRecordSeparator(recordSeparator);
         this.recordFactory = recordFactory;
     }
 
-    public RecordFormat(int[] projection, char delimiter, char recordSeparator) {
+    public AbstractRecordFormatConfig(int[] projection, char delimiter, char recordSeparator) {
         this(projection, delimiter, recordSeparator, IRecordFactory.ROW_RECORD);
     }
 
@@ -44,23 +45,23 @@ public class RecordFormat {
     // Public Methods.
     // ---------------------------------------------------
 
-    public RecordFormat(int[] projection, char delimiter) {
+    public AbstractRecordFormatConfig(int[] projection, char delimiter) {
         this(projection, delimiter, DEFAULT_RECORD_SEPARATOR);
     }
 
-    public RecordFormat(char delimiter) {
+    public AbstractRecordFormatConfig(char delimiter) {
         this(DEFAULT_PROJECTION, delimiter, DEFAULT_RECORD_SEPARATOR);
     }
 
-    public RecordFormat(int[] projection) {
+    public AbstractRecordFormatConfig(int[] projection) {
         this(projection, DEFAULT_DELIMITER, DEFAULT_RECORD_SEPARATOR);
     }
 
-    public RecordFormat() {
+    public AbstractRecordFormatConfig() {
         this(DEFAULT_PROJECTION, DEFAULT_DELIMITER, DEFAULT_RECORD_SEPARATOR);
     }
 
-    public RecordFormat setRecordFactory(IRecordFactory recordFactory) {
+    public AbstractRecordFormatConfig setRecordFactory(IRecordFactory recordFactory) {
         this.recordFactory = recordFactory;
         return this;
     }

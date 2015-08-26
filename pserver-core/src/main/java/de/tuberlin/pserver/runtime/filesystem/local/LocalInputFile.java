@@ -5,7 +5,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSection;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
+import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
 import de.tuberlin.pserver.types.PartitionType;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -24,7 +24,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
     private final String filePath;
 
-    private final RecordFormat format;
+    private final AbstractRecordFormatConfig format;
 
     private final FileSection fileSection;
 
@@ -35,7 +35,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
     // ---------------------------------------------------
 
     public LocalInputFile(final String filePath,
-                          final RecordFormat format,
+                          final AbstractRecordFormatConfig format,
                           final PartitionType partitionType) {
 
         this.filePath       = Preconditions.checkNotNull(filePath);

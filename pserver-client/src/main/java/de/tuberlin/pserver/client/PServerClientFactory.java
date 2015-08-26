@@ -81,6 +81,12 @@ public enum PServerClientFactory {
         this.userCodeManager.addStandardDependency("io/netty");
         this.userCodeManager.addStandardDependency("de/tuberlin/aura/core");*/
 
+        try {
+            Thread.sleep(30000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         LOG.info("PServer Client Startup: " + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms");
     }
 
