@@ -58,9 +58,9 @@ public abstract class AbstractMatrix implements Matrix {
 
     @Override  public Object getOwner() { return owner; }
 
-    @Override  public long numRows() { return rows; }
+    @Override  public long rows() { return rows; }
 
-    @Override  public long numCols() { return cols; }
+    @Override  public long cols() { return cols; }
 
     @Override  public Layout getLayout() { return layout; }
 
@@ -79,8 +79,8 @@ public abstract class AbstractMatrix implements Matrix {
     public Vector aggregateRows(final VectorFunction f) {
         // TODO: we do not create new Vectors/Matrices in our API.
         // TODO: Especially not of DVector inside of AbstractMatrix.
-        Vector r = new DVector(numRows());
-        long n = numRows();
+        Vector r = new DVector(rows());
+        long n = rows();
         for (int row = 0; row < n; row++) {
             r.set(row, f.apply(rowAsVector(row)));
         }
@@ -123,14 +123,14 @@ public abstract class AbstractMatrix implements Matrix {
 
     @Override
     public Matrix mul(Matrix B) {
-        return mul(B, newInstance(this.rows, B.numCols()));
+        return mul(B, newInstance(this.rows, B.cols()));
     }
 
     @Override
     public Matrix mul(Matrix B, Matrix C) {
         Utils.checkShapeMatrixMatrixMult(this, B, C);
-        for (int row = 0; row < C.numRows(); row++) {
-            for (int col = 0; col < C.numCols(); col++) {
+        for (int row = 0; row < C.rows(); row++) {
+            for (int col = 0; col < C.cols(); col++) {
                 C.set(row, col, this.rowAsVector(row).dot(B.colAsVector(col)));
             }
         }
@@ -192,8 +192,8 @@ public abstract class AbstractMatrix implements Matrix {
     @Override
     public Matrix applyOnElements(final DoubleUnaryOperator f, final Matrix B) {
         Utils.checkShapeEqual(this, B);
-        for (int i = 0; i < B.numRows(); ++i) {
-            for (int j = 0; j < B.numCols(); ++j) {
+        for (int i = 0; i < B.rows(); ++i) {
+            for (int j = 0; j < B.cols(); ++j) {
                 B.set(i, j, f.applyAsDouble(this.get(i, j)));
             }
         }
@@ -208,8 +208,8 @@ public abstract class AbstractMatrix implements Matrix {
     @Override
     public Matrix applyOnElements(Matrix B, DoubleBinaryOperator f, Matrix C) {
         Utils.checkShapeEqual(this, B, C);
-        for (int i = 0; i < numRows(); ++i) {
-            for (int j = 0; j < numCols(); ++j) {
+        for (int i = 0; i < rows(); ++i) {
+            for (int j = 0; j < cols(); ++j) {
                 C.set(i, j, f.applyAsDouble(this.get(i, j), B.get(i, j)));
             }
         }
@@ -224,8 +224,8 @@ public abstract class AbstractMatrix implements Matrix {
     @Override
     public Matrix applyOnElements(final MatrixElementUnaryOperator f, final Matrix B) {
         Utils.checkShapeEqual(this, B);
-        for (int i = 0; i < B.numRows(); ++i) {
-            for (int j = 0; j < B.numCols(); ++j) {
+        for (int i = 0; i < B.rows(); ++i) {
+            for (int j = 0; j < B.cols(); ++j) {
                 B.set(i, j, f.apply(i, j, this.get(i, j)));
             }
         }
@@ -287,8 +287,8 @@ public abstract class AbstractMatrix implements Matrix {
     @Override
     public Matrix applyOnNonZeroElements(MatrixElementUnaryOperator f, Matrix B) {
         Utils.checkShapeEqual(this, B);
-        for (int row = 0; row < numRows(); ++row) {
-            for (int col = 0; col < numCols(); ++col) {
+        for (int row = 0; row < rows(); ++row) {
+            for (int col = 0; col < cols(); ++col) {
                 double oldVal = get(row, col);
                 if(oldVal != 0.0) {
                     double newVal = f.apply(row, col, oldVal);
@@ -319,38 +319,38 @@ public abstract class AbstractMatrix implements Matrix {
 
         protected Random rand = new Random();
 
-        public AbstractRowIterator(final AbstractMatrix mat) { this(mat, 0, Utils.toInt(Preconditions.checkNotNull(mat).numRows()) - 1); }
+        public AbstractRowIterator(final AbstractMatrix mat) { this(mat, 0, Utils.toInt(Preconditions.checkNotNull(mat).rows()) - 1); }
         public AbstractRowIterator(final AbstractMatrix mat, final int startRow, final int endRow) {
             this.target = mat;
-            Preconditions.checkArgument(startRow >= 0 && startRow < target.numRows());
-            Preconditions.checkArgument(endRow > startRow && endRow < target.numRows());
+            Preconditions.checkArgument(startRow >= 0 && startRow < target.rows());
+            Preconditions.checkArgument(endRow > startRow && endRow < target.rows());
             this.startRow = startRow;
             this.endRow = endRow;
             reset();
         }
 
         @Override
-        public boolean hasNextRow() {
+        public boolean hasNext() {
             return numFetched < (endRow - startRow + 1);
         }
 
         @Override
-        public void nextRow() {
+        public void next() {
             numFetched++;
             currentRow++;
         }
 
         @Override
-        public void nextRandomRow() {
+        public void nextRandom() {
             numFetched++;
             currentRow = startRow + rand.nextInt(endRow + 1);
         }
 
         @Override
-        public double getValueOfColumn(final int col) { return target.get(currentRow, col); }
+        public double value(final long col) { return target.get(currentRow, col); }
 
         protected Vector getAsVector(int from, int size, Vector result) {
-            Preconditions.checkArgument(from + size <= target.numCols());
+            Preconditions.checkArgument(from + size <= target.cols());
             Preconditions.checkArgument(result.length() == size);
             for(int i = from; i - from < size; i++) {
                 result.set(i, target.get(currentRow, i));
@@ -359,10 +359,10 @@ public abstract class AbstractMatrix implements Matrix {
         }
 
         @Override
-        public abstract Vector getAsVector();
+        public abstract Vector asVector();
 
         @Override
-        public abstract Vector getAsVector(int from, int size);
+        public abstract Vector asVector(int from, int size);
 
         @Override
         public void reset() {
@@ -371,12 +371,12 @@ public abstract class AbstractMatrix implements Matrix {
         }
 
         @Override
-        public long numRows() { return target.rows; }
+        public long rows() { return target.rows; }
 
         @Override
-        public long numCols() { return target.cols; }
+        public long cols() { return target.cols; }
 
         @Override
-        public int getCurrentRowNum() { return currentRow; }
+        public int rowNum() { return currentRow; }
     }
 }

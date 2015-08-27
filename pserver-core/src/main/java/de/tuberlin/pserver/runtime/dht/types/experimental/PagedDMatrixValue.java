@@ -26,11 +26,11 @@ public class PagedDMatrixValue {/*extends AbstractBufferValue implements DMatrix
 
         // ---------------------------------------------------
 
-        public RowIterator(final PagedDMatrixValue v) { this(v, 0, (int)Preconditions.checkNotNull(v).numRows()); }
+        public RowIterator(final PagedDMatrixValue v) { this(v, 0, (int)Preconditions.checkNotNull(v).rows()); }
         public RowIterator(final PagedDMatrixValue v, final int startRow, final int endRow) {
 
             this.self = Preconditions.checkNotNull(v);
-            Preconditions.checkArgument(startRow >= 0 && startRow < self.numRows());
+            Preconditions.checkArgument(startRow >= 0 && startRow < self.rows());
 
             this.startRow       = startRow;
             this.end            = endRow * self.cols;
@@ -44,10 +44,10 @@ public class PagedDMatrixValue {/*extends AbstractBufferValue implements DMatrix
         // ---------------------------------------------------
 
         @Override
-        public boolean hasNextRow() { return globalRowIndex < end; }
+        public boolean hasNext() { return globalRowIndex < end; }
 
         @Override
-        public void nextRow() {
+        public void next() {
             globalRowIndex += self.cols;
             localIndex  += self.cols;
             if (localIndex >= currentSegment.length)
@@ -55,7 +55,7 @@ public class PagedDMatrixValue {/*extends AbstractBufferValue implements DMatrix
         }
 
         @Override
-        public double getValueOfColumn(final int col) {
+        public double value(final int col) {
             if (localIndex + col >= currentSegment.length)
                 return nextSegment[(localIndex + col) - currentSegment.length];
             else
@@ -81,10 +81,10 @@ public class PagedDMatrixValue {/*extends AbstractBufferValue implements DMatrix
         }
 
         @Override
-        public long numRows() { return self.rows; }
+        public long rows() { return self.rows; }
 
         @Override
-        public long numCols() { return self.cols; }
+        public long cols() { return self.cols; }
 
         // ---------------------------------------------------
 
@@ -169,10 +169,10 @@ public class PagedDMatrixValue {/*extends AbstractBufferValue implements DMatrix
     }
 
     @Override
-    public long numRows() { return rows; }
+    public long rows() { return rows; }
 
     @Override
-    public long numCols() { return cols; }
+    public long cols() { return cols; }
 
     @Override
     public DMatrix.RowIterator rowIterator(final int startRow, final int endRow) { return new RowIterator(this, startRow, endRow); }

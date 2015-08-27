@@ -78,12 +78,19 @@ public final class InfrastructureManager extends EventDispatcher {
     public int getMachineIndex(final MachineDescriptor machine) { return machines.indexOf(Preconditions.checkNotNull(machine)); }
 
     public MachineDescriptor getMachine(final int machineIndex) {
-
         if (machineIndex >= machines.size())
             return null;
-
-
         return machines.get(machineIndex);
+    }
+
+    public int getNumOfNodesFromZookeeper() {
+        String numNodesStr = null;
+        try {
+            numNodesStr = (String)zookeeper.read("/numnodes");
+        } catch (Exception e) {
+            //throw new IllegalStateException(e);
+        }
+        return (numNodesStr == null) ? -1 : Integer.parseInt(numNodesStr);
     }
 
     // ---------------------------------------------------

@@ -10,46 +10,11 @@ import de.tuberlin.pserver.math.vector.AbstractVector;
 import de.tuberlin.pserver.math.vector.Vector;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
 
 public class DVector extends AbstractVector {
-
-    // ---------------------------------------------------
-    // Inner Classes.
-    // ---------------------------------------------------
-
-    private final class DVectorElementIterator implements ElementIterator {
-
-        private final DVector self;
-
-        private final int end;
-
-        private final int start;
-
-        private int index;
-
-        public DVectorElementIterator(final DVector self, final int start, final int end) {
-            this.self  = Preconditions.checkNotNull(self);
-            this.start = start;
-            this.end   = end;
-            this.index = start - 1;
-        }
-
-        @Override public boolean hasNextElement() { return index < end; }
-
-        @Override public void nextElement() { ++index; }
-
-        @Override public void nextRandomElement() { throw new UnsupportedOperationException(); }
-
-        @Override public double value() { return self.data[index]; }
-
-        @Override public void reset() { index = start - 1; }
-
-        @Override public long length() { return self.length(); }
-
-        @Override public int getCurrentElementNum() { return index; }
-    }
 
     // ---------------------------------------------------
     // Fields.
@@ -163,10 +128,6 @@ public class DVector extends AbstractVector {
 
     @Override public double get(long index) { return data[(int)index]; }
 
-    @Override public double atomicGet(final long index) { throw new UnsupportedOperationException(); }
-
-    @Override public void atomicSet(final long index, final double value) { throw new UnsupportedOperationException(); }
-
     @Override public double[] toArray() { return data; }
 
     @Override public void setArray(final double[] data) { this.data = Preconditions.checkNotNull(data); }
@@ -195,19 +156,13 @@ public class DVector extends AbstractVector {
     }
 
     @Override
-    public ElementIterator nonZeroElementIterator() {
-        return null;
-    }
+    public ElementIterator nonZeroElementIterator() { return new DVectorElementIterator(this, 0, data.length - 1, true); }
 
     @Override
-    public ElementIterator elementIterator() {
-        return new DVectorElementIterator(this, 0, data.length - 1);
-    }
+    public ElementIterator elementIterator() { return new DVectorElementIterator(this, 0, data.length - 1, false); }
 
     @Override
-    public ElementIterator elementIterator(int start, int end) {
-        return new DVectorElementIterator(this, start, end);
-    }
+    public ElementIterator elementIterator(int start, int end) { return new DVectorElementIterator(this, start, end, false); }
 
     @Override
     public double aggregate(final DoubleBinaryOperator aggregator, final DoubleUnaryOperator map) {
@@ -219,25 +174,83 @@ public class DVector extends AbstractVector {
     }
 
     @Override
-    public Vector copy() {
-        return new DVector(this);
+    public Vector copy() { return new DVector(this); }
+
+    @Override
+    public Vector concat(final Vector v) {
+        Preconditions.checkState(v instanceof DVector && v.layout() == layout());
+        final double[] newData = new double[data.length + v.toArray().length];
+        System.arraycopy(data, 0, newData, 0, data.length);
+        System.arraycopy(v.toArray(), 0, newData, data.length, v.toArray().length);
+        return new DVector(data.length + v.toArray().length, newData, layout());
     }
 
     @Override
-    public Vector viewPart(final long s, final long e) {
-        throw new UnsupportedOperationException();
+    public Vector concat(final List<Vector> vList) {
+        final long length = vList.stream()
+                .map(v -> {
+                    Preconditions.checkState(v instanceof DVector && v.layout() == layout());
+                    return v.length();
+                }).mapToLong(Long::longValue).sum();
+
+        final double[] newData = new double[(int)length];
+        int offset = 0;
+        for (int i = 0; i < vList.size(); ++i) {
+            final Vector v = vList.get(0);
+            System.arraycopy(v.toArray(), 0, newData, offset, v.toArray().length);
+            offset += v.length();
+        }
+        return new DVector(length, newData, layout());
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("[");
-        for (int i = 0; i < data.length; i++)
-            sb.append(data[i]).append(",");
+        for (double aData : data) sb.append(aData).append(",");
         sb.deleteCharAt(sb.length() - 1);
         sb.append("]");
         if (type == Layout.COLUMN_LAYOUT)
             sb.append("^T");
         return sb.toString();
+    }
+
+    // ---------------------------------------------------
+    // Inner Classes.
+    // ---------------------------------------------------
+
+    private final class DVectorElementIterator implements ElementIterator {
+
+        private final DVector self;
+
+        private final int end;
+
+        private final int start;
+
+        private final boolean nonZero;
+
+        private int index;
+
+        public DVectorElementIterator(final DVector self, final int start, final int end, final boolean nonZero) {
+            this.self    = Preconditions.checkNotNull(self);
+            this.start   = start;
+            this.end     = end;
+            this.nonZero = nonZero;
+            this.index   = start - 1;
+        }
+
+        @Override public boolean hasNextElement() { return index < end; }
+
+        @Override public void nextElement() { if (nonZero) while(self.data[++index] == 0.0) {} else ++index; }
+
+        @Override public void nextRandomElement() { throw new UnsupportedOperationException(); }
+
+        @Override public double value() { return self.data[index]; }
+
+        @Override public void reset() { index = start - 1; }
+
+        @Override public long length() { return self.length(); }
+
+        @Override public int getCurrentElementNum() { return index; }
     }
 }

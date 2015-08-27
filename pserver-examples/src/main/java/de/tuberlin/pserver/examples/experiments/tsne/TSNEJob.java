@@ -80,8 +80,8 @@ public class TSNEJob extends MLProgram {
             // early exaggeration
             P.assign(P.scale(EARLY_EXAGGERATION));
 
-            final long n = Y.numRows();
-            final long d = Y.numCols();
+            final long n = Y.rows();
+            final long d = Y.cols();
 
             final Matrix Q            = new MatrixBuilder().dimension(n, n).build();
             final Matrix Y_squared    = new MatrixBuilder().dimension(n, d).build();
@@ -118,10 +118,10 @@ public class TSNEJob extends MLProgram {
                         final Matrix PQ = P.copy().sub(Q);
 
                         CF.iterate()
-                                .exe(P.numRows(), (i) -> {
+                                .exe(P.rows(), (i) -> {
                                     final Vector sumVec = new VectorBuilder().dimension(d).build();
                                     CF.iterate()
-                                            .exe(P.numCols(), (j) -> {
+                                            .exe(P.cols(), (j) -> {
                                                 final Double pq = PQ.get(i, j);
                                                 final Double num_j = num.get(i, j);
                                                 sumVec.assign(
@@ -154,15 +154,15 @@ public class TSNEJob extends MLProgram {
 
                         Y.assign(Y.add(iY));
                         mean.assign(0.0);
-                        for (int i = 0; i < Y.numRows(); ++i)
+                        for (int i = 0; i < Y.rows(); ++i)
                             mean.add(Y.rowAsVector(i));
-                        mean.assign(mean.div(Y.numRows()));
+                        mean.assign(mean.div(Y.rows()));
                         Y.assign(Y.addVectorToRows(mean.mul(-1.0)));
 
                         if ((epoch + 1) % 10 == 0) {
                             double C = 0.0;
-                            for (int i = 0; i < P.numRows(); ++i) {
-                                for (int j = 0; j < P.numCols(); ++j) {
+                            for (int i = 0; i < P.rows(); ++i) {
+                                for (int j = 0; j < P.cols(); ++j) {
                                     if (i != j) {
                                         C += P.get(i, j) * Math.log(P.get(i, j) / Q.get(i, j));
                                     }
@@ -186,8 +186,8 @@ public class TSNEJob extends MLProgram {
 
     private Matrix binarySearch(Matrix X, Double tol, Double perplexity) {
 
-        long n = X.numRows();
-        long d = X.numCols();
+        long n = X.rows();
+        long d = X.cols();
 
         final Matrix X_squared  = new MatrixBuilder().dimension(n, d).build();
         final Matrix P_tmp      = new MatrixBuilder().dimension(n, n).build();
@@ -281,8 +281,8 @@ public class TSNEJob extends MLProgram {
         try (PrintWriter writer = new PrintWriter("datasets/pserver_mnist.csv", "UTF-8")) {
 
             Matrix R = (Matrix) res.get(0).get(0);
-            for (int i = 0; i < R.numRows(); ++i) {
-                for (int j = 0; j < R.numCols(); ++j) {
+            for (int i = 0; i < R.rows(); ++i) {
+                for (int j = 0; j < R.cols(); ++j) {
                     writer.println(i + "," + j + "," + R.get(i, j));
                 }
             }

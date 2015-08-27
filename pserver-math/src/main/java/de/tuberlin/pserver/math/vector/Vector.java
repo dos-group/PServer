@@ -6,6 +6,7 @@ import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.exceptions.IncompatibleShapeException;
 import de.tuberlin.pserver.math.operations.ApplyOnDoubleElements;
 
+import java.util.List;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
 
@@ -42,13 +43,55 @@ public interface Vector extends SharedObject, ApplyOnDoubleElements<Vector> {
 
     public Layout layout();
 
+    // ---------------------------------------------------
+
     public void set(final long index, final double value);
 
     public double get(final long index);
 
-    public double atomicGet(final long index);
+    // ---------------------------------------------------
 
-    public void atomicSet(final long index, final double value);
+    public Vector assign(final Vector v);
+
+    public Vector assign(final double v);
+
+    // ---------------------------------------------------
+
+    public Vector like();
+
+    // ---------------------------------------------------
+
+    public Vector copy();
+
+    // ---------------------------------------------------
+
+    public Vector concat(final Vector v);
+
+    public Vector concat(final List<Vector> vList);
+
+    // ---------------------------------------------------
+
+    public ElementIterator nonZeroElementIterator();
+
+    public ElementIterator elementIterator();
+
+    public ElementIterator elementIterator(final int start, final int end);
+
+    // ---------------------------------------------------
+
+    public double aggregate(DoubleBinaryOperator aggregator, DoubleUnaryOperator map);
+
+    // ---------------------------------------------------
+
+    public double sum();
+
+    public double norm(final double v);
+
+    public double maxValue();
+
+    public double minValue();
+
+    // ---------------------------------------------------
 
     /**
      * Identical to {@link #mul(double, Vector)} but automatically creates the resulting <code>vector y</code>.
@@ -123,36 +166,11 @@ public interface Vector extends SharedObject, ApplyOnDoubleElements<Vector> {
      */
     public Vector add(final double alpha, final Vector y, Vector z);
 
-    public Vector assign(final Vector v);
-
-    public Vector assign(final double v);
-
-    public Vector viewPart(final long s, final long e);
-
-    public Vector like();
-
-    public Vector copy();
-
-    public ElementIterator nonZeroElementIterator();
-
-    public ElementIterator elementIterator();
-
-    public ElementIterator elementIterator(final int start, final int end);
-
-    public double aggregate(DoubleBinaryOperator aggregator, DoubleUnaryOperator map);
 
     /**
      * Called on vector x. Computes the dot product of x and y.
      * @param y
      * @return dot product of x and y
      */
-    public double dot(final Vector y);                       // x = x^T * y
-
-    public double sum();
-
-    public double norm(final double v);
-
-    public double maxValue();
-
-    public double minValue();
+    public double dot(final Vector y);
 }

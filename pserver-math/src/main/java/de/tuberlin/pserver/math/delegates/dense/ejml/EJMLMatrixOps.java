@@ -77,6 +77,6 @@ public final class EJMLMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
     // ---------------------------------------------------
 
     private static DenseMatrix64F convertDMatrixToDenseMatrix64F(final Matrix matrix) {
-        return DenseMatrix64F.wrap((int)matrix.numRows(), (int)matrix.numCols(), matrix.toArray());
+        return DenseMatrix64F.wrap((int)matrix.rows(), (int)matrix.cols(), matrix.toArray());
     }
 }

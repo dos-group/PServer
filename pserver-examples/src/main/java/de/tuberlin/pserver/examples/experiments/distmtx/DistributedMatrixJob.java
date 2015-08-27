@@ -21,21 +21,21 @@ public class DistributedMatrixJob extends MLProgram {
         program.process(() -> {
 
             CF.iterate().exe(X, (i, iter) -> {
-                X.set(iter.getCurrentRowNum(), 0, slotContext.programContext.runtimeContext.nodeID + 1);
+                X.set(iter.rowNum(), 0, slotContext.programContext.runtimeContext.nodeID + 1);
             });
 
             X.collectRemotePartitions();
 
             CF.select().node(1).exe(() -> {
-                for (int i = 0; i < X.numRows(); ++i)
+                for (int i = 0; i < X.rows(); ++i)
                     System.out.println(X.get(i, 0));
             });
 
             /*final Matrix.RowIterator iter = X.rowIterator();
-            while (iter.hasNextRow()) {
-                iter.nextRow();
-                System.out.println(slotContext.programContext.runtimeContext.nodeID + " -> " + iter.getCurrentRowNum());
-                X.set(iter.getCurrentRowNum(), 0, slotContext.programContext.runtimeContext.nodeID * 10);
+            while (iter.hasNext()) {
+                iter.next();
+                System.out.println(slotContext.programContext.runtimeContext.nodeID + " -> " + iter.rowNum());
+                X.set(iter.rowNum(), 0, slotContext.programContext.runtimeContext.nodeID * 10);
             }
 
             double s = X.aggregateRows(Vector::sum).sum();

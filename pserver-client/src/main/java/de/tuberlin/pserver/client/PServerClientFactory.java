@@ -14,9 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public enum PServerClientFactory {
 
@@ -42,8 +41,6 @@ public enum PServerClientFactory {
 
     public final UserCodeManager userCodeManager;
 
-    public final List<MachineDescriptor> workers;
-
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
@@ -58,29 +55,29 @@ public enum PServerClientFactory {
 
         this.config         = Preconditions.checkNotNull(config);
         this.machine        = configureMachine();
-        this.workers        = new ArrayList<>();
         this.infraManager   = new InfrastructureManager(machine, config);
         this.netManager     = new NetManager(machine, infraManager, 16);
 
-        try {
-            ZookeeperClient zookeeper = new ZookeeperClient(zookeeperServer);
-            final List<String> machineIDs = zookeeper.getChildrenForPath(ZookeeperClient.ZOOKEEPER_NODES);
-            for (final String machineID : machineIDs) {
-                final MachineDescriptor md = (MachineDescriptor) zookeeper.read(ZookeeperClient.ZOOKEEPER_NODES + "/" + machineID);
-                netManager.connectTo(md);
-                workers.add(md);
-            }
-            zookeeper.close();
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
+        final AtomicInteger detectedNodeNum = new AtomicInteger(0);
+        infraManager.addEventListener(ZookeeperClient.IM_EVENT_NODE_ADDED, event -> {
+            if (event.getPayload() instanceof MachineDescriptor) {
+                final MachineDescriptor md = (MachineDescriptor) event.getPayload();
+                if (!machine.machineID.equals(md.machineID)) {
+                    netManager.connectTo(md);
+                    detectedNodeNum.incrementAndGet();
+                }
+            } else
+                throw new IllegalStateException();
+        });
+
+        infraManager.start();
+
+        // Active waiting until all nodes are available!
+        while (infraManager.getNumOfNodesFromZookeeper() != detectedNodeNum.get()) {
+            try { Thread.sleep(1000); } catch(Exception e) { LOG.error(e.getMessage()); }
         }
 
         this.userCodeManager = new UserCodeManager(this.getClass().getClassLoader());
-        /*this.userCodeManager.addStandardDependency("java");
-        this.userCodeManager.addStandardDependency("org/apache/log4j");
-        this.userCodeManager.addStandardDependency("io/netty");
-        this.userCodeManager.addStandardDependency("de/tuberlin/aura/core");*/
-
         LOG.info("PServer Client Startup: " + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms");
     }
 

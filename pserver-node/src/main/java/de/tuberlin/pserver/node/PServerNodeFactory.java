@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public enum PServerNodeFactory {
 
@@ -61,6 +62,8 @@ public enum PServerNodeFactory {
 
     public final ExecutionManager executionManager;
 
+    private final AtomicInteger detectedNodeNum = new AtomicInteger(0);
+
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
@@ -79,9 +82,10 @@ public enum PServerNodeFactory {
 
         infraManager.addEventListener(ZookeeperClient.IM_EVENT_NODE_ADDED, event -> {
             if (event.getPayload() instanceof MachineDescriptor) {
-                final MachineDescriptor md = (MachineDescriptor)event.getPayload();
+                final MachineDescriptor md = (MachineDescriptor) event.getPayload();
                 if (!machine.machineID.equals(md.machineID)) {
                     netManager.connectTo(md);
+                    detectedNodeNum.incrementAndGet();
                 }
             } else
                 throw new IllegalStateException();
@@ -89,17 +93,15 @@ public enum PServerNodeFactory {
 
         infraManager.start();
 
-        try { Thread.sleep(2000); } catch (Exception e) { throw new IllegalStateException(); }
+        // Active waiting until all nodes are available!
+        while (infraManager.getNumOfNodesFromZookeeper() - 1 != detectedNodeNum.get()) {
+            try { Thread.sleep(1000); } catch(Exception e) { LOG.error(e.getMessage()); }
+        }
 
-        this.fileSystemManager = createFileSystem(infraManager.getNodeID());
-        this.dht = new DHTManager(this.config, infraManager, netManager);
-        this.executionManager = new ExecutionManager(Runtime.getRuntime().availableProcessors(), netManager);
-        this.dataManager = new DataManager(this.config, infraManager, netManager, executionManager, fileSystemManager, dht);
-
-        //LOG.info(infraManager.getMachine()
-        //        + " | " + infraManager.getNodeID()
-        //        + " | " + infraManager.getActivePeers().length()
-        //        + " | " + infraManager.getMachines().length());
+        this.fileSystemManager  = createFileSystem(infraManager.getNodeID());
+        this.dht                = new DHTManager(this.config, infraManager, netManager);
+        this.executionManager   = new ExecutionManager(Runtime.getRuntime().availableProcessors(), netManager);
+        this.dataManager        = new DataManager(this.config, infraManager, netManager, executionManager, fileSystemManager, dht);
 
         LOG.info("PServer Node Startup: " + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms");
     }

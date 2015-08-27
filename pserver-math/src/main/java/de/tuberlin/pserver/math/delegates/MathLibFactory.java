@@ -96,7 +96,7 @@ public class MathLibFactory {
     public static Object createSMatrixInternalObject(final SMathLibrary lib, final SMatrix matrix) {
         switch (Preconditions.checkNotNull(lib)) {
             case UJMP_LIBRARY:
-                return SparseMatrix.factory.zeros(matrix.numRows(), matrix.numCols());
+                return SparseMatrix.factory.zeros(matrix.rows(), matrix.cols());
         }
         throw new IllegalStateException();
     }

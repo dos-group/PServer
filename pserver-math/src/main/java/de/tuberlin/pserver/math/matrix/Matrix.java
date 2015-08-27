@@ -21,43 +21,26 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
 
     interface RowIterator { // ...for ROW_LAYOUT
 
-        boolean hasNextRow();
+        boolean hasNext();
 
-        void nextRow();
+        void next();
 
-        void nextRandomRow();
+        void nextRandom();
 
-        double getValueOfColumn(final int col);
+        double value(final long col);
 
-        Vector getAsVector();
+        Vector asVector();
 
-        Vector getAsVector(int from, int size);
+        Vector asVector(int from, int size);
 
         void reset();
 
-        long numRows();
+        long rows();
 
-        long numCols();
+        long cols();
 
-        int getCurrentRowNum();
+        int rowNum();
     }
-
-    // ---------------------------------------------------
-
-    /*interface ColumnIterator { // ...for COLUMN_LAYOUT
-
-        boolean hasNextColumn();
-
-        void nextColumn();
-
-        double getValueOfRow(final int row);
-
-        void reset();
-
-        long numRows();
-
-        long numCols();
-    }*/
 
     // ---------------------------------------------------
 
@@ -100,26 +83,32 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
     }
 
     // ---------------------------------------------------
-
-    void lock();
-
-    void unlock();
+    // Public Methods.
+    // ---------------------------------------------------
 
     Layout getLayout();
 
     // ---------------------------------------------------
 
-    long numRows();
+    void lock();
 
-    long numCols();
+    void unlock();
+
+    // ---------------------------------------------------
+
+    long rows();
+
+    long cols();
+
+    // ---------------------------------------------------
+
+    double get(final long index);
 
     double get(final long row, final long col);
 
     void set(final long row, final long col, final double value);
 
-    double atomicGet(final long row, final long col);
-
-    void atomicSet(final long row, final long col, final double value);
+    // ---------------------------------------------------
 
     RowIterator rowIterator();
 
@@ -130,6 +119,44 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
     double aggregate(final DoubleBinaryOperator combiner, final DoubleUnaryOperator mapper);
 
     Vector aggregateRows(final VectorFunction f);
+
+    // ---------------------------------------------------
+
+    Vector rowAsVector();
+
+    Vector rowAsVector(final long row);
+
+    Vector rowAsVector(final long row, final long from, final long to);
+
+    // ---------------------------------------------------
+
+    Vector colAsVector();
+
+    Vector colAsVector(final long col);
+
+    Vector colAsVector(final long col, final long from, final long to);
+
+    // ---------------------------------------------------
+
+    Matrix assign(final Matrix v);
+
+    Matrix assign(final double v);
+
+    Matrix assignRow(final long row, final Vector v);
+
+    Matrix assignColumn(final long col, final Vector v);
+
+    Matrix assign(final long row, final long col, final Matrix m);
+
+    // ---------------------------------------------------
+
+    Matrix subMatrix(final long row, final long col, final long rowSize, final long colSize);
+
+    // ---------------------------------------------------
+
+    Matrix copy();
+
+    // ---------------------------------------------------
 
     /**
      * Identical to {@link #add(Matrix, Matrix)} but automatically creates the resulting <code>Matrix C</code>.
@@ -175,7 +202,7 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
      * @param B Matrix to multiply with A. Of shape m x o
      * @param C Matrix to store the result in. Of shape n x o
      * @return C after computing C = A * B
-     * @throws IncompatibleShapeException If A.numCols() != B.numRows() or A.numRows() != C.numRows() or B.numCols() != C.numCols()
+     * @throws IncompatibleShapeException If A.cols() != B.rows() or A.rows() != C.rows() or B.cols() != C.cols()
      */
     Matrix mul(final Matrix B, final Matrix C);
 
@@ -186,7 +213,7 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
      * @param b Vector to multiply with A
      * @param c Vector to store the result in
      * @return c after computing c = A * b
-     * @throws IncompatibleShapeException If b.length() != A.numRows() or c.length() != A.numRows()
+     * @throws IncompatibleShapeException If b.length() != A.rows() or c.length() != A.rows()
      */
     Vector mul(final Vector b, final Vector c);
 
@@ -217,7 +244,7 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
      *
      * @param B to store the result in
      * @return B after computing B = A<sup>T</sup>
-     * @throws IncompatibleShapeException If A.numRows() != B.numCols() or A.numCols() != B.numRows()
+     * @throws IncompatibleShapeException If A.rows() != B.cols() or A.cols() != B.rows()
      */
     Matrix transpose(final Matrix B);
 
@@ -232,7 +259,7 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
      *
      * @param B to store the result in
      * @return B after computing B = A<sup>-1</sup>
-     * @throws IncompatibleShapeException If A.numRows() != B.numCols() or A.numCols() != B.numRows()
+     * @throws IncompatibleShapeException If A.rows() != B.cols() or A.cols() != B.rows()
      * @throws SingularMatrixException    If A is singular an its inverse can not be computed
      */
     Matrix invert(final Matrix B);
@@ -270,12 +297,12 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
 
     /**
      * Called on Matrix A. Computes b = a + v for each row-vector a and b in A and B respectively.
-     * <strong>Note: It has to hold that A.numCols() == v.length(). Also, A and B have to be of the same shape.</strong
+     * <strong>Note: It has to hold that A.cols() == v.length(). Also, A and B have to be of the same shape.</strong
      *
      * @param v Vector to add on each row-vector in A
      * @param B to store the result in
      * @return B after computing b = a + v for each row-vector a and b in A and B respectively.
-     * @throws IncompatibleShapeException If A.numCols() != v.length() or if A and B are of different shapes.
+     * @throws IncompatibleShapeException If A.cols() != v.length() or if A and B are of different shapes.
      */
     Matrix addVectorToRows(final Vector v, final Matrix B);
 
@@ -286,12 +313,12 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
 
     /**
      * Called on Matrix A. Computes b = a + v for each column-vector a and b in A and B respectively.
-     * <strong>Note: It has to hold that A.numRows() == v.length(). Also, A and B have to be of the same shape.</strong
+     * <strong>Note: It has to hold that A.rows() == v.length(). Also, A and B have to be of the same shape.</strong
      *
      * @param v Vector to add on each col-vector in A
      * @param B to store the result in
      * @return B after computing b = a + v for each column-vector a and b in A and B respectively.
-     * @throws IncompatibleShapeException If A.numRows() != v.length() or if A and B are of different shapes.
+     * @throws IncompatibleShapeException If A.rows() != v.length() or if A and B are of different shapes.
      */
     Matrix addVectorToCols(final Vector v, final Matrix B);
 
@@ -306,34 +333,4 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
      * @return B after setting B = A with diagonal entries equal to zero.
      */
     Matrix setDiagonalsToZero(Matrix B);
-
-    // ---------------------------------------------------
-
-    Vector rowAsVector();
-
-    Vector rowAsVector(final long row);
-
-    Vector rowAsVector(final long row, final long from, final long to);
-
-    Vector colAsVector();
-
-    Vector colAsVector(final long col);
-
-    Vector colAsVector(final long col, final long from, final long to);
-
-    Matrix assign(final Matrix v);
-
-    Matrix assign(final double v);
-
-    Matrix assignRow(final long row, final Vector v);
-
-    Matrix assignColumn(final long col, final Vector v);
-
-    Matrix copy();
-
-    // ---------------------------------------------------
-
-    Matrix subMatrix(final long row, final long col, final long rowSize, final long colSize);
-
-    Matrix assign(final long row, final long col, final Matrix m);
 }

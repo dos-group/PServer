@@ -63,7 +63,7 @@ public class LBFGSOptimizer {
         public Pair<Double, Vector> calculate(Vector x) {
             final long n = x.length();
 
-            final int numFeatures = (int)dataIterator.numCols() - 1;
+            final int numFeatures = (int)dataIterator.cols() - 1;
 
             //val bcW = data.context.broadcast(w) ????
 
@@ -71,13 +71,13 @@ public class LBFGSOptimizer {
 
             double lossSum = 0.0;
 
-            while (dataIterator.hasNextRow()) {
+            while (dataIterator.hasNext()) {
 
-                dataIterator.nextRow();
+                dataIterator.next();
 
-                final double label = dataIterator.getValueOfColumn((int) dataIterator.numCols() - 1);
+                final double label = dataIterator.value((int) dataIterator.cols() - 1);
 
-                final Vector featureVector = dataIterator.getAsVector(0, numFeatures);
+                final Vector featureVector = dataIterator.asVector(0, numFeatures);
 
                 final LabeledVector labeledVector = new LabeledVector(label, featureVector);
 
@@ -90,13 +90,13 @@ public class LBFGSOptimizer {
 
             double regVal = 0.0; // Regularization...
 
-            double loss = lossSum / dataIterator.numRows() + regVal;
+            double loss = lossSum / dataIterator.rows() + regVal;
 
             Vector gradientTotal = new DVector((DVector)x);
 
             gradientTotal.add(-1.0, stepFunction.takeStep(x, new DVector(n), 1));
 
-            gradientTotal.add(1.0 / dataIterator.numRows(), gradientSum);
+            gradientTotal.add(1.0 / dataIterator.rows(), gradientSum);
 
             return Pair.of(lossSum, gradientTotal);
         }

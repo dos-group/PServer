@@ -93,19 +93,11 @@ public class DistributedMatrix extends AbstractMatrix {
 
     public Matrix.PartitionShape getPartitionShape() { return shape; }
 
+    @Override public double get(long index) { return matrix.get(index); }
+
     @Override public double get(long row, long col) { return matrix.get(translateRow(row), translateCol(col)); }
 
-    @Override public void set(long row, long col, double value) {
-
-        if (value == 0.0)
-            throw new IllegalStateException();
-
-        matrix.set(translateRow(row), translateCol(col), value);
-    }
-
-    @Override public double atomicGet(long row, long col) { return 0; }
-
-    @Override public void atomicSet(long row, long col, double value) {}
+    @Override public void set(long row, long col, double value) { matrix.set(translateRow(row), translateCol(col), value); }
 
     @Override public Vector rowAsVector() { return matrix.rowAsVector(); }
 
@@ -164,9 +156,9 @@ public class DistributedMatrix extends AbstractMatrix {
                 final Vector partialAgg = new VectorBuilder().dimension(shape.rows).layout(layout).format(format).build();
                 final Vector totalAgg = new VectorBuilder().dimension(rows).layout(layout).format(format).build();
                 final RowIterator iter = rowIterator();
-                while(iter.hasNextRow()) {
-                    iter.nextRow();
-                    final int row = iter.getCurrentRowNum();
+                while(iter.hasNext()) {
+                    iter.next();
+                    final int row = iter.rowNum();
                     final double value = f.apply(rowAsVector(row));
                     partialAgg.set(row - shape.rowOffset, value);
                     totalAgg.set(row, value);
@@ -255,18 +247,18 @@ public class DistributedMatrix extends AbstractMatrix {
 
     public Matrix.RowIterator createLocalRowIterator(final Matrix.RowIterator iter) {
         return new Matrix.RowIterator() {
-            @Override public boolean hasNextRow() { return iter.hasNextRow(); }
-            @Override public void nextRow() { iter.nextRow(); }
-            @Override public void nextRandomRow() { iter.nextRandomRow(); }
-            @Override public double getValueOfColumn(int col) { return iter.getValueOfColumn(col); }
-            @Override public Vector getAsVector() { return iter.getAsVector(); }
-            @Override public Vector getAsVector(int from, int size) { return iter.getAsVector(from, size); }
+            @Override public boolean hasNext() { return iter.hasNext(); }
+            @Override public void next() { iter.next(); }
+            @Override public void nextRandom() { iter.nextRandom(); }
+            @Override public double value(long col) { return iter.value(col); }
+            @Override public Vector asVector() { return iter.asVector(); }
+            @Override public Vector asVector(int from, int size) { return iter.asVector(from, size); }
             @Override public void reset() { iter.reset(); }
-            @Override public long numRows() { return iter.numRows(); }
-            @Override public long numCols() { return iter.numCols(); }
-            @Override public int getCurrentRowNum() { return completeMatrix
-                    ? iter.getCurrentRowNum()
-                    : iter.getCurrentRowNum() + (int)shape.rowOffset; }
+            @Override public long rows() { return iter.rows(); }
+            @Override public long cols() { return iter.cols(); }
+            @Override public int rowNum() { return completeMatrix
+                    ? iter.rowNum()
+                    : iter.rowNum() + (int)shape.rowOffset; }
         };
     }
 }

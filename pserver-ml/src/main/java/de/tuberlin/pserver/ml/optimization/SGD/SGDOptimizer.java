@@ -135,22 +135,22 @@ public class SGDOptimizer implements Optimizer {
 
     private GeneralLinearModel simple_sgd(final GeneralLinearModel model, final Matrix.RowIterator dataIterator) {
 
-        final int numFeatures = (int)dataIterator.numCols() - 1;
+        final int numFeatures = (int)dataIterator.cols() - 1;
 
         model.startTraining();
 
         for (int epoch = 0; epoch < numIterations; ++epoch) {
 
-            while (dataIterator.hasNextRow()) {
+            while (dataIterator.hasNext()) {
 
                 if (useRandomShuffle)
-                    dataIterator.nextRandomRow();
+                    dataIterator.nextRandom();
                 else
-                    dataIterator.nextRow();
+                    dataIterator.next();
 
-                final double label = dataIterator.getValueOfColumn((int) dataIterator.numCols() - 1);
+                final double label = dataIterator.value((int) dataIterator.cols() - 1);
 
-                final Vector featureVector = dataIterator.getAsVector(0, numFeatures);
+                final Vector featureVector = dataIterator.asVector(0, numFeatures);
 
                 final LabeledVector labeledVector = new LabeledVector(label, featureVector);
 

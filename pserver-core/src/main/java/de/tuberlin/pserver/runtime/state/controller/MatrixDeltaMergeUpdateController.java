@@ -43,7 +43,7 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
 
         this.stateMatrix = Preconditions.checkNotNull(matrix);
 
-        this.buffer = new byte[(int)(matrix.numRows() * matrix.numCols()) * Doubles.BYTES];
+        this.buffer = new byte[(int)(matrix.rows() * matrix.cols()) * Doubles.BYTES];
 
         this.matrixDelta = new EmbeddedDHTObject<>(new MatrixDeltaUpdate(slotContext.programContext.perNodeDOP));
 
@@ -69,7 +69,7 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
 
             final double newVal = stateMatrix.get(i, j);
 
-            final long bufferOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET + ((i * stateMatrix.numCols() + j) * Double.BYTES);
+            final long bufferOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET + ((i * stateMatrix.cols() + j) * Double.BYTES);
 
             final double oldVal = UnsafeOp.unsafe.getDouble(buffer, bufferOffset);
 
@@ -91,7 +91,7 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.iterate().parExe(stateMatrix, (e, i, j, v) -> {
 
-            final long bufferOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET + (i * stateMatrix.numCols() + j) * Double.BYTES;
+            final long bufferOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET + (i * stateMatrix.cols() + j) * Double.BYTES;
 
             UnsafeOp.unsafe.putDouble(buffer, bufferOffset, v);
         });
@@ -153,7 +153,7 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
 
                 sc.CF.iterate().parExe(stateMatrix, (e, i, j, v) -> {
 
-                    final long bufferOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET + ((i * stateMatrix.numCols() + j) * Double.BYTES);
+                    final long bufferOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET + ((i * stateMatrix.cols() + j) * Double.BYTES);
 
                     final double remoteVal = UnsafeOp.unsafe.getDouble(buffer, bufferOffset);
 

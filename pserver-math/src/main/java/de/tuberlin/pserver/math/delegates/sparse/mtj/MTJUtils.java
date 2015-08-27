@@ -31,11 +31,11 @@ public class MTJUtils {
     }
 
     public static int[][] buildRowBasedNz(DMatrix mat) {
-        return buildRowBasedNz(mat.toArray(), mat.numRows(), mat.numCols(), mat.getLayout());
+        return buildRowBasedNz(mat.toArray(), mat.rows(), mat.cols(), mat.getLayout());
     }
 
     public static int[][] buildColBasedNz(DMatrix mat) {
-        return buildColBasedNz(mat.toArray(), mat.numRows(), mat.numCols(), mat.getLayout());
+        return buildColBasedNz(mat.toArray(), mat.rows(), mat.cols(), mat.getLayout());
     }
 
     public static int[][] buildRowBasedNz(double[] data, long rows, long cols, Layout layout) {
@@ -93,12 +93,12 @@ public class MTJUtils {
         if(mat instanceof DMatrix) {
             switch(mat.getLayout()) {
                 case COLUMN_LAYOUT :
-                    result = new DenseMatrix(Utils.toInt(mat.numRows()), Utils.toInt(mat.numCols()), mat.toArray(), mutable);
+                    result = new DenseMatrix(Utils.toInt(mat.rows()), Utils.toInt(mat.cols()), mat.toArray(), mutable);
                     break;
                 case ROW_LAYOUT :
-                    de.tuberlin.pserver.math.matrix.Matrix aux = new DMatrix(mat.numCols(), mat.numRows());
+                    de.tuberlin.pserver.math.matrix.Matrix aux = new DMatrix(mat.cols(), mat.rows());
                     mat.transpose(aux);
-                    result = new DenseMatrix(Utils.toInt(mat.numRows()), Utils.toInt(mat.numCols()), aux.toArray(), mutable);
+                    result = new DenseMatrix(Utils.toInt(mat.rows()), Utils.toInt(mat.cols()), aux.toArray(), mutable);
                     break;
                 default :
                     throw new IllegalArgumentException("Unkown memory layout: " + mat.getLayout().toString());

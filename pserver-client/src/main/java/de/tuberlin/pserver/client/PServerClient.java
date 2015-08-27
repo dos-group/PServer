@@ -42,13 +42,9 @@ public final class PServerClient extends EventDispatcher {
 
     private final UserCodeManager userCodeManager;
 
-    private final List<MachineDescriptor> workers;
-
     private final Map<UUID, CountDownLatch> activeJobs;
 
     private final Map<Pair<UUID,Integer>, List<Serializable>> jobResults;
-
-    //private final Map<String, UUID> nameUIDMapping;
 
     // ---------------------------------------------------
     // Constructors.
@@ -60,13 +56,11 @@ public final class PServerClient extends EventDispatcher {
 
         this.config          = factory.config;
         this.machine         = factory.machine;
-        this.workers         = factory.workers;
         this.infraManager    = factory.infraManager;
         this.netManager      = factory.netManager;
         this.userCodeManager = factory.userCodeManager;
         this.activeJobs      = new HashMap<>();
         this.jobResults      = new HashMap<>();
-        //this.nameUIDMapping  = new HashMap<>();
 
         this.netManager.addEventListener(ProgramFailureEvent.PSERVER_FAILURE_JOB_EVENT, new JobFailureEvent());
         this.netManager.addEventListener(ProgramResultEvent.PSERVER_JOB_RESULT_EVENT, new JobResultEvent());
@@ -113,18 +107,16 @@ public final class PServerClient extends EventDispatcher {
         final ProgramSubmissionEvent jobSubmission = new ProgramSubmissionEvent(
                 machine,
                 jopUID,
-                //classData.getLeft().getName(),
-                //classData.getLeft().getSimpleName(),
                 perNodeParallelism,
                 byteCode
         );
 
-        final CountDownLatch jobLatch = new CountDownLatch(workers.size());
+        final CountDownLatch jobLatch = new CountDownLatch(infraManager.getMachines().size());
         activeJobs.put(jopUID, jobLatch);
-        //nameUIDMapping.put(jobSubmission.simpleClassName, jopUID);
-
         LOG.info("Submit Job '" + jobClass.getSimpleName() + "'.");
-        workers.forEach(md -> netManager.sendEvent(md, jobSubmission));
+        infraManager.getMachines().forEach(md -> {
+            if (!md.equals(machine)) netManager.sendEvent(md, jobSubmission);
+        });
 
         try {
             jobLatch.await();
@@ -145,7 +137,7 @@ public final class PServerClient extends EventDispatcher {
 
     public IConfig getConfig() { return config; }
 
-    public int getNumberOfWorkers() { return workers.size(); }
+    public int getNumberOfWorkers() { return infraManager.getMachines().size(); /*workers.size();*/ }
 
     @Override
     public void deactivate() {

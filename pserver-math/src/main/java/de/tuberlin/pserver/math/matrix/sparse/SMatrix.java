@@ -6,7 +6,6 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.dense.DVector;
-import gnu.trove.map.hash.TIntDoubleHashMap;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.HashMap;
@@ -73,6 +72,11 @@ public class SMatrix extends AbstractMatrix {
     // ---------------------------------------------------
 
     @Override
+    public double get(long index) {
+        return 0;
+    }
+
+    @Override
     public double get(long row, long col) {
         final Double value = data.get((int)(row * cols + col));
         return (value == null) ? 0 : value;
@@ -81,16 +85,6 @@ public class SMatrix extends AbstractMatrix {
     @Override
     public void set(long row, long col, double value) {
         data.put((int)(row * cols + col), value);
-    }
-
-    @Override
-    public double atomicGet(long row, long col) {
-        throw new NotImplementedException("not impl");
-    }
-
-    @Override
-    public void atomicSet(long row, long col, double value) {
-        throw new NotImplementedException("not impl");
     }
 
     @Override
@@ -209,14 +203,14 @@ public class SMatrix extends AbstractMatrix {
         }
 
         @Override
-        public Vector getAsVector() {
-            return getAsVector(0, Utils.toInt(numCols()));
+        public Vector asVector() {
+            return asVector(0, Utils.toInt(cols()));
         }
 
         @Override
-        public Vector getAsVector(int from, int size) {
+        public Vector asVector(int from, int size) {
             System.out.println("curRow:" + currentRow);
-            if(from < 0 || size > numCols()) {
+            if(from < 0 || size > cols()) {
                 throw new IllegalArgumentException();
             }
             DVector rowVec = new DVector(size, Layout.ROW_LAYOUT);

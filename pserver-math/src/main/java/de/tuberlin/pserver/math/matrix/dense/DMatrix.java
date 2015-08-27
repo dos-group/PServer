@@ -16,83 +16,6 @@ import java.util.Random;
 public class DMatrix extends AbstractMatrix implements Serializable {
 
     // ---------------------------------------------------
-    // Inner Classes.
-    // ---------------------------------------------------
-
-    private static final class RowIterator implements Matrix.RowIterator {
-
-        private DMatrix self;
-
-        private int globalRowIndex;
-
-        private final int end;
-
-        private final int start;
-
-        private final int numRows;
-
-        private int currentRowIndex;
-
-        private Random rand;
-
-        // ---------------------------------------------------
-
-        public RowIterator(final DMatrix v) { this(v, 0, (int)Preconditions.checkNotNull(v).numRows() - 1); }
-        public RowIterator(final DMatrix v, final int startRow, final int endRow) {
-            this.self = v;
-            Preconditions.checkArgument(startRow >= 0 && startRow < self.numRows());
-//            Preconditions.checkArgument(endRow > startRow && endRow < self.numRows());
-            this.start = startRow * (int)self.cols;
-            this.end = endRow * (int)self.cols;
-            this.globalRowIndex = this.start - (int)-self.cols;
-            this.numRows = endRow - startRow;
-            this.rand = new Random();
-            reset();
-        }
-
-        // ---------------------------------------------------
-
-        @Override
-        public boolean hasNextRow() { return globalRowIndex < end - self.cols/*|| globalRowIndex < self.rows * self.cols*/; }
-
-        @Override
-        public void nextRow() { globalRowIndex += self.cols; currentRowIndex = globalRowIndex; }
-
-        @Override
-        public void nextRandomRow() {
-            globalRowIndex += self.cols;
-            currentRowIndex = start +  (rand.nextInt(numRows) * (int)self.cols);
-        }
-
-        @Override
-        public double getValueOfColumn(final int col) {
-            //System.out.println("currentRowIndex = " + currentRowIndex + ", col = " + col + ", " + ((currentRowIndex + col) < self.data.length) + ", v = " + self.data[col]);
-            return self.data[currentRowIndex + col]; }
-
-        @Override
-        public Vector getAsVector() { return getAsVector(0, (int)self.cols); }
-
-        @Override
-        public Vector getAsVector(int from, int size) {
-            final double v[] = new double[size];
-            System.arraycopy(self.data, currentRowIndex + from, v, 0, size);
-            return new DVector(size, v);
-        }
-
-        @Override
-        public void reset() { globalRowIndex = start - (int)self.cols; }
-
-        @Override
-        public long numRows() { return self.rows; }
-
-        @Override
-        public long numCols() { return self.cols; }
-
-        @Override
-        public int getCurrentRowNum() { return currentRowIndex / (int)self.cols; }
-    }
-
-    // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
@@ -140,16 +63,13 @@ public class DMatrix extends AbstractMatrix implements Serializable {
     // ---------------------------------------------------
 
     @Override
+    public double get(final long index) { return data[(int)index]; }
+
+    @Override
     public double get(final long row, final long col) { return data[Utils.getPos(row, col, this)]; }
 
     @Override
     public void set(long row, long col, double value) { data[Utils.getPos(row, col, this)] = value; }
-
-    @Override
-    public double atomicGet(long row, long col) { throw new UnsupportedOperationException(); }
-
-    @Override
-    public void atomicSet(long row, long col, double value) { throw new UnsupportedOperationException(); }
 
     @Override
     public double[] toArray() {
@@ -157,10 +77,7 @@ public class DMatrix extends AbstractMatrix implements Serializable {
     }
 
     @Override
-    public void setArray(final double[] data) {
-        Preconditions.checkState(data.length == rows * cols);
-        this.data = data;
-    }
+    public void setArray(final double[] data) { Preconditions.checkState(data.length == rows * cols); this.data = data; }
 
     @Override
     public RowIterator rowIterator() { return new RowIterator(this); }
@@ -217,7 +134,7 @@ public class DMatrix extends AbstractMatrix implements Serializable {
 
     @Override
     public Matrix assign(final Matrix v) {
-        Preconditions.checkState(v.numRows() * v.numCols() == rows * cols);
+        Preconditions.checkState(v.rows() * v.cols() == rows * cols);
         System.arraycopy(v.toArray(), 0, data, 0, (int)(rows * cols));
         return this;
     }
@@ -231,12 +148,12 @@ public class DMatrix extends AbstractMatrix implements Serializable {
 
     @Override
     public Vector rowAsVector() {
-        return rowAsVector(0, 0, numCols());
+        return rowAsVector(0, 0, cols());
     }
 
     @Override
     public Vector rowAsVector(final long row) {
-        return rowAsVector(row, 0, numCols());
+        return rowAsVector(row, 0, cols());
     }
 
     @Override
@@ -265,7 +182,7 @@ public class DMatrix extends AbstractMatrix implements Serializable {
         }
         else {
             for (int i = 0; i < result.length; i++) {
-                int row = (int)from+i;
+                int row = (int)from + i;
                 result[i] = data[(int)(row * cols + col)];
             }
         }
@@ -274,7 +191,7 @@ public class DMatrix extends AbstractMatrix implements Serializable {
 
     @Override
     public Matrix assignRow(final long row, final Vector v) {
-        Preconditions.checkNotNull(numCols() == v.length());
+        Preconditions.checkNotNull(cols() == v.length());
         for (int i = 0; i < v.length(); ++i)
             data[Utils.getPos(row, i, this)] = v.get(i);
         return this;
@@ -314,7 +231,7 @@ public class DMatrix extends AbstractMatrix implements Serializable {
     @Override
     public Matrix assign(final long row, final long col, final Matrix m) {
         if (layout == Layout.ROW_LAYOUT && m.getLayout() == Layout.ROW_LAYOUT) {
-            if (cols == m.numCols())
+            if (cols == m.cols())
                 System.arraycopy(m.toArray(), 0, data, (int)(row * cols + col), m.toArray().length);
             else
                 throw new IllegalStateException();
@@ -344,4 +261,79 @@ public class DMatrix extends AbstractMatrix implements Serializable {
     //@Override public boolean invert() { return matrixOpDelegate.invert(this); }
 
     // ---------------------------------------------------
+
+    // ---------------------------------------------------
+    // Inner Classes.
+    // ---------------------------------------------------
+
+    private static final class RowIterator implements Matrix.RowIterator {
+
+        private DMatrix self;
+
+        private int globalRowIndex;
+
+        private final int end;
+
+        private final int start;
+
+        private final int numRows;
+
+        private int currentRowIndex;
+
+        private Random rand;
+
+        // ---------------------------------------------------
+
+        public RowIterator(final DMatrix v) { this(v, 0, (int)Preconditions.checkNotNull(v).rows() - 1); }
+        public RowIterator(final DMatrix v, final int startRow, final int endRow) {
+            this.self = v;
+            Preconditions.checkArgument(startRow >= 0 && startRow < self.rows());
+//            Preconditions.checkArgument(endRow > startRow && endRow < self.rows());
+            this.start = startRow * (int)self.cols;
+            this.end = endRow * (int)self.cols;
+            this.globalRowIndex = this.start - (int)-self.cols;
+            this.numRows = endRow - startRow;
+            this.rand = new Random();
+            reset();
+        }
+
+        // ---------------------------------------------------
+
+        @Override
+        public boolean hasNext() { return globalRowIndex < end - self.cols/*|| globalRowIndex < self.rows * self.cols*/; }
+
+        @Override
+        public void next() { globalRowIndex += self.cols; currentRowIndex = globalRowIndex; }
+
+        @Override
+        public void nextRandom() {
+            globalRowIndex += self.cols;
+            currentRowIndex = start +  (rand.nextInt(numRows) * (int)self.cols);
+        }
+
+        @Override
+        public double value(final long col) { return self.data[(int)(currentRowIndex + col)]; }
+
+        @Override
+        public Vector asVector() { return asVector(0, (int) self.cols); }
+
+        @Override
+        public Vector asVector(int from, int size) {
+            final double v[] = new double[size];
+            System.arraycopy(self.data, currentRowIndex + from, v, 0, size);
+            return new DVector(size, v);
+        }
+
+        @Override
+        public void reset() { globalRowIndex = start - (int)self.cols; }
+
+        @Override
+        public long rows() { return self.rows; }
+
+        @Override
+        public long cols() { return self.cols; }
+
+        @Override
+        public int rowNum() { return currentRowIndex / (int)self.cols; }
+    }
 }

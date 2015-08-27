@@ -107,8 +107,8 @@ public final class Iteration extends CFStatement {
     public Iteration exe(final Matrix.RowIterator ri, final MatrixRowIterationBody b) throws Exception {
         final IterationBody ib = (epoch) -> b.body(epoch, ri);
         final IterationTermination it = () -> {
-                final boolean t = !ri.hasNextRow();
-                if (!t) ri.nextRow();
+                final boolean t = !ri.hasNext();
+                if (!t) ri.next();
                 return t;
         };
         return exe(it, ib);
@@ -122,8 +122,8 @@ public final class Iteration extends CFStatement {
 
     private MatrixRowIterationBody toRowMatrixIB(final Matrix m, final MatrixElementIterationBody b) throws Exception {
         return (epoch, rit) -> {
-            for (long j = 0; j < m.numCols(); ++j) {
-                b.body(epoch, rit.getCurrentRowNum(), j, rit.getValueOfColumn((int) j));
+            for (long j = 0; j < m.cols(); ++j) {
+                b.body(epoch, rit.rowNum(), j, rit.value((int) j));
             }
         };
     }

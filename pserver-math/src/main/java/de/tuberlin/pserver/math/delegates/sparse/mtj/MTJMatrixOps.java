@@ -54,7 +54,7 @@ public class MTJMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
 
     @Override
     public Vector mul(Matrix A, Vector x) {
-        SparseVector result = new SparseVector(Utils.toInt(A.numRows()), Utils.toInt(A.numRows() / 4));
+        SparseVector result = new SparseVector(Utils.toInt(A.rows()), Utils.toInt(A.rows() / 4));
         return MTJUtils.toPserverVector(
                 MTJUtils.toLibMatrix(A, true).mult(
                         MTJUtils.toLibVector(x),
@@ -67,7 +67,7 @@ public class MTJMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
         return MTJUtils.toPserverMatrix(
                 MTJUtils.toLibMatrix(A, true).mult(
                         MTJUtils.toLibMatrix(B),
-                        new FlexCompColMatrix(Utils.toInt(A.numRows()), Utils.toInt(B.numCols()))
+                        new FlexCompColMatrix(Utils.toInt(A.rows()), Utils.toInt(B.cols()))
                 ));
     }
 
@@ -99,7 +99,7 @@ public class MTJMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
 
     @Override
     public boolean invert(Matrix A) {
-        DenseMatrix I = Matrices.identity(Utils.toInt(Math.min(A.numCols(), A.numRows())));
+        DenseMatrix I = Matrices.identity(Utils.toInt(Math.min(A.cols(), A.rows())));
         DenseMatrix AI = I.copy();
         try {
             MTJUtils.toLibMatrix(A).solve(I, AI);

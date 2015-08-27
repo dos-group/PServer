@@ -21,11 +21,11 @@ public class DMatrixTests {
             for(int j = 0; j < cols; j++) {
                 // rows layout: [ < #cols elements ... > < #cols elements ... > ... ]
                 //               ^   first rows  ^       ^  second rows  ^
-                //               ^ rows * numCols + cols
+                //               ^ rows * cols + cols
                 assert(matRowLayout.get(i, j) == dataRowLayout[i * cols + j]);
                 // cols layout: [ < #rows elements ... > < #rows elements ... > ... ]
                 //               ^   first cols  ^       ^  second cols  ^
-                //               ^ cols * numRows + rows
+                //               ^ cols * rows + rows
                 assert(matColumnLayout.get(i, j) == dataColumnLayout[j * rows + i]);
             }
         }

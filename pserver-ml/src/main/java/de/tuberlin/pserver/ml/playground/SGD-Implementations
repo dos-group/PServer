@@ -48,26 +48,26 @@ public class SGDOptimizerOLD implements Optimizer {
         Preconditions.checkNotNull(dataIterator);
 
         if (labelIndex == -1)
-            labelIndex = (int)dataIterator.numCols() - 1;
+            labelIndex = (int)dataIterator.cols() - 1;
 
         final int[] featureIndices = extractFeatureIndices(dataIterator);
         final int numFeatures = featureIndices.length;
 
-        final Matrix gradient = new DMatrix(1, weights.numCols());
+        final Matrix gradient = new DMatrix(1, weights.cols());
 
         double current_alpha = alpha;
 
         for (int epoch = 0; epoch < numIterations; ++epoch) {
 
-            while (dataIterator.hasNextRow()) {
+            while (dataIterator.hasNext()) {
 
-                dataIterator.nextRow();
+                dataIterator.next();
 
                 double p = weights.get(0, 0);
                 for (int i = 0, j = 1; i < numFeatures; ++i, ++j)
-                    p += dataIterator.getValueOfColumn(featureIndices[i]) * weights.get(0, j);
+                    p += dataIterator.value(featureIndices[i]) * weights.get(0, j);
 
-                final double label = dataIterator.getValueOfColumn(labelIndex);
+                final double label = dataIterator.value(labelIndex);
 
                 // Compute parameter Θ(0).
                 final double weight_0_old = weights.atomicGet(0, 0);
@@ -78,7 +78,7 @@ public class SGDOptimizerOLD implements Optimizer {
 
                 // Compute parameters Θ(1..m).
                 for (int i = 0, j = 1; i < numFeatures; ++i, ++j) {
-                    final double feature = dataIterator.getValueOfColumn(featureIndices[i]);
+                    final double feature = dataIterator.value(featureIndices[i]);
                     final double weight_j_old = weights.atomicGet(0, j);
                     final double gradient_j = lossFunction.gradient(p, label * feature);
                     final double weight_j = weight_j_old - current_alpha * gradient_j;
@@ -100,7 +100,7 @@ public class SGDOptimizerOLD implements Optimizer {
     }
 
     private int[] extractFeatureIndices(final Matrix.RowIterator dataIterator) {
-        int[] indices = new int[(int)dataIterator.numCols() - 1];
+        int[] indices = new int[(int)dataIterator.cols() - 1];
         for (int j = 0, k = 0; j < indices.length + 1; ++j) {
             if (j != labelIndex) {
                 indices[k] = j;

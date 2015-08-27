@@ -320,11 +320,11 @@ public final class ExecutionManager {
                     ? endOffset + (int) dm.partitionNumRows() % scopeDOP
                     : endOffset;
         } else {
-            blockSize   = (int) matrix.numRows() / scopeDOP;
+            blockSize   = (int) matrix.rows() / scopeDOP;
             startOffset = slotContext.slotID * blockSize;
             endOffset   = (slotContext.slotID * blockSize + blockSize - 1);
             endOffset   = (slotContext.slotID == range.getRight())
-                    ? endOffset + (int) matrix.numRows() % scopeDOP
+                    ? endOffset + (int) matrix.rows() % scopeDOP
                     : endOffset;
         }
         return matrix.rowIterator(startOffset, endOffset);

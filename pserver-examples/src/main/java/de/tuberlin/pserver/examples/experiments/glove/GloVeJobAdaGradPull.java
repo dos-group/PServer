@@ -11,6 +11,7 @@ import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
 import de.tuberlin.pserver.runtime.state.merger.VectorUpdateMerger;
 import de.tuberlin.pserver.types.PartitionType;
 import org.apache.commons.lang3.mutable.MutableDouble;
+import org.apache.commons.lang3.mutable.MutableInt;
 
 import java.util.Random;
 
@@ -36,7 +37,7 @@ public final class GloVeJobAdaGradPull extends MLProgram {
             rows = COLS, cols = COLS, path = "datasets/text8_coocc.csv")
     public Matrix X;
 
-    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = COLS * 2, remoteUpdate = RemoteUpdate.SIMPLE_MERGE_UPDATE)
+    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = COLS * 2, remoteUpdate = RemoteUpdate.DELTA_MERGE_UPDATE)
     public Matrix W;
 
     @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = COLS * 2, remoteUpdate = RemoteUpdate.SIMPLE_MERGE_UPDATE)
@@ -76,8 +77,8 @@ public final class GloVeJobAdaGradPull extends MLProgram {
         program.initialize(() -> {
 
             final Random rand = new Random();
-            for (int i = 0; i < W.numRows(); ++i) {
-                for (int j = 0; j < W.numCols(); ++j) {
+            for (int i = 0; i < W.rows(); ++i) {
+                for (int j = 0; j < W.cols(); ++j) {
                     W.set(i, j, (rand.nextDouble() - 0.5) / ROWS);
                     GradSq.set(i, j, 1.0);
                 }
@@ -134,7 +135,6 @@ public final class GloVeJobAdaGradPull extends MLProgram {
 
                     GradSqB.set(wordVecIdx, GradSqB.get(wordVecIdx) + fdiff * fdiff);
                     GradSqB.set(ctxVecIdx, GradSqB.get(ctxVecIdx) + fdiff * fdiff);
-
                 });
 
                 DF.publishUpdate();

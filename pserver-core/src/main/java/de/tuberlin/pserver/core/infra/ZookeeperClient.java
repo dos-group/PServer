@@ -80,6 +80,21 @@ public final class ZookeeperClient {
         }
     }
 
+    public void create(final String path) {
+        try {
+            Stat stat = curator.checkExists().forPath(path);
+            if (stat == null) {
+                try {
+                    curator.create().forPath(path, new byte[0]);
+                } catch (KeeperException.NodeExistsException e) {
+                    // These nodes only need to exist. No matter who created them.
+                }
+            }
+        } catch (Exception e) {
+            //throw new IllegalStateException(e);
+        }
+    }
+
     public Object read(final String path) throws Exception {
         try {
             final byte[] data = curator.getData().forPath(path);

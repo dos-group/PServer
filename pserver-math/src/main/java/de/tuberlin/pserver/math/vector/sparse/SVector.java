@@ -6,6 +6,7 @@ import de.tuberlin.pserver.math.vector.AbstractVector;
 import de.tuberlin.pserver.math.vector.Vector;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SVector extends AbstractVector {
@@ -29,25 +30,10 @@ public class SVector extends AbstractVector {
     @Override
     public double get(long index) {
         Double result = data.get(index);
-        if(result == null) {
+        if (result == null) {
             return 0.0;
         }
         return result;
-    }
-
-    @Override
-    public double atomicGet(long index) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void atomicSet(long index, double value) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Vector viewPart(long s, long e) {
-        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -58,6 +44,16 @@ public class SVector extends AbstractVector {
     @Override
     public Vector copy() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Vector concat(Vector v) {
+        return null;
+    }
+
+    @Override
+    public Vector concat(List<Vector> vList) {
+        return null;
     }
 
     @Override
