@@ -2,6 +2,7 @@ package de.tuberlin.pserver.dsl.state;
 
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
+import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
 import de.tuberlin.pserver.types.PartitionType;
 
 public final class StateDeclaration {
@@ -28,6 +29,8 @@ public final class StateDeclaration {
 
     public final Format format;
 
+    public final Class<? extends AbstractRecordFormatConfig> recordFormatConfigClass;
+
     public final String path;
 
     public final RemoteUpdate remoteUpdate;
@@ -45,6 +48,7 @@ public final class StateDeclaration {
                             final long cols,
                             final Layout layout,
                             final Format format,
+                            final Class<? extends AbstractRecordFormatConfig> recordFormatConfigClass,
                             final String path,
                             final RemoteUpdate remoteUpdate) {
 
@@ -57,6 +61,7 @@ public final class StateDeclaration {
         this.cols           = cols;
         this.layout         = layout;
         this.format         = format;
+        this.recordFormatConfigClass = recordFormatConfigClass;
         this.path           = path;
         this.remoteUpdate   = remoteUpdate;
     }

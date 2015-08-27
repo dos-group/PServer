@@ -6,7 +6,7 @@ import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
+import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.hadoop.conf.Configuration;
@@ -42,7 +42,7 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
 
     protected transient long splitLength;
 
-    protected transient RecordFormat format;
+    protected transient AbstractRecordFormatConfig format;
 
     protected transient CSVParser csvFileParser;
 
@@ -68,7 +68,7 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
     //  Constructors
     // --------------------------------------------------------------------------------------------
 
-    public HDFSInputFile(final IConfig config, final NetManager netManager, final String filePath, RecordFormat format) {
+    public HDFSInputFile(final IConfig config, final NetManager netManager, final String filePath, AbstractRecordFormatConfig format) {
         this.config     = Preconditions.checkNotNull(config);
         this.path       = Preconditions.checkNotNull(filePath);
         this.filePath   = new Path(filePath);
@@ -77,7 +77,7 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
     }
 
     public HDFSInputFile(final IConfig config, final NetManager netManager, final String filePath) {
-        this(config, netManager, filePath, RecordFormat.DEFAULT);
+        this(config, netManager, filePath, AbstractRecordFormatConfig.DEFAULT);
     }
 
     // --------------------------------------------------------------------------------------------

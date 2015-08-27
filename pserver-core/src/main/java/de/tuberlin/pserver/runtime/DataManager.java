@@ -21,7 +21,7 @@ import de.tuberlin.pserver.runtime.dht.DHTObject;
 import de.tuberlin.pserver.runtime.dht.types.AbstractBufferedDHTObject;
 import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
-import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
+import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
 import de.tuberlin.pserver.runtime.partitioning.MatrixPartitionManager;
 import de.tuberlin.pserver.types.PartitionType;
 import org.slf4j.Logger;
@@ -182,7 +182,7 @@ public class DataManager extends EventDispatcher {
                              final long cols,
                              final GlobalScope globalScope,
                              final PartitionType partitionType,
-                             final RecordFormat recordFormat,
+                             final AbstractRecordFormatConfig recordFormat,
                              final Format matrixFormat,
                              final Layout matrixLayout) {
 

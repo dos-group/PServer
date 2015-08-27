@@ -14,7 +14,7 @@ import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.VectorBuilder;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordFactory;
-import de.tuberlin.pserver.runtime.filesystem.record.RecordFormat;
+import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
 import de.tuberlin.pserver.runtime.state.controller.MatrixDeltaMergeUpdateController;
 import de.tuberlin.pserver.runtime.state.controller.MatrixMergeUpdateController;
 import de.tuberlin.pserver.runtime.state.controller.RemoteUpdateController;
@@ -142,6 +142,7 @@ public final class MLProgramLinker {
                             stateProperties.cols(),
                             stateProperties.layout(),
                             stateProperties.format(),
+                            stateProperties.recordFormat(),
                             stateProperties.path(),
                             stateProperties.remoteUpdate()
                     );
@@ -227,9 +228,7 @@ public final class MLProgramLinker {
                                     decl.cols,
                                     decl.globalScope,
                                     decl.partitionType,
-                                    decl.format == Format.SPARSE_FORMAT
-                                            ? RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD)
-                                            : RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROW_RECORD),
+                                    decl.recordFormatConfigClass.newInstance(),
                                     decl.format,
                                     decl.layout
                             );
@@ -255,9 +254,7 @@ public final class MLProgramLinker {
                                     decl.cols,
                                     decl.globalScope,
                                     decl.partitionType,
-                                    decl.format == Format.SPARSE_FORMAT
-                                            ? RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROWCOLVAL_RECORD)
-                                            : RecordFormat.DEFAULT.setRecordFactory(IRecordFactory.ROW_RECORD),
+                                    decl.recordFormatConfigClass.newInstance(),
                                     decl.format,
                                     decl.layout
                             );
