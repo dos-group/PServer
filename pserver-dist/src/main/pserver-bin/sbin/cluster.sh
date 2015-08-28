@@ -139,9 +139,16 @@ zookeeper-setup)
 
 zookeeper-start)
 
+        NUM_ZOOKEEPERS=$(cat "${ZOOKEEPERS_FILE}" | sed '/^\s*$/d' | wc -l)
+        CURRENT_NODE=1
         function run_on_host() {
             HOST=$1
-            ssh -n $PSERVER_SSH_OPTS ${HOST} -- "${PSERVER_DESTINATION_DIRECTORY}/${PSERVER_ROOT_DIR_NAME}/sbin/local.sh zookeeper-start"
+            if [ $CURRENT_NODE -lt $NUM_ZOOKEEPERS ]; then
+                ssh -n $PSERVER_SSH_OPTS ${HOST} -- "${PSERVER_DESTINATION_DIRECTORY}/${PSERVER_ROOT_DIR_NAME}/sbin/local.sh zookeeper-start --zookeeper-do-not-set-numnodes"
+            else
+                ssh -n $PSERVER_SSH_OPTS ${HOST} -- "${PSERVER_DESTINATION_DIRECTORY}/${PSERVER_ROOT_DIR_NAME}/sbin/local.sh zookeeper-start"
+            fi
+            CURRENT_NODE=$((CURRENT_NODE+1))
         }
         HOSTLIST="${ZOOKEEPERS_FILE}"
         . "${PSERVER_ROOT_DIR}/inc/run_on_all_hosts.sh"
