@@ -18,10 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 public final class PServerClient extends EventDispatcher {
@@ -74,7 +71,15 @@ public final class PServerClient extends EventDispatcher {
         @Override
         public void handleEvent(final Event e) {
             final ProgramFailureEvent jfe = (ProgramFailureEvent)e;
-            LOG.error(jfe.toString());
+            final List<Serializable> res = new ArrayList<>();
+            res.add(jfe);
+            jobResults.put(Pair.of(jfe.programID, jfe.nodeID), res);
+            final CountDownLatch jobLatch = activeJobs.get(jfe.programID);
+            if (jobLatch != null) {
+                jobLatch.countDown();
+            } else {
+                throw new IllegalStateException();
+            }
         }
     }
 
@@ -102,17 +107,17 @@ public final class PServerClient extends EventDispatcher {
         Preconditions.checkArgument(perNodeParallelism >= 1);
 
         final long start = System.nanoTime();
-        final UUID jopUID = UUID.randomUUID();
+        final UUID jobUID = UUID.randomUUID();
         final List<Pair<String, byte[]>> byteCode = userCodeManager.extractClass(jobClass);
         final ProgramSubmissionEvent jobSubmission = new ProgramSubmissionEvent(
                 machine,
-                jopUID,
+                jobUID,
                 perNodeParallelism,
                 byteCode
         );
 
         final CountDownLatch jobLatch = new CountDownLatch(infraManager.getMachines().size());
-        activeJobs.put(jopUID, jobLatch);
+        activeJobs.put(jobUID, jobLatch);
         LOG.info("Submit Job '" + jobClass.getSimpleName() + "'.");
         infraManager.getMachines().forEach(md -> {
             if (!md.equals(machine)) netManager.sendEvent(md, jobSubmission);
@@ -128,7 +133,21 @@ public final class PServerClient extends EventDispatcher {
                 + "' [" + jobSubmission.programID +"] finished in "
                 + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms.");
 
-        return jopUID;
+
+        boolean programError = false;
+        for (int i = 0; i < infraManager.getMachines().size(); ++i) {
+
+            if (jobResults.get(Pair.of(jobUID, i)) == null)
+                continue;
+
+            if (jobResults.get(Pair.of(jobUID, i)).get(0) instanceof ProgramFailureEvent) {
+                final ProgramFailureEvent pfe = (ProgramFailureEvent) jobResults.get(Pair.of(jobUID, i)).get(0);
+                LOG.error(pfe.toString());
+                programError = true;
+            }
+        }
+
+        return !programError ? jobUID : null;
     }
 
     public List<Serializable> getResultsFromWorker(final UUID jobUID, final int nodeID) {
@@ -137,7 +156,7 @@ public final class PServerClient extends EventDispatcher {
 
     public IConfig getConfig() { return config; }
 
-    public int getNumberOfWorkers() { return infraManager.getMachines().size(); /*workers.size();*/ }
+    public int getNumberOfWorkers() { return infraManager.getMachines().size(); }
 
     @Override
     public void deactivate() {

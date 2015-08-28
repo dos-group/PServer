@@ -125,7 +125,7 @@ public class NestedIntervalTree<T> {
                 if (c.interval.intersects(interval))
                     return false;
                 else
-                    isValid(interval);
+                    isValid(c.interval); // TODO: Should be right ??
             }
             return true;
         } else

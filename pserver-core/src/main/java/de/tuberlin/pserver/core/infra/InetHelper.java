@@ -41,7 +41,14 @@ public final class InetHelper {
             LOG.error("I/O error", e);
         }
 
-        return null;
+        final InetAddress address;
+        try {
+            address = InetAddress.getByName(InetAddress.getLocalHost().getHostName());
+        } catch(Exception e) {
+            throw new IllegalStateException(e);
+        }
+
+        return address;
     }
 
     public static int getFreePort() {

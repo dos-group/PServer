@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.examples.experiments.liblinear;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.dsl.GlobalAggregator;
+import de.tuberlin.pserver.dsl.Aggregator;
 import de.tuberlin.pserver.dsl.SharedDouble;
 import de.tuberlin.pserver.dsl.SharedVar;
 import de.tuberlin.pserver.math.matrix.Matrix;
@@ -34,7 +34,7 @@ public class TronLR implements TronFunction {
             f_obj.add((yz >= 0) ? Math.log(1 + enyz) : -yz + Math.log(1 + Math.exp(yz)));
         });
 
-        return new GlobalAggregator<>(sc, f_obj.done().get())
+        return new Aggregator<>(sc, f_obj.done().get())
                 .apply(partialAggs -> partialAggs.stream()
                                 .map(Double::doubleValue)
                                 .reduce((a, b) -> a + b)
@@ -65,7 +65,7 @@ public class TronLR implements TronFunction {
                 }
         });
 
-        return new GlobalAggregator<>(sc, grad)
+        return new Aggregator<>(sc, grad)
                 .apply(partialGrads -> partialGrads.stream()
                                 .reduce((a, b) -> a.add(b, a))
                                 .get().mul(param.C).add(grad)
@@ -102,7 +102,7 @@ public class TronLR implements TronFunction {
             }
         });
 
-        return new GlobalAggregator<>(sc, blockHs)
+        return new Aggregator<>(sc, blockHs)
                 .apply(partialGrads -> partialGrads.stream()
                                 .reduce((a, b) -> a.add(b, a))
                                 .get().mul(param.C).add(s)

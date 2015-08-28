@@ -1,20 +1,15 @@
 package de.tuberlin.pserver.examples.experiments.liblinear;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import de.tuberlin.pserver.dsl.GlobalAggregator;
+import de.tuberlin.pserver.dsl.Aggregator;
 import de.tuberlin.pserver.dsl.SharedInt;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.dense.DVector;
 import de.tuberlin.pserver.runtime.SlotContext;
-import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 // TODO: need primitive to compute at one slot and use result at all.
 
@@ -44,7 +39,7 @@ public final class LibLinearSolver {
                 count.inc();
         });
 
-        int pos = new GlobalAggregator<>(sc, count.done().get())
+        int pos = new Aggregator<>(sc, count.done().get())
                 .apply(c -> c.stream()
                                 .mapToInt(Integer::intValue)
                                 .sum()
@@ -125,7 +120,7 @@ public final class LibLinearSolver {
 
         final Vector partialLabelSet = new DVector(ls.length, ls);
 
-        final Vector labelSet = new GlobalAggregator<>(sc, partialLabelSet)
+        final Vector labelSet = new Aggregator<>(sc, partialLabelSet)
                 .apply(partialLabelSet::concat);
 
         final LibLinearModel model = new LibLinearModel(param, labelSet);

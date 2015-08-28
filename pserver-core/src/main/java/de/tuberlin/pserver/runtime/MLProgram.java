@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 public abstract class MLProgram extends EventDispatcher {
 
@@ -150,9 +151,17 @@ public abstract class MLProgram extends EventDispatcher {
                         + " post-process phase [duration: " + (end - start) + " ms].");
             }
 
-            slotContext.programContext.programDoneBarrier.countDown();
+            synchronized (slotContext.programContext.programDoneBarrier) {
+                slotContext.programContext.programDoneBarrier.countDown();
+            }
 
-            CF.select().slot(0).exe(slotContext.programContext.programDoneBarrier::await);
+            CF.select().slot(0).exe(() -> {
+                final boolean done = slotContext.programContext.programDoneBarrier.await(20, TimeUnit.SECONDS);
+                if (!done) {
+                    System.out.println("PROGRAM DONE BARRIER LOCKED AT NODE [" + slotContext.programContext.runtimeContext.nodeID + "] " +
+                            "=> barrierCount = " + slotContext.programContext.programDoneBarrier.getCount());
+                }
+            });
 
         program.leave();
     }

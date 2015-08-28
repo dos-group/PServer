@@ -5,12 +5,13 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.SlotContext;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GlobalAggregator<T extends Serializable> {
+public class Aggregator<T extends Serializable> {
 
     // TODO: PRESERVE ORDER OF RECEIVED PARTIAL AGGREGATES ? !
 
@@ -35,8 +36,8 @@ public class GlobalAggregator<T extends Serializable> {
 
     // ---------------------------------------------------
 
-    public GlobalAggregator(final SlotContext sc, final T partialAgg) throws Exception { this(sc, partialAgg, true); }
-    public GlobalAggregator(final SlotContext sc, final T partialAgg, final boolean symmetricAgg) throws Exception {
+    public Aggregator(final SlotContext sc, final T partialAgg) throws Exception { this(sc, partialAgg, true); }
+    public Aggregator(final SlotContext sc, final T partialAgg, final boolean symmetricAgg) throws Exception {
 
         this.sc = Preconditions.checkNotNull(sc);
 
@@ -99,7 +100,7 @@ public class GlobalAggregator<T extends Serializable> {
 
     private T asymmetric_apply(final AggregatorFunction<T> function) throws Exception {
 
-        /*final Pair<Integer, Integer> slotIDs = sc.programContext.runtimeContext.executionManager.getAvailableSlotRangeForScope();
+        final Pair<Integer, Integer> slotIDs = sc.programContext.runtimeContext.executionManager.getAvailableSlotRangeForScope();
 
         // -- master node --
 
@@ -155,9 +156,7 @@ public class GlobalAggregator<T extends Serializable> {
 
         sharedGlobalAgg.done();
 
-        return resultAgg;*/
-
-        return null;
+        return resultAgg;
     }
 
     // ---------------------------------------------------

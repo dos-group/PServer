@@ -86,7 +86,7 @@ public final class ExecutionManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExecutionManager.class);
 
-    public final int numOfSlots;
+    public int numOfSlots;
 
     private final NetManager netManager;
 
@@ -102,7 +102,7 @@ public final class ExecutionManager {
 
     private final ThreadLocal<MutableInt> currentFrameLevel;
 
-    private final NestedIntervalTree<SlotAllocation> slotAssignment;
+    private NestedIntervalTree<SlotAllocation> slotAssignment;
 
     // ---------------------------------------------------
     // Constructor.
@@ -126,12 +126,6 @@ public final class ExecutionManager {
         this.activeFrame = new ExecutionFrame[numOfSlots];
 
         this.currentFrameLevel = new ThreadLocal<>();
-
-        final NestedIntervalTree.Interval in = new NestedIntervalTree.Interval(0, numOfSlots - 1);
-
-        final SlotAllocation sa = new SlotAllocation(in);
-
-        this.slotAssignment = new NestedIntervalTree<>(in, sa);
     }
 
     // ---------------------------------------------------
@@ -150,16 +144,27 @@ public final class ExecutionManager {
         programContextMap.remove(Preconditions.checkNotNull(jobID));
     }
 
-    public void registerSlotContext(final SlotContext ic) {
+    public synchronized void registerSlotContext(final SlotContext ic) {
         slotContextMap.put(Thread.currentThread().getId(), Preconditions.checkNotNull(ic));
     }
 
-    public SlotContext getSlotContext() {
+    public synchronized SlotContext getSlotContext() {
         return slotContextMap.get(Thread.currentThread().getId());
     }
 
-    public void unregisterSlotContext() {
+    public synchronized void unregisterSlotContext() {
         slotContextMap.remove(Thread.currentThread().getId());
+    }
+
+    public void setNumOfSlots(final int numOfSlots) {
+
+        this.numOfSlots = numOfSlots;
+
+        final NestedIntervalTree.Interval in = new NestedIntervalTree.Interval(0, numOfSlots - 1);
+
+        final SlotAllocation sa = new SlotAllocation(in);
+
+        this.slotAssignment = new NestedIntervalTree<>(in, sa);
     }
 
     public int getNumOfSlots() { return numOfSlots; }
@@ -292,8 +297,8 @@ public final class ExecutionManager {
         }
     }
 
-    public void localSync() {
-        final SlotContext slotContext = getSlotContext();
+    public void localSync(final SlotContext slotContext) {
+        //final SlotContext slotContext = getSlotContext();
         try {
             slotContext.programContext.localSyncBarrier.await();
         } catch (Exception e) {

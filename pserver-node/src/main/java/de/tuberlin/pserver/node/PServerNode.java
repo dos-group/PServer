@@ -108,6 +108,8 @@ public final class PServerNode extends EventDispatcher {
 
             LOG.info(programContext.toString());
 
+            executionManager.setNumOfSlots(programSubmission.perNodeDOP);
+
             executionManager.registerJob(programContext.programID, programContext);
 
             for (int i = 0; i < programContext.perNodeDOP; ++i) {

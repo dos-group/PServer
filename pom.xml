@@ -338,6 +338,7 @@
         <module>pserver-node</module>
         <module>pserver-ml</module>
         <module>pserver-examples</module>
+        <module>pserver-test</module>
         <module>pserver-dist</module>
     </modules>
 

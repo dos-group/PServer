@@ -33,5 +33,5 @@ public final class ControlFlow {
 
     public Selection select() {return new Selection(slotContext); }
 
-    public void syncSlots() { slotContext.programContext.runtimeContext.executionManager.localSync(); }
+    public void syncSlots() { slotContext.programContext.runtimeContext.executionManager.localSync(slotContext); }
 }
