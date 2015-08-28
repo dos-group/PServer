@@ -20,7 +20,7 @@ public class DistributedMatrixJob extends MLProgram {
 
         program.process(() -> {
 
-            CF.iterate().exe(X, (i, iter) -> {
+            /*CF.iterate().exe(X, (i, iter) -> {
                 X.set(iter.rowNum(), 0, slotContext.programContext.runtimeContext.nodeID + 1);
             });
 
@@ -29,7 +29,7 @@ public class DistributedMatrixJob extends MLProgram {
             CF.select().node(1).exe(() -> {
                 for (int i = 0; i < X.rows(); ++i)
                     System.out.println(X.get(i, 0));
-            });
+            });*/
 
             /*final Matrix.RowIterator iter = X.rowIterator();
             while (iter.hasNext()) {

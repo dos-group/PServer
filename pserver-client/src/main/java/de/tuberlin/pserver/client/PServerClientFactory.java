@@ -70,7 +70,7 @@ public enum PServerClientFactory {
                 throw new IllegalStateException();
         });
 
-        infraManager.start();
+        infraManager.start(false);
 
         // Active waiting until all nodes are available!
         while (infraManager.getNumOfNodesFromZookeeper() != detectedNodeNum.get()) {

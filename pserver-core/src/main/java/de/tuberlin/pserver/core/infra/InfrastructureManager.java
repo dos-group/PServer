@@ -43,17 +43,16 @@ public final class InfrastructureManager extends EventDispatcher {
         this.machine    = Preconditions.checkNotNull(machine);
         this.peers      = new ConcurrentHashMap<>();
         this.machines   = Collections.synchronizedList(new ArrayList<>());
-        machines.add(machine);
     }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    public void start() {
+    public void start(final boolean registerAtZookeeper) {
         final String zookeeperServer = ZookeeperClient.buildServersString(config.getObjectList("zookeeper.servers"));
         ZookeeperClient.checkConnectionString(zookeeperServer);
-        connectZookeeper(zookeeperServer);
+        connectZookeeper(zookeeperServer, registerAtZookeeper);
         LOG.debug("Started InfrastructureManager at " + machine);
     }
 
@@ -102,13 +101,16 @@ public final class InfrastructureManager extends EventDispatcher {
     // Private Methods.
     // ---------------------------------------------------
 
-    private void connectZookeeper(final String server) {
+    private void connectZookeeper(final String server, final boolean registerAtZookeeper) {
         Preconditions.checkNotNull(server);
         try {
             ZookeeperClient zookeeper = new ZookeeperClient(server);
             zookeeper.initDirectories();
             final String zkNodeDir = ZookeeperClient.ZOOKEEPER_NODES + "/" + machine.machineID.toString();
-            zookeeper.store(zkNodeDir, machine);
+            if (registerAtZookeeper) {
+                zookeeper.store(zkNodeDir, machine);
+                machines.add(machine);
+            }
             final InfrastructureWatcher watcher = new InfrastructureWatcher();
             final List<String> machineIDs = zookeeper.getChildrenForPathAndWatch(ZookeeperClient.ZOOKEEPER_NODES, watcher);
             synchronized (lock) {
