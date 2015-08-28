@@ -3,7 +3,6 @@ package de.tuberlin.pserver.core.infra;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.config.IConfig;
-import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -31,40 +30,46 @@ public final class InfrastructureManager extends EventDispatcher {
 
     private ZookeeperClient zookeeper;
 
-    private final Object lock = new Object();
+    public final boolean isClient;
+
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    public InfrastructureManager(final MachineDescriptor machine, final IConfig config) {
+    public InfrastructureManager(final MachineDescriptor machine, final IConfig config, final boolean isClient) {
         super(true, "INFRASTRUCTURE-MANAGER-THREAD");
         this.config     = Preconditions.checkNotNull(config);
         this.machine    = Preconditions.checkNotNull(machine);
         this.peers      = new ConcurrentHashMap<>();
         this.machines   = Collections.synchronizedList(new ArrayList<>());
+        this.isClient   = isClient;
     }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    public void start(final boolean registerAtZookeeper) {
+    public void start() {
         final String zookeeperServer = ZookeeperClient.buildServersString(config.getObjectList("zookeeper.servers"));
         ZookeeperClient.checkConnectionString(zookeeperServer);
-        connectZookeeper(zookeeperServer, registerAtZookeeper);
+        try {
+            zookeeper = new ZookeeperClient(zookeeperServer);
+            zookeeper.initDirectories();
+            Thread.sleep(1000);
+            if (!isClient) {
+                zookeeper.store(ZookeeperClient.ZOOKEEPER_NODES + "/" + machine.machineID.toString(), machine);
+                machines.add(machine);
+            }
+            loadMachines();
+        }
+        catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
         LOG.debug("Started InfrastructureManager at " + machine);
     }
 
-    public int getNodeIDFromMachineUID(final UUID machineUID) {
-        Preconditions.checkNotNull(machineUID);
-        for (int i = 0; i < machines.size(); ++i) {
-            if (machines.get(i).machineID.equals(machineUID))
-                return i;
-        }
-        throw new IllegalStateException();
-    }
-
+    private final Object lock = new Object();
 
     public Map<UUID, MachineDescriptor> getActivePeers() { return Collections.unmodifiableMap(peers); }
 
@@ -76,20 +81,19 @@ public final class InfrastructureManager extends EventDispatcher {
 
     public int getMachineIndex(final MachineDescriptor machine) { return machines.indexOf(Preconditions.checkNotNull(machine)); }
 
+    public int getNodeIDFromMachineUID(final UUID machineUID) {
+        Preconditions.checkNotNull(machineUID);
+        for (int i = 0; i < machines.size(); ++i) {
+            if (machines.get(i).machineID.equals(machineUID))
+                return i;
+        }
+        throw new IllegalStateException();
+    }
+
     public MachineDescriptor getMachine(final int machineIndex) {
         if (machineIndex >= machines.size())
             return null;
         return machines.get(machineIndex);
-    }
-
-    public int getNumOfNodesFromZookeeper() {
-        String numNodesStr = null;
-        try {
-            numNodesStr = (String)zookeeper.read("/numnodes");
-        } catch (Exception e) {
-            //throw new IllegalStateException(e);
-        }
-        return (numNodesStr == null) ? -1 : Integer.parseInt(numNodesStr);
     }
 
     // ---------------------------------------------------
@@ -97,105 +101,33 @@ public final class InfrastructureManager extends EventDispatcher {
     @Override
     public void deactivate() { super.deactivate(); }
 
-    // ---------------------------------------------------
-    // Private Methods.
-    // ---------------------------------------------------
-
-    private void connectZookeeper(final String server, final boolean registerAtZookeeper) {
-        Preconditions.checkNotNull(server);
-        try {
-            ZookeeperClient zookeeper = new ZookeeperClient(server);
-            zookeeper.initDirectories();
-            final String zkNodeDir = ZookeeperClient.ZOOKEEPER_NODES + "/" + machine.machineID.toString();
-            if (registerAtZookeeper) {
-                zookeeper.store(zkNodeDir, machine);
-                machines.add(machine);
-            }
-            final InfrastructureWatcher watcher = new InfrastructureWatcher();
-            final List<String> machineIDs = zookeeper.getChildrenForPathAndWatch(ZookeeperClient.ZOOKEEPER_NODES, watcher);
-            synchronized (lock) {
-                for (final String machineID : machineIDs) {
-                    final MachineDescriptor md = (MachineDescriptor) zookeeper.read(ZookeeperClient.ZOOKEEPER_NODES + "/" + machineID);
-                    if (!md.machineID.equals(machine.machineID)) {
-                        peers.put(md.machineID, md);
-                        machines.add(md);
-                        Collections.sort(machines);
-                        dispatchEvent(new Event(ZookeeperClient.IM_EVENT_NODE_ADDED, md));
-                    }
-                }
-            }
-            this.zookeeper = zookeeper;
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
+    private void loadMachines() {
+        int requiredNumNodes = Integer.parseInt((String)zookeeper.readBlocking("/numnodes"));
+        if(!isClient) {
+            requiredNumNodes--;
         }
+        while(readMachinesAndProcess() < requiredNumNodes) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        Collections.sort(machines);
     }
 
-    // ---------------------------------------------------
-    // Inner Classes.
-    // ---------------------------------------------------
-
-    private class InfrastructureWatcher implements Watcher {
-
-        @Override
-        public synchronized void process(final WatchedEvent event) {
-            //try {
-                synchronized (lock) {
-
-                    while (zookeeper == null) // Killer solution ! :)
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-
-                    zookeeper.getChildrenForPathAndWatch(ZookeeperClient.ZOOKEEPER_NODES, this);
-                    final List<String> machineList = zookeeper.getChildrenForPath(ZookeeperClient.ZOOKEEPER_NODES);
-                    // Find out whether a node was created or deleted.
-                    //if (peers.values().length() < machineList.length()) {
-                        // A node has been added.
-                        MachineDescriptor md = null;
-                        for (final String machineIDStr : machineList) {
-                            final UUID machineID = UUID.fromString(machineIDStr);
-                            if (!peers.containsKey(machineID)) {
-
-                                boolean readSuccess;
-                                do {
-                                    try {
-                                        md = (MachineDescriptor) zookeeper.read(event.getPath() + "/" + machineIDStr);
-                                        readSuccess = true;
-                                    } catch (Exception e) {
-                                        readSuccess = false;
-                                    }
-                                } while (!readSuccess);
-
-                                if (!md.machineID.equals(machine.machineID)) {
-                                    peers.put(machineID, md);
-                                    machines.add(md);
-                                    Collections.sort(machines);
-                                    dispatchEvent(new de.tuberlin.pserver.core.events.Event(ZookeeperClient.IM_EVENT_NODE_ADDED, md));
-                                }
-                            }
-                        }
-                    /*} else {
-                        // A node has been removed.
-                        UUID machineID = null;
-                        for (final UUID uid : peers.keySet()) {
-                            if (!machineList.contains(uid.toString())) {
-                                machineID = uid;
-                                break;
-                            }
-                        }
-                        final MachineDescriptor removedMachine = peers.remove(machineID);
-                        machines.remove(removedMachine);
-                        Collections.sort(machines);
-                        dispatchEvent(new de.tuberlin.pserver.core.events.Event(ZookeeperClient.IM_EVENT_NODE_REMOVED, removedMachine));
-                    }*/
-
-                    // keep watching
-                }
-            //} catch (Exception e) {
-            //    LOG.error(e.getLocalizedMessage());
-            //}
+    private int readMachinesAndProcess() {
+        final List<String> machineList = zookeeper.getChildrenForPath(ZookeeperClient.ZOOKEEPER_NODES);
+        for (final String machineIDStr : machineList) {
+            final UUID machineID = UUID.fromString(machineIDStr);
+            if (!peers.containsKey(machineID) && !machine.machineID.equals(machineID)) {
+                MachineDescriptor md = (MachineDescriptor) zookeeper.readBlocking(ZookeeperClient.ZOOKEEPER_NODES + "/" + machineIDStr);
+                //System.out.println("["+machine.machineID.toString().substring(0,4) + "]["+isClient+"]: added "+md.machineID.toString().substring(0,4));
+                peers.put(machineID, md);
+                machines.add(md);
+            }
         }
+        return machines.size();
     }
+
 }

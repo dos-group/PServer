@@ -5,6 +5,7 @@ import de.tuberlin.pserver.core.events.EventDispatcher;
 import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
+import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.runtime.*;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
