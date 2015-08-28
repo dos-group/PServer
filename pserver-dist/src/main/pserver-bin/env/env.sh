@@ -35,6 +35,8 @@ STAGING_PARAM_FORWARDING=""
 # STAGING_PARAM_FORWARDING="-f 1 -c 5"
 . "${PSERVER_ROOT_DIR}/profiles/${ENV_PROFILE}/env.sh"
 
+PARAM_ZOOKEEPER_DO_NOT_SET_NUMNODES=0
+
 while [ $# -gt 0 ]; do
 	case "${1}" in
 		-zid|--zookeeper-myid)
@@ -44,6 +46,10 @@ while [ $# -gt 0 ]; do
 			fi
 			PARAM_ZOOKEEPER_MYID="${2}"
 			shift 2
+			;;
+		--zookeeper-do-not-set-numnodes)
+			PARAM_ZOOKEEPER_DO_NOT_SET_NUMNODES=1
+			shift 1
 			;;
 		-called-from-staging)
 			PARAM_CALLED_FROM_STAGING=1
