@@ -7,6 +7,7 @@ import de.tuberlin.pserver.core.infra.InetHelper;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.infra.ZookeeperClient;
+import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.core.net.RPCManager;
 import de.tuberlin.pserver.runtime.DataManager;
@@ -70,38 +71,31 @@ public enum PServerNodeFactory {
 
     private PServerNodeFactory(final IConfig config) {
 
+
+
         final long start = System.nanoTime();
 
         this.config             = Preconditions.checkNotNull(config);
         this.machine            = configureMachine();
+
         this.memoryManager      = null; //new MemoryManager(config);
-        this.infraManager       = new InfrastructureManager(machine, config);
+        this.infraManager       = new InfrastructureManager(machine, config, false);
         this.netManager         = new NetManager(machine, infraManager, 16);
         this.userCodeManager    = new UserCodeManager(this.getClass().getClassLoader());
         this.rpcManager         = new RPCManager(netManager);
 
-        infraManager.addEventListener(ZookeeperClient.IM_EVENT_NODE_ADDED, event -> {
-            if (event.getPayload() instanceof MachineDescriptor) {
-                final MachineDescriptor md = (MachineDescriptor) event.getPayload();
-                if (!machine.machineID.equals(md.machineID)) {
-                    netManager.connectTo(md);
-                    detectedNodeNum.incrementAndGet();
-                }
-            } else
-                throw new IllegalStateException();
-        });
-
-        infraManager.start(true);
-
-        // Active waiting until all nodes are available!
-        while (infraManager.getNumOfNodesFromZookeeper() - 1 != detectedNodeNum.get()) {
-            try { Thread.sleep(1000); } catch(Exception e) { LOG.error(e.getMessage()); }
-        }
+        infraManager.start(); // blocking until all nodes are registered at zookeeper
+        infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connectTo);
 
         this.fileSystemManager  = createFileSystem(infraManager.getNodeID());
         this.dht                = new DHTManager(this.config, infraManager, netManager);
         this.executionManager   = new ExecutionManager(Runtime.getRuntime().availableProcessors(), netManager);
         this.dataManager        = new DataManager(this.config, infraManager, netManager, executionManager, fileSystemManager, dht);
+
+        netManager.addEventListener(NetEvents.NetEventTypes.ECHO_REQUEST, event -> {
+            UUID dst = ((NetEvents.NetEvent) event).srcMachineID;
+            netManager.sendEvent(dst, new NetEvents.NetEvent(NetEvents.NetEventTypes.ECHO_RESPONSE));
+        });
 
         LOG.info("PServer Node Startup: " + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms");
     }
