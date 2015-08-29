@@ -71,10 +71,15 @@ public enum PServerNodeFactory {
 
     private PServerNodeFactory(final IConfig config) {
 
+
+
         final long start = System.nanoTime();
 
         this.config             = Preconditions.checkNotNull(config);
         this.machine            = configureMachine();
+
+        //System.out.println("["+machine.machineID.toString().substring(0,4) + "]["+false+"]: started");
+
         this.memoryManager      = null; //new MemoryManager(config);
         this.infraManager       = new InfrastructureManager(machine, config, false);
         this.netManager         = new NetManager(machine, infraManager, 16);
@@ -82,21 +87,26 @@ public enum PServerNodeFactory {
         this.rpcManager         = new RPCManager(netManager);
 
         infraManager.start(); // blocking until all nodes are registered at zookeeper
+        //System.out.println("[" + machine.machineID.toString().substring(0, 4) + "] connect");
         infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connectTo);
 
+        //System.out.println("[" + machine.machineID.toString().substring(0, 4) + "] fs");
         this.fileSystemManager  = createFileSystem(infraManager.getNodeID());
+        //System.out.println("["+machine.machineID.toString().substring(0,4)+"] dht");
         this.dht                = new DHTManager(this.config, infraManager, netManager);
+        //System.out.println("["+machine.machineID.toString().substring(0,4)+"] exec");
         this.executionManager   = new ExecutionManager(Runtime.getRuntime().availableProcessors(), netManager);
+        //System.out.println("["+machine.machineID.toString().substring(0,4)+"] dm");
         this.dataManager        = new DataManager(this.config, infraManager, netManager, executionManager, fileSystemManager, dht);
 
-        netManager.addEventListener("ECHO_REQUEST", event -> {
-            //LOG.info("Received ECHO_REQUEST on instance " + "[" + infraManager.getNodeID() + "] from " + ((NetEvents.NetEvent) event).srcMachineID);
-            netManager.connectTo((MachineDescriptor)event.getPayload());
+        netManager.addEventListener(NetEvents.NetEventTypes.ECHO_REQUEST, event -> {
+            //LOG.info("Received ECHO_REQUEST on instance " + "[" + machine.machineID.toString().substring(0,4) + "] from " + ((NetEvents.NetEvent) event).srcMachineID.toString().substring(0,4));
             UUID dst = ((NetEvents.NetEvent) event).srcMachineID;
-            netManager.sendEvent(dst, new NetEvents.NetEvent("ECHO_RESPONSE"));
+            netManager.sendEvent(dst, new NetEvents.NetEvent(NetEvents.NetEventTypes.ECHO_RESPONSE));
+            System.out.println("node response: [" + machine.machineID.toString().substring(0, 4) + "] -> [" + dst.toString().substring(0, 4) + "]");
         });
 
-        LOG.info("PServer Node Startup: " + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms");
+        LOG.info("["+machine.machineID.toString().substring(0,4)+"] PServer Node Startup: " + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms");
     }
 
     // ---------------------------------------------------

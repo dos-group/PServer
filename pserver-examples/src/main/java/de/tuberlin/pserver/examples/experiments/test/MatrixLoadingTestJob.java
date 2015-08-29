@@ -21,7 +21,7 @@ import java.util.List;
 
 public class MatrixLoadingTestJob extends MLProgram  {
 
-    private static final int NUM_NODES = 7;
+    private static final int NUM_NODES = 8;
     private static final long ROWS = 10000;
     private static final long COLS = 2500;
     private static final String FILE = "datasets/rowcolval_dataset_"+ROWS+"_"+COLS+".csv";

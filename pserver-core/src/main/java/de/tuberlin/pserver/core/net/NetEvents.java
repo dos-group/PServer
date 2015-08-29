@@ -23,6 +23,10 @@ public final class NetEvents {
 
         public static final String IO_EVENT_RPC_CALLER_RESPONSE = "res";
 
+        public static final String ECHO_REQUEST = "ECHO_REQUEST";
+
+        public static final String ECHO_RESPONSE = "ECHO_RESPONSE";
+
 
     }
 

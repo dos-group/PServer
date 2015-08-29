@@ -56,7 +56,7 @@ public final class InfrastructureManager extends EventDispatcher {
         try {
             zookeeper = new ZookeeperClient(zookeeperServer);
             zookeeper.initDirectories();
-            Thread.sleep(1000);
+            //Thread.sleep(1000);
             if (!isClient) {
                 zookeeper.store(ZookeeperClient.ZOOKEEPER_NODES + "/" + machine.machineID.toString(), machine);
                 machines.add(machine);
@@ -107,16 +107,19 @@ public final class InfrastructureManager extends EventDispatcher {
             requiredNumNodes--;
         }
         while(readMachinesAndProcess() < requiredNumNodes) {
+
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
+        // System.out.println("["+machine.machineID.toString().substring(0,4) + "]["+isClient+"]: left loop: " + requiredNumNodes);
         Collections.sort(machines);
     }
 
     private int readMachinesAndProcess() {
+        // System.out.println("["+machine.machineID.toString().substring(0,4) + "]["+isClient+"]: updating machines");
         final List<String> machineList = zookeeper.getChildrenForPath(ZookeeperClient.ZOOKEEPER_NODES);
         for (final String machineIDStr : machineList) {
             final UUID machineID = UUID.fromString(machineIDStr);
@@ -127,6 +130,7 @@ public final class InfrastructureManager extends EventDispatcher {
                 machines.add(md);
             }
         }
+        // System.out.println("["+machine.machineID.toString().substring(0,4) + "]["+isClient+"]: has "+machines.size() + " machines");
         return machines.size();
     }
 

@@ -63,36 +63,65 @@ public enum PServerClientFactory {
 
         this.config         = Preconditions.checkNotNull(config);
         this.machine        = configureMachine();
+
+        //System.out.println("["+machine.machineID.toString().substring(0,4) + "]["+true+"]: started");
+
         this.infraManager   = new InfrastructureManager(machine, config, true);
         this.netManager     = new NetManager(machine, infraManager, 16);
 
         infraManager.start(); // blocking until all nodes are registered at zookeeper
         infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connectTo);
 
-        LOG.info("client infra startup");
+        //LOG.info("client infra startup");
 
         // block until all nodes are really ready for job submission
-        Set<UUID> responses = new HashSet<>();
+        final Set<UUID> responses = new HashSet<>();
         infraManager.getMachines().forEach(md -> responses.add(md.machineID));
-        netManager.addEventListener("ECHO_RESPONSE", event -> {
-            LOG.info("Received ECHO_RESPONSE on client from " + ((NetEvents.NetEvent) event).srcMachineID);
-            synchronized (responses) {
-                //System.out.println(".");
-                responses.remove(((NetEvents.NetEvent) event).srcMachineID);
-                responses.notifyAll();
-            }
-        });
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        netManager.addEventListener(
+                NetEvents.NetEventTypes.ECHO_RESPONSE,
+                new IEventHandler() {
+                    @Override
+                    public void handleEvent(Event event) {
+                        //System.out.println("attempting to get lock");
+                        synchronized (responses) {
+                            //System.out.println("got lock");
+                            responses.remove(((NetEvents.NetEvent) event).srcMachineID);
+                            responses.notifyAll();
+                        }
+                    }
+                }
+        );
+// THE ABOVE DOES NOT WORK WITH LAMBDA !!!
+// EXCEPT WITH REFERENCE TO "this"
+// ???
+//                event -> {
+//            //LOG.info("Received ECHO_RESPONSE on client from " + ((NetEvents.NetEvent) event).srcMachineID.toString().substring(0,4));
+//            //String fu = machine.machineID.toString();
+//            System.out.println("attempting to get lock");
+//            synchronized (responses) {
+//                System.out.println("got lock");
+//                responses.remove(((NetEvents.NetEvent) event).srcMachineID);
+//                responses.notifyAll();
+//            }
+//    });
         synchronized (responses) {
             while(!responses.isEmpty()) {
-                LOG.info("responses to go: " + responses.size());
+                //LOG.info("responses to go: " + responses.size());
                 try {
                     for (UUID response : responses) {
-                        LOG.info("ECHO_REQUEST sent to " + response.toString());
-                        NetEvents.NetEvent event = new NetEvents.NetEvent("ECHO_REQUEST");
+                        //LOG.info("ECHO_REQUEST sent to " + response.toString().substring(0,4));
+                        NetEvents.NetEvent event = new NetEvents.NetEvent(NetEvents.NetEventTypes.ECHO_REQUEST);
                         event.setPayload(machine);
+                        System.out.println("client request: ["+machine.machineID.toString().substring(0,4)+"] -> ["+response.toString().substring(0,4)+"]");
                         netManager.sendEvent(response, event);
                     }
-                    responses.wait(2000);
+                    System.out.println("client echoed to all nodes");
+                    responses.wait(1000);
                 } catch (InterruptedException e) {}
             }
         }
