@@ -84,8 +84,6 @@ public final class NetManager extends EventDispatcher {
     public void connectTo(final MachineDescriptor dstMachine) {
         Preconditions.checkNotNull(dstMachine);
 
-        final Lock lock = new ReentrantLock();
-        final Condition condition = lock.newCondition();
         final InetSocketAddress socketAddress = new InetSocketAddress(dstMachine.address, dstMachine.port);
         final Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(elg).channel(NioSocketChannel.class).handler(new ChannelInitializer<SocketChannel>() {
@@ -105,30 +103,31 @@ public final class NetManager extends EventDispatcher {
             @Override
             public void operationComplete(ChannelFuture cf) throws Exception {
                 if (cf.isSuccess()) {
-                    peers.put(dstMachine.machineID, cf.channel());
+                    synchronized (peers) {
+                        peers.put(dstMachine.machineID, cf.channel());
+                        peers.notify();
+                    }
                     final NetEvents.NetEvent event = new NetEvents.NetEvent(
                             NetEvents.NetEventTypes.IO_EVENT_CHANNEL_CONNECTED,
                             machine.machineID,
                             dstMachine.machineID
                     );
                     sendEvent(dstMachine, event);
-                    lock.lock();
-                    condition.signal();
-                    lock.unlock();
                 } else {
                     throw new IllegalStateException(cf.cause());
                 }
             }
         });
 
-        lock.lock();
-        try {
-            condition.await();
-        } catch (InterruptedException e) {
-            LOG.error(e.getLocalizedMessage());
-        } finally {
-            lock.unlock();
+        synchronized (peers) {
+            while(!peers.containsKey(dstMachine.machineID)) {
+                try {
+                    peers.wait(1000);
+                }
+                catch (InterruptedException e) {}
+            }
         }
+
     }
 
     public void sendEvent(final int nodeID, final NetEvents.NetEvent event) {
