@@ -67,16 +67,9 @@ public enum PServerClientFactory {
         infraManager.start(); // blocking until all nodes are registered at zookeeper
         infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connectTo);
 
-        //LOG.info("client infra startup");
-
         // block until all nodes are really ready for job submission
         final Set<UUID> responses = new HashSet<>();
         infraManager.getMachines().forEach(md -> responses.add(md.machineID));
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         netManager.addEventListener(
                 NetEvents.NetEventTypes.ECHO_RESPONSE,
                 new IEventHandler() {
@@ -89,19 +82,18 @@ public enum PServerClientFactory {
                     }
                 }
         );
-// THE ABOVE DOES NOT WORK WITH LAMBDA !!!
-// EXCEPT WITH REFERENCE TO "this"
-// ???
-//                event -> {
-//            //LOG.info("Received ECHO_RESPONSE on client from " + ((NetEvents.NetEvent) event).srcMachineID.toString().substring(0,4));
-//            //String fu = machine.machineID.toString();
-//            System.out.println("attempting to get lock");
-//            synchronized (responses) {
-//                System.out.println("got lock");
-//                responses.remove(((NetEvents.NetEvent) event).srcMachineID);
-//                responses.notifyAll();
-//            }
-//    });
+        //THE ABOVE DOES NOT WORK WITH LAMBDAS !!!
+        //EXCEPT WITH REFERENCE TO "this"
+        //???
+        //netManager.addEventListener(
+        //      NetEvents.NetEventTypes.ECHO_RESPONSE,
+        //      event -> {
+        //            //String mandatoryFooBarReferenceToParentObject = machine.machineID.toString();
+        //            synchronized (responses) {
+        //                responses.remove(((NetEvents.NetEvent) event).srcMachineID);
+        //                responses.notifyAll();
+        //            }
+        //});
         synchronized (responses) {
             while(!responses.isEmpty()) {
                 try {
