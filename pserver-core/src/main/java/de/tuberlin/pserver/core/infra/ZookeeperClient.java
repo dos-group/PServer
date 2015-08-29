@@ -106,6 +106,20 @@ public final class ZookeeperClient {
         }
     }
 
+    public Object readBlocking(final String path) {
+        Object result = null;
+        boolean readSuccess;
+        do {
+            try {
+                result = read(path);
+                readSuccess = true;
+            } catch (Exception e) {
+                readSuccess = false;
+            }
+        } while (!readSuccess);
+        return result;
+    }
+
     public void store(final String path, final Object object) throws Exception {
         try {
             final ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();

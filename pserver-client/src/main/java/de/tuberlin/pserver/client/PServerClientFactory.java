@@ -4,18 +4,22 @@ package de.tuberlin.pserver.client;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.config.IConfigFactory;
+import de.tuberlin.pserver.core.events.Event;
+import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InetHelper;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.infra.ZookeeperClient;
+import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.runtime.usercode.UserCodeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public enum PServerClientFactory {
 
@@ -55,26 +59,60 @@ public enum PServerClientFactory {
 
         this.config         = Preconditions.checkNotNull(config);
         this.machine        = configureMachine();
-        this.infraManager   = new InfrastructureManager(machine, config);
+
+
+        this.infraManager   = new InfrastructureManager(machine, config, true);
         this.netManager     = new NetManager(machine, infraManager, 16);
 
-        final AtomicInteger detectedNodeNum = new AtomicInteger(0);
-        infraManager.addEventListener(ZookeeperClient.IM_EVENT_NODE_ADDED, event -> {
-            if (event.getPayload() instanceof MachineDescriptor) {
-                final MachineDescriptor md = (MachineDescriptor) event.getPayload();
-                if (!machine.machineID.equals(md.machineID)) {
-                    netManager.connectTo(md);
-                    detectedNodeNum.incrementAndGet();
+        infraManager.start(); // blocking until all nodes are registered at zookeeper
+        infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connectTo);
+
+        //LOG.info("client infra startup");
+
+        // block until all nodes are really ready for job submission
+        final Set<UUID> responses = new HashSet<>();
+        infraManager.getMachines().forEach(md -> responses.add(md.machineID));
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        netManager.addEventListener(
+                NetEvents.NetEventTypes.ECHO_RESPONSE,
+                new IEventHandler() {
+                    @Override
+                    public void handleEvent(Event event) {
+                        synchronized (responses) {
+                            responses.remove(((NetEvents.NetEvent) event).srcMachineID);
+                            responses.notifyAll();
+                        }
+                    }
                 }
-            } else
-                throw new IllegalStateException();
-        });
-
-        infraManager.start(false);
-
-        // Active waiting until all nodes are available!
-        while (infraManager.getNumOfNodesFromZookeeper() != detectedNodeNum.get()) {
-            try { Thread.sleep(1000); } catch(Exception e) { LOG.error(e.getMessage()); }
+        );
+// THE ABOVE DOES NOT WORK WITH LAMBDA !!!
+// EXCEPT WITH REFERENCE TO "this"
+// ???
+//                event -> {
+//            //LOG.info("Received ECHO_RESPONSE on client from " + ((NetEvents.NetEvent) event).srcMachineID.toString().substring(0,4));
+//            //String fu = machine.machineID.toString();
+//            System.out.println("attempting to get lock");
+//            synchronized (responses) {
+//                System.out.println("got lock");
+//                responses.remove(((NetEvents.NetEvent) event).srcMachineID);
+//                responses.notifyAll();
+//            }
+//    });
+        synchronized (responses) {
+            while(!responses.isEmpty()) {
+                try {
+                    for (UUID response : responses) {
+                        NetEvents.NetEvent event = new NetEvents.NetEvent(NetEvents.NetEventTypes.ECHO_REQUEST);
+                        event.setPayload(machine);
+                        netManager.sendEvent(response, event);
+                    }
+                    responses.wait(1000);
+                } catch (InterruptedException e) {}
+            }
         }
 
         this.userCodeManager = new UserCodeManager(this.getClass().getClassLoader());
