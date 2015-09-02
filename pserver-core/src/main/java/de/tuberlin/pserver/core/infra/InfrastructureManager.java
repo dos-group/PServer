@@ -102,9 +102,6 @@ public final class InfrastructureManager extends EventDispatcher {
 
     private void loadMachines() {
         int requiredNumNodes = Integer.parseInt((String)zookeeper.readBlocking("/numnodes"));
-        if(!isClient) {
-            requiredNumNodes--;
-        }
         while(readMachinesAndProcess() < requiredNumNodes) {
             try {
                 Thread.sleep(1000);

@@ -20,7 +20,7 @@ public class MatrixLoadingTestJob extends MLProgram  {
 
     private static final long ROWS = 10000;
     private static final long COLS = 2500;
-    private static final String FILE = "datasets/rowcolval_dataset_" + ROWS + "_" + COLS + ".csv";
+    private static final String FILE = "datasets/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
 
     @SharedState(
             globalScope = GlobalScope.PARTITIONED,
@@ -76,7 +76,7 @@ public class MatrixLoadingTestJob extends MLProgram  {
     }
 
     public static void main(String[] args) {
-        System.setProperty("simulation.numNodes", "13");
+        System.setProperty("simulation.numNodes", "4");
         PServerExecutor.LOCAL
                 .run(MatrixLoadingTestJob.class, 1)
                 .done();

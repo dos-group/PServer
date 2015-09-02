@@ -84,7 +84,7 @@ public final class PServerNode extends EventDispatcher {
         @Override
         public void handleEvent(final Event e) {
             final ProgramSubmissionEvent programSubmission = (ProgramSubmissionEvent)e;
-            LOG.info("Received job on instance " + "[" + infraManager.getNodeID() + "]" + programSubmission.toString());
+//            LOG.info("Received job on instance " + "[" + infraManager.getNodeID() + "]" + programSubmission.toString());
 
             final Class<?> clazz = userCodeManager.implantClass(programSubmission.byteCode);
 
@@ -107,7 +107,7 @@ public final class PServerNode extends EventDispatcher {
                     programSubmission.perNodeDOP
             );
 
-            LOG.info(programContext.toString());
+//            LOG.info(programContext.toString());
 
             executionManager.setNumOfSlots(programSubmission.perNodeDOP);
 

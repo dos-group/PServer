@@ -9,6 +9,7 @@ import de.tuberlin.pserver.math.exceptions.SingularMatrixException;
 import de.tuberlin.pserver.math.operations.ApplyOnDoubleElements;
 import de.tuberlin.pserver.math.utils.VectorFunction;
 import de.tuberlin.pserver.math.vector.Vector;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
@@ -53,8 +54,6 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
 
     public static final class PartitionShape {
 
-        private transient Gson gson = GsonUtils.createPrettyPrintAndAnnotationExclusionGson();
-
         public final long rows;
         public final long cols;
         public final long rowOffset;
@@ -79,7 +78,24 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
             return row < rows && col < cols;
         }
 
-        @Override public String toString() { return "\nPartitionShape " + gson.toJson(this); }
+        @Override public String toString() { return "PartitionShape ("+rows+"+"+rowOffset+","+cols+"+"+colOffset+")"; }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+
+            if (o == null || getClass() != o.getClass()) return false;
+
+            PartitionShape that = (PartitionShape) o;
+
+            return new EqualsBuilder()
+                    .append(rows, that.rows)
+                    .append(cols, that.cols)
+                    .append(rowOffset, that.rowOffset)
+                    .append(colOffset, that.colOffset)
+                    .isEquals();
+        }
+
     }
 
     // ---------------------------------------------------

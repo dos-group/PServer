@@ -437,10 +437,9 @@ public class DataManager extends EventDispatcher {
 
     public void loadInputData(final SlotContext ctx) throws Exception{
         Preconditions.checkNotNull(ctx);
-        if (fileSystemManager != null) {
-            if (ctx.slotID == 0) {
-                matrixPartitionManager.loadFilesIntoDHT();
-            }
+        Preconditions.checkNotNull(fileSystemManager);
+        if (ctx.slotID == 0) {
+            matrixPartitionManager.loadFilesIntoDHT();
         }
     }
 }
