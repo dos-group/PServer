@@ -127,16 +127,19 @@ public class Aggregator<T extends Serializable> {
 
             sharedGlobalAgg.set(agg);
 
-            sc.CF.syncSlots();
+            //sc.CF.syncSlots();
         });
 
-        sc.CF.select().node(AGG_NODE_ID).slot(slotIDs.getLeft() + 1, slotIDs.getRight()).exe(sc.CF::syncSlots);
+        //sc.CF.select().node(AGG_NODE_ID).slot(slotIDs.getLeft() + 1, slotIDs.getRight()).exe(sc.CF::syncSlots);
 
         // -- slave nodes --
 
+
+       // System.out.println("----------------------------------------------->> " + slotIDs.getLeft());
+
         sc.CF.select().node(AGG_NODE_ID + 1, sc.programContext.nodeDOP - 1).slot(slotIDs.getLeft()).exe(() -> {
 
-            sc.programContext.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg, new int[] {AGG_NODE_ID});
+            sc.programContext.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg, new int[]{AGG_NODE_ID});
 
             sc.programContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, aggPushUID(), new DataManager.DataEventHandler() {
 
@@ -147,10 +150,12 @@ public class Aggregator<T extends Serializable> {
                 }
             });
 
-            sc.CF.syncSlots();
+            //sc.CF.syncSlots();
         });
 
-        sc.CF.select().node(AGG_NODE_ID + 1, sc.programContext.nodeDOP - 1).slot(slotIDs.getLeft() + 1, slotIDs.getRight()).exe(sc.CF::syncSlots);
+        //sc.CF.select().node(AGG_NODE_ID + 1, sc.programContext.nodeDOP - 1).slot(slotIDs.getLeft() + 1, slotIDs.getRight()).exe(sc.CF::syncSlots);
+
+        sc.CF.syncSlots();
 
         final T resultAgg = sharedGlobalAgg.get();
 

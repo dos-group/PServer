@@ -6,7 +6,7 @@ import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.runtime.MLProgram;
 
 
-public class AggregatorTestJob extends MLProgram {
+public class SymAggregatorTestJob extends MLProgram {
 
     @Override
     public void define(final Program program) {

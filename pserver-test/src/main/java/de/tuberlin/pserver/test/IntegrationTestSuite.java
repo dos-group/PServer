@@ -18,7 +18,7 @@ public class IntegrationTestSuite {
     // Constants.
     // ---------------------------------------------------
 
-    public static final int NUM_NODES = 4;
+    public static final int NUM_NODES = 1;
 
     public static final int NUM_SLOTS = 4;
 

@@ -76,7 +76,7 @@ public class NestedIntervalTree<T> {
 
     // ---------------------------------------------------
 
-    public boolean put(final Interval interval, final T value) {
+    public synchronized boolean put(final Interval interval, final T value) {
         Preconditions.checkNotNull(interval);
         Preconditions.checkNotNull(value);
         final Node parent = find(root, interval);
@@ -93,7 +93,7 @@ public class NestedIntervalTree<T> {
     }
 
     //public Node find(final Interval interval) { return find(root, interval); }
-    private Node find(final Node n, final Interval interval) {
+    private synchronized Node find(final Node n, final Interval interval) {
         if (n.interval.contains(interval)) {
             for (Node c : n.children) {
                 final Node r = find(c, interval);
@@ -105,7 +105,7 @@ public class NestedIntervalTree<T> {
             return null;
     }
 
-    public boolean exist(final Interval interval) { return exist(root, interval); }
+    public synchronized boolean exist(final Interval interval) { return exist(root, interval); }
     private boolean exist(final Node n, final Interval interval) {
         if (n.interval.contains(interval)) {
             if (n.interval.equals(interval))
@@ -118,7 +118,7 @@ public class NestedIntervalTree<T> {
         return false;
     }
 
-    public boolean isValid(final Interval interval) { return isValid(root, interval); }
+    public synchronized boolean isValid(final Interval interval) { return isValid(root, interval); }
     private boolean isValid(final Node n, final Interval interval) {
         if (n.interval.contains(interval)) {
             for (Node c : n.children) {
@@ -132,7 +132,27 @@ public class NestedIntervalTree<T> {
             return false;
     }
 
-    public Pair<Interval,T> get(final Interval interval) {
+
+    public synchronized boolean isValid2(final Interval interval) { return isValid2(root, interval); }
+    private boolean isValid2(final Node n, final Interval interval) {
+        //System.out.println("node interval = " + n.interval + " -- interval = " + interval);
+        if (n.interval.contains(interval)) {
+            //System.out.println("contains");
+            for (Node c : n.children) {
+                if (c.interval.intersects(interval)) {
+                    System.out.println("intersects " + c.interval.toString());
+                    return false;
+                } else
+                    isValid(c.interval); // TODO: Should be right ??
+            }
+            return true;
+        } else
+            return false;
+    }
+
+
+
+    public synchronized Pair<Interval,T> get(final Interval interval) {
         Preconditions.checkNotNull(interval);
         final Node n = find(root, interval);
         if (n == null)
@@ -140,7 +160,7 @@ public class NestedIntervalTree<T> {
         return Pair.of(n.interval, n.value);
     }
 
-    public boolean remove(final Interval interval) {
+    public synchronized boolean remove(final Interval interval) {
         Preconditions.checkNotNull(interval);
         final Node n = find(root, interval);
         if (n == null)
@@ -148,6 +168,20 @@ public class NestedIntervalTree<T> {
         if (n.parent != null)
             n.parent.children.remove(n);
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return toString(root);
+    }
+
+    public String toString(final Node parent) {
+        final StringBuilder strBuilder = new StringBuilder();
+        strBuilder.append("[" + parent.interval.low + ", " + parent.interval.high + "]\n");
+        for (final Node n : parent.children) {
+            strBuilder.append(toString(n));
+        }
+        return strBuilder.toString();
     }
 
     // ---------------------------------------------------

@@ -242,14 +242,22 @@ public final class ExecutionManager {
 
     public SlotAllocation allocSlots(final int low, final int high) {
 
-        final NestedIntervalTree.Interval range = new NestedIntervalTree.Interval(low, high);
+        assert low == high;
 
         synchronized (monitor) {
 
+            final NestedIntervalTree.Interval range = new NestedIntervalTree.Interval(low, high);
+
             if (!slotAssignment.exist(range)) {
 
-                if (!slotAssignment.isValid(range))
-                    throw new IllegalStateException();
+                if (!slotAssignment.isValid(range)) {
+
+                    //System.out.println(range.toString() + "  ====>  " + slotAssignment.toString());
+
+                    //slotAssignment.isValid2(range);
+
+                    throw new IllegalStateException("\n" + slotAssignment.toString());
+                }
 
                 final SlotAllocation sa = new SlotAllocation(range);
 
@@ -274,6 +282,10 @@ public final class ExecutionManager {
                 slotAssignment.remove(Preconditions.checkNotNull(sa.range));
             }
         }
+    }
+
+    public String printAllocation() {
+        return slotAssignment.toString();
     }
 
     // ---------------------------------------------------
