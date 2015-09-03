@@ -13,6 +13,7 @@ import de.tuberlin.pserver.math.vector.VectorBuilder;
 import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 
 public class DistributedMatrix extends AbstractMatrix {
 
@@ -218,8 +219,7 @@ public class DistributedMatrix extends AbstractMatrix {
         switch (partitionType) {
             case NOT_PARTITIONED: return new PartitionShape(rows, cols, 0, 0);
             case ROW_PARTITIONED: {
-                final long _rows = (rows % 2 != 0 && nodeID == nodeDOP - 1) ? (rows / nodeDOP) + 1 : rows / nodeDOP;
-                return new PartitionShape(_rows, cols, (rows / nodeDOP) * nodeID, 0);
+                return new MatrixByRowPartitioner(nodeID, nodeDOP, rows, cols).getPartitionShape();
             }
             case COLUMN_PARTITIONED: throw new UnsupportedOperationException();
             case BLOCK_PARTITIONED: throw new UnsupportedOperationException();

@@ -20,7 +20,9 @@ import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
 import de.tuberlin.pserver.types.DistributedMatrix;
 import de.tuberlin.pserver.types.PartitionType;
+import org.apache.log4j.Logger;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +32,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class MatrixPartitionManager {
+
+    private Logger LOG = Logger.getLogger(MatrixPartitionManager.class);
 
     // ---------------------------------------------------
     // Inner Classes.
@@ -246,6 +250,7 @@ public final class MatrixPartitionManager {
         final Matrix matrix = getLoadingMatrix(task);
         ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
 
+        int nodeId = task.slotContext.programContext.runtimeContext.nodeID;
         MatrixEntry entry = null;
         while (fileIterator.hasNext()) {
             final IRecord record = fileIterator.next();
@@ -257,23 +262,17 @@ public final class MatrixPartitionManager {
                 // get the partition this record belongs to
                 int targetPartition = matrixPartitioner.getPartitionOfEntry(entry);
                 // if record belongs to own node, set the value
-                if (targetPartition == task.slotContext.programContext.runtimeContext.nodeID) {
+                if (targetPartition == nodeId) {
                     matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
                 } else {
                     // otherwise append entry to foreign entries and send them depending on threshold
-                    List<MatrixEntry> foreignsOfTargetNode = getSavely(foreignEntries, targetPartition, foreignEntriesThreshold);
+                    List<MatrixEntry> foreignsOfTargetNode = getListOrCreateIfNotExists(foreignEntries, targetPartition, foreignEntriesThreshold);
                     foreignsOfTargetNode.add(new ImmutableMatrixEntry(entry));
                     if (foreignsOfTargetNode.size() >= foreignEntriesThreshold) {
                         sendPartition(targetPartition, foreignsOfTargetNode, task);
                     }
                 }
             }
-
-            //final MatrixEntry me = entry;
-            //try {
-            //    task.slotContext.CF.select().node(0).slot(0).exe(() -> {if (me != null) System.out.println("--> " + matrix.get(me.getRow(), 0)); });
-            //} catch (Exception e) {
-            //}
         }
         // send all remaining foreign entries
         for (Map.Entry<Integer, List<MatrixEntry>> map : foreignEntries.entrySet()) {
@@ -299,7 +298,7 @@ public final class MatrixPartitionManager {
         }
     }
 
-    private List<MatrixEntry> getSavely(Map<Integer, List<MatrixEntry>> foreignEntries, int partitionId, int threshold) {
+    private List<MatrixEntry> getListOrCreateIfNotExists(Map<Integer, List<MatrixEntry>> foreignEntries, int partitionId, int threshold) {
         List<MatrixEntry> result = foreignEntries.get(partitionId);
         // if list does not exist yet, create and put it into map
         if (result == null) {

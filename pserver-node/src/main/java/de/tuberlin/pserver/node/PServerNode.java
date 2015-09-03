@@ -5,6 +5,7 @@ import de.tuberlin.pserver.core.events.EventDispatcher;
 import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
+import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.runtime.*;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
@@ -83,7 +84,7 @@ public final class PServerNode extends EventDispatcher {
         @Override
         public void handleEvent(final Event e) {
             final ProgramSubmissionEvent programSubmission = (ProgramSubmissionEvent)e;
-            LOG.info("Received job on instance " + "[" + infraManager.getNodeID() + "]" + programSubmission.toString());
+//            LOG.info("Received job on instance " + "[" + infraManager.getNodeID() + "]" + programSubmission.toString());
 
             final Class<?> clazz = userCodeManager.implantClass(programSubmission.byteCode);
 
@@ -106,7 +107,7 @@ public final class PServerNode extends EventDispatcher {
                     programSubmission.perNodeDOP
             );
 
-            LOG.info(programContext.toString());
+//            LOG.info(programContext.toString());
 
             executionManager.setNumOfSlots(programSubmission.perNodeDOP);
 

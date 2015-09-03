@@ -1,6 +1,8 @@
 package de.tuberlin.pserver.test.core.jobs;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.core.infra.ClusterSimulator;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.dsl.state.GlobalScope;
 import de.tuberlin.pserver.dsl.state.SharedState;
@@ -18,7 +20,7 @@ public class MatrixLoadingTestJob extends MLProgram  {
 
     private static final long ROWS = 10000;
     private static final long COLS = 2500;
-    private static final String FILE = "datasets/rowcolval_dataset_" + ROWS + "_" + COLS + ".csv";
+    private static final String FILE = "datasets/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
 
     @SharedState(
             globalScope = GlobalScope.PARTITIONED,
@@ -71,5 +73,12 @@ public class MatrixLoadingTestJob extends MLProgram  {
             }
 
         });
+    }
+
+    public static void main(String[] args) {
+        System.setProperty("simulation.numNodes", "4");
+        PServerExecutor.LOCAL
+                .run(MatrixLoadingTestJob.class, 1)
+                .done();
     }
 }

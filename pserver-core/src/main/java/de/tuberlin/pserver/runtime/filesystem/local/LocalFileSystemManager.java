@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.runtime.filesystem.local;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.net.NetEvents;
@@ -13,19 +14,15 @@ import de.tuberlin.pserver.types.PartitionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public final class LocalFileSystemManager implements FileSystemManager {
-
-    // ---------------------------------------------------
-    // Fields.
-    // ---------------------------------------------------
-
-    public static final long SYNC_TIME = 2000; // 2s to globalSync. all simulation workers.
 
     // ---------------------------------------------------
     // Fields.
@@ -75,15 +72,18 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
     @Override
     public void computeInputSplitsForRegisteredFiles() {
+
         final CountDownLatch splitComputationLatch = new CountDownLatch(infraManager.getMachines().size() - 1);
-        final IEventHandler handler = (e) -> {
-            synchronized (LocalFileSystemManager.this) {
+
+        // I don't trust lambdas with closures to local variables anymore ...
+        IEventHandler handler = new IEventHandler() {
+            @Override
+            public void handleEvent(Event event) {
                 splitComputationLatch.countDown();
             }
         };
-        netManager.addEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler);
 
-        final long start = System.currentTimeMillis();
+        netManager.addEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler);
 
         inputFileMap.forEach(
                 (k, v) -> v.computeLocalFileSection(
@@ -96,26 +96,18 @@ public final class LocalFileSystemManager implements FileSystemManager {
                 (k, v) -> v.forEach(FileDataIterator::initialize)
         );
 
-        final long end = System.currentTimeMillis();
+        netManager.broadcastEvent(new NetEvents.NetEvent(PSERVER_LFSM_COMPUTED_FILE_SPLITS, true));
 
-        // We need to globalSync. here in simulation mode.
-        if (end - start < SYNC_TIME) {
+        LOG.debug("["+infraManager.getNodeID()+"] Finished computing local input splits");
+
+        while(splitComputationLatch.getCount() > 0) {
             try {
-                Thread.sleep(SYNC_TIME - (end - start));
+                splitComputationLatch.await(1000, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                LOG.debug("["+infraManager.getNodeID()+"] Waiting for other nodes to finish computing input splits");
             }
         }
 
-        netManager.broadcastEvent(new NetEvents.NetEvent(PSERVER_LFSM_COMPUTED_FILE_SPLITS));
-
-        try {
-            splitComputationLatch.await();
-        } catch (InterruptedException e) {
-            throw new IllegalStateException(e);
-        }
-
         netManager.removeEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler);
-        LOG.debug("Input splits are computed.");
     }
 }

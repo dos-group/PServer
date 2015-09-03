@@ -19,12 +19,6 @@ import java.util.List;
 public final class ClusterSimulator implements Deactivatable {
 
     // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    private final static int CLUSTER_SIMULATOR_BOOTSTRAP_TIME = 6000; // in ms
-
-    // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
@@ -52,8 +46,7 @@ public final class ClusterSimulator implements Deactivatable {
         final int zkPort            = config.getObjectList("zookeeper.servers").get(0).getInt("port");
         final int numNodes          = config.getInt("simulation.numNodes");
         final boolean useZookeeper  = config.getBoolean("simulation.useZookeeper");
-        final List<String> tmp      = config.getStringList("simulation.jvmOptions");
-        final String[] jvmOpts      = tmp.toArray(new String[tmp.size()]);
+        final List<String> jvmOpts  = config.getStringList("simulation.jvmOptions");
 
         // sanity check.
         ZookeeperClient.checkConnectionString(zkServer);
@@ -103,14 +96,11 @@ public final class ClusterSimulator implements Deactivatable {
         // ------- bootstrap cluster -------
 
         for (int i = 0; i < numNodes; ++i) {
-            peList.add(new ProcessExecutor(mainClass).execute(jvmOpts));
+            List<String> nodeJvmOpts = new ArrayList<>(jvmOpts);
+            // nodeJvmOpts.add(String.format("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=%d",8000+i));
+            peList.add(new ProcessExecutor(mainClass).execute(jvmOpts.toArray(new String[jvmOpts.size()])));
         }
 
-        try {
-            Thread.sleep(CLUSTER_SIMULATOR_BOOTSTRAP_TIME);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     // ---------------------------------------------------
