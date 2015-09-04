@@ -2,6 +2,7 @@ package de.tuberlin.pserver.dsl;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.SlotGroup;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
@@ -40,26 +41,29 @@ public final class SharedVar<T> {
 
         this.sc = Preconditions.checkNotNull(sc);
 
-        Pair<Integer, Integer> slotRange = sc.programContext.runtimeContext.executionManager.getAvailableSlotRangeForScope();
+        final SlotGroup slotGroup = sc.programContext.runtimeContext.executionManager.getActiveSlotGroup();
 
-        final int masterSlotID = slotRange.getLeft();
+        final int masterSlotID = slotGroup.minSlotID;
 
-        final int refNum = slotRange.getRight() - slotRange.getLeft() + 1;
+        final int refNum = slotGroup.maxSlotID - slotGroup.minSlotID + 1;
 
         this.sharedVarUID = nextSharedVarUID(masterSlotID);
 
-        sc.CF.select().slot(masterSlotID).exe(() -> {
+        //sc.CF.select().slot(masterSlotID).exe(() -> {
 
-            final AtomicReference<T> valueRef = new AtomicReference<>(Preconditions.checkNotNull(value));
+            if (sc.slotID == masterSlotID) {
 
-            final ReentrantLock valueLock = new ReentrantLock(true);
+                final AtomicReference<T> valueRef = new AtomicReference<>(Preconditions.checkNotNull(value));
 
-            final AtomicInteger refCount = new AtomicInteger(refNum);
+                final ReentrantLock valueLock = new ReentrantLock(true);
 
-            final Triple<AtomicReference<T>, ReentrantLock, AtomicInteger> managedVar = Triple.of(valueRef, valueLock, refCount);
+                final AtomicInteger refCount = new AtomicInteger(refNum);
 
-            sc.programContext.put(sharedVarUIDStr(), managedVar);
-        });
+                final Triple<AtomicReference<T>, ReentrantLock, AtomicInteger> managedVar = Triple.of(valueRef, valueLock, refCount);
+
+                sc.programContext.put(sharedVarUIDStr(), managedVar);
+            }
+        //});
     }
 
     // ---------------------------------------------------

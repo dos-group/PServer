@@ -1,8 +1,14 @@
 package de.tuberlin.pserver.test.core.jobs;
 
 
+import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.runtime.SlotGroup;
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.util.Random;
 
 public class SelectControlFlowTestJob extends MLProgram {
 
@@ -11,19 +17,63 @@ public class SelectControlFlowTestJob extends MLProgram {
 
         program.process(() -> {
 
-            CF.select().slot(0, 2).exe(() -> {
+            CF.select().slot(0, 3).exe(() -> {
 
-                //final Pair<Integer, Integer> sr0 = slotContext.programContext.runtimeContext.executionManager.getAvailableSlotRangeForScope();
+                final SlotGroup sg0 = slotContext.programContext.runtimeContext.executionManager.getActiveSlotGroup();
 
-                //System.out.println("[" + sr0.getLeft() + ", " + sr0.getRight() + "]");
+                System.out.println("LEVEL 1 " + sg0);
 
-                CF.select().slot(0, 1).exe(() -> {
+                Thread.sleep(new Random().nextInt(1000));
 
-                    //final Pair<Integer, Integer> sr1 = slotContext.programContext.runtimeContext.executionManager.getAvailableSlotRangeForScope();
+                CF.select().slot(1, 3).exe(() -> {
 
-                    //System.out.println("[" + sr1.getLeft() + ", " + sr1.getRight() + "]");
+                    final SlotGroup sg1 = slotContext.programContext.runtimeContext.executionManager.getActiveSlotGroup();
+
+                    System.out.println("LEVEL 2 " + sg1);
+
+                    Thread.sleep(new Random().nextInt(1000));
+
+                    CF.select().slot(2, 3).exe(() -> {
+
+                        final SlotGroup sg2 = slotContext.programContext.runtimeContext.executionManager.getActiveSlotGroup();
+
+                        System.out.println("LEVEL 3 " + sg2);
+
+                        Thread.sleep(new Random().nextInt(1000));
+
+                        CF.select().slot(3, 3).exe(() -> {
+
+                            final SlotGroup sg3 = slotContext.programContext.runtimeContext.executionManager.getActiveSlotGroup();
+
+                            System.out.println("LEVEL 4 " + sg3);
+
+                            Thread.sleep(new Random().nextInt(1000));
+
+                            try {
+                                CF.select().slot(0, 3).exe(() -> {
+
+                                    final SlotGroup sg4 = slotContext.programContext.runtimeContext.executionManager.getActiveSlotGroup();
+
+                                    System.out.println("LEVEL 5 " + sg4);
+                                });
+
+                            } catch(Throwable e) {
+                                System.out.println("SLOT ALLOCATION NOT POSSIBLE");
+                            }
+                        });
+                    });
                 });
             });
         });
+    }
+
+    // ---------------------------------------------------
+    // Entry Point.
+    // ---------------------------------------------------
+
+    public static void main(final String[] args) {
+        PServerExecutor.LOCAL
+                .run(SelectControlFlowTestJob.class, 4)
+                .done();
     }
 }

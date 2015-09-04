@@ -1,10 +1,13 @@
 package de.tuberlin.pserver.dsl.controlflow.selection;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.dsl.SharedVar;
 import de.tuberlin.pserver.dsl.controlflow.Body;
 import de.tuberlin.pserver.dsl.controlflow.CFStatement;
 import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.SlotContext;
+
+import java.util.concurrent.CyclicBarrier;
 
 public final class Selection extends CFStatement {
 
@@ -12,7 +15,7 @@ public final class Selection extends CFStatement {
     // Fields.
     // ---------------------------------------------------
 
-    private final ExecutionManager exeManager;
+    private final ExecutionManager executionManager;
 
     private int fromNodeID;
 
@@ -22,13 +25,15 @@ public final class Selection extends CFStatement {
 
     private int toSlotID;
 
+    private CyclicBarrier slotGroupBarrier;
+
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
     public Selection(final SlotContext ic) {
         super(ic);
-        exeManager = ic.programContext.runtimeContext.executionManager;
+        executionManager = ic.programContext.runtimeContext.executionManager;
         allNodes();
         allSlots();
     }
@@ -65,7 +70,13 @@ public final class Selection extends CFStatement {
     // Synchronization.
     // ---------------------------------------------------
 
-    public Selection sync() { throw new UnsupportedOperationException(); }
+    public Selection sync() throws Exception {
+
+        if (slotGroupBarrier != null)
+            slotGroupBarrier.await();
+
+        return this;
+    }
 
     // ---------------------------------------------------
     // Execution.
@@ -73,23 +84,41 @@ public final class Selection extends CFStatement {
 
     public void exe(final Body body) throws Exception {
         Preconditions.checkNotNull(body);
+
+
+
         if (inNodeRange() && inInstanceRange()) {
 
-            final ExecutionManager.SlotAllocation sa = exeManager.allocSlots(fromSlotID, toSlotID);
+            final ExecutionManager.SlotGroupAllocation sa = executionManager.allocSlots(fromSlotID, toSlotID);
 
-            enter();
+            final int numActiveSlots = (toSlotID - fromSlotID) + 1;
 
-            long duration = System.currentTimeMillis();
+            if (numActiveSlots > 1) {
 
-            body.body();
+                final SharedVar<CyclicBarrier> sgb = new SharedVar<>(slotContext, new CyclicBarrier(numActiveSlots));
 
-            duration = System.currentTimeMillis() - duration;
+                slotGroupBarrier = sgb.get();
 
-            setProfilingData(new ProfilingData(duration));
+                sgb.done();
+            }
 
-            leave();
+            sync();
 
-            exeManager.releaseSlots(sa);
+                enter();
+
+                    long duration = System.currentTimeMillis();
+
+                        body.body();
+
+                    duration = System.currentTimeMillis() - duration;
+
+                    setProfilingData(new ProfilingData(duration));
+
+                leave();
+
+            sync();
+
+            executionManager.releaseSlots(sa);
         }
     }
 

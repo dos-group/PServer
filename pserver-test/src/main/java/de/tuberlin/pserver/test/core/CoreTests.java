@@ -17,8 +17,6 @@ public class CoreTests {
 
     private static PServerClient client;
 
-    private static int numSlots;
-
     // --------------------------------------------------
     // Tests.
     // --------------------------------------------------
@@ -28,26 +26,26 @@ public class CoreTests {
         if (!IntegrationTestSuite.isRunning)
             IntegrationTestSuite.setUpTestEnvironment();
         client = new PServerClient(PServerClientFactory.INSTANCE);
-        numSlots = Integer.parseInt(System.getProperty("simulation.numSlots"));
     }
 
-    //@Test
-    //public void testPushAwait() { assert client.execute(PushAwaitTestJob.class, numSlots) != null; }
+    // TODO: SOMETIMES STALLS/DEADLOCKS! BUT WITH NO EXCEPTION :(
+    @Test
+    public void testPushAwait() { assert client.execute(PushAwaitTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
 
     //@Test
     //public void testMatrixLoading() { assert client.execute(MatrixLoadingTestJob.class, numSlots) != null; }
 
-    //@Test
-    //public void testSymmetricAggregator() { assert client.execute(SymAggregatorTestJob.class, numSlots) != null; }
+    @Test
+    public void testSymmetricAggregator() { assert client.execute(SymAggregatorTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
 
     //@Test
     //public void testAsymmetricAggregator() { assert client.execute(ASymAggregatorTestJob.class, numSlots) != null; }
 
-    //@Test
-    //public void testSharedVar() { assert client.execute(SharedVarTestJob.class, numSlots) != null; }
+    @Test
+    public void testSharedVar() { assert client.execute(SharedVarTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
 
     @Test
-    public void testSelectControlFlow() { assert client.execute(SelectControlFlowTestJob.class, numSlots) != null; }
+    public void testSelectControlFlow() { assert client.execute(SelectControlFlowTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
 
     @AfterClass
     public static void tearDown() {

@@ -11,6 +11,8 @@ import java.io.Serializable;
 
 public class PushAwaitTestJob extends MLProgram {
 
+    public static final int NUM_MSG = 1000;
+
     public static class TestObject implements Serializable {
 
         public final String name;
@@ -32,9 +34,11 @@ public class PushAwaitTestJob extends MLProgram {
 
         program.process(() -> {
 
-            CF.select().node(0).exe(() -> {
+            Thread.sleep(3000);
 
-                for (int i = 0; i < 1000; ++i) {
+            CF.select().node(0).slot(0).exe(() -> {
+
+                for (int i = 0; i < NUM_MSG; ++i) {
 
                     dataManager.pushTo("ping", new TestObject("ping-Msg", 0), new int[]{1});
 
@@ -46,11 +50,13 @@ public class PushAwaitTestJob extends MLProgram {
                         }
                     });
                 }
+
+                System.out.println("FINISH - NODE 0");
             });
 
-            CF.select().node(1).exe(() -> {
+            CF.select().node(1).slot(0).exe(() -> {
 
-                for (int i = 0; i < 1000; ++i) {
+                for (int i = 0; i < NUM_MSG; ++i) {
 
                     dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, "ping", new DataManager.DataEventHandler() {
                         @Override
@@ -62,11 +68,11 @@ public class PushAwaitTestJob extends MLProgram {
 
                     dataManager.pushTo("pong", new TestObject("pong-Msg", 0), new int[]{0});
                 }
-            });
 
+                System.out.println("FINISH - NODE 1");
+            });
         });
     }
-
 
     // ---------------------------------------------------
     // Entry Point.

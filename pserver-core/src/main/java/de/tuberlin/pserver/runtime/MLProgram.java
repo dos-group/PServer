@@ -94,7 +94,9 @@ public abstract class MLProgram extends EventDispatcher {
 
             programLinker.fetchStateObjects(this);
 
-            CF.select().slot(0).exe(() -> {
+            //CF.select().slot(0).exe(() -> {
+
+            if (slotContext.slotID == 0) {
 
                 LOG.info(slotIDStr + "Enter " + program.slotContext.programContext.simpleClassName + " initialization phase.");
 
@@ -108,7 +110,9 @@ public abstract class MLProgram extends EventDispatcher {
                         + " initialization phase [duration: " + (end - start) + " ms].");
 
                 slotContext.programContext.programInitBarrier.countDown();
-            });
+            }
+
+            //});
 
             slotContext.programContext.programInitBarrier.await();
 
@@ -155,13 +159,10 @@ public abstract class MLProgram extends EventDispatcher {
                 slotContext.programContext.programDoneBarrier.countDown();
             }
 
-            CF.select().slot(0).exe(() -> {
-                final boolean done = slotContext.programContext.programDoneBarrier.await(20, TimeUnit.SECONDS);
-                if (!done) {
-                    System.out.println("PROGRAM DONE BARRIER LOCKED AT NODE [" + slotContext.programContext.runtimeContext.nodeID + "] " +
-                            "=> barrierCount = " + slotContext.programContext.programDoneBarrier.getCount());
-                }
-            });
+            //CF.select().slot(0).exe(slotContext.programContext.programDoneBarrier::await);
+
+            if (slotContext.slotID == 0)
+                slotContext.programContext.programDoneBarrier.await();
 
         program.leave();
     }

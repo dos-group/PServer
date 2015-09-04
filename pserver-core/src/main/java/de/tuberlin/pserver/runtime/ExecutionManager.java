@@ -37,17 +37,17 @@ public final class ExecutionManager {
     // Inner Classes.
     // ---------------------------------------------------
 
-    public static final class SlotAllocation {
+    public static final class SlotGroupAllocation {
 
-        public NestedIntervalTree.Interval range;
+        public NestedIntervalTree.Interval slotIDRange;
 
         public ExecutionFrame[] frames;
 
-        public SlotAllocation(final NestedIntervalTree.Interval range) {
+        public SlotGroupAllocation(final NestedIntervalTree.Interval slotIDRange) {
 
-            this.range = Preconditions.checkNotNull(range);
+            this.slotIDRange = Preconditions.checkNotNull(slotIDRange);
 
-            this.frames = new ExecutionFrame[(range.high - range.low) + 1];
+            this.frames = new ExecutionFrame[(slotIDRange.high - slotIDRange.low) + 1];
         }
 
         public int size() { return frames.length; }
@@ -96,13 +96,11 @@ public final class ExecutionManager {
 
     // DSL Runtime.
 
-    private final Object monitor = new Object();
-
     private final ExecutionFrame[] activeFrame;
 
     private final ThreadLocal<MutableInt> currentFrameLevel;
 
-    private NestedIntervalTree<SlotAllocation> slotAssignment;
+    private NestedIntervalTree<SlotGroupAllocation> slotAssignment;
 
     // ---------------------------------------------------
     // Constructor.
@@ -156,13 +154,13 @@ public final class ExecutionManager {
         slotContextMap.remove(Thread.currentThread().getId());
     }
 
-    public void setNumOfSlots(final int numOfSlots) {
+    public synchronized void setNumOfSlots(final int numOfSlots) {
 
         this.numOfSlots = numOfSlots;
 
         final NestedIntervalTree.Interval in = new NestedIntervalTree.Interval(0, numOfSlots - 1);
 
-        final SlotAllocation sa = new SlotAllocation(in);
+        final SlotGroupAllocation sa = new SlotGroupAllocation(in);
 
         this.slotAssignment = new NestedIntervalTree<>(in, sa);
     }
@@ -173,7 +171,7 @@ public final class ExecutionManager {
     // DSL RUNTIME MANAGEMENT.
     // ---------------------------------------------------
 
-    public void pushFrame(final CFStatement statement) {
+    public synchronized void pushFrame(final CFStatement statement) {
 
         final SlotContext ic = getSlotContext();
 
@@ -188,14 +186,11 @@ public final class ExecutionManager {
 
         activeFrame[ic.slotID] = newFrame;
 
-        synchronized (monitor) {
+        final Pair<NestedIntervalTree.Interval, SlotGroupAllocation> slotGroup = slotAssignment.get(new NestedIntervalTree.Point(ic.slotID));
 
-            final Pair<NestedIntervalTree.Interval, SlotAllocation> slotGroup = slotAssignment.get(new NestedIntervalTree.Point(ic.slotID));
+        int index = ic.slotID - slotGroup.getLeft().low;
 
-            int index = ic.slotID - slotGroup.getLeft().low;
-
-            slotGroup.getRight().frames[index] = newFrame;
-        }
+        slotGroup.getRight().frames[index] = newFrame;
     }
 
     public void popFrame() {
@@ -214,78 +209,82 @@ public final class ExecutionManager {
         return activeFrame[ic.slotID];
     }
 
-    public int getScopeDOP() {
+    public synchronized int getScopeDOP() {
 
         final SlotContext ic = getSlotContext();
 
-        synchronized (monitor) {
-
-            return slotAssignment.get(new NestedIntervalTree.Point(ic.slotID)).getRight().size();
-        }
+        return slotAssignment.get(new NestedIntervalTree.Point(ic.slotID)).getRight().size();
     }
 
-    public Pair<Integer, Integer> getAvailableSlotRangeForScope() {
+    public synchronized SlotGroup getActiveSlotGroup() {
 
         final SlotContext ic = getSlotContext();
 
-        synchronized (monitor) {
+        final NestedIntervalTree.Interval slots = slotAssignment.get(new NestedIntervalTree.Point(ic.slotID)).getLeft();
 
-            final NestedIntervalTree.Interval slots = slotAssignment.get(new NestedIntervalTree.Point(ic.slotID)).getLeft();
-
-            return Pair.of(slots.low, slots.high);
-        }
+        return new SlotGroup(slots.low, slots.high);
     }
 
     // ---------------------------------------------------
     // SLOT ASSIGNMENT.
     // ---------------------------------------------------
 
-    public SlotAllocation allocSlots(final int low, final int high) {
+    public synchronized SlotGroupAllocation allocSlots(final int low, final int high) {
 
         assert low == high;
 
-        synchronized (monitor) {
+        final NestedIntervalTree.Interval range = new NestedIntervalTree.Interval(low, high);
 
-            final NestedIntervalTree.Interval range = new NestedIntervalTree.Interval(low, high);
+        if (!slotAssignment.exist(range)) {
 
-            if (!slotAssignment.exist(range)) {
-
-                if (!slotAssignment.isValid(range)) {
-
-                    //System.out.println(range.toString() + "  ====>  " + slotAssignment.toString());
-
-                    //slotAssignment.isValid2(range);
-
-                    throw new IllegalStateException("\n" + slotAssignment.toString());
-                }
-
-                final SlotAllocation sa = new SlotAllocation(range);
-
-                if (!slotAssignment.put(range, sa))
-                    throw new IllegalStateException();
-
-                return sa;
-
-            } else {
-
-                return slotAssignment.get(range).getRight();
+            if (!slotAssignment.isValid(range)) {
+                throw new IllegalStateException("(1) Not a valid slot range.\n" + slotAssignment.toString() + " ==>> " + range);
             }
+
+            final SlotGroupAllocation sa = new SlotGroupAllocation(range);
+
+            if (!slotAssignment.put(range, sa))
+                throw new IllegalStateException();
+
+            return sa;
+
+        } else {
+
+            final int currentSlotID = getSlotContext().slotID;
+
+            if (!range.contains(currentSlotID) || !slotAssignment.isValid(range)) {
+                throw new IllegalStateException("(2) Not a valid slot range.\n" + slotAssignment.toString() + " ==>> " + range);
+            }
+
+            return slotAssignment.get(range).getRight();
         }
     }
 
-    public void releaseSlots(final SlotAllocation sa) {
+    /*public synchronized void releaseSlots(final SlotAllocation sa) throws Exception {
+        //synchronized (monitor) {
+            if (slotAssignment.exist(sa.slotIDRange)) {
+                //while (!slotAssignment.isDeepestInterval(sa.slotIDRange)) {
+                //    Thread.sleep(10);
+                //}
+                slotAssignment.remove(Preconditions.checkNotNull(sa.slotIDRange));
+            }
+        //}
+    }*/
 
-        synchronized (monitor) {
-
-            if (slotAssignment.exist(sa.range)) {
-
-                slotAssignment.remove(Preconditions.checkNotNull(sa.range));
+    public void releaseSlots(final SlotGroupAllocation sa) throws Exception {
+        synchronized (this) {
+            if (!slotAssignment.exist(sa.slotIDRange))
+                return;
+        }
+        while (!slotAssignment.isDeepestInterval(sa.slotIDRange)) {
+            synchronized (this) {
+                wait();
             }
         }
-    }
-
-    public String printAllocation() {
-        return slotAssignment.toString();
+        synchronized (this) {
+            slotAssignment.remove(Preconditions.checkNotNull(sa.slotIDRange));
+            notifyAll();
+        }
     }
 
     // ---------------------------------------------------
@@ -310,7 +309,6 @@ public final class ExecutionManager {
     }
 
     public void localSync(final SlotContext slotContext) {
-        //final SlotContext slotContext = getSlotContext();
         try {
             slotContext.programContext.localSyncBarrier.await();
         } catch (Exception e) {
@@ -326,21 +324,21 @@ public final class ExecutionManager {
         Preconditions.checkNotNull(matrix);
         final SlotContext slotContext = getSlotContext();
         final int scopeDOP = getScopeDOP();
-        final Pair<Integer, Integer> range = getAvailableSlotRangeForScope();
+        final SlotGroup slotGroup = getActiveSlotGroup();
         int startOffset, endOffset, blockSize;
         if (matrix.getClass() == DistributedMatrix.class) {
             final DistributedMatrix dm = (DistributedMatrix)matrix;
             blockSize   = (int) dm.partitionNumRows() / scopeDOP;
             startOffset = (int)(dm.partitionBaseRowOffset() + (slotContext.slotID * blockSize));
             endOffset   = startOffset + blockSize - 1;
-            endOffset   = (slotContext.slotID == range.getRight())
+            endOffset   = (slotContext.slotID == slotGroup.maxSlotID)
                     ? endOffset + (int) dm.partitionNumRows() % scopeDOP
                     : endOffset;
         } else {
             blockSize   = (int) matrix.rows() / scopeDOP;
             startOffset = slotContext.slotID * blockSize;
             endOffset   = (slotContext.slotID * blockSize + blockSize - 1);
-            endOffset   = (slotContext.slotID == range.getRight())
+            endOffset   = (slotContext.slotID == slotGroup.maxSlotID)
                     ? endOffset + (int) matrix.rows() % scopeDOP
                     : endOffset;
         }
@@ -351,12 +349,12 @@ public final class ExecutionManager {
         Preconditions.checkNotNull(vector);
         final SlotContext slotContext = getSlotContext();
         final int scopeDOP = getScopeDOP();
-        final Pair<Integer, Integer> range = getAvailableSlotRangeForScope();
+        final SlotGroup slotGroup = getActiveSlotGroup();
         int startOffset, endOffset, blockSize;
             blockSize   = (int) vector.length() / scopeDOP;
             startOffset = slotContext.slotID * blockSize;
             endOffset   = (slotContext.slotID * blockSize + blockSize - 1);
-            endOffset   = (slotContext.slotID == range.getRight())
+            endOffset   = (slotContext.slotID == slotGroup.maxSlotID)
                     ? endOffset + (int) vector.length() % scopeDOP
                     : endOffset;
         return vector.elementIterator(startOffset, endOffset);

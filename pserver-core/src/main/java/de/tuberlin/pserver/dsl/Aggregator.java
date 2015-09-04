@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.SlotGroup;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.Serializable;
@@ -58,7 +59,7 @@ public class Aggregator<T extends Serializable> {
 
     private T symmetric_apply(final AggregatorFunction<T> function) throws Exception {
 
-        final int slotID = sc.programContext.runtimeContext.executionManager.getAvailableSlotRangeForScope().getLeft();
+        final int slotID = sc.programContext.runtimeContext.executionManager.getActiveSlotGroup().minSlotID;
 
         sc.CF.select().slot(slotID).exe(() -> {
 
@@ -100,11 +101,11 @@ public class Aggregator<T extends Serializable> {
 
     private T asymmetric_apply(final AggregatorFunction<T> function) throws Exception {
 
-        final Pair<Integer, Integer> slotIDs = sc.programContext.runtimeContext.executionManager.getAvailableSlotRangeForScope();
+        final SlotGroup slotGroup = sc.programContext.runtimeContext.executionManager.getActiveSlotGroup();
 
         // -- master node --
 
-        sc.CF.select().node(AGG_NODE_ID).slot(slotIDs.getLeft()).exe(() -> {
+        sc.CF.select().node(AGG_NODE_ID).slot(slotGroup.minSlotID).exe(() -> {
 
             final int n = sc.programContext.nodeDOP - 1;
 
@@ -137,7 +138,7 @@ public class Aggregator<T extends Serializable> {
 
        // System.out.println("----------------------------------------------->> " + slotIDs.getLeft());
 
-        sc.CF.select().node(AGG_NODE_ID + 1, sc.programContext.nodeDOP - 1).slot(slotIDs.getLeft()).exe(() -> {
+        sc.CF.select().node(AGG_NODE_ID + 1, sc.programContext.nodeDOP - 1).slot(slotGroup.minSlotID).exe(() -> {
 
             sc.programContext.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg, new int[]{AGG_NODE_ID});
 

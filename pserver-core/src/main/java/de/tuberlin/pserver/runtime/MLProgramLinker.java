@@ -66,7 +66,9 @@ public final class MLProgramLinker {
 
     public void link(final SlotContext slotContext, final MLProgram instance) throws Exception {
 
-        slotContext.CF.select().slot(0).exe(() -> {
+        //slotContext.CF.select().slot(0).exe(() -> {
+
+        if (slotContext.slotID == 0) {
 
             stateDecls = new ArrayList<>();
 
@@ -102,7 +104,9 @@ public final class MLProgramLinker {
 
             LOG.info(slotIDStr + "Leave " + slotContext.programContext.simpleClassName
                     + " loading linking [duration: " + (end - start) + " ms].");
-        });
+        }
+
+        //});
 
         slotContext.programContext.programLoadBarrier.await();
     }
