@@ -2,9 +2,10 @@ package de.tuberlin.pserver.core.infra;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.config.IConfig;
+import org.apache.curator.CuratorZookeeperClient;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.ExponentialBackoffRetry;
+import org.apache.curator.retry.RetryNTimes;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
@@ -39,6 +40,10 @@ public final class ZookeeperClient {
 
     public static final String ZOOKEEPER_NODES = ZOOKEEPER_ROOT + "/nodes";
 
+    public static int CONNECTION_TIMEOUT = 1000;
+
+    public static int CONNECTION_RETRIES = 15;
+
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
@@ -53,8 +58,21 @@ public final class ZookeeperClient {
 
     public ZookeeperClient(final String zookeeperServer) {
         Preconditions.checkNotNull(zookeeperServer);
-        curator = CuratorFrameworkFactory.newClient(zookeeperServer, 60000 * 10, 60000 * 10, new ExponentialBackoffRetry(1000, 3));
+        curator = CuratorFrameworkFactory.newClient(zookeeperServer, CONNECTION_TIMEOUT, CONNECTION_TIMEOUT, new RetryNTimes(CONNECTION_RETRIES, CONNECTION_TIMEOUT));
         curator.start();
+        CuratorZookeeperClient client = curator.getZookeeperClient();
+        int tries = 1;
+        while(tries <= CONNECTION_RETRIES && !client.isConnected()) {
+            try {
+                Thread.sleep(CONNECTION_TIMEOUT);
+            } catch (InterruptedException e) {}
+            LOG.debug("Unsuccessful try ("+tries+") to connect to zookeeper at " + client.getCurrentConnectionString());
+            tries++;
+        }
+        if(!client.isConnected()) {
+            LOG.error("Unable to connect to zookeeper at " + client.getCurrentConnectionString());
+            System.exit(1);
+        }
     }
 
     // ---------------------------------------------------
