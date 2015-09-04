@@ -71,12 +71,12 @@ public enum PServerNodeFactory {
 
     private PServerNodeFactory(final IConfig config) {
 
-
-
         final long start = System.nanoTime();
 
         this.config             = Preconditions.checkNotNull(config);
         this.machine            = configureMachine();
+
+        LOG.debug("Starting PServer Node with id : " + machine.machineID.toString().substring(0,2));
 
         this.memoryManager      = null; //new MemoryManager(config);
         this.infraManager       = new InfrastructureManager(machine, config, false);

@@ -101,11 +101,15 @@ public final class InfrastructureManager extends EventDispatcher {
     public void deactivate() { super.deactivate(); }
 
     private void loadMachines() {
-        int requiredNumNodes = Integer.parseInt((String)zookeeper.readBlocking("/numnodes"));
-        while(readMachinesAndProcess() < requiredNumNodes) {
+        int requiredNumNodes = zookeeper.readNumNodes();
+        LOG.debug("InfraManager at " + machine.machineID.toString().substring(0,2) + "needs to wait for " + requiredNumNodes + " nodes to register");
+        int registeredNumNodes;
+        while((registeredNumNodes = readMachinesAndProcess()) < requiredNumNodes) {
             try {
                 Thread.sleep(1000);
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+                LOG.debug("InfraManager at " + machine.machineID.toString().substring(0,2) + " waits for " + (requiredNumNodes - registeredNumNodes) + " nodes to register");
+            }
         }
         Collections.sort(machines);
     }
