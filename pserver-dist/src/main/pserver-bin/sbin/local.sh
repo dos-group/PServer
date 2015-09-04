@@ -218,11 +218,11 @@ zookeeper-start)
 		rotateLogFile "${ZOOKEEPER_LOG_DIR}/zookeeper.out"
 		# remove all zookeeper data to perform a clean start
 		# THIS IS IMPORTANT FOR THE SETTING OF NODE /numNodes !!!
-		rm -rf \"${ZOOKEEPER_DATA_DIR}/version-2\" 2&>1 > /dev/null
+		rm -rf \"${ZOOKEEPER_DATA_DIR}/version-2\" &> /dev/null
 		${ACTUAL_ZOOKEEPER_INSTALL_DIR}/bin/zkServer.sh start 2>&1 | xargs -L 1 -I '{}' echo [NOTICE][$(hostname)] {}
 		if [ $PARAM_ZOOKEEPER_DO_NOT_SET_NUMNODES -eq 0 ]; then
 			NUM_NODES=$(cat "${SLAVES_FILE}" | sed '/^\s*$/d' | wc -l)
-			while ! ${ACTUAL_ZOOKEEPER_INSTALL_DIR}/bin/zkCli.sh -server localhost:2181 create /numnodes $NUM_NODES >/dev/null 2>&1; do
+			while ! ${ACTUAL_ZOOKEEPER_INSTALL_DIR}/bin/zkCli.sh -server localhost:2181 create /numnodes $NUM_NODES &> /dev/null; do
 				echo "[NOTICE][$(hostname)] Failed to set numNodes to $NUM_NODES"
 				sleep 1
 			done

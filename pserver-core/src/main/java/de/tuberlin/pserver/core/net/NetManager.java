@@ -21,9 +21,6 @@ import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public final class NetManager extends EventDispatcher {
 
@@ -215,11 +212,12 @@ public final class NetManager extends EventDispatcher {
             }
         });
 
-        try {
-            // Wait until the netty-server is bound.
-            cf.sync();
-        } catch (InterruptedException e) {
-            LOG.error(e.getLocalizedMessage());
+        while(!cf.isDone()) {
+            try {
+                cf.await(1000);
+            } catch (InterruptedException e) {
+                LOG.debug("NetManager of [" + machine.machineID + "] is waiting to get bound to port: " + machine.port + ".");
+            }
         }
     }
 }

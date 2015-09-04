@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -106,6 +107,50 @@ public final class ZookeeperClient {
         }
     }
 
+    public void writeNumNodes(int numNodes) throws Exception {
+        try {
+            String numNodesStr = String.valueOf(numNodes);
+            byte[] bytes = new byte[numNodesStr.length()];
+            for (int i = 0; i < bytes.length; i++) {
+                bytes[i] = (byte) numNodesStr.charAt(i);
+            }
+            curator.create().forPath("/numnodes", bytes);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public int readNumNodes() {
+        try {
+            final byte[] data = readByteArrayBlocking("/numnodes");
+            int numnodes = 0;
+            for (int i = data.length - 1; i >= 0; i--) {
+                numnodes += Integer.valueOf(String.valueOf((char)data[i])) * (int)Math.pow(10, data.length - (i + 1));
+            }
+            return numnodes;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public byte[] readByteArrayBlocking(final String path) {
+        byte[] result = null;
+        boolean readSuccess;
+        do {
+            try {
+                result = curator.getData().forPath(path);
+                readSuccess = true;
+            } catch (Exception e) {
+                LOG.debug("failed to read path: " + path, e);
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e1) {}
+                readSuccess = false;
+            }
+        } while (!readSuccess);
+        return result;
+    }
+
     public Object readBlocking(final String path) {
         Object result = null;
         boolean readSuccess;
@@ -114,6 +159,10 @@ public final class ZookeeperClient {
                 result = read(path);
                 readSuccess = true;
             } catch (Exception e) {
+                LOG.debug("failed to read path: " + path, e);
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e1) {}
                 readSuccess = false;
             }
         } while (!readSuccess);
@@ -178,4 +227,23 @@ public final class ZookeeperClient {
         }
         return servers.isEmpty() ? "" : sb.substring(0, sb.length() - 1);
     }
+
+    // TODO: unit test?
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
+        // write
+        String numNodesStr = String.valueOf("8");
+        byte[] bytes = new byte[numNodesStr.length()];
+        for (int i = 0; i < bytes.length; i++) {
+            bytes[i] = (byte) numNodesStr.charAt(i);
+        }
+        System.out.println(Arrays.toString(bytes));
+        // read
+        final byte[] data = bytes;
+        int numnodes = 0;
+        for (int i = data.length - 1; i >= 0; i--) {
+            numnodes += Integer.valueOf(String.valueOf((char)data[i])) * (int)Math.pow(10, data.length - (i + 1));
+        }
+        System.out.println(numnodes);
+    }
+
 }
