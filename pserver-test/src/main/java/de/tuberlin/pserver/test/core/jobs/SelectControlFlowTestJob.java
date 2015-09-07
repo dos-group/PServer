@@ -21,7 +21,7 @@ public class SelectControlFlowTestJob extends MLProgram {
 
                 final SlotGroup sg0 = slotContext.programContext.runtimeContext.executionManager.getActiveSlotGroup();
 
-                System.out.println("LEVEL 1 " + sg0);
+                //System.out.println("LEVEL 1 " + sg0);
 
                 Thread.sleep(new Random().nextInt(1000));
 
@@ -29,7 +29,7 @@ public class SelectControlFlowTestJob extends MLProgram {
 
                     final SlotGroup sg1 = slotContext.programContext.runtimeContext.executionManager.getActiveSlotGroup();
 
-                    System.out.println("LEVEL 2 " + sg1);
+                    //System.out.println("LEVEL 2 " + sg1);
 
                     Thread.sleep(new Random().nextInt(1000));
 
@@ -37,7 +37,7 @@ public class SelectControlFlowTestJob extends MLProgram {
 
                         final SlotGroup sg2 = slotContext.programContext.runtimeContext.executionManager.getActiveSlotGroup();
 
-                        System.out.println("LEVEL 3 " + sg2);
+                        //System.out.println("LEVEL 3 " + sg2);
 
                         Thread.sleep(new Random().nextInt(1000));
 
@@ -45,7 +45,7 @@ public class SelectControlFlowTestJob extends MLProgram {
 
                             final SlotGroup sg3 = slotContext.programContext.runtimeContext.executionManager.getActiveSlotGroup();
 
-                            System.out.println("LEVEL 4 " + sg3);
+                            //System.out.println("LEVEL 4 " + sg3);
 
                             Thread.sleep(new Random().nextInt(1000));
 
@@ -65,15 +65,5 @@ public class SelectControlFlowTestJob extends MLProgram {
                 });
             });
         });
-    }
-
-    // ---------------------------------------------------
-    // Entry Point.
-    // ---------------------------------------------------
-
-    public static void main(final String[] args) {
-        PServerExecutor.LOCAL
-                .run(SelectControlFlowTestJob.class, 4)
-                .done();
     }
 }

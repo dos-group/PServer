@@ -8,10 +8,8 @@ import de.tuberlin.pserver.commons.hashtable.NonBlockingHashMap;
 import de.tuberlin.pserver.commons.json.GsonUtils;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 
@@ -47,7 +45,7 @@ public final class MLProgramContext {
     public final CyclicBarrier localSyncBarrier;
 
     @GsonUtils.Exclude
-    public final List<SlotContext> slots;
+    public final Map<Long, SlotContext> threadIDSlotCtxMap;
 
     @GsonUtils.Exclude
     public final CountDownLatch programLoadBarrier;
@@ -85,24 +83,24 @@ public final class MLProgramContext {
 
         this.globalSyncBarrier  = new ResettableCountDownLatch(nodeDOP);
         this.localSyncBarrier   = new CyclicBarrier(perNodeDOP);
-        this.slots              = new ArrayList<>();
+        this.threadIDSlotCtxMap = new ConcurrentHashMap<>();
         this.programLoadBarrier = new CountDownLatch(1);
         this.programInitBarrier = new CountDownLatch(1);
         this.programDoneBarrier = new CountDownLatch(perNodeDOP);
 
-        this.programStore = new NonBlockingHashMap<>();
+        this.programStore       = new NonBlockingHashMap<>();
     }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    public void addSlot(final SlotContext ic) {
-        slots.add(Preconditions.checkNotNull(ic));
+    public synchronized void addSlotContext(final long threadID, final SlotContext sc) {
+        threadIDSlotCtxMap.put(threadID, Preconditions.checkNotNull(sc));
     }
 
-    public void removeSlot(final SlotContext ic) {
-        slots.remove(Preconditions.checkNotNull(ic));
+    public synchronized void removeSlotContext(final long threadID) {
+        threadIDSlotCtxMap.remove(threadID);
     }
 
     // ---------------------------------------------------

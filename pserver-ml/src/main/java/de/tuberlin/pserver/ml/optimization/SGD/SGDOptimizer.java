@@ -179,8 +179,8 @@ public class SGDOptimizer implements Optimizer {
 
     private void updateObserver(final GeneralLinearModel model) {
         /*if (ctx.slotID == 0) {
-            final Vector[] gradientSums = new Vector[ctx.jobContext.numOfSlots];
-            for (int i = 0; i < ctx.jobContext.numOfSlots; ++i) {
+            final Vector[] gradientSums = new Vector[ctx.jobContext.numOfCores];
+            for (int i = 0; i < ctx.jobContext.numOfCores; ++i) {
                 gradientSums[i] = gradientSum;
                 state.gradientSum.assign(0.0);
                 if (useLogging) {

@@ -20,9 +20,7 @@ import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
 import de.tuberlin.pserver.types.DistributedMatrix;
 import de.tuberlin.pserver.types.PartitionType;
-import org.apache.log4j.Logger;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public final class MatrixPartitionManager {
 
-    private Logger LOG = Logger.getLogger(MatrixPartitionManager.class);
+    //private Logger LOG = Logger.getLogger(MatrixPartitionManager.class);
 
     // ---------------------------------------------------
     // Inner Classes.
@@ -171,6 +169,12 @@ public final class MatrixPartitionManager {
         finishedLoadingLatch.await();
     }
 
+    public void clearContext() {
+        matrixLoadTasks.clear();
+        fileLoadingBarrier.clear();
+        loadingMatrices.clear();
+    }
+
     // ---------------------------------------------------
     // Private Methods.
     // ---------------------------------------------------
@@ -251,7 +255,7 @@ public final class MatrixPartitionManager {
         ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
 
         int nodeId = task.slotContext.programContext.runtimeContext.nodeID;
-        MatrixEntry entry = null;
+        MatrixEntry entry;
         while (fileIterator.hasNext()) {
             final IRecord record = fileIterator.next();
             // iterate through entries in record

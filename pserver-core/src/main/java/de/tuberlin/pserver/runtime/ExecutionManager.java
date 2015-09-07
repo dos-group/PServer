@@ -14,9 +14,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 public final class ExecutionManager {
 
@@ -86,13 +84,13 @@ public final class ExecutionManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExecutionManager.class);
 
-    public int numOfSlots;
+    public final int numOfCores;
 
     private final NetManager netManager;
 
-    private final Map<UUID, MLProgramContext> programContextMap;
+    // Execution Context.
 
-    private final Map<Long, SlotContext> slotContextMap;
+    private final AtomicReference<MLProgramContext> programContextRef;
 
     // DSL Runtime.
 
@@ -106,22 +104,25 @@ public final class ExecutionManager {
     // Constructor.
     // ---------------------------------------------------
 
-    public ExecutionManager(final int numOfSlots, final NetManager netManager) {
+    public ExecutionManager(final int numOfCores, final NetManager netManager) {
 
-        this.numOfSlots = numOfSlots;
+        this.numOfCores = numOfCores;
 
         this.netManager = Preconditions.checkNotNull(netManager);
 
-        this.programContextMap = new ConcurrentHashMap<>();
+        this.programContextRef = new AtomicReference<>(null);
 
-        this.slotContextMap = new ConcurrentHashMap<>();
+        this.netManager.addEventListener(BSP_SYNC_BARRIER_EVENT, event -> {
 
-        this.netManager.addEventListener(BSP_SYNC_BARRIER_EVENT, event ->
-                programContextMap.get(event.getPayload()).globalSyncBarrier.countDown());
+            if (!programContextRef.get().programID.equals(event.getPayload()))
+                throw new IllegalStateException();
+
+            programContextRef.get().globalSyncBarrier.countDown();
+        });
 
         // DSL Runtime.
 
-        this.activeFrame = new ExecutionFrame[numOfSlots];
+        this.activeFrame = new ExecutionFrame[numOfCores];
 
         this.currentFrameLevel = new ThreadLocal<>();
     }
@@ -130,42 +131,30 @@ public final class ExecutionManager {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void registerJob(final UUID jobID, final MLProgramContext programContext) {
-        programContextMap.put(Preconditions.checkNotNull(jobID), Preconditions.checkNotNull(programContext));
-    }
+    public void registerProgram(final MLProgramContext programContext) {
+        Preconditions.checkNotNull(programContext);
 
-    public MLProgramContext getJob(final UUID jobID) {
-        return programContextMap.get(Preconditions.checkNotNull(jobID));
-    }
+        final int activeSlots = programContext.perNodeDOP;
 
-    public void unregisterJob(final UUID jobID) {
-        programContextMap.remove(Preconditions.checkNotNull(jobID));
-    }
+        programContextRef.set(programContext);
 
-    public synchronized void registerSlotContext(final SlotContext ic) {
-        slotContextMap.put(Thread.currentThread().getId(), Preconditions.checkNotNull(ic));
-    }
-
-    public synchronized SlotContext getSlotContext() {
-        return slotContextMap.get(Thread.currentThread().getId());
-    }
-
-    public synchronized void unregisterSlotContext() {
-        slotContextMap.remove(Thread.currentThread().getId());
-    }
-
-    public synchronized void setNumOfSlots(final int numOfSlots) {
-
-        this.numOfSlots = numOfSlots;
-
-        final NestedIntervalTree.Interval in = new NestedIntervalTree.Interval(0, numOfSlots - 1);
+        final NestedIntervalTree.Interval in = new NestedIntervalTree.Interval(0, activeSlots - 1);
 
         final SlotGroupAllocation sa = new SlotGroupAllocation(in);
 
         this.slotAssignment = new NestedIntervalTree<>(in, sa);
     }
 
-    public int getNumOfSlots() { return numOfSlots; }
+    public void unregisterProgram(final MLProgramContext programContext) {
+        Preconditions.checkNotNull(programContext);
+
+        programContextRef.set(null);
+    }
+
+    public synchronized SlotContext getSlotContext() {
+
+        return programContextRef.get().threadIDSlotCtxMap.get(Thread.currentThread().getId());
+    }
 
     // ---------------------------------------------------
     // DSL RUNTIME MANAGEMENT.
@@ -173,7 +162,7 @@ public final class ExecutionManager {
 
     public synchronized void pushFrame(final CFStatement statement) {
 
-        final SlotContext ic = getSlotContext();
+        final SlotContext sc = statement.slotContext;
 
         if (currentFrameLevel.get() == null) {
 
@@ -182,31 +171,29 @@ public final class ExecutionManager {
 
         currentFrameLevel.get().increment();
 
-        final ExecutionFrame newFrame = new ExecutionFrame(currentFrameLevel.get().getValue(), activeFrame[ic.slotID], statement, ic);
+        final ExecutionFrame newFrame = new ExecutionFrame(
+                currentFrameLevel.get().getValue(),
+                activeFrame[statement.slotContext.slotID],
+                statement,
+                sc
+        );
 
-        activeFrame[ic.slotID] = newFrame;
+        activeFrame[sc.slotID] = newFrame;
 
-        final Pair<NestedIntervalTree.Interval, SlotGroupAllocation> slotGroup = slotAssignment.get(new NestedIntervalTree.Point(ic.slotID));
+        final Pair<NestedIntervalTree.Interval, SlotGroupAllocation> slotGroup = slotAssignment.get(new NestedIntervalTree.Point(sc.slotID));
 
-        int index = ic.slotID - slotGroup.getLeft().low;
+        final int index = statement.slotContext.slotID - slotGroup.getLeft().low;
 
         slotGroup.getRight().frames[index] = newFrame;
     }
 
     public void popFrame() {
 
-        final SlotContext ic = getSlotContext();
+        final SlotContext sc = getSlotContext();
 
-        activeFrame[ic.slotID] = activeFrame[ic.slotID].parent;
+        activeFrame[sc.slotID] = activeFrame[sc.slotID].parent;
 
         currentFrameLevel.get().decrement();
-    }
-
-    public ExecutionFrame currentFrame() {
-
-        final SlotContext ic = getSlotContext();
-
-        return activeFrame[ic.slotID];
     }
 
     public synchronized int getScopeDOP() {
@@ -218,9 +205,9 @@ public final class ExecutionManager {
 
     public synchronized SlotGroup getActiveSlotGroup() {
 
-        final SlotContext ic = getSlotContext();
+        final SlotContext sc = getSlotContext();
 
-        final NestedIntervalTree.Interval slots = slotAssignment.get(new NestedIntervalTree.Point(ic.slotID)).getLeft();
+        final NestedIntervalTree.Interval slots = slotAssignment.get(new NestedIntervalTree.Point(sc.slotID)).getLeft();
 
         return new SlotGroup(slots.low, slots.high);
     }
@@ -260,17 +247,6 @@ public final class ExecutionManager {
         }
     }
 
-    /*public synchronized void releaseSlots(final SlotAllocation sa) throws Exception {
-        //synchronized (monitor) {
-            if (slotAssignment.exist(sa.slotIDRange)) {
-                //while (!slotAssignment.isDeepestInterval(sa.slotIDRange)) {
-                //    Thread.sleep(10);
-                //}
-                slotAssignment.remove(Preconditions.checkNotNull(sa.slotIDRange));
-            }
-        //}
-    }*/
-
     public void releaseSlots(final SlotGroupAllocation sa) throws Exception {
         synchronized (this) {
             if (!slotAssignment.exist(sa.slotIDRange))
@@ -291,6 +267,14 @@ public final class ExecutionManager {
     // ITERATION CONTROL FLOW.
     // ---------------------------------------------------
 
+    public void localSync(final SlotContext slotContext) {
+        try {
+            slotContext.programContext.localSyncBarrier.await();
+        } catch (Exception e) {
+            LOG.error(e.getLocalizedMessage());
+        }
+    }
+
     public void globalSync() {
         final SlotContext slotContext = getSlotContext();
         final NetEvents.NetEvent globalSyncEvent = new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT);
@@ -305,14 +289,6 @@ public final class ExecutionManager {
             slotContext.programContext.globalSyncBarrier.reset();
         } else {
             throw new IllegalStateException();
-        }
-    }
-
-    public void localSync(final SlotContext slotContext) {
-        try {
-            slotContext.programContext.localSyncBarrier.await();
-        } catch (Exception e) {
-            LOG.error(e.getLocalizedMessage());
         }
     }
 
@@ -359,4 +335,26 @@ public final class ExecutionManager {
                     : endOffset;
         return vector.elementIterator(startOffset, endOffset);
     }
+
+    // ---------------------------------------------------
+    // UNUSED STUFF
+    // ---------------------------------------------------
+
+    /*public synchronized void releaseSlots(final SlotAllocation sa) throws Exception {
+        //synchronized (monitor) {
+            if (slotAssignment.exist(sa.slotIDRange)) {
+                //while (!slotAssignment.isDeepestInterval(sa.slotIDRange)) {
+                //    Thread.sleep(10);
+                //}
+                slotAssignment.remove(Preconditions.checkNotNull(sa.slotIDRange));
+            }
+        //}
+    }*/
+
+    /*public ExecutionFrame currentFrame() {
+
+        final SlotContext sc = getSlotContext();
+
+        return activeFrame[sc.slotID];
+    }*/
 }

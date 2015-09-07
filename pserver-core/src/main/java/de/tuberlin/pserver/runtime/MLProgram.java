@@ -94,8 +94,6 @@ public abstract class MLProgram extends EventDispatcher {
 
             programLinker.fetchStateObjects(this);
 
-            //CF.select().slot(0).exe(() -> {
-
             if (slotContext.slotID == 0) {
 
                 LOG.info(slotIDStr + "Enter " + program.slotContext.programContext.simpleClassName + " initialization phase.");
@@ -111,8 +109,6 @@ public abstract class MLProgram extends EventDispatcher {
 
                 slotContext.programContext.programInitBarrier.countDown();
             }
-
-            //});
 
             slotContext.programContext.programInitBarrier.await();
 
@@ -155,15 +151,12 @@ public abstract class MLProgram extends EventDispatcher {
                         + " post-process phase [duration: " + (end - start) + " ms].");
             }
 
-            synchronized (slotContext.programContext.programDoneBarrier) {
-                slotContext.programContext.programDoneBarrier.countDown();
-            }
-
-            //CF.select().slot(0).exe(slotContext.programContext.programDoneBarrier::await);
-
-            if (slotContext.slotID == 0)
-                slotContext.programContext.programDoneBarrier.await();
-
         program.leave();
+
+        synchronized (slotContext.programContext.programDoneBarrier) {
+            slotContext.programContext.programDoneBarrier.countDown();
+        }
+
+        slotContext.programContext.programDoneBarrier.await();
     }
 }

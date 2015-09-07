@@ -155,6 +155,15 @@ public class DataManager extends EventDispatcher {
     }
 
     // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
+
+    public void clearContext() {
+        matrixPartitionManager.clearContext();
+        fileSystemManager.clearContext();
+    }
+
+    // ---------------------------------------------------
     // EVENT HANDLING
     // ---------------------------------------------------
 

@@ -156,8 +156,8 @@ public final class Iteration extends CFStatement {
 
     private void sync() {
         if (!((mode & ASYNC) == ASYNC))
-            if ((mode & LOCAL) == LOCAL)
-                slotContext.programContext.runtimeContext.executionManager.localSync(slotContext);
+            //if ((mode & LOCAL) == LOCAL)
+            //    slotContext.programContext.runtimeContext.executionManager.localSync(slotContext);
             if ((mode & GLOBAL) == GLOBAL && slotContext.slotID == 0)
                 slotContext.programContext.runtimeContext.executionManager.globalSync();
     }

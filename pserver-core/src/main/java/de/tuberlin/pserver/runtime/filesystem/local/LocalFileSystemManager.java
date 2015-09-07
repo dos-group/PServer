@@ -71,6 +71,12 @@ public final class LocalFileSystemManager implements FileSystemManager {
     }
 
     @Override
+    public void clearContext() {
+        this.inputFileMap.clear();
+        this.registeredIteratorMap.clear();
+    }
+
+    @Override
     public void computeInputSplitsForRegisteredFiles() {
 
         final CountDownLatch splitComputationLatch = new CountDownLatch(infraManager.getMachines().size() - 1);

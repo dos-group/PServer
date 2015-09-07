@@ -14,10 +14,6 @@ public class ASymAggregatorTestJob extends MLProgram {
 
         program.process(() -> {
 
-            //final int nodeID = slotContext.programContext.runtimeContext.nodeID;
-            //final Pair<Integer, Integer> slotRange = slotContext.programContext.runtimeContext.executionManager.getActiveSlotGroup();
-            //System.out.println("[" + nodeID + "] Slot Range [" + slotRange.getLeft() + ", " + slotRange.getRight() + "]");
-
             final int partialAgg = slotContext.programContext.runtimeContext.nodeID * 1000;
 
             final int globalAgg = new Aggregator<>(slotContext, partialAgg, false)
