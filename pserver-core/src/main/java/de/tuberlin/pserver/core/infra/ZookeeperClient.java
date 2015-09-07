@@ -63,16 +63,17 @@ public final class ZookeeperClient {
         CuratorZookeeperClient client = curator.getZookeeperClient();
         int tries = 1;
         while(tries <= CONNECTION_RETRIES && !client.isConnected()) {
+            LOG.debug("Unsuccessful try ("+tries+") to connect to zookeeper at " + client.getCurrentConnectionString());
             try {
                 Thread.sleep(CONNECTION_TIMEOUT);
             } catch (InterruptedException e) {}
-            LOG.debug("Unsuccessful try ("+tries+") to connect to zookeeper at " + client.getCurrentConnectionString());
             tries++;
         }
         if(!client.isConnected()) {
             LOG.error("Unable to connect to zookeeper at " + client.getCurrentConnectionString());
             System.exit(1);
         }
+        LOG.info("Successfully connected to zookeeper at " + client.getCurrentConnectionString());
     }
 
     // ---------------------------------------------------

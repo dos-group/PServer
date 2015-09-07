@@ -118,11 +118,13 @@ public final class NetManager extends EventDispatcher {
 
         synchronized (peers) {
             while(!peers.containsKey(dstMachine.machineID)) {
+                LOG.debug("waiting to connect to peer " + dstMachine.machineID.toString().substring(0,2) + " at " + dstMachine.hostname + ":" + dstMachine.port);
                 try {
                     peers.wait(1000);
                 }
                 catch (InterruptedException e) {}
             }
+            LOG.debug("successfully connected to peer " + dstMachine.machineID.toString().substring(0,2) + " at " + dstMachine.hostname + ":" + dstMachine.port);
         }
 
     }
@@ -213,11 +215,11 @@ public final class NetManager extends EventDispatcher {
         });
 
         while(!cf.isDone()) {
+            LOG.debug("NetManager of [" + machine.machineID + "] is waiting to get bound to port: " + machine.port + ".");
             try {
                 cf.await(1000);
-            } catch (InterruptedException e) {
-                LOG.debug("NetManager of [" + machine.machineID + "] is waiting to get bound to port: " + machine.port + ".");
-            }
+            } catch (InterruptedException e) {}
         }
+        LOG.debug("NetManager of [" + machine.machineID + "] successfully bound to port: " + machine.port + ".");
     }
 }

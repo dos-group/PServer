@@ -173,12 +173,12 @@ public final class MatrixPartitionManager {
             }
         }
         while(finishedLoadingLatch.getCount() > 0) {
+            LOG.debug("waiting for " + finishedLoadingLatch.getCount() + " loading tasks to finish");
             try {
                 finishedLoadingLatch.await(10, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                LOG.debug("waiting for " + finishedLoadingLatch.getCount() + " loading tasks to finish");
-            }
+            } catch (InterruptedException e) {}
         }
+        LOG.info("completed all loading tasks");
     }
 
     // ---------------------------------------------------
