@@ -22,8 +22,6 @@ public final class MatrixBuilder {
 
     private double[] data;
 
-    private int initialCapacity = -1;
-
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
@@ -57,15 +55,10 @@ public final class MatrixBuilder {
         return this;
     }
 
-    public MatrixBuilder initialCapacity(final int initialCapacity) {
-        this.initialCapacity = initialCapacity;
-        return this;
-    }
-
     public Matrix build() {
         switch (format) {
             case SPARSE_FORMAT:
-                    return new SMatrix(rows, cols, layout, initialCapacity);
+                    return new SMatrix(rows, cols, layout);
             case DENSE_FORMAT:
                     if (data == null)
                         return new DMatrix(rows, cols, new double[Utils.toInt(rows * cols)], layout);

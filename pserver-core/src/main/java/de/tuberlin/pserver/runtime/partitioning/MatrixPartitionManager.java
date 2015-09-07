@@ -117,7 +117,9 @@ public final class MatrixPartitionManager {
                     final MatrixLoadTask task = matrixLoadTasks.get(e.getName());
                     final Matrix matrix = getLoadingMatrix(task);
                     for (final MatrixEntry entry : e.getEntries()) {
-                        matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
+                        synchronized (matrix) {
+                            matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
+                        }
                     }
                 }
         );
@@ -170,10 +172,14 @@ public final class MatrixPartitionManager {
             }
         }
         while(finishedLoadingLatch.getCount() > 0) {
-            LOG.debug("waiting for " + finishedLoadingLatch.getCount() + " loading tasks to finish");
+            LOG.debug("waiting for " + finishedLoadingLatch.getCount() + " loading tasks to finish:");
+            for(String taskName : fileLoadingBarrier.keySet()) {
+                LOG.debug("task '"+taskName+"' has " + fileLoadingBarrier.get(taskName) + " nodes to finish");
+            }
             try {
                 finishedLoadingLatch.await(10, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+            }
         }
         LOG.info("completed all loading tasks");
     }
@@ -201,9 +207,7 @@ public final class MatrixPartitionManager {
                             task.partitionType,
                             task.matrixLayout,
                             task.matrixFormat,
-                            false,
-                            //(int)task.fileIterator.getFileSection().linesToRead
-                            0
+                            false
                     );
                 } break;
                 case LOGICALLY_PARTITIONED:
@@ -271,7 +275,9 @@ public final class MatrixPartitionManager {
                 int targetPartition = matrixPartitioner.getPartitionOfEntry(entry);
                 // if record belongs to own node, set the value
                 if (targetPartition == nodeId) {
-                    matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
+                    synchronized (matrix) {
+                        matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
+                    }
                 } else {
                     // otherwise append entry to foreign entries and send them depending on threshold
                     List<MatrixEntry> foreignsOfTargetNode = getListOrCreateIfNotExists(foreignEntries, targetPartition, foreignEntriesThreshold);
