@@ -42,23 +42,13 @@ public class DistributedMatrix extends AbstractMatrix {
     public DistributedMatrix(final DistributedMatrix m) {
         this(m.slotContext, m.rows, m.cols, m.partitionType, m.layout, m.format, m.completeMatrix);
     }
+
     public DistributedMatrix(final SlotContext slotContext,
                              final long rows, final long cols,
                              final PartitionType partitionType,
                              final Layout layout,
                              final Format format,
                              final boolean completeMatrix) {
-
-        this(slotContext, rows, cols, partitionType, layout, format, completeMatrix, -1);
-    }
-
-    public DistributedMatrix(final SlotContext slotContext,
-                             final long rows, final long cols,
-                             final PartitionType partitionType,
-                             final Layout layout,
-                             final Format format,
-                             final boolean completeMatrix,
-                             final int initialCapacity) {
 
         super(rows, cols, layout);
 
@@ -76,7 +66,6 @@ public class DistributedMatrix extends AbstractMatrix {
                 .dimension(_rows, _cols)
                 .layout(layout)
                 .format(format)
-                .initialCapacity(initialCapacity)
                 .build();
     }
 

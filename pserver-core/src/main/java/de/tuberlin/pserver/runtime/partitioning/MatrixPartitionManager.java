@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class MatrixPartitionManager {
@@ -114,7 +115,9 @@ public final class MatrixPartitionManager {
                     final MatrixLoadTask task = matrixLoadTasks.get(e.getName());
                     final Matrix matrix = getLoadingMatrix(task);
                     for (final MatrixEntry entry : e.getEntries()) {
-                        matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
+                        synchronized (matrix) {
+                            matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
+                        }
                     }
                 }
         );
@@ -154,7 +157,7 @@ public final class MatrixPartitionManager {
         fileLoadingBarrier.put(name, new AtomicInteger(slotContext.programContext.nodeDOP));
     }
 
-    public void loadFilesIntoDHT() throws Exception {
+    public void loadFilesIntoDHT() {
         fileSystemManager.computeInputSplitsForRegisteredFiles();
         finishedLoadingLatch = new CountDownLatch(matrixLoadTasks.size());
         for (final MatrixLoadTask task : matrixLoadTasks.values()) {
@@ -166,7 +169,17 @@ public final class MatrixPartitionManager {
                 default: throw new IllegalStateException();
             }
         }
-        finishedLoadingLatch.await();
+        while(finishedLoadingLatch.getCount() > 0) {
+            LOG.debug("waiting for " + finishedLoadingLatch.getCount() + " loading tasks to finish:");
+            for(String taskName : fileLoadingBarrier.keySet()) {
+                LOG.debug("task '"+taskName+"' has " + fileLoadingBarrier.get(taskName) + " nodes to finish");
+            }
+            try {
+                finishedLoadingLatch.await(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+            }
+        }
+        LOG.info("completed all loading tasks");
     }
 
     public void clearContext() {
@@ -198,8 +211,7 @@ public final class MatrixPartitionManager {
                             task.partitionType,
                             task.matrixLayout,
                             task.matrixFormat,
-                            false,
-                            (int)task.fileIterator.getFileSection().linesToRead
+                            false
                     );
                 } break;
                 case LOGICALLY_PARTITIONED:
@@ -267,7 +279,9 @@ public final class MatrixPartitionManager {
                 int targetPartition = matrixPartitioner.getPartitionOfEntry(entry);
                 // if record belongs to own node, set the value
                 if (targetPartition == nodeId) {
-                    matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
+                    synchronized (matrix) {
+                        matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
+                    }
                 } else {
                     // otherwise append entry to foreign entries and send them depending on threshold
                     List<MatrixEntry> foreignsOfTargetNode = getListOrCreateIfNotExists(foreignEntries, targetPartition, foreignEntriesThreshold);

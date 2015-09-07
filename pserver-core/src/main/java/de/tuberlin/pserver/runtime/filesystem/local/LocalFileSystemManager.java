@@ -107,12 +107,13 @@ public final class LocalFileSystemManager implements FileSystemManager {
         LOG.debug("["+infraManager.getNodeID()+"] Finished computing local input splits");
 
         while(splitComputationLatch.getCount() > 0) {
+            LOG.debug("["+infraManager.getNodeID()+"] Waiting for other nodes to finish computing input splits");
             try {
                 splitComputationLatch.await(1000, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                LOG.debug("["+infraManager.getNodeID()+"] Waiting for other nodes to finish computing input splits");
-            }
+            } catch (InterruptedException e) {}
         }
+
+        LOG.debug("["+infraManager.getNodeID()+"] All nodes finished computing local input splits");
 
         netManager.removeEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler);
     }

@@ -8,7 +8,7 @@ public class EmbeddedDHTObject<T extends SharedObject> extends AbstractBufferedD
     // Fields.
     // ---------------------------------------------------
 
-    protected double[] data;
+    //protected double[] data;
 
     public final T object;
 
@@ -19,7 +19,7 @@ public class EmbeddedDHTObject<T extends SharedObject> extends AbstractBufferedD
     public EmbeddedDHTObject(final T object) {
         super((int)object.sizeOf(), false);
         this.object = object;
-        this.data   = object.toArray();
+        //this.data   = object.toArray();
         this.object.setOwner(this);
     }
 

@@ -79,7 +79,7 @@ public final class HDFSFileSystemManagerServer implements FileSystemManager, Inp
             }
         });
 
-        netManager.broadcastEvent(new NetEvents.NetEvent(PSERVER_LFSM_COMPUTED_FILE_SPLITS));
+        netManager.broadcastEvent(new NetEvents.NetEvent(PSERVER_LFSM_COMPUTED_FILE_SPLITS, true));
 
         registeredIteratorMap.forEach(
                 (k, v) -> v.forEach(FileDataIterator::initialize)
