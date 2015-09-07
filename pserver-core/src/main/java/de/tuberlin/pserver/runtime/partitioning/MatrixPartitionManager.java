@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class MatrixPartitionManager {
@@ -116,6 +117,9 @@ public final class MatrixPartitionManager {
                     final MatrixLoadTask task = matrixLoadTasks.get(e.getName());
                     final Matrix matrix = getLoadingMatrix(task);
                     for (final MatrixEntry entry : e.getEntries()) {
+                        if(entry.getRow() == 5990 && entry.getCol() == 529) {
+                            LOG.error("got the fucker via event: " + entry);
+                        }
                         matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
                     }
                 }
@@ -156,7 +160,7 @@ public final class MatrixPartitionManager {
         fileLoadingBarrier.put(name, new AtomicInteger(slotContext.programContext.nodeDOP));
     }
 
-    public void loadFilesIntoDHT() throws Exception {
+    public void loadFilesIntoDHT() {
         fileSystemManager.computeInputSplitsForRegisteredFiles();
         finishedLoadingLatch = new CountDownLatch(matrixLoadTasks.size());
         for (final MatrixLoadTask task : matrixLoadTasks.values()) {
@@ -168,7 +172,13 @@ public final class MatrixPartitionManager {
                 default: throw new IllegalStateException();
             }
         }
-        finishedLoadingLatch.await();
+        while(finishedLoadingLatch.getCount() > 0) {
+            try {
+                finishedLoadingLatch.await(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                LOG.debug("waiting for " + finishedLoadingLatch.getCount() + " loading tasks to finish");
+            }
+        }
     }
 
     // ---------------------------------------------------
@@ -195,7 +205,8 @@ public final class MatrixPartitionManager {
                             task.matrixLayout,
                             task.matrixFormat,
                             false,
-                            (int)task.fileIterator.getFileSection().linesToRead
+                            //(int)task.fileIterator.getFileSection().linesToRead
+                            0
                     );
                 } break;
                 case LOGICALLY_PARTITIONED:
@@ -257,14 +268,23 @@ public final class MatrixPartitionManager {
             // iterate through entries in record
             while (record.hasNext()) {
                 entry = record.next(reusable);
+                if(entry.getRow() == 5990 && entry.getCol() == 529) {
+                    LOG.error("read the fucker from disk: " + entry);
+                    if(entry.getRow() >= task.rows || entry.getCol() >= task.cols)
+                        LOG.error("discarded the fucker!!!" + entry.getRow() + " >= "+ task.rows + " || " + entry.getCol() + " >= " + task.cols);
+                }
                 if(entry.getRow() >= task.rows || entry.getCol() >= task.cols)
                     continue;
                 // get the partition this record belongs to
                 int targetPartition = matrixPartitioner.getPartitionOfEntry(entry);
                 // if record belongs to own node, set the value
+                if(entry.getRow() == 5990 && entry.getCol() == 529)
+                    LOG.error("fuckers partition: "+targetPartition+" my partition: "+nodeId);
                 if (targetPartition == nodeId) {
                     matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
                 } else {
+                    if(entry.getRow() == 5990 && entry.getCol() == 529)
+                        LOG.error("read the fucker from disk: " + entry);
                     // otherwise append entry to foreign entries and send them depending on threshold
                     List<MatrixEntry> foreignsOfTargetNode = getListOrCreateIfNotExists(foreignEntries, targetPartition, foreignEntriesThreshold);
                     foreignsOfTargetNode.add(new ImmutableMatrixEntry(entry));

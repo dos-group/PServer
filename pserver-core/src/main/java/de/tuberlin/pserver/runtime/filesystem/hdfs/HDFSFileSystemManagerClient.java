@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public final class HDFSFileSystemManagerClient implements FileSystemManager, InputSplitProvider {
 
@@ -78,9 +79,9 @@ public final class HDFSFileSystemManagerClient implements FileSystemManager, Inp
         netManager.addEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler);
 
         try {
-            splitComputationLatch.await();
+            splitComputationLatch.await(1, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            throw new IllegalStateException(e);
+            LOG.debug("waiting for hdfs-master to complete computation of input splits");
         }
         netManager.removeEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler);
 

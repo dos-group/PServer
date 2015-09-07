@@ -102,7 +102,7 @@ public final class InfrastructureManager extends EventDispatcher {
 
     private void loadMachines() {
         int requiredNumNodes = zookeeper.readNumNodes();
-        LOG.debug("InfraManager at " + machine.machineID.toString().substring(0,2) + "needs to wait for " + requiredNumNodes + " nodes to register");
+        LOG.debug("InfraManager at " + machine.machineID.toString().substring(0,2) + " needs to wait for " + requiredNumNodes + " nodes to register");
         int registeredNumNodes;
         while((registeredNumNodes = readMachinesAndProcess()) < requiredNumNodes) {
             try {

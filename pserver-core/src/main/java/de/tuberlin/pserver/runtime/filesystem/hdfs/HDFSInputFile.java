@@ -324,9 +324,9 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
         }
         if (this.splitStart != 0) {
             this.stream.seek(this.splitStart);
+            this.stream.readLine();
         }
 
-        this.stream.readLine();
         this.csvFileParser = new CSVParser(new InputStreamReader(this.stream), format.getCsvFormat());
         this.csvIterator = csvFileParser.iterator();
     }

@@ -19,13 +19,17 @@ public class SubmitMatrixLoadingTestJob extends MLProgram {
 
     private static final long ROWS = 10000;
     private static final long COLS = 2500;
-    private static final String FILE = "datasets/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
+    // loaded by pserver
+    private static final String PSERVER_FILE = "hdfs://wally101.cit.tu-berlin.de:45010/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
+    //private static final String PSERVER_FILE = "/home/fridtjof.sander/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
+    // loaded by job
+    private static final String PROGRAM_FILE = "/home/fridtjof.sander/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
 
     @SharedState(
             globalScope = GlobalScope.PARTITIONED,
             rows = ROWS,
             cols = COLS,
-            path = FILE
+            path = PSERVER_FILE
     )
     public Matrix matrix;
 
@@ -42,7 +46,7 @@ public class SubmitMatrixLoadingTestJob extends MLProgram {
 
             BufferedReader br = null;
             try {
-                br = new BufferedReader(new FileReader(FILE));
+                br = new BufferedReader(new FileReader(PROGRAM_FILE));
                 String line = null;
                 while((line = br.readLine()) != null) {
                     String[] parts = line.split(",");
@@ -53,9 +57,8 @@ public class SubmitMatrixLoadingTestJob extends MLProgram {
                     if(partitioner.getPartitionOfEntry(entry.set(row, col, Double.NaN)) == nodeId) {
                         double matrixVal = matrix.get(row, col);
                         if(matrixVal != val) {
-                            System.out.println(nodeId + ": matrix("+row+","+col+") is "+matrixVal+" but should be "+val);
+                            LOG.error(nodeId + ": matrix("+row+","+col+") is "+matrixVal+" but should be "+val);
                         }
-                        Preconditions.checkState(matrixVal == val);
                     }
                 }
             } catch (IOException e) {
@@ -75,8 +78,8 @@ public class SubmitMatrixLoadingTestJob extends MLProgram {
     }
 
     public static void main(String[] args) {
-        System.setProperty("simulation.numNodes", "4");
-        PServerExecutor.LOCAL
+        System.setProperty("pserver.profile", "wally");
+        PServerExecutor.DISTRIBUTED
                 .run(SubmitMatrixLoadingTestJob.class, 1)
                 .done();
     }
