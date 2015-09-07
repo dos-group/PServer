@@ -6,6 +6,7 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.dense.DVector;
+import gnu.trove.map.hash.TIntDoubleHashMap;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.HashMap;
@@ -14,57 +15,17 @@ import java.util.Map;
 public class SMatrix extends AbstractMatrix {
 
     // ---------------------------------------------------
-    // Inner Classes.
-    // ---------------------------------------------------
-
-    /*public final class MtxPos implements Serializable {
-
-        public final long row;
-
-        public final long col;
-
-        public MtxPos(final long row, final long col) {
-            this.row = row;
-            this.col = col;
-        }
-
-        @Override
-        public int hashCode() {
-            return (int) (row * cols + col);
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (o instanceof MtxPos) {
-                MtxPos that = (MtxPos) o;
-                return (this.row == that.row && this.col == that.col);
-            }
-            return false;
-        }
-    }*/
-
-    // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    private final int initialCapacity;
-
-    //private final TIntDoubleHashMap data;
-
-    private final Map<Integer, Double> data;
+    private final TIntDoubleHashMap data = new TIntDoubleHashMap();
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    public SMatrix(final long rows, final long cols, final Layout layout, final int initialCapacity) {
+    public SMatrix(final long rows, final long cols, final Layout layout) {
         super(rows, cols, layout);
-        this.initialCapacity = initialCapacity;
-        //if (initialCapacity == -1)
-        //    this.data = new TIntDoubleHashMap();//(int)((rows * cols)/10));
-        //else
-        //    this.data = new TIntDoubleHashMap(initialCapacity);
-        data = new HashMap<>();
     }
 
     // ---------------------------------------------------
@@ -73,23 +34,24 @@ public class SMatrix extends AbstractMatrix {
 
     @Override
     public double get(long index) {
-        return 0;
+        final Double value = data.get(Utils.toInt(index));
+        return (value == null) ? 0. : value;
     }
 
     @Override
     public double get(long row, long col) {
-        final Double value = data.get((int)(row * cols + col));
-        return (value == null) ? 0 : value;
+        final Double value = data.get(Utils.getPos(row, col, this));
+        return (value == null) ? 0. : value;
     }
 
     @Override
     public void set(long row, long col, double value) {
-        data.put((int)(row * cols + col), value);
+        data.put(Utils.getPos(row, col, this), value);
     }
 
     @Override
     public double[] toArray() {
-        return new double[0];
+        throw new NotImplementedException("not impl");
     }
 
     @Override
@@ -99,17 +61,17 @@ public class SMatrix extends AbstractMatrix {
 
     @Override
     public RowIterator rowIterator() {
-        return new SMatrix2RowIterator(this);
+        throw new NotImplementedException("not impl");
     }
 
     @Override
     public RowIterator rowIterator(int startRow, int endRow) {
-        return new SMatrix2RowIterator(this, startRow, endRow);
+        throw new NotImplementedException("not impl");
     }
 
     @Override
     protected Matrix newInstance(long rows, long cols) {
-        return new SMatrix(rows, cols, Layout.ROW_LAYOUT, initialCapacity);
+        throw new NotImplementedException("not impl");
     }
 
     @Override
@@ -184,41 +146,6 @@ public class SMatrix extends AbstractMatrix {
 
     @Override
     public Matrix applyOnNonZeroElements(MatrixElementUnaryOperator f, Matrix B) {
-        /*for (Map.Entry<Long, Double> ele : data.entrySet()) {
-            long row = ele.getKey() / cols;
-            long col = ele.getKey() % cols;
-            B.set(row, col, f.apply(row, col, ele.getValue()));
-        }*/
-        return this;
-    }
-
-    public static class SMatrix2RowIterator extends AbstractRowIterator {
-
-        public SMatrix2RowIterator(AbstractMatrix mat) {
-            super(mat);
-        }
-
-        public SMatrix2RowIterator(AbstractMatrix mat, int startRow, int endRow) {
-            super(mat, startRow, endRow);
-        }
-
-        @Override
-        public Vector asVector() {
-            return asVector(0, Utils.toInt(cols()));
-        }
-
-        @Override
-        public Vector asVector(int from, int size) {
-            System.out.println("curRow:" + currentRow);
-            if(from < 0 || size > cols()) {
-                throw new IllegalArgumentException();
-            }
-            DVector rowVec = new DVector(size, Layout.ROW_LAYOUT);
-            for(long col = from; col < size; col++) {
-                double val = target.get(currentRow, col);
-                rowVec.set(col, val);
-            }
-            return rowVec;
-        }
+        throw new NotImplementedException("not impl");
     }
 }

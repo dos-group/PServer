@@ -2,7 +2,6 @@ package de.tuberlin.pserver.test.core.jobs;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.core.infra.ClusterSimulator;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.dsl.state.GlobalScope;
 import de.tuberlin.pserver.dsl.state.SharedState;
@@ -16,7 +15,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-public class MatrixLoadingTestJob extends MLProgram  {
+public class MatrixDenseLoadingTestJob extends MLProgram  {
 
     private static final long ROWS = 10000;
     private static final long COLS = 2500;
@@ -78,7 +77,7 @@ public class MatrixLoadingTestJob extends MLProgram  {
     public static void main(String[] args) {
         System.setProperty("simulation.numNodes", "4");
         PServerExecutor.LOCAL
-                .run(MatrixLoadingTestJob.class, 1)
+                .run(MatrixDenseLoadingTestJob.class, 1)
                 .done();
     }
 }

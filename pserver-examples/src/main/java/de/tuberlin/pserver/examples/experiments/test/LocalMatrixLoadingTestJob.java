@@ -16,16 +16,18 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-public class SubmitMatrixLoadingTestJob extends MLProgram {
+/**
+ * Created by fsander on 07.09.15.
+ */
+public class LocalMatrixLoadingTestJob extends MLProgram {
 
     private static final long ROWS = 10000;
     private static final long COLS = 2500;
 
     // loaded by pserver
-    private static final String PSERVER_FILE = "hdfs://wally101.cit.tu-berlin.de:45010/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
-    //private static final String PSERVER_FILE = "/home/fridtjof.sander/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
+    private static final String PSERVER_FILE = "datasets/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
     // loaded by job
-    private static final String PROGRAM_FILE = "/home/fridtjof.sander/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
+    private static final String PROGRAM_FILE = "datasets/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
 
     @SharedState(
             globalScope = GlobalScope.PARTITIONED,
@@ -80,10 +82,10 @@ public class SubmitMatrixLoadingTestJob extends MLProgram {
     }
 
     public static void main(String[] args) {
-        System.setProperty("pserver.profile", "wally");
-        PServerExecutor.DISTRIBUTED
+        System.setProperty("simulation.numNodes", "4");
+        PServerExecutor.LOCAL
                 .run(SubmitMatrixLoadingTestJob.class, 1)
                 .done();
     }
-}
 
+}

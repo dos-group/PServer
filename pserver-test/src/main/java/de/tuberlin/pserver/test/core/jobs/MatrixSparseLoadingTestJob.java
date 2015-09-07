@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.examples.experiments.test;
+package de.tuberlin.pserver.test.core.jobs;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.client.PServerExecutor;
@@ -16,22 +16,17 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-public class SubmitMatrixLoadingTestJob extends MLProgram {
+public class MatrixSparseLoadingTestJob extends MLProgram  {
 
     private static final long ROWS = 10000;
     private static final long COLS = 2500;
-
-    // loaded by pserver
-    private static final String PSERVER_FILE = "hdfs://wally101.cit.tu-berlin.de:45010/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
-    //private static final String PSERVER_FILE = "/home/fridtjof.sander/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
-    // loaded by job
-    private static final String PROGRAM_FILE = "/home/fridtjof.sander/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
+    private static final String FILE = "datasets/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
 
     @SharedState(
             globalScope = GlobalScope.PARTITIONED,
             rows = ROWS,
             cols = COLS,
-            path = PSERVER_FILE,
+            path = FILE,
             format = Format.SPARSE_FORMAT
     )
     public Matrix matrix;
@@ -40,6 +35,7 @@ public class SubmitMatrixLoadingTestJob extends MLProgram {
     @Override
     public void define(Program program) {
         program.process(() -> {
+
             int nodeId = slotContext.programContext.runtimeContext.nodeID;
             int numNodes = slotContext.programContext.nodeDOP;
             MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);
@@ -48,7 +44,7 @@ public class SubmitMatrixLoadingTestJob extends MLProgram {
 
             BufferedReader br = null;
             try {
-                br = new BufferedReader(new FileReader(PROGRAM_FILE));
+                br = new BufferedReader(new FileReader(FILE));
                 String line = null;
                 while((line = br.readLine()) != null) {
                     String[] parts = line.split(",");
@@ -76,14 +72,14 @@ public class SubmitMatrixLoadingTestJob extends MLProgram {
                     }
                 }
             }
+
         });
     }
 
     public static void main(String[] args) {
-        System.setProperty("pserver.profile", "wally");
-        PServerExecutor.DISTRIBUTED
-                .run(SubmitMatrixLoadingTestJob.class, 1)
+        System.setProperty("simulation.numNodes", "4");
+        PServerExecutor.LOCAL
+                .run(MatrixSparseLoadingTestJob.class, 1)
                 .done();
     }
 }
-
