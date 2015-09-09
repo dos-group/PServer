@@ -17,7 +17,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-public class MatrixLoadingTestJob extends MLProgram  {
+public class MatrixDenseLoadingTestJob extends MLProgram  {
 
     private static final long ROWS = 1000;
     private static final long COLS = 250;
@@ -26,7 +26,7 @@ public class MatrixLoadingTestJob extends MLProgram  {
 
     private final String FILE;
 
-    public MatrixLoadingTestJob() {
+    public MatrixDenseLoadingTestJob() {
         FILE = getClass().getClassLoader().getResource("rowcolval_dataset_1000_250_shuffeled.csv").getFile();
     }
 
