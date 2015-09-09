@@ -1,10 +1,9 @@
-package de.tuberlin.pserver.test.core.jobs;
+package de.tuberlin.pserver.test.core.programs;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.dsl.Aggregator;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.runtime.MLProgram;
-import org.apache.commons.lang3.tuple.Pair;
 
 
 public class ASymAggregatorTestJob extends MLProgram {

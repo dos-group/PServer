@@ -3,7 +3,9 @@ package de.tuberlin.pserver.dsl.controlflow.iteration;
 import de.tuberlin.pserver.dsl.controlflow.CFStatement;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.SlotGroup;
 
 public final class Iteration extends CFStatement {
 
@@ -38,6 +40,8 @@ public final class Iteration extends CFStatement {
     // Fields.
     // ---------------------------------------------------
 
+    private final ExecutionManager executionManager;
+
     private long epoch;
 
     private int mode = ASYNC;
@@ -46,8 +50,10 @@ public final class Iteration extends CFStatement {
     // Constructor.
     // ---------------------------------------------------
 
-    public Iteration(final SlotContext ic) {
-        super(ic);
+    public Iteration(final SlotContext sc) {
+        super(sc);
+
+        this.executionManager = sc.programContext.runtimeContext.executionManager;
     }
 
     // ---------------------------------------------------
@@ -66,30 +72,34 @@ public final class Iteration extends CFStatement {
 
         enter();
 
-        long duration, passDuration = 0, syncDuration = 0;
+            final SlotGroup sg = executionManager.getActiveSlotGroup();
 
-        duration = System.currentTimeMillis();
-        
-        while (!t.terminate()) {
+            long duration, passDuration = 0, syncDuration = 0;
 
-            long t0 = System.currentTimeMillis();
-            
-            b.body(epoch);
+            duration = System.currentTimeMillis();
 
-            long t1 = System.currentTimeMillis();
-            
-            sync();
+            while (!t.terminate()) {
 
-            syncDuration += System.currentTimeMillis() - t1;
+                long t0 = System.currentTimeMillis();
 
-            ++epoch;
+                long t1 = System.currentTimeMillis();
 
-            passDuration += System.currentTimeMillis() - t0;
-        }
+                //sg.sync(slotContext);
 
-        duration = System.currentTimeMillis() - duration;
+                sync(sg);
 
-        setProfilingData(new IterationProfilingData(duration, passDuration / epoch, syncDuration / epoch));
+                syncDuration += System.currentTimeMillis() - t1;
+
+                b.body(epoch);
+
+                ++epoch;
+
+                passDuration += System.currentTimeMillis() - t0;
+            }
+
+            duration = System.currentTimeMillis() - duration;
+
+            setProfilingData(new IterationProfilingData(duration, passDuration / epoch, syncDuration / epoch));
 
         leave();
 
@@ -154,19 +164,26 @@ public final class Iteration extends CFStatement {
     // Private Methods.
     // ---------------------------------------------------
 
-    private void sync() {
-        if (!((mode & ASYNC) == ASYNC))
-            //if ((mode & LOCAL) == LOCAL)
-            //    slotContext.programContext.runtimeContext.executionManager.localSync(slotContext);
-            if ((mode & GLOBAL) == GLOBAL && slotContext.slotID == 0)
-                slotContext.programContext.runtimeContext.executionManager.globalSync();
+    private void sync(final SlotGroup sg) throws Exception {
+        switch (mode) {
+            case ASYNC:
+                return;
+            case LOCAL:
+                sg.sync(slotContext);
+                return;
+            case GLOBAL:
+                sg.sync(slotContext);
+                if (sg.minSlotID == slotContext.slotID)
+                    executionManager.globalSync(slotContext);
+                return;
+        }
     }
 
     private Matrix.RowIterator parallelMatrixRowIterator(final Matrix m) {
-        return slotContext.programContext.runtimeContext.executionManager.parallelMatrixRowIterator(m);
+        return executionManager.parallelMatrixRowIterator(m);
     }
 
     private Vector.ElementIterator parallelVectorElementIterator(final Vector v) {
-        return slotContext.programContext.runtimeContext.executionManager.parallelVectorElementIterator(v);
+        return executionManager.parallelVectorElementIterator(v);
     }
 }

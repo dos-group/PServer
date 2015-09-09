@@ -3,7 +3,6 @@ package de.tuberlin.pserver.runtime;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
-import de.tuberlin.pserver.commons.ds.ResettableCountDownLatch;
 import de.tuberlin.pserver.commons.hashtable.NonBlockingHashMap;
 import de.tuberlin.pserver.commons.json.GsonUtils;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
@@ -11,7 +10,7 @@ import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.atomic.AtomicReference;
 
 public final class MLProgramContext {
 
@@ -39,13 +38,7 @@ public final class MLProgramContext {
     // ---------------------------------------------------
 
     @GsonUtils.Exclude
-    public final ResettableCountDownLatch globalSyncBarrier;
-
-    @GsonUtils.Exclude
-    public final CyclicBarrier localSyncBarrier;
-
-    @GsonUtils.Exclude
-    public final Map<Long, SlotContext> threadIDSlotCtxMap;
+    private AtomicReference<CountDownLatch> globalSyncBarrier;
 
     @GsonUtils.Exclude
     public final CountDownLatch programLoadBarrier;
@@ -60,6 +53,9 @@ public final class MLProgramContext {
 
     @GsonUtils.Exclude
     private final Map<String, Object> programStore;
+
+    @GsonUtils.Exclude
+    public final Map<Long, SlotContext> threadIDSlotCtxMap;
 
     // ---------------------------------------------------
     // Constructors.
@@ -81,8 +77,7 @@ public final class MLProgramContext {
         this.nodeDOP            = nodeDOP;
         this.perNodeDOP         = perNodeDOP;
 
-        this.globalSyncBarrier  = new ResettableCountDownLatch(nodeDOP);
-        this.localSyncBarrier   = new CyclicBarrier(perNodeDOP);
+        this.globalSyncBarrier  = new AtomicReference<>(new CountDownLatch(nodeDOP - 1));
         this.threadIDSlotCtxMap = new ConcurrentHashMap<>();
         this.programLoadBarrier = new CountDownLatch(1);
         this.programInitBarrier = new CountDownLatch(1);
@@ -111,6 +106,28 @@ public final class MLProgramContext {
     public <T> T get(final String name) { return (T)programStore.get(Preconditions.checkNotNull(name)); }
 
     public void delete(final String name) { programStore.remove(Preconditions.checkNotNull(name)); }
+
+    // ---------------------------------------------------
+
+    public void countDownBarrier() {
+        while (globalSyncBarrier.get().getCount() == 0) { // TODO: Change this!
+            try {
+                Thread.sleep(5);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        globalSyncBarrier.get().countDown();
+    }
+
+    public void awaitGlobalSyncBarrier() {
+        try {
+            globalSyncBarrier.get().await();
+            globalSyncBarrier.set(new CountDownLatch(nodeDOP - 1));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
     // ---------------------------------------------------
 

@@ -37,4 +37,13 @@ public final class SlotContext {
         this.CF                 = new ControlFlow(this);
         this.DF                 = new DataFlow(this);
     }
+
+    // ---------------------------------------------------
+    // Public Method.
+    // ---------------------------------------------------
+
+    @Override
+    public String toString() {
+        return "[" + programContext.runtimeContext.nodeID + "|" + slotID + "]";
+    }
 }

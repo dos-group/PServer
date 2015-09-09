@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.test.core.jobs;
+package de.tuberlin.pserver.test.core.programs;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.dsl.Aggregator;
@@ -18,7 +18,7 @@ public class SymAggregatorTestJob extends MLProgram {
             final int globalAgg = new Aggregator<>(slotContext, partialAgg)
                     .apply(pa -> pa.stream().mapToInt(Integer::intValue).sum());
 
-            //Preconditions.checkState(globalAgg == 6000);
+            Preconditions.checkState(globalAgg == 6000);
         });
     }
 }

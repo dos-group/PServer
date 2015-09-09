@@ -47,8 +47,6 @@ public class SMatrix extends AbstractMatrix {
     // Fields.
     // ---------------------------------------------------
 
-    private final int initialCapacity;
-
     //private final TIntDoubleHashMap data;
 
     private final Map<Integer, Double> data;
@@ -57,9 +55,8 @@ public class SMatrix extends AbstractMatrix {
     // Constructors.
     // ---------------------------------------------------
 
-    public SMatrix(final long rows, final long cols, final Layout layout, final int initialCapacity) {
+    public SMatrix(final long rows, final long cols, final Layout layout) {
         super(rows, cols, layout);
-        this.initialCapacity = initialCapacity;
         //if (initialCapacity == -1)
         //    this.data = new TIntDoubleHashMap();//(int)((rows * cols)/10));
         //else
@@ -109,7 +106,7 @@ public class SMatrix extends AbstractMatrix {
 
     @Override
     protected Matrix newInstance(long rows, long cols) {
-        return new SMatrix(rows, cols, Layout.ROW_LAYOUT, initialCapacity);
+        return new SMatrix(rows, cols, Layout.ROW_LAYOUT);
     }
 
     @Override

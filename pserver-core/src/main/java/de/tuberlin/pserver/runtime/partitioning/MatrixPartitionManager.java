@@ -20,6 +20,8 @@ import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
 import de.tuberlin.pserver.types.DistributedMatrix;
 import de.tuberlin.pserver.types.PartitionType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,8 +33,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class MatrixPartitionManager {
-
-    //private Logger LOG = Logger.getLogger(MatrixPartitionManager.class);
 
     // ---------------------------------------------------
     // Inner Classes.
@@ -78,6 +78,8 @@ public final class MatrixPartitionManager {
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
+
+    private static final Logger LOG = LoggerFactory.getLogger(MatrixPartitionManager.class);
 
     private final NetManager netManager;
 
@@ -158,6 +160,11 @@ public final class MatrixPartitionManager {
     }
 
     public void loadFilesIntoDHT() {
+
+        // Skip, if no loading is required.
+        if (matrixLoadTasks.size() == 0)
+            return;
+
         fileSystemManager.computeInputSplitsForRegisteredFiles();
         finishedLoadingLatch = new CountDownLatch(matrixLoadTasks.size());
         for (final MatrixLoadTask task : matrixLoadTasks.values()) {

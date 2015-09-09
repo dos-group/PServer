@@ -14,6 +14,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class ExecutionManager {
@@ -100,6 +101,8 @@ public final class ExecutionManager {
 
     private NestedIntervalTree<SlotGroupAllocation> slotAssignment;
 
+    private final Object lock = new Object();
+
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
@@ -117,7 +120,7 @@ public final class ExecutionManager {
             if (!programContextRef.get().programID.equals(event.getPayload()))
                 throw new IllegalStateException();
 
-            programContextRef.get().globalSyncBarrier.countDown();
+                programContextRef.get().countDownBarrier();
         });
 
         // DSL Runtime.
@@ -269,27 +272,19 @@ public final class ExecutionManager {
 
     public void localSync(final SlotContext slotContext) {
         try {
-            slotContext.programContext.localSyncBarrier.await();
+            final SlotGroup sg = getActiveSlotGroup();
+            sg.sync(slotContext);
+            //slotContext.programContext.localSyncBarrier.await();
         } catch (Exception e) {
             LOG.error(e.getLocalizedMessage());
         }
     }
 
-    public void globalSync() {
-        final SlotContext slotContext = getSlotContext();
-        final NetEvents.NetEvent globalSyncEvent = new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT);
+    public void globalSync(final SlotContext slotContext) {
+        final NetEvents.NetEvent globalSyncEvent = new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT, true);
         globalSyncEvent.setPayload(slotContext.programContext.programID);
         netManager.broadcastEvent(globalSyncEvent);
-        try {
-            slotContext.programContext.globalSyncBarrier.await();
-        } catch (InterruptedException e) {
-            LOG.error(e.getMessage());
-        }
-        if (slotContext.programContext.globalSyncBarrier.getCount() == 0) {
-            slotContext.programContext.globalSyncBarrier.reset();
-        } else {
-            throw new IllegalStateException();
-        }
+        slotContext.programContext.awaitGlobalSyncBarrier();
     }
 
     // ---------------------------------------------------

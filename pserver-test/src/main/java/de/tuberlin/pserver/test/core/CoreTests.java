@@ -4,7 +4,7 @@ package de.tuberlin.pserver.test.core;
 import de.tuberlin.pserver.client.PServerClient;
 import de.tuberlin.pserver.client.PServerClientFactory;
 import de.tuberlin.pserver.test.IntegrationTestSuite;
-import de.tuberlin.pserver.test.core.jobs.*;
+import de.tuberlin.pserver.test.core.programs.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -30,26 +30,32 @@ public class CoreTests {
 
     // --------------------------------------------------
 
-    // TODO: SOMETIMES STALLS/DEADLOCKS! BUT WITH NO EXCEPTION :(
-    //@Test
-    //public void testPushAwait() { assert client.execute(PushAwaitTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
-
-    //@Test
-    //public void testAsymmetricAggregator() { assert client.execute(ASymAggregatorTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
-
-    // --------------------------------------------------
+    @Test
+    public void testPushAwait() { assert client.execute(PushAwaitTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
 
     @Test
-    public void testMatrixLoading() { assert client.execute(MatrixLoadingTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
+    public void testEventSystemSendReceive() { assert client.execute(EventSystemSendReceiveTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
 
     @Test
-    public void testSymmetricAggregator() { assert client.execute(SymAggregatorTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
+    public void testLocalSync() { assert client.execute(LocalSyncTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
 
     @Test
     public void testSharedVar() { assert client.execute(SharedVarTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
 
     @Test
     public void testSelectControlFlow() { assert client.execute(SelectControlFlowTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
+
+    @Test
+    public void testGlobalSync() { assert client.execute(GlobalSyncTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
+
+    @Test
+    public void testSymmetricAggregator() { assert client.execute(SymAggregatorTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
+
+    @Test
+    public void testAsymmetricAggregator() { assert client.execute(ASymAggregatorTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
+
+    //@Test
+    //public void testMatrixLoading() { assert client.execute(MatrixLoadingTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
 
     // --------------------------------------------------
 
