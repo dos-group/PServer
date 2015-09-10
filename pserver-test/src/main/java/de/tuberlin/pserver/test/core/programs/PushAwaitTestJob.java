@@ -15,7 +15,7 @@ public class PushAwaitTestJob extends MLProgram {
 
         program.process(() -> {
 
-            CF.select().node(0).slot(0).exe(() -> {
+            CF.parScope().node(0).slot(0).exe(() -> {
 
                 Thread.sleep(3000);
 
@@ -34,7 +34,7 @@ public class PushAwaitTestJob extends MLProgram {
 
             // ---------------------------------------------------
 
-            CF.select().node(1).slot(0).exe(() -> {
+            CF.parScope().node(1).slot(0).exe(() -> {
 
                 for (int i = 0; i < NUM_MSG; ++i) {
 

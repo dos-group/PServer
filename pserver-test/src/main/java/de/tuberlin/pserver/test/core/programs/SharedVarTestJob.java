@@ -15,11 +15,11 @@ public class SharedVarTestJob extends MLProgram {
 
             final SharedInt sharedInt = new SharedInt(slotContext, 0);
 
-            CF.iterate().exe(1000, (e) -> sharedInt.inc());
+            CF.loop().exe(1000, (e) -> sharedInt.inc());
 
             CF.syncSlots();
 
-            CF.select().slot(0).exe(() -> Preconditions.checkState(sharedInt.get() == 4000));
+            CF.parScope().slot(0).exe(() -> Preconditions.checkState(sharedInt.get() == 4000));
 
             sharedInt.done();
         });

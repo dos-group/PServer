@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.dsl.controlflow;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.dsl.controlflow.iteration.Iteration;
-import de.tuberlin.pserver.dsl.controlflow.selection.Selection;
+import de.tuberlin.pserver.dsl.controlflow.iteration.Loop;
+import de.tuberlin.pserver.dsl.controlflow.selection.ParallelScope;
 import de.tuberlin.pserver.runtime.SlotContext;
 
 public final class ControlFlow {
@@ -29,9 +29,9 @@ public final class ControlFlow {
 
     public int numInstances() { return slotContext.programContext.perNodeDOP; }
 
-    public Iteration iterate() { return new Iteration(slotContext); }
+    public Loop loop() { return new Loop(slotContext); }
 
-    public Selection select() {return new Selection(slotContext); }
+    public ParallelScope parScope() {return new ParallelScope(slotContext); }
 
     public void syncSlots() { slotContext.programContext.runtimeContext.executionManager.localSync(slotContext); }
 }

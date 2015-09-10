@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.examples.experiments.kmeans;
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.controlflow.iteration.Iteration;
+import de.tuberlin.pserver.dsl.controlflow.iteration.Loop;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.dsl.state.GlobalScope;
 import de.tuberlin.pserver.dsl.state.RemoteUpdate;
@@ -26,7 +26,6 @@ public class Kmeans extends MLProgram {
 
     // loaded by pserver
     private static final String FILE = "datasets/stripes3.csv";
-
 
     @SharedState(
             globalScope = GlobalScope.PARTITIONED,
@@ -62,24 +61,25 @@ public class Kmeans extends MLProgram {
 
 
         program.initialize(() -> {
+
             for (int i = 0; i < K; i++) {
                 int nodeId = slotContext.programContext.runtimeContext.nodeID;
                 System.out.println("centroid[node:"+nodeId+",row:"+i+"]="+centroids.rowAsVector(i));
             }
-        });
 
+        }).process(() -> {
 
+            CF.loop().sync(Loop.GLOBAL).exe(10, (iteration) -> {
 
-        program.process(() -> {
-
-            CF.iterate().exe(10, (iteration) -> {
                 Matrix.RowIterator iter = matrix.rowIterator();
                 int row = 0;
-                while(iter.hasNext()) {
+
+                while (iter.hasNext()) {
                     Vector point = iter.asVector();
                     iter.next();
                     double closestDistance = Double.MAX_VALUE;
                     long closestCentroidId = -1;
+
                     for (long centroidId = 0; centroidId < K; centroidId++) {
                         Vector centroid = centroids.rowAsVector(centroidId);
                         Vector diff = centroid.sub(point);
@@ -89,35 +89,42 @@ public class Kmeans extends MLProgram {
                             closestCentroidId = centroidId;
                         }
                     }
+
                     Vector one = new DVector(1, new double[]{1});
                     Vector updateDelta = point.concat(one);
                     Vector update = centroidsUpdate.rowAsVector(closestCentroidId);
                     centroidsUpdate.assignRow(closestCentroidId, update.add(updateDelta));
                 }
+
                 DF.publishUpdate();
                 DF.pullUpdate();
+
                 for (int i = 0; i < K; i++) {
-                    if(centroidsUpdate.get(i, COLS) > 0) {
+                    if (centroidsUpdate.get(i, COLS) > 0) {
                         centroids.assignRow(i, centroidsUpdate.rowAsVector(i, 0, COLS).div(centroidsUpdate.get(i, COLS)));
                     }
                 }
+
                 for (int i = 0; i < K; i++) {
                     int nodeId = slotContext.programContext.runtimeContext.nodeID;
-                    System.out.println("centroid[node:"+nodeId+",row:"+i+"]="+centroids.rowAsVector(i));
+                    System.out.println("centroid[node:" + nodeId + ",row:" + i + "]=" + centroids.rowAsVector(i));
                 }
             });
 
-        });
+        }).postProcess(() -> {
 
-        program.postProcess(() -> {
             for (int i = 0; i < K; i++) {
                 int nodeId = slotContext.programContext.runtimeContext.nodeID;
-                System.out.println("centroid[node:"+nodeId+",row:"+i+"]="+centroids.rowAsVector(i));
+                System.out.println("centroid[node:" + nodeId + ",row:" + i + "]=" + centroids.rowAsVector(i));
             }
+
         });
 
     }
 
+    // ---------------------------------------------------
+    // Entry Point.
+    // ---------------------------------------------------
     public static void main(String[] args) {
         local();
     }

@@ -19,7 +19,7 @@ public class TronLR implements TronFunction {
 
         final SharedDouble f_obj = new SharedDouble(sc, 0.0);
 
-        sc.CF.iterate().parExe(dataPoints, (epoch, it) -> {
+        sc.CF.loop().parExe(dataPoints, (epoch, it) -> {
 
             double z = 0.0;
 
@@ -46,7 +46,7 @@ public class TronLR implements TronFunction {
 
         final Vector grad = new SharedVar<>(sc, w_broad.copy().assign(0.0)).acquire();
 
-        sc.CF.iterate().parExe(dataPoints, (epoch, it) -> {
+        sc.CF.loop().parExe(dataPoints, (epoch, it) -> {
 
             double z = 0.0;
 
@@ -76,7 +76,7 @@ public class TronLR implements TronFunction {
 
         final Vector blockHs = new SharedVar<>(sc, w_broad.copy().assign(0.0)).acquire();
 
-        sc.CF.iterate().parExe(dataPoints, (epoch, it) -> {
+        sc.CF.loop().parExe(dataPoints, (epoch, it) -> {
 
             double z = 0.0;
             double wa = 0.0;

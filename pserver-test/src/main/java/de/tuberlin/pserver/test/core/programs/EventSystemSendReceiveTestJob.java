@@ -19,7 +19,7 @@ public class EventSystemSendReceiveTestJob extends MLProgram {
 
         program.process(() -> {
 
-            CF.select().node(0).slot(0).exe(() -> {
+            CF.parScope().node(0).slot(0).exe(() -> {
 
                 final CyclicBarrier barrier = new CyclicBarrier(2);
 
@@ -47,7 +47,7 @@ public class EventSystemSendReceiveTestJob extends MLProgram {
 
             // ---------------------------------------------------
 
-            CF.select().node(1).slot(0).exe(() -> {
+            CF.parScope().node(1).slot(0).exe(() -> {
 
                 final CyclicBarrier barrier = new CyclicBarrier(2);
 

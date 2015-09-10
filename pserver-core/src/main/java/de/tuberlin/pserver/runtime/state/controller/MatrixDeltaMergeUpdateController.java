@@ -65,7 +65,7 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.syncSlots();
 
-        sc.CF.iterate().parExe(stateMatrix, (e, i, j, v) -> {
+        sc.CF.loop().parExe(stateMatrix, (e, i, j, v) -> {
 
             final double newVal = stateMatrix.get(i, j);
 
@@ -89,7 +89,7 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
             matrixDelta.object.setDelta(sc.slotID, compressor.compress(buffer, offset, length)); // TODO: Creates a new buffer...
         }
 
-        sc.CF.iterate().parExe(stateMatrix, (e, i, j, v) -> {
+        sc.CF.loop().parExe(stateMatrix, (e, i, j, v) -> {
 
             final long bufferOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET + (i * stateMatrix.cols() + j) * Double.BYTES;
 
@@ -110,7 +110,7 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.syncSlots();
 
-        sc.CF.select().slot(0).exe( () -> {
+        sc.CF.parScope().slot(0).exe( () -> {
 
             final DataManager dataManager = sc.programContext.runtimeContext.dataManager;
 
@@ -151,7 +151,7 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
 
                 compressor.decompress(compressedDelta, 0, buffer, offset, length);
 
-                sc.CF.iterate().parExe(stateMatrix, (e, i, j, v) -> {
+                sc.CF.loop().parExe(stateMatrix, (e, i, j, v) -> {
 
                     final long bufferOffset = Unsafe.ARRAY_BYTE_BASE_OFFSET + ((i * stateMatrix.cols() + j) * Double.BYTES);
 
@@ -165,6 +165,6 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.syncSlots();
 
-        sc.CF.select().slot(0).exe(() -> sc.programContext.delete(stateName + "-Remote-Matrix-Delta-List"));
+        sc.CF.parScope().slot(0).exe(() -> sc.programContext.delete(stateName + "-Remote-Matrix-Delta-List"));
     }
 }

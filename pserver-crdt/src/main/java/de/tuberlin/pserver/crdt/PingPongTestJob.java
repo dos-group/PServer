@@ -16,7 +16,7 @@ public class PingPongTestJob extends MLProgram {
 
         program.process(() -> {
 
-            CF.select().node(0).slot(0).exe(() -> { // node 0 with slot 0 executes this section...
+            CF.parScope().node(0).slot(0).exe(() -> { // node 0 with slot 0 executes this section...
 
                 for (int i = 0; i < NUM_MSG; ++i) {
 
@@ -36,7 +36,7 @@ public class PingPongTestJob extends MLProgram {
 
             // ---------------------------------------------------
 
-            CF.select().node(1).slot(0).exe(() -> { // node 1 with slot 0 executes this section...
+            CF.parScope().node(1).slot(0).exe(() -> { // node 1 with slot 0 executes this section...
 
                 for (int i = 0; i < NUM_MSG; ++i) {
 

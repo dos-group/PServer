@@ -6,7 +6,6 @@ import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.SlotContext;
 import de.tuberlin.pserver.runtime.SlotGroup;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -61,7 +60,7 @@ public class Aggregator<T extends Serializable> {
 
         final int slotID = sc.programContext.runtimeContext.executionManager.getActiveSlotGroup().minSlotID;
 
-        sc.CF.select().slot(slotID).exe(() -> {
+        sc.CF.parScope().slot(slotID).exe(() -> {
 
             sc.programContext.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg);
 
@@ -105,7 +104,7 @@ public class Aggregator<T extends Serializable> {
 
         // -- master node --
 
-        sc.CF.select().node(AGG_NODE_ID).slot(slotGroup.minSlotID).exe(() -> {
+        sc.CF.parScope().node(AGG_NODE_ID).slot(slotGroup.minSlotID).exe(() -> {
 
             final int n = sc.programContext.nodeDOP - 1;
 
@@ -131,14 +130,14 @@ public class Aggregator<T extends Serializable> {
             //sc.CF.syncSlots();
         });
 
-        //sc.CF.select().node(AGG_NODE_ID).slot(slotIDs.getLeft() + 1, slotIDs.getRight()).exe(sc.CF::syncSlots);
+        //sc.CF.parScope().node(AGG_NODE_ID).slot(slotIDs.getLeft() + 1, slotIDs.getRight()).exe(sc.CF::syncSlots);
 
         // -- slave nodes --
 
 
        // System.out.println("----------------------------------------------->> " + slotIDs.getLeft());
 
-        sc.CF.select().node(AGG_NODE_ID + 1, sc.programContext.nodeDOP - 1).slot(slotGroup.minSlotID).exe(() -> {
+        sc.CF.parScope().node(AGG_NODE_ID + 1, sc.programContext.nodeDOP - 1).slot(slotGroup.minSlotID).exe(() -> {
 
             sc.programContext.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg, new int[]{AGG_NODE_ID});
 
@@ -154,7 +153,7 @@ public class Aggregator<T extends Serializable> {
             //sc.CF.syncSlots();
         });
 
-        //sc.CF.select().node(AGG_NODE_ID + 1, sc.programContext.nodeDOP - 1).slot(slotIDs.getLeft() + 1, slotIDs.getRight()).exe(sc.CF::syncSlots);
+        //sc.CF.parScope().node(AGG_NODE_ID + 1, sc.programContext.nodeDOP - 1).slot(slotIDs.getLeft() + 1, slotIDs.getRight()).exe(sc.CF::syncSlots);
 
         sc.CF.syncSlots();
 

@@ -2,7 +2,7 @@ package de.tuberlin.pserver.runtime;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.dsl.state.DeltaFilter;
+import de.tuberlin.pserver.dsl.state.StateExtractor;
 import de.tuberlin.pserver.dsl.state.StateMerger;
 import de.tuberlin.pserver.dsl.state.SharedState;
 import de.tuberlin.pserver.dsl.state.StateDeclaration;
@@ -63,7 +63,7 @@ public final class MLProgramLinker {
 
     public void link(final SlotContext slotContext, final MLProgram instance) throws Exception {
 
-        //slotContext.CF.select().slot(0).exe(() -> {
+        //slotContext.CF.parScope().slot(0).exe(() -> {
 
         if (slotContext.slotID == 0) {
 
@@ -156,8 +156,8 @@ public final class MLProgramLinker {
     private void analyzeAndWireDeltaFilterAnnotations(final MLProgram instance) throws Exception {
         for (final Field field : Preconditions.checkNotNull(programClass).getDeclaredFields()) {
             for (final Annotation an : field.getDeclaredAnnotations()) {
-                if (an instanceof DeltaFilter) {
-                    final DeltaFilter filterProperties = (DeltaFilter) an;
+                if (an instanceof StateExtractor) {
+                    final StateExtractor filterProperties = (StateExtractor) an;
                     StringTokenizer st = new StringTokenizer(filterProperties.stateObjects(), ",");
                     while (st.hasMoreTokens()) {
                         final String stateObjName = st.nextToken().replaceAll("\\s+","");

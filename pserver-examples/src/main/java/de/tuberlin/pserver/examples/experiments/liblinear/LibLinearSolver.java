@@ -34,7 +34,7 @@ public final class LibLinearSolver {
         Problem binaryProb = prob.genBinaryProblem(posLabel);
 
         SharedInt count = new SharedInt(sc, 0);
-        sc.CF.iterate().parExe(binaryProb.dataPoints, (e, it) -> {
+        sc.CF.loop().parExe(binaryProb.dataPoints, (e, it) -> {
             if (it.value(it.cols() - 1) > 0)
                 count.inc();
         });

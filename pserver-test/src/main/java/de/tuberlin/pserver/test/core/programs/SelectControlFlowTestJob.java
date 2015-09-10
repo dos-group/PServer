@@ -14,7 +14,7 @@ public class SelectControlFlowTestJob extends MLProgram {
 
         program.process(() -> {
 
-            CF.select().slot(0, 3).exe(() -> {
+            CF.parScope().slot(0, 3).exe(() -> {
 
                 final SlotGroup sg0 = slotContext.programContext.runtimeContext.executionManager.getActiveSlotGroup();
 
@@ -22,7 +22,7 @@ public class SelectControlFlowTestJob extends MLProgram {
 
                 Thread.sleep(new Random().nextInt(1000));
 
-                CF.select().slot(1, 3).exe(() -> {
+                CF.parScope().slot(1, 3).exe(() -> {
 
                     final SlotGroup sg1 = slotContext.programContext.runtimeContext.executionManager.getActiveSlotGroup();
 
@@ -30,7 +30,7 @@ public class SelectControlFlowTestJob extends MLProgram {
 
                     Thread.sleep(new Random().nextInt(1000));
 
-                    CF.select().slot(2, 3).exe(() -> {
+                    CF.parScope().slot(2, 3).exe(() -> {
 
                         final SlotGroup sg2 = slotContext.programContext.runtimeContext.executionManager.getActiveSlotGroup();
 
@@ -38,7 +38,7 @@ public class SelectControlFlowTestJob extends MLProgram {
 
                         Thread.sleep(new Random().nextInt(1000));
 
-                        CF.select().slot(3, 3).exe(() -> {
+                        CF.parScope().slot(3, 3).exe(() -> {
 
                             final SlotGroup sg3 = slotContext.programContext.runtimeContext.executionManager.getActiveSlotGroup();
 
@@ -47,7 +47,7 @@ public class SelectControlFlowTestJob extends MLProgram {
                             Thread.sleep(new Random().nextInt(1000));
 
                             try {
-                                CF.select().slot(0, 3).exe(() -> {
+                                CF.parScope().slot(0, 3).exe(() -> {
 
                                     final SlotGroup sg4 = slotContext.programContext.runtimeContext.executionManager.getActiveSlotGroup();
 

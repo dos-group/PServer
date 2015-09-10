@@ -47,7 +47,7 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.syncSlots();
 
-        sc.CF.select().slot(0).exe( () -> {
+        sc.CF.parScope().slot(0).exe( () -> {
 
             synchronized (shadowMatrix.lock) {
 
@@ -69,7 +69,7 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.syncSlots();
 
-        sc.CF.select().slot(0).exe( () -> {
+        sc.CF.parScope().slot(0).exe( () -> {
 
             final DataManager dataManager = sc.programContext.runtimeContext.dataManager;
 
@@ -98,7 +98,7 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
 
         for (final Matrix remoteMatrix : remoteMatrices) {
 
-            sc.CF.iterate().parExe(remoteMatrix, (e, i, j, v) -> {
+            sc.CF.loop().parExe(remoteMatrix, (e, i, j, v) -> {
 
                 matrixUpdateMerger.mergeElement(i, j, v, remoteMatrix.get(i, j));
             });
@@ -106,6 +106,6 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.syncSlots();
 
-        sc.CF.select().slot(0).exe(() -> sc.programContext.delete(stateName + "-Remote-Matrix-List"));
+        sc.CF.parScope().slot(0).exe(() -> sc.programContext.delete(stateName + "-Remote-Matrix-List"));
     }
 }

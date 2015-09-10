@@ -49,7 +49,7 @@ public class MatrixDenseLoadingTestJob extends MLProgram  {
 
         program.process(() -> {
 
-            CF.select().slot(0).exe(() -> {
+            CF.parScope().slot(0).exe(() -> {
 
                 matrix = dataManager.getObject("matrix");
 

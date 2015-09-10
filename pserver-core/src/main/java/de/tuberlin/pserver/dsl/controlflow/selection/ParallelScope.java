@@ -9,7 +9,7 @@ import de.tuberlin.pserver.runtime.SlotContext;
 
 import java.util.concurrent.CyclicBarrier;
 
-public final class Selection extends CFStatement {
+public final class ParallelScope extends CFStatement {
 
     // ---------------------------------------------------
     // Fields.
@@ -31,7 +31,7 @@ public final class Selection extends CFStatement {
     // Constructor.
     // ---------------------------------------------------
 
-    public Selection(final SlotContext ic) {
+    public ParallelScope(final SlotContext ic) {
         super(ic);
         executionManager = ic.programContext.runtimeContext.executionManager;
         allNodes();
@@ -42,35 +42,35 @@ public final class Selection extends CFStatement {
     // Node Selection.
     // ---------------------------------------------------
 
-    public Selection node(final int fromNodeID, final int toNodeID) {
+    public ParallelScope node(final int fromNodeID, final int toNodeID) {
         this.fromNodeID = fromNodeID;
         this.toNodeID = toNodeID;
         return this;
     }
 
-    public Selection node(final int nodeID) { return node(nodeID, nodeID); }
+    public ParallelScope node(final int nodeID) { return node(nodeID, nodeID); }
 
-    public Selection allNodes() { return node(0, slotContext.programContext.nodeDOP - 1); }
+    public ParallelScope allNodes() { return node(0, slotContext.programContext.nodeDOP - 1); }
 
     // ---------------------------------------------------
     // Instance Selection.
     // ---------------------------------------------------
 
-    public Selection slot(final int fromSlotID, final int toSlotID) {
+    public ParallelScope slot(final int fromSlotID, final int toSlotID) {
         this.fromSlotID = fromSlotID;
         this.toSlotID = toSlotID;
         return this;
     }
 
-    public Selection slot(final int slotID) { return slot(slotID, slotID); }
+    public ParallelScope slot(final int slotID) { return slot(slotID, slotID); }
 
-    public Selection allSlots() { return slot(0, slotContext.programContext.perNodeDOP - 1); }
+    public ParallelScope allSlots() { return slot(0, slotContext.programContext.perNodeDOP - 1); }
 
     // ---------------------------------------------------
     // Synchronization.
     // ---------------------------------------------------
 
-    public Selection sync() throws Exception {
+    public ParallelScope sync() throws Exception {
 
         if (slotGroupBarrier != null)
             slotGroupBarrier.await();

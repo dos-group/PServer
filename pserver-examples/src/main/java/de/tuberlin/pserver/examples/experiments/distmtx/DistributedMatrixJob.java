@@ -20,13 +20,13 @@ public class DistributedMatrixJob extends MLProgram {
 
         program.process(() -> {
 
-            /*CF.iterate().exe(X, (i, iter) -> {
+            /*CF.loop().exe(X, (i, iter) -> {
                 X.set(iter.rowNum(), 0, slotContext.programContext.runtimeContext.nodeID + 1);
             });
 
             X.collectRemotePartitions();
 
-            CF.select().node(1).exe(() -> {
+            CF.parScope().node(1).exe(() -> {
                 for (int i = 0; i < X.rows(); ++i)
                     System.out.println(X.get(i, 0));
             });*/

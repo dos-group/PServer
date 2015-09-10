@@ -49,7 +49,7 @@ public final class SharedVar<T> {
 
         this.sharedVarUID = nextSharedVarUID(masterSlotID);
 
-        //sc.CF.select().slot(masterSlotID).exe(() -> {
+        //sc.CF.parScope().slot(masterSlotID).exe(() -> {
 
             if (sc.slotID == masterSlotID) {
 

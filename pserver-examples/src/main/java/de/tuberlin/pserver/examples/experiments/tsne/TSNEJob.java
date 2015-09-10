@@ -94,7 +94,7 @@ public class TSNEJob extends MLProgram {
 
             final MutableDouble momentum = new MutableDouble(0.0);
 
-            CF.iterate()
+            CF.loop()
                     .exe(NUM_EPOCHS, (epoch) -> {
 
                         Y.applyOnElements(e -> Math.pow(e, 2), Y_squared);
@@ -117,10 +117,10 @@ public class TSNEJob extends MLProgram {
                         Q.assign(Q.applyOnElements(e -> Math.max(e, 1e-12)));
                         final Matrix PQ = P.copy().sub(Q);
 
-                        CF.iterate()
+                        CF.loop()
                                 .exe(P.rows(), (i) -> {
                                     final Vector sumVec = new VectorBuilder().dimension(d).build();
-                                    CF.iterate()
+                                    CF.loop()
                                             .exe(P.cols(), (j) -> {
                                                 final Double pq = PQ.get(i, j);
                                                 final Double num_j = num.get(i, j);
@@ -137,7 +137,7 @@ public class TSNEJob extends MLProgram {
 
                         momentum.setValue((epoch < 20) ? INITIAL_MOMENTUM : FINAL_MOMENTUM);
 
-                        CF.iterate()
+                        CF.loop()
                                 .exe(gains, (e, i, j, v) -> {
                                     final Double dY_j = dY.get(i, j);
                                     final Double iY_j = iY.get(i, j);

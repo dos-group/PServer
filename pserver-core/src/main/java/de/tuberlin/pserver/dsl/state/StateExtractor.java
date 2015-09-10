@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface DeltaFilter {
+public @interface StateExtractor {
 
     public String stateObjects();
 }
