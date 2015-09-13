@@ -47,7 +47,7 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
 
         this.matrixDelta = new EmbeddedDHTObject<>(new MatrixDeltaUpdate(slotContext.programContext.perNodeDOP));
 
-        slotContext.programContext.runtimeContext.dataManager.putObject(stateName + "-Delta", matrixDelta);
+        slotContext.runtimeContext.dataManager.putObject(stateName + "-Delta", matrixDelta);
     }
 
     // ---------------------------------------------------
@@ -112,7 +112,7 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.parScope().slot(0).exe( () -> {
 
-            final DataManager dataManager = sc.programContext.runtimeContext.dataManager;
+            final DataManager dataManager = sc.runtimeContext.dataManager;
 
             final DHTObject[] dhtObjects = dataManager.pullFrom(stateName + "-Delta", dataManager.remoteNodeIDs);
 

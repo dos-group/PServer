@@ -58,11 +58,11 @@ public class Aggregator<T extends Serializable> {
 
     private T symmetric_apply(final AggregatorFunction<T> function) throws Exception {
 
-        final int slotID = sc.programContext.runtimeContext.executionManager.getActiveSlotGroup().minSlotID;
+        final int slotID = sc.runtimeContext.executionManager.getActiveSlotGroup().minSlotID;
 
         sc.CF.parScope().slot(slotID).exe(() -> {
 
-            sc.programContext.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg);
+            sc.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg);
 
             final int n = sc.programContext.nodeDOP - 1;
 
@@ -71,9 +71,9 @@ public class Aggregator<T extends Serializable> {
             for (int i = 0; i < n + 1; ++i)
                 partialAggs.add(null);
 
-            partialAggs.set(sc.programContext.runtimeContext.nodeID, partialAgg);
+            partialAggs.set(sc.runtimeContext.nodeID, partialAgg);
 
-            sc.programContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
+            sc.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
 
                 @Override
                 @SuppressWarnings("unchecked")
@@ -100,7 +100,7 @@ public class Aggregator<T extends Serializable> {
 
     private T asymmetric_apply(final AggregatorFunction<T> function) throws Exception {
 
-        final SlotGroup slotGroup = sc.programContext.runtimeContext.executionManager.getActiveSlotGroup();
+        final SlotGroup slotGroup = sc.getActiveSlotGroup();
 
         // -- master node --
 
@@ -112,7 +112,7 @@ public class Aggregator<T extends Serializable> {
 
             partialAggs.add(partialAgg);
 
-            sc.programContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
+            sc.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
 
                 @Override
                 @SuppressWarnings("unchecked")
@@ -123,7 +123,7 @@ public class Aggregator<T extends Serializable> {
 
             final T agg = function.apply(partialAggs);
 
-            sc.programContext.runtimeContext.dataManager.pushTo(aggPushUID(), agg);
+            sc.runtimeContext.dataManager.pushTo(aggPushUID(), agg);
 
             sharedGlobalAgg.set(agg);
 
@@ -139,9 +139,9 @@ public class Aggregator<T extends Serializable> {
 
         sc.CF.parScope().node(AGG_NODE_ID + 1, sc.programContext.nodeDOP - 1).slot(slotGroup.minSlotID).exe(() -> {
 
-            sc.programContext.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg, new int[]{AGG_NODE_ID});
+            sc.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg, new int[]{AGG_NODE_ID});
 
-            sc.programContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, aggPushUID(), new DataManager.DataEventHandler() {
+            sc.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, aggPushUID(), new DataManager.DataEventHandler() {
 
                 @Override
                 @SuppressWarnings("unchecked")

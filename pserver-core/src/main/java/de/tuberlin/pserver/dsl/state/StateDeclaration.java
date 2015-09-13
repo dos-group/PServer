@@ -19,6 +19,8 @@ public final class StateDeclaration {
 
     public final GlobalScope globalScope;
 
+    public final int[] atNodes;
+
     public final PartitionType partitionType;
 
     public final long rows;
@@ -43,6 +45,7 @@ public final class StateDeclaration {
                             final Class<?> stateType,
                             final LocalScope localScope,
                             final GlobalScope globalScope,
+                            final int[] atNodes,
                             final PartitionType partitionType,
                             final long rows,
                             final long cols,
@@ -56,6 +59,7 @@ public final class StateDeclaration {
         this.stateType      = stateType;
         this.localScope     = localScope;
         this.globalScope    = globalScope;
+        this.atNodes        = atNodes;
         this.partitionType  = partitionType;
         this.rows           = rows;
         this.cols           = cols;

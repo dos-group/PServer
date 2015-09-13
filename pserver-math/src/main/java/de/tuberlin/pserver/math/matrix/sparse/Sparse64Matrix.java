@@ -9,7 +9,7 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 import org.apache.commons.lang3.NotImplementedException;
 
 
-public class SMatrix extends AbstractMatrix {
+public class Sparse64Matrix extends AbstractMatrix {
 
     // ---------------------------------------------------
     // Fields.
@@ -21,7 +21,7 @@ public class SMatrix extends AbstractMatrix {
     // Constructors.
     // ---------------------------------------------------
 
-    public SMatrix(final long rows, final long cols, final Layout layout) {
+    public Sparse64Matrix(final long rows, final long cols, final Layout layout) {
         super(rows, cols, layout);
     }
 

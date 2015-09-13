@@ -46,9 +46,9 @@ public abstract class CFStatement {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void enter() { slotContext.programContext.runtimeContext.executionManager.pushFrame(this); }
+    public void enter() { slotContext.runtimeContext.executionManager.pushFrame(this); }
 
-    public void leave() { slotContext.programContext.runtimeContext.executionManager.popFrame(); }
+    public void leave() { slotContext.runtimeContext.executionManager.popFrame(); }
 
     // ---------------------------------------------------
 

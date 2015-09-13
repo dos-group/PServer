@@ -52,9 +52,9 @@ public abstract class MLProgram extends EventDispatcher {
 
         this.slotContext = Preconditions.checkNotNull(slotContext);
 
-        this.executionManager = slotContext.programContext.runtimeContext.executionManager;
+        this.executionManager = slotContext.runtimeContext.executionManager;
 
-        this.dataManager = slotContext.programContext.runtimeContext.dataManager;
+        this.dataManager = slotContext.runtimeContext.dataManager;
 
         this.program = new Program(slotContext);
 
@@ -85,7 +85,7 @@ public abstract class MLProgram extends EventDispatcher {
 
         define(program);
 
-        final String slotIDStr = "[" + slotContext.programContext.runtimeContext.nodeID
+        final String slotIDStr = "[" + slotContext.runtimeContext.nodeID
                 + " | " + slotContext.slotID + "] ";
 
         program.enter();

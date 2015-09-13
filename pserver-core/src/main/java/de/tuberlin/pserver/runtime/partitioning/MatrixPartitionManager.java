@@ -264,7 +264,7 @@ public final class MatrixPartitionManager {
         // threshold that indicates how many entries are gathered before sending
         int foreignEntriesThreshold = 2048;
         final IMatrixPartitioner matrixPartitioner = new MatrixByRowPartitioner(
-                task.slotContext.programContext.runtimeContext.nodeID,
+                task.slotContext.runtimeContext.nodeID,
                 task.slotContext.programContext.nodeDOP,
                 task.rows,
                 task.cols
@@ -273,7 +273,7 @@ public final class MatrixPartitionManager {
         final Matrix matrix = getLoadingMatrix(task);
         ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
 
-        int nodeId = task.slotContext.programContext.runtimeContext.nodeID;
+        int nodeId = task.slotContext.runtimeContext.nodeID;
         MatrixEntry entry;
         while (fileIterator.hasNext()) {
             final IRecord record = fileIterator.next();

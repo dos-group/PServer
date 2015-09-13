@@ -31,6 +31,9 @@ public class CoreTests {
     // --------------------------------------------------
 
     @Test
+    public void testSingletonMatrix() { assert client.execute(SingletonMatrixTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
+
+    /*@Test
     public void testPushAwait() { assert client.execute(PushAwaitTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
 
     @Test
@@ -52,7 +55,7 @@ public class CoreTests {
     public void testSymmetricAggregator() { assert client.execute(SymAggregatorTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
 
     @Test
-    public void testAsymmetricAggregator() { assert client.execute(ASymAggregatorTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
+    public void testAsymmetricAggregator() { assert client.execute(ASymAggregatorTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }*/
 
     //@Test
     //public void testMatrixDenseLoading() { assert client.execute(MatrixDenseLoadingTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }

@@ -2,7 +2,7 @@ package de.tuberlin.pserver.math.delegates.sparse.mtj;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.math.matrix.dense.DMatrix;
+import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
 import de.tuberlin.pserver.math.vector.AbstractVector;
 import de.tuberlin.pserver.math.vector.dense.DVector;
@@ -30,12 +30,12 @@ public class MTJUtils {
         return ! (v instanceof ISparseVector);
     }
 
-    public static int[][] buildRowBasedNz(DMatrix mat) {
-        return buildRowBasedNz(mat.toArray(), mat.rows(), mat.cols(), mat.getLayout());
+    public static int[][] buildRowBasedNz(Dense64Matrix mat) {
+        return buildRowBasedNz(mat.toArray(), mat.rows(), mat.cols(), mat.layout());
     }
 
-    public static int[][] buildColBasedNz(DMatrix mat) {
-        return buildColBasedNz(mat.toArray(), mat.rows(), mat.cols(), mat.getLayout());
+    public static int[][] buildColBasedNz(Dense64Matrix mat) {
+        return buildColBasedNz(mat.toArray(), mat.rows(), mat.cols(), mat.layout());
     }
 
     public static int[][] buildRowBasedNz(double[] data, long rows, long cols, Layout layout) {
@@ -90,18 +90,18 @@ public class MTJUtils {
 
     public static no.uib.cipr.matrix.Matrix toLibMatrix(de.tuberlin.pserver.math.matrix.Matrix mat, boolean mutable) {
         no.uib.cipr.matrix.Matrix result = null;
-        if(mat instanceof DMatrix) {
-            switch(mat.getLayout()) {
+        if(mat instanceof Dense64Matrix) {
+            switch(mat.layout()) {
                 case COLUMN_LAYOUT :
                     result = new DenseMatrix(Utils.toInt(mat.rows()), Utils.toInt(mat.cols()), mat.toArray(), mutable);
                     break;
                 case ROW_LAYOUT :
-                    de.tuberlin.pserver.math.matrix.Matrix aux = new DMatrix(mat.cols(), mat.rows());
+                    de.tuberlin.pserver.math.matrix.Matrix aux = new Dense64Matrix(mat.cols(), mat.rows());
                     mat.transpose(aux);
                     result = new DenseMatrix(Utils.toInt(mat.rows()), Utils.toInt(mat.cols()), aux.toArray(), mutable);
                     break;
                 default :
-                    throw new IllegalArgumentException("Unkown memory layout: " + mat.getLayout().toString());
+                    throw new IllegalArgumentException("Unkown memory layout: " + mat.layout().toString());
             }
         }
         Preconditions.checkState(result != null, "Unable to convert matrix");
@@ -111,7 +111,7 @@ public class MTJUtils {
     public static de.tuberlin.pserver.math.matrix.Matrix toPserverMatrix(no.uib.cipr.matrix.Matrix mat) {
         de.tuberlin.pserver.math.matrix.Matrix result = null;
         if(mat instanceof no.uib.cipr.matrix.DenseMatrix) {
-            result = new DMatrix(mat.numRows(), mat.numRows(), ((DenseMatrix) mat).getData(), Layout.COLUMN_LAYOUT);
+            result = new Dense64Matrix(mat.numRows(), mat.numRows(), ((DenseMatrix) mat).getData(), Layout.COLUMN_LAYOUT);
         }
         Preconditions.checkState(result != null, "Unable to convert matrix");
         return result;

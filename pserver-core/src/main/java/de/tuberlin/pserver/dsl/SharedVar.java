@@ -41,7 +41,7 @@ public final class SharedVar<T> {
 
         this.sc = Preconditions.checkNotNull(sc);
 
-        final SlotGroup slotGroup = sc.programContext.runtimeContext.executionManager.getActiveSlotGroup();
+        final SlotGroup slotGroup = sc.getActiveSlotGroup();
 
         final int masterSlotID = slotGroup.minSlotID;
 

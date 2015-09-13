@@ -72,7 +72,7 @@ public class TSNEJob extends MLProgram {
             P.assign(binarySearch(X, TOL, PERPLEXITY));
             P.assign(P.add(P.transpose()));
 
-           // GLOBAL OPERATION !!!
+           // SINGLETON OPERATION !!!
             double sumP = P.aggregateRows(Vector::sum).sum();
 
             P.assign(P.scale(1 / sumP));
@@ -109,7 +109,7 @@ public class TSNEJob extends MLProgram {
                         num.setDiagonalsToZero(num);
 
                         // ---------------------------------------------------
-                        // (2) GLOBAL OPERATION!!!
+                        // (2) SINGLETON OPERATION!!!
                         // ---------------------------------------------------
                         final double sumNum = num.aggregateRows(Vector::sum).sum();
 

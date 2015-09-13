@@ -102,7 +102,7 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
     // Public Methods.
     // ---------------------------------------------------
 
-    Layout getLayout();
+    Layout layout();
 
     // ---------------------------------------------------
 

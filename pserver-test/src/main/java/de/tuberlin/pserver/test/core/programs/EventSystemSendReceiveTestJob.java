@@ -15,7 +15,7 @@ public class EventSystemSendReceiveTestJob extends MLProgram {
     @Override
     public void define(final Program program) {
 
-        final NetManager netManager = slotContext.programContext.runtimeContext.netManager;
+        final NetManager netManager = slotContext.runtimeContext.netManager;
 
         program.process(() -> {
 

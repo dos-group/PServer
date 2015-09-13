@@ -35,7 +35,7 @@ public class VectorMergeUpdateController extends RemoteUpdateController {
 
         this.shadowVector = new EmbeddedDHTObject<>(Preconditions.checkNotNull(vector).copy());
 
-        slotContext.programContext.runtimeContext.dataManager.putObject(stateName + "-Shadow", shadowVector);
+        slotContext.runtimeContext.dataManager.putObject(stateName + "-Shadow", shadowVector);
     }
 
     // ---------------------------------------------------
@@ -71,7 +71,7 @@ public class VectorMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.parScope().slot(0).exe( () -> {
 
-            final DataManager dataManager = sc.programContext.runtimeContext.dataManager;
+            final DataManager dataManager = sc.runtimeContext.dataManager;
 
             final DHTObject[] dhtObjects = dataManager.pullFrom(stateName + "-Shadow", dataManager.remoteNodeIDs);
 

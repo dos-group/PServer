@@ -156,7 +156,12 @@ public final class ExecutionManager {
 
     public synchronized SlotContext getSlotContext() {
 
-        return programContextRef.get().threadIDSlotCtxMap.get(Thread.currentThread().getId());
+        SlotContext sc = programContextRef.get().threadIDSlotCtxMap.get(Thread.currentThread().getId());
+
+        while (sc == null)
+            sc = programContextRef.get().threadIDSlotCtxMap.get(Thread.currentThread().getId());
+
+        return sc;
     }
 
     // ---------------------------------------------------
@@ -223,30 +228,31 @@ public final class ExecutionManager {
 
         assert low == high;
 
-        final NestedIntervalTree.Interval range = new NestedIntervalTree.Interval(low, high);
+        final NestedIntervalTree.Interval slotRange = new NestedIntervalTree.Interval(low, high);
 
-        if (!slotAssignment.exist(range)) {
+        if (!slotAssignment.exist(slotRange)) {
 
-            if (!slotAssignment.isValid(range)) {
-                throw new IllegalStateException("(1) Not a valid slot range.\n" + slotAssignment.toString() + " ==>> " + range);
+            if (!slotAssignment.isValid(slotRange)) {
+                throw new IllegalStateException("(1) Not a valid slot slotRange.\n" + slotAssignment.toString() + " ==>> " + slotRange);
             }
 
-            final SlotGroupAllocation sa = new SlotGroupAllocation(range);
+            final SlotGroupAllocation sa = new SlotGroupAllocation(slotRange);
 
-            if (!slotAssignment.put(range, sa))
+            if (!slotAssignment.put(slotRange, sa))
                 throw new IllegalStateException();
 
             return sa;
 
         } else {
 
-            final int currentSlotID = getSlotContext().slotID;
+            final SlotGroup currentSlotGroup = getSlotContext().getActiveSlotGroup();
 
-            if (!range.contains(currentSlotID) || !slotAssignment.isValid(range)) {
-                throw new IllegalStateException("(2) Not a valid slot range.\n" + slotAssignment.toString() + " ==>> " + range);
+            // TODO: Check also intersection between currentSlotGroup and slotRange ?
+            if (!currentSlotGroup.asInterval().contains(slotRange)) {
+                throw new IllegalStateException("(2) Not a valid slot slotRange.\n" + slotAssignment.toString() + " ==>> " + slotRange);
             }
 
-            return slotAssignment.get(range).getRight();
+            return slotAssignment.get(slotRange).getRight();
         }
     }
 
@@ -274,7 +280,6 @@ public final class ExecutionManager {
         try {
             final SlotGroup sg = getActiveSlotGroup();
             sg.sync(slotContext);
-            //slotContext.programContext.localSyncBarrier.await();
         } catch (Exception e) {
             LOG.error(e.getLocalizedMessage());
         }

@@ -51,13 +51,13 @@ public class GeneralLinearModel extends Model<GeneralLinearModel> {
                 .layout(Layout.COLUMN_LAYOUT)
                 .build();
 
-        ctx.programContext.runtimeContext.dataManager.putObject(name, weights);
+        ctx.runtimeContext.dataManager.putObject(name, weights);
     }
 
     @Override
     public void fetchModel(final SlotContext ctx) {
         Preconditions.checkNotNull(ctx);
-        weights = ctx.programContext.runtimeContext.dataManager.getObject(name);
+        weights = ctx.runtimeContext.dataManager.getObject(name);
     }
 
     @Override

@@ -53,7 +53,7 @@ public final class Loop extends CFStatement {
     public Loop(final SlotContext sc) {
         super(sc);
 
-        this.executionManager = sc.programContext.runtimeContext.executionManager;
+        this.executionManager = sc.runtimeContext.executionManager;
     }
 
     // ---------------------------------------------------

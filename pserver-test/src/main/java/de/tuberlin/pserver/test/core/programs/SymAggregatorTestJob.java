@@ -13,7 +13,7 @@ public class SymAggregatorTestJob extends MLProgram {
 
         program.process(() -> {
 
-            final int partialAgg = slotContext.programContext.runtimeContext.nodeID * 1000;
+            final int partialAgg = slotContext.runtimeContext.nodeID * 1000;
 
             final int globalAgg = new Aggregator<>(slotContext, partialAgg)
                     .apply(pa -> pa.stream().mapToInt(Integer::intValue).sum());

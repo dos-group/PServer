@@ -54,7 +54,7 @@ public class DistributedMatrix extends AbstractMatrix {
 
         this.slotContext    = Preconditions.checkNotNull(slotContext);
         this.nodeDOP        = slotContext.programContext.nodeDOP;
-        this.nodeID         = slotContext.programContext.runtimeContext.nodeID;
+        this.nodeID         = slotContext.runtimeContext.nodeID;
         this.partitionType  = Preconditions.checkNotNull(partitionType);
         this.shape          = createShape(rows, cols);
         this.format         = format;
@@ -154,9 +154,9 @@ public class DistributedMatrix extends AbstractMatrix {
                     totalAgg.set(row, value);
                 }
 
-                slotContext.programContext.runtimeContext.dataManager.pushTo("rowAgg", partialAgg);
+                slotContext.runtimeContext.dataManager.pushTo("rowAgg", partialAgg);
                 final int n = slotContext.programContext.nodeDOP - 1;
-                slotContext.programContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "rowAgg",
+                slotContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "rowAgg",
                         new DataManager.DataEventHandler() {
                             @Override
                             public void handleDataEvent(int srcNodeID, Object value) {
@@ -181,9 +181,9 @@ public class DistributedMatrix extends AbstractMatrix {
         switch (partitionType) {
             case ROW_PARTITIONED: {
                 Matrix partialMatrix = matrix.subMatrix(shape.rowOffset, shape.colOffset, shape.rows, shape.cols);
-                slotContext.programContext.runtimeContext.dataManager.pushTo("partialMatrix", partialMatrix);
+                slotContext.runtimeContext.dataManager.pushTo("partialMatrix", partialMatrix);
                 final int n = slotContext.programContext.nodeDOP - 1;
-                slotContext.programContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "partialMatrix",
+                slotContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "partialMatrix",
                         new DataManager.DataEventHandler() {
                             @Override
                             public void handleDataEvent(int srcNodeID, Object value) {

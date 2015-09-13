@@ -19,6 +19,8 @@ public @interface SharedState {;
 
     GlobalScope globalScope() default GlobalScope.REPLICATED;
 
+    String at() default "";
+
     PartitionType partitionType() default PartitionType.ROW_PARTITIONED;
 
     long rows() default 0;

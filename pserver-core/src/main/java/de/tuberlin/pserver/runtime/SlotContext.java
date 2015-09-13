@@ -11,6 +11,8 @@ public final class SlotContext {
     // Fields.
     // ---------------------------------------------------
 
+    public final RuntimeContext runtimeContext;
+
     public final MLProgramContext programContext;
 
     public final int slotID;
@@ -27,10 +29,12 @@ public final class SlotContext {
     // Constructors.
     // ---------------------------------------------------
 
-    public SlotContext(final MLProgramContext programContext,
+    public SlotContext(final RuntimeContext runtimeContext,
+                       final MLProgramContext programContext,
                        final int slotID,
                        final MLProgram programInvokeable) {
 
+        this.runtimeContext     = Preconditions.checkNotNull(runtimeContext);
         this.programContext     = Preconditions.checkNotNull(programContext);
         this.slotID             = slotID;
         this.programInvokeable  = Preconditions.checkNotNull(programInvokeable);
@@ -44,6 +48,10 @@ public final class SlotContext {
 
     @Override
     public String toString() {
-        return "[" + programContext.runtimeContext.nodeID + "|" + slotID + "]";
+        return "[" + runtimeContext.nodeID + "|" + slotID + "]";
+    }
+
+    public SlotGroup getActiveSlotGroup() {
+        return runtimeContext.executionManager.getActiveSlotGroup();
     }
 }

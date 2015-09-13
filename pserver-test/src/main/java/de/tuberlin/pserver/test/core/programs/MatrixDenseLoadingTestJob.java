@@ -53,7 +53,7 @@ public class MatrixDenseLoadingTestJob extends MLProgram  {
 
                 matrix = dataManager.getObject("matrix");
 
-                int nodeId = slotContext.programContext.runtimeContext.nodeID;
+                int nodeId = slotContext.runtimeContext.nodeID;
                 int numNodes = slotContext.programContext.nodeDOP;
                 MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);
                 ReusableMatrixEntry entry = new MutableMatrixEntry(-1, -1, Double.NaN);

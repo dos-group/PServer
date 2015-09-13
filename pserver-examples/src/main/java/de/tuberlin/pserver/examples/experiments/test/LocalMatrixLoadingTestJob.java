@@ -42,7 +42,7 @@ public class LocalMatrixLoadingTestJob extends MLProgram {
     @Override
     public void define(Program program) {
         program.process(() -> {
-            int nodeId = slotContext.programContext.runtimeContext.nodeID;
+            int nodeId = slotContext.runtimeContext.nodeID;
             int numNodes = slotContext.programContext.nodeDOP;
             MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);
 

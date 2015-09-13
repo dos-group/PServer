@@ -13,7 +13,7 @@ import de.tuberlin.pserver.math.vector.dense.DVector;
 import java.io.Serializable;
 import java.util.Random;
 
-public class DMatrix extends AbstractMatrix implements Serializable {
+public class Dense64Matrix extends AbstractMatrix implements Serializable {
 
     // ---------------------------------------------------
     // Fields.
@@ -31,7 +31,7 @@ public class DMatrix extends AbstractMatrix implements Serializable {
     // ---------------------------------------------------
 
     // Copy Constructor.
-    public DMatrix(final Vector m) {
+    public Dense64Matrix(final Vector m) {
         super(m.layout() == Layout.COLUMN_LAYOUT ?
                 1 : m.length(),
               m.layout() == Layout.COLUMN_LAYOUT ?
@@ -45,15 +45,15 @@ public class DMatrix extends AbstractMatrix implements Serializable {
     }
 
     // Copy Constructor.
-    public DMatrix(final DMatrix m) {
+    public Dense64Matrix(final Dense64Matrix m) {
         super(m.rows, m.cols, m.layout);
         this.data = new double[m.data.length];
         System.arraycopy(m.data, 0, this.data, 0, m.data.length);
     }
 
-    public DMatrix(final long rows, final long cols) { this(rows, cols, null, Layout.ROW_LAYOUT); }
-    public DMatrix(final long rows, final long cols, final double[] data) { this(rows, cols, data, Layout.ROW_LAYOUT); }
-    public DMatrix(final long rows, final long cols, final double[] data, final Layout layout) {
+    public Dense64Matrix(final long rows, final long cols) { this(rows, cols, null, Layout.ROW_LAYOUT); }
+    public Dense64Matrix(final long rows, final long cols, final double[] data) { this(rows, cols, data, Layout.ROW_LAYOUT); }
+    public Dense64Matrix(final long rows, final long cols, final double[] data, final Layout layout) {
         super(rows, cols, layout);
         this.data = (data == null) ? new double[(int)(rows * cols)] : Preconditions.checkNotNull(data);
     }
@@ -87,7 +87,7 @@ public class DMatrix extends AbstractMatrix implements Serializable {
 
     @Override
     protected Matrix newInstance(long rows, long cols) {
-        return new DMatrix(rows, cols);
+        return new Dense64Matrix(rows, cols);
     }
 
     // ---------------------------------------------------
@@ -214,7 +214,7 @@ public class DMatrix extends AbstractMatrix implements Serializable {
 
     @Override
     public Matrix copy() {
-        return new DMatrix(this);
+        return new Dense64Matrix(this);
     }
 
     @Override
@@ -223,14 +223,14 @@ public class DMatrix extends AbstractMatrix implements Serializable {
             final int length = (int)(rows * cols);
             final double[] subData = new double[length];
             System.arraycopy(data, (int)(row * cols + col), subData, 0, length);
-            return new DMatrix(rows, cols, subData, layout);
+            return new Dense64Matrix(rows, cols, subData, layout);
         } else
             throw new UnsupportedOperationException();
     }
 
     @Override
     public Matrix assign(final long row, final long col, final Matrix m) {
-        if (layout == Layout.ROW_LAYOUT && m.getLayout() == Layout.ROW_LAYOUT) {
+        if (layout == Layout.ROW_LAYOUT && m.layout() == Layout.ROW_LAYOUT) {
             if (cols == m.cols())
                 System.arraycopy(m.toArray(), 0, data, (int)(row * cols + col), m.toArray().length);
             else
@@ -268,7 +268,7 @@ public class DMatrix extends AbstractMatrix implements Serializable {
 
     private static final class RowIterator implements Matrix.RowIterator {
 
-        private DMatrix self;
+        private Dense64Matrix self;
 
         private int globalRowIndex;
 
@@ -284,8 +284,8 @@ public class DMatrix extends AbstractMatrix implements Serializable {
 
         // ---------------------------------------------------
 
-        public RowIterator(final DMatrix v) { this(v, 0, (int)Preconditions.checkNotNull(v).rows() - 1); }
-        public RowIterator(final DMatrix v, final int startRow, final int endRow) {
+        public RowIterator(final Dense64Matrix v) { this(v, 0, (int)Preconditions.checkNotNull(v).rows() - 1); }
+        public RowIterator(final Dense64Matrix v, final int startRow, final int endRow) {
             this.self = v;
             Preconditions.checkArgument(startRow >= 0 && startRow < self.rows());
 //            Preconditions.checkArgument(endRow > startRow && endRow < self.rows());

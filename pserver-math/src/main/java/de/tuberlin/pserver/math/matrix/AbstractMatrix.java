@@ -62,7 +62,7 @@ public abstract class AbstractMatrix implements Matrix {
 
     @Override  public long cols() { return cols; }
 
-    @Override  public Layout getLayout() { return layout; }
+    @Override  public Layout layout() { return layout; }
 
     @Override  public abstract RowIterator rowIterator();
 

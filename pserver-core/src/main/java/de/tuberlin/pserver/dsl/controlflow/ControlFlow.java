@@ -33,5 +33,5 @@ public final class ControlFlow {
 
     public ParallelScope parScope() {return new ParallelScope(slotContext); }
 
-    public void syncSlots() { slotContext.programContext.runtimeContext.executionManager.localSync(slotContext); }
+    public void syncSlots() { slotContext.runtimeContext.executionManager.localSync(slotContext); }
 }

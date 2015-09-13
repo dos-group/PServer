@@ -20,6 +20,9 @@ import de.tuberlin.pserver.runtime.state.filter.MatrixUpdateFilter;
 import de.tuberlin.pserver.runtime.state.merger.UpdateMerger;
 import de.tuberlin.pserver.types.DistributedMatrix;
 import de.tuberlin.pserver.types.PartitionType;
+import de.tuberlin.pserver.types.RemoteMatrixSkeleton;
+import de.tuberlin.pserver.types.RemoteMatrixStub;
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +48,8 @@ public final class MLProgramLinker {
 
     private final DataManager dataManager;
 
+    private final RuntimeContext runtimeContext;
+
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
@@ -55,6 +60,7 @@ public final class MLProgramLinker {
         this.programContext   = Preconditions.checkNotNull(programContext);
         this.programClass     = Preconditions.checkNotNull(programClass);
         this.dataManager      = programContext.runtimeContext.dataManager;
+        this.runtimeContext   = programContext.runtimeContext;
     }
 
     // ---------------------------------------------------
@@ -69,7 +75,7 @@ public final class MLProgramLinker {
 
             stateDecls = new ArrayList<>();
 
-            final String slotIDStr = "[" + slotContext.programContext.runtimeContext.nodeID
+            final String slotIDStr = "[" + runtimeContext.nodeID
                     + " | " + slotContext.slotID + "] ";
 
             LOG.info(slotIDStr + "Enter " + slotContext.programContext.simpleClassName + " linking phase.");
@@ -138,6 +144,7 @@ public final class MLProgramLinker {
                             field.getType(),
                             stateProperties.localScope(),
                             stateProperties.globalScope(),
+                            parseIntArray(stateProperties.at()),
                             stateProperties.partitionType(),
                             stateProperties.rows(),
                             stateProperties.cols(),
@@ -198,6 +205,42 @@ public final class MLProgramLinker {
         for (final StateDeclaration decl : stateDecls) {
             if (Matrix.class.isAssignableFrom(decl.stateType)) {
                 switch (decl.globalScope) {
+                    case SINGLETON: {
+
+                        if (decl.atNodes.length != 1)
+                            throw new IllegalStateException();
+
+                        if (decl.atNodes[0] < 0 || decl.atNodes[0] > runtimeContext.numOfNodes - 1)
+                            throw new IllegalStateException();
+
+                        if (runtimeContext.nodeID == decl.atNodes[0]) {
+
+                            final SharedObject so = new MatrixBuilder()
+                                    .dimension(decl.rows, decl.cols)
+                                    .format(decl.format)
+                                    .layout(decl.layout)
+                                    .build();
+
+                            dataManager.putObject(decl.name, so);
+
+                            new RemoteMatrixStub(slotContext, decl.name, (Matrix)so);
+
+                        } else {
+
+                            final RemoteMatrixSkeleton remoteMatrixSkeleton = new RemoteMatrixSkeleton(
+                                    slotContext,
+                                    decl.name,
+                                    decl.atNodes[0],
+                                    decl.rows,
+                                    decl.cols,
+                                    decl.format,
+                                    decl.layout
+                            );
+
+                            dataManager.putObject(decl.name, remoteMatrixSkeleton);
+                        }
+
+                    } break;
                     case REPLICATED: {
                         if ("".equals(decl.path)) {
 
@@ -306,6 +349,14 @@ public final class MLProgramLinker {
         }
     }
 
+    private int[] parseIntArray (final String intArrayStr) {
+        final StringTokenizer st = new StringTokenizer(Preconditions.checkNotNull(intArrayStr), ",");
+        final List<Integer> vals = new ArrayList<>();
+        while (st.hasMoreTokens())
+            vals.add(Integer.valueOf(st.nextToken().replaceAll("\\s+", "")));
+        return ArrayUtils.toPrimitive(vals.toArray(new Integer[vals.size()]));
+    }
+
     // ---------------------------------------------------
     // Utility Methods.
     // ---------------------------------------------------
@@ -315,5 +366,4 @@ public final class MLProgramLinker {
     public static String stateDeclarationName(final String name) { return "__state_declaration_" + name; }
 
     public static String remoteUpdateControllerName(final String name) { return "__remote_update_controller_" + name; }
-
 }

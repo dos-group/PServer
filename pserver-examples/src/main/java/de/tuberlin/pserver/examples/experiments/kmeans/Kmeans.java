@@ -9,7 +9,7 @@ import de.tuberlin.pserver.dsl.state.SharedState;
 import de.tuberlin.pserver.dsl.state.StateMerger;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.dense.DMatrix;
+import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.dense.DVector;
 import de.tuberlin.pserver.runtime.MLProgram;
@@ -57,13 +57,13 @@ public class Kmeans extends MLProgram {
         for (int i = 0; i < K * COLS; i++) {
             data[i] = rand.nextDouble();
         }
-        final Matrix centroids = new DMatrix(K, COLS, data);
+        final Matrix centroids = new Dense64Matrix(K, COLS, data);
 
 
         program.initialize(() -> {
 
             for (int i = 0; i < K; i++) {
-                int nodeId = slotContext.programContext.runtimeContext.nodeID;
+                int nodeId = slotContext.runtimeContext.nodeID;
                 System.out.println("centroid[node:"+nodeId+",row:"+i+"]="+centroids.rowAsVector(i));
             }
 
@@ -106,7 +106,7 @@ public class Kmeans extends MLProgram {
                 }
 
                 for (int i = 0; i < K; i++) {
-                    int nodeId = slotContext.programContext.runtimeContext.nodeID;
+                    int nodeId = slotContext.runtimeContext.nodeID;
                     System.out.println("centroid[node:" + nodeId + ",row:" + i + "]=" + centroids.rowAsVector(i));
                 }
             });
@@ -114,7 +114,7 @@ public class Kmeans extends MLProgram {
         }).postProcess(() -> {
 
             for (int i = 0; i < K; i++) {
-                int nodeId = slotContext.programContext.runtimeContext.nodeID;
+                int nodeId = slotContext.runtimeContext.nodeID;
                 System.out.println("centroid[node:" + nodeId + ",row:" + i + "]=" + centroids.rowAsVector(i));
             }
 

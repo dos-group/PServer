@@ -34,7 +34,7 @@ public final class DataFlow {
 
         this.slotContext = Preconditions.checkNotNull(slotContext);
 
-        this.dataManager = slotContext.programContext.runtimeContext.dataManager;
+        this.dataManager = slotContext.runtimeContext.dataManager;
 
         this.programContext = slotContext.programContext;
     }

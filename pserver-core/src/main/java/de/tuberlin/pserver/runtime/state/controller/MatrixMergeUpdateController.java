@@ -35,7 +35,7 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
 
         this.shadowMatrix = new EmbeddedDHTObject<>(Preconditions.checkNotNull(matrix).copy());
 
-        slotContext.programContext.runtimeContext.dataManager.putObject(stateName + "-Shadow", shadowMatrix);
+        slotContext.runtimeContext.dataManager.putObject(stateName + "-Shadow", shadowMatrix);
     }
 
     // ---------------------------------------------------
@@ -71,7 +71,7 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.parScope().slot(0).exe( () -> {
 
-            final DataManager dataManager = sc.programContext.runtimeContext.dataManager;
+            final DataManager dataManager = sc.runtimeContext.dataManager;
 
             final DHTObject[] dhtObjects = dataManager.pullFrom(stateName + "-Shadow", dataManager.remoteNodeIDs);
 

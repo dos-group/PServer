@@ -33,7 +33,7 @@ public final class ParallelScope extends CFStatement {
 
     public ParallelScope(final SlotContext ic) {
         super(ic);
-        executionManager = ic.programContext.runtimeContext.executionManager;
+        executionManager = ic.runtimeContext.executionManager;
         allNodes();
         allSlots();
     }
@@ -85,8 +85,6 @@ public final class ParallelScope extends CFStatement {
     public void exe(final Body body) throws Exception {
         Preconditions.checkNotNull(body);
 
-
-
         if (inNodeRange() && inInstanceRange()) {
 
             final ExecutionManager.SlotGroupAllocation sa = executionManager.allocSlots(fromSlotID, toSlotID);
@@ -127,8 +125,8 @@ public final class ParallelScope extends CFStatement {
     // ---------------------------------------------------
 
     private boolean inNodeRange() {
-        return slotContext.programContext.runtimeContext.nodeID >= fromNodeID
-                && slotContext.programContext.runtimeContext.nodeID <= toNodeID;
+        return slotContext.runtimeContext.nodeID >= fromNodeID
+                && slotContext.runtimeContext.nodeID <= toNodeID;
     }
 
     private boolean inInstanceRange() {
