@@ -7,7 +7,8 @@ import de.tuberlin.pserver.commons.hashtable.NonBlockingHashMap;
 import de.tuberlin.pserver.commons.json.GsonUtils;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 
-import java.util.*;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;

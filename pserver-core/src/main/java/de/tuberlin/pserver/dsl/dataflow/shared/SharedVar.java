@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.dsl;
+package de.tuberlin.pserver.dsl.dataflow.shared;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.SlotContext;
@@ -49,7 +49,7 @@ public final class SharedVar<T> {
 
         this.sharedVarUID = nextSharedVarUID(masterSlotID);
 
-        //sc.CF.parScope().slot(masterSlotID).exe(() -> {
+        //sc.CF.parUnit().slot(masterSlotID).exe(() -> {
 
             if (sc.slotID == masterSlotID) {
 

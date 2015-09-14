@@ -1,7 +1,5 @@
 package de.tuberlin.pserver.math.matrix;
 
-import com.google.gson.Gson;
-import de.tuberlin.pserver.commons.json.GsonUtils;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.exceptions.IncompatibleShapeException;

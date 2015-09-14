@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
 public abstract class MLProgram extends EventDispatcher {
 
@@ -91,6 +90,8 @@ public abstract class MLProgram extends EventDispatcher {
         program.enter();
 
             programLinker.link(slotContext, this);
+
+            programLinker.defineUnits(this, program);
 
             programLinker.fetchStateObjects(this);
 

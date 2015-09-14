@@ -1,4 +1,5 @@
-package de.tuberlin.pserver.dsl.state;
+package de.tuberlin.pserver.dsl.controlflow.annotations;
+
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,8 +7,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface StateMerger {
+@Target(ElementType.METHOD)
+public @interface Unit {
 
-    public String stateObjects();
+    String at() default "";
 }

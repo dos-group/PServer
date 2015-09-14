@@ -5,7 +5,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.ds.NestedIntervalTree;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.dsl.controlflow.CFStatement;
+import de.tuberlin.pserver.dsl.controlflow.base.CFStatement;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.types.DistributedMatrix;
@@ -14,7 +14,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class ExecutionManager {

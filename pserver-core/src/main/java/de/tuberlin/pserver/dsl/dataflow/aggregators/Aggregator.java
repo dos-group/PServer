@@ -1,7 +1,8 @@
-package de.tuberlin.pserver.dsl;
+package de.tuberlin.pserver.dsl.dataflow.aggregators;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.dsl.dataflow.shared.SharedVar;
 import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.SlotContext;
@@ -60,7 +61,7 @@ public class Aggregator<T extends Serializable> {
 
         final int slotID = sc.runtimeContext.executionManager.getActiveSlotGroup().minSlotID;
 
-        sc.CF.parScope().slot(slotID).exe(() -> {
+        sc.CF.parUnit(slotID).exe(() -> {
 
             sc.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg);
 
@@ -104,56 +105,63 @@ public class Aggregator<T extends Serializable> {
 
         // -- master node --
 
-        sc.CF.parScope().node(AGG_NODE_ID).slot(slotGroup.minSlotID).exe(() -> {
+        if (sc.node(AGG_NODE_ID)) {
 
-            final int n = sc.programContext.nodeDOP - 1;
+            sc.CF.parUnit(slotGroup.minSlotID).exe(() -> {
 
-            final List<T> partialAggs = new ArrayList<>();
+                final int n = sc.programContext.nodeDOP - 1;
 
-            partialAggs.add(partialAgg);
+                final List<T> partialAggs = new ArrayList<>();
 
-            sc.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
+                partialAggs.add(partialAgg);
 
-                @Override
-                @SuppressWarnings("unchecked")
-                public void handleDataEvent(int srcNodeID, Object value) {
-                    partialAggs.add((T) value);
-                }
+                sc.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
+
+                    @Override
+                    @SuppressWarnings("unchecked")
+                    public void handleDataEvent(int srcNodeID, Object value) {
+                        partialAggs.add((T) value);
+                    }
+                });
+
+                final T agg = function.apply(partialAggs);
+
+                sc.runtimeContext.dataManager.pushTo(aggPushUID(), agg);
+
+                sharedGlobalAgg.set(agg);
+
+                //sc.CF.syncSlots();
             });
+        }
 
-            final T agg = function.apply(partialAggs);
-
-            sc.runtimeContext.dataManager.pushTo(aggPushUID(), agg);
-
-            sharedGlobalAgg.set(agg);
-
-            //sc.CF.syncSlots();
-        });
-
-        //sc.CF.parScope().node(AGG_NODE_ID).slot(slotIDs.getLeft() + 1, slotIDs.getRight()).exe(sc.CF::syncSlots);
+        //sc.CF.parUnit().node(AGG_NODE_ID).slot(slotIDs.getLeft() + 1, slotIDs.getRight()).exe(sc.CF::syncSlots);
 
         // -- slave nodes --
 
 
        // System.out.println("----------------------------------------------->> " + slotIDs.getLeft());
 
-        sc.CF.parScope().node(AGG_NODE_ID + 1, sc.programContext.nodeDOP - 1).slot(slotGroup.minSlotID).exe(() -> {
 
-            sc.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg, new int[]{AGG_NODE_ID});
+        if (sc.node(AGG_NODE_ID + 1, sc.programContext.nodeDOP - 1)) {
 
-            sc.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, aggPushUID(), new DataManager.DataEventHandler() {
+            sc.CF.parUnit(slotGroup.minSlotID).exe(() -> {
 
-                @Override
-                @SuppressWarnings("unchecked")
-                public void handleDataEvent(int srcNodeID, Object value) {
-                    sharedGlobalAgg.set((T) value);
-                }
+                sc.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg, new int[]{AGG_NODE_ID});
+
+                sc.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, aggPushUID(), new DataManager.DataEventHandler() {
+
+                    @Override
+                    @SuppressWarnings("unchecked")
+                    public void handleDataEvent(int srcNodeID, Object value) {
+                        sharedGlobalAgg.set((T) value);
+                    }
+                });
+
+                //sc.CF.syncSlots();
             });
+        }
 
-            //sc.CF.syncSlots();
-        });
-
-        //sc.CF.parScope().node(AGG_NODE_ID + 1, sc.programContext.nodeDOP - 1).slot(slotIDs.getLeft() + 1, slotIDs.getRight()).exe(sc.CF::syncSlots);
+        //sc.CF.parUnit().node(AGG_NODE_ID + 1, sc.programContext.nodeDOP - 1).slot(slotIDs.getLeft() + 1, slotIDs.getRight()).exe(sc.CF::syncSlots);
 
         sc.CF.syncSlots();
 

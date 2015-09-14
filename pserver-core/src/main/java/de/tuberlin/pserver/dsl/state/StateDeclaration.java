@@ -1,5 +1,8 @@
 package de.tuberlin.pserver.dsl.state;
 
+import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.LocalScope;
+import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;

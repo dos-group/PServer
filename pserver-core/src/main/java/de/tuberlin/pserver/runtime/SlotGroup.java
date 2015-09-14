@@ -2,7 +2,7 @@ package de.tuberlin.pserver.runtime;
 
 
 import de.tuberlin.pserver.commons.ds.NestedIntervalTree;
-import de.tuberlin.pserver.dsl.SharedVar;
+import de.tuberlin.pserver.dsl.dataflow.shared.SharedVar;
 
 import java.util.concurrent.CyclicBarrier;
 

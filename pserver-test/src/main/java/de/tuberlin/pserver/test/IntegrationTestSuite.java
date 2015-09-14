@@ -7,8 +7,8 @@ import de.tuberlin.pserver.node.PServerMain;
 import de.tuberlin.pserver.test.core.CoreTests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.runners.Suite;
 import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({CoreTests.class})

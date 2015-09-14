@@ -2,10 +2,11 @@ package de.tuberlin.pserver.examples.experiments.tsne;
 
 import com.google.common.collect.Lists;
 import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.dsl.state.GlobalScope;
-import de.tuberlin.pserver.dsl.state.RemoteUpdate;
-import de.tuberlin.pserver.dsl.state.SharedState;
+import de.tuberlin.pserver.dsl.state.annotations.State;
+import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
@@ -44,23 +45,23 @@ public class TSNEJob extends MLProgram {
     // Fields.
     // ---------------------------------------------------
 
-    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = INPUT_COLS,
+    @State(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = INPUT_COLS,
             path = "datasets/mnist_10_X.csv", format = Format.SPARSE_FORMAT)
     public Matrix X;
 
-    @SharedState(globalScope = GlobalScope.LOGICALLY_PARTITIONED, rows = ROWS, cols = ROWS,
+    @State(globalScope = GlobalScope.LOGICALLY_PARTITIONED, rows = ROWS, cols = ROWS,
             remoteUpdate = RemoteUpdate.COLLECT_PARTITIONS_UPDATE)
     public Matrix P;
 
-    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = EMBEDDING_DIMENSION)
+    @State(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = EMBEDDING_DIMENSION)
     public Matrix Y;
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    @Override
-    public void define(final Program program) {
+    @Unit
+    public void main(final Program program) {
 
         program.initialize(() -> {
 

@@ -110,7 +110,7 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.syncSlots();
 
-        sc.CF.parScope().slot(0).exe( () -> {
+        sc.CF.parUnit(0).exe( () -> {
 
             final DataManager dataManager = sc.runtimeContext.dataManager;
 
@@ -165,6 +165,6 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.syncSlots();
 
-        sc.CF.parScope().slot(0).exe(() -> sc.programContext.delete(stateName + "-Remote-Matrix-Delta-List"));
+        sc.CF.parUnit(0).exe(() -> sc.programContext.delete(stateName + "-Remote-Matrix-Delta-List"));
     }
 }

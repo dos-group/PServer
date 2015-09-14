@@ -1,6 +1,9 @@
-package de.tuberlin.pserver.dsl.controlflow.iteration;
+package de.tuberlin.pserver.dsl.controlflow.loop;
 
-import de.tuberlin.pserver.dsl.controlflow.CFStatement;
+import de.tuberlin.pserver.dsl.controlflow.base.CFStatement;
+import de.tuberlin.pserver.dsl.controlflow.loop.iterators.MatrixElementIteratorBody;
+import de.tuberlin.pserver.dsl.controlflow.loop.iterators.MatrixRowIteratorBody;
+import de.tuberlin.pserver.dsl.controlflow.loop.iterators.VectorElementIteratorBody;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.runtime.ExecutionManager;
@@ -66,9 +69,9 @@ public final class Loop extends CFStatement {
     // Execution.
     // ---------------------------------------------------
 
-    public Loop exe(final long n, final IterationBody b) throws Exception { return exe(() -> !(epoch < n), b); }
+    public Loop exe(final long n, final LoopBody b) throws Exception { return exe(() -> !(epoch < n), b); }
 
-    public Loop exe(final IterationTermination t, final IterationBody b) throws Exception {
+    public Loop exe(final LoopTermination t, final LoopBody b) throws Exception {
 
         enter();
 
@@ -110,13 +113,13 @@ public final class Loop extends CFStatement {
     // Matrix Operations.
     // ---------------------------------------------------
 
-    public Loop parExe(final Matrix m, final MatrixRowIterationBody b) throws Exception { return exe(parallelMatrixRowIterator(m), b); }
+    public Loop parExe(final Matrix m, final MatrixRowIteratorBody b) throws Exception { return exe(parallelMatrixRowIterator(m), b); }
 
-    public Loop exe(final Matrix m, final MatrixRowIterationBody b)throws Exception { return exe(m.rowIterator(), b); }
+    public Loop exe(final Matrix m, final MatrixRowIteratorBody b)throws Exception { return exe(m.rowIterator(), b); }
 
-    public Loop exe(final Matrix.RowIterator ri, final MatrixRowIterationBody b) throws Exception {
-        final IterationBody ib = (epoch) -> b.body(epoch, ri);
-        final IterationTermination it = () -> {
+    public Loop exe(final Matrix.RowIterator ri, final MatrixRowIteratorBody b) throws Exception {
+        final LoopBody ib = (epoch) -> b.body(epoch, ri);
+        final LoopTermination it = () -> {
                 final boolean t = !ri.hasNext();
                 if (!t) ri.next();
                 return t;
@@ -126,11 +129,11 @@ public final class Loop extends CFStatement {
 
     // ---------------------------------------------------
 
-    public Loop parExe(final Matrix m, final MatrixElementIterationBody b) throws Exception { return parExe(m, toRowMatrixIB(m, b)); }
+    public Loop parExe(final Matrix m, final MatrixElementIteratorBody b) throws Exception { return parExe(m, toRowMatrixIB(m, b)); }
 
-    public Loop exe(final Matrix m, final MatrixElementIterationBody b) throws Exception { return exe(m, toRowMatrixIB(m, b)); }
+    public Loop exe(final Matrix m, final MatrixElementIteratorBody b) throws Exception { return exe(m, toRowMatrixIB(m, b)); }
 
-    private MatrixRowIterationBody toRowMatrixIB(final Matrix m, final MatrixElementIterationBody b) throws Exception {
+    private MatrixRowIteratorBody toRowMatrixIB(final Matrix m, final MatrixElementIteratorBody b) throws Exception {
         return (epoch, rit) -> {
             for (long j = 0; j < m.cols(); ++j) {
                 b.body(epoch, rit.rowNum(), j, rit.value((int) j));
@@ -142,13 +145,13 @@ public final class Loop extends CFStatement {
     // Vector Operations.
     // ---------------------------------------------------
 
-    public Loop parExe(final Vector v, final VectorElementIterationBody b) throws Exception { return exe(parallelVectorElementIterator(v), b); }
+    public Loop parExe(final Vector v, final VectorElementIteratorBody b) throws Exception { return exe(parallelVectorElementIterator(v), b); }
 
-    public Loop exe(final Vector v, final VectorElementIterationBody b)throws Exception { return exe(v.elementIterator(), b); }
+    public Loop exe(final Vector v, final VectorElementIteratorBody b)throws Exception { return exe(v.elementIterator(), b); }
 
-    public Loop exe(final Vector.ElementIterator ei, final VectorElementIterationBody b) throws Exception {
-        final IterationBody ib = (epoch) -> b.body(epoch, ei);
-        final IterationTermination it = () -> {
+    public Loop exe(final Vector.ElementIterator ei, final VectorElementIteratorBody b) throws Exception {
+        final LoopBody ib = (epoch) -> b.body(epoch, ei);
+        final LoopTermination it = () -> {
             final boolean t = !ei.hasNextElement();
             if (!t) ei.nextElement();
             return t;

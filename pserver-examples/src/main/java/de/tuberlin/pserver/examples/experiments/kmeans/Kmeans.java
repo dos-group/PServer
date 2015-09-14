@@ -1,12 +1,13 @@
 package de.tuberlin.pserver.examples.experiments.kmeans;
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.controlflow.iteration.Loop;
+import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
+import de.tuberlin.pserver.dsl.controlflow.loop.Loop;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.dsl.state.GlobalScope;
-import de.tuberlin.pserver.dsl.state.RemoteUpdate;
-import de.tuberlin.pserver.dsl.state.SharedState;
-import de.tuberlin.pserver.dsl.state.StateMerger;
+import de.tuberlin.pserver.dsl.state.annotations.State;
+import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
+import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
@@ -27,7 +28,7 @@ public class Kmeans extends MLProgram {
     // loaded by pserver
     private static final String FILE = "datasets/stripes3.csv";
 
-    @SharedState(
+    @State(
             globalScope = GlobalScope.PARTITIONED,
             rows = ROWS,
             cols = COLS,
@@ -37,7 +38,7 @@ public class Kmeans extends MLProgram {
     )
     public Matrix matrix;
 
-    @SharedState(
+    @State(
             globalScope = GlobalScope.REPLICATED,
             rows = K,
             cols = COLS + 1,
@@ -49,8 +50,8 @@ public class Kmeans extends MLProgram {
     public final MatrixUpdateMerger centroidsUpdateMerger = (i, j, val, remoteVal) -> val + remoteVal;
 
 
-    @Override
-    public void define(Program program) {
+    @Unit
+    public void main(final Program program) {
 
         Random rand = new Random(42);
         double[] data = new double[(int)(K * COLS)];

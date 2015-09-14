@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.crdt;
 
 import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.ExecutionManager;
@@ -11,21 +12,21 @@ public class PingPongTestJob extends MLProgram {
 
     public static final int NUM_MSG = 50;
 
-    @Override
-    public void define(final Program program) {
+    @Unit(at = "0")
+    public void pingNode(final Program program) {
 
         program.process(() -> {
 
-            CF.parScope().node(0).slot(0).exe(() -> { // node 0 with slot 0 executes this section...
+            CF.parUnit(0).exe(() -> { // node 0 with slot 0 executes this section...
 
                 for (int i = 0; i < NUM_MSG; ++i) {
 
-                    dataManager.pushTo("ping", new Integer(i), new int[] { 1 });
+                    dataManager.pushTo("ping", new Integer(i), new int[]{1});
 
                     dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, "pong", new DataManager.DataEventHandler() {
                         @Override
                         public void handleDataEvent(int srcNodeID, Object value) {
-                            final Integer i = (Integer)value;
+                            final Integer i = (Integer) value;
                             System.out.println("received pong " + i);
                         }
                     });
@@ -33,10 +34,15 @@ public class PingPongTestJob extends MLProgram {
 
                 System.out.println("-- FINISH NODE " + slotContext);
             });
+        });
+    }
 
-            // ---------------------------------------------------
+    @Unit(at = "1")
+    public void pongNode(final Program program) {
 
-            CF.parScope().node(1).slot(0).exe(() -> { // node 1 with slot 0 executes this section...
+        program.process(() -> {
+
+            CF.parUnit(1).slot(0).exe(() -> { // node 1 with slot 0 executes this section...
 
                 for (int i = 0; i < NUM_MSG; ++i) {
 
@@ -55,6 +61,7 @@ public class PingPongTestJob extends MLProgram {
             });
         });
     }
+
 
     // ---------------------------------------------------
     // Entry Point.

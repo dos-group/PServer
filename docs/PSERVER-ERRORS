@@ -92,8 +92,8 @@ ProgramFailureEvent {
 java.lang.NullPointerException
 	at de.tuberlin.pserver.runtime.ExecutionManager.getSlotContext(ExecutionManager.java:156)
 	at de.tuberlin.pserver.runtime.ExecutionManager.getActiveSlotGroup(ExecutionManager.java:208)
-	at de.tuberlin.pserver.dsl.SharedVar.<init>(SharedVar.java:44)
-	at de.tuberlin.pserver.dsl.SharedInt.<init>(SharedInt.java:14)
+	at de.tuberlin.pserver.dsl.dataflow.shared.SharedVar.<init>(SharedVar.java:44)
+	at de.tuberlin.pserver.dsl.dataflow.shared.SharedInt.<init>(SharedInt.java:14)
 	at de.tuberlin.pserver.test.core.jobs.SharedVarTestJob.lambda$define$12(SharedVarTestJob.java:17)
 	at de.tuberlin.pserver.runtime.MLProgram.run(MLProgram.java:133)
 	at de.tuberlin.pserver.node.PServerNode$PServerJobHandler.lambda$handleEvent$0(PServerNode.java:117)

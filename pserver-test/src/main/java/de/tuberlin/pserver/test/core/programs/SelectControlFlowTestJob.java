@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.test.core.programs;
 
 
-import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.runtime.SlotGroup;
@@ -10,12 +10,12 @@ import java.util.Random;
 
 public class SelectControlFlowTestJob extends MLProgram {
 
-    @Override
-    public void define(final Program program) {
+    @Unit
+    public void main(final Program program) {
 
         program.process(() -> {
 
-            CF.parScope().slot(0, 3).exe(() -> {
+            CF.parUnit(0, 3).exe(() -> {
 
                 final SlotGroup sg0 = slotContext.getActiveSlotGroup();
 
@@ -23,7 +23,7 @@ public class SelectControlFlowTestJob extends MLProgram {
 
                 Thread.sleep(new Random().nextInt(1000));
 
-                CF.parScope().slot(1, 3).exe(() -> {
+                CF.parUnit(1, 3).exe(() -> {
 
                     final SlotGroup sg1 = slotContext.getActiveSlotGroup();
 
@@ -31,7 +31,7 @@ public class SelectControlFlowTestJob extends MLProgram {
 
                     Thread.sleep(new Random().nextInt(1000));
 
-                    CF.parScope().slot(2, 3).exe(() -> {
+                    CF.parUnit(2, 3).exe(() -> {
 
                         final SlotGroup sg2 = slotContext.getActiveSlotGroup();
 
@@ -39,7 +39,7 @@ public class SelectControlFlowTestJob extends MLProgram {
 
                         Thread.sleep(new Random().nextInt(1000));
 
-                        CF.parScope().slot(3, 3).exe(() -> {
+                        CF.parUnit(3, 3).exe(() -> {
 
                             final SlotGroup sg3 = slotContext.getActiveSlotGroup();
 
@@ -49,7 +49,7 @@ public class SelectControlFlowTestJob extends MLProgram {
 
                             try {
 
-                                CF.parScope().slot(0, 3).exe(() -> {
+                                CF.parUnit(0, 3).exe(() -> {
 
                                     final SlotGroup sg4 = slotContext.getActiveSlotGroup();
 
@@ -64,22 +64,10 @@ public class SelectControlFlowTestJob extends MLProgram {
                 });
             });
 
-            CF.parScope().slot(0).exe(() -> {
-                System.out.println("SLOT 0");
-            });
-
-            CF.parScope().slot(1).exe(() -> {
-                System.out.println("SLOT 1");
-            });
-
-            CF.parScope().slot(2).exe(() -> {
-                System.out.println("SLOT 2");
-            });
-
-            CF.parScope().slot(3).exe(() -> {
-                System.out.println("SLOT 3");
-            });
-
+            CF.parUnit(0).exe(() -> System.out.println("SLOT 0"));
+            CF.parUnit(1).exe(() -> System.out.println("SLOT 1"));
+            CF.parUnit(2).exe(() -> System.out.println("SLOT 2"));
+            CF.parUnit(3).exe(() -> System.out.println("SLOT 3"));
         });
     }
 }

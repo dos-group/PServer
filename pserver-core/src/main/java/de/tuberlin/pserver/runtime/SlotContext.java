@@ -47,11 +47,13 @@ public final class SlotContext {
     // ---------------------------------------------------
 
     @Override
-    public String toString() {
-        return "[" + runtimeContext.nodeID + "|" + slotID + "]";
+    public String toString() { return "[" + runtimeContext.nodeID + "|" + slotID + "]"; }
+
+    public SlotGroup getActiveSlotGroup() { return runtimeContext.executionManager.getActiveSlotGroup(); }
+
+    public boolean node(final int fromNodeID, final int toNodeID) {
+        return runtimeContext.nodeID >= fromNodeID && runtimeContext.nodeID <= toNodeID;
     }
 
-    public SlotGroup getActiveSlotGroup() {
-        return runtimeContext.executionManager.getActiveSlotGroup();
-    }
+    public boolean node(final int nodeID) { return node(nodeID, nodeID); }
 }

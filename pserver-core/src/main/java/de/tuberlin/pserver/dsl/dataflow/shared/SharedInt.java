@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.dsl;
+package de.tuberlin.pserver.dsl.dataflow.shared;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.SlotContext;

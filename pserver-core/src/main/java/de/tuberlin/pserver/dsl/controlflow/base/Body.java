@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.dsl.controlflow;
+package de.tuberlin.pserver.dsl.controlflow.base;
 
 public interface Body {
 

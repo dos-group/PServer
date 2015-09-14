@@ -1,25 +1,21 @@
-package de.tuberlin.pserver.dsl.controlflow.selection;
+package de.tuberlin.pserver.dsl.controlflow.unit;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.dsl.SharedVar;
-import de.tuberlin.pserver.dsl.controlflow.Body;
-import de.tuberlin.pserver.dsl.controlflow.CFStatement;
+import de.tuberlin.pserver.dsl.controlflow.base.Body;
+import de.tuberlin.pserver.dsl.controlflow.base.CFStatement;
+import de.tuberlin.pserver.dsl.dataflow.shared.SharedVar;
 import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.SlotContext;
 
 import java.util.concurrent.CyclicBarrier;
 
-public final class ParallelScope extends CFStatement {
+public final class SlotParallelUnit extends CFStatement {
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
     private final ExecutionManager executionManager;
-
-    private int fromNodeID;
-
-    private int toNodeID;
 
     private int fromSlotID;
 
@@ -31,50 +27,33 @@ public final class ParallelScope extends CFStatement {
     // Constructor.
     // ---------------------------------------------------
 
-    public ParallelScope(final SlotContext ic) {
+    public SlotParallelUnit(final SlotContext ic) {
         super(ic);
         executionManager = ic.runtimeContext.executionManager;
-        allNodes();
         allSlots();
     }
 
     // ---------------------------------------------------
-    // Node Selection.
+    // Slot Selection.
     // ---------------------------------------------------
 
-    public ParallelScope node(final int fromNodeID, final int toNodeID) {
-        this.fromNodeID = fromNodeID;
-        this.toNodeID = toNodeID;
-        return this;
-    }
-
-    public ParallelScope node(final int nodeID) { return node(nodeID, nodeID); }
-
-    public ParallelScope allNodes() { return node(0, slotContext.programContext.nodeDOP - 1); }
-
-    // ---------------------------------------------------
-    // Instance Selection.
-    // ---------------------------------------------------
-
-    public ParallelScope slot(final int fromSlotID, final int toSlotID) {
+    public SlotParallelUnit slot(final int fromSlotID, final int toSlotID) {
         this.fromSlotID = fromSlotID;
         this.toSlotID = toSlotID;
         return this;
     }
 
-    public ParallelScope slot(final int slotID) { return slot(slotID, slotID); }
+    public SlotParallelUnit slot(final int slotID) { return slot(slotID, slotID); }
 
-    public ParallelScope allSlots() { return slot(0, slotContext.programContext.perNodeDOP - 1); }
+    public SlotParallelUnit allSlots() { return slot(0, slotContext.programContext.perNodeDOP - 1); }
 
     // ---------------------------------------------------
     // Synchronization.
     // ---------------------------------------------------
 
-    public ParallelScope sync() throws Exception {
-
+    public SlotParallelUnit sync() throws Exception {
         if (slotGroupBarrier != null)
             slotGroupBarrier.await();
-
         return this;
     }
 
@@ -85,7 +64,7 @@ public final class ParallelScope extends CFStatement {
     public void exe(final Body body) throws Exception {
         Preconditions.checkNotNull(body);
 
-        if (inNodeRange() && inInstanceRange()) {
+        if (inSlotRange()) {
 
             final ExecutionManager.SlotGroupAllocation sa = executionManager.allocSlots(fromSlotID, toSlotID);
 
@@ -124,13 +103,5 @@ public final class ParallelScope extends CFStatement {
     // Private Methods.
     // ---------------------------------------------------
 
-    private boolean inNodeRange() {
-        return slotContext.runtimeContext.nodeID >= fromNodeID
-                && slotContext.runtimeContext.nodeID <= toNodeID;
-    }
-
-    private boolean inInstanceRange() {
-        return slotContext.slotID >= fromSlotID
-                && slotContext.slotID <= toSlotID;
-    }
+    private boolean inSlotRange() { return slotContext.slotID >= fromSlotID && slotContext.slotID <= toSlotID; }
 }

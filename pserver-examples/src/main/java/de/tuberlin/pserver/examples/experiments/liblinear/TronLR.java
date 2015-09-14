@@ -1,9 +1,9 @@
 package de.tuberlin.pserver.examples.experiments.liblinear;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.dsl.Aggregator;
-import de.tuberlin.pserver.dsl.SharedDouble;
-import de.tuberlin.pserver.dsl.SharedVar;
+import de.tuberlin.pserver.dsl.dataflow.aggregators.Aggregator;
+import de.tuberlin.pserver.dsl.dataflow.shared.SharedDouble;
+import de.tuberlin.pserver.dsl.dataflow.shared.SharedVar;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.runtime.SlotContext;

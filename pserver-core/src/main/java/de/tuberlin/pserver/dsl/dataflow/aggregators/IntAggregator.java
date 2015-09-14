@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.dsl;
+package de.tuberlin.pserver.dsl.dataflow.aggregators;
 
 
 import de.tuberlin.pserver.runtime.SlotContext;
