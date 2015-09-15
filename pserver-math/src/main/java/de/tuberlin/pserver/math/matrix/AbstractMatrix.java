@@ -317,7 +317,7 @@ public abstract class AbstractMatrix implements Matrix {
     @Override
     public double norm(int p) {
         double norm = 0;
-        for (int row = 0; row < row; row++) {
+        for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
                 norm += Math.pow(this.get(row, col), p);
             }
