@@ -4,8 +4,6 @@ package de.tuberlin.pserver.core.infra;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.EventDispatcher;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

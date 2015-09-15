@@ -16,7 +16,7 @@ public final class RuntimeContext {
 
     public final int numOfNodes;
 
-    public final int numOfSlots;
+    public final int numOfCores;
 
     public final int nodeID;
 
@@ -34,7 +34,7 @@ public final class RuntimeContext {
 
     public RuntimeContext(final MachineDescriptor machine,
                           final int numOfNodes,
-                          final int numOfSlots,
+                          final int numOfCores,
                           final int nodeID,
                           final NetManager netManager,
                           final DHTManager dht,
@@ -43,7 +43,7 @@ public final class RuntimeContext {
 
         this.machine            = Preconditions.checkNotNull(machine);
         this.numOfNodes         = numOfNodes;
-        this.numOfSlots         = numOfSlots;
+        this.numOfCores = numOfCores;
         this.nodeID             = nodeID;
         this.dht                = Preconditions.checkNotNull(dht);
         this.netManager         = Preconditions.checkNotNull(netManager);

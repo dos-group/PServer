@@ -31,9 +31,10 @@ public class NestedIntervalTree<T> {
         public boolean equals(Interval x) { return (low == x.low) && (x.high == high); }
 
         public boolean intersects(Interval that) {
-            if (that.high < this.low) return false;
-            if (this.high < that.low) return false;
-            return true;
+            if (this.low <= that.low  && that.low <= this.high && that.high > this.high)  return true;
+            //if (that.low <= this.low  && this.low <= that.high && this.high > that.high)  return true;
+            //if (this.low <= that.high && that.high <= this.high) return true;
+            return false;
         }
 
         public int compareTo(Interval that) {
@@ -76,7 +77,7 @@ public class NestedIntervalTree<T> {
 
     // ---------------------------------------------------
 
-    public boolean put(final Interval interval, final T value) {
+    public synchronized boolean put(final Interval interval, final T value) {
         Preconditions.checkNotNull(interval);
         Preconditions.checkNotNull(value);
         final Node parent = find(root, interval);
@@ -93,7 +94,7 @@ public class NestedIntervalTree<T> {
     }
 
     //public Node find(final Interval interval) { return find(root, interval); }
-    private Node find(final Node n, final Interval interval) {
+    private synchronized Node find(final Node n, final Interval interval) {
         if (n.interval.contains(interval)) {
             for (Node c : n.children) {
                 final Node r = find(c, interval);
@@ -105,7 +106,7 @@ public class NestedIntervalTree<T> {
             return null;
     }
 
-    public boolean exist(final Interval interval) { return exist(root, interval); }
+    public synchronized boolean exist(final Interval interval) { return exist(root, interval); }
     private boolean exist(final Node n, final Interval interval) {
         if (n.interval.contains(interval)) {
             if (n.interval.equals(interval))
@@ -118,21 +119,23 @@ public class NestedIntervalTree<T> {
         return false;
     }
 
-    public boolean isValid(final Interval interval) { return isValid(root, interval); }
+    public synchronized boolean isValid(final Interval interval) { return isValid(root, interval); }
     private boolean isValid(final Node n, final Interval interval) {
         if (n.interval.contains(interval)) {
             for (Node c : n.children) {
-                if (c.interval.intersects(interval))
+                if (c.interval.intersects(interval) || interval.contains(c.interval))
                     return false;
-                else
-                    isValid(c.interval); // TODO: Should be right ??
+            }
+            for (Node c : n.children) {
+                if (c.interval.contains(interval))
+                    return isValid(c, interval);
             }
             return true;
         } else
             return false;
     }
 
-    public Pair<Interval,T> get(final Interval interval) {
+    public synchronized Pair<Interval,T> get(final Interval interval) {
         Preconditions.checkNotNull(interval);
         final Node n = find(root, interval);
         if (n == null)
@@ -140,7 +143,7 @@ public class NestedIntervalTree<T> {
         return Pair.of(n.interval, n.value);
     }
 
-    public boolean remove(final Interval interval) {
+    public synchronized boolean remove(final Interval interval) {
         Preconditions.checkNotNull(interval);
         final Node n = find(root, interval);
         if (n == null)
@@ -150,18 +153,88 @@ public class NestedIntervalTree<T> {
         return true;
     }
 
+    public synchronized boolean isDeepestInterval(final Interval interval) {
+        Preconditions.checkNotNull(interval);
+        final Node n = find(root, interval);
+        if (n == null)
+            return false;
+        if (n.children.size() == 0)
+            return true;
+        else
+            return false;
+    }
+
+
+    @Override
+    public String toString() {
+        return toString(root);
+    }
+
+    public String toString(final Node parent) {
+        final StringBuilder strBuilder = new StringBuilder();
+        strBuilder.append("[" + parent.interval.low + ", " + parent.interval.high + "] -> ");
+        for (final Node n : parent.children) {
+            strBuilder.append(toString(n));
+        }
+        return strBuilder.toString();
+    }
+
     // ---------------------------------------------------
 
     public static void main(final String[] args) {
 
-        final NestedIntervalTree<Integer> nit = new NestedIntervalTree<>(new Interval(0, 7), 1);
+        final NestedIntervalTree<Integer> nestedIntervalTree = new NestedIntervalTree<>(new NestedIntervalTree.Interval(0, 3), 0);
 
-        nit.put(new Interval(0, 4), 2);
 
-        nit.put(new Interval(0, 2), 3);
+        /*NestedIntervalTree.Interval in1 = new NestedIntervalTree.Interval(1, 3);
+        System.out.println(in1 + " - " + nestedIntervalTree.isValid(in1));
+        nestedIntervalTree.put(in1, 1);
 
-        System.out.println(nit.get(new Point(1)).getKey().toString());
 
-        System.out.println(nit.put(new Interval(0, 3), 4));
+        NestedIntervalTree.Interval in2 = new NestedIntervalTree.Interval(1, 2);
+        System.out.println(in2 + " - " + nestedIntervalTree.isValid(in2));
+        nestedIntervalTree.put(in2, 2);
+
+
+        NestedIntervalTree.Interval inX = new NestedIntervalTree.Interval(0, 3);
+        System.out.println("+ " + inX + " - " + nestedIntervalTree.isValid(inX));
+
+
+        NestedIntervalTree.Interval in3 = new NestedIntervalTree.Interval(2, 2);
+        System.out.println(in3 + " - " + nestedIntervalTree.isValid(in3));
+        nestedIntervalTree.put(in3, 3);
+
+
+        NestedIntervalTree.Interval in4 = new NestedIntervalTree.Interval(3, 3);
+        System.out.println(in4 + " - " + nestedIntervalTree.isValid(in4));
+        nestedIntervalTree.put(in4, 4);*/
+
+
+        NestedIntervalTree.Interval in1 = new NestedIntervalTree.Interval(0, 3);
+        System.out.println(in1 + " - " + nestedIntervalTree.isValid(in1));
+        nestedIntervalTree.put(in1, 1);
+
+
+        NestedIntervalTree.Interval in2 = new NestedIntervalTree.Interval(1, 3);
+        System.out.println(in2 + " - " + nestedIntervalTree.isValid(in2));
+        nestedIntervalTree.put(in2, 2);
+
+
+        NestedIntervalTree.Interval inX = new NestedIntervalTree.Interval(2, 3);
+        System.out.println("+ " + inX + " - " + nestedIntervalTree.isValid(inX));
+
+
+        NestedIntervalTree.Interval in3 = new NestedIntervalTree.Interval(3, 3);
+        System.out.println(in3 + " - " + nestedIntervalTree.isValid(in3));
+        nestedIntervalTree.put(in3, 3);
+
+
+        NestedIntervalTree.Interval in4 = new NestedIntervalTree.Interval(0, 3);
+        System.out.println(in4 + " - " + nestedIntervalTree.isValid(in4));
+        nestedIntervalTree.put(in4, 4);
+
+/*
+        System.out.println("is deepest interval - " + nestedIntervalTree.isDeepestInterval(in2));
+*/
     }
 }

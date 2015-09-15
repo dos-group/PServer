@@ -2,10 +2,11 @@ package de.tuberlin.pserver.examples.experiments.tsne;
 
 import com.google.common.collect.Lists;
 import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.dsl.state.GlobalScope;
-import de.tuberlin.pserver.dsl.state.RemoteUpdate;
-import de.tuberlin.pserver.dsl.state.SharedState;
+import de.tuberlin.pserver.dsl.state.annotations.State;
+import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
@@ -44,23 +45,23 @@ public class TSNEJob extends MLProgram {
     // Fields.
     // ---------------------------------------------------
 
-    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = INPUT_COLS,
+    @State(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = INPUT_COLS,
             path = "datasets/mnist_10_X.csv", format = Format.SPARSE_FORMAT)
     public Matrix X;
 
-    @SharedState(globalScope = GlobalScope.LOGICALLY_PARTITIONED, rows = ROWS, cols = ROWS,
+    @State(globalScope = GlobalScope.LOGICALLY_PARTITIONED, rows = ROWS, cols = ROWS,
             remoteUpdate = RemoteUpdate.COLLECT_PARTITIONS_UPDATE)
     public Matrix P;
 
-    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = EMBEDDING_DIMENSION)
+    @State(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = EMBEDDING_DIMENSION)
     public Matrix Y;
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    @Override
-    public void define(final Program program) {
+    @Unit
+    public void main(final Program program) {
 
         program.initialize(() -> {
 
@@ -72,7 +73,7 @@ public class TSNEJob extends MLProgram {
             P.assign(binarySearch(X, TOL, PERPLEXITY));
             P.assign(P.add(P.transpose()));
 
-           // GLOBAL OPERATION !!!
+           // SINGLETON OPERATION !!!
             double sumP = P.aggregateRows(Vector::sum).sum();
 
             P.assign(P.scale(1 / sumP));
@@ -94,7 +95,7 @@ public class TSNEJob extends MLProgram {
 
             final MutableDouble momentum = new MutableDouble(0.0);
 
-            CF.iterate()
+            CF.loop()
                     .exe(NUM_EPOCHS, (epoch) -> {
 
                         Y.applyOnElements(e -> Math.pow(e, 2), Y_squared);
@@ -109,7 +110,7 @@ public class TSNEJob extends MLProgram {
                         num.setDiagonalsToZero(num);
 
                         // ---------------------------------------------------
-                        // (2) GLOBAL OPERATION!!!
+                        // (2) SINGLETON OPERATION!!!
                         // ---------------------------------------------------
                         final double sumNum = num.aggregateRows(Vector::sum).sum();
 
@@ -117,10 +118,10 @@ public class TSNEJob extends MLProgram {
                         Q.assign(Q.applyOnElements(e -> Math.max(e, 1e-12)));
                         final Matrix PQ = P.copy().sub(Q);
 
-                        CF.iterate()
+                        CF.loop()
                                 .exe(P.rows(), (i) -> {
                                     final Vector sumVec = new VectorBuilder().dimension(d).build();
-                                    CF.iterate()
+                                    CF.loop()
                                             .exe(P.cols(), (j) -> {
                                                 final Double pq = PQ.get(i, j);
                                                 final Double num_j = num.get(i, j);
@@ -137,7 +138,7 @@ public class TSNEJob extends MLProgram {
 
                         momentum.setValue((epoch < 20) ? INITIAL_MOMENTUM : FINAL_MOMENTUM);
 
-                        CF.iterate()
+                        CF.loop()
                                 .exe(gains, (e, i, j, v) -> {
                                     final Double dY_j = dY.get(i, j);
                                     final Double iY_j = iY.get(i, j);

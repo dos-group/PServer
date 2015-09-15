@@ -14,7 +14,6 @@ import de.tuberlin.pserver.types.PartitionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -71,6 +70,12 @@ public final class LocalFileSystemManager implements FileSystemManager {
     }
 
     @Override
+    public void clearContext() {
+        this.inputFileMap.clear();
+        this.registeredIteratorMap.clear();
+    }
+
+    @Override
     public void computeInputSplitsForRegisteredFiles() {
 
         final CountDownLatch splitComputationLatch = new CountDownLatch(infraManager.getMachines().size() - 1);
@@ -109,6 +114,6 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
         LOG.debug("["+infraManager.getNodeID()+"] All nodes finished computing local input splits");
 
-        netManager.removeEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler);
+        //netManager.removeEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler); // TODO: This can lead to a deadlock!
     }
 }

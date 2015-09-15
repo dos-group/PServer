@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.examples.experiments.liblinear;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.dsl.Aggregator;
-import de.tuberlin.pserver.dsl.SharedInt;
+import de.tuberlin.pserver.dsl.dataflow.aggregators.Aggregator;
+import de.tuberlin.pserver.dsl.dataflow.shared.SharedInt;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.math.vector.dense.DVector;
@@ -34,7 +34,7 @@ public final class LibLinearSolver {
         Problem binaryProb = prob.genBinaryProblem(posLabel);
 
         SharedInt count = new SharedInt(sc, 0);
-        sc.CF.iterate().parExe(binaryProb.dataPoints, (e, it) -> {
+        sc.CF.loop().parExe(binaryProb.dataPoints, (e, it) -> {
             if (it.value(it.cols() - 1) > 0)
                 count.inc();
         });

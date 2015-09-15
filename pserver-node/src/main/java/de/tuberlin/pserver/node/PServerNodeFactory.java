@@ -6,12 +6,12 @@ import de.tuberlin.pserver.core.config.IConfigFactory;
 import de.tuberlin.pserver.core.infra.InetHelper;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.core.infra.ZookeeperClient;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.core.net.RPCManager;
 import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.ExecutionManager;
+import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemType;
@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public enum PServerNodeFactory {
 
@@ -63,7 +62,7 @@ public enum PServerNodeFactory {
 
     public final ExecutionManager executionManager;
 
-    private final AtomicInteger detectedNodeNum = new AtomicInteger(0);
+    public final RuntimeContext runtimeContext;
 
     // ---------------------------------------------------
     // Constructors.
@@ -91,6 +90,18 @@ public enum PServerNodeFactory {
         this.dht                = new DHTManager(this.config, infraManager, netManager);
         this.executionManager   = new ExecutionManager(Runtime.getRuntime().availableProcessors(), netManager);
         this.dataManager        = new DataManager(this.config, infraManager, netManager, executionManager, fileSystemManager, dht);
+
+
+        this.runtimeContext = new RuntimeContext(
+                machine,
+                infraManager.getMachines().size(),
+                Runtime.getRuntime().availableProcessors(),
+                infraManager.getNodeID(),
+                netManager,
+                DHTManager.getInstance(),
+                dataManager,
+                executionManager
+        );
 
         netManager.addEventListener(NetEvents.NetEventTypes.ECHO_REQUEST, event -> {
             UUID dst = ((NetEvents.NetEvent) event).srcMachineID;

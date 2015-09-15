@@ -106,6 +106,13 @@ public final class HDFSFileSystemManagerServer implements FileSystemManager, Inp
     }
 
     @Override
+    public void clearContext() {
+        inputSplitAssignerMap.clear();
+        registeredIteratorMap.clear();
+        inputFileMap.clear();
+    }
+
+    @Override
     public InputSplit getNextInputSplit(final MachineDescriptor md) {
         Preconditions.checkNotNull(md);
         final InputSplitAssigner inputSplitAssigner = inputSplitAssignerMap.get(md.machineID);

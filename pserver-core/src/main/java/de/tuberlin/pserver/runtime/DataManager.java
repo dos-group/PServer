@@ -2,6 +2,7 @@ package de.tuberlin.pserver.runtime;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.commons.ds.ResettableCountDownLatch;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
@@ -11,7 +12,7 @@ import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.dsl.state.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.SharedObject;
@@ -29,7 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -42,7 +42,7 @@ public class DataManager extends EventDispatcher {
 
     public static abstract class DataEventHandler implements IEventHandler {
 
-        private CountDownLatch latch = null;
+        private ResettableCountDownLatch latch = null;
 
         private InfrastructureManager infraManager;
 
@@ -63,9 +63,11 @@ public class DataManager extends EventDispatcher {
                 dispatcher.removeEventListener(event.type, this);
         }
 
-        public void initLatch(final int n) { latch = new CountDownLatch(n); }
+        public void initLatch(final int n) { latch = new ResettableCountDownLatch(n); }
 
-        public CountDownLatch getLatch() { return latch; }
+        public void reset() { latch.reset(); }
+
+        public ResettableCountDownLatch getLatch() { return latch; }
 
         public void setDispatcher(final IEventDispatcher dispatcher) { this.dispatcher = dispatcher; }
 
@@ -74,10 +76,14 @@ public class DataManager extends EventDispatcher {
         public void setRemoveAfterAwait(final boolean removeAfterAwait) { this.removeAfterAwait = removeAfterAwait; }
     }
 
+    // ---------------------------------------------------
+
     public static interface PullRequestHandler {
 
         public abstract Object handlePullRequest(final String name);
     }
+
+    // ---------------------------------------------------
 
     public interface Merger<T extends SharedObject> {
 
@@ -116,7 +122,7 @@ public class DataManager extends EventDispatcher {
 
     // ---------------------------------------------------
 
-    private final int[] nodeIDs;
+    public final int[] nodeIDs;
 
     public final int[] remoteNodeIDs;
 
@@ -152,6 +158,15 @@ public class DataManager extends EventDispatcher {
             }
             ++i;
         }
+    }
+
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
+
+    public void clearContext() {
+        matrixPartitionManager.clearContext();
+        fileSystemManager.clearContext();
     }
 
     // ---------------------------------------------------
@@ -238,7 +253,7 @@ public class DataManager extends EventDispatcher {
 
     // ---------------------------------------------------
 
-    public void pushTo(final String name, final Object value, final int[] nodeIDs) {
+    public synchronized void pushTo(final String name, final Object value, final int[] nodeIDs) {
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(nodeIDs);
         final NetEvents.NetEvent event = new NetEvents.NetEvent(PUSH_EVENT_PREFIX + name, true);
@@ -246,7 +261,7 @@ public class DataManager extends EventDispatcher {
         netManager.sendEvent(nodeIDs, event);
     }
 
-    public void pushTo(final String name, final Object value) {
+    public synchronized void pushTo(final String name, final Object value) {
         Preconditions.checkNotNull(name);
         final NetEvents.NetEvent event = new NetEvents.NetEvent(PUSH_EVENT_PREFIX + name, true);
         event.setPayload(value);
@@ -256,8 +271,29 @@ public class DataManager extends EventDispatcher {
         //netManager.dispatchEvent(event);
     }
 
-    public void awaitEvent(final ExecutionManager.CallType type, final String name, final DataEventHandler handler) {
+    /*public void awaitEvent(final ExecutionManager.CallType type, final String name, final DataEventHandler handler) {
         awaitEvent(type, remoteNodeIDs.length, name, handler); }
+    public void awaitEvent(final ExecutionManager.CallType type, final int n, final String name, final DataEventHandler handler) {
+        Preconditions.checkNotNull(type);
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(handler);
+        handler.setDispatcher(netManager);
+        handler.setInfraManager(infraManager);
+        handler.setRemoveAfterAwait(true);
+        handler.initLatch(n);
+        netManager.addEventListener(PUSH_EVENT_PREFIX + name, handler);
+        if (type == ExecutionManager.CallType.SYNC) {
+            try {
+                handler.getLatch().await();
+            } catch (InterruptedException e) {
+                LOG.error(e.getLocalizedMessage());
+            }
+        }
+    }*/
+
+    //public void awaitEvent(final ExecutionManager.CallType type, final String name, final DataEventHandler handler) {
+    //    awaitEvent(type, remoteNodeIDs.length, name, handler); }
+
     public void awaitEvent(final ExecutionManager.CallType type, final int n, final String name, final DataEventHandler handler) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(name);

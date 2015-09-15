@@ -18,7 +18,10 @@ public interface FileSystemManager {
 
     public abstract void computeInputSplitsForRegisteredFiles();
 
-    public abstract <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath,
-                                                                               final AbstractRecordFormatConfig recordFormat,
-                                                                               final PartitionType partitionType);
+    public abstract <T extends IRecord> FileDataIterator<T> createFileIterator(
+                            final String filePath,
+                            final AbstractRecordFormatConfig recordFormat,
+                            final PartitionType partitionType);
+
+    public abstract void clearContext();
 }

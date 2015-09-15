@@ -35,7 +35,7 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
 
         this.shadowMatrix = new EmbeddedDHTObject<>(Preconditions.checkNotNull(matrix).copy());
 
-        slotContext.programContext.runtimeContext.dataManager.putObject(stateName + "-Shadow", shadowMatrix);
+        slotContext.runtimeContext.dataManager.putObject(stateName + "-Shadow", shadowMatrix);
     }
 
     // ---------------------------------------------------
@@ -47,7 +47,7 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.syncSlots();
 
-        sc.CF.select().slot(0).exe( () -> {
+        sc.CF.parUnit(0).exe( () -> {
 
             synchronized (shadowMatrix.lock) {
 
@@ -69,9 +69,9 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.syncSlots();
 
-        sc.CF.select().slot(0).exe( () -> {
+        sc.CF.parUnit(0).exe( () -> {
 
-            final DataManager dataManager = sc.programContext.runtimeContext.dataManager;
+            final DataManager dataManager = sc.runtimeContext.dataManager;
 
             final DHTObject[] dhtObjects = dataManager.pullFrom(stateName + "-Shadow", dataManager.remoteNodeIDs);
 
@@ -98,7 +98,7 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
 
         for (final Matrix remoteMatrix : remoteMatrices) {
 
-            sc.CF.iterate().parExe(remoteMatrix, (e, i, j, v) -> {
+            sc.CF.loop().parExe(remoteMatrix, (e, i, j, v) -> {
 
                 matrixUpdateMerger.mergeElement(i, j, v, remoteMatrix.get(i, j));
             });
@@ -106,6 +106,6 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.syncSlots();
 
-        sc.CF.select().slot(0).exe(() -> sc.programContext.delete(stateName + "-Remote-Matrix-List"));
+        sc.CF.parUnit(0).exe(() -> sc.programContext.delete(stateName + "-Remote-Matrix-List"));
     }
 }

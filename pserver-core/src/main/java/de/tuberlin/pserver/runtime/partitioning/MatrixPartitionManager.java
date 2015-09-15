@@ -3,7 +3,7 @@ package de.tuberlin.pserver.runtime.partitioning;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.dsl.state.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
@@ -20,9 +20,9 @@ import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
 import de.tuberlin.pserver.types.DistributedMatrix;
 import de.tuberlin.pserver.types.PartitionType;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,8 +33,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class MatrixPartitionManager {
-
-    private Logger LOG = Logger.getLogger(MatrixPartitionManager.class);
 
     // ---------------------------------------------------
     // Inner Classes.
@@ -80,6 +78,8 @@ public final class MatrixPartitionManager {
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
+
+    private static final Logger LOG = LoggerFactory.getLogger(MatrixPartitionManager.class);
 
     private final NetManager netManager;
 
@@ -160,6 +160,11 @@ public final class MatrixPartitionManager {
     }
 
     public void loadFilesIntoDHT() {
+
+        // Skip, if no loading is required.
+        if (matrixLoadTasks.size() == 0)
+            return;
+
         fileSystemManager.computeInputSplitsForRegisteredFiles();
         finishedLoadingLatch = new CountDownLatch(matrixLoadTasks.size());
         for (final MatrixLoadTask task : matrixLoadTasks.values()) {
@@ -182,6 +187,12 @@ public final class MatrixPartitionManager {
             }
         }
         LOG.info("completed all loading tasks");
+    }
+
+    public void clearContext() {
+        matrixLoadTasks.clear();
+        fileLoadingBarrier.clear();
+        loadingMatrices.clear();
     }
 
     // ---------------------------------------------------
@@ -253,7 +264,7 @@ public final class MatrixPartitionManager {
         // threshold that indicates how many entries are gathered before sending
         int foreignEntriesThreshold = 2048;
         final IMatrixPartitioner matrixPartitioner = new MatrixByRowPartitioner(
-                task.slotContext.programContext.runtimeContext.nodeID,
+                task.slotContext.runtimeContext.nodeID,
                 task.slotContext.programContext.nodeDOP,
                 task.rows,
                 task.cols
@@ -262,8 +273,8 @@ public final class MatrixPartitionManager {
         final Matrix matrix = getLoadingMatrix(task);
         ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
 
-        int nodeId = task.slotContext.programContext.runtimeContext.nodeID;
-        MatrixEntry entry = null;
+        int nodeId = task.slotContext.runtimeContext.nodeID;
+        MatrixEntry entry;
         while (fileIterator.hasNext()) {
             final IRecord record = fileIterator.next();
             // iterate through entries in record

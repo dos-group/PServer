@@ -7,8 +7,8 @@ import de.tuberlin.pserver.node.PServerMain;
 import de.tuberlin.pserver.test.core.CoreTests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.runners.Suite;
 import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({CoreTests.class})
@@ -30,6 +30,13 @@ public class IntegrationTestSuite {
 
     public static boolean isRunning = false;
 
+    // ---------------------------------------------------
+    // Constructors.
+    // ---------------------------------------------------
+
+    public IntegrationTestSuite() {
+    }
+
     // --------------------------------------------------
     // Test Suite Methods.
     // --------------------------------------------------
@@ -41,9 +48,8 @@ public class IntegrationTestSuite {
 
     @BeforeClass
     public static void setUpTestEnvironment() {
-        final IConfig simConfig = IConfigFactory.load(IConfig.Type.PSERVER_SIMULATION);
         System.setProperty("simulation.numNodes", String.valueOf(NUM_NODES));
-        System.setProperty("simulation.numSlots", String.valueOf(NUM_SLOTS));
+        final IConfig simConfig = IConfigFactory.load(IConfig.Type.PSERVER_SIMULATION);
         clusterSimulator = new ClusterSimulator(simConfig, PServerMain.class);
     }
 

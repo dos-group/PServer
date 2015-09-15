@@ -76,7 +76,8 @@ public final class PServerClient extends EventDispatcher {
             jobResults.put(Pair.of(jfe.programID, jfe.nodeID), res);
             final CountDownLatch jobLatch = activeJobs.get(jfe.programID);
             if (jobLatch != null) {
-                jobLatch.countDown();
+                while (jobLatch.getCount() > 0)
+                    jobLatch.countDown();
             } else {
                 throw new IllegalStateException();
             }

@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
 public abstract class MLProgram extends EventDispatcher {
 
@@ -52,9 +51,9 @@ public abstract class MLProgram extends EventDispatcher {
 
         this.slotContext = Preconditions.checkNotNull(slotContext);
 
-        this.executionManager = slotContext.programContext.runtimeContext.executionManager;
+        this.executionManager = slotContext.runtimeContext.executionManager;
 
-        this.dataManager = slotContext.programContext.runtimeContext.dataManager;
+        this.dataManager = slotContext.runtimeContext.dataManager;
 
         this.program = new Program(slotContext);
 
@@ -85,16 +84,18 @@ public abstract class MLProgram extends EventDispatcher {
 
         define(program);
 
-        final String slotIDStr = "[" + slotContext.programContext.runtimeContext.nodeID
+        final String slotIDStr = "[" + slotContext.runtimeContext.nodeID
                 + " | " + slotContext.slotID + "] ";
 
         program.enter();
 
             programLinker.link(slotContext, this);
 
+            programLinker.defineUnits(this, program);
+
             programLinker.fetchStateObjects(this);
 
-            CF.select().slot(0).exe(() -> {
+            if (slotContext.slotID == 0) {
 
                 LOG.info(slotIDStr + "Enter " + program.slotContext.programContext.simpleClassName + " initialization phase.");
 
@@ -108,7 +109,7 @@ public abstract class MLProgram extends EventDispatcher {
                         + " initialization phase [duration: " + (end - start) + " ms].");
 
                 slotContext.programContext.programInitBarrier.countDown();
-            });
+            }
 
             slotContext.programContext.programInitBarrier.await();
 
@@ -151,18 +152,12 @@ public abstract class MLProgram extends EventDispatcher {
                         + " post-process phase [duration: " + (end - start) + " ms].");
             }
 
-            synchronized (slotContext.programContext.programDoneBarrier) {
-                slotContext.programContext.programDoneBarrier.countDown();
-            }
-
-            CF.select().slot(0).exe(() -> {
-                final boolean done = slotContext.programContext.programDoneBarrier.await(20, TimeUnit.SECONDS);
-                if (!done) {
-                    System.out.println("PROGRAM DONE BARRIER LOCKED AT NODE [" + slotContext.programContext.runtimeContext.nodeID + "] " +
-                            "=> barrierCount = " + slotContext.programContext.programDoneBarrier.getCount());
-                }
-            });
-
         program.leave();
+
+        synchronized (slotContext.programContext.programDoneBarrier) {
+            slotContext.programContext.programDoneBarrier.countDown();
+        }
+
+        slotContext.programContext.programDoneBarrier.await();
     }
 }

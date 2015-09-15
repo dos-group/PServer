@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.dsl.dataflow;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.dsl.state.RemoteUpdate;
 import de.tuberlin.pserver.dsl.state.StateDeclaration;
+import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.MLProgramContext;
@@ -34,7 +34,7 @@ public final class DataFlow {
 
         this.slotContext = Preconditions.checkNotNull(slotContext);
 
-        this.dataManager = slotContext.programContext.runtimeContext.dataManager;
+        this.dataManager = slotContext.runtimeContext.dataManager;
 
         this.programContext = slotContext.programContext;
     }

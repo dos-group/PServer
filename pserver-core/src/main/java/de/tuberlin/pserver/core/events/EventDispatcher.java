@@ -48,15 +48,14 @@ public class EventDispatcher implements IEventDispatcher {
     }
     public EventDispatcher(boolean useDispatchThread, String name) {
 
-        this.listenerMap = new ConcurrentHashMap<>();
-        this.cachedEvents = new ConcurrentHashMap<>();
-        this.useDispatchThread = useDispatchThread;
-        this.isRunning = new AtomicBoolean(useDispatchThread);
-        this.eventQueue = useDispatchThread ? new LinkedBlockingQueue<>() : null;
+        this.listenerMap        = new ConcurrentHashMap<>();
+        this.cachedEvents       = new ConcurrentHashMap<>();
+        this.useDispatchThread  = useDispatchThread;
+        this.isRunning          = new AtomicBoolean(useDispatchThread);
+        this.eventQueue         = useDispatchThread ? new LinkedBlockingQueue<>() : null;
 
         if (useDispatchThread) {
-            Runnable runnable = new Runnable() {
-
+            final Runnable runnable = new Runnable() {
                 @Override
                 public void run() {
                     while (isRunning.get() || eventQueue.size() != 0) {
@@ -99,6 +98,17 @@ public class EventDispatcher implements IEventDispatcher {
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
+
+    @Override
+    public int getNumOfQueuedEvents() {
+        return eventQueue.size();
+    }
+
+    @Override
+    public int getNumOfCachedEvents(final String type) {
+        final List<Event> events = cachedEvents.get(type);
+        return events == null ? 0 : events.size();
+    }
 
     @Override
     public synchronized void addEventListener(final String type, final IEventHandler listener) {
@@ -216,7 +226,25 @@ public class EventDispatcher implements IEventDispatcher {
 
     private boolean dispatch(final Event event) {
         Preconditions.checkNotNull(event);
-        List<IEventHandler> listeners = listenerMap.get(event.type);
+
+        List<IEventHandler> listeners = null;
+        int retryCount = 5;
+        while (listeners == null && retryCount-- > 0) {
+            listeners = listenerMap.get(event.type);
+            if (listeners == null) {
+                try {
+                    Thread.sleep(5);
+                } catch(InterruptedException ie) {
+                    LOG.error(ie.getMessage());
+                }
+            }
+        }
+
+
+
+
+
+
         if (listeners != null) {
             List<IEventHandler> l = new ArrayList<>(listeners);
             for (final IEventHandler el : l) {

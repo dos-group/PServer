@@ -35,7 +35,7 @@ public class VectorMergeUpdateController extends RemoteUpdateController {
 
         this.shadowVector = new EmbeddedDHTObject<>(Preconditions.checkNotNull(vector).copy());
 
-        slotContext.programContext.runtimeContext.dataManager.putObject(stateName + "-Shadow", shadowVector);
+        slotContext.runtimeContext.dataManager.putObject(stateName + "-Shadow", shadowVector);
     }
 
     // ---------------------------------------------------
@@ -47,7 +47,7 @@ public class VectorMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.syncSlots();
 
-        sc.CF.select().slot(0).exe( () -> {
+        sc.CF.parUnit(0).exe( () -> {
 
             synchronized (shadowVector.lock) {
 
@@ -69,9 +69,9 @@ public class VectorMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.syncSlots();
 
-        sc.CF.select().slot(0).exe( () -> {
+        sc.CF.parUnit(0).exe( () -> {
 
-            final DataManager dataManager = sc.programContext.runtimeContext.dataManager;
+            final DataManager dataManager = sc.runtimeContext.dataManager;
 
             final DHTObject[] dhtObjects = dataManager.pullFrom(stateName + "-Shadow", dataManager.remoteNodeIDs);
 
@@ -98,7 +98,7 @@ public class VectorMergeUpdateController extends RemoteUpdateController {
 
         for (final Vector remoteVector : remoteVectors) {
 
-            sc.CF.iterate().parExe(remoteVector, (e, it) -> {
+            sc.CF.loop().parExe(remoteVector, (e, it) -> {
 
                 final long i = it.getCurrentElementNum();
 
@@ -108,6 +108,6 @@ public class VectorMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.syncSlots();
 
-        sc.CF.select().slot(0).exe(() -> sc.programContext.delete(stateName + "-Remote-Vector-List"));
+        sc.CF.parUnit(0).exe(() -> sc.programContext.delete(stateName + "-Remote-Vector-List"));
     }
 }

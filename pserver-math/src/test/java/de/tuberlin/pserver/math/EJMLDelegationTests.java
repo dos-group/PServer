@@ -3,7 +3,7 @@ package de.tuberlin.pserver.math;
 import de.tuberlin.pserver.math.generators.MatrixGenerator;
 import de.tuberlin.pserver.math.generators.VectorGenerator;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.dense.DMatrix;
+import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
 import de.tuberlin.pserver.math.vector.Vector;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
@@ -206,7 +206,7 @@ public class EJMLDelegationTests {
             int b = (rand.nextInt(10) + 1)*10;
 
             Matrix mat1 = MatrixGenerator.RandomDMatrix(a,b);
-            Matrix res = new DMatrix(b, a);
+            Matrix res = new Dense64Matrix(b, a);
 
             double[] ejmlMat1Data = new double[a*b];
             System.arraycopy(mat1.toArray(), 0, ejmlMat1Data, 0, a*b);

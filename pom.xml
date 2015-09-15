@@ -146,6 +146,16 @@
                 <artifactId>pserver-examples</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-test</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-crdt</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <!-- SYSTEM DEPENDENCIES -->
             <dependency>
@@ -344,6 +354,7 @@
         <module>pserver-client</module>
         <module>pserver-node</module>
         <module>pserver-ml</module>
+        <module>pserver-crdt</module>
         <module>pserver-examples</module>
         <module>pserver-test</module>
         <module>pserver-dist</module>

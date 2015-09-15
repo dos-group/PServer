@@ -11,7 +11,7 @@ public class Utils {
     public static final double DEFAULT_EPSILON = 0.001;
 
     public static int getPos(final long row, final long col, Matrix mat) {
-        return getPos(row, col, mat.getLayout(), mat.rows(), mat.cols());
+        return getPos(row, col, mat.layout(), mat.rows(), mat.cols());
     }
 
     public static int getPos(final long row, final long col, Layout layout, long numRows, long numCols) {
