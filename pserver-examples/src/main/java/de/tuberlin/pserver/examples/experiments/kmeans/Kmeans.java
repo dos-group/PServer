@@ -53,12 +53,12 @@ public class Kmeans extends MLProgram {
     @Override
     public void define(Program program) {
 
-        Random rand = new Random(42);
-        double[] data = new double[(int)(K * COLS)];
-        for (int i = 0; i < K * COLS; i++) {
-            data[i] = rand.nextDouble();
-        }
-        final Matrix centroids = new DMatrix(K, COLS, data);
+//        Random rand = new Random(42);
+//        double[] data = new double[(int)(K * COLS)];
+//        for (int i = 0; i < K * COLS; i++) {
+//            data[i] = rand.nextDouble();
+//        }
+        final Matrix centroids = new DMatrix(K, COLS, new double[] {0, -1, 0, 0, 0, 1});
 
 
         program.initialize(() -> {
@@ -74,7 +74,6 @@ public class Kmeans extends MLProgram {
 
             CF.iterate().exe(10, (iteration) -> {
                 Matrix.RowIterator iter = matrix.rowIterator();
-                int row = 0;
                 while(iter.hasNext()) {
                     Vector point = iter.asVector();
                     iter.next();
@@ -92,12 +91,15 @@ public class Kmeans extends MLProgram {
                     Vector one = new DVector(1, new double[]{1});
                     Vector updateDelta = point.concat(one);
                     Vector update = centroidsUpdate.rowAsVector(closestCentroidId);
+                    System.out.println(update);
                     centroidsUpdate.assignRow(closestCentroidId, update.add(updateDelta));
+                    System.out.println(update.add(updateDelta));
                 }
-                DF.publishUpdate();
-                DF.pullUpdate();
+                //DF.publishUpdate();
+                //DF.pullUpdate();
                 for (int i = 0; i < K; i++) {
                     if(centroidsUpdate.get(i, COLS) > 0) {
+                        System.out.println("centroidsUpdate("+i+")="+centroidsUpdate.rowAsVector(i));
                         centroids.assignRow(i, centroidsUpdate.rowAsVector(i, 0, COLS).div(centroidsUpdate.get(i, COLS)));
                     }
                 }
@@ -105,6 +107,7 @@ public class Kmeans extends MLProgram {
                     int nodeId = slotContext.programContext.runtimeContext.nodeID;
                     System.out.println("centroid[node:"+nodeId+",row:"+i+"]="+centroids.rowAsVector(i));
                 }
+                centroidsUpdate.assign(0);
             });
 
         });
