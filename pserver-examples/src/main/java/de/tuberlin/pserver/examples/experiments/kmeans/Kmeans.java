@@ -74,19 +74,23 @@ public class Kmeans extends MLProgram {
                 while (iter.hasNext()) {
                     Matrix point = iter.get();
                     iter.next();
+                    System.out.println("point: " + point);
                     double closestDistance = Double.MAX_VALUE;
                     long closestCentroidId = -1;
                     for (long centroidId = 0; centroidId < K; centroidId++) {
                         Matrix centroid = centroids.getRow(centroidId);
                         Matrix diff = centroid.sub(point);
                         double distance = diff.norm(2);
+                        System.out.print(distance + ",");
                         if (distance < closestDistance) {
                             closestDistance = distance;
                             closestCentroidId = centroidId;
                         }
                     }
+                    System.out.println();
                     Matrix updateDelta = point.copy(1, COLS + 1);
                     updateDelta.set(0, COLS, 1);
+                    System.out.println("updateDelta: " + updateDelta);
                     centroidsUpdate.assignRow(closestCentroidId, centroidsUpdate.getRow(closestCentroidId).add(updateDelta));
                 }
                 //DF.publishUpdate();
