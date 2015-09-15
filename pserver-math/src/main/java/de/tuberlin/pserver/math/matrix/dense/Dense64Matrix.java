@@ -7,8 +7,6 @@ import de.tuberlin.pserver.math.delegates.MathLibFactory;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
-import de.tuberlin.pserver.math.vector.Vector;
-import de.tuberlin.pserver.math.vector.dense.DVector;
 
 import java.io.Serializable;
 import java.util.Random;
@@ -21,7 +19,7 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
 
     //private static final Logger LOG = LoggerFactory.getLogger(DMatrix.class);
 
-    private static final LibraryMatrixOps<Matrix, Vector> matrixOpDelegate =
+    private static final LibraryMatrixOps<Matrix> matrixOpDelegate =
             MathLibFactory.delegateDMatrixOpsTo(MathLibFactory.DMathLibrary.EJML_LIBRARY);
 
     private double[] data;
@@ -29,20 +27,6 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
-
-    // Copy Constructor.
-    public Dense64Matrix(final Vector m) {
-        super(m.layout() == Layout.COLUMN_LAYOUT ?
-                1 : m.length(),
-              m.layout() == Layout.COLUMN_LAYOUT ?
-                m.length() : 1,
-              m.layout() == Layout.COLUMN_LAYOUT ?
-                Layout.COLUMN_LAYOUT : Layout.ROW_LAYOUT);
-
-        final double[] md = m.toArray();
-        this.data = new double[md.length];
-        System.arraycopy(md, 0, this.data, 0, md.length);
-    }
 
     // Copy Constructor.
     public Dense64Matrix(final Dense64Matrix m) {
@@ -113,11 +97,6 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
     }
 
     @Override
-    public Vector mul(Vector b, Vector c) {
-        return super.mul(b, c);
-    }
-
-    @Override
     public Matrix scale(double a, Matrix B) {
         return super.scale(a, B);
     }
@@ -147,35 +126,26 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
     }
 
     @Override
-    public Vector rowAsVector() {
-        return rowAsVector(0, 0, cols());
+    public Matrix getRow(final long row) {
+        return getRow(row, 0, cols());
     }
 
     @Override
-    public Vector rowAsVector(final long row) {
-        return rowAsVector(row, 0, cols());
-    }
-
-    @Override
-    public Vector rowAsVector(final long row, final long from, final long to) { // TODO: Optimize with respect to the layout with array copy.
-        Vector r = new DVector(to - from);
+    public Matrix getRow(final long row, final long from, final long to) {
+        // TODO: Optimize with respect to the layout with array copy.
+        Matrix r = new Dense64Matrix(1, to - from);
         for (long i = from; i < to; ++i)
-            r.set(i, data[Utils.getPos(row, i, this)]);
+            r.set(1, i, data[Utils.getPos(row, i, this)]);
         return r;
     }
 
     @Override
-    public Vector colAsVector() {
-        return colAsVector(0, 0, rows);
+    public Matrix getCol(final long col) {
+        return getCol(col, 0, rows);
     }
 
     @Override
-    public Vector colAsVector(final long col) {
-        return colAsVector(col, 0, rows);
-    }
-
-    @Override
-    public Vector colAsVector(final long col, final long from, final long to) {
+    public Matrix getCol(final long col, final long from, final long to) {
         double[] result = new double[(int)(to - from)];
         if(layout == Layout.COLUMN_LAYOUT) {
             System.arraycopy(data, (int)(col * rows + from), result, 0, result.length);
@@ -186,19 +156,19 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
                 result[i] = data[(int)(row * cols + col)];
             }
         }
-        return new DVector(result.length, result);
+        return new Dense64Matrix(result.length, 1, result, Layout.COLUMN_LAYOUT);
     }
 
     @Override
-    public Matrix assignRow(final long row, final Vector v) {
-        Preconditions.checkNotNull(cols() == v.length());
-        for (int i = 0; i < v.length(); ++i)
+    public Matrix assignRow(final long row, final Matrix v) {
+        Preconditions.checkNotNull(cols == v.cols());
+        for (int i = 0; i < cols; ++i)
             data[Utils.getPos(row, i, this)] = v.get(i);
         return this;
     }
 
     @Override
-    public Matrix assignColumn(final long col, final Vector v) {
+    public Matrix assignColumn(final long col, final Matrix v) {
         double[] vData = v.toArray();
         Preconditions.checkArgument(rows == vData.length);
         if(layout == Layout.COLUMN_LAYOUT) {
@@ -215,6 +185,12 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
     @Override
     public Matrix copy() {
         return new Dense64Matrix(this);
+    }
+
+    @Override
+    public Matrix copy(long rows, long cols) {
+
+        return null;
     }
 
     @Override
@@ -315,13 +291,13 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
         public double value(final long col) { return self.data[(int)(currentRowIndex + col)]; }
 
         @Override
-        public Vector asVector() { return asVector(0, (int) self.cols); }
+        public Matrix get() { return get(0, (int) self.cols); }
 
         @Override
-        public Vector asVector(int from, int size) {
+        public Matrix get(int from, int size) {
             final double v[] = new double[size];
             System.arraycopy(self.data, currentRowIndex + from, v, 0, size);
-            return new DVector(size, v);
+            return new Dense64Matrix(1, size, v);
         }
 
         @Override

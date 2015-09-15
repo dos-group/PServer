@@ -1,19 +1,19 @@
 package de.tuberlin.pserver.ml.optimization;
 
 import de.tuberlin.pserver.commons.unsafe.UnsafeOp;
-import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.matrix.Matrix;
 
 public interface GradientStepFunction {
 
-    public abstract Vector takeStep(final Vector weights, final Vector gradients, final double alpha);
+    public abstract Matrix takeStep(final Matrix weights, final Matrix gradients, final double alpha);
 
     // ---------------------------------------------------
 
     class SimpleGradientStep implements GradientStepFunction {
 
         @Override
-        public Vector takeStep(final Vector weights, final Vector gradients, final double alpha) {
-            return weights.add(-alpha, gradients);
+        public Matrix takeStep(final Matrix weights, final Matrix gradients, final double alpha) {
+            return weights.scale(-alpha).add(gradients);
         }
     }
 
@@ -33,8 +33,8 @@ public interface GradientStepFunction {
         }
 
         @Override
-        public Vector takeStep(final Vector weights, final Vector gradients, final double alpha) {
-            for( int i = 0; i < weights.length(); i++ ) {
+        public Matrix takeStep(final Matrix weights, final Matrix gradients, final double alpha) {
+            for( int i = 0; i < weights.cols(); i++ ) {
 
                 final long value = Double.doubleToRawLongBits(weights.get(i) + (-alpha) * gradients.get(i));
 

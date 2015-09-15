@@ -14,12 +14,9 @@ import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
-import de.tuberlin.pserver.math.vector.Vector;
-import de.tuberlin.pserver.math.vector.VectorBuilder;
 import de.tuberlin.pserver.runtime.state.controller.MatrixDeltaMergeUpdateController;
 import de.tuberlin.pserver.runtime.state.controller.MatrixMergeUpdateController;
 import de.tuberlin.pserver.runtime.state.controller.RemoteUpdateController;
-import de.tuberlin.pserver.runtime.state.controller.VectorMergeUpdateController;
 import de.tuberlin.pserver.runtime.state.filter.MatrixUpdateFilter;
 import de.tuberlin.pserver.runtime.state.merger.UpdateMerger;
 import de.tuberlin.pserver.types.DistributedMatrix;
@@ -408,32 +405,6 @@ public final class MLProgramLinker {
                         break;
                     default:
                         throw new UnsupportedOperationException();
-                }
-            } else if (Vector.class.isAssignableFrom(decl.stateType)) {
-                if (!"".equals(decl.path))
-                    throw new IllegalStateException();
-                switch (decl.globalScope) {
-                    case REPLICATED: {
-                        final SharedObject so = new VectorBuilder()
-                                .dimension(decl.layout == Layout.ROW_LAYOUT ? decl.cols : decl.rows)
-                                .format(decl.format)
-                                .layout(decl.layout)
-                                .build();
-
-                        switch (decl.remoteUpdate) {
-                            case NO_UPDATE: break;
-                            case SIMPLE_MERGE_UPDATE:
-                                programContext.put(remoteUpdateControllerName(decl.name),
-                                        new VectorMergeUpdateController(slotContext, decl.name, (Vector)so));
-                                break;
-                            case DELTA_MERGE_UPDATE:
-                                throw new UnsupportedOperationException();
-                        }
-
-                        dataManager.putObject(decl.name, so);
-                    } break;
-                    case PARTITIONED: throw new UnsupportedOperationException();
-                    default: throw new UnsupportedOperationException();
                 }
             } else
                 throw new UnsupportedOperationException();

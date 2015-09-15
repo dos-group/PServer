@@ -3,7 +3,6 @@ package de.tuberlin.pserver.math.delegates;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.delegates.sparse.mtj.MTJMatrixOps;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.vector.Vector;
 
 public class MathLibFactory {
 
@@ -47,7 +46,7 @@ public class MathLibFactory {
 
     // ---------------------------------------------------
 
-    public static LibraryMatrixOps<Matrix, Vector> delegateDMatrixOpsTo(final DMathLibrary lib) {
+    public static LibraryMatrixOps<Matrix> delegateDMatrixOpsTo(final DMathLibrary lib) {
         switch (Preconditions.checkNotNull(lib)) {
             case EJML_LIBRARY:
                 return new de.tuberlin.pserver.math.delegates.dense.ejml.EJMLMatrixOps();
@@ -61,21 +60,7 @@ public class MathLibFactory {
 
     // ---------------------------------------------------
 
-    public static LibraryVectorOps<Vector> delegateDVectorOpsTo(final DMathLibrary lib) {
-        switch (Preconditions.checkNotNull(lib)) {
-            case EJML_LIBRARY:
-                return new de.tuberlin.pserver.math.delegates.dense.ejml.EJMLVectorOps();
-            case MTJ_LIBRARY:
-                throw new UnsupportedOperationException();
-            case JBLAS_LIBRARY:
-                throw new UnsupportedOperationException();
-        }
-        throw new IllegalStateException();
-    }
-
-    // ---------------------------------------------------
-
-    public static LibraryMatrixOps<Matrix, Vector> delegateSMatrixOpsTo(final SMathLibrary lib) {
+    public static LibraryMatrixOps<Matrix> delegateSMatrixOpsTo(final SMathLibrary lib) {
         switch (Preconditions.checkNotNull(lib)) {
             case MTJ_LIBRARY:
                 return new MTJMatrixOps();
@@ -83,15 +68,6 @@ public class MathLibFactory {
         throw new IllegalStateException();
     }
 
-    // ---------------------------------------------------
-
-    public static LibraryVectorOps<Vector> delegateSVectorOpsTo(final SMathLibrary lib) {
-        switch (Preconditions.checkNotNull(lib)) {
-            case MTJ_LIBRARY:
-                return new de.tuberlin.pserver.math.delegates.sparse.mtj.MTJVectorOps();
-        }
-        throw new IllegalStateException();
-    }
 /*
     public static Object createSMatrixInternalObject(final SMathLibrary lib, final SMatrix matrix) {
         switch (Preconditions.checkNotNull(lib)) {

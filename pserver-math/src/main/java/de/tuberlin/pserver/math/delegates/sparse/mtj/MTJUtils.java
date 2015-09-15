@@ -4,10 +4,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
-import de.tuberlin.pserver.math.vector.AbstractVector;
-import de.tuberlin.pserver.math.vector.dense.DVector;
 import no.uib.cipr.matrix.DenseMatrix;
-import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.Matrix;
 import no.uib.cipr.matrix.Vector;
 import no.uib.cipr.matrix.sparse.ISparseVector;
@@ -114,24 +111,6 @@ public class MTJUtils {
             result = new Dense64Matrix(mat.numRows(), mat.numRows(), ((DenseMatrix) mat).getData(), Layout.COLUMN_LAYOUT);
         }
         Preconditions.checkState(result != null, "Unable to convert matrix");
-        return result;
-    }
-
-
-    public static no.uib.cipr.matrix.Vector toLibVector(de.tuberlin.pserver.math.vector.Vector vec) {
-        no.uib.cipr.matrix.Vector result = null;
-        if(vec instanceof DVector) {
-            result = new DenseVector(vec.toArray());
-        }
-        Preconditions.checkState(result != null, "Unable to convert vector");
-        return result;
-    }
-
-    public static de.tuberlin.pserver.math.vector.Vector toPserverVector(no.uib.cipr.matrix.Vector vec, Layout type) {
-        de.tuberlin.pserver.math.vector.Vector result = null;
-        if(MTJUtils.isDense(vec)) {
-            result = new DVector(vec.size(), ((AbstractVector) vec).toArray(), type);
-        }
         return result;
     }
 

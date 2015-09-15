@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.ml.generators;
 
-import de.tuberlin.pserver.math.vector.Vector;
-import de.tuberlin.pserver.math.vector.dense.DVector;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.ArrayUtils;
@@ -267,12 +267,12 @@ public final class DataGenerator {
 
         final Random rand = new Random();
         rand.setSeed(42);
-        final Vector weights = new DVector(nFeatures);
-        for (long i = 0; i < weights.length(); ++i)
-            weights.set(i, rand.nextDouble() - 0.5);
-        final Vector xMean = new DVector(nFeatures);
+        final Matrix weights = new Dense64Matrix(1, nFeatures);
+        for (long i = 0; i < weights.cols(); ++i)
+            weights.set(1, i, rand.nextDouble() - 0.5);
+        final Matrix xMean = new Dense64Matrix(1, nFeatures);
         xMean.assign(0.0);
-        final Vector xVariance = new DVector(nFeatures);
+        final Matrix xVariance = new Dense64Matrix(1, nFeatures);
         xVariance.assign(1.0 / 3.0);
         return generateLinearData(fileName, 42, 0.0, weights, xMean, xVariance, nPoints, eps);
     }
@@ -280,26 +280,25 @@ public final class DataGenerator {
     public static double[] generateLinearData(final String fileName,
                                               final long seed,
                                               final double intercept,
-                                              final Vector weights,
-                                              final Vector xMean,
-                                              final Vector xVariance,
+                                              final Matrix weights,
+                                              final Matrix xMean,
+                                              final Matrix xVariance,
                                               final int nPoints,
                                               double eps) {
 
         final Random rand = new Random();
         rand.setSeed(seed);
 
-        final Vector[] x = new Vector[nPoints];
+        final Matrix x = new Dense64Matrix(nPoints, weights.cols());
         for (int i = 0; i < nPoints; ++i) {
-            x[i] = new DVector(weights.length());
-            for (int j = 0; j < (int)weights.length(); ++j) {
-                x[i].set(j, (rand.nextDouble() - 0.5) * Math.sqrt(12.0 * xVariance.get(j)) + xMean.get(j));
+            for (int j = 0; j < (int)weights.cols(); ++j) {
+                x.set(i, j, (rand.nextDouble() - 0.5) * Math.sqrt(12.0 * xVariance.get(j)) + xMean.get(j));
             }
         }
 
         final double[] y = new double[nPoints];
         for (int i = 0; i < nPoints; ++i) {
-            y[i] = x[i].dot(weights) + intercept + eps * rand.nextGaussian();
+            y[i] = x.getRow(i).dot(weights) + intercept + eps * rand.nextGaussian();
         }
 
         FileWriter trainingDataFW           = null;
@@ -309,10 +308,10 @@ public final class DataGenerator {
         try {
             trainingDataFW = new FileWriter(fileName);
             trainingDataCSVPrinter = new CSVPrinter(trainingDataFW, csvFileFormat);
-            final List<Double> data = new ArrayList<>((int)weights.length() + 1);
+            final List<Double> data = new ArrayList<>((int)weights.cols() + 1);
             for (int i = 0; i < nPoints; ++i) {
-                for (int j = 0; j < (int)weights.length(); ++j) {
-                    data.add(x[i].get(j));
+                for (int j = 0; j < (int)weights.cols(); ++j) {
+                    data.add(x.get(i,j));
                 }
                 data.add(y[i]);
                 trainingDataCSVPrinter.printRecord(data);

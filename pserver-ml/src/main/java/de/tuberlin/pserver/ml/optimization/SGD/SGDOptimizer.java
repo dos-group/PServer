@@ -3,8 +3,7 @@ package de.tuberlin.pserver.ml.optimization.SGD;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.vector.Vector;
-import de.tuberlin.pserver.ml.common.LabeledVector;
+import de.tuberlin.pserver.ml.common.LabeledMatrix;
 import de.tuberlin.pserver.ml.models.GeneralLinearModel;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.runtime.SlotContext;
@@ -104,7 +103,7 @@ public class SGDOptimizer implements Optimizer {
     }
 
     @Override
-    public Vector optimize(GeneralLinearModel model, Vector example) {
+    public Matrix optimize(GeneralLinearModel model, Matrix example) {
         return null;
     }
 
@@ -150,11 +149,11 @@ public class SGDOptimizer implements Optimizer {
 
                 final double label = dataIterator.value((int) dataIterator.cols() - 1);
 
-                final Vector featureVector = dataIterator.asVector(0, numFeatures);
+                final Matrix featureVector = dataIterator.get(0, numFeatures);
 
-                final LabeledVector labeledVector = new LabeledVector(label, featureVector);
+                final LabeledMatrix labeledMatrix = new LabeledMatrix(label, featureVector);
 
-                final Vector gradient = lossFunction.gradient(labeledVector, model.getWeights());
+                final Matrix gradient = lossFunction.gradient(labeledMatrix, model.getWeights());
 
                 //gradientSum.add(gradient);
 

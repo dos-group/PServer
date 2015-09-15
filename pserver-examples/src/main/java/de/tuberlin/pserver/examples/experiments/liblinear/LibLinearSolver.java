@@ -4,12 +4,12 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.dsl.dataflow.aggregators.Aggregator;
 import de.tuberlin.pserver.dsl.dataflow.shared.SharedInt;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.vector.Vector;
-import de.tuberlin.pserver.math.vector.dense.DVector;
+import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
 import de.tuberlin.pserver.runtime.SlotContext;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Arrays;
+import java.util.List;
 
 // TODO: need primitive to compute at one slot and use result at all.
 
@@ -29,7 +29,7 @@ public final class LibLinearSolver {
 
     private GeneralizedLinearModel train_one(final Problem prob, final Parameter param, final double posLabel) throws Exception {
 
-        Vector w = null;
+        Matrix w = null;
 
         Problem binaryProb = prob.genBinaryProblem(posLabel);
 
@@ -113,21 +113,26 @@ public final class LibLinearSolver {
 
         final Matrix dp = prob.dataPoints;
 
-        final double[] labels = dp.colAsVector(dp.cols() - 1).toArray();
+        final double[] labels = dp.getCol(dp.cols() - 1).toArray();
 
         final double ls[] = Arrays.asList(ArrayUtils.toObject(labels))
                 .stream().distinct().mapToDouble(Double::doubleValue).toArray();
 
-        final Vector partialLabelSet = new DVector(ls.length, ls);
+        final Matrix partialLabelSet = new Dense64Matrix(1, ls.length, ls);
 
-        final Vector labelSet = new Aggregator<>(sc, partialLabelSet)
-                .apply(partialLabelSet::concat);
+        final Matrix labelSet = new Aggregator<>(sc, partialLabelSet).apply(partialAggs -> {
+            Matrix result = partialAggs.size() > 0 ? partialAggs.get(0) : new Dense64Matrix(1, 1);
+            for (int i = 1; i < partialAggs.size(); i++) {
+                result.concat(partialAggs.get(i), result);
+            }
+            return result;
+        });
 
         final LibLinearModel model = new LibLinearModel(param, labelSet);
 
         model.bias = prob.bias;
 
-        for (int i = 0; i < labelSet.length(); ++i) {
+        for (int i = 0; i < labelSet.cols(); ++i) {
             model.subModels.add(train_one(prob, param, labelSet.get(i)));
         }
 

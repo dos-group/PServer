@@ -4,7 +4,6 @@ import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
-import de.tuberlin.pserver.math.vector.Vector;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 import org.apache.commons.lang3.NotImplementedException;
 
@@ -77,32 +76,22 @@ public class Sparse64Matrix extends AbstractMatrix {
     }
 
     @Override
-    public Vector rowAsVector() {
+    public Matrix getRow(long row) {
         throw new NotImplementedException("not impl");
     }
 
     @Override
-    public Vector rowAsVector(long row) {
+    public Matrix getRow(long row, long from, long to) {
         throw new NotImplementedException("not impl");
     }
 
     @Override
-    public Vector rowAsVector(long row, long from, long to) {
+    public Matrix getCol(long col) {
         throw new NotImplementedException("not impl");
     }
 
     @Override
-    public Vector colAsVector() {
-        throw new NotImplementedException("not impl");
-    }
-
-    @Override
-    public Vector colAsVector(long col) {
-        throw new NotImplementedException("not impl");
-    }
-
-    @Override
-    public Vector colAsVector(long col, long from, long to) {
+    public Matrix getCol(long col, long from, long to) {
         throw new NotImplementedException("not impl");
     }
 
@@ -117,12 +106,12 @@ public class Sparse64Matrix extends AbstractMatrix {
     }
 
     @Override
-    public Matrix assignRow(long row, Vector v) {
+    public Matrix assignRow(long row, Matrix v) {
         throw new NotImplementedException("not impl");
     }
 
     @Override
-    public Matrix assignColumn(long col, Vector v) {
+    public Matrix assignColumn(long col, Matrix v) {
         throw new NotImplementedException("not impl");
     }
 

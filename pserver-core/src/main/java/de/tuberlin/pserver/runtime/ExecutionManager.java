@@ -7,7 +7,6 @@ import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.dsl.controlflow.base.CFStatement;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.types.DistributedMatrix;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.tuple.Pair;
@@ -318,21 +317,6 @@ public final class ExecutionManager {
                     : endOffset;
         }
         return matrix.rowIterator(startOffset, endOffset);
-    }
-
-    public Vector.ElementIterator parallelVectorElementIterator(final Vector vector) {
-        Preconditions.checkNotNull(vector);
-        final SlotContext slotContext = getSlotContext();
-        final int scopeDOP = getScopeDOP();
-        final SlotGroup slotGroup = getActiveSlotGroup();
-        int startOffset, endOffset, blockSize;
-            blockSize   = (int) vector.length() / scopeDOP;
-            startOffset = slotContext.slotID * blockSize;
-            endOffset   = (slotContext.slotID * blockSize + blockSize - 1);
-            endOffset   = (slotContext.slotID == slotGroup.maxSlotID)
-                    ? endOffset + (int) vector.length() % scopeDOP
-                    : endOffset;
-        return vector.elementIterator(startOffset, endOffset);
     }
 
     // ---------------------------------------------------

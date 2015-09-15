@@ -3,9 +3,7 @@ package de.tuberlin.pserver.dsl.controlflow.loop;
 import de.tuberlin.pserver.dsl.controlflow.base.CFStatement;
 import de.tuberlin.pserver.dsl.controlflow.loop.iterators.MatrixElementIteratorBody;
 import de.tuberlin.pserver.dsl.controlflow.loop.iterators.MatrixRowIteratorBody;
-import de.tuberlin.pserver.dsl.controlflow.loop.iterators.VectorElementIteratorBody;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.SlotContext;
 import de.tuberlin.pserver.runtime.SlotGroup;
@@ -142,24 +140,6 @@ public final class Loop extends CFStatement {
     }
 
     // ---------------------------------------------------
-    // Vector Operations.
-    // ---------------------------------------------------
-
-    public Loop parExe(final Vector v, final VectorElementIteratorBody b) throws Exception { return exe(parallelVectorElementIterator(v), b); }
-
-    public Loop exe(final Vector v, final VectorElementIteratorBody b)throws Exception { return exe(v.elementIterator(), b); }
-
-    public Loop exe(final Vector.ElementIterator ei, final VectorElementIteratorBody b) throws Exception {
-        final LoopBody ib = (epoch) -> b.body(epoch, ei);
-        final LoopTermination it = () -> {
-            final boolean t = !ei.hasNextElement();
-            if (!t) ei.nextElement();
-            return t;
-        };
-        return exe(it, ib);
-    }
-
-    // ---------------------------------------------------
 
     public long getEpoch() { return epoch; }
 
@@ -186,7 +166,4 @@ public final class Loop extends CFStatement {
         return executionManager.parallelMatrixRowIterator(m);
     }
 
-    private Vector.ElementIterator parallelVectorElementIterator(final Vector v) {
-        return executionManager.parallelVectorElementIterator(v);
-    }
 }

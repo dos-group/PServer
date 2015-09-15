@@ -5,8 +5,7 @@ import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.exceptions.IncompatibleShapeException;
 import de.tuberlin.pserver.math.exceptions.SingularMatrixException;
 import de.tuberlin.pserver.math.operations.ApplyOnDoubleElements;
-import de.tuberlin.pserver.math.utils.VectorFunction;
-import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.utils.MatrixAggregation;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
 import java.util.function.DoubleBinaryOperator;
@@ -28,9 +27,9 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
 
         double value(final long col);
 
-        Vector asVector();
+        Matrix get();
 
-        Vector asVector(int from, int size);
+        Matrix get(int from, int size);
 
         void reset();
 
@@ -130,25 +129,22 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
 
     // ---------------------------------------------------
 
-    double aggregate(final DoubleBinaryOperator combiner, final DoubleUnaryOperator mapper);
+    double aggregate(final DoubleBinaryOperator combiner, final DoubleUnaryOperator mapper, final Matrix result);
 
-    Vector aggregateRows(final VectorFunction f);
-
-    // ---------------------------------------------------
-
-    Vector rowAsVector();
-
-    Vector rowAsVector(final long row);
-
-    Vector rowAsVector(final long row, final long from, final long to);
+    Matrix aggregateRows(final MatrixAggregation f);
+    Matrix aggregateRows(final MatrixAggregation f, final Matrix result);
 
     // ---------------------------------------------------
 
-    Vector colAsVector();
+    Matrix getRow(final long row);
 
-    Vector colAsVector(final long col);
+    Matrix getRow(final long row, final long from, final long to);
 
-    Vector colAsVector(final long col, final long from, final long to);
+    // ---------------------------------------------------
+
+    Matrix getCol(final long col);
+
+    Matrix getCol(final long col, final long from, final long to);
 
     // ---------------------------------------------------
 
@@ -156,9 +152,9 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
 
     Matrix assign(final double v);
 
-    Matrix assignRow(final long row, final Vector v);
+    Matrix assignRow(final long row, final Matrix v);
 
-    Matrix assignColumn(final long col, final Vector v);
+    Matrix assignColumn(final long col, final Matrix v);
 
     Matrix assign(final long row, final long col, final Matrix m);
 
@@ -169,6 +165,8 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
     // ---------------------------------------------------
 
     Matrix copy();
+
+    Matrix copy(long rows, long cols);
 
     // ---------------------------------------------------
 
@@ -219,17 +217,6 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
      * @throws IncompatibleShapeException If A.cols() != B.rows() or A.rows() != C.rows() or B.cols() != C.cols()
      */
     Matrix mul(final Matrix B, final Matrix C);
-
-    /**
-     * Called on Matrix A. Computes Matrix-Vector-Multiplication c = A * b and returns c. <br>
-     * <strong>Note: A is wlog. of shape n x m. Vector b has to be of size m and c of size n</strong>
-     *
-     * @param b Vector to multiply with A
-     * @param c Vector to store the result in
-     * @return c after computing c = A * b
-     * @throws IncompatibleShapeException If b.length() != A.rows() or c.length() != A.rows()
-     */
-    Vector mul(final Vector b, final Vector c);
 
     /**
      * Identical to {@link #scale(double, Matrix)} but automatically creates the resulting <code>Matrix B</code>.
@@ -305,9 +292,9 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
     Matrix applyOnNonZeroElements(final MatrixElementUnaryOperator f, Matrix B);
 
     /**
-     * Identical to {@link #addVectorToRows(Vector, Matrix)} but automatically creates the resulting <code>Matrix B</code>.
+     * Identical to {@link #addVectorToRows(Matrix, Matrix)} but automatically creates the resulting <code>Matrix B</code>.
      */
-    Matrix addVectorToRows(final Vector v);
+    Matrix addVectorToRows(final Matrix v);
 
     /**
      * Called on Matrix A. Computes b = a + v for each row-vector a and b in A and B respectively.
@@ -318,12 +305,12 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
      * @return B after computing b = a + v for each row-vector a and b in A and B respectively.
      * @throws IncompatibleShapeException If A.cols() != v.length() or if A and B are of different shapes.
      */
-    Matrix addVectorToRows(final Vector v, final Matrix B);
+    Matrix addVectorToRows(final Matrix v, final Matrix B);
 
     /**
-     * Identical to {@link #addVectorToCols(Vector, Matrix)} but automatically creates the resulting <code>Matrix B</code>.
+     * Identical to {@link #addVectorToCols(Matrix, Matrix)} but automatically creates the resulting <code>Matrix B</code>.
      */
-    Matrix addVectorToCols(final Vector v);
+    Matrix addVectorToCols(final Matrix v);
 
     /**
      * Called on Matrix A. Computes b = a + v for each column-vector a and b in A and B respectively.
@@ -334,7 +321,7 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
      * @return B after computing b = a + v for each column-vector a and b in A and B respectively.
      * @throws IncompatibleShapeException If A.rows() != v.length() or if A and B are of different shapes.
      */
-    Matrix addVectorToCols(final Vector v, final Matrix B);
+    Matrix addVectorToCols(final Matrix v, final Matrix B);
 
     /**
      * Identical to {@link #setDiagonalsToZero(Matrix)} but automatically creates the resulting <code>Matrix B</code>.
@@ -347,4 +334,15 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
      * @return B after setting B = A with diagonal entries equal to zero.
      */
     Matrix setDiagonalsToZero(Matrix B);
+
+    double sum();
+
+    double norm(int p);
+
+    double dot(Matrix B);
+
+    Matrix concat(Matrix B);
+
+    Matrix concat(Matrix B, Matrix C);
+
 }

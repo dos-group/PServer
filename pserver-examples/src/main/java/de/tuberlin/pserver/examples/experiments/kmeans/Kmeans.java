@@ -11,8 +11,6 @@ import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
-import de.tuberlin.pserver.math.vector.Vector;
-import de.tuberlin.pserver.math.vector.dense.DVector;
 import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.runtime.filesystem.record.config.RowRecordFormatConfig;
 import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
@@ -65,7 +63,7 @@ public class Kmeans extends MLProgram {
 
             for (int i = 0; i < K; i++) {
                 int nodeId = slotContext.runtimeContext.nodeID;
-                System.out.println("centroid[node:"+nodeId+",row:"+i+"]="+centroids.rowAsVector(i));
+                System.out.println("centroid[node:"+nodeId+",row:"+i+"]="+centroids.getRow(i));
             }
 
         }).process(() -> {
@@ -74,40 +72,36 @@ public class Kmeans extends MLProgram {
 
                 Matrix.RowIterator iter = matrix.rowIterator();
                 while (iter.hasNext()) {
-                    Vector point = iter.asVector();
+                    Matrix point = iter.get();
                     iter.next();
                     double closestDistance = Double.MAX_VALUE;
                     long closestCentroidId = -1;
-
                     for (long centroidId = 0; centroidId < K; centroidId++) {
-                        Vector centroid = centroids.rowAsVector(centroidId);
-                        Vector diff = centroid.sub(point);
+                        Matrix centroid = centroids.getRow(centroidId);
+                        Matrix diff = centroid.sub(point);
                         double distance = diff.norm(2);
                         if (distance < closestDistance) {
                             closestDistance = distance;
                             closestCentroidId = centroidId;
                         }
                     }
-
-                    Vector one = new DVector(1, new double[]{1});
-                    Vector updateDelta = point.concat(one);
-                    Vector update = centroidsUpdate.rowAsVector(closestCentroidId);
-                    System.out.println(update);
-                    centroidsUpdate.assignRow(closestCentroidId, update.add(updateDelta));
-                    System.out.println(update.add(updateDelta));
+                    Matrix updateDelta = point.copy(1, COLS + 1);
+                    updateDelta.set(1, COLS, 1);
+                    centroidsUpdate.assignRow(closestCentroidId, centroidsUpdate.getRow(closestCentroidId).add(updateDelta));
                 }
                 //DF.publishUpdate();
                 //DF.pullUpdate();
                 for (int i = 0; i < K; i++) {
                     if (centroidsUpdate.get(i, COLS) > 0) {
-                        System.out.println("centroidsUpdate(" + i + ")=" + centroidsUpdate.rowAsVector(i));
-                        centroids.assignRow(i, centroidsUpdate.rowAsVector(i, 0, COLS).div(centroidsUpdate.get(i, COLS)));
+                        System.out.println("centroidsUpdate(" + i + ")=" + centroidsUpdate.getRow(i));
+                        Matrix update = centroidsUpdate.getRow(i, 0, COLS);
+                        centroids.assignRow(i, update.scale(1. / centroidsUpdate.get(i, COLS), update));
                     }
                 }
 
                 for (int i = 0; i < K; i++) {
                     int nodeId = slotContext.runtimeContext.nodeID;
-                    System.out.println("centroid[node:" + nodeId + ",row:" + i + "]=" + centroids.rowAsVector(i));
+                    System.out.println("centroid[node:" + nodeId + ",row:" + i + "]=" + centroids.getRow(i));
                 }
                 centroidsUpdate.assign(0);
             });
@@ -116,7 +110,7 @@ public class Kmeans extends MLProgram {
 
             for (int i = 0; i < K; i++) {
                 int nodeId = slotContext.runtimeContext.nodeID;
-                System.out.println("centroid[node:" + nodeId + ",row:" + i + "]=" + centroids.rowAsVector(i));
+                System.out.println("centroid[node:" + nodeId + ",row:" + i + "]=" + centroids.getRow(i));
             }
 
         });

@@ -2,7 +2,6 @@ package de.tuberlin.pserver.ml.optimization.ADMM;
 
 
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.ml.models.GeneralLinearModel;
 import de.tuberlin.pserver.ml.optimization.Optimizer;
 import org.slf4j.Logger;
@@ -33,7 +32,7 @@ public class ADMMOptimizer implements Optimizer {
     }
 
     @Override
-    public Vector optimize(GeneralLinearModel model, Vector example) {
+    public Matrix optimize(GeneralLinearModel model, Matrix example) {
         return null;
     }
 }

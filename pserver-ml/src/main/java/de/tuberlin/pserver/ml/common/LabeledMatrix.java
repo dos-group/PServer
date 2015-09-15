@@ -4,11 +4,11 @@ package de.tuberlin.pserver.ml.common;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import de.tuberlin.pserver.commons.json.GsonUtils;
-import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.matrix.Matrix;
 
 import java.io.Serializable;
 
-public class LabeledVector implements Serializable {
+public class LabeledMatrix implements Serializable {
 
     // ---------------------------------------------------
     // Fields.
@@ -18,15 +18,15 @@ public class LabeledVector implements Serializable {
 
     public final double label;
 
-    public final Vector vector;
+    public final Matrix matrix;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    public LabeledVector(final double label, final Vector vector) {
+    public LabeledMatrix(final double label, final Matrix matrix) {
         this.label  = label;
-        this.vector = Preconditions.checkNotNull(vector);
+        this.matrix = Preconditions.checkNotNull(matrix);
     }
 
     // ---------------------------------------------------
@@ -38,12 +38,12 @@ public class LabeledVector implements Serializable {
         if (obj == null) return false;
         if (obj == this) return true;
         if (obj.getClass() != getClass()) return false;
-        return ((LabeledVector)obj).label == label
-                && vector.equals(((LabeledVector)obj).vector);
+        return ((LabeledMatrix)obj).label == label
+                && matrix.equals(((LabeledMatrix)obj).matrix);
     }
 
     @Override
     public String toString() {
-        return "LabeledVector" + gson.toJson(this);
+        return "LabeledMatrix" + gson.toJson(this);
     }
 }

@@ -5,7 +5,6 @@ import de.tuberlin.pserver.dsl.dataflow.aggregators.Aggregator;
 import de.tuberlin.pserver.dsl.dataflow.shared.SharedDouble;
 import de.tuberlin.pserver.dsl.dataflow.shared.SharedVar;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.runtime.SlotContext;
 
 
@@ -15,7 +14,7 @@ public class TronLR implements TronFunction {
 
     public TronLR(final SlotContext sc) { this.sc = Preconditions.checkNotNull(sc); }
 
-    public double functionValue(final Matrix dataPoints, final Vector w_broad, final Parameter param) throws Exception {
+    public double functionValue(final Matrix dataPoints, final Matrix w_broad, final Parameter param) throws Exception {
 
         final SharedDouble f_obj = new SharedDouble(sc, 0.0);
 
@@ -25,7 +24,7 @@ public class TronLR implements TronFunction {
 
             for (int i = 0; i < it.cols(); ++i)
                 if (it.value(i) != 0.0)
-                    z += it.value(i) * w_broad.get(i);
+                    z += it.value(i) * w_broad.get(1, i);
 
             final double yz = it.value(it.cols() - 1) * z;
 
@@ -42,9 +41,9 @@ public class TronLR implements TronFunction {
                 );
     }
 
-    public Vector gradient(final Matrix dataPoints, final Vector w_broad, final Parameter param) throws Exception {
+    public Matrix gradient(final Matrix dataPoints, final Matrix w_broad, final Parameter param) throws Exception {
 
-        final Vector grad = new SharedVar<>(sc, w_broad.copy().assign(0.0)).acquire();
+        final Matrix grad = new SharedVar<>(sc, w_broad.copy().assign(0.0)).acquire();
 
         sc.CF.loop().parExe(dataPoints, (epoch, it) -> {
 
@@ -52,7 +51,7 @@ public class TronLR implements TronFunction {
 
             for (int i = 0; i < it.cols(); ++i)
                 if (it.value(i) != 0.0)
-                    z += it.value(i) * w_broad.get(i);
+                    z += it.value(i) * w_broad.get(1, i);
 
             final double y = it.value(it.cols() - 1);
             z = (1.0 / (1.0 + Math.exp(-y * z)) - 1.0) * y;
@@ -60,7 +59,7 @@ public class TronLR implements TronFunction {
             for (int i = 0; i < it.cols(); ++i)
                 if (it.value(i) != 0.0) {
                     synchronized (grad) {
-                        grad.set(i, grad.get(i) + z * it.value(i));
+                        grad.set(1, i, grad.get(1, i) + z * it.value(i));
                     }
                 }
         });
@@ -68,13 +67,13 @@ public class TronLR implements TronFunction {
         return new Aggregator<>(sc, grad)
                 .apply(partialGrads -> partialGrads.stream()
                                 .reduce((a, b) -> a.add(b, a))
-                                .get().mul(param.C).add(grad)
+                                .get().scale(param.C).add(grad)
                 );
     }
 
-    public Vector hessianVector(final Matrix dataPoints, final Vector w_broad, final Parameter param, final Vector s) throws Exception {
+    public Matrix hessianVector(final Matrix dataPoints, final Matrix w_broad, final Parameter param, final Matrix s) throws Exception {
 
-        final Vector blockHs = new SharedVar<>(sc, w_broad.copy().assign(0.0)).acquire();
+        final Matrix blockHs = new SharedVar<>(sc, w_broad.copy().assign(0.0)).acquire();
 
         sc.CF.loop().parExe(dataPoints, (epoch, it) -> {
 
@@ -96,7 +95,7 @@ public class TronLR implements TronFunction {
             for (int i = 0; i < it.cols(); ++i) {
                 if (it.value(i) != 0.0) {
                     synchronized (blockHs) {
-                        blockHs.set(i, blockHs.get(i) + wa * it.value(i));
+                        blockHs.set(1, i, blockHs.get(i) + wa * it.value(i));
                     }
                 }
             }
@@ -105,7 +104,7 @@ public class TronLR implements TronFunction {
         return new Aggregator<>(sc, blockHs)
                 .apply(partialGrads -> partialGrads.stream()
                                 .reduce((a, b) -> a.add(b, a))
-                                .get().mul(param.C).add(s)
+                                .get().scale(param.C).add(s)
                 );
     }
 }

@@ -5,7 +5,6 @@ import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.vector.Vector;
 import de.tuberlin.pserver.runtime.SlotContext;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
@@ -58,25 +57,21 @@ public class RemoteMatrixStub extends AbstractMatrix {
 
     @Override public double get(long index) { throw new UnsupportedOperationException(); }
 
-    @Override public Vector rowAsVector() { throw new UnsupportedOperationException(); }
+    @Override public Matrix getRow(long row) { throw new UnsupportedOperationException(); }
 
-    @Override public Vector rowAsVector(long row) { throw new UnsupportedOperationException(); }
+    @Override public Matrix getRow(long row, long from, long to) { throw new UnsupportedOperationException(); }
 
-    @Override public Vector rowAsVector(long row, long from, long to) { throw new UnsupportedOperationException(); }
+    @Override public Matrix getCol(long col) { throw new UnsupportedOperationException(); }
 
-    @Override public Vector colAsVector() { throw new UnsupportedOperationException(); }
-
-    @Override public Vector colAsVector(long col) { throw new UnsupportedOperationException(); }
-
-    @Override public Vector colAsVector(long col, long from, long to) { throw new UnsupportedOperationException(); }
+    @Override public Matrix getCol(long col, long from, long to) { throw new UnsupportedOperationException(); }
 
     @Override public Matrix assign(Matrix m) { throw new UnsupportedOperationException(); }
 
     @Override public Matrix assign(double v) { throw new UnsupportedOperationException(); }
 
-    @Override public Matrix assignRow(long row, Vector v) { throw new UnsupportedOperationException(); }
+    @Override public Matrix assignRow(long row, Matrix v) { throw new UnsupportedOperationException(); }
 
-    @Override public Matrix assignColumn(long col, Vector v) { throw new UnsupportedOperationException(); }
+    @Override public Matrix assignColumn(long col, Matrix v) { throw new UnsupportedOperationException(); }
 
     @Override public Matrix copy() { throw new UnsupportedOperationException(); }
 

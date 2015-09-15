@@ -4,8 +4,8 @@ package de.tuberlin.pserver.ml.models;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.math.vector.Vector;
-import de.tuberlin.pserver.math.vector.VectorBuilder;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.runtime.SlotContext;
 
 public class GeneralLinearModel extends Model<GeneralLinearModel> {
@@ -16,7 +16,7 @@ public class GeneralLinearModel extends Model<GeneralLinearModel> {
 
     public final long length;
 
-    private Vector weights;
+    private Matrix weights;
 
     // ---------------------------------------------------
     // Constructor.
@@ -30,7 +30,7 @@ public class GeneralLinearModel extends Model<GeneralLinearModel> {
         this(Preconditions.checkNotNull(lm.name), lm.nodeID, lm.length, Preconditions.checkNotNull(lm.weights).copy());
     }
 
-    public GeneralLinearModel(final String name, final int nodeID, final long length, final Vector weights) {
+    public GeneralLinearModel(final String name, final int nodeID, final long length, final Matrix weights) {
         super(name, nodeID);
         this.length     = length;
         this.weights    = weights;
@@ -45,8 +45,8 @@ public class GeneralLinearModel extends Model<GeneralLinearModel> {
         Preconditions.checkNotNull(ctx);
         Preconditions.checkArgument(length > 0);
 
-        Vector weights = new VectorBuilder()
-                .dimension(length)
+        Matrix weights = new MatrixBuilder()
+                .dimension(length, 1)
                 .format(Format.DENSE_FORMAT)
                 .layout(Layout.COLUMN_LAYOUT)
                 .build();
@@ -68,7 +68,7 @@ public class GeneralLinearModel extends Model<GeneralLinearModel> {
 
     // ---------------------------------------------------
 
-    public Vector getWeights() { return weights; }
+    public Matrix getWeights() { return weights; }
 
-    public void updateModel(final Vector update) { weights.assign(update); }
+    public void updateModel(final Matrix update) { weights.assign(update); }
 }
