@@ -395,7 +395,7 @@ public abstract class AbstractMatrix implements Matrix {
         return C;
     }
 
-    // ---------------------------------------------------
+// ---------------------------------------------------
     // Inner Classes.
     // ---------------------------------------------------
 
@@ -447,7 +447,7 @@ public abstract class AbstractMatrix implements Matrix {
             Preconditions.checkArgument(from + size <= target.cols());
             Preconditions.checkArgument(result.rows() == 1 && result.cols() == size);
             for(int i = from; i - from < size; i++) {
-                result.set(1, i, target.get(currentRow, i));
+                result.set(0, i, target.get(currentRow, i));
             }
             return result;
         }

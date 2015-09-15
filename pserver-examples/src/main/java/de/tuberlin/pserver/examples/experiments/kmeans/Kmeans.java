@@ -86,7 +86,7 @@ public class Kmeans extends MLProgram {
                         }
                     }
                     Matrix updateDelta = point.copy(1, COLS + 1);
-                    updateDelta.set(1, COLS, 1);
+                    updateDelta.set(0, COLS, 1);
                     centroidsUpdate.assignRow(closestCentroidId, centroidsUpdate.getRow(closestCentroidId).add(updateDelta));
                 }
                 //DF.publishUpdate();

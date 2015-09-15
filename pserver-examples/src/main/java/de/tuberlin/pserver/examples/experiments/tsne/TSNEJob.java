@@ -221,17 +221,17 @@ public class TSNEJob extends MLProgram {
             while(Math.abs(HDiff) > tol && tries++ < 50){
 
                 if (HDiff > 0){
-                    betaMin = beta.get(1, i);
+                    betaMin = beta.get(0, i);
                     if (Double.isInfinite(betaMax))
-                        beta.set(1, i, beta.get(i) * 2);
+                        beta.set(0, i, beta.get(i) * 2);
                     else
-                        beta.set(1, i, (beta.get(i) + betaMax) / 2);
+                        beta.set(0, i, (beta.get(i) + betaMax) / 2);
                 } else {
-                    betaMax = beta.get(1, i);
+                    betaMax = beta.get(0, i);
                     if (Double.isInfinite(betaMin))
-                        beta.set(1, i, beta.get(i) / 2);
+                        beta.set(0, i, beta.get(i) / 2);
                     else
-                        beta.set(1, i, (beta.get(i) + betaMin) / 2);
+                        beta.set(0, i, (beta.get(i) + betaMin) / 2);
                 }
 
                 hBeta = computeHBeta(Di, beta.get(i), i);
@@ -248,12 +248,12 @@ public class TSNEJob extends MLProgram {
 
     private Tuple2<Double, Matrix> computeHBeta(Matrix d, Double beta, Long index){
         final Matrix P = new MatrixBuilder().dimension(1, d.cols()).build();
-        P.set(1, index, 0.0);
+        P.set(0, index, 0.0);
 
         // parExe over all elements i != j
         for (long i=0; i < P.cols(); ++i)
             if (i != index)
-                P.set(1, i, Math.exp(-1 * d.get(i) * beta));
+                P.set(0, i, Math.exp(-1 * d.get(i) * beta));
 
         final Matrix PD = P.copy().applyOnElements(d, (e1, e2) -> e1 * e2);
         final double sumP = P.sum();

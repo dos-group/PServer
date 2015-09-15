@@ -269,7 +269,7 @@ public final class DataGenerator {
         rand.setSeed(42);
         final Matrix weights = new Dense64Matrix(1, nFeatures);
         for (long i = 0; i < weights.cols(); ++i)
-            weights.set(1, i, rand.nextDouble() - 0.5);
+            weights.set(0, i, rand.nextDouble() - 0.5);
         final Matrix xMean = new Dense64Matrix(1, nFeatures);
         xMean.assign(0.0);
         final Matrix xVariance = new Dense64Matrix(1, nFeatures);

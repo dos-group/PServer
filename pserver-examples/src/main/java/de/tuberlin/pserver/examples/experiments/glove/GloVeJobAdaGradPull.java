@@ -90,8 +90,8 @@ public final class GloVeJobAdaGradPull extends MLProgram {
             }
 
             for (int i = 0; i < GradSqB.cols(); i++) {
-                B.set(1, i, (rand.nextDouble() - 0.5) / ROWS);
-                GradSqB.set(1, i, 1.0);
+                B.set(0, i, (rand.nextDouble() - 0.5) / ROWS);
+                GradSqB.set(0, i, 1.0);
             }
 
         }).process(() -> {
@@ -129,8 +129,8 @@ public final class GloVeJobAdaGradPull extends MLProgram {
                     W.assignColumn(wordVecIdx, w1.sub(grad1.applyOnElements(gs1, (el1, el2) -> el1 / Math.sqrt(el2))));
                     W.assignColumn(ctxVecIdx, w2.sub(grad2.applyOnElements(gs2, (el1, el2) -> el1 / Math.sqrt(el2))));
 
-                    B.set(1, wordVecIdx, b1 - fdiff / Math.sqrt(GradSqB.get(1, wordVecIdx)));
-                    B.set(1, ctxVecIdx, b2 - fdiff / Math.sqrt(GradSqB.get(1, ctxVecIdx)));
+                    B.set(0, wordVecIdx, b1 - fdiff / Math.sqrt(GradSqB.get(0, wordVecIdx)));
+                    B.set(0, ctxVecIdx, b2 - fdiff / Math.sqrt(GradSqB.get(0, ctxVecIdx)));
 
                     gs1.assign(gs1.applyOnElements(grad1, (el1, el2) -> el1 + el2 * el2));
                     gs2.assign(gs2.applyOnElements(grad2, (el1, el2) -> el1 + el2 * el2));
@@ -138,8 +138,8 @@ public final class GloVeJobAdaGradPull extends MLProgram {
                     GradSq.assignColumn(wordVecIdx, gs1);
                     GradSq.assignColumn(ctxVecIdx, gs2);
 
-                    GradSqB.set(1, wordVecIdx, GradSqB.get(1, wordVecIdx) + fdiff * fdiff);
-                    GradSqB.set(1, ctxVecIdx, GradSqB.get(1, ctxVecIdx) + fdiff * fdiff);
+                    GradSqB.set(0, wordVecIdx, GradSqB.get(0, wordVecIdx) + fdiff * fdiff);
+                    GradSqB.set(0, ctxVecIdx, GradSqB.get(0, ctxVecIdx) + fdiff * fdiff);
                 });
 
                 DF.publishUpdate();

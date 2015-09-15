@@ -144,8 +144,8 @@ public class DistributedMatrix extends AbstractMatrix {
                     iter.next();
                     final int row = iter.rowNum();
                     final double value = f.apply(getRow(row));
-                    partialAgg.set(1, row - shape.rowOffset, value);
-                    totalAgg.set(1, row, value);
+                    partialAgg.set(0, row - shape.rowOffset, value);
+                    totalAgg.set(0, row, value);
                 }
 
                 slotContext.runtimeContext.dataManager.pushTo("rowAgg", partialAgg);
@@ -157,7 +157,7 @@ public class DistributedMatrix extends AbstractMatrix {
                                 final Matrix remotePartialAgg = (Matrix)value;
                                 final long offset = rows / slotContext.programContext.nodeDOP * srcNodeID;
                                 for (int i = 0; i < remotePartialAgg.rows(); ++i)
-                                   totalAgg.set(1, offset + i, remotePartialAgg.get(1, i));
+                                   totalAgg.set(0, offset + i, remotePartialAgg.get(0, i));
                             }
                         }
                 );

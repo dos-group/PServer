@@ -9,6 +9,7 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Random;
 
 public class Dense64Matrix extends AbstractMatrix implements Serializable {
@@ -53,7 +54,17 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
     public double get(final long row, final long col) { return data[Utils.getPos(row, col, this)]; }
 
     @Override
-    public void set(long row, long col, double value) { data[Utils.getPos(row, col, this)] = value; }
+    public void set(long row, long col, double value) {
+        try {
+            data[Utils.getPos(row, col, this)] = value;
+        }
+        catch(ArrayIndexOutOfBoundsException e) {
+            if(row < rows && col < cols) {
+                throw new IllegalStateException(String.format("Attempt to set a valid position (%d, %d) in matrix of shape (%d, %d) yielded ArrayIndexOutOfBounds: %d", row, col, rows, cols, Utils.getPos(row, col, this)), e);
+            }
+            throw new IllegalStateException(String.format("Attempt to set a invalid position (%d, %d) in matrix of shape (%d, %d) yielded ArrayIndexOutOfBounds: %d", row, col, rows, cols, Utils.getPos(row, col, this)), e);
+        }
+    }
 
     @Override
     public double[] toArray() {
@@ -135,7 +146,7 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
         // TODO: Optimize with respect to the layout with array copy.
         Matrix r = new Dense64Matrix(1, to - from);
         for (long i = from; i < to; ++i)
-            r.set(1, i, data[Utils.getPos(row, i, this)]);
+            r.set(0, i, data[Utils.getPos(row, i, this)]);
         return r;
     }
 
@@ -188,12 +199,6 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
     }
 
     @Override
-    public Matrix copy(long rows, long cols) {
-
-        return null;
-    }
-
-    @Override
     public Matrix subMatrix(long row, long col, long rows, long cols) {
         if (layout == Layout.ROW_LAYOUT) {
             final int length = (int)(rows * cols);
@@ -214,6 +219,13 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
             return this;
         } else
             throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String toString() {
+        return "Dense64Matrix{" +
+                "data=" + Arrays.toString(data) +
+                '}';
     }
 
     // ---------------------------------------------------

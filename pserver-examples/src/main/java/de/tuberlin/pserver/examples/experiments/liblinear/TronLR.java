@@ -24,7 +24,7 @@ public class TronLR implements TronFunction {
 
             for (int i = 0; i < it.cols(); ++i)
                 if (it.value(i) != 0.0)
-                    z += it.value(i) * w_broad.get(1, i);
+                    z += it.value(i) * w_broad.get(0, i);
 
             final double yz = it.value(it.cols() - 1) * z;
 
@@ -51,7 +51,7 @@ public class TronLR implements TronFunction {
 
             for (int i = 0; i < it.cols(); ++i)
                 if (it.value(i) != 0.0)
-                    z += it.value(i) * w_broad.get(1, i);
+                    z += it.value(i) * w_broad.get(0, i);
 
             final double y = it.value(it.cols() - 1);
             z = (1.0 / (1.0 + Math.exp(-y * z)) - 1.0) * y;
@@ -59,7 +59,7 @@ public class TronLR implements TronFunction {
             for (int i = 0; i < it.cols(); ++i)
                 if (it.value(i) != 0.0) {
                     synchronized (grad) {
-                        grad.set(1, i, grad.get(1, i) + z * it.value(i));
+                        grad.set(0, i, grad.get(0, i) + z * it.value(i));
                     }
                 }
         });
@@ -95,7 +95,7 @@ public class TronLR implements TronFunction {
             for (int i = 0; i < it.cols(); ++i) {
                 if (it.value(i) != 0.0) {
                     synchronized (blockHs) {
-                        blockHs.set(1, i, blockHs.get(i) + wa * it.value(i));
+                        blockHs.set(0, i, blockHs.get(i) + wa * it.value(i));
                     }
                 }
             }
