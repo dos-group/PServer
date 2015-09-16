@@ -2,6 +2,8 @@ package de.tuberlin.pserver.counters;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.crdt.CRDT;
+import de.tuberlin.pserver.crdt.Operation;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.runtime.MLProgram;
 
@@ -37,7 +39,7 @@ public class GCounterTestJob extends MLProgram {
 
                 System.out.println("[DEBUG] Check 1 [" + slotContext.programContext.runtimeContext.nodeID + "]");
                 for(int i = 0; i < 10000; i++) {
-                    gc.add(1, dataManager);
+                    gc.applyOperation(new Operation(CRDT.ADD, 1), dataManager);
                 }
 
                 System.out.println("[DEBUG] Check 2 [" + slotContext.programContext.runtimeContext.nodeID + "]");
@@ -53,7 +55,7 @@ public class GCounterTestJob extends MLProgram {
 
                 System.out.println("[DEBUG] Check 1 [" + slotContext.programContext.runtimeContext.nodeID + "]");
                 for(int i = 0; i < 50000; i++) {
-                    gc.add(1, dataManager);
+                    gc.applyOperation(new Operation(CRDT.ADD, 1), dataManager);
                 }
 
                 System.out.println("[DEBUG] Check 2 [" + slotContext.programContext.runtimeContext.nodeID + "]");
@@ -69,7 +71,7 @@ public class GCounterTestJob extends MLProgram {
 
                 System.out.println("[DEBUG] Check 1 [" + slotContext.programContext.runtimeContext.nodeID + "]");
                 for(int i = 0; i < 100000; i++) {
-                    gc.add(1, dataManager);
+                    gc.applyOperation(new Operation(CRDT.ADD, 1), dataManager);
                 }
 
                 System.out.println("[DEBUG] Check 2 [" + slotContext.programContext.runtimeContext.nodeID + "]");

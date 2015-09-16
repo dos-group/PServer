@@ -81,7 +81,7 @@ public class Counter implements CRDT, Serializable {
         return readyNodes;
     }
 
-    @Override
+    //@Override
     public void applyUpdate(int srcNodeID, Operation op, DataManager dm){
         // receive from another node
         if(op.getType() == ADD) {
