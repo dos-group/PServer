@@ -5,7 +5,7 @@ import de.tuberlin.pserver.runtime.DataManager;
 
 public abstract class AbstractCounter extends AbstractCRDT implements CounterCRDT {
 
-    public AbstractCounter(int id, DataManager dataManager) {
+    public AbstractCounter(String id, DataManager dataManager) {
         super(id, dataManager);
     }
 }

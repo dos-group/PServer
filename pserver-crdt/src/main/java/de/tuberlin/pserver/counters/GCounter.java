@@ -7,18 +7,18 @@ import de.tuberlin.pserver.runtime.DataManager;
 import java.io.Serializable;
 
 public class GCounter extends AbstractCounter implements CRDT, Serializable {
-    private int count = 0;
+    private long count = 0;
 
-    public GCounter(int id, DataManager dataManager) {
+    public GCounter(String id, DataManager dataManager) {
         super(id, dataManager);
         run(dataManager);
     }
 
     @Override
-    public int getCount() {
+    public long getCount() {
         // Defensive copy so the value can not be changed without evoking the add method which broadcasts updates
         // TODO: Does this defensive copy make sense?
-        int tmp = count;
+        long tmp = count;
         return tmp;
     }
 

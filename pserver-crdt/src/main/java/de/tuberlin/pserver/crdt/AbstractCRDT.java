@@ -4,6 +4,11 @@ import de.tuberlin.pserver.runtime.DataManager;
 
 import java.util.*;
 
+
+// TODO: improve buffer performance => sometimes one or two operations are missing at a replica
+// TODO: what about exceptions in general
+// TODO what about when counters reach MAX_INT => exception or keep counting somehow?
+
 public abstract class AbstractCRDT implements CRDT {
     private final Set runningNodes = new HashSet<>();
     private final Set finishedNodes = new HashSet<>();
@@ -11,14 +16,14 @@ public abstract class AbstractCRDT implements CRDT {
 
     private boolean allNodesRunning = false;
     private boolean allNodesFinished = false;
-    protected final int id;
+    protected final String id;
 
 
-    public AbstractCRDT(int id, DataManager dataManager) {
+    public AbstractCRDT(String id, DataManager dataManager) {
 
         this.id = id;
 
-        dataManager.addDataEventListener("Running", new DataManager.DataEventHandler() {
+        dataManager.addDataEventListener("Running_"+id, new DataManager.DataEventHandler() {
             @Override
             public void handleDataEvent(int srcNodeID, Object value) {
                 runningNodes.add(srcNodeID);
@@ -26,17 +31,17 @@ public abstract class AbstractCRDT implements CRDT {
 
                 if (runningNodes.size() == dataManager.remoteNodeIDs.length) {
                     allNodesRunning = true;
-                    dataManager.removeDataEventListener("Running", this);
+                    dataManager.removeDataEventListener("Running_"+id, this);
 
                     // This is necessary to reach replicas that were not online when the first "Running" message was sent
-                    dataManager.pushTo("Running", 0, dataManager.remoteNodeIDs);
+                    dataManager.pushTo("Running_"+id, 0, dataManager.remoteNodeIDs);
                     System.out.println("[DEBUG] BufferA: " + buffer.size());
                     //broadcastBuffer(dataManager);
                 }
             }
         });
 
-        dataManager.addDataEventListener("Operation", new DataManager.DataEventHandler() {
+        dataManager.addDataEventListener("Operation_"+id, new DataManager.DataEventHandler() {
             @Override
             public void handleDataEvent(int srcNodeID, Object value) {
                 update(srcNodeID, (Operation) value, dataManager);
@@ -46,7 +51,7 @@ public abstract class AbstractCRDT implements CRDT {
 
 
     public void run(DataManager dataManager) {
-        dataManager.pushTo("Running", 0, dataManager.remoteNodeIDs);
+        dataManager.pushTo("Running_" + id, 0, dataManager.remoteNodeIDs);
     }
 
     public void finish(DataManager dataManager) {
@@ -60,6 +65,8 @@ public abstract class AbstractCRDT implements CRDT {
             }
         }
 
+       // broadcastBuffer(dataManager);
+
         System.out.println("[DEBUG] All nodes: " + isAllNodesRunning());
         System.out.println("[DEBUG] BufferB: " + buffer.size());
 
@@ -67,7 +74,7 @@ public abstract class AbstractCRDT implements CRDT {
 
         while(!isAllNodesFinished()) {
             try {
-                broadcastBuffer(dataManager);
+                //broadcastBuffer(dataManager);
                 Thread.sleep(50);
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -85,6 +92,7 @@ public abstract class AbstractCRDT implements CRDT {
 
     protected void addFinishedNode(int nodeID, DataManager dataManager) {
         finishedNodes.add(nodeID);
+        //allNodesRunning = false;
         if(finishedNodes.size() == dataManager.remoteNodeIDs.length) {
             allNodesFinished = true;
         }
@@ -94,17 +102,17 @@ public abstract class AbstractCRDT implements CRDT {
         // send to all nodes
         if(isAllNodesRunning()) {
             broadcastBuffer(dm);
-            dm.pushTo("Operation", op, dm.remoteNodeIDs);
+            dm.pushTo("Operation_"+id, op, dm.remoteNodeIDs);
         } else {
             buffer(op);
         }
     }
 
     private void broadcastBuffer(DataManager dm) {
-        if(isAllNodesRunning() && buffer.size() > 0) {
+        if(buffer.size() > 0) {
             System.out.println("[DEBUG] Broadcasting buffer size " + buffer.size());
             while(buffer.size() > 0) {
-                dm.pushTo("Operation", buffer.poll(), dm.remoteNodeIDs);
+                dm.pushTo("Operation_"+id, buffer.poll(), dm.remoteNodeIDs);
             }
         } else {
             //TODO: some exception?
@@ -118,6 +126,10 @@ public abstract class AbstractCRDT implements CRDT {
     public void applyOperation(Operation op, DataManager dm) {
         update(-1, op, dm);
         broadcast(op, dm);
+    }
+
+    public Queue getBuffer() {
+        return buffer;
     }
 
     protected abstract void update(int srcNodeId, Operation op, DataManager dm);
