@@ -100,7 +100,7 @@ public final class Loop extends CFStatement {
 
             duration = System.currentTimeMillis() - duration;
 
-            setProfilingData(new IterationProfilingData(duration, passDuration / epoch, syncDuration / epoch));
+            setProfilingData(new IterationProfilingData(duration, epoch > 0 ? passDuration / epoch : passDuration, epoch > 0 ? syncDuration / epoch : syncDuration));
 
         leave();
 
@@ -113,9 +113,12 @@ public final class Loop extends CFStatement {
 
     public Loop parExe(final Matrix m, final MatrixRowIteratorBody b) throws Exception { return exe(parallelMatrixRowIterator(m), b); }
 
-    public Loop exe(final Matrix m, final MatrixRowIteratorBody b)throws Exception { return exe(m.rowIterator(), b); }
+    public Loop exe(final Matrix m, final MatrixRowIteratorBody b)throws Exception {
+        return exe(m.rowIterator(), b);
+    }
 
     public Loop exe(final Matrix.RowIterator ri, final MatrixRowIteratorBody b) throws Exception {
+        System.out.println(ri.rowNum());
         final LoopBody ib = (epoch) -> b.body(epoch, ri);
         final LoopTermination it = () -> {
                 final boolean t = !ri.hasNext();
@@ -134,6 +137,7 @@ public final class Loop extends CFStatement {
     private MatrixRowIteratorBody toRowMatrixIB(final Matrix m, final MatrixElementIteratorBody b) throws Exception {
         return (epoch, rit) -> {
             for (long j = 0; j < m.cols(); ++j) {
+                System.out.println("row: " + rit.rowNum() + "; col: " + j);
                 b.body(epoch, rit.rowNum(), j, rit.value((int) j));
             }
         };

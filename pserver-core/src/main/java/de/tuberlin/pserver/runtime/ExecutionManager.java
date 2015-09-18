@@ -7,6 +7,7 @@ import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.dsl.controlflow.base.CFStatement;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.types.DistributedMatrix;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.tuple.Pair;
@@ -298,25 +299,8 @@ public final class ExecutionManager {
         Preconditions.checkNotNull(matrix);
         final SlotContext slotContext = getSlotContext();
         final int scopeDOP = getScopeDOP();
-        final SlotGroup slotGroup = getActiveSlotGroup();
-        int startOffset, endOffset, blockSize;
-        if (matrix.getClass() == DistributedMatrix.class) {
-            final DistributedMatrix dm = (DistributedMatrix)matrix;
-            blockSize   = (int) dm.partitionNumRows() / scopeDOP;
-            startOffset = (int)(dm.partitionBaseRowOffset() + (slotContext.slotID * blockSize));
-            endOffset   = startOffset + blockSize - 1;
-            endOffset   = (slotContext.slotID == slotGroup.maxSlotID)
-                    ? endOffset + (int) dm.partitionNumRows() % scopeDOP
-                    : endOffset;
-        } else {
-            blockSize   = (int) matrix.rows() / scopeDOP;
-            startOffset = slotContext.slotID * blockSize;
-            endOffset   = (slotContext.slotID * blockSize + blockSize - 1);
-            endOffset   = (slotContext.slotID == slotGroup.maxSlotID)
-                    ? endOffset + (int) matrix.rows() % scopeDOP
-                    : endOffset;
-        }
-        return matrix.rowIterator(startOffset, endOffset);
+        Matrix.PartitionShape shape = new MatrixByRowPartitioner(slotContext.slotID, scopeDOP, matrix.rows(), matrix.cols()).getPartitionShape();
+        return matrix.rowIterator((int) shape.rowOffset, (int) shape.rows);
     }
 
     // ---------------------------------------------------

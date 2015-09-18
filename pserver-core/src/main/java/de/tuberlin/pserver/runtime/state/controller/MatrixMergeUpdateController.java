@@ -98,9 +98,9 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
 
         for (final Matrix remoteMatrix : remoteMatrices) {
 
-            sc.CF.loop().parExe(remoteMatrix, (e, i, j, v) -> {
+            sc.CF.loop().exe(stateMatrix, (e, i, j, v) -> {
 
-                matrixUpdateMerger.mergeElement(i, j, v, remoteMatrix.get(i, j));
+                stateMatrix.set(i, j, matrixUpdateMerger.mergeElement(i, j, v, remoteMatrix.get(i, j)));
             });
         }
 

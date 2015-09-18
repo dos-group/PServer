@@ -21,10 +21,10 @@ public class Kmeans extends MLProgram {
 
     private static final long ROWS = 1000;
     private static final long COLS = 2;
-    private static final int K = 3;
+    private static final int K = 2;
 
     // loaded by pserver
-    private static final String FILE = "datasets/stripes3.csv";
+    private static final String FILE = "datasets/stripes2.csv";
 
     @State(
             globalScope = GlobalScope.PARTITIONED,
@@ -45,69 +45,68 @@ public class Kmeans extends MLProgram {
     public Matrix centroidsUpdate;
 
     @StateMerger(stateObjects = "centroidsUpdate")
-    public final MatrixUpdateMerger centroidsUpdateMerger = (i, j, val, remoteVal) -> val + remoteVal;
+    public final MatrixUpdateMerger centroidsUpdateMerger = (i, j, val, remoteVal) -> {
+        System.out.println("called! i: "+i+", j: "+j+", val: "+val+", remoteVal: "+remoteVal);
+        return val + remoteVal;
+    };
 
 
     @Unit
     public void main(final Program program) {
 
-//        Random rand = new Random(42);
-//        double[] data = new double[(int)(K * COLS)];
-//        for (int i = 0; i < K * COLS; i++) {
-//            data[i] = rand.nextDouble();
-//        }
-        final Matrix centroids = new Dense64Matrix(K, COLS, new double[] {0, -1, 0, 0, 0, 1});
+        Random rand = new Random(42);
+        double[] data = new double[(int)(K * COLS)];
+        for (int i = 0; i < K * COLS; i++) {
+            data[i] = rand.nextDouble();
+        }
+        final Matrix centroids = new Dense64Matrix(K, COLS, data);
 
 
-        program.initialize(() -> {
+        program.process(() -> {
 
-            for (int i = 0; i < K; i++) {
-                int nodeId = slotContext.runtimeContext.nodeID;
-                System.out.println("centroid[node:"+nodeId+",row:"+i+"]="+centroids.getRow(i));
-            }
-
-        }).process(() -> {
+            centroidsUpdate.assign(0);
 
             CF.loop().sync(Loop.GLOBAL).exe(10, (iteration) -> {
+                int nodeId = slotContext.runtimeContext.nodeID;
 
+                // BEGIN: PULL MODEL FROM OTHER NODES AND MERGE
+                System.out.println(nodeId + ": pre pull centroidsUpdate: " + centroidsUpdate);
+                DF.pullUpdate();
+                System.out.println(nodeId + ": post pull centroidsUpdate: " + centroidsUpdate);
+                for (int i = 0; i < K; i++) {
+                    if (centroidsUpdate.get(i, COLS) > 0) {
+                        Matrix update = centroidsUpdate.getRow(i, 0, COLS);
+                        if (centroidsUpdate.get(i, COLS) > 0) {
+                            centroids.assignRow(i, update.scale(1. / centroidsUpdate.get(i, COLS), update));
+                        }
+                    }
+                }
+                centroidsUpdate.assign(0);
+                // END: PULL MODEL FROM OTHER NODES AND MERGE
+
+                // BEGIN: STANDARD KMEANS ON LOCAL PARTITION
                 Matrix.RowIterator iter = matrix.rowIterator();
                 while (iter.hasNext()) {
                     Matrix point = iter.get();
                     iter.next();
-                    System.out.println("point: " + point);
                     double closestDistance = Double.MAX_VALUE;
                     long closestCentroidId = -1;
                     for (long centroidId = 0; centroidId < K; centroidId++) {
                         Matrix centroid = centroids.getRow(centroidId);
                         Matrix diff = centroid.sub(point);
                         double distance = diff.norm(2);
-                        System.out.print(distance + ",");
                         if (distance < closestDistance) {
                             closestDistance = distance;
                             closestCentroidId = centroidId;
                         }
                     }
-                    System.out.println();
                     Matrix updateDelta = point.copy(1, COLS + 1);
                     updateDelta.set(0, COLS, 1);
-                    System.out.println("updateDelta: " + updateDelta);
                     centroidsUpdate.assignRow(closestCentroidId, centroidsUpdate.getRow(closestCentroidId).add(updateDelta));
                 }
-                //DF.publishUpdate();
-                //DF.pullUpdate();
-                for (int i = 0; i < K; i++) {
-                    if (centroidsUpdate.get(i, COLS) > 0) {
-                        System.out.println("centroidsUpdate(" + i + ")=" + centroidsUpdate.getRow(i));
-                        Matrix update = centroidsUpdate.getRow(i, 0, COLS);
-                        centroids.assignRow(i, update.scale(1. / centroidsUpdate.get(i, COLS), update));
-                    }
-                }
+                // END: STANDARD KMEANS ON LOCAL PARTITION
 
-                for (int i = 0; i < K; i++) {
-                    int nodeId = slotContext.runtimeContext.nodeID;
-                    System.out.println("centroid[node:" + nodeId + ",row:" + i + "]=" + centroids.getRow(i));
-                }
-                centroidsUpdate.assign(0);
+                DF.publishUpdate();
             });
 
         }).postProcess(() -> {
@@ -131,12 +130,12 @@ public class Kmeans extends MLProgram {
     public static void cluster() {
         System.setProperty("pserver.profile", "wally");
         PServerExecutor.DISTRIBUTED
-                .run(Kmeans.class, 1)
+                .run(Kmeans.class, 4)
                 .done();
     }
 
     public static void local() {
-        System.setProperty("simulation.numNodes", "1");
+        System.setProperty("simulation.numNodes", "2");
         PServerExecutor.LOCAL
                 .run(Kmeans.class, 1)
                 .done();

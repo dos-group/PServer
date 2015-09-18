@@ -3,6 +3,7 @@ package de.tuberlin.pserver.math;
 import de.tuberlin.pserver.math.generators.BufferGenerator;
 import de.tuberlin.pserver.math.generators.MatrixGenerator;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
 import org.junit.Test;
 
 public class DMatrixTests {
@@ -122,6 +123,11 @@ public class DMatrixTests {
                 assert(java.util.Arrays.equals(colsRowLayout[i], mat.getCol(i).toArray()));
             }
         }
+    }
+
+    @Test
+    public void testSub() {
+        Matrix mat1 = new Dense64Matrix(1, 2, new double[] {0.524603007490649});
     }
 
     public void checkUniAndMatrixAssign(int rows, int cols, Matrix mat) {

@@ -8,6 +8,7 @@ import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
 
+import javax.rmi.CORBA.Util;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Random;
@@ -258,62 +259,97 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
 
         private Dense64Matrix self;
 
-        private int globalRowIndex;
-
         private final int end;
 
         private final int start;
 
-        private final int numRows;
+        private int currentRow;
 
-        private int currentRowIndex;
+        private final int rowsToFetch;
+
+        private int rowsFetched;
 
         private Random rand;
 
         // ---------------------------------------------------
 
-        public RowIterator(final Dense64Matrix v) { this(v, 0, (int)Preconditions.checkNotNull(v).rows() - 1); }
+        public RowIterator(final Dense64Matrix v) { this(v, 0, (int)Preconditions.checkNotNull(v).rows()); }
         public RowIterator(final Dense64Matrix v, final int startRow, final int endRow) {
             this.self = v;
             Preconditions.checkArgument(startRow >= 0 && startRow < self.rows());
-//            Preconditions.checkArgument(endRow > startRow && endRow < self.rows());
-            this.start = startRow * (int)self.cols;
-            this.end = endRow * (int)self.cols;
-            this.globalRowIndex = this.start - (int)-self.cols;
-            this.numRows = endRow - startRow;
+            Preconditions.checkArgument(endRow >= startRow && endRow <= self.rows());
+            this.start = startRow;
+            this.end = endRow;
+            this.rowsToFetch = endRow - startRow;
             this.rand = new Random();
             reset();
+            System.out.println("inner Dense64Matrix.rowIterator! start: "+start+"; end: "+end+"; rowsToFetch: "+ rowsToFetch +";");
         }
 
         // ---------------------------------------------------
 
         @Override
-        public boolean hasNext() { return globalRowIndex < end - self.cols/*|| globalRowIndex < self.rows * self.cols*/; }
-
-        @Override
-        public void next() { globalRowIndex += self.cols; currentRowIndex = globalRowIndex; }
-
-        @Override
-        public void nextRandom() {
-            globalRowIndex += self.cols;
-            currentRowIndex = start +  (rand.nextInt(numRows) * (int)self.cols);
+        public boolean hasNext() {
+            return rowsFetched < rowsToFetch;
         }
 
         @Override
-        public double value(final long col) { return self.data[(int)(currentRowIndex + col)]; }
+        public void next() {
+            // the generic case is just currentRow++, but the reset method only sets rowsFetched = 0
+            if(rowsFetched == 0) {
+                currentRow = 0;
+            }
+            else {
+                currentRow++;
+            }
+            rowsFetched++;
+            // can overflow if nextRandom and next is called alternatingly
+            if(currentRow >= end) {
+                currentRow = start;
+            }
+        }
 
         @Override
-        public Matrix get() { return get(0, (int) self.cols); }
+        public void nextRandom() {
+            rowsFetched++;
+            currentRow = start + rand.nextInt(end);
+        }
+
+        @Override
+        public double value(final long col) {
+            return self.data[Utils.getPos(currentRow, col, self)];
+        }
+
+        @Override
+        public Matrix get() {
+            return get(0, (int) self.cols);
+        }
 
         @Override
         public Matrix get(int from, int size) {
             final double v[] = new double[size];
-            System.arraycopy(self.data, currentRowIndex + from, v, 0, size);
+            if(self.layout == Layout.ROW_LAYOUT) {
+                try {
+                    System.arraycopy(self.data, Utils.getPos(currentRow, from, self), v, 0, size);
+                }
+                catch(ArrayIndexOutOfBoundsException e) {
+                    System.out.println("failed copy from: " + Utils.getPos(currentRow, from, self) + "; currentRow: " + currentRow + "; from: " + from + ";  length: " + size + "; array.length: " + self.data.length);
+                    throw e;
+                }
+
+            }
+            else {
+                for (int i = from; i < size; i++) {
+                    v[i-from] = self.data[Utils.getPos(currentRow, i, self)];
+                }
+            }
             return new Dense64Matrix(1, size, v);
         }
 
         @Override
-        public void reset() { globalRowIndex = start - (int)self.cols; }
+        public void reset() {
+            rowsFetched = 0;
+        }
 
         @Override
         public long rows() { return self.rows; }
@@ -322,6 +358,6 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
         public long cols() { return self.cols; }
 
         @Override
-        public int rowNum() { return currentRowIndex / (int)self.cols; }
+        public int rowNum() { return currentRow; }
     }
 }
