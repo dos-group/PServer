@@ -7,7 +7,8 @@ import java.util.*;
 
 // TODO: improve buffer performance => sometimes one or two operations are missing at a replica
 // TODO: what about exceptions in general
-// TODO what about when counters reach MAX_INT => exception or keep counting somehow?
+// TODO: what about when counters reach MAX_INT => exception or keep counting somehow?
+// TODO: what if someone uses the same id for two crdts?
 
 public abstract class AbstractCRDT implements CRDT {
     private final Set runningNodes = new HashSet<>();

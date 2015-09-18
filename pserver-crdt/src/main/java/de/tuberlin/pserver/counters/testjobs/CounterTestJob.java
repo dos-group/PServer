@@ -19,15 +19,12 @@ public class CounterTestJob extends MLProgram {
 
         program.process(() -> {
             /*CF.select().allNodes().allSlots().exe(() -> {
-                Random r = new Random(Calendar.getInstance().getTimeInMillis());
                 Counter gc = new Counter(1, dataManager);
 
-                System.out.println("[DEBUG] Check 1 [" + slotContext.programContext.runtimeContext.nodeID + "]");
                 for(int i = 0; i < 10000; i++) {
                     gc.add(1, dataManager);
                 }
 
-                System.out.println("[DEBUG] Check 2 [" + slotContext.programContext.runtimeContext.nodeID + "]");
                 gc.finish(dataManager);
 
                 System.out.println("[DEBUG] Count of node " + slotContext.programContext.runtimeContext.nodeID + ": " + gc.getCount());
@@ -39,7 +36,6 @@ public class CounterTestJob extends MLProgram {
                 Counter gc = new Counter("one", dataManager);
                 Counter gc2 = new Counter("two", dataManager);
 
-                System.out.println("[DEBUG] Check 1 [" + slotContext.programContext.runtimeContext.nodeID + "]");
                 for (int i = 0; i < 10000; i++) {
                     gc.applyOperation(new Operation(CRDT.SUBTRACT, 2), dataManager);
                     if ((i % 2) == 0) {
@@ -47,7 +43,6 @@ public class CounterTestJob extends MLProgram {
                     }
                 }
 
-                System.out.println("[DEBUG] Check 2 [" + slotContext.programContext.runtimeContext.nodeID + "]");
                 gc.finish(dataManager);
                 gc2.finish(dataManager);
 
@@ -60,11 +55,9 @@ public class CounterTestJob extends MLProgram {
             });
 
             CF.select().node(1).slot(0).exe(() -> {
-                Random r = new Random(Calendar.getInstance().getTimeInMillis());
                 Counter gc = new Counter("one", dataManager);
                 Counter gc2 = new Counter("two", dataManager);
 
-                System.out.println("[DEBUG] Check 1 [" + slotContext.programContext.runtimeContext.nodeID + "]");
                 for (int i = 0; i < 50000; i++) {
                     gc.applyOperation(new Operation(CRDT.ADD, 1), dataManager);
                     if ((i % 2) == 0) {
@@ -72,7 +65,6 @@ public class CounterTestJob extends MLProgram {
                     }
                 }
 
-                System.out.println("[DEBUG] Check 2 [" + slotContext.programContext.runtimeContext.nodeID + "]");
                 gc.finish(dataManager);
                 gc2.finish(dataManager);
 
@@ -85,11 +77,9 @@ public class CounterTestJob extends MLProgram {
             });
 
             CF.select().node(2).slot(0).exe(() -> {
-                Random r = new Random(Calendar.getInstance().getTimeInMillis());
                 Counter gc = new Counter("one", dataManager);
                 Counter gc2 = new Counter("two", dataManager);
 
-                System.out.println("[DEBUG] Check 1 [" + slotContext.programContext.runtimeContext.nodeID + "]");
                 for (int i = 0; i < 100000; i++) {
                     gc.applyOperation(new Operation(CRDT.ADD, 1), dataManager);
                     if ((i % 2) == 0) {
@@ -97,7 +87,6 @@ public class CounterTestJob extends MLProgram {
                     }
                 }
 
-                System.out.println("[DEBUG] Check 2 [" + slotContext.programContext.runtimeContext.nodeID + "]");
                 gc.finish(dataManager);
                 gc2.finish(dataManager);
 
@@ -110,11 +99,9 @@ public class CounterTestJob extends MLProgram {
             });
 
             CF.select().node(3).slot(0).exe(() -> {
-                Random r = new Random(Calendar.getInstance().getTimeInMillis());
                 Counter gc = new Counter("one", dataManager);
                 Counter gc2 = new Counter("two", dataManager);
 
-                System.out.println("[DEBUG] Check 1 [" + slotContext.programContext.runtimeContext.nodeID + "]");
                 for (int i = 0; i < 150000; i++) {
                     gc.applyOperation(new Operation(CRDT.ADD, 1), dataManager);
                     if ((i % 2) == 0) {
@@ -122,7 +109,6 @@ public class CounterTestJob extends MLProgram {
                     }
                 }
 
-                System.out.println("[DEBUG] Check 2 [" + slotContext.programContext.runtimeContext.nodeID + "]");
                 gc.finish(dataManager);
                 gc2.finish(dataManager);
 
@@ -134,12 +120,6 @@ public class CounterTestJob extends MLProgram {
                 System.out.println("[DEBUG] Number of remote nodes: " + dataManager.remoteNodeIDs.length);
             });
         });
-
-
-
-
-
-
     }
 
     public static void main(final String[] args) {

@@ -4,7 +4,9 @@ import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.Operation;
 import de.tuberlin.pserver.runtime.DataManager;
 
+import javax.naming.OperationNotSupportedException;
 import java.io.Serializable;
+import java.util.EmptyStackException;
 
 public class GCounter extends AbstractCounter implements CRDT, Serializable {
     private long count = 0;
@@ -30,6 +32,7 @@ public class GCounter extends AbstractCounter implements CRDT, Serializable {
             addFinishedNode(srcNodeID, dm);
         } else {
             // TODO: throw a specific exception
+            throw new EmptyStackException();
         }
     }
 }
