@@ -118,7 +118,6 @@ public final class Loop extends CFStatement {
     }
 
     public Loop exe(final Matrix.RowIterator ri, final MatrixRowIteratorBody b) throws Exception {
-        System.out.println(ri.rowNum());
         final LoopBody ib = (epoch) -> b.body(epoch, ri);
         final LoopTermination it = () -> {
                 final boolean t = !ri.hasNext();
@@ -137,7 +136,6 @@ public final class Loop extends CFStatement {
     private MatrixRowIteratorBody toRowMatrixIB(final Matrix m, final MatrixElementIteratorBody b) throws Exception {
         return (epoch, rit) -> {
             for (long j = 0; j < m.cols(); ++j) {
-                System.out.println("row: " + rit.rowNum() + "; col: " + j);
                 b.body(epoch, rit.rowNum(), j, rit.value((int) j));
             }
         };

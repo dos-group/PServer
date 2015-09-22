@@ -125,11 +125,6 @@ public class DMatrixTests {
         }
     }
 
-    @Test
-    public void testSub() {
-        Matrix mat1 = new Dense64Matrix(1, 2, new double[] {0.524603007490649});
-    }
-
     public void checkUniAndMatrixAssign(int rows, int cols, Matrix mat) {
         double[] uniVals = BufferGenerator.RandomUniValues(rows, cols);
         assert(java.util.Arrays.equals(mat.assign(uniVals[0]).toArray(), uniVals));
