@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.dsl.controlflow.program;
 
-import de.tuberlin.pserver.dsl.controlflow.Body;
-import de.tuberlin.pserver.dsl.controlflow.CFStatement;
+import de.tuberlin.pserver.dsl.controlflow.base.Body;
+import de.tuberlin.pserver.dsl.controlflow.base.CFStatement;
 import de.tuberlin.pserver.runtime.SlotContext;
 
 public final class Program extends CFStatement {

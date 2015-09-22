@@ -2,10 +2,9 @@ package de.tuberlin.pserver.math.matrix;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.Layout;
+import de.tuberlin.pserver.math.utils.Functions;
 import de.tuberlin.pserver.math.utils.Utils;
-import de.tuberlin.pserver.math.utils.VectorFunction;
-import de.tuberlin.pserver.math.vector.Vector;
-import de.tuberlin.pserver.math.vector.dense.DVector;
+import de.tuberlin.pserver.math.utils.MatrixAggregation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,29 +61,30 @@ public abstract class AbstractMatrix implements Matrix {
 
     @Override  public long cols() { return cols; }
 
-    @Override  public Layout getLayout() { return layout; }
+    @Override  public Layout layout() { return layout; }
 
     @Override  public abstract RowIterator rowIterator();
 
     @Override  public abstract RowIterator rowIterator(int startRow, int endRow);
 
     @Override
-    public double aggregate(DoubleBinaryOperator combiner, DoubleUnaryOperator mapper) {
-        //return aggregateRows(v -> v.aggregate(combiner, mapper)).aggregate(combiner, Functions.IDENTITY);
-        // for merge:
-        return aggregateRows(v -> v.aggregate(combiner, mapper)).aggregate(combiner, x -> x);
+    public double aggregate(DoubleBinaryOperator combiner, DoubleUnaryOperator mapper, final Matrix result) {
+        // return aggregateRows(v -> v.aggregate(combiner, mapper), this).aggregate(combiner, Functions.IDENTITY);
+        return 0;
     }
 
     @Override
-    public Vector aggregateRows(final VectorFunction f) {
-        // TODO: we do not create new Vectors/Matrices in our API.
-        // TODO: Especially not of DVector inside of AbstractMatrix.
-        Vector r = new DVector(rows());
-        long n = rows();
-        for (int row = 0; row < n; row++) {
-            r.set(row, f.apply(rowAsVector(row)));
+    public Matrix aggregateRows(final MatrixAggregation f) {
+        return aggregateRows(f, newInstance(rows, 1));
+    }
+
+    @Override
+    public Matrix aggregateRows(final MatrixAggregation f, Matrix result) {
+        Preconditions.checkArgument(result.rows() == rows && result.cols() == 1);
+        for (int row = 0; row < rows; row++) {
+            result.set(row, 1, f.apply(getRow(row)));
         }
-        return r;
+        return result;
     }
 
     @Override
@@ -131,19 +131,10 @@ public abstract class AbstractMatrix implements Matrix {
         Utils.checkShapeMatrixMatrixMult(this, B, C);
         for (int row = 0; row < C.rows(); row++) {
             for (int col = 0; col < C.cols(); col++) {
-                C.set(row, col, this.rowAsVector(row).dot(B.colAsVector(col)));
+                C.set(row, col, this.getRow(row).dot(B.getCol(col)));
             }
         }
         return C;
-    }
-
-    @Override
-    public Vector mul(Vector b, Vector c) {
-        Utils.checkShapeMatrixVectorMult(this, b, c);
-        for (int i = 0; i < c.length(); i++) {
-            c.set(i, this.rowAsVector(i).dot(b));
-        }
-        return c;
     }
 
     @Override
@@ -233,12 +224,12 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public Matrix addVectorToRows(final Vector v) {
+    public Matrix addVectorToRows(final Matrix v) {
         return addVectorToRows(v, newInstance(rows, cols));
     }
 
     @Override
-    public Matrix addVectorToRows(Vector v, Matrix B) {
+    public Matrix addVectorToRows(Matrix v, Matrix B) {
         Utils.checkApplyVectorToRows(this, v, B);
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
@@ -249,12 +240,12 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
-    public Matrix addVectorToCols(final Vector v) {
+    public Matrix addVectorToCols(final Matrix v) {
         return addVectorToCols(v, newInstance(rows, cols));
     }
 
     @Override
-    public Matrix addVectorToCols(Vector v, Matrix B) {
+    public Matrix addVectorToCols(Matrix v, Matrix B) {
         Utils.checkApplyVectorToCols(this, v, B);
         for (int col = 0; col < cols; col++) {
             for (int row = 0; row < rows; row++) {
@@ -301,7 +292,110 @@ public abstract class AbstractMatrix implements Matrix {
         return this;
     }
 
-    // ---------------------------------------------------
+    @Override
+    public Matrix copy(long rows, long cols) {
+        Matrix result = newInstance(rows, cols);
+        for (int row = 0; row < Math.min(this.rows, rows); row++) {
+            for (int col = 0; col < Math.min(this.cols, cols); col++) {
+                result.set(row, col, this.get(row, col));
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public double sum() {
+        double sum = 0;
+        for (int row = 0; row < row; row++) {
+            for (int col = 0; col < cols; col++) {
+                sum += this.get(row, col);
+            }
+        }
+        return sum;
+    }
+
+    @Override
+    public double norm(int p) {
+        double norm = 0;
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                norm += Math.pow(this.get(row, col), p);
+            }
+        }
+        return Math.pow(norm, 1./p);
+    }
+
+    @Override
+    public double dot(Matrix B) {
+        double result = 0;
+        if(this.layout == Layout.ROW_LAYOUT) {
+            Preconditions.checkArgument(rows == 1);
+            Preconditions.checkArgument(B.layout() == Layout.ROW_LAYOUT);
+            Preconditions.checkArgument(B.rows() == 1);
+            Preconditions.checkArgument(cols == B.cols());
+            for (int col = 0; col < cols; col++) {
+                result += this.get(col) * B.get(col);
+            }
+        }
+        else if(this.layout == Layout.COLUMN_LAYOUT) {
+            Preconditions.checkArgument(cols == 1);
+            Preconditions.checkArgument(B.layout() == Layout.COLUMN_LAYOUT);
+            Preconditions.checkArgument(B.cols() == 1);
+            Preconditions.checkArgument(rows == B.rows());
+            for (int row = 0; row < rows; row++) {
+                result += this.get(row) * B.get(row);
+            }
+        }
+        else {
+            throw new IllegalStateException("Unknown layout: " + layout.name());
+        }
+        return result;
+    }
+
+    @Override
+    public Matrix concat(Matrix B) {
+        if(this.layout == Layout.ROW_LAYOUT) {
+            Preconditions.checkArgument(cols == B.cols());
+            return concat(B, newInstance(rows + B.rows(), cols));
+        }
+        else if(this.layout == Layout.COLUMN_LAYOUT) {
+            Preconditions.checkArgument(rows == B.rows());
+            return concat(B, newInstance(rows, B.cols() + cols));
+        }
+        else {
+            throw new IllegalStateException("Unknown layout: " + layout.name());
+        }
+    }
+
+    @Override
+    public Matrix concat(Matrix B, Matrix C) {
+        if(this.layout == Layout.ROW_LAYOUT) {
+            Preconditions.checkArgument(cols == B.cols());
+            Preconditions.checkArgument(C.rows() == rows + B.rows() && C.cols() == cols);
+            for (int row = 0; row < C.rows(); row++) {
+                for (int col = 0; col < cols; col++) {
+                    double val = row < rows ? this.get(row, col) : B.get(row, col);
+                    C.set(row, col, val);
+                }
+            }
+        }
+        else if(this.layout == Layout.COLUMN_LAYOUT) {
+            Preconditions.checkArgument(rows == B.rows());
+            Preconditions.checkArgument(C.rows() == rows && C.cols() == cols + B.cols());
+            for (int row = 0; row < C.rows(); row++) {
+                for (int col = 0; col < cols; col++) {
+                    double val = col < cols ? this.get(row, col) : B.get(row, col);
+                    C.set(row, col, val);
+                }
+            }
+        }
+        else {
+            throw new IllegalStateException("Unknown layout: " + layout.name());
+        }
+        return C;
+    }
+
+// ---------------------------------------------------
     // Inner Classes.
     // ---------------------------------------------------
 
@@ -349,20 +443,20 @@ public abstract class AbstractMatrix implements Matrix {
         @Override
         public double value(final long col) { return target.get(currentRow, col); }
 
-        protected Vector getAsVector(int from, int size, Vector result) {
+        protected Matrix get(int from, int size, Matrix result) {
             Preconditions.checkArgument(from + size <= target.cols());
-            Preconditions.checkArgument(result.length() == size);
+            Preconditions.checkArgument(result.rows() == 1 && result.cols() == size);
             for(int i = from; i - from < size; i++) {
-                result.set(i, target.get(currentRow, i));
+                result.set(0, i, target.get(currentRow, i));
             }
             return result;
         }
 
         @Override
-        public abstract Vector asVector();
+        public abstract Matrix get();
 
         @Override
-        public abstract Vector asVector(int from, int size);
+        public abstract Matrix get(int from, int size);
 
         @Override
         public void reset() {

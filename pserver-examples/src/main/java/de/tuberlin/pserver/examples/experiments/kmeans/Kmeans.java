@@ -1,17 +1,16 @@
 package de.tuberlin.pserver.examples.experiments.kmeans;
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.controlflow.iteration.Iteration;
+import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
+import de.tuberlin.pserver.dsl.controlflow.loop.Loop;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.dsl.state.GlobalScope;
-import de.tuberlin.pserver.dsl.state.RemoteUpdate;
-import de.tuberlin.pserver.dsl.state.SharedState;
-import de.tuberlin.pserver.dsl.state.StateMerger;
+import de.tuberlin.pserver.dsl.state.annotations.State;
+import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
+import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.dense.DMatrix;
-import de.tuberlin.pserver.math.vector.Vector;
-import de.tuberlin.pserver.math.vector.dense.DVector;
+import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
 import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.runtime.filesystem.record.config.RowRecordFormatConfig;
 import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
@@ -22,13 +21,12 @@ public class Kmeans extends MLProgram {
 
     private static final long ROWS = 1000;
     private static final long COLS = 2;
-    private static final int K = 3;
+    private static final int K = 2;
 
     // loaded by pserver
-    private static final String FILE = "datasets/stripes3.csv";
+    private static final String FILE = "datasets/stripes2.csv";
 
-
-    @SharedState(
+    @State(
             globalScope = GlobalScope.PARTITIONED,
             rows = ROWS,
             cols = COLS,
@@ -38,7 +36,7 @@ public class Kmeans extends MLProgram {
     )
     public Matrix matrix;
 
-    @SharedState(
+    @State(
             globalScope = GlobalScope.REPLICATED,
             rows = K,
             cols = COLS + 1,
@@ -47,77 +45,84 @@ public class Kmeans extends MLProgram {
     public Matrix centroidsUpdate;
 
     @StateMerger(stateObjects = "centroidsUpdate")
-    public final MatrixUpdateMerger centroidsUpdateMerger = (i, j, val, remoteVal) -> val + remoteVal;
+    public final MatrixUpdateMerger centroidsUpdateMerger = (i, j, val, remoteVal) -> {
+        System.out.println("called! i: "+i+", j: "+j+", val: "+val+", remoteVal: "+remoteVal);
+        return val + remoteVal;
+    };
 
 
-    @Override
-    public void define(Program program) {
+    @Unit
+    public void main(final Program program) {
 
         Random rand = new Random(42);
         double[] data = new double[(int)(K * COLS)];
         for (int i = 0; i < K * COLS; i++) {
             data[i] = rand.nextDouble();
         }
-        final Matrix centroids = new DMatrix(K, COLS, data);
-
-
-        program.initialize(() -> {
-            for (int i = 0; i < K; i++) {
-                int nodeId = slotContext.programContext.runtimeContext.nodeID;
-                System.out.println("centroid[node:"+nodeId+",row:"+i+"]="+centroids.rowAsVector(i));
-            }
-        });
-
+        final Matrix centroids = new Dense64Matrix(K, COLS, data);
 
 
         program.process(() -> {
 
-            CF.iterate().exe(10, (iteration) -> {
+            centroidsUpdate.assign(0);
+
+            CF.loop().sync(Loop.GLOBAL).exe(10, (iteration) -> {
+                int nodeId = slotContext.runtimeContext.nodeID;
+
+                // BEGIN: PULL MODEL FROM OTHER NODES AND MERGE
+                System.out.println(nodeId + ": pre pull centroidsUpdate: " + centroidsUpdate);
+                DF.pullUpdate();
+                System.out.println(nodeId + ": post pull centroidsUpdate: " + centroidsUpdate);
+                for (int i = 0; i < K; i++) {
+                    if (centroidsUpdate.get(i, COLS) > 0) {
+                        Matrix update = centroidsUpdate.getRow(i, 0, COLS);
+                        if (centroidsUpdate.get(i, COLS) > 0) {
+                            centroids.assignRow(i, update.scale(1. / centroidsUpdate.get(i, COLS), update));
+                        }
+                    }
+                }
+                centroidsUpdate.assign(0);
+                // END: PULL MODEL FROM OTHER NODES AND MERGE
+
+                // BEGIN: STANDARD KMEANS ON LOCAL PARTITION
                 Matrix.RowIterator iter = matrix.rowIterator();
-                int row = 0;
-                while(iter.hasNext()) {
-                    Vector point = iter.asVector();
+                while (iter.hasNext()) {
+                    Matrix point = iter.get();
                     iter.next();
                     double closestDistance = Double.MAX_VALUE;
                     long closestCentroidId = -1;
                     for (long centroidId = 0; centroidId < K; centroidId++) {
-                        Vector centroid = centroids.rowAsVector(centroidId);
-                        Vector diff = centroid.sub(point);
+                        Matrix centroid = centroids.getRow(centroidId);
+                        Matrix diff = centroid.sub(point);
                         double distance = diff.norm(2);
                         if (distance < closestDistance) {
                             closestDistance = distance;
                             closestCentroidId = centroidId;
                         }
                     }
-                    Vector one = new DVector(1, new double[]{1});
-                    Vector updateDelta = point.concat(one);
-                    Vector update = centroidsUpdate.rowAsVector(closestCentroidId);
-                    centroidsUpdate.assignRow(closestCentroidId, update.add(updateDelta));
+                    Matrix updateDelta = point.copy(1, COLS + 1);
+                    updateDelta.set(0, COLS, 1);
+                    centroidsUpdate.assignRow(closestCentroidId, centroidsUpdate.getRow(closestCentroidId).add(updateDelta));
                 }
+                // END: STANDARD KMEANS ON LOCAL PARTITION
+
                 DF.publishUpdate();
-                DF.pullUpdate();
-                for (int i = 0; i < K; i++) {
-                    if(centroidsUpdate.get(i, COLS) > 0) {
-                        centroids.assignRow(i, centroidsUpdate.rowAsVector(i, 0, COLS).div(centroidsUpdate.get(i, COLS)));
-                    }
-                }
-                for (int i = 0; i < K; i++) {
-                    int nodeId = slotContext.programContext.runtimeContext.nodeID;
-                    System.out.println("centroid[node:"+nodeId+",row:"+i+"]="+centroids.rowAsVector(i));
-                }
             });
 
-        });
+        }).postProcess(() -> {
 
-        program.postProcess(() -> {
             for (int i = 0; i < K; i++) {
-                int nodeId = slotContext.programContext.runtimeContext.nodeID;
-                System.out.println("centroid[node:"+nodeId+",row:"+i+"]="+centroids.rowAsVector(i));
+                int nodeId = slotContext.runtimeContext.nodeID;
+                System.out.println("centroid[node:" + nodeId + ",row:" + i + "]=" + centroids.getRow(i));
             }
+
         });
 
     }
 
+    // ---------------------------------------------------
+    // Entry Point.
+    // ---------------------------------------------------
     public static void main(String[] args) {
         local();
     }
@@ -125,12 +130,12 @@ public class Kmeans extends MLProgram {
     public static void cluster() {
         System.setProperty("pserver.profile", "wally");
         PServerExecutor.DISTRIBUTED
-                .run(Kmeans.class, 1)
+                .run(Kmeans.class, 4)
                 .done();
     }
 
     public static void local() {
-        System.setProperty("simulation.numNodes", "1");
+        System.setProperty("simulation.numNodes", "2");
         PServerExecutor.LOCAL
                 .run(Kmeans.class, 1)
                 .done();

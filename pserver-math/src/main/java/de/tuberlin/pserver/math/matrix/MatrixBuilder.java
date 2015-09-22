@@ -4,8 +4,8 @@ package de.tuberlin.pserver.math.matrix;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.math.matrix.dense.DMatrix;
-import de.tuberlin.pserver.math.matrix.sparse.SMatrix;
+import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
+import de.tuberlin.pserver.math.matrix.sparse.Sparse64Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
 
 public final class MatrixBuilder {
@@ -58,12 +58,12 @@ public final class MatrixBuilder {
     public Matrix build() {
         switch (format) {
             case SPARSE_FORMAT:
-                    return new SMatrix(rows, cols, layout);
+                    return new Sparse64Matrix(rows, cols, layout);
             case DENSE_FORMAT:
                     if (data == null)
-                        return new DMatrix(rows, cols, new double[Utils.toInt(rows * cols)], layout);
+                        return new Dense64Matrix(rows, cols, new double[Utils.toInt(rows * cols)], layout);
                     else
-                        return new DMatrix(rows, cols, data, layout);
+                        return new Dense64Matrix(rows, cols, data, layout);
         }
         throw new IllegalStateException();
     }

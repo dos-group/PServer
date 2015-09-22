@@ -7,9 +7,7 @@ import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
-import de.tuberlin.pserver.math.utils.VectorFunction;
-import de.tuberlin.pserver.math.vector.Vector;
-import de.tuberlin.pserver.math.vector.VectorBuilder;
+import de.tuberlin.pserver.math.utils.MatrixAggregation;
 import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.SlotContext;
@@ -54,7 +52,7 @@ public class DistributedMatrix extends AbstractMatrix {
 
         this.slotContext    = Preconditions.checkNotNull(slotContext);
         this.nodeDOP        = slotContext.programContext.nodeDOP;
-        this.nodeID         = slotContext.programContext.runtimeContext.nodeID;
+        this.nodeID         = slotContext.runtimeContext.nodeID;
         this.partitionType  = Preconditions.checkNotNull(partitionType);
         this.shape          = createShape(rows, cols);
         this.format         = format;
@@ -89,25 +87,21 @@ public class DistributedMatrix extends AbstractMatrix {
 
     @Override public void set(long row, long col, double value) { matrix.set(translateRow(row), translateCol(col), value); }
 
-    @Override public Vector rowAsVector() { return matrix.rowAsVector(); }
+    @Override public Matrix getRow(long row) { return matrix.getRow(translateRow(row)); }
 
-    @Override public Vector rowAsVector(long row) { return matrix.rowAsVector(translateRow(row)); }
+    @Override public Matrix getRow(long row, long from, long to) { return matrix.getRow(translateRow(row), from, to); }
 
-    @Override public Vector rowAsVector(long row, long from, long to) { return matrix.rowAsVector(translateRow(row), from, to); }
+    @Override public Matrix getCol(long col) { return matrix.getCol(translateCol(col)); }
 
-    @Override public Vector colAsVector() { return matrix.colAsVector(); }
-
-    @Override public Vector colAsVector(long col) { return matrix.colAsVector(translateCol(col)); }
-
-    @Override public Vector colAsVector(long col, long from, long to) { return matrix.colAsVector(translateCol(col), from, to); }
+    @Override public Matrix getCol(long col, long from, long to) { return matrix.getCol(translateCol(col), from, to); }
 
     @Override public Matrix assign(Matrix m) { return matrix.assign(m); }
 
     @Override public Matrix assign(double v) { return matrix.assign(v); }
 
-    @Override public Matrix assignRow(long row, Vector v) { return matrix.assignRow(translateRow(row), v); }
+    @Override public Matrix assignRow(long row, Matrix v) { return matrix.assignRow(translateRow(row), v); }
 
-    @Override public Matrix assignColumn(long col, Vector v) { return matrix.assignColumn(translateCol(col), v); }
+    @Override public Matrix assignColumn(long col, Matrix v) { return matrix.assignColumn(translateCol(col), v); }
 
     @Override public Matrix copy() { return new DistributedMatrix(this); }
 
@@ -139,31 +133,31 @@ public class DistributedMatrix extends AbstractMatrix {
     // Distributed Operations - Synchronous!
     // ---------------------------------------------------
 
-    public Vector aggregateRows(final VectorFunction f) {
+    public Matrix aggregateRows(final MatrixAggregation f) {
         switch (partitionType) {
             case ROW_PARTITIONED: {
 
-                final Vector partialAgg = new VectorBuilder().dimension(shape.rows).layout(layout).format(format).build();
-                final Vector totalAgg = new VectorBuilder().dimension(rows).layout(layout).format(format).build();
+                final Matrix partialAgg = new MatrixBuilder().dimension(1, shape.rows).layout(layout).format(format).build();
+                final Matrix totalAgg = new MatrixBuilder().dimension(1, rows).layout(layout).format(format).build();
                 final RowIterator iter = rowIterator();
                 while(iter.hasNext()) {
                     iter.next();
                     final int row = iter.rowNum();
-                    final double value = f.apply(rowAsVector(row));
-                    partialAgg.set(row - shape.rowOffset, value);
-                    totalAgg.set(row, value);
+                    final double value = f.apply(getRow(row));
+                    partialAgg.set(0, row - shape.rowOffset, value);
+                    totalAgg.set(0, row, value);
                 }
 
-                slotContext.programContext.runtimeContext.dataManager.pushTo("rowAgg", partialAgg);
+                slotContext.runtimeContext.dataManager.pushTo("rowAgg", partialAgg);
                 final int n = slotContext.programContext.nodeDOP - 1;
-                slotContext.programContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "rowAgg",
+                slotContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "rowAgg",
                         new DataManager.DataEventHandler() {
                             @Override
                             public void handleDataEvent(int srcNodeID, Object value) {
-                                final Vector remotePartialAgg = (Vector)value;
+                                final Matrix remotePartialAgg = (Matrix)value;
                                 final long offset = rows / slotContext.programContext.nodeDOP * srcNodeID;
-                                for (int i = 0; i < remotePartialAgg.length(); ++i)
-                                   totalAgg.set(offset + i, remotePartialAgg.get(i));
+                                for (int i = 0; i < remotePartialAgg.rows(); ++i)
+                                   totalAgg.set(0, offset + i, remotePartialAgg.get(0, i));
                             }
                         }
                 );
@@ -181,9 +175,9 @@ public class DistributedMatrix extends AbstractMatrix {
         switch (partitionType) {
             case ROW_PARTITIONED: {
                 Matrix partialMatrix = matrix.subMatrix(shape.rowOffset, shape.colOffset, shape.rows, shape.cols);
-                slotContext.programContext.runtimeContext.dataManager.pushTo("partialMatrix", partialMatrix);
+                slotContext.runtimeContext.dataManager.pushTo("partialMatrix", partialMatrix);
                 final int n = slotContext.programContext.nodeDOP - 1;
-                slotContext.programContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "partialMatrix",
+                slotContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "partialMatrix",
                         new DataManager.DataEventHandler() {
                             @Override
                             public void handleDataEvent(int srcNodeID, Object value) {
@@ -240,8 +234,8 @@ public class DistributedMatrix extends AbstractMatrix {
             @Override public void next() { iter.next(); }
             @Override public void nextRandom() { iter.nextRandom(); }
             @Override public double value(long col) { return iter.value(col); }
-            @Override public Vector asVector() { return iter.asVector(); }
-            @Override public Vector asVector(int from, int size) { return iter.asVector(from, size); }
+            @Override public Matrix get() { return iter.get(); }
+            @Override public Matrix get(int from, int size) { return iter.get(from, size); }
             @Override public void reset() { iter.reset(); }
             @Override public long rows() { return iter.rows(); }
             @Override public long cols() { return iter.cols(); }

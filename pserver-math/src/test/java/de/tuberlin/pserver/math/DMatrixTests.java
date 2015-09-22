@@ -2,9 +2,8 @@ package de.tuberlin.pserver.math;
 
 import de.tuberlin.pserver.math.generators.BufferGenerator;
 import de.tuberlin.pserver.math.generators.MatrixGenerator;
-import de.tuberlin.pserver.math.generators.VectorGenerator;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
 import org.junit.Test;
 
 public class DMatrixTests {
@@ -53,12 +52,12 @@ public class DMatrixTests {
             // naive case: get rows from rows-layout
             double[] rowData = new double[cols];
             System.arraycopy(dataRowLayout, i * cols, rowData, 0, cols);
-            Vector rowVec = matRowLayout.rowAsVector(i);
-            assert(rowVec.length() == cols);
+            Matrix rowVec = matRowLayout.getRow(i);
+            assert(rowVec.rows() == 1 && rowVec.cols() == cols);
             assert(java.util.Arrays.equals(rowVec.toArray(), rowData));
             // more difficult case: get rows from cols-layout
-            Vector rowVecFromColLayout = matColumnLayout.rowAsVector(i);
-            assert(rowVecFromColLayout.length() == cols);
+            Matrix rowVecFromColLayout = matColumnLayout.getRow(i);
+            assert(rowVecFromColLayout.rows() == 1 && rowVecFromColLayout.cols() == cols);
             for(int j = 0; j < cols; j++) {
                 assert(rowVecFromColLayout.get(j) == matColumnLayout.get(i,j));
             }
@@ -67,12 +66,12 @@ public class DMatrixTests {
             // naive case: get cols from cols-layout
             double[] colData = new double[rows];
             System.arraycopy(dataColumnLayout, i * rows, colData, 0, rows);
-            Vector colVec = matColumnLayout.colAsVector(i);
-            assert(colVec.length() == rows);
+            Matrix colVec = matColumnLayout.getCol(i);
+            assert(colVec.cols() == 1 && colVec.rows() == rows);
             assert(java.util.Arrays.equals(colVec.toArray(), colData));
             // more difficult case: get rows from cols-layout
-            Vector colVecFromRowLayout = matRowLayout.colAsVector(i);
-            assert(colVecFromRowLayout.length() == rows);
+            Matrix colVecFromRowLayout = matRowLayout.getCol(i);
+            assert(colVecFromRowLayout.cols() == 1 && colVecFromRowLayout.rows() == rows);
             for(int j = 0; j < rows; j++) {
                 assert(colVecFromRowLayout.get(j) == matRowLayout.get(j,i));
             }
@@ -94,34 +93,34 @@ public class DMatrixTests {
     public void checkRowColumnAssigns(int rows, int cols, Matrix mat) {
         double[][] rowsRowLayout = new double[rows][cols];
         for(int i = 0; i < rows; i++) {
-            rowsRowLayout[i] = mat.rowAsVector(i).toArray();
+            rowsRowLayout[i] = mat.getRow(i).toArray();
         }
         double[][] colsRowLayout = new double[cols][rows];
         for(int i = 0; i < cols; i++) {
-            colsRowLayout[i] = mat.colAsVector(i).toArray();
+            colsRowLayout[i] = mat.getCol(i).toArray();
         }
         for(int row = 0; row < rows; row++) {
-            Vector vec = VectorGenerator.RandomDVector(cols);
+            Matrix vec = MatrixGenerator.RandomDMatrix(1, cols);
             mat.assignRow(row, vec);
             rowsRowLayout[row] = vec.toArray();
             for(int i = 0; i < cols; i++) {
                 colsRowLayout[i][row] = vec.toArray()[i];
-                assert(java.util.Arrays.equals(colsRowLayout[i], mat.colAsVector(i).toArray()));
+                assert(java.util.Arrays.equals(colsRowLayout[i], mat.getCol(i).toArray()));
             }
             for(int i = 0; i < rows; i++) {
-                assert(java.util.Arrays.equals(rowsRowLayout[i], mat.rowAsVector(i).toArray()));
+                assert(java.util.Arrays.equals(rowsRowLayout[i], mat.getRow(i).toArray()));
             }
         }
         for(int col = 0; col < cols; col++) {
-            Vector vec = VectorGenerator.RandomDVector(rows);
+            Matrix vec = MatrixGenerator.RandomDMatrix(rows, 1);
             mat.assignColumn(col, vec);
             colsRowLayout[col] = vec.toArray();
             for(int i = 0; i < rows; i++) {
                 rowsRowLayout[i][col] = vec.toArray()[i];
-                assert(java.util.Arrays.equals(rowsRowLayout[i], mat.rowAsVector(i).toArray()));
+                assert(java.util.Arrays.equals(rowsRowLayout[i], mat.getRow(i).toArray()));
             }
             for(int i = 0; i < cols; i++) {
-                assert(java.util.Arrays.equals(colsRowLayout[i], mat.colAsVector(i).toArray()));
+                assert(java.util.Arrays.equals(colsRowLayout[i], mat.getCol(i).toArray()));
             }
         }
     }

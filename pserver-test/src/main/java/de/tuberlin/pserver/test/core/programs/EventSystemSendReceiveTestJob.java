@@ -3,6 +3,7 @@ package de.tuberlin.pserver.test.core.programs;
 
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
+import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.runtime.MLProgram;
 
@@ -12,14 +13,14 @@ public class EventSystemSendReceiveTestJob extends MLProgram {
 
     public static final int NUM_MSG = 20000;
 
-    @Override
-    public void define(final Program program) {
+    @Unit(at = "0")
+    public void pingNode(final Program program) {
 
-        final NetManager netManager = slotContext.programContext.runtimeContext.netManager;
+        final NetManager netManager = slotContext.runtimeContext.netManager;
 
-        program.process(() -> {
+        program.process(() ->
 
-            CF.select().node(0).slot(0).exe(() -> {
+            CF.serial().exe(() -> {
 
                 final CyclicBarrier barrier = new CyclicBarrier(2);
 
@@ -43,11 +44,19 @@ public class EventSystemSendReceiveTestJob extends MLProgram {
                 }
 
                 System.out.println("-- FINISH NODE 0");
-            });
+            })
+        );
+    }
 
-            // ---------------------------------------------------
 
-            CF.select().node(1).slot(0).exe(() -> {
+    @Unit(at = "1")
+    public void pongNode(final Program program) {
+
+        final NetManager netManager = slotContext.runtimeContext.netManager;
+
+        program.process(() ->
+
+            CF.serial().exe(() -> {
 
                 final CyclicBarrier barrier = new CyclicBarrier(2);
 
@@ -67,7 +76,7 @@ public class EventSystemSendReceiveTestJob extends MLProgram {
                 }
 
                 System.out.println("-- FINISH NODE 1");
-            });
-        });
+            })
+        );
     }
 }

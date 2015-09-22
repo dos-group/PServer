@@ -1,20 +1,18 @@
 package de.tuberlin.pserver.ml.optimization;
 
-import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.math.vector.Vector;
-import de.tuberlin.pserver.math.vector.dense.DVector;
-import de.tuberlin.pserver.ml.common.LabeledVector;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.ml.common.LabeledMatrix;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public interface LossFunction {
 
-    public abstract double loss(final LabeledVector v, final Vector weights);
+    public abstract double loss(final LabeledMatrix v, final Matrix weights);
 
-    public abstract Vector gradient(final LabeledVector v, final Vector weights);
+    public abstract Matrix gradient(final LabeledMatrix v, final Matrix weights);
 
-    public abstract Pair<Double, Vector> lossAndGradient(final LabeledVector v, final Vector weights);
+    public abstract Pair<Double, Matrix> lossAndGradient(final LabeledMatrix v, final Matrix weights);
 
     // ---------------------------------------------------
 
@@ -34,27 +32,27 @@ public interface LossFunction {
         }
 
         @Override
-        public double loss(final LabeledVector v, final Vector weights) {
+        public double loss(final LabeledMatrix v, final Matrix weights) {
             return lossAndGradient(v, weights).getLeft();
         }
 
         @Override
-        public Vector gradient(final LabeledVector v, final Vector weights) {
+        public Matrix gradient(final LabeledMatrix v, final Matrix weights) {
             return lossAndGradient(v, weights).getRight();
         }
 
         @Override
-        public Pair<Double, Vector> lossAndGradient(LabeledVector v, Vector weights) {
+        public Pair<Double, Matrix> lossAndGradient(LabeledMatrix v, Matrix weights) {
 
-            double prediction = predictionFunction.predict(v.vector, weights);
+            double prediction = predictionFunction.predict(v.matrix, weights);
 
             double loss = partialLossFunction.loss(prediction, v.label);
 
             double lossDerivative = partialLossFunction.derivative(prediction, v.label);
 
-            Vector gradient = new DVector((DVector)v.vector, Layout.COLUMN_LAYOUT); // predictionFunction.gradient(v.vector, weights)
+            Matrix gradient = v.matrix.copy(); // predictionFunction.gradient(v.vector, weights)
 
-            gradient.mul(lossDerivative);
+            gradient.scale(lossDerivative, gradient);
 
             return Pair.of(loss, gradient);
         }

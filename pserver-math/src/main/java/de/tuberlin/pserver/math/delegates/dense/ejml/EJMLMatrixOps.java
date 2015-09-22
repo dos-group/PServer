@@ -2,12 +2,10 @@ package de.tuberlin.pserver.math.delegates.dense.ejml;
 
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.vector.Vector;
-import org.ejml.alg.dense.mult.MatrixVectorMult;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 
-public final class EJMLMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
+public final class EJMLMatrixOps implements LibraryMatrixOps<Matrix> {
 
     // ---------------------------------------------------
     // Public Methods.
@@ -37,15 +35,6 @@ public final class EJMLMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
         final DenseMatrix64F b = convertDMatrixToDenseMatrix64F(B);
         final DenseMatrix64F c = convertDMatrixToDenseMatrix64F(C);
         CommonOps.mult(a, b, c);
-        return C;
-    }
-
-    @Override
-    public Vector mul(final Matrix A, final Vector B, final Vector C) {
-        final DenseMatrix64F a = convertDMatrixToDenseMatrix64F(A);
-        final DenseMatrix64F b = EJMLVectorOps.convertDVectorToDenseVector64F(B);
-        final DenseMatrix64F c = EJMLVectorOps.convertDVectorToDenseVector64F(C);
-        MatrixVectorMult.mult(a, b, c);
         return C;
     }
 

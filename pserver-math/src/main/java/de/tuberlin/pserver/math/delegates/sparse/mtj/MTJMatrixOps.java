@@ -2,10 +2,9 @@ package de.tuberlin.pserver.math.delegates.sparse.mtj;
 
 import de.tuberlin.pserver.math.delegates.LibraryMatrixOps;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.vector.Vector;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-public class MTJMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
+public class MTJMatrixOps implements LibraryMatrixOps<Matrix> {
 
     @Override
     public Matrix add(Matrix A, Matrix B, Matrix C) {
@@ -19,11 +18,6 @@ public class MTJMatrixOps implements LibraryMatrixOps<Matrix, Vector> {
 
     @Override
     public Matrix mul(Matrix A, Matrix B, Matrix C) {
-        throw new NotImplementedException();
-    }
-
-    @Override
-    public Vector mul(Matrix A, Vector b, Vector c) {
         throw new NotImplementedException();
     }
 

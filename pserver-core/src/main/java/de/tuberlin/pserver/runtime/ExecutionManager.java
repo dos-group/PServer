@@ -5,16 +5,15 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.ds.NestedIntervalTree;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.dsl.controlflow.CFStatement;
+import de.tuberlin.pserver.dsl.controlflow.base.CFStatement;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.types.DistributedMatrix;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class ExecutionManager {
@@ -156,7 +155,12 @@ public final class ExecutionManager {
 
     public synchronized SlotContext getSlotContext() {
 
-        return programContextRef.get().threadIDSlotCtxMap.get(Thread.currentThread().getId());
+        SlotContext sc = programContextRef.get().threadIDSlotCtxMap.get(Thread.currentThread().getId());
+
+        while (sc == null)
+            sc = programContextRef.get().threadIDSlotCtxMap.get(Thread.currentThread().getId());
+
+        return sc;
     }
 
     // ---------------------------------------------------
@@ -223,30 +227,31 @@ public final class ExecutionManager {
 
         assert low == high;
 
-        final NestedIntervalTree.Interval range = new NestedIntervalTree.Interval(low, high);
+        final NestedIntervalTree.Interval slotRange = new NestedIntervalTree.Interval(low, high);
 
-        if (!slotAssignment.exist(range)) {
+        if (!slotAssignment.exist(slotRange)) {
 
-            if (!slotAssignment.isValid(range)) {
-                throw new IllegalStateException("(1) Not a valid slot range.\n" + slotAssignment.toString() + " ==>> " + range);
+            if (!slotAssignment.isValid(slotRange)) {
+                throw new IllegalStateException("(1) Not a valid slot slotRange.\n" + slotAssignment.toString() + " ==>> " + slotRange);
             }
 
-            final SlotGroupAllocation sa = new SlotGroupAllocation(range);
+            final SlotGroupAllocation sa = new SlotGroupAllocation(slotRange);
 
-            if (!slotAssignment.put(range, sa))
+            if (!slotAssignment.put(slotRange, sa))
                 throw new IllegalStateException();
 
             return sa;
 
         } else {
 
-            final int currentSlotID = getSlotContext().slotID;
+            final SlotGroup currentSlotGroup = getSlotContext().getActiveSlotGroup();
 
-            if (!range.contains(currentSlotID) || !slotAssignment.isValid(range)) {
-                throw new IllegalStateException("(2) Not a valid slot range.\n" + slotAssignment.toString() + " ==>> " + range);
+            // TODO: Check also intersection between currentSlotGroup and slotRange ?
+            if (!currentSlotGroup.asInterval().contains(slotRange)) {
+                throw new IllegalStateException("(2) Not a valid slot slotRange.\n" + slotAssignment.toString() + " ==>> " + slotRange);
             }
 
-            return slotAssignment.get(range).getRight();
+            return slotAssignment.get(slotRange).getRight();
         }
     }
 
@@ -274,7 +279,6 @@ public final class ExecutionManager {
         try {
             final SlotGroup sg = getActiveSlotGroup();
             sg.sync(slotContext);
-            //slotContext.programContext.localSyncBarrier.await();
         } catch (Exception e) {
             LOG.error(e.getLocalizedMessage());
         }
@@ -295,40 +299,8 @@ public final class ExecutionManager {
         Preconditions.checkNotNull(matrix);
         final SlotContext slotContext = getSlotContext();
         final int scopeDOP = getScopeDOP();
-        final SlotGroup slotGroup = getActiveSlotGroup();
-        int startOffset, endOffset, blockSize;
-        if (matrix.getClass() == DistributedMatrix.class) {
-            final DistributedMatrix dm = (DistributedMatrix)matrix;
-            blockSize   = (int) dm.partitionNumRows() / scopeDOP;
-            startOffset = (int)(dm.partitionBaseRowOffset() + (slotContext.slotID * blockSize));
-            endOffset   = startOffset + blockSize - 1;
-            endOffset   = (slotContext.slotID == slotGroup.maxSlotID)
-                    ? endOffset + (int) dm.partitionNumRows() % scopeDOP
-                    : endOffset;
-        } else {
-            blockSize   = (int) matrix.rows() / scopeDOP;
-            startOffset = slotContext.slotID * blockSize;
-            endOffset   = (slotContext.slotID * blockSize + blockSize - 1);
-            endOffset   = (slotContext.slotID == slotGroup.maxSlotID)
-                    ? endOffset + (int) matrix.rows() % scopeDOP
-                    : endOffset;
-        }
-        return matrix.rowIterator(startOffset, endOffset);
-    }
-
-    public Vector.ElementIterator parallelVectorElementIterator(final Vector vector) {
-        Preconditions.checkNotNull(vector);
-        final SlotContext slotContext = getSlotContext();
-        final int scopeDOP = getScopeDOP();
-        final SlotGroup slotGroup = getActiveSlotGroup();
-        int startOffset, endOffset, blockSize;
-            blockSize   = (int) vector.length() / scopeDOP;
-            startOffset = slotContext.slotID * blockSize;
-            endOffset   = (slotContext.slotID * blockSize + blockSize - 1);
-            endOffset   = (slotContext.slotID == slotGroup.maxSlotID)
-                    ? endOffset + (int) vector.length() % scopeDOP
-                    : endOffset;
-        return vector.elementIterator(startOffset, endOffset);
+        Matrix.PartitionShape shape = new MatrixByRowPartitioner(slotContext.slotID, scopeDOP, matrix.rows(), matrix.cols()).getPartitionShape();
+        return matrix.rowIterator((int) shape.rowOffset, (int) shape.rows);
     }
 
     // ---------------------------------------------------

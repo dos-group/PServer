@@ -1,10 +1,8 @@
 package de.tuberlin.pserver.math;
 
 import de.tuberlin.pserver.math.generators.MatrixGenerator;
-import de.tuberlin.pserver.math.generators.VectorGenerator;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.dense.DMatrix;
-import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 import org.junit.Test;
@@ -112,38 +110,6 @@ public class EJMLDelegationTests {
     }*/
 
     @Test
-    public void matrixVectorMultResultByReference() {
-
-        Random rand = new Random();
-
-        for(int i=0; i<1000; i++) {
-            int a = (rand.nextInt(10) + 1)*10;
-            int b = (rand.nextInt(10) + 1)*10;
-
-            Vector vec = VectorGenerator.RandomDVector(b);
-            double[] vecData = vec.toArray();
-            DenseMatrix64F ejmlVec = DenseMatrix64F.wrap(b, 1, vecData);
-
-            Matrix mat = MatrixGenerator.RandomDMatrix(a,b);
-            double[] matData = mat.toArray();
-            DenseMatrix64F ejmlMat = DenseMatrix64F.wrap(a, b, matData);
-
-            Vector res = VectorGenerator.RandomDVector(a);
-            double[] resData = res.toArray();
-            DenseMatrix64F ejmlRes = DenseMatrix64F.wrap(a, 1, resData);
-
-            CommonOps.mult(ejmlMat, ejmlVec, ejmlRes);
-            mat.mul(vec, res);
-
-            assert(mat.toArray() == matData);
-            assert(vec.toArray() == vecData);
-            assert(resData != vecData);
-            assert(java.util.Arrays.equals(resData, ejmlRes.getData()));
-
-        }
-    }
-
-    @Test
     public void matrixMatrixMult() {
 
         Random rand = new Random();
@@ -206,7 +172,7 @@ public class EJMLDelegationTests {
             int b = (rand.nextInt(10) + 1)*10;
 
             Matrix mat1 = MatrixGenerator.RandomDMatrix(a,b);
-            Matrix res = new DMatrix(b, a);
+            Matrix res = new Dense64Matrix(b, a);
 
             double[] ejmlMat1Data = new double[a*b];
             System.arraycopy(mat1.toArray(), 0, ejmlMat1Data, 0, a*b);

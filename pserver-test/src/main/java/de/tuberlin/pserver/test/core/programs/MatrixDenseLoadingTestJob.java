@@ -1,8 +1,9 @@
 package de.tuberlin.pserver.test.core.programs;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.dsl.state.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
@@ -30,8 +31,8 @@ public class MatrixDenseLoadingTestJob extends MLProgram  {
         FILE = getClass().getClassLoader().getResource("rowcolval_dataset_1000_250_shuffeled.csv").getFile();
     }
 
-    @Override
-    public void define(Program program) {
+    @Unit
+    public void main(final Program program) {
 
         if (slotContext.slotID == 0) {
             dataManager.loadAsMatrix(
@@ -49,11 +50,11 @@ public class MatrixDenseLoadingTestJob extends MLProgram  {
 
         program.process(() -> {
 
-            CF.select().slot(0).exe(() -> {
+            CF.parUnit(0).exe(() -> {
 
                 matrix = dataManager.getObject("matrix");
 
-                int nodeId = slotContext.programContext.runtimeContext.nodeID;
+                int nodeId = slotContext.runtimeContext.nodeID;
                 int numNodes = slotContext.programContext.nodeDOP;
                 MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);
                 ReusableMatrixEntry entry = new MutableMatrixEntry(-1, -1, Double.NaN);

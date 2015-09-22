@@ -2,16 +2,15 @@ package de.tuberlin.pserver.examples.experiments.tsne;
 
 import com.google.common.collect.Lists;
 import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.dsl.state.GlobalScope;
-import de.tuberlin.pserver.dsl.state.RemoteUpdate;
-import de.tuberlin.pserver.dsl.state.SharedState;
+import de.tuberlin.pserver.dsl.state.annotations.State;
+import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.tuples.Tuple2;
-import de.tuberlin.pserver.math.vector.Vector;
-import de.tuberlin.pserver.math.vector.VectorBuilder;
 import de.tuberlin.pserver.runtime.MLProgram;
 import org.apache.commons.lang3.mutable.MutableDouble;
 
@@ -44,23 +43,23 @@ public class TSNEJob extends MLProgram {
     // Fields.
     // ---------------------------------------------------
 
-    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = INPUT_COLS,
+    @State(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = INPUT_COLS,
             path = "datasets/mnist_10_X.csv", format = Format.SPARSE_FORMAT)
     public Matrix X;
 
-    @SharedState(globalScope = GlobalScope.LOGICALLY_PARTITIONED, rows = ROWS, cols = ROWS,
+    @State(globalScope = GlobalScope.LOGICALLY_PARTITIONED, rows = ROWS, cols = ROWS,
             remoteUpdate = RemoteUpdate.COLLECT_PARTITIONS_UPDATE)
     public Matrix P;
 
-    @SharedState(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = EMBEDDING_DIMENSION)
+    @State(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = EMBEDDING_DIMENSION)
     public Matrix Y;
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    @Override
-    public void define(final Program program) {
+    @Unit
+    public void main(final Program program) {
 
         program.initialize(() -> {
 
@@ -72,8 +71,8 @@ public class TSNEJob extends MLProgram {
             P.assign(binarySearch(X, TOL, PERPLEXITY));
             P.assign(P.add(P.transpose()));
 
-           // GLOBAL OPERATION !!!
-            double sumP = P.aggregateRows(Vector::sum).sum();
+           // SINGLETON OPERATION !!!
+            double sumP = P.sum();
 
             P.assign(P.scale(1 / sumP));
 
@@ -88,17 +87,17 @@ public class TSNEJob extends MLProgram {
             final Matrix gains        = new MatrixBuilder().dimension(n, d).build();
             final Matrix iY           = new MatrixBuilder().dimension(n, d).build();
             final Matrix dY           = new MatrixBuilder().dimension(n, d).build();
-            final Vector mean         = new VectorBuilder().dimension(d).build();
+            final Matrix mean         = new MatrixBuilder().dimension(1, d).build();
 
             gains.assign(1.0);
 
             final MutableDouble momentum = new MutableDouble(0.0);
 
-            CF.iterate()
+            CF.loop()
                     .exe(NUM_EPOCHS, (epoch) -> {
 
                         Y.applyOnElements(e -> Math.pow(e, 2), Y_squared);
-                        final Vector sum_Y = Y_squared.aggregateRows(Vector::sum);
+                        final Matrix sum_Y = Y_squared.aggregateRows(Matrix::sum);
                         final Matrix num = Y.mul(Y.transpose())
                                 .scale(-2)
                                 .addVectorToRows(sum_Y)
@@ -109,25 +108,25 @@ public class TSNEJob extends MLProgram {
                         num.setDiagonalsToZero(num);
 
                         // ---------------------------------------------------
-                        // (2) GLOBAL OPERATION!!!
+                        // (2) SINGLETON OPERATION!!!
                         // ---------------------------------------------------
-                        final double sumNum = num.aggregateRows(Vector::sum).sum();
+                        final double sumNum = num.sum();
 
-                        Q.assign(num.copy().scale(1.0 / sumNum));
-                        Q.assign(Q.applyOnElements(e -> Math.max(e, 1e-12)));
-                        final Matrix PQ = P.copy().sub(Q);
+                        num.scale(1.0 / sumNum, Q);
+                        Q.applyOnElements(e -> Math.max(e, 1e-12), Q);
+                        final Matrix PQ = P.sub(Q);
 
-                        CF.iterate()
+                        CF.loop()
                                 .exe(P.rows(), (i) -> {
-                                    final Vector sumVec = new VectorBuilder().dimension(d).build();
-                                    CF.iterate()
+                                    final Matrix sumVec = new MatrixBuilder().dimension(1, d).build();
+                                    CF.loop()
                                             .exe(P.cols(), (j) -> {
                                                 final Double pq = PQ.get(i, j);
                                                 final Double num_j = num.get(i, j);
                                                 sumVec.assign(
                                                         sumVec.add(
-                                                                Y.rowAsVector(i)
-                                                                        .sub(Y.rowAsVector(j))
+                                                                Y.getRow(i)
+                                                                        .sub(Y.getRow(j))
                                                                         .applyOnElements(e -> e * pq * num_j)
                                                         )
                                                 );
@@ -137,7 +136,7 @@ public class TSNEJob extends MLProgram {
 
                         momentum.setValue((epoch < 20) ? INITIAL_MOMENTUM : FINAL_MOMENTUM);
 
-                        CF.iterate()
+                        CF.loop()
                                 .exe(gains, (e, i, j, v) -> {
                                     final Double dY_j = dY.get(i, j);
                                     final Double iY_j = iY.get(i, j);
@@ -152,12 +151,12 @@ public class TSNEJob extends MLProgram {
                                         .sub(dY.applyOnElements(gains, (e1, e2) -> e1 * e2).scale(LEARNING_RATE))
                         );
 
-                        Y.assign(Y.add(iY));
+                        Y.add(iY, Y);
                         mean.assign(0.0);
                         for (int i = 0; i < Y.rows(); ++i)
-                            mean.add(Y.rowAsVector(i));
-                        mean.assign(mean.div(Y.rows()));
-                        Y.assign(Y.addVectorToRows(mean.mul(-1.0)));
+                            mean.add(Y.getRow(i));
+                        mean.scale(-1./Y.rows(), mean);
+                        Y.addVectorToRows(mean, Y);
 
                         if ((epoch + 1) % 10 == 0) {
                             double C = 0.0;
@@ -174,7 +173,7 @@ public class TSNEJob extends MLProgram {
                         if (epoch == 100)
                             P.assign(P.scale(1.0 / EARLY_EXAGGERATION));
 
-                        LOG.debug("Y: " + Y.rowAsVector().toString());
+                        LOG.debug("Y: " + Y.getRow(0).toString());
                     });
 
         }).postProcess(() -> result(Y));
@@ -191,14 +190,14 @@ public class TSNEJob extends MLProgram {
 
         final Matrix X_squared  = new MatrixBuilder().dimension(n, d).build();
         final Matrix P_tmp      = new MatrixBuilder().dimension(n, n).build();
-        final Vector beta       = new VectorBuilder().dimension(n).build();
+        final Matrix beta       = new MatrixBuilder().dimension(1, n).build();
 
         beta.assign(1.0);
 
         // compute the distances between all x_i
         X_squared.assign(X_squared.applyOnElements(e -> Math.pow(e, 2), X));
 
-        final Vector sumX = X_squared.aggregateRows(Vector::sum);
+        final Matrix sumX = X_squared.aggregateRows(Matrix::sum);
         final Matrix D = X.mul(X.transpose()).scale(-2).addVectorToRows(sumX).transpose().addVectorToRows(sumX);
 
         final double logU = Math.log(perplexity);
@@ -208,12 +207,12 @@ public class TSNEJob extends MLProgram {
             double betaMin = Double.NEGATIVE_INFINITY;
             double betaMax = Double.POSITIVE_INFINITY;
 
-            final Vector Di = D.rowAsVector(i);
+            final Matrix Di = D.getRow(i);
 
-            Tuple2<Double, Vector> hBeta = computeHBeta(Di, beta.get(i), i);
+            Tuple2<Double, Matrix> hBeta = computeHBeta(Di, beta.get(i), i);
 
             double H = hBeta._1;
-            Vector Pi = hBeta._2;
+            Matrix Pi = hBeta._2;
             // Evaluate whether the perplexity is within tolerance
 
             double HDiff = H - logU;
@@ -222,17 +221,17 @@ public class TSNEJob extends MLProgram {
             while(Math.abs(HDiff) > tol && tries++ < 50){
 
                 if (HDiff > 0){
-                    betaMin = beta.get(i);
+                    betaMin = beta.get(0, i);
                     if (Double.isInfinite(betaMax))
-                        beta.set(i, beta.get(i) * 2);
+                        beta.set(0, i, beta.get(i) * 2);
                     else
-                        beta.set(i, (beta.get(i) + betaMax) / 2);
+                        beta.set(0, i, (beta.get(i) + betaMax) / 2);
                 } else {
-                    betaMax = beta.get(i);
+                    betaMax = beta.get(0, i);
                     if (Double.isInfinite(betaMin))
-                        beta.set(i, beta.get(i) / 2);
+                        beta.set(0, i, beta.get(i) / 2);
                     else
-                        beta.set(i, (beta.get(i) + betaMin) / 2);
+                        beta.set(0, i, (beta.get(i) + betaMin) / 2);
                 }
 
                 hBeta = computeHBeta(Di, beta.get(i), i);
@@ -247,16 +246,16 @@ public class TSNEJob extends MLProgram {
         return P_tmp;
     }
 
-    private Tuple2<Double, Vector> computeHBeta(Vector d, Double beta, Long index){
-        final Vector P = new VectorBuilder().dimension(d.length()).build();
-        P.set(index, 0.0);
+    private Tuple2<Double, Matrix> computeHBeta(Matrix d, Double beta, Long index){
+        final Matrix P = new MatrixBuilder().dimension(1, d.cols()).build();
+        P.set(0, index, 0.0);
 
         // parExe over all elements i != j
-        for (long i=0; i < P.length(); ++i)
+        for (long i=0; i < P.cols(); ++i)
             if (i != index)
-                P.set(i, Math.exp(-1 * d.get(i) * beta));
+                P.set(0, i, Math.exp(-1 * d.get(i) * beta));
 
-        final Vector PD = P.copy().applyOnElements(d, (e1, e2) -> e1 * e2);
+        final Matrix PD = P.copy().applyOnElements(d, (e1, e2) -> e1 * e2);
         final double sumP = P.sum();
         final double H = Math.log(sumP) + beta * PD.sum() / sumP;
 

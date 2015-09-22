@@ -2,9 +2,10 @@ package de.tuberlin.pserver.test.core.programs;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.dsl.state.GlobalScope;
-import de.tuberlin.pserver.dsl.state.SharedState;
+import de.tuberlin.pserver.dsl.state.annotations.State;
+import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
@@ -32,8 +33,8 @@ public class MatrixSparseLoadingTestJob extends MLProgram  {
         FILE = getClass().getClassLoader().getResource("rowcolval_dataset_1000_250_shuffeled.csv").getFile();
     }
 
-    @Override
-    public void define(Program program) {
+    @Unit
+    public void main(final Program program) {
 
         if (slotContext.slotID == 0) {
             dataManager.loadAsMatrix(
@@ -51,7 +52,7 @@ public class MatrixSparseLoadingTestJob extends MLProgram  {
 
         program.process(() -> {
 
-            int nodeId = slotContext.programContext.runtimeContext.nodeID;
+            int nodeId = slotContext.runtimeContext.nodeID;
             int numNodes = slotContext.programContext.nodeDOP;
             MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);
 
@@ -104,7 +105,7 @@ public class MatrixSparseLoadingTestJob extends MLProgram  {
         private static final long COLS = 2500;
         private static final String FILE = "datasets/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
 
-        @SharedState(
+        @State(
                 globalScope = GlobalScope.PARTITIONED,
                 rows = ROWS,
                 cols = COLS,
@@ -117,7 +118,7 @@ public class MatrixSparseLoadingTestJob extends MLProgram  {
         public void define(Program program) {
             program.process(() -> {
 
-                int nodeId = slotContext.programContext.runtimeContext.nodeID;
+                int nodeId = slotContext.runtimeContext.nodeID;
                 int numNodes = slotContext.programContext.nodeDOP;
                 MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);
 

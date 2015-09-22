@@ -1,9 +1,7 @@
 package de.tuberlin.pserver.math;
 
 import de.tuberlin.pserver.math.generators.MatrixGenerator;
-import de.tuberlin.pserver.math.generators.VectorGenerator;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.vector.Vector;
 import org.junit.Test;
 
 import java.util.function.DoubleUnaryOperator;
@@ -43,11 +41,6 @@ public class ReferenceTests {
 
     public void testMatrixMatrixMultWithTargetParameter(final Matrix mat1, final Matrix mat2, final Matrix target) {
         final Matrix result = mat1.mul(mat2, target);
-        assertTrue("Matrix.mul called on object X with explicit target parameter T must return T", result == target);
-    }
-
-    public void testMatrixVectorMult(final Matrix mat, final Vector vec, final Vector target) {
-        final Vector result = mat.mul(vec, target);
         assertTrue("Matrix.mul called on object X with explicit target parameter T must return T", result == target);
     }
 
@@ -111,22 +104,22 @@ public class ReferenceTests {
         assertTrue("Matrix.applyOnElements (Element) called on object X with explicit target parameter T must return T", result == target);
     }
 
-    public void testMatrixAddVectorToRowsWithoutTargetParameter(final Matrix mat, final Vector b) {
+    public void testMatrixAddVectorToRowsWithoutTargetParameter(final Matrix mat, final Matrix b) {
         final Matrix result = mat.addVectorToRows(b);
         assertTrue("Matrix.addVectorToRows called on object X without target parameter must not return X", result != mat);
     }
 
-    public void testMatrixAddVectorToRowsWithTargetParameter(final Matrix mat, final Vector b, final Matrix target) {
+    public void testMatrixAddVectorToRowsWithTargetParameter(final Matrix mat, final Matrix b, final Matrix target) {
         final Matrix result = mat.addVectorToRows(b, target);
         assertTrue("Matrix.addVectorToRows called on object X with explicit target parameter T must return T", result == target);
     }
 
-    public void testMatrixAddVectorToColsWithoutTargetParameter(final Matrix mat, final Vector b) {
+    public void testMatrixAddVectorToColsWithoutTargetParameter(final Matrix mat, final Matrix b) {
         final Matrix result = mat.addVectorToCols(b);
         assertTrue("Matrix.addVectorToCols called on object X without target parameter must not return X", result != mat);
     }
 
-    public void testMatrixAddVectorToColsWithTargetParameter(final Matrix mat, final Vector b, final Matrix target) {
+    public void testMatrixAddVectorToColsWithTargetParameter(final Matrix mat, final Matrix b, final Matrix target) {
         final Matrix result = mat.addVectorToCols(b, target);
         assertTrue("Matrix.addVectorToCols called on object X with explicit target parameter T must return T", result == target);
     }
@@ -149,8 +142,8 @@ public class ReferenceTests {
         Matrix NO = MatrixGenerator.RandomDMatrix(n, o);
         Matrix MO = MatrixGenerator.RandomDMatrix(m, o);
 
-        Vector M = VectorGenerator.RandomDVector(m);
-        Vector N = VectorGenerator.RandomDVector(n);
+        Matrix M = MatrixGenerator.RandomDMatrix(1, m);
+        Matrix N = MatrixGenerator.RandomDMatrix(1, n);
 
         testMatrixAddWithoutTargetParameter(MN.copy(), MN.copy());
         testMatrixAddWithTargetParameter(MN.copy(), MN.copy(), MN.copy());
@@ -160,8 +153,6 @@ public class ReferenceTests {
 
         testMatrixMatrixMultWithoutTargetParameter(MM.copy(), MM.copy());
         testMatrixMatrixMultWithTargetParameter(MN.copy(), NO.copy(), MO.copy());
-
-        testMatrixVectorMult(MN.copy(), N.copy(), M.copy());
 
         testMatrixScaleWithoutTargetParameter(MN.copy(), 1.);
         testMatrixScaleWithTargetParameter(MN.copy(), 1., MN.copy());

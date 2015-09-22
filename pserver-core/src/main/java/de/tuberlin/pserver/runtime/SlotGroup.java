@@ -1,7 +1,8 @@
 package de.tuberlin.pserver.runtime;
 
 
-import de.tuberlin.pserver.dsl.SharedVar;
+import de.tuberlin.pserver.commons.ds.NestedIntervalTree;
+import de.tuberlin.pserver.dsl.dataflow.shared.SharedVar;
 
 import java.util.concurrent.CyclicBarrier;
 
@@ -53,4 +54,8 @@ public final class SlotGroup {
 
     @Override
     public String toString() { return "[" + minSlotID + ", " + maxSlotID + "]"; }
+
+    public NestedIntervalTree.Interval asInterval() {
+        return new NestedIntervalTree.Interval(minSlotID, maxSlotID);
+    }
 }

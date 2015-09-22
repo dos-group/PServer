@@ -4,14 +4,13 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.exceptions.IncompatibleShapeException;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.vector.Vector;
 
 public class Utils {
 
     public static final double DEFAULT_EPSILON = 0.001;
 
     public static int getPos(final long row, final long col, Matrix mat) {
-        return getPos(row, col, mat.getLayout(), mat.rows(), mat.cols());
+        return getPos(row, col, mat.layout(), mat.rows(), mat.cols());
     }
 
     public static int getPos(final long row, final long col, Layout layout, long numRows, long numCols) {
@@ -47,31 +46,6 @@ public class Utils {
             }
         }
         return data;
-    }
-
-    /**
-     * Checks if two vectors are of the same shape.
-     * @param A of shape m
-     * @param B of shape n
-     * @throws IncompatibleShapeException if not m == n
-     */
-    public static void checkShapeEqual(Vector A, Vector B) {
-        if( ! (A.length() == B.length())) {
-            throw new IncompatibleShapeException("Required: A: m, B: m. Given: A: %d, B: %d", A.length(), B.length());
-        }
-    }
-
-    /**
-     * Checks if three vectors are of the same shape.
-     * @param A of shape m
-     * @param B of shape n
-     * @param C of shape o
-     * @throws IncompatibleShapeException if not m == n == o
-     */
-    public static void checkShapeEqual(Vector A, Vector B, Vector C) {
-        if( ! (A.length() == B.length() && A.length() == C.length())) {
-            throw new IncompatibleShapeException("Required: A: m, B: m, C: m. Given: A: %d, B: %d, C: %d", A.length(), B.length(), C.length());
-        }
     }
 
     /**
@@ -123,19 +97,6 @@ public class Utils {
     }
 
     /**
-     * Checks if A, b and c have valid shapes to multiply A and b and store the result in c.
-     * @param A of shape m x n
-     * @param b of size  o
-     * @param c of size  p
-     * @throws IncompatibleShapeException if not (n == o && m == p)
-     */
-    public static void checkShapeMatrixVectorMult(Matrix A, Vector b, Vector c) {
-        if( ! (A.cols() == b.length() && A.rows() == c.length())) {
-            throw new IncompatibleShapeException("Required: A: m x n, b: n, c: m. Given: A: %d x %d, b: %d, c: %d", A.rows(), A.cols(), b.length(), c.length());
-        }
-    }
-
-    /**
      * Checks if A is square
      * @param A of shape m x n
      * @throws IncompatibleShapeException if not (m == n)
@@ -161,26 +122,26 @@ public class Utils {
     /**
      * Checks if v can be applied to the rows of A, and if the result can be stored in B.
      * @param A of shape m x n
-     * @param v of shape o
+     * @param V of shape 1 x o
      * @param B of shape p x q
      * @throws IncompatibleShapeException if not (n == o && m == p && n == q)
      */
-    public static void checkApplyVectorToRows(Matrix A, Vector v, Matrix B) {
-        if( ! (A.rows() == B.rows() && A.cols() == B.cols()) && A.cols() == v.length()) {
-            throw new IncompatibleShapeException("Required: A: m x n, v: n, B: m x n. Given: A: %d x %d, v: %d, B: %d x %d", A.rows(), A.cols(), v.length(), B.rows(), B.cols());
+    public static void checkApplyVectorToRows(Matrix A, Matrix V, Matrix B) {
+        if( ! (A.rows() == B.rows() && A.cols() == B.cols()) && A.cols() == V.cols() && V.rows() == 1) {
+            throw new IncompatibleShapeException("Required: A: m x n, V: 1 x n, B: m x n. Given: A: %d x %d, V: %d x %d, B: %d x %d", A.rows(), A.cols(), V.rows(), V.cols(), B.rows(), B.cols());
         }
     }
 
     /**
      * Checks if v can be applied to the cols of A, and if the result can be stored in B.
      * @param A of shape m x n
-     * @param v of shape o
+     * @param V of shape o x 1
      * @param B of shape p x q
      * @throws IncompatibleShapeException if not (m == o && m == p && n == q)
      */
-    public static void checkApplyVectorToCols(Matrix A, Vector v, Matrix B) {
-        if( ! (A.rows() == B.rows() && A.cols() == B.cols()) && A.rows() == v.length()) {
-            throw new IncompatibleShapeException("Required: A: m x n, v: m, B: m x n. Given: A: %d x %d, v: %d, B: %d x %d", A.rows(), A.cols(), v.length(), B.rows(), B.cols());
+    public static void checkApplyVectorToCols(Matrix A, Matrix V, Matrix B) {
+        if( ! (A.rows() == B.rows() && A.cols() == B.cols()) && A.rows() == V.rows() && V.cols() == 1) {
+            throw new IncompatibleShapeException("Required: A: m x n, V: m x 1, B: m x n. Given: A: %d x %d, V: %d x %d, B: %d x %d", A.rows(), A.cols(), V.rows(), V.cols(), B.rows(), B.cols());
         }
     }
 }

@@ -12,8 +12,6 @@ import de.tuberlin.pserver.runtime.events.ProgramResultEvent;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
 import de.tuberlin.pserver.runtime.usercode.UserCodeManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.List;
@@ -26,7 +24,7 @@ public final class PServerNode extends EventDispatcher {
     // Fields.
     // ---------------------------------------------------
 
-    private static final Logger LOG = LoggerFactory.getLogger(PServerNode.class);
+    //private static final Logger LOG = LoggerFactory.getLogger(PServerNode.class);
 
     private final MachineDescriptor machine;
 
@@ -105,6 +103,7 @@ public final class PServerNode extends EventDispatcher {
                         final MLProgram programInvokeable = programClass.newInstance();
 
                         final SlotContext slotContext = new SlotContext(
+                                runtimeContext,
                                 programContext,
                                 logicThreadID,
                                 programInvokeable
@@ -121,8 +120,8 @@ public final class PServerNode extends EventDispatcher {
                             final List<Serializable> results = dataManager.getResults(slotContext.programContext.programID);
 
                             final ProgramResultEvent jre = new ProgramResultEvent(
-                                    slotContext.programContext.runtimeContext.machine,
-                                    slotContext.programContext.runtimeContext.nodeID,
+                                    slotContext.runtimeContext.machine,
+                                    slotContext.runtimeContext.nodeID,
                                     slotContext.programContext.programID,
                                     results
                             );

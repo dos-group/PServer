@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.examples.experiments.liblinear;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.vector.Vector;
+import de.tuberlin.pserver.math.matrix.Matrix;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -12,7 +12,7 @@ public class LibLinearModel implements Serializable {
 
     private final Parameter param;
 
-    private Vector labels;
+    private Matrix labels;
 
     private int nrClass;
 
@@ -22,7 +22,7 @@ public class LibLinearModel implements Serializable {
 
     public double threshold = 0.0;
 
-    public LibLinearModel(final Parameter param, final Vector labels) {
+    public LibLinearModel(final Parameter param, final Matrix labels) {
 
         this.param  = Preconditions.checkNotNull(param);
 

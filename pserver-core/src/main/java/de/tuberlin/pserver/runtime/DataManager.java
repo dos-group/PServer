@@ -12,7 +12,7 @@ import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.dsl.state.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.SharedObject;
@@ -30,8 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -124,7 +122,7 @@ public class DataManager extends EventDispatcher {
 
     // ---------------------------------------------------
 
-    private final int[] nodeIDs;
+    public final int[] nodeIDs;
 
     public final int[] remoteNodeIDs;
 

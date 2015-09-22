@@ -1,9 +1,10 @@
 package de.tuberlin.pserver.examples.experiments.distmtx;
 
 import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.dsl.state.GlobalScope;
-import de.tuberlin.pserver.dsl.state.SharedState;
+import de.tuberlin.pserver.dsl.state.annotations.State;
+import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.types.DistributedMatrix;
@@ -11,22 +12,22 @@ import de.tuberlin.pserver.types.PartitionType;
 
 public class DistributedMatrixJob extends MLProgram {
 
-    @SharedState(globalScope = GlobalScope.LOGICALLY_PARTITIONED, partitionType = PartitionType.ROW_PARTITIONED,
+    @State(globalScope = GlobalScope.LOGICALLY_PARTITIONED, partitionType = PartitionType.ROW_PARTITIONED,
             rows = 20, cols = 20, format = Format.DENSE_FORMAT)
     public DistributedMatrix X;
 
-    @Override
-    public void define(final Program program) {
+    @Unit
+    public void main(final Program program) {
 
         program.process(() -> {
 
-            /*CF.iterate().exe(X, (i, iter) -> {
+            /*CF.loop().exe(X, (i, iter) -> {
                 X.set(iter.rowNum(), 0, slotContext.programContext.runtimeContext.nodeID + 1);
             });
 
             X.collectRemotePartitions();
 
-            CF.select().node(1).exe(() -> {
+            CF.parUnit().node(1).exe(() -> {
                 for (int i = 0; i < X.rows(); ++i)
                     System.out.println(X.get(i, 0));
             });*/

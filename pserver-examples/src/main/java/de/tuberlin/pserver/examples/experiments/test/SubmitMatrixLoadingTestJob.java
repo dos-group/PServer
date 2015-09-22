@@ -3,8 +3,8 @@ package de.tuberlin.pserver.examples.experiments.test;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.dsl.state.GlobalScope;
-import de.tuberlin.pserver.dsl.state.SharedState;
+import de.tuberlin.pserver.dsl.state.annotations.State;
+import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.MLProgram;
@@ -27,7 +27,7 @@ public class SubmitMatrixLoadingTestJob extends MLProgram {
     // loaded by job
     private static final String PROGRAM_FILE = "/home/fridtjof.sander/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
 
-    @SharedState(
+    @State(
             globalScope = GlobalScope.PARTITIONED,
             rows = ROWS,
             cols = COLS,
@@ -40,7 +40,7 @@ public class SubmitMatrixLoadingTestJob extends MLProgram {
     @Override
     public void define(Program program) {
         program.process(() -> {
-            int nodeId = slotContext.programContext.runtimeContext.nodeID;
+            int nodeId = slotContext.runtimeContext.nodeID;
             int numNodes = slotContext.programContext.nodeDOP;
             MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);
 
