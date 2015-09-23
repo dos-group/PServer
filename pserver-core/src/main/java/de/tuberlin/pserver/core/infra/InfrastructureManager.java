@@ -2,6 +2,7 @@ package de.tuberlin.pserver.core.infra;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.core.common.Deactivatable;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.EventDispatcher;
 import org.slf4j.Logger;
@@ -10,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class InfrastructureManager extends EventDispatcher {
+public final class InfrastructureManager extends EventDispatcher implements Deactivatable {
 
     // ---------------------------------------------------
     // Fields.
@@ -30,7 +31,6 @@ public final class InfrastructureManager extends EventDispatcher {
 
     public final boolean isClient;
 
-
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
@@ -42,6 +42,12 @@ public final class InfrastructureManager extends EventDispatcher {
         this.peers      = new ConcurrentHashMap<>();
         this.machines   = Collections.synchronizedList(new ArrayList<>());
         this.isClient   = isClient;
+    }
+
+    @Override
+    public void deactivate() {
+        zookeeper.close();
+        super.deactivate();
     }
 
     // ---------------------------------------------------
@@ -65,8 +71,6 @@ public final class InfrastructureManager extends EventDispatcher {
         }
         LOG.debug("Started InfrastructureManager at " + machine);
     }
-
-    private final Object lock = new Object();
 
     public Map<UUID, MachineDescriptor> getActivePeers() { return Collections.unmodifiableMap(peers); }
 
@@ -94,9 +98,6 @@ public final class InfrastructureManager extends EventDispatcher {
     }
 
     // ---------------------------------------------------
-
-    @Override
-    public void deactivate() { super.deactivate(); }
 
     private void loadMachines() {
         int requiredNumNodes = zookeeper.readNumNodes();

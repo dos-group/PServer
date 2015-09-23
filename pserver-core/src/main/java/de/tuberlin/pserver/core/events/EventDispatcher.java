@@ -200,7 +200,6 @@ public class EventDispatcher implements IEventDispatcher {
     @Override
     public void deactivate() {
         if (useDispatchThread) {
-            LOG.trace("Shutdown event dispatcher");
             isRunning.set(false);
             // Feed the poison pill to the event dispatcher thread to terminate it.
             eventQueue.add(new Event(InternalEventTypes.KILL_EVENT));
@@ -229,7 +228,7 @@ public class EventDispatcher implements IEventDispatcher {
 
         List<IEventHandler> listeners = null;
         int retryCount = 5;
-        while (listeners == null && retryCount-- > 0) {
+        while (listeners == null && retryCount-- > 0) { // TODO: ??
             listeners = listenerMap.get(event.type);
             if (listeners == null) {
                 try {
@@ -239,11 +238,6 @@ public class EventDispatcher implements IEventDispatcher {
                 }
             }
         }
-
-
-
-
-
 
         if (listeners != null) {
             List<IEventHandler> l = new ArrayList<>(listeners);

@@ -43,7 +43,7 @@ public final class RuntimeContext {
 
         this.machine            = Preconditions.checkNotNull(machine);
         this.numOfNodes         = numOfNodes;
-        this.numOfCores = numOfCores;
+        this.numOfCores         = numOfCores;
         this.nodeID             = nodeID;
         this.dht                = Preconditions.checkNotNull(dht);
         this.netManager         = Preconditions.checkNotNull(netManager);

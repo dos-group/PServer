@@ -61,6 +61,15 @@ public final class PServerNode extends EventDispatcher {
         netManager.addEventListener(ProgramSubmissionEvent.PSERVER_JOB_SUBMISSION_EVENT, new PServerJobHandler());
     }
 
+    @Override
+    public void deactivate() {
+        executor.shutdownNow();
+        dataManager.deactivate();
+        netManager.deactivate();
+        infraManager.deactivate();
+        super.deactivate();
+    }
+
     // ---------------------------------------------------
     // Event Handler.
     // ---------------------------------------------------
@@ -98,9 +107,11 @@ public final class PServerNode extends EventDispatcher {
 
                     final long systemThreadID = Thread.currentThread().getId();
 
+                    MLProgram programInvokeable = null;
+
                     try {
 
-                        final MLProgram programInvokeable = programClass.newInstance();
+                        programInvokeable = programClass.newInstance();
 
                         final SlotContext slotContext = new SlotContext(
                                 runtimeContext,
@@ -152,20 +163,12 @@ public final class PServerNode extends EventDispatcher {
 
                             executionManager.unregisterProgram(programContext);
                         }
+
+                        if (programInvokeable != null)
+                            programInvokeable.deactivate();
                     }
                 });
             }
         }
-    }
-
-    // ---------------------------------------------------
-    // Public Methods.
-    // ---------------------------------------------------
-
-    @Override
-    public void deactivate() {
-        netManager.deactivate();
-        infraManager.deactivate();
-        super.deactivate();
     }
 }

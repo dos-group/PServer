@@ -8,7 +8,6 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
-import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.tuples.Tuple2;
@@ -20,7 +19,6 @@ import org.apache.commons.lang3.mutable.MutableDouble;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.List;
-import java.util.Random;
 
 public class TSNEJob extends MLProgram {
 
@@ -306,7 +304,7 @@ public class TSNEJob extends MLProgram {
 
     public static void cluster() {
         System.setProperty("pserver.profile", "wally");
-        PServerExecutor.DISTRIBUTED
+        PServerExecutor.REMOTE
                 .run(TSNEJob.class, 4)
                 .done();
     }

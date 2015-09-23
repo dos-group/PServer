@@ -129,7 +129,7 @@ public class Kmeans extends MLProgram {
 
     public static void cluster() {
         System.setProperty("pserver.profile", "wally");
-        PServerExecutor.DISTRIBUTED
+        PServerExecutor.REMOTE
                 .run(Kmeans.class, 4)
                 .done();
     }

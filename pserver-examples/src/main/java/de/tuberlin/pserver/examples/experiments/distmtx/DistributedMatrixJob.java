@@ -49,8 +49,8 @@ public class DistributedMatrixJob extends MLProgram {
     // ---------------------------------------------------
 
     public static void main(final String[] args) {
-
-        PServerExecutor.LOCAL
+        System.setProperty("simulation.numNodes", "4");
+        PServerExecutor.LOCAL_DEBUG
                 .run(DistributedMatrixJob.class, 1)
                 .done();
     }

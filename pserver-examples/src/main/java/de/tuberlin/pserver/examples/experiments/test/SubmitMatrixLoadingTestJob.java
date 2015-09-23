@@ -81,7 +81,7 @@ public class SubmitMatrixLoadingTestJob extends MLProgram {
 
     public static void main(String[] args) {
         System.setProperty("pserver.profile", "wally");
-        PServerExecutor.DISTRIBUTED
+        PServerExecutor.REMOTE
                 .run(SubmitMatrixLoadingTestJob.class, 1)
                 .done();
     }

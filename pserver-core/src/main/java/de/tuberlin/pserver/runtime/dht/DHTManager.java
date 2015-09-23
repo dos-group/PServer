@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import de.tuberlin.pserver.commons.compression.Compressor;
 import de.tuberlin.pserver.commons.hashtable.NonBlockingHashMap;
+import de.tuberlin.pserver.core.common.Deactivatable;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
@@ -26,7 +27,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-public final class DHTManager extends EventDispatcher {
+public final class DHTManager extends EventDispatcher implements Deactivatable {
 
     // ---------------------------------------------------
     // DHT Events.
@@ -130,7 +131,7 @@ public final class DHTManager extends EventDispatcher {
 
     private static final Object globalDHTMutex = new Object();
 
-    private static final AtomicReference<DHTManager> globalDHTInstance = new AtomicReference<>(null);
+    //private static final AtomicReference<DHTManager> globalDHTInstance = new AtomicReference<>(null);
 
     // ---------------------------------------------------
 
@@ -172,10 +173,10 @@ public final class DHTManager extends EventDispatcher {
 
         super(true, "DHT-THREAD");
 
-        synchronized (globalDHTMutex) {
-            if (!globalDHTInstance.compareAndSet(null, this))
-                throw new IllegalStateException();
-        }
+        //synchronized (globalDHTMutex) {
+        //    if (!globalDHTInstance.compareAndSet(null, this))
+        //        throw new IllegalStateException();
+        //}
 
         this.config         = Preconditions.checkNotNull(config);
         this.infraManager   = Preconditions.checkNotNull(infraManager);
@@ -200,7 +201,9 @@ public final class DHTManager extends EventDispatcher {
         globalKeyDirectory = new GlobalKeyDirectory();
     }
 
-    public static DHTManager getInstance() { return Preconditions.checkNotNull(globalDHTInstance.get()); }
+    public static DHTManager getInstance() { return null; /*Preconditions.checkNotNull(globalDHTInstance.get());*/ }
+
+    public void deactivate() { super.deactivate(); }
 
     // ---------------------------------------------------
     // Event Handler.

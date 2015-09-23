@@ -3,6 +3,7 @@ package de.tuberlin.pserver.runtime;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.ds.ResettableCountDownLatch;
+import de.tuberlin.pserver.core.common.Deactivatable;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
@@ -35,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class DataManager extends EventDispatcher {
+public class DataManager extends EventDispatcher implements Deactivatable {
 
     // ---------------------------------------------------
     // Inner Classes.
@@ -159,6 +160,11 @@ public class DataManager extends EventDispatcher {
             }
             ++i;
         }
+    }
+
+    public void deactivate() {
+        dht.deactivate();
+        super.deactivate();
     }
 
     // ---------------------------------------------------
