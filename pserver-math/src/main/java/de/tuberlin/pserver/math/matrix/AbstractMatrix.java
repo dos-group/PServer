@@ -82,7 +82,7 @@ public abstract class AbstractMatrix implements Matrix {
     public Matrix aggregateRows(final MatrixAggregation f, Matrix result) {
         Preconditions.checkArgument(result.rows() == rows && result.cols() == 1);
         for (int row = 0; row < rows; row++) {
-            result.set(row, 1, f.apply(getRow(row)));
+            result.set(row, 0, f.apply(getRow(row)));
         }
         return result;
     }
@@ -306,7 +306,7 @@ public abstract class AbstractMatrix implements Matrix {
     @Override
     public double sum() {
         double sum = 0;
-        for (int row = 0; row < row; row++) {
+        for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
                 sum += this.get(row, col);
             }
@@ -393,6 +393,18 @@ public abstract class AbstractMatrix implements Matrix {
             throw new IllegalStateException("Unknown layout: " + layout.name());
         }
         return C;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("AbstractMatrix["+rows+"|"+cols+"]: ");
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                stringBuilder.append("("+row+","+col+","+get(row,col)+") ");
+            }
+        }
+        return stringBuilder.toString();
     }
 
 // ---------------------------------------------------
