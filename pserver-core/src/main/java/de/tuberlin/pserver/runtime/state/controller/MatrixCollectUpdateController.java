@@ -2,7 +2,7 @@ package de.tuberlin.pserver.runtime.state.controller;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.types.DistributedMatrix;
 
 public class MatrixCollectUpdateController extends RemoteUpdateController {
@@ -17,10 +17,10 @@ public class MatrixCollectUpdateController extends RemoteUpdateController {
     // Constructors.
     // ---------------------------------------------------
 
-    public MatrixCollectUpdateController(final SlotContext slotContext,
+    public MatrixCollectUpdateController(final ProgramContext programContext,
                                          final String stateName,
                                          final DistributedMatrix matrix) {
-        super(slotContext, stateName);
+        super(programContext, stateName);
 
         Preconditions.checkState(matrix.completeMatrix);
 
@@ -32,12 +32,12 @@ public class MatrixCollectUpdateController extends RemoteUpdateController {
     // ---------------------------------------------------
 
     @Override
-    public void publishUpdate(SlotContext sc) throws Exception {
+    public void publishUpdate() throws Exception {
 
     }
 
     @Override
-    public void pullUpdate(SlotContext sc) throws Exception {
+    public void pullUpdate() throws Exception {
         matrix.collectRemotePartitions();
     }
 }

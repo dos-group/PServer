@@ -21,20 +21,20 @@ public class SingletonMatrixTestJob extends Program {
     public void main(final Lifecycle lifecycle) {
         /*program.process(() -> {
 
-            final int rows = ((ROWS / (slotContext.programContext.nodeDOP - 1)) / slotContext.programContext.perNodeDOP);
+            final int rows = ((ROWS / (programContext.programContext.nodeDOP - 1)) / programContext.programContext.perNodeDOP);
 
-            for (int k = 0; k < slotContext.programContext.perNodeDOP; ++k) {
+            for (int k = 0; k < programContext.programContext.perNodeDOP; ++k) {
 
                 CF.parUnit(k).exe(() -> {
 
-                    for (int i = slotContext.slotID * rows; i < slotContext.slotID * rows + rows; ++i) {
+                    for (int i = programContext.slotID * rows; i < programContext.slotID * rows + rows; ++i) {
                         for (int j = 0; j < COLS; ++j) {
 
-                            W.set(i, j, slotContext.slotID);
+                            W.set(i, j, programContext.slotID);
                             final double value = W.get(i, j);
 
-                            Preconditions.checkState(value == slotContext.slotID,
-                                    value + " != " + slotContext.slotID + " - " + slotContext);
+                            Preconditions.checkState(value == programContext.slotID,
+                                    value + " != " + programContext.slotID + " - " + programContext);
                         }
                     }
                 });

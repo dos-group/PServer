@@ -2,6 +2,7 @@ package de.tuberlin.pserver.examples.experiments.test;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
@@ -16,9 +17,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-/**
- * Created by fsander on 07.09.15.
- */
 public class LocalMatrixLoadingTestJob extends Program {
 
     private static final long ROWS = 10000;
@@ -39,11 +37,11 @@ public class LocalMatrixLoadingTestJob extends Program {
     public Matrix matrix;
 
 
-    @Override
-    public void define(Lifecycle lifecycle) {
+    @Unit
+    public void main(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            int nodeId = slotContext.runtimeContext.nodeID;
-            int numNodes = slotContext.programContext.nodeDOP;
+            int nodeId = programContext.runtimeContext.nodeID;
+            int numNodes = programContext.nodeDOP;
             MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);
 
             ReusableMatrixEntry entry = new MutableMatrixEntry(-1, -1, Double.NaN);

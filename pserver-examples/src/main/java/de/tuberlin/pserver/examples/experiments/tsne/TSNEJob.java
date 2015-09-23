@@ -173,7 +173,7 @@ public class TSNEJob extends Program {
                         Y.add(iY, Y);
 
                         DF.publishUpdate();
-                        executionManager.globalSync(slotContext);
+                        executionManager.globalSync(programContext);
                         DF.pullUpdate();
 
                         // center Y

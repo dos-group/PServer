@@ -9,7 +9,7 @@ import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
@@ -40,7 +40,7 @@ public final class MatrixPartitionManager {
 
     private final class MatrixLoadTask {
 
-        final SlotContext slotContext;
+        final ProgramContext programContext;
         final String name;
         final long rows;
         final long cols;
@@ -51,7 +51,7 @@ public final class MatrixPartitionManager {
         final Layout matrixLayout;
         final FileDataIterator fileIterator;
 
-        public MatrixLoadTask(final SlotContext slotContext,
+        public MatrixLoadTask(final ProgramContext programContext,
                               final String filePath,
                               final String name,
                               final long rows,
@@ -62,7 +62,7 @@ public final class MatrixPartitionManager {
                               final Format matrixFormat,
                               final Layout matrixLayout) {
 
-            this.slotContext        = slotContext;
+            this.programContext     = programContext;
             this.name               = name;
             this.rows               = rows;
             this.cols               = cols;
@@ -134,7 +134,7 @@ public final class MatrixPartitionManager {
     // Public Methods.
     // ---------------------------------------------------
 
-    public Matrix load(final SlotContext slotContext,
+    public Matrix load(final ProgramContext programContext,
                      final String filePath,
                      final String name,
                      final long rows, final long cols,
@@ -145,7 +145,7 @@ public final class MatrixPartitionManager {
                      final Layout matrixLayout) {
 
         final MatrixLoadTask mlt = new MatrixLoadTask(
-                slotContext,
+                programContext,
                 filePath,
                 name,
                 rows, cols,
@@ -156,7 +156,7 @@ public final class MatrixPartitionManager {
                 matrixLayout
         );
         matrixLoadTasks.put(name, mlt);
-        fileLoadingBarrier.put(name, new AtomicInteger(slotContext.programContext.nodeDOP));
+        fileLoadingBarrier.put(name, new AtomicInteger(programContext.nodeDOP));
         return getLoadingMatrix(mlt);
     }
 
@@ -213,7 +213,7 @@ public final class MatrixPartitionManager {
                 } break;
                 case PARTITIONED: {
                     matrix = new DistributedMatrix(
-                            task.slotContext,
+                            task.programContext,
                             task.rows,
                             task.cols,
                             task.partitionType,
@@ -224,7 +224,7 @@ public final class MatrixPartitionManager {
                 } break;
                 case LOGICALLY_PARTITIONED:
                     matrix = new DistributedMatrix(
-                            task.slotContext,
+                            task.programContext,
                             task.rows,
                             task.cols,
                             task.partitionType,
@@ -265,8 +265,8 @@ public final class MatrixPartitionManager {
         // threshold that indicates how many entries are gathered before sending
         int foreignEntriesThreshold = 2048;
         final IMatrixPartitioner matrixPartitioner = new MatrixByRowPartitioner(
-                task.slotContext.runtimeContext.nodeID,
-                task.slotContext.programContext.nodeDOP,
+                task.programContext.runtimeContext.nodeID,
+                task.programContext.nodeDOP,
                 task.rows,
                 task.cols
         );
@@ -274,7 +274,7 @@ public final class MatrixPartitionManager {
         final Matrix matrix = getLoadingMatrix(task);
         ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
 
-        int nodeId = task.slotContext.runtimeContext.nodeID;
+        int nodeId = task.programContext.runtimeContext.nodeID;
         MatrixEntry entry;
         while (fileIterator.hasNext()) {
             final IRecord record = fileIterator.next();

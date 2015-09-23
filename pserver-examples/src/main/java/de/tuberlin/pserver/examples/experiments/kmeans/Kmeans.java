@@ -67,7 +67,7 @@ public class Kmeans extends Program {
             centroidsUpdate.assign(0);
 
             CF.loop().sync(Loop.GLOBAL).exe(10, (iteration) -> {
-                int nodeId = slotContext.runtimeContext.nodeID;
+                int nodeId = programContext.runtimeContext.nodeID;
 
                 // BEGIN: PULL MODEL FROM OTHER NODES AND MERGE
                 System.out.println(nodeId + ": pre pull centroidsUpdate: " + centroidsUpdate);
@@ -112,7 +112,7 @@ public class Kmeans extends Program {
         }).postProcess(() -> {
 
             for (int i = 0; i < K; i++) {
-                int nodeId = slotContext.runtimeContext.nodeID;
+                int nodeId = programContext.runtimeContext.nodeID;
                 System.out.println("centroid[node:" + nodeId + ",row:" + i + "]=" + centroids.getRow(i));
             }
 

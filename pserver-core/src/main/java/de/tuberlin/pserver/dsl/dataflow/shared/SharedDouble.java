@@ -3,14 +3,14 @@ package de.tuberlin.pserver.dsl.dataflow.shared;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AtomicDouble;
-import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 
 public class SharedDouble {
 
     private final SharedVar<AtomicDouble> sharedDouble;
 
-    public SharedDouble(final SlotContext sc, final double value) throws Exception {
-        this.sharedDouble = new SharedVar<>(Preconditions.checkNotNull(sc), new AtomicDouble(value));
+    public SharedDouble(final ProgramContext pc, final double value) throws Exception {
+        this.sharedDouble = new SharedVar<>(Preconditions.checkNotNull(pc), new AtomicDouble(value));
     }
 
     public double inc() { return sharedDouble.get().addAndGet(1.0); }

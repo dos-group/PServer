@@ -16,7 +16,7 @@ public class EventSystemSendReceiveTestJob extends Program {
     @Unit(at = "0")
     public void pingNode(final Lifecycle lifecycle) {
 
-        final NetManager netManager = slotContext.runtimeContext.netManager;
+        final NetManager netManager = programContext.runtimeContext.netManager;
 
         lifecycle.process(() -> {
 
@@ -50,7 +50,7 @@ public class EventSystemSendReceiveTestJob extends Program {
     @Unit(at = "1")
     public void pongNode(final Lifecycle lifecycle) {
 
-        final NetManager netManager = slotContext.runtimeContext.netManager;
+        final NetManager netManager = programContext.runtimeContext.netManager;
 
         lifecycle.process(() -> {
 

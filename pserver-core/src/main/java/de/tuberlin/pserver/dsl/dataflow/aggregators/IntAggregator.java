@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.dsl.dataflow.aggregators;
 
 
-import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 
 public class IntAggregator extends Aggregator<Integer> {
 
@@ -9,8 +9,8 @@ public class IntAggregator extends Aggregator<Integer> {
         ADD, COUNT, MIN, MAX
     }
 
-    public IntAggregator(final SlotContext sc, final Integer partialAgg) throws Exception {
-        super(sc, partialAgg);
+    public IntAggregator(final ProgramContext pc, final Integer partialAgg) throws Exception {
+        super(pc, partialAgg);
     }
 
     public Integer apply(final Operation op) throws Exception {

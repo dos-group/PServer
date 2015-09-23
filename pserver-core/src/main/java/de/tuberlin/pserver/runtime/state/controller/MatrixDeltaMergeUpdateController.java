@@ -4,19 +4,10 @@ package de.tuberlin.pserver.runtime.state.controller;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Doubles;
 import de.tuberlin.pserver.commons.compression.Compressor;
-import de.tuberlin.pserver.commons.unsafe.UnsafeOp;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.SlotContext;
-import de.tuberlin.pserver.runtime.dht.DHTObject;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
-import de.tuberlin.pserver.runtime.state.filter.MatrixUpdateFilter;
-import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
 import de.tuberlin.pserver.runtime.state.update.MatrixDeltaUpdate;
-import sun.misc.Unsafe;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
 
@@ -36,18 +27,18 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
     // Constructors.
     // ---------------------------------------------------
 
-    public MatrixDeltaMergeUpdateController(final SlotContext slotContext,
+    public MatrixDeltaMergeUpdateController(final ProgramContext programContext,
                                             final String stateName,
                                             final Matrix matrix) {
-        super(slotContext, stateName);
+        super(programContext, stateName);
 
         this.stateMatrix = Preconditions.checkNotNull(matrix);
 
         this.buffer = new byte[(int)(matrix.rows() * matrix.cols()) * Doubles.BYTES];
 
-        this.matrixDelta = new EmbeddedDHTObject<>(new MatrixDeltaUpdate(slotContext.programContext.runtimeContext.numOfCores));
+        this.matrixDelta = new EmbeddedDHTObject<>(new MatrixDeltaUpdate(programContext.runtimeContext.numOfCores));
 
-        slotContext.runtimeContext.dataManager.putObject(stateName + "-Delta", matrixDelta);
+        programContext.runtimeContext.dataManager.putObject(stateName + "-Delta", matrixDelta);
     }
 
     // ---------------------------------------------------
@@ -55,7 +46,7 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
     // ---------------------------------------------------
 
     @Override
-    public void publishUpdate(final SlotContext sc) throws Exception {
+    public void publishUpdate() throws Exception {
 /*
         Preconditions.checkState(filter != null);
 
@@ -100,7 +91,7 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
     }
 
     @Override
-    public void pullUpdate(final SlotContext sc) throws Exception {
+    public void pullUpdate() throws Exception {
 /*
         Preconditions.checkState(merger != null);
 

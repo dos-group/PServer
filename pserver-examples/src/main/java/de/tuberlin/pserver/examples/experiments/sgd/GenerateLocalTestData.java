@@ -1,7 +1,5 @@
 package de.tuberlin.pserver.examples.experiments.sgd;
 
-import de.tuberlin.pserver.ml.generators.DataGenerator;
-
 public class GenerateLocalTestData {
 
     public static final int ROWS_SPARSE_DATASET = 5;
@@ -19,6 +17,6 @@ public class GenerateLocalTestData {
 
         //DataGenerator.generateDatasetAndWriteToFile(ROWS_SPARSE_DATASET, COLS_SPARSE_DATASET-1, 42, "datasets/sparse_dataset.csv");
 
-        DataGenerator.generateRowColValuePerLineDatasetAndWriteToFile(ROWS_ROWCOLVAL_DATASET, COLS_ROWCOLVAL_DATASET, 42, "datasets/rowcolval_dataset_10000_2500.csv");
+        //DataGenerator.generateRowColValuePerLineDatasetAndWriteToFile(ROWS_ROWCOLVAL_DATASET, COLS_ROWCOLVAL_DATASET, 42, "datasets/rowcolval_dataset_10000_2500.csv");
     }
 }

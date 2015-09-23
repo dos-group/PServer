@@ -6,10 +6,11 @@ import com.google.gson.Gson;
 import de.tuberlin.pserver.commons.hashtable.NonBlockingHashMap;
 import de.tuberlin.pserver.commons.json.GsonUtils;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
+import de.tuberlin.pserver.dsl.controlflow.ControlFlow;
+import de.tuberlin.pserver.dsl.dataflow.DataFlow;
 
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -34,6 +35,10 @@ public final class ProgramContext {
 
     public final int nodeDOP;
 
+    public ControlFlow CF;
+
+    public DataFlow DF;
+
     // ---------------------------------------------------
 
     @GsonUtils.Exclude
@@ -43,9 +48,6 @@ public final class ProgramContext {
 
     @GsonUtils.Exclude
     private final Map<String, Object> programStore;
-
-    @GsonUtils.Exclude
-    public final Map<Long, SlotContext> threadIDSlotCtxMap;
 
     // ---------------------------------------------------
     // Constructors.
@@ -66,22 +68,14 @@ public final class ProgramContext {
         this.nodeDOP            = nodeDOP;
 
         this.globalSyncBarrier  = new AtomicReference<>(new CountDownLatch(nodeDOP - 1));
-        this.threadIDSlotCtxMap = new ConcurrentHashMap<>();
         this.programStore       = new NonBlockingHashMap<>();
+
+        this.CF                 = new ControlFlow(this);
+        this.DF                 = new DataFlow(this);
     }
 
     // ---------------------------------------------------
     // Public Methods.
-    // ---------------------------------------------------
-
-    public synchronized void addSlotContext(final long threadID, final SlotContext sc) {
-        threadIDSlotCtxMap.put(threadID, Preconditions.checkNotNull(sc));
-    }
-
-    public synchronized void removeSlotContext(final long threadID) {
-        threadIDSlotCtxMap.remove(threadID);
-    }
-
     // ---------------------------------------------------
 
     public void put(final String name, final Object obj) { programStore.put(Preconditions.checkNotNull(name), Preconditions.checkNotNull(obj)); }
@@ -113,10 +107,14 @@ public final class ProgramContext {
         }
     }
 
+    public boolean node(final int fromNodeID, final int toNodeID) {
+        return runtimeContext.nodeID >= fromNodeID && runtimeContext.nodeID <= toNodeID;
+    }
+
+    public boolean node(final int nodeID) { return node(nodeID, nodeID); }
+
     // ---------------------------------------------------
 
     @Override
-    public String toString() {
-        return "\nMLProgramContext " + gson.toJson(this);
-    }
+    public String toString() { return "\nMLProgramContext " + gson.toJson(this); }
 }

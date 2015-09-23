@@ -206,7 +206,7 @@ public class DataManager extends EventDispatcher {
         programContextRef.set(null);
     }
 
-    public synchronized SlotContext getSlotContext() {
+    /*public synchronized SlotContext getSlotContext() {
 
         SlotContext sc = programContextRef.get().threadIDSlotCtxMap.get(Thread.currentThread().getId());
 
@@ -214,7 +214,7 @@ public class DataManager extends EventDispatcher {
             sc = programContextRef.get().threadIDSlotCtxMap.get(Thread.currentThread().getId());
 
         return sc;
-    }
+    }*/
 
     public void clearContext() {
         matrixPartitionManager.clearContext();
@@ -222,11 +222,11 @@ public class DataManager extends EventDispatcher {
     }
 
 
-    public void globalSync(final SlotContext slotContext) {
+    public void globalSync(final ProgramContext programContext) {
         final NetEvents.NetEvent globalSyncEvent = new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT, true);
-        globalSyncEvent.setPayload(slotContext.programContext.programID);
+        globalSyncEvent.setPayload(programContext.programID);
         netManager.broadcastEvent(globalSyncEvent);
-        slotContext.programContext.awaitGlobalSyncBarrier();
+        programContext.awaitGlobalSyncBarrier();
     }
 
     // ---------------------------------------------------
@@ -250,7 +250,7 @@ public class DataManager extends EventDispatcher {
     // DATA LOADING
     // ---------------------------------------------------
 
-    public Matrix loadAsMatrix(final SlotContext slotContext,
+    public Matrix loadAsMatrix(final ProgramContext programContext,
                              final String filePath,
                              final String name,
                              final long rows,
@@ -262,7 +262,7 @@ public class DataManager extends EventDispatcher {
                              final Layout matrixLayout) {
 
         return matrixPartitionManager.load(
-                slotContext,
+                programContext,
                 filePath,
                 name,
                 rows,
@@ -531,11 +531,8 @@ public class DataManager extends EventDispatcher {
         return resultObjects.get(jobUID);
     }
 
-    public void loadInputData(final SlotContext ctx) throws Exception{
-        Preconditions.checkNotNull(ctx);
-        Preconditions.checkNotNull(fileSystemManager);
-        if (ctx.slotID == 0) {
-            matrixPartitionManager.loadFilesIntoDHT();
-        }
+    public void loadInputData() throws Exception{
+        Preconditions.checkState(fileSystemManager != null);
+        matrixPartitionManager.loadFilesIntoDHT();
     }
 }

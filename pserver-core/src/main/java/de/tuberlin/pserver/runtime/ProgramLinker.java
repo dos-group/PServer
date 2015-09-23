@@ -71,9 +71,9 @@ public final class ProgramLinker {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void link(final SlotContext slotContext, final Program instance) throws Exception {
+    public void link(final Program instance) throws Exception {
 
-        //slotContext.CF.parUnit().slot(0).exe(() -> {
+        //programContext.CF.parUnit().slot(0).exe(() -> {
 
         unitDecls = new ArrayList<>();
 
@@ -81,22 +81,21 @@ public final class ProgramLinker {
 
         stateDecls = new ArrayList<>();
 
-        final String slotIDStr = "[" + runtimeContext.nodeID
-                + " | " + slotContext.slotID + "] ";
+        final String slotIDStr = "[" + runtimeContext.nodeID + "]";
 
-        LOG.info(slotIDStr + "Enter " + slotContext.programContext.simpleClassName + " linking phase.");
+        LOG.info(slotIDStr + "Enter " + programContext.simpleClassName + " linking phase.");
 
         final long start = System.currentTimeMillis();
 
         analyzeStateObjects();
 
-        allocateStateObjects(slotContext);
+        allocateStateObjects(programContext);
 
         analyzeAndWireDeltaFilterAnnotations(instance);
 
         analyzeAndWireDeltaMergerAnnotations(instance);
 
-        dataManager.loadInputData(slotContext);
+        dataManager.loadInputData();
 
         for (final StateDeclaration decl : stateDecls) {
 
@@ -109,7 +108,7 @@ public final class ProgramLinker {
 
         final long end = System.currentTimeMillis();
 
-        LOG.info(slotIDStr + "Leave " + slotContext.programContext.simpleClassName
+        LOG.info(slotIDStr + "Leave " + programContext.simpleClassName
                 + " loading linking [duration: " + (end - start) + " ms].");
     }
 
@@ -136,7 +135,7 @@ public final class ProgramLinker {
 
         for (final UnitDeclaration decl : unitDecls) {
 
-            if (ArrayUtils.contains(decl.atNodes, lifecycle.slotContext.runtimeContext.nodeID)) {
+            if (ArrayUtils.contains(decl.atNodes, lifecycle.programContext.runtimeContext.nodeID)) {
 
                 try {
 
@@ -279,7 +278,7 @@ public final class ProgramLinker {
         }
     }
 
-    private void allocateStateObjects(final SlotContext slotContext) throws Exception {
+    private void allocateStateObjects(final ProgramContext programContext) throws Exception {
         Preconditions.checkNotNull(stateDecls);
         for (final StateDeclaration decl : stateDecls) {
             if (Matrix.class.isAssignableFrom(decl.stateType)) {
@@ -302,12 +301,12 @@ public final class ProgramLinker {
 
                             dataManager.putObject(decl.name, so);
 
-                            new RemoteMatrixStub(slotContext, decl.name, (Matrix)so);
+                            new RemoteMatrixStub(programContext, decl.name, (Matrix)so);
 
                         } else {
 
                             final RemoteMatrixSkeleton remoteMatrixSkeleton = new RemoteMatrixSkeleton(
-                                    slotContext,
+                                    programContext,
                                     decl.name,
                                     decl.atNodes[0],
                                     decl.rows,
@@ -332,7 +331,7 @@ public final class ProgramLinker {
                         }
                         else {
                             so = dataManager.loadAsMatrix(
-                                    slotContext,
+                                    programContext,
                                     decl.path,
                                     decl.name,
                                     decl.rows,
@@ -348,18 +347,18 @@ public final class ProgramLinker {
                             case NO_UPDATE: break;
                             case SIMPLE_MERGE_UPDATE:
                                     programContext.put(remoteUpdateControllerName(decl.name),
-                                            new MatrixMergeUpdateController(slotContext, decl.name, (Matrix)so));
+                                            new MatrixMergeUpdateController(programContext, decl.name, (Matrix)so));
                                 break;
                             case DELTA_MERGE_UPDATE:
                                     programContext.put(remoteUpdateControllerName(decl.name),
-                                            new MatrixDeltaMergeUpdateController(slotContext, decl.name, (Matrix)so));
+                                            new MatrixDeltaMergeUpdateController(programContext, decl.name, (Matrix)so));
                                 break;
                         }
                     } break;
                     case PARTITIONED: {
                         if ("".equals(decl.path)) {
                             final SharedObject so = new DistributedMatrix(
-                                    slotContext,
+                                    programContext,
                                     decl.rows, decl.cols,
                                     PartitionType.ROW_PARTITIONED,
                                     decl.layout,
@@ -369,7 +368,7 @@ public final class ProgramLinker {
                             dataManager.putObject(decl.name, so);
                         } else {
                             dataManager.loadAsMatrix(
-                                    slotContext,
+                                    programContext,
                                     decl.path,
                                     decl.name,
                                     decl.rows,
@@ -384,7 +383,7 @@ public final class ProgramLinker {
                     } break;
                     case LOGICALLY_PARTITIONED:
                         final SharedObject so = new DistributedMatrix(
-                                slotContext,
+                                programContext,
                                 decl.rows, decl.cols,
                                 PartitionType.ROW_PARTITIONED,
                                 decl.layout,

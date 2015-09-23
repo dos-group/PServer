@@ -2,7 +2,7 @@ package de.tuberlin.pserver.dsl.controlflow.program;
 
 import de.tuberlin.pserver.dsl.controlflow.base.Body;
 import de.tuberlin.pserver.dsl.controlflow.base.CFStatement;
-import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 
 public final class Lifecycle extends CFStatement {
 
@@ -20,8 +20,8 @@ public final class Lifecycle extends CFStatement {
     // Constructor.
     // ---------------------------------------------------
 
-    public Lifecycle(final SlotContext slotContext) {
-        super(slotContext);
+    public Lifecycle(final ProgramContext programContext) {
+        super(programContext);
     }
 
     // ---------------------------------------------------

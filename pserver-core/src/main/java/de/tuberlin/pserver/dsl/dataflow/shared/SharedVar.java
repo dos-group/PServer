@@ -1,8 +1,7 @@
 package de.tuberlin.pserver.dsl.dataflow.shared;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.runtime.SlotContext;
-import de.tuberlin.pserver.runtime.SlotGroup;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
@@ -29,7 +28,7 @@ public final class SharedVar<T> {
 
     // ---------------------------------------------------
 
-    private final SlotContext sc;
+    private final ProgramContext pc;
 
     //private final Pair<Integer, Long> sharedVarUID;
 
@@ -37,11 +36,11 @@ public final class SharedVar<T> {
 
     // ---------------------------------------------------
 
-    public SharedVar(final SlotContext sc, final T value) throws Exception {
+    public SharedVar(final ProgramContext pc, final T value) throws Exception {
 
-        this.sc = Preconditions.checkNotNull(sc);
+        this.pc = Preconditions.checkNotNull(pc);
 
-        //final SlotGroup slotGroup = sc.getActiveSlotGroup();
+        //final SlotGroup slotGroup = pc.getActiveSlotGroup();
 
         //final int masterSlotID = slotGroup.minSlotID;
 
@@ -49,21 +48,15 @@ public final class SharedVar<T> {
 
         //this.sharedVarUID = nextSharedVarUID(masterSlotID);
 
-        //sc.CF.parUnit().slot(masterSlotID).exe(() -> {
+        final AtomicReference<T> valueRef = new AtomicReference<>(Preconditions.checkNotNull(value));
 
-            //if (sc.slotID == masterSlotID) {
+        final ReentrantLock valueLock = new ReentrantLock(true);
 
-                //final AtomicReference<T> valueRef = new AtomicReference<>(Preconditions.checkNotNull(value));
+        //final AtomicInteger refCount = new AtomicInteger(refNum);
 
-                //final ReentrantLock valueLock = new ReentrantLock(true);
+        //final Triple<AtomicReference<T>, ReentrantLock, AtomicInteger> managedVar = Triple.of(valueRef, valueLock, refCount);
 
-                //final AtomicInteger refCount = new AtomicInteger(refNum);
-
-                //final Triple<AtomicReference<T>, ReentrantLock, AtomicInteger> managedVar = Triple.of(valueRef, valueLock, refCount);
-
-                //sc.programContext.put(sharedVarUIDStr(), managedVar);
-            //}
-        //});
+        //pc.put(sharedVarUIDStr(), managedVar);
     }
 
     // ---------------------------------------------------
@@ -104,7 +97,7 @@ public final class SharedVar<T> {
 
             Preconditions.checkState(this.managedVar != null);
 
-            //sc.programContext.delete(sharedVarUIDStr());
+            //pc.delete(sharedVarUIDStr());
         }
 
         return this.managedVar.getLeft().get();
@@ -112,10 +105,10 @@ public final class SharedVar<T> {
 
     public SharedVar<T> fetch() {
 
-        while(this.managedVar == null) { // busy waiting.
+        /*while(this.managedVar == null) { // busy waiting.
 
-            //this.managedVar = sc.programContext.get(sharedVarUIDStr());
-        }
+            this.managedVar = pc.get(sharedVarUIDStr());
+        }*/
 
         return this;
     }

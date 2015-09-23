@@ -3,7 +3,7 @@ package de.tuberlin.pserver.dsl.controlflow.base;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import de.tuberlin.pserver.commons.json.GsonUtils;
-import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 
 import java.util.UUID;
 
@@ -30,7 +30,7 @@ public abstract class CFStatement {
 
     public final UUID id  = UUID.randomUUID();
 
-    public final SlotContext slotContext;
+    public final ProgramContext programContext;
 
     private ProfilingData profilingData;
 
@@ -38,8 +38,8 @@ public abstract class CFStatement {
     // Constructors.
     // ---------------------------------------------------
 
-    public CFStatement(final SlotContext slotContext) {
-        this.slotContext = Preconditions.checkNotNull(slotContext);
+    public CFStatement(final ProgramContext programContext) {
+        this.programContext = Preconditions.checkNotNull(programContext);
     }
 
     // ---------------------------------------------------

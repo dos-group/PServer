@@ -29,7 +29,7 @@ public class PingPongTestJob extends Program {
                 });
             }
 
-            System.out.println("-- FINISH NODE " + slotContext);
+            System.out.println("-- FINISH NODE " + programContext);
 
         });
     }
@@ -52,7 +52,7 @@ public class PingPongTestJob extends Program {
                 dataManager.pushTo("pong", new Integer(i), new int[] { 0 });
             }
 
-            System.out.println("-- FINISH NODE " + slotContext);
+            System.out.println("-- FINISH NODE " + programContext);
         });
     }
 

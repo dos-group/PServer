@@ -2,8 +2,7 @@ package de.tuberlin.pserver.dsl.controlflow.loop;
 
 import de.tuberlin.pserver.dsl.controlflow.base.CFStatement;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.SlotContext;
-import de.tuberlin.pserver.runtime.SlotGroup;
+import de.tuberlin.pserver.runtime.ProgramContext;
 
 public final class Loop extends CFStatement {
 
@@ -46,10 +45,10 @@ public final class Loop extends CFStatement {
     // Constructor.
     // ---------------------------------------------------
 
-    public Loop(final SlotContext sc) {
-        super(sc);
+    public Loop(final ProgramContext pc) {
+        super(pc);
 
-        this.dataManager = sc.runtimeContext.dataManager;
+        this.dataManager = pc.runtimeContext.dataManager;
     }
 
     // ---------------------------------------------------
@@ -142,15 +141,14 @@ public final class Loop extends CFStatement {
     // Private Methods.
     // ---------------------------------------------------
 
-    private void sync(final SlotGroup sg) throws Exception {
+    /*private void sync(final SlotGroup sg) throws Exception {
         switch (mode) {
             case ASYNC:
                 return;
             case GLOBAL:
-                if (sg.minSlotID == slotContext.slotID)
-                    dataManager.globalSync(slotContext);
+                dataManager.globalSync(programContext);
         }
-    }
+    }*/
 
     //private Matrix.RowIterator parallelMatrixRowIterator(final Matrix m) {
     //    return executionManager.parallelMatrixRowIterator(m);

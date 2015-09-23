@@ -90,31 +90,20 @@ public final class PServerNode extends EventDispatcher {
 
             new Thread(() -> {
 
-                final long systemThreadID = Thread.currentThread().getId();
-
                 try {
 
-                    final Program programInvokeable = programClass.newInstance();
+                    final Program program = programClass.newInstance();
 
-                    final SlotContext slotContext = new SlotContext(
-                            runtimeContext,
-                            programContext,
-                            0,
-                            programInvokeable
-                    );
+                    program.injectContext(programContext);
 
-                    programContext.addSlotContext(systemThreadID, slotContext);
+                    program.run();
 
-                    programInvokeable.injectContext(slotContext);
-
-                    programInvokeable.run();
-
-                    final List<Serializable> results = dataManager.getResults(slotContext.programContext.programID);
+                    final List<Serializable> results = dataManager.getResults(programContext.programID);
 
                     final ProgramResultEvent jre = new ProgramResultEvent(
-                            slotContext.runtimeContext.machine,
-                            slotContext.runtimeContext.nodeID,
-                            slotContext.programContext.programID,
+                            runtimeContext.machine,
+                            runtimeContext.nodeID,
+                            programContext.programID,
                             results
                     );
 
@@ -136,8 +125,6 @@ public final class PServerNode extends EventDispatcher {
                 } finally {
 
                     dataManager.clearContext();
-
-                    programContext.removeSlotContext(systemThreadID);
 
                     dataManager.unregisterProgram(programContext);
                 }

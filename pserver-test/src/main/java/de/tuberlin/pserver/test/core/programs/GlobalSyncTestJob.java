@@ -21,7 +21,7 @@ public class GlobalSyncTestJob extends Program {
 
                 Thread.sleep(rand.nextInt(1000));
 
-                //System.out.println(slotContext + " -> " + e);
+                //System.out.println(programContext + " -> " + e);
             });
         });
     }

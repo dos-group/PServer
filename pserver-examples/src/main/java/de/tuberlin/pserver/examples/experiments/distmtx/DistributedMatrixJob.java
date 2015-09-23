@@ -22,7 +22,7 @@ public class DistributedMatrixJob extends Program {
         lifecycle.process(() -> {
 
             /*CF.loop().exe(X, (i, iter) -> {
-                X.set(iter.rowNum(), 0, slotContext.programContext.runtimeContext.nodeID + 1);
+                X.set(iter.rowNum(), 0, programContext.programContext.runtimeContext.nodeID + 1);
             });
 
             X.collectRemotePartitions();
@@ -35,8 +35,8 @@ public class DistributedMatrixJob extends Program {
             /*final Matrix.RowIterator iter = X.rowIterator();
             while (iter.hasNext()) {
                 iter.next();
-                System.out.println(slotContext.programContext.runtimeContext.nodeID + " -> " + iter.rowNum());
-                X.set(iter.rowNum(), 0, slotContext.programContext.runtimeContext.nodeID * 10);
+                System.out.println(programContext.programContext.runtimeContext.nodeID + " -> " + iter.rowNum());
+                X.set(iter.rowNum(), 0, programContext.programContext.runtimeContext.nodeID * 10);
             }
 
             double s = X.aggregateRows(Vector::sum).sum();

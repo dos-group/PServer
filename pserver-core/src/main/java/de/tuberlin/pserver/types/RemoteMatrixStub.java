@@ -5,7 +5,7 @@ import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -15,13 +15,13 @@ public class RemoteMatrixStub extends AbstractMatrix {
     // Constructor.
     // ---------------------------------------------------
 
-    public RemoteMatrixStub(final SlotContext slotContext,
+    public RemoteMatrixStub(final ProgramContext programContext,
                             final String name,
                             final Matrix matrix) {
 
         super(matrix.rows(), matrix.cols(), matrix.layout());
 
-        final NetManager netManager = slotContext.runtimeContext.netManager;
+        final NetManager netManager = programContext.runtimeContext.netManager;
 
         netManager.addEventListener("get_request_" + name, event -> {
             final NetEvents.NetEvent getRequestEvent = (NetEvents.NetEvent) event;

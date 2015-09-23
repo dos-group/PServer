@@ -7,7 +7,6 @@ import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.runtime.ProgramLinker;
-import de.tuberlin.pserver.runtime.SlotContext;
 import de.tuberlin.pserver.runtime.dht.DHTKey;
 import de.tuberlin.pserver.runtime.state.controller.RemoteUpdateController;
 
@@ -20,23 +19,19 @@ public final class DataFlow {
     // Fields.
     // ---------------------------------------------------
 
-    private final SlotContext slotContext;
+    private final ProgramContext programContext;
 
     private final DataManager dataManager;
-
-    private final ProgramContext programContext;
 
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
-    public DataFlow(final SlotContext slotContext) {
+    public DataFlow(final ProgramContext programContext) {
 
-        this.slotContext = Preconditions.checkNotNull(slotContext);
+        this.programContext = Preconditions.checkNotNull(programContext);
 
-        this.dataManager = slotContext.runtimeContext.dataManager;
-
-        this.programContext = slotContext.programContext;
+        this.dataManager = programContext.runtimeContext.dataManager;
     }
 
     // ---------------------------------------------------
@@ -54,7 +49,7 @@ public final class DataFlow {
             final String name = st.nextToken().replaceAll("\\s+", "");
             final RemoteUpdateController remoteUpdateController =
                     (RemoteUpdateController) programContext.get(ProgramLinker.remoteUpdateControllerName(name));
-            remoteUpdateController.publishUpdate(slotContext);
+            remoteUpdateController.publishUpdate();
         }
     }
 
@@ -76,7 +71,7 @@ public final class DataFlow {
             final String name = st.nextToken().replaceAll("\\s+", "");
             final RemoteUpdateController remoteUpdateController =
                     (RemoteUpdateController) programContext.get(ProgramLinker.remoteUpdateControllerName(name));
-            remoteUpdateController.pullUpdate(slotContext);
+            remoteUpdateController.pullUpdate();
         }
     }
 

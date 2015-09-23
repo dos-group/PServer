@@ -10,7 +10,7 @@ import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import org.apache.commons.lang3.mutable.MutableDouble;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
@@ -24,7 +24,7 @@ public class RemoteMatrixSkeleton extends AbstractMatrix {
     // Fields.
     // ---------------------------------------------------
 
-    private final SlotContext slotContext;
+    private final ProgramContext programContext;
 
     private final String name;
 
@@ -50,7 +50,7 @@ public class RemoteMatrixSkeleton extends AbstractMatrix {
     // Constructor.
     // ---------------------------------------------------
 
-    public RemoteMatrixSkeleton(final SlotContext slotContext,
+    public RemoteMatrixSkeleton(final ProgramContext programContext,
                                 final String name,
                                 final int atNodeID,
                                 final long rows,
@@ -60,7 +60,7 @@ public class RemoteMatrixSkeleton extends AbstractMatrix {
 
         super(rows, cols, layout);
 
-        this.slotContext    = Preconditions.checkNotNull(slotContext);
+        this.programContext = Preconditions.checkNotNull(programContext);
         this.name           = Preconditions.checkNotNull(name);
         this.atNodeID       = atNodeID;
         this.rows           = rows;
@@ -68,7 +68,7 @@ public class RemoteMatrixSkeleton extends AbstractMatrix {
         this.format         = format;
         this.layout         = layout;
 
-        this.netManager    = slotContext.runtimeContext.netManager;
+        this.netManager    = programContext.runtimeContext.netManager;
 
         netManager.addEventListener("get_response_" + name, new IEventHandler() {
 
@@ -93,7 +93,7 @@ public class RemoteMatrixSkeleton extends AbstractMatrix {
 
     @Override
     public double get(long row, long col) {
-        final NetEvents.NetEvent getRequestEvent = new NetEvents.NetEvent("get_request_" + name );
+        final NetEvents.NetEvent getRequestEvent = new NetEvents.NetEvent("get_request_" + name);
         getRequestEvent.setPayload(Pair.of(row, col));
         netManager.sendEvent(atNodeID, getRequestEvent);
         try {
@@ -107,8 +107,7 @@ public class RemoteMatrixSkeleton extends AbstractMatrix {
 
     @Override
     public void set(long row, long col, double value) {
-        final int slotID =  slotContext.runtimeContext.dataManager.getSlotContext().slotID;
-        final NetEvents.NetEvent putRequestEvent = new NetEvents.NetEvent("put_request_" + name + "_" + slotID);
+        final NetEvents.NetEvent putRequestEvent = new NetEvents.NetEvent("put_request_" + name);
         putRequestEvent.setPayload(Triple.of(row, col, value));
         netManager.sendEvent(atNodeID, putRequestEvent);
     }

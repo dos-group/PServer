@@ -4,7 +4,7 @@ package de.tuberlin.pserver.dsl.dataflow.aggregators;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.dsl.dataflow.shared.SharedVar;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -25,7 +25,7 @@ public class Aggregator<T extends Serializable> {
 
     // ---------------------------------------------------
 
-    private final SlotContext sc;
+    private final ProgramContext pc;
 
     private final T partialAgg;
 
@@ -35,16 +35,16 @@ public class Aggregator<T extends Serializable> {
 
     // ---------------------------------------------------
 
-    public Aggregator(final SlotContext sc, final T partialAgg) throws Exception { this(sc, partialAgg, true); }
-    public Aggregator(final SlotContext sc, final T partialAgg, final boolean symmetricAgg) throws Exception {
+    public Aggregator(final ProgramContext pc, final T partialAgg) throws Exception { this(pc, partialAgg, true); }
+    public Aggregator(final ProgramContext pc, final T partialAgg, final boolean symmetricAgg) throws Exception {
 
-        this.sc = Preconditions.checkNotNull(sc);
+        this.pc = Preconditions.checkNotNull(pc);
 
         this.partialAgg = Preconditions.checkNotNull(partialAgg);
 
         this.symmetricAgg = symmetricAgg;
 
-        this.sharedGlobalAgg = new SharedVar<>(sc, partialAgg);
+        this.sharedGlobalAgg = new SharedVar<>(pc, partialAgg);
     }
 
     // ---------------------------------------------------
@@ -57,18 +57,18 @@ public class Aggregator<T extends Serializable> {
 
     private T symmetric_apply(final AggregatorFunction<T> function) throws Exception {
 
-        sc.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg);
+        pc.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg);
 
-        final int n = sc.programContext.nodeDOP - 1;
+        final int n = pc.nodeDOP - 1;
 
         final List<T> partialAggs = new ArrayList<>();
 
         for (int i = 0; i < n + 1; ++i)
             partialAggs.add(null);
 
-        partialAggs.set(sc.runtimeContext.nodeID, partialAgg);
+        partialAggs.set(pc.runtimeContext.nodeID, partialAgg);
 
-        sc.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
+        pc.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
 
             @Override
             @SuppressWarnings("unchecked")
@@ -94,15 +94,15 @@ public class Aggregator<T extends Serializable> {
 
         // -- master node --
 
-        if (sc.node(AGG_NODE_ID)) {
+        if (pc.node(AGG_NODE_ID)) {
 
-            final int n = sc.programContext.nodeDOP - 1;
+            final int n = pc.nodeDOP - 1;
 
             final List<T> partialAggs = new ArrayList<>();
 
             partialAggs.add(partialAgg);
 
-            sc.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
+            pc.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
 
                 @Override
                 @SuppressWarnings("unchecked")
@@ -113,17 +113,17 @@ public class Aggregator<T extends Serializable> {
 
             final T agg = function.apply(partialAggs);
 
-            sc.runtimeContext.dataManager.pushTo(aggPushUID(), agg);
+            pc.runtimeContext.dataManager.pushTo(aggPushUID(), agg);
 
             sharedGlobalAgg.set(agg);
         }
 
 
-        if (sc.node(AGG_NODE_ID + 1, sc.programContext.nodeDOP - 1)) {
+        if (pc.node(AGG_NODE_ID + 1, pc.nodeDOP - 1)) {
 
-            sc.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg, new int[]{AGG_NODE_ID});
+            pc.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg, new int[]{AGG_NODE_ID});
 
-            sc.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, 1, aggPushUID(), new DataManager.DataEventHandler() {
+            pc.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, 1, aggPushUID(), new DataManager.DataEventHandler() {
 
                 @Override
                 @SuppressWarnings("unchecked")

@@ -3,7 +3,7 @@ package de.tuberlin.pserver.runtime.state.controller;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
 
 
@@ -21,16 +21,16 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
     // Constructors.
     // ---------------------------------------------------
 
-    public MatrixMergeUpdateController(final SlotContext slotContext,
+    public MatrixMergeUpdateController(final ProgramContext programContext,
                                        final String stateName,
                                        final Matrix matrix) {
-        super(slotContext, stateName);
+        super(programContext, stateName);
 
         this.stateMatrix = Preconditions.checkNotNull(matrix);
 
         this.shadowMatrix = new EmbeddedDHTObject<>(Preconditions.checkNotNull(matrix).copy());
 
-        slotContext.runtimeContext.dataManager.putObject(stateName + "-Shadow", shadowMatrix);
+        programContext.runtimeContext.dataManager.putObject(stateName + "-Shadow", shadowMatrix);
     }
 
     // ---------------------------------------------------
@@ -38,7 +38,7 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
     // ---------------------------------------------------
 
     @Override
-    public void publishUpdate(final SlotContext sc) throws Exception {
+    public void publishUpdate() throws Exception {
 
         synchronized (shadowMatrix.lock) {
 
@@ -47,7 +47,7 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
     }
 
     @Override
-    public void pullUpdate(final SlotContext sc) throws Exception {
+    public void pullUpdate() throws Exception {
 
         /*Preconditions.checkState(merger != null);
 

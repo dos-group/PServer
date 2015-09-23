@@ -36,9 +36,10 @@ public class MatrixSparseLoadingTestJob extends Program {
     @Unit
     public void main(final Lifecycle lifecycle) {
 
-        if (slotContext.slotID == 0) {
+        lifecycle.process(() -> {
+
             dataManager.loadAsMatrix(
-                    slotContext,
+                    programContext,
                     FILE,
                     "matrix",
                     ROWS, COLS,
@@ -48,12 +49,10 @@ public class MatrixSparseLoadingTestJob extends Program {
                     Format.SPARSE_FORMAT,
                     Layout.ROW_LAYOUT
             );
-        }
 
-        lifecycle.process(() -> {
 
-            int nodeId = slotContext.runtimeContext.nodeID;
-            int numNodes = slotContext.programContext.nodeDOP;
+            int nodeId = programContext.runtimeContext.nodeID;
+            int numNodes = programContext.nodeDOP;
             MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);
 
             ReusableMatrixEntry entry = new MutableMatrixEntry(-1, -1, Double.NaN);
@@ -114,12 +113,12 @@ public class MatrixSparseLoadingTestJob extends Program {
         public Matrix matrix;
 
 
-        @Override
-        public void define(Lifecycle lifecycle) {
+        @Unit
+        public void main(Lifecycle lifecycle) {
             lifecycle.process(() -> {
 
-                int nodeId = slotContext.runtimeContext.nodeID;
-                int numNodes = slotContext.programContext.nodeDOP;
+                int nodeId = programContext.runtimeContext.nodeID;
+                int numNodes = programContext.nodeDOP;
                 MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);
 
                 ReusableMatrixEntry entry = new MutableMatrixEntry(-1, -1, Double.NaN);

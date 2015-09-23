@@ -34,9 +34,10 @@ public class MatrixDenseLoadingTestJob extends Program {
     @Unit
     public void main(final Lifecycle lifecycle) {
 
-        if (slotContext.slotID == 0) {
+        lifecycle.process(() -> {
+
             dataManager.loadAsMatrix(
-                    slotContext,
+                    programContext,
                     FILE,
                     "matrix",
                     ROWS, COLS,
@@ -46,14 +47,11 @@ public class MatrixDenseLoadingTestJob extends Program {
                     Format.DENSE_FORMAT,
                     Layout.ROW_LAYOUT
             );
-        }
-
-        lifecycle.process(() -> {
 
             matrix = dataManager.getObject("matrix");
 
-            int nodeId = slotContext.runtimeContext.nodeID;
-            int numNodes = slotContext.programContext.nodeDOP;
+            int nodeId = programContext.runtimeContext.nodeID;
+            int numNodes = programContext.nodeDOP;
             MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);
             ReusableMatrixEntry entry = new MutableMatrixEntry(-1, -1, Double.NaN);
             BufferedReader br = null;

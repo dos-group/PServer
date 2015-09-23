@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.dsl.dataflow.shared;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -10,8 +10,8 @@ public class SharedInt {
 
     private final SharedVar<AtomicInteger> sharedInt;
 
-    public SharedInt(final SlotContext sc, final int value) throws Exception {
-        this.sharedInt = new SharedVar<>(Preconditions.checkNotNull(sc), new AtomicInteger(value));
+    public SharedInt(final ProgramContext pc, final int value) throws Exception {
+        this.sharedInt = new SharedVar<>(Preconditions.checkNotNull(pc), new AtomicInteger(value));
     }
 
     public int inc() { return sharedInt.get().addAndGet(1); }

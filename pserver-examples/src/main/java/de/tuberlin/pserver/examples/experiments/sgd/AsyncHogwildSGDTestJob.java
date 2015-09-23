@@ -31,7 +31,7 @@ public final class AsyncHogwildSGDTestJob extends Program {
 
         dataManager.loadAsMatrix("datasets/sparse_dataset.csv", GenerateLocalTestData.ROWS_SPARSE_DATASET, GenerateLocalTestData.COLS_SPARSE_DATASET);
 
-        model.createModel(slotContext);
+        model.createModel(programContext);
     }
 
     @Override
@@ -43,7 +43,7 @@ public final class AsyncHogwildSGDTestJob extends Program {
 
         final PartialLossFunction partialLossFunction = new PartialLossFunction.SquareLoss();
 
-        final Optimizer optimizer = new SGDOptimizer(slotContext, SGDOptimizer.TYPE.SGD_SIMPLE, false)
+        final Optimizer optimizer = new SGDOptimizer(programContext, SGDOptimizer.TYPE.SGD_SIMPLE, false)
                 .setNumberOfIterations(1000)
                 .setLearningRate(0.00005)
                 .setLossFunction(new LossFunction.GenericLossFunction(predictionFunction, partialLossFunction))

@@ -21,11 +21,11 @@ public abstract class Program extends EventDispatcher {
 
     protected DataManager dataManager;
 
-    public SlotContext slotContext;
-
     private Lifecycle lifecycle;
 
     private ProgramLinker programLinker;
+
+    public ProgramContext programContext;
 
     // ---------------------------------------------------
 
@@ -37,62 +37,47 @@ public abstract class Program extends EventDispatcher {
     // Constructors.
     // ---------------------------------------------------
 
-    public Program() {
-        super(true);
+    public Program() { super(true); }
+
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
+
+    public void injectContext(final ProgramContext programContext) throws Exception {
+
+        this.programContext = Preconditions.checkNotNull(programContext);
+
+        this.dataManager = programContext.runtimeContext.dataManager;
+
+        this.lifecycle = new Lifecycle(programContext);
+
+        this.CF = programContext.CF;
+
+        this.DF = programContext.DF;
+
+        programLinker = new ProgramLinker(programContext, getClass());
+    }
+
+    public void result(final Serializable... obj) {
+        dataManager.setResults(programContext.programID, Arrays.asList(obj));
     }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    public void injectContext(final SlotContext slotContext) throws Exception {
-
-        this.slotContext = Preconditions.checkNotNull(slotContext);
-
-        this.dataManager = slotContext.runtimeContext.dataManager;
-
-        this.lifecycle = new Lifecycle(slotContext);
-
-        this.CF = slotContext.CF;
-
-        this.DF = slotContext.DF;
-
-        programLinker = new ProgramLinker(slotContext.programContext, getClass());
-    }
-
-    public void result(final Serializable... obj) {
-        if (slotContext.slotID == 0) {
-            dataManager.setResults(slotContext.programContext.programID, Arrays.asList(obj));
-        }
-    }
-
-    // ---------------------------------------------------
-    // Lifecycle.
-    // ---------------------------------------------------
-
-    public void define(final Lifecycle lifecycle) {}
-
-    // ---------------------------------------------------
-    // Lifecycle Execution.
-    // ---------------------------------------------------
-
     public void run() throws Exception {
 
-        define(lifecycle);
+        final String slotIDStr = "[" + programContext.runtimeContext.nodeID + "]";
 
-        final String slotIDStr = "[" + slotContext.runtimeContext.nodeID
-                + " | " + slotContext.slotID + "] ";
-
-        //program.enter();
-
-        programLinker.link(slotContext, this);
+        programLinker.link(this);
 
         programLinker.defineUnits(this, lifecycle);
 
         programLinker.fetchStateObjects(this);
 
         {
-            LOG.info(slotIDStr + "Enter " + lifecycle.slotContext.programContext.simpleClassName + " pre-process phase.");
+            LOG.info(slotIDStr + "Enter " + lifecycle.programContext.simpleClassName + " pre-process phase.");
 
             final long start = System.currentTimeMillis();
 
@@ -100,12 +85,12 @@ public abstract class Program extends EventDispatcher {
 
             final long end = System.currentTimeMillis();
 
-            LOG.info(slotIDStr + "Leave " + lifecycle.slotContext.programContext.simpleClassName
+            LOG.info(slotIDStr + "Leave " + lifecycle.programContext.simpleClassName
                     + " pre-process phase [duration: " + (end - start) + " ms].");
         }
 
         {
-            LOG.info(slotIDStr + "Enter " + lifecycle.slotContext.programContext.simpleClassName + " process phase.");
+            LOG.info(slotIDStr + "Enter " + lifecycle.programContext.simpleClassName + " process phase.");
 
             final long start = System.currentTimeMillis();
 
@@ -113,12 +98,12 @@ public abstract class Program extends EventDispatcher {
 
             final long end = System.currentTimeMillis();
 
-            LOG.info(slotIDStr + "Leave " + lifecycle.slotContext.programContext.simpleClassName +
+            LOG.info(slotIDStr + "Leave " + lifecycle.programContext.simpleClassName +
                     " process phase [duration: " + (end - start) + " ms].");
         }
 
         {
-            LOG.info(slotIDStr + "Enter " + lifecycle.slotContext.programContext.simpleClassName + " post-process phase.");
+            LOG.info(slotIDStr + "Enter " + lifecycle.programContext.simpleClassName + " post-process phase.");
 
             final long start = System.currentTimeMillis();
 
@@ -126,10 +111,8 @@ public abstract class Program extends EventDispatcher {
 
             final long end = System.currentTimeMillis();
 
-            LOG.info(slotIDStr + "Leave " + lifecycle.slotContext.programContext.simpleClassName
+            LOG.info(slotIDStr + "Leave " + lifecycle.programContext.simpleClassName
                     + " post-process phase [duration: " + (end - start) + " ms].");
         }
-
-        //program.leave();
     }
 }

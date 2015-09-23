@@ -5,14 +5,14 @@ import de.tuberlin.pserver.dsl.dataflow.aggregators.Aggregator;
 import de.tuberlin.pserver.dsl.dataflow.shared.SharedDouble;
 import de.tuberlin.pserver.dsl.dataflow.shared.SharedVar;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 
 
 public class TronLR implements TronFunction {
 
-    private final SlotContext sc;
+    private final ProgramContext sc;
 
-    public TronLR(final SlotContext sc) { this.sc = Preconditions.checkNotNull(sc); }
+    public TronLR(final ProgramContext sc) { this.sc = Preconditions.checkNotNull(sc); }
 
     public double functionValue(final Matrix dataPoints, final Matrix w_broad, final Parameter param) throws Exception {
 

@@ -2,7 +2,7 @@ package de.tuberlin.pserver.runtime.state.controller;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.runtime.state.filter.UpdateFilter;
 import de.tuberlin.pserver.runtime.state.merger.UpdateMerger;
 
@@ -12,7 +12,7 @@ public abstract class RemoteUpdateController {
     // Fields.
     // ---------------------------------------------------
 
-    protected final SlotContext slotContext;
+    protected final ProgramContext programContext;
 
     protected final String stateName;
 
@@ -24,9 +24,9 @@ public abstract class RemoteUpdateController {
     // Constructors.
     // ---------------------------------------------------
 
-    public RemoteUpdateController(final SlotContext slotContext, final String stateName){
-        this.slotContext  = Preconditions.checkNotNull(slotContext);
-        this.stateName    = Preconditions.checkNotNull(stateName);
+    public RemoteUpdateController(final ProgramContext programContext, final String stateName){
+        this.programContext  = Preconditions.checkNotNull(programContext);
+        this.stateName       = Preconditions.checkNotNull(stateName);
     }
 
     // ---------------------------------------------------
@@ -39,7 +39,7 @@ public abstract class RemoteUpdateController {
 
     // ---------------------------------------------------
 
-    public abstract void publishUpdate(final SlotContext sc) throws Exception;
+    public abstract void publishUpdate() throws Exception;
 
-    public abstract void pullUpdate(final SlotContext sc) throws Exception;
+    public abstract void pullUpdate() throws Exception;
 }

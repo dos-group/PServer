@@ -9,7 +9,7 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.utils.MatrixAggregation;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 
 public class DistributedMatrix extends AbstractMatrix {
@@ -18,7 +18,7 @@ public class DistributedMatrix extends AbstractMatrix {
     // Fields.
     // ---------------------------------------------------
 
-    private final SlotContext slotContext;
+    private final ProgramContext programContext;
 
     private final int nodeDOP, nodeID;
 
@@ -37,10 +37,10 @@ public class DistributedMatrix extends AbstractMatrix {
     // ---------------------------------------------------
 
     public DistributedMatrix(final DistributedMatrix m) {
-        this(m.slotContext, m.rows, m.cols, m.partitionType, m.layout, m.format, m.completeMatrix);
+        this(m.programContext, m.rows, m.cols, m.partitionType, m.layout, m.format, m.completeMatrix);
     }
 
-    public DistributedMatrix(final SlotContext slotContext,
+    public DistributedMatrix(final ProgramContext programContext,
                              final long rows, final long cols,
                              final PartitionType partitionType,
                              final Layout layout,
@@ -49,9 +49,9 @@ public class DistributedMatrix extends AbstractMatrix {
 
         super(rows, cols, layout);
 
-        this.slotContext    = Preconditions.checkNotNull(slotContext);
-        this.nodeDOP        = slotContext.programContext.nodeDOP;
-        this.nodeID         = slotContext.runtimeContext.nodeID;
+        this.programContext = Preconditions.checkNotNull(programContext);
+        this.nodeDOP        = programContext.nodeDOP;
+        this.nodeID         = programContext.runtimeContext.nodeID;
         this.partitionType  = Preconditions.checkNotNull(partitionType);
         this.shape          = createShape(rows, cols);
         this.format         = format;
@@ -147,14 +147,14 @@ public class DistributedMatrix extends AbstractMatrix {
                     totalAgg.set(0, row, value);
                 }
 
-                slotContext.runtimeContext.dataManager.pushTo("rowAgg", partialAgg);
-                final int n = slotContext.programContext.nodeDOP - 1;
-                slotContext.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, n, "rowAgg",
+                programContext.runtimeContext.dataManager.pushTo("rowAgg", partialAgg);
+                final int n = programContext.nodeDOP - 1;
+                programContext.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, n, "rowAgg",
                         new DataManager.DataEventHandler() {
                             @Override
                             public void handleDataEvent(int srcNodeID, Object value) {
                                 final Matrix remotePartialAgg = (Matrix)value;
-                                final long offset = rows / slotContext.programContext.nodeDOP * srcNodeID;
+                                final long offset = rows / programContext.nodeDOP * srcNodeID;
                                 for (int i = 0; i < remotePartialAgg.rows(); ++i)
                                    totalAgg.set(0, offset + i, remotePartialAgg.get(0, i));
                             }
@@ -174,9 +174,9 @@ public class DistributedMatrix extends AbstractMatrix {
         switch (partitionType) {
             case ROW_PARTITIONED: {
                 Matrix partialMatrix = matrix.subMatrix(shape.rowOffset, shape.colOffset, shape.rows, shape.cols);
-                slotContext.runtimeContext.dataManager.pushTo("partialMatrix", partialMatrix);
-                final int n = slotContext.programContext.nodeDOP - 1;
-                slotContext.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, n, "partialMatrix",
+                programContext.runtimeContext.dataManager.pushTo("partialMatrix", partialMatrix);
+                final int n = programContext.nodeDOP - 1;
+                programContext.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, n, "partialMatrix",
                         new DataManager.DataEventHandler() {
                             @Override
                             public void handleDataEvent(int srcNodeID, Object value) {

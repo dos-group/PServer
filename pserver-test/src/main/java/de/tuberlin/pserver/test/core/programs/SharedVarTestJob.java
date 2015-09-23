@@ -14,7 +14,7 @@ public class SharedVarTestJob extends Program {
 
         lifecycle.process(() -> {
 
-            final SharedInt sharedInt = new SharedInt(slotContext, 0);
+            final SharedInt sharedInt = new SharedInt(programContext, 0);
 
             CF.loop().exe(1000, (e) -> sharedInt.inc());
 
