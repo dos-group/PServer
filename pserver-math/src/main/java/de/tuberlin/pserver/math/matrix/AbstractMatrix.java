@@ -396,6 +396,16 @@ public abstract class AbstractMatrix implements Matrix {
     }
 
     @Override
+    public Matrix assign(long rowOffset, long colOffset, Matrix m) {
+        for (long row = rowOffset; row < rows; row++) {
+            for (long col = colOffset; col < cols; col++) {
+                set(row, col, m.get(row - rowOffset, col - colOffset));
+            }
+        }
+        return this;
+    }
+
+    @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("AbstractMatrix["+rows+"|"+cols+"]: ");

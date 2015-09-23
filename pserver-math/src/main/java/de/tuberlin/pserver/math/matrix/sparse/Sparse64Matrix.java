@@ -126,7 +126,7 @@ public class Sparse64Matrix extends AbstractMatrix {
     }
 
     @Override
-    public Matrix assign(long row, long col, Matrix m) {
+    public Matrix assign(long rowOffset, long colOffset, Matrix m) {
         throw new NotImplementedException("not impl");
     }
 

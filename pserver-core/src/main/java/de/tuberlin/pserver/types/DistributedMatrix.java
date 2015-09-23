@@ -11,7 +11,15 @@ import de.tuberlin.pserver.math.utils.MatrixAggregation;
 import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.partitioning.IPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
+import de.tuberlin.pserver.runtime.partitioning.RemotePartition;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Vector;
 
 public class DistributedMatrix extends AbstractMatrix {
 
@@ -107,7 +115,7 @@ public class DistributedMatrix extends AbstractMatrix {
 
     @Override public Matrix subMatrix(long row, long col, long rowSize, long colSize) { return null; }
 
-    @Override public Matrix assign(long row, long col, Matrix m) { return null; }
+    @Override public Matrix assign(long rowOffset, long colOffset, Matrix m) { return null; }
 
     @Override protected Matrix newInstance(long rows, long cols) { throw new UnsupportedOperationException(); }
 
@@ -243,5 +251,76 @@ public class DistributedMatrix extends AbstractMatrix {
                     ? iter.rowNum()
                     : iter.rowNum() + (int)shape.rowOffset; }
         };
+    }
+
+    private DistributedMatrix constructIntersectingMatrix(DistributedMatrix sourceMatrix, PartitionShape targetPartition) {
+
+
+        // TODO: THIS DOESNT WORK LIKE THIS
+        // we need to create a DistributedMatrix with specified:
+        // - dimension
+        // - partitioning from which a targetPartition is derived
+
+
+        // TODO: how to set slotContext, partitionType, layout, format correctly?
+        DistributedMatrix result = new DistributedMatrix(sourceMatrix.slotContext, targetPartition.rows, targetPartition.cols, sourceMatrix.partitionType, sourceMatrix.layout, sourceMatrix.format, false);
+
+        Map<Integer,RemotePartition> remotePartitions = getIntersectingRemotePartitions(sourceMatrix, targetPartition);
+        // offer own partition, if any
+        RemotePartition ownPartition = remotePartitions.get(nodeID);
+        if(ownPartition != null) {
+            System.out.println(nodeID + ": " + ownPartition.shape);
+            long innerRowOffset = ownPartition.shape.rowOffset - sourceMatrix.shape.rowOffset;
+            long innerColOffset = ownPartition.shape.colOffset - sourceMatrix.shape.colOffset;
+            Matrix subMatrix = matrix.subMatrix(innerRowOffset, innerColOffset, ownPartition.shape.rows, ownPartition.shape.cols);
+            result.matrix.assign(ownPartition.shape.rowOffset, ownPartition.shape.colOffset, subMatrix);
+            slotContext.runtimeContext.dataManager.pushTo("partialMatrix", subMatrix);
+            remotePartitions.remove(ownPartition);
+        }
+        int n = remotePartitions.size() - (ownPartition != null ? 1 : 0);
+        slotContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "partialMatrix",
+                new DataManager.DataEventHandler() {
+                    @Override
+                    public void handleDataEvent(int srcNodeID, Object value) {
+                        final Matrix remotePartialMatrix = (Matrix) value;
+                        RemotePartition remotePartition = remotePartitions.get(srcNodeID);
+                        Preconditions.checkNotNull(remotePartition, "Received remote partition from node {} but couldn't find a shape for it.", srcNodeID);
+                        result.matrix.assign(remotePartition.shape.rowOffset, remotePartition.shape.colOffset, remotePartialMatrix);
+                    }
+                }
+        );
+
+        return result;
+    }
+
+    /**
+     * Calculates the minimal set of RemotePartitions that need to be fetched in order to construct a Matrix of a given
+     * PartitionShape from a given DistributedMatrix. <br>
+     * In other words it calculates all PartitionShapes of sourceMatrix that intersect targetShape "divided" by the
+     * nodeId the shape resides on.
+     * SourceMatrix x TargetShape -> {RemotePartitions}
+     * @param sourceMatrix The Matrix from which another Matrix shall be constructed
+     * @param targetShape The shape of the Matrix that is to be constructed
+     * @return The minimal set of RemotePartitions that need to be fetched in order to construct a Matrix of shape targetShape from sourceMatrix
+     */
+    private static Map<Integer,RemotePartition> getIntersectingRemotePartitions(DistributedMatrix sourceMatrix, PartitionShape targetShape) {
+        Map<Integer,RemotePartition> remotePartitions = new HashMap<>(sourceMatrix.nodeDOP);
+        for (int i = 0; i < sourceMatrix.nodeDOP; i++) {
+            IMatrixPartitioner remotePartitioner = new MatrixByRowPartitioner(i, sourceMatrix.nodeDOP, sourceMatrix.rows, sourceMatrix.cols);
+            PartitionShape remoteShape = remotePartitioner.getPartitionShape();
+            PartitionShape intersection = targetShape.intersect(remoteShape);
+            if(intersection != null) { // null if no intersection
+                remotePartitions.put(i, new RemotePartition(intersection, i));
+            }
+            System.out.println(i + ": " + remoteShape + " intersect " + targetShape + " = " + intersection);
+        }
+        return remotePartitions;
+    }
+
+    @Override
+    public Matrix transpose() {
+        PartitionShape transposedShape = new PartitionShape(shape.cols, shape.rows, shape.colOffset, shape.rowOffset);
+        DistributedMatrix remoteView = constructIntersectingMatrix(this, transposedShape);
+        return remoteView;
     }
 }
