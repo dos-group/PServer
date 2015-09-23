@@ -5,7 +5,7 @@ import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.config.IConfigFactory;
 import de.tuberlin.pserver.core.infra.ClusterSimulator;
 import de.tuberlin.pserver.node.PServerMain;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.runtime.Program;
 import org.apache.log4j.ConsoleAppender;
 
 import java.io.Serializable;
@@ -43,7 +43,7 @@ public enum PServerExecutor {
     // Public Methods.
     // ---------------------------------------------------
 
-    public PServerExecutor run(final Class<? extends MLProgram> jobClass) {
+    public PServerExecutor run(final Class<? extends Program> jobClass) {
         if (isLocal) {
             simulator = new ClusterSimulator(
                     IConfigFactory.load(IConfig.Type.PSERVER_SIMULATION),

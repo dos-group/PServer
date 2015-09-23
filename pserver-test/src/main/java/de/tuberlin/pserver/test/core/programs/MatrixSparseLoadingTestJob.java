@@ -9,7 +9,7 @@ import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.runtime.Program;
 import de.tuberlin.pserver.runtime.filesystem.record.config.RowColValRecordFormatConfig;
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
@@ -20,7 +20,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-public class MatrixSparseLoadingTestJob extends MLProgram  {
+public class MatrixSparseLoadingTestJob extends Program {
 
     private static final long ROWS = 1000;
     private static final long COLS = 250;
@@ -99,7 +99,7 @@ public class MatrixSparseLoadingTestJob extends MLProgram  {
                 .done();
     }
 
-    public static class MatrixDenseLoadingTestJob extends MLProgram  {
+    public static class MatrixDenseLoadingTestJob extends Program {
 
         private static final long ROWS = 10000;
         private static final long COLS = 2500;

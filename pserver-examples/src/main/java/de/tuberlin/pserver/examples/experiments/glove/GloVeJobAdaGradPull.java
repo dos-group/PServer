@@ -10,13 +10,13 @@ import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.runtime.Program;
 import de.tuberlin.pserver.runtime.state.filter.MatrixUpdateFilter;
 import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
 import de.tuberlin.pserver.runtime.state.merger.VectorUpdateMerger;
 import de.tuberlin.pserver.types.PartitionType;
 
-public final class GloVeJobAdaGradPull extends MLProgram {
+public final class GloVeJobAdaGradPull extends Program {
 
     // ---------------------------------------------------
 

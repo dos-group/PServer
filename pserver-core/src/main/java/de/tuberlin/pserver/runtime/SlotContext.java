@@ -13,11 +13,11 @@ public final class SlotContext {
 
     public final RuntimeContext runtimeContext;
 
-    public final MLProgramContext programContext;
+    public final ProgramContext programContext;
 
     public final int slotID;
 
-    public final MLProgram programInvokeable;
+    public final Program programInvokeable;
 
     // ---------------------------------------------------
 
@@ -30,9 +30,9 @@ public final class SlotContext {
     // ---------------------------------------------------
 
     public SlotContext(final RuntimeContext runtimeContext,
-                       final MLProgramContext programContext,
+                       final ProgramContext programContext,
                        final int slotID,
-                       final MLProgram programInvokeable) {
+                       final Program programInvokeable) {
 
         this.runtimeContext     = Preconditions.checkNotNull(runtimeContext);
         this.programContext     = Preconditions.checkNotNull(programContext);

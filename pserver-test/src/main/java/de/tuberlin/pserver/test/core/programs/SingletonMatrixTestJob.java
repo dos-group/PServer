@@ -6,9 +6,9 @@ import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.runtime.Program;
 
-public class SingletonMatrixTestJob extends MLProgram {
+public class SingletonMatrixTestJob extends Program {
 
     private static final int ROWS = 1000;
 

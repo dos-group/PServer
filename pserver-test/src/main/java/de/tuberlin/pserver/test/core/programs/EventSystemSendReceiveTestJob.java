@@ -5,11 +5,11 @@ import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.runtime.Program;
 
 import java.util.concurrent.CyclicBarrier;
 
-public class EventSystemSendReceiveTestJob extends MLProgram {
+public class EventSystemSendReceiveTestJob extends Program {
 
     public static final int NUM_MSG = 20000;
 

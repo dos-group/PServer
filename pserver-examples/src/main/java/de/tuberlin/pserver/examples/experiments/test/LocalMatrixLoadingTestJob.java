@@ -7,7 +7,7 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.runtime.Program;
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
@@ -19,7 +19,7 @@ import java.io.IOException;
 /**
  * Created by fsander on 07.09.15.
  */
-public class LocalMatrixLoadingTestJob extends MLProgram {
+public class LocalMatrixLoadingTestJob extends Program {
 
     private static final long ROWS = 10000;
     private static final long COLS = 2500;

@@ -11,7 +11,7 @@ import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.tuples.Tuple2;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.runtime.Program;
 import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
 import de.tuberlin.pserver.types.DistributedMatrix;
 
@@ -19,7 +19,7 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.List;
 
-public class TSNEJob extends MLProgram {
+public class TSNEJob extends Program {
 
     // ---------------------------------------------------
     // Constants.

@@ -6,11 +6,11 @@ import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.Format;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.runtime.Program;
 import de.tuberlin.pserver.types.DistributedMatrix;
 import de.tuberlin.pserver.types.PartitionType;
 
-public class DistributedMatrixJob extends MLProgram {
+public class DistributedMatrixJob extends Program {
 
     @State(globalScope = GlobalScope.LOGICALLY_PARTITIONED, partitionType = PartitionType.ROW_PARTITIONED,
             rows = 20, cols = 20, format = Format.DENSE_FORMAT)

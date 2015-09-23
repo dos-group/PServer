@@ -4,10 +4,10 @@ import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.runtime.Program;
 
 
-public class PingPongTestJob extends MLProgram {
+public class PingPongTestJob extends Program {
 
     public static final int NUM_MSG = 50;
 

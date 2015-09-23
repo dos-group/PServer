@@ -8,7 +8,7 @@ import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.runtime.Program;
 import de.tuberlin.pserver.runtime.events.ProgramFailureEvent;
 import de.tuberlin.pserver.runtime.events.ProgramResultEvent;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
@@ -102,7 +102,7 @@ public final class PServerClient extends EventDispatcher {
     // Public Methods.
     // ---------------------------------------------------
 
-    public UUID execute(final Class<? extends MLProgram> jobClass) {
+    public UUID execute(final Class<? extends Program> jobClass) {
         Preconditions.checkNotNull(jobClass);
 
         final long start = System.nanoTime();

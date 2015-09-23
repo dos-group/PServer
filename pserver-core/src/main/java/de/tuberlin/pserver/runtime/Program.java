@@ -11,13 +11,13 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.util.Arrays;
 
-public abstract class MLProgram extends EventDispatcher {
+public abstract class Program extends EventDispatcher {
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    protected static final Logger LOG = LoggerFactory.getLogger(MLProgram.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(Program.class);
 
     protected DataManager dataManager;
 
@@ -25,7 +25,7 @@ public abstract class MLProgram extends EventDispatcher {
 
     private Lifecycle lifecycle;
 
-    private MLProgramLinker programLinker;
+    private ProgramLinker programLinker;
 
     // ---------------------------------------------------
 
@@ -37,7 +37,7 @@ public abstract class MLProgram extends EventDispatcher {
     // Constructors.
     // ---------------------------------------------------
 
-    public MLProgram() {
+    public Program() {
         super(true);
     }
 
@@ -57,7 +57,7 @@ public abstract class MLProgram extends EventDispatcher {
 
         this.DF = slotContext.DF;
 
-        programLinker = new MLProgramLinker(slotContext.programContext, getClass());
+        programLinker = new ProgramLinker(slotContext.programContext, getClass());
     }
 
     public void result(final Serializable... obj) {

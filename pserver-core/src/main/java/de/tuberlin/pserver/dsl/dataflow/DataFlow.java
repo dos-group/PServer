@@ -5,8 +5,8 @@ import de.tuberlin.pserver.dsl.state.StateDeclaration;
 import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.MLProgramContext;
-import de.tuberlin.pserver.runtime.MLProgramLinker;
+import de.tuberlin.pserver.runtime.ProgramContext;
+import de.tuberlin.pserver.runtime.ProgramLinker;
 import de.tuberlin.pserver.runtime.SlotContext;
 import de.tuberlin.pserver.runtime.dht.DHTKey;
 import de.tuberlin.pserver.runtime.state.controller.RemoteUpdateController;
@@ -24,7 +24,7 @@ public final class DataFlow {
 
     private final DataManager dataManager;
 
-    private final MLProgramContext programContext;
+    private final ProgramContext programContext;
 
     // ---------------------------------------------------
     // Constructor.
@@ -53,7 +53,7 @@ public final class DataFlow {
         while (st.hasMoreTokens()) {
             final String name = st.nextToken().replaceAll("\\s+", "");
             final RemoteUpdateController remoteUpdateController =
-                    (RemoteUpdateController) programContext.get(MLProgramLinker.remoteUpdateControllerName(name));
+                    (RemoteUpdateController) programContext.get(ProgramLinker.remoteUpdateControllerName(name));
             remoteUpdateController.publishUpdate(slotContext);
         }
     }
@@ -61,7 +61,7 @@ public final class DataFlow {
     public void publishUpdate() throws Exception {
         @SuppressWarnings("unchecked")
         final List<StateDeclaration> stateDecls = (List<StateDeclaration>)
-                programContext.get(MLProgramLinker.stateDeclarationListName());
+                programContext.get(ProgramLinker.stateDeclarationListName());
         for (final StateDeclaration stateDecl : stateDecls) {
             if (stateDecl.remoteUpdate != RemoteUpdate.NO_UPDATE) {
                 publishUpdate(stateDecl.name);
@@ -75,7 +75,7 @@ public final class DataFlow {
         while (st.hasMoreTokens()) {
             final String name = st.nextToken().replaceAll("\\s+", "");
             final RemoteUpdateController remoteUpdateController =
-                    (RemoteUpdateController) programContext.get(MLProgramLinker.remoteUpdateControllerName(name));
+                    (RemoteUpdateController) programContext.get(ProgramLinker.remoteUpdateControllerName(name));
             remoteUpdateController.pullUpdate(slotContext);
         }
     }
@@ -83,7 +83,7 @@ public final class DataFlow {
     public void pullUpdate() throws Exception {
         @SuppressWarnings("unchecked")
         final List<StateDeclaration> stateDecls = (List<StateDeclaration>)
-                programContext.get(MLProgramLinker.stateDeclarationListName());
+                programContext.get(ProgramLinker.stateDeclarationListName());
         for (final StateDeclaration stateDecl : stateDecls) {
             if (stateDecl.remoteUpdate != RemoteUpdate.NO_UPDATE) {
                 pullUpdate(stateDecl.name);

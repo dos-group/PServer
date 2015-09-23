@@ -11,13 +11,13 @@ import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.runtime.Program;
 import de.tuberlin.pserver.runtime.filesystem.record.config.RowRecordFormatConfig;
 import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
 
 import java.util.Random;
 
-public class Kmeans extends MLProgram {
+public class Kmeans extends Program {
 
     private static final long ROWS = 1000;
     private static final long COLS = 2;

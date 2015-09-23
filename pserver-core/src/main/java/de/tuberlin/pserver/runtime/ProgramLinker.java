@@ -34,17 +34,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-public final class MLProgramLinker {
+public final class ProgramLinker {
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    private static final Logger LOG = LoggerFactory.getLogger(MLProgramLinker.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProgramLinker.class);
 
-    private final MLProgramContext programContext;
+    private final ProgramContext programContext;
 
-    private final Class<? extends MLProgram> programClass;
+    private final Class<? extends Program> programClass;
 
     private final DataManager dataManager;
 
@@ -58,8 +58,8 @@ public final class MLProgramLinker {
     // Constructors.
     // ---------------------------------------------------
 
-    public MLProgramLinker(final MLProgramContext programContext,
-                           final Class<? extends MLProgram> programClass) {
+    public ProgramLinker(final ProgramContext programContext,
+                         final Class<? extends Program> programClass) {
 
         this.programContext   = Preconditions.checkNotNull(programContext);
         this.programClass     = Preconditions.checkNotNull(programClass);
@@ -71,7 +71,7 @@ public final class MLProgramLinker {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void link(final SlotContext slotContext, final MLProgram instance) throws Exception {
+    public void link(final SlotContext slotContext, final Program instance) throws Exception {
 
         //slotContext.CF.parUnit().slot(0).exe(() -> {
 
@@ -113,7 +113,7 @@ public final class MLProgramLinker {
                 + " loading linking [duration: " + (end - start) + " ms].");
     }
 
-    public void fetchStateObjects(final MLProgram program) throws Exception {
+    public void fetchStateObjects(final Program program) throws Exception {
 
         stateDecls = programContext.get(stateDeclarationListName());
 
@@ -129,7 +129,7 @@ public final class MLProgramLinker {
         }
     }
 
-    public void defineUnits(final MLProgram programInvokeable, final Lifecycle lifecycle) {
+    public void defineUnits(final Program programInvokeable, final Lifecycle lifecycle) {
         Preconditions.checkNotNull(programInvokeable);
         Preconditions.checkNotNull(lifecycle);
         Preconditions.checkNotNull(unitDecls);
@@ -238,7 +238,7 @@ public final class MLProgramLinker {
         }
     }
 
-    private void analyzeAndWireDeltaFilterAnnotations(final MLProgram instance) throws Exception {
+    private void analyzeAndWireDeltaFilterAnnotations(final Program instance) throws Exception {
         for (final Field field : Preconditions.checkNotNull(programClass).getDeclaredFields()) {
             for (final Annotation an : field.getDeclaredAnnotations()) {
                 if (an instanceof StateExtractor) {
@@ -258,7 +258,7 @@ public final class MLProgramLinker {
         }
     }
 
-    private void analyzeAndWireDeltaMergerAnnotations(final MLProgram instance) throws Exception {
+    private void analyzeAndWireDeltaMergerAnnotations(final Program instance) throws Exception {
         for (final Field field : Preconditions.checkNotNull(programClass).getDeclaredFields()) {
             for (final Annotation an : field.getDeclaredAnnotations()) {
                 if (an instanceof StateMerger) {

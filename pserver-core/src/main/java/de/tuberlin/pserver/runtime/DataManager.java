@@ -136,7 +136,7 @@ public class DataManager extends EventDispatcher {
 
     public final int[] remoteNodeIDs;
 
-    private final AtomicReference<MLProgramContext> programContextRef;
+    private final AtomicReference<ProgramContext> programContextRef;
 
 
     // ---------------------------------------------------
@@ -188,7 +188,7 @@ public class DataManager extends EventDispatcher {
     // ---------------------------------------------------
 
 
-    public void registerProgram(final MLProgramContext programContext) {
+    public void registerProgram(final ProgramContext programContext) {
         Preconditions.checkNotNull(programContext);
 
         programContextRef.set(programContext);
@@ -200,7 +200,7 @@ public class DataManager extends EventDispatcher {
         //this.slotAssignment = new NestedIntervalTree<>(in, sa);
     }
 
-    public void unregisterProgram(final MLProgramContext programContext) {
+    public void unregisterProgram(final ProgramContext programContext) {
         Preconditions.checkNotNull(programContext);
 
         programContextRef.set(null);

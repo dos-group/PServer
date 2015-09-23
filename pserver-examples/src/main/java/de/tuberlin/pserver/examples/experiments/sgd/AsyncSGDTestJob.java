@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.examples.experiments.sgd;
 
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.runtime.Program;
 
-public final class AsyncSGDTestJob extends MLProgram {
+public final class AsyncSGDTestJob extends Program {
 /*
     // ---------------------------------------------------
     // Fields.

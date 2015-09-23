@@ -3,9 +3,9 @@ package de.tuberlin.pserver.test.core.programs;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.runtime.Program;
 
-public class PushAwaitTestJob extends MLProgram {
+public class PushAwaitTestJob extends Program {
 
     public static final int NUM_MSG = 20000;
 

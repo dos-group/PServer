@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
-public final class MLProgramContext {
+public final class ProgramContext {
 
     // ---------------------------------------------------
     // Fields.
@@ -51,12 +51,12 @@ public final class MLProgramContext {
     // Constructors.
     // ---------------------------------------------------
 
-    public MLProgramContext(final RuntimeContext runtimeContext,
-                            final MachineDescriptor clientMachine,
-                            final UUID programID,
-                            final String className,
-                            final String simpleClassName,
-                            final int nodeDOP) {
+    public ProgramContext(final RuntimeContext runtimeContext,
+                          final MachineDescriptor clientMachine,
+                          final UUID programID,
+                          final String className,
+                          final String simpleClassName,
+                          final int nodeDOP) {
 
         this.runtimeContext     = Preconditions.checkNotNull(runtimeContext);
         this.clientMachine      = Preconditions.checkNotNull(clientMachine);

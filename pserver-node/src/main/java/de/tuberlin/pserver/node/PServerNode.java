@@ -71,13 +71,13 @@ public final class PServerNode extends EventDispatcher {
         public void handleEvent(final Event e) {
             final ProgramSubmissionEvent programSubmission = (ProgramSubmissionEvent)e;
             final Class<?> clazz = userCodeManager.implantClass(programSubmission.byteCode);
-            if (!MLProgram.class.isAssignableFrom(clazz))
+            if (!Program.class.isAssignableFrom(clazz))
                 throw new IllegalStateException();
 
             @SuppressWarnings("unchecked")
-            final Class<? extends MLProgram> programClass = (Class<? extends MLProgram>) clazz;
+            final Class<? extends Program> programClass = (Class<? extends Program>) clazz;
 
-            final MLProgramContext programContext = new MLProgramContext(
+            final ProgramContext programContext = new ProgramContext(
                     runtimeContext,
                     programSubmission.clientMachine,
                     programSubmission.programID,
@@ -94,7 +94,7 @@ public final class PServerNode extends EventDispatcher {
 
                 try {
 
-                    final MLProgram programInvokeable = programClass.newInstance();
+                    final Program programInvokeable = programClass.newInstance();
 
                     final SlotContext slotContext = new SlotContext(
                             runtimeContext,

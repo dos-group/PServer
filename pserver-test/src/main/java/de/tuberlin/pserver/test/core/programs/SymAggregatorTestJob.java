@@ -4,10 +4,10 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.dsl.dataflow.aggregators.Aggregator;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.runtime.Program;
 
 
-public class SymAggregatorTestJob extends MLProgram {
+public class SymAggregatorTestJob extends Program {
 
     @Unit
     public void main(final Lifecycle lifecycle) {
