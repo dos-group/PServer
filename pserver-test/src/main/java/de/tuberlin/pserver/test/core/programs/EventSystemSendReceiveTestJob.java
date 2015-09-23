@@ -18,33 +18,31 @@ public class EventSystemSendReceiveTestJob extends MLProgram {
 
         final NetManager netManager = slotContext.runtimeContext.netManager;
 
-        program.process(() ->
+        program.process(() -> {
 
-            CF.serial().exe(() -> {
+            final CyclicBarrier barrier = new CyclicBarrier(2);
 
-                final CyclicBarrier barrier = new CyclicBarrier(2);
-
-                netManager.addEventListener("test-pong", event -> {
-                    try {
-                        barrier.await();
-                    } catch (Exception e) {
-                        LOG.error(e.getMessage());
-                    }
-                });
-
-                // TODO: We have to wait here until the receiver has
-                // TODO: registered his event handler, else the test deadlocks.
-                Thread.sleep(3000);
-
-                for (int i = 0; i < NUM_MSG; ++i) {
-
-                    netManager.sendEvent(1, new NetEvents.NetEvent("test-ping", true));
-
+            netManager.addEventListener("test-pong", event -> {
+                try {
                     barrier.await();
+                } catch (Exception e) {
+                    LOG.error(e.getMessage());
                 }
+            });
 
-                System.out.println("-- FINISH NODE 0");
-            })
+            // TODO: We have to wait here until the receiver has
+            // TODO: registered his event handler, else the test deadlocks.
+            Thread.sleep(3000);
+
+            for (int i = 0; i < NUM_MSG; ++i) {
+
+                netManager.sendEvent(1, new NetEvents.NetEvent("test-ping", true));
+
+                barrier.await();
+            }
+
+            System.out.println("-- FINISH NODE 0");
+            }
         );
     }
 
@@ -54,29 +52,26 @@ public class EventSystemSendReceiveTestJob extends MLProgram {
 
         final NetManager netManager = slotContext.runtimeContext.netManager;
 
-        program.process(() ->
+        program.process(() -> {
 
-            CF.serial().exe(() -> {
+            final CyclicBarrier barrier = new CyclicBarrier(2);
 
-                final CyclicBarrier barrier = new CyclicBarrier(2);
-
-                netManager.addEventListener("test-ping", event -> {
-                    try {
-                        barrier.await();
-                    } catch (Exception e) {
-                        LOG.error(e.getMessage());
-                    }
-                });
-
-                for (int i = 0; i < NUM_MSG; ++i) {
-
+            netManager.addEventListener("test-ping", event -> {
+                try {
                     barrier.await();
-
-                    netManager.sendEvent(0, new NetEvents.NetEvent("test-pong", true));
+                } catch (Exception e) {
+                    LOG.error(e.getMessage());
                 }
+            });
 
-                System.out.println("-- FINISH NODE 1");
-            })
-        );
+            for (int i = 0; i < NUM_MSG; ++i) {
+
+                barrier.await();
+
+                netManager.sendEvent(0, new NetEvents.NetEvent("test-pong", true));
+            }
+
+            System.out.println("-- FINISH NODE 1");
+        });
     }
 }

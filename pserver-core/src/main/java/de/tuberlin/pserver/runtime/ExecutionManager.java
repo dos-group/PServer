@@ -136,11 +136,9 @@ public final class ExecutionManager {
     public void registerProgram(final MLProgramContext programContext) {
         Preconditions.checkNotNull(programContext);
 
-        final int activeSlots = programContext.perNodeDOP;
-
         programContextRef.set(programContext);
 
-        final NestedIntervalTree.Interval in = new NestedIntervalTree.Interval(0, activeSlots - 1);
+        final NestedIntervalTree.Interval in = new NestedIntervalTree.Interval(0, programContext.runtimeContext.numOfCores - 1);
 
         final SlotGroupAllocation sa = new SlotGroupAllocation(in);
 
@@ -274,15 +272,6 @@ public final class ExecutionManager {
     // ---------------------------------------------------
     // ITERATION CONTROL FLOW.
     // ---------------------------------------------------
-
-    public void localSync(final SlotContext slotContext) {
-        try {
-            final SlotGroup sg = getActiveSlotGroup();
-            sg.sync(slotContext);
-        } catch (Exception e) {
-            LOG.error(e.getLocalizedMessage());
-        }
-    }
 
     public void globalSync(final SlotContext slotContext) {
         final NetEvents.NetEvent globalSyncEvent = new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT, true);

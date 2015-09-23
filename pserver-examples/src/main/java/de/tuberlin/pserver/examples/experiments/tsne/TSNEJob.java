@@ -81,12 +81,7 @@ public class TSNEJob extends MLProgram {
     @Unit
     public void main(final Program program) {
 
-        program.initialize(() -> {
-            // random init of model. TODO: use matrix util to do this
-            //final Random rand = new Random(0);
-            //Y.applyOnElements(e -> e = rand.nextDouble());
-
-        }).process(() -> {
+        program.process(() -> {
             // calc affinity. P is affinity for input X
             P.assign(binarySearch(X, TOL, PERPLEXITY));
             // symmetrize
@@ -307,7 +302,7 @@ public class TSNEJob extends MLProgram {
     public static void cluster() {
         System.setProperty("pserver.profile", "wally");
         PServerExecutor.DISTRIBUTED
-                .run(TSNEJob.class, 4)
+                .run(TSNEJob.class)
                 .done();
     }
 
@@ -317,7 +312,7 @@ public class TSNEJob extends MLProgram {
         final List<List<Serializable>> res = Lists.newArrayList();
 
         PServerExecutor.LOCAL
-                .run(TSNEJob.class, 1)
+                .run(TSNEJob.class)
                 .results(res)
                 .done();
 

@@ -18,9 +18,7 @@ public class SharedVarTestJob extends MLProgram {
 
             CF.loop().exe(1000, (e) -> sharedInt.inc());
 
-            CF.syncSlots();
-
-            CF.serial().exe(() -> Preconditions.checkState(sharedInt.get() == 4000));
+            Preconditions.checkState(sharedInt.get() == 1000);
 
             sharedInt.done();
         });

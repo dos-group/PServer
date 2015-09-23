@@ -51,7 +51,7 @@ public class DistributedMatrixJob extends MLProgram {
     public static void main(final String[] args) {
 
         PServerExecutor.LOCAL
-                .run(DistributedMatrixJob.class, 1)
+                .run(DistributedMatrixJob.class)
                 .done();
     }
 }

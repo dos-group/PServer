@@ -10,7 +10,6 @@ import de.tuberlin.pserver.dsl.state.StateDeclaration;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.annotations.StateExtractor;
 import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
-import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
@@ -80,47 +79,38 @@ public final class MLProgramLinker {
 
         analyzeExecutableUnits();
 
-        if (slotContext.slotID == 0) {
+        stateDecls = new ArrayList<>();
 
-            stateDecls = new ArrayList<>();
+        final String slotIDStr = "[" + runtimeContext.nodeID
+                + " | " + slotContext.slotID + "] ";
 
-            final String slotIDStr = "[" + runtimeContext.nodeID
-                    + " | " + slotContext.slotID + "] ";
+        LOG.info(slotIDStr + "Enter " + slotContext.programContext.simpleClassName + " linking phase.");
 
-            LOG.info(slotIDStr + "Enter " + slotContext.programContext.simpleClassName + " linking phase.");
+        final long start = System.currentTimeMillis();
 
-            final long start = System.currentTimeMillis();
+        analyzeStateObjects();
 
-            analyzeStateObjects();
+        allocateStateObjects(slotContext);
 
-            allocateStateObjects(slotContext);
+        analyzeAndWireDeltaFilterAnnotations(instance);
 
-            analyzeAndWireDeltaFilterAnnotations(instance);
+        analyzeAndWireDeltaMergerAnnotations(instance);
 
-            analyzeAndWireDeltaMergerAnnotations(instance);
+        dataManager.loadInputData(slotContext);
 
-            dataManager.loadInputData(slotContext);
+        for (final StateDeclaration decl : stateDecls) {
 
-            for (final StateDeclaration decl : stateDecls) {
-
-                programContext.put(stateDeclarationName(decl.name), decl);
-            }
-
-            programContext.put(stateDeclarationListName(), stateDecls);
-
-            Thread.sleep(5000); // TODO: Wait until all objects are placed in DHT and accessible...
-
-            slotContext.programContext.programLoadBarrier.countDown();
-
-            final long end = System.currentTimeMillis();
-
-            LOG.info(slotIDStr + "Leave " + slotContext.programContext.simpleClassName
-                    + " loading linking [duration: " + (end - start) + " ms].");
+            programContext.put(stateDeclarationName(decl.name), decl);
         }
 
-        //});
+        programContext.put(stateDeclarationListName(), stateDecls);
 
-        slotContext.programContext.programLoadBarrier.await();
+        Thread.sleep(5000); // TODO: Wait until all objects are placed in DHT and accessible...
+
+        final long end = System.currentTimeMillis();
+
+        LOG.info(slotIDStr + "Leave " + slotContext.programContext.simpleClassName
+                + " loading linking [duration: " + (end - start) + " ms].");
     }
 
     public void fetchStateObjects(final MLProgram program) throws Exception {
@@ -190,11 +180,11 @@ public final class MLProgramLinker {
 
                     final int[] executingNodeIDs = parseNodeRanges(unitProperties.at());
 
-                    if (executingNodeIDs.length == 0 && globalUnitDeclIndex == -1)
+                    /*if (executingNodeIDs.length == 0 && globalUnitDeclIndex == -1) // TODO
                         globalUnitDeclIndex = unitDecls.size();
                     else
                         if (globalUnitDeclIndex != -1)
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("globalUnitDeclIndex = " + globalUnitDeclIndex + " | executingNodeIDs.length = " + executingNodeIDs.length);*/
 
                     for (final Integer nodeID : executingNodeIDs) {
                         if (!availableNodeIDs.remove(nodeID))

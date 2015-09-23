@@ -79,7 +79,7 @@ public final class GloVeJobAdaGradPull extends MLProgram {
     @Unit
     public void main(final Program program) {
 
-        program.initialize(() -> {
+        program.preProcess(() -> {
 
             final Random rand = new Random();
             for (int i = 0; i < W.rows(); ++i) {
@@ -154,7 +154,7 @@ public final class GloVeJobAdaGradPull extends MLProgram {
 
     public static void main(final String[] args) {
         PServerExecutor.LOCAL
-                .run(GloVeJobAdaGradPull.class, 1)
+                .run(GloVeJobAdaGradPull.class)
                 .done();
     }
 }

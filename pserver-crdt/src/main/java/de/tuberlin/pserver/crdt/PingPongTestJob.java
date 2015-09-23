@@ -17,23 +17,21 @@ public class PingPongTestJob extends MLProgram {
 
         program.process(() -> {
 
-            CF.parUnit(0).exe(() -> { // node 0 with slot 0 executes this section...
+            for (int i = 0; i < NUM_MSG; ++i) {
 
-                for (int i = 0; i < NUM_MSG; ++i) {
+                dataManager.pushTo("ping", new Integer(i), new int[]{1});
 
-                    dataManager.pushTo("ping", new Integer(i), new int[]{1});
+                dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, "pong", new DataManager.DataEventHandler() {
+                    @Override
+                    public void handleDataEvent(int srcNodeID, Object value) {
+                        final Integer i = (Integer) value;
+                        System.out.println("received pong " + i);
+                    }
+                });
+            }
 
-                    dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, "pong", new DataManager.DataEventHandler() {
-                        @Override
-                        public void handleDataEvent(int srcNodeID, Object value) {
-                            final Integer i = (Integer) value;
-                            System.out.println("received pong " + i);
-                        }
-                    });
-                }
+            System.out.println("-- FINISH NODE " + slotContext);
 
-                System.out.println("-- FINISH NODE " + slotContext);
-            });
         });
     }
 
@@ -42,23 +40,20 @@ public class PingPongTestJob extends MLProgram {
 
         program.process(() -> {
 
-            CF.parUnit(1).slot(0).exe(() -> { // node 1 with slot 0 executes this section...
+            for (int i = 0; i < NUM_MSG; ++i) {
 
-                for (int i = 0; i < NUM_MSG; ++i) {
+                dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, "ping", new DataManager.DataEventHandler() {
+                    @Override
+                    public void handleDataEvent(int srcNodeID, Object value) {
+                        final Integer i = (Integer)value;
+                        System.out.println("received ping " + i);
+                    }
+                });
 
-                    dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, "ping", new DataManager.DataEventHandler() {
-                        @Override
-                        public void handleDataEvent(int srcNodeID, Object value) {
-                            final Integer i = (Integer)value;
-                            System.out.println("received ping " + i);
-                        }
-                    });
+                dataManager.pushTo("pong", new Integer(i), new int[] { 0 });
+            }
 
-                    dataManager.pushTo("pong", new Integer(i), new int[] { 0 });
-                }
-
-                System.out.println("-- FINISH NODE " + slotContext);
-            });
+            System.out.println("-- FINISH NODE " + slotContext);
         });
     }
 
@@ -78,7 +73,7 @@ public class PingPongTestJob extends MLProgram {
         PServerExecutor.LOCAL
                 // Second param is number of slots (threads executing the job) per node,
                 // should be 1 at the beginning.
-                .run(PingPongTestJob.class, 1)
+                .run(PingPongTestJob.class)
                 .done();
     }
 }

@@ -15,8 +15,6 @@ import org.apache.commons.lang3.mutable.MutableDouble;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
@@ -44,9 +42,9 @@ public class RemoteMatrixSkeleton extends AbstractMatrix {
 
     private final NetManager netManager;
 
-    private final List<CyclicBarrier> barrierList = new ArrayList<>();
+    private final CyclicBarrier barrier = new CyclicBarrier(2);
 
-    private final List<MutableDouble> returnedValueList = new ArrayList<>();
+    private final MutableDouble returnedValue = new MutableDouble(Double.NaN);
 
     // ---------------------------------------------------
     // Constructor.
@@ -72,29 +70,21 @@ public class RemoteMatrixSkeleton extends AbstractMatrix {
 
         this.netManager    = slotContext.runtimeContext.netManager;
 
-        for (int i = 0; i < slotContext.programContext.perNodeDOP; ++i) {
+        netManager.addEventListener("get_response_" + name, new IEventHandler() {
 
-            final int slotID = i;
-
-            barrierList.add(new CyclicBarrier(2));
-
-            returnedValueList.add(new MutableDouble(Double.NaN));
-
-            netManager.addEventListener("get_response_" + name + "_" + slotID, new IEventHandler() {
-
-                @Override
-                public void handleEvent(Event event) {
-                    @SuppressWarnings("unchecked")
-                    final Double result = (Double) event.getPayload();
-                    returnedValueList.get(slotID).setValue(result);
-                    try {
-                        barrierList.get(slotID).await();
-                    } catch (InterruptedException | BrokenBarrierException e) {
-                        e.printStackTrace();
-                    }
+            @Override
+            public void handleEvent(Event event) {
+                @SuppressWarnings("unchecked")
+                final Double result = (Double) event.getPayload();
+                returnedValue.setValue(result);
+                try {
+                    barrier.await();
+                } catch (InterruptedException | BrokenBarrierException e) {
+                    e.printStackTrace();
                 }
-            });
-        }
+            }
+        });
+
     }
 
     // ---------------------------------------------------
@@ -103,16 +93,15 @@ public class RemoteMatrixSkeleton extends AbstractMatrix {
 
     @Override
     public double get(long row, long col) {
-        final int slotID =  slotContext.runtimeContext.executionManager.getSlotContext().slotID;
-        final NetEvents.NetEvent getRequestEvent = new NetEvents.NetEvent("get_request_" + name + "_" + slotID);
+        final NetEvents.NetEvent getRequestEvent = new NetEvents.NetEvent("get_request_" + name );
         getRequestEvent.setPayload(Pair.of(row, col));
         netManager.sendEvent(atNodeID, getRequestEvent);
         try {
-            barrierList.get(slotID).await();
+            barrier.await();
         } catch (InterruptedException | BrokenBarrierException e) {
             e.printStackTrace();
         }
-        return returnedValueList.get(slotID).doubleValue();
+        return returnedValue.doubleValue();
 
     }
 

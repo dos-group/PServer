@@ -50,47 +50,44 @@ public class MatrixDenseLoadingTestJob extends MLProgram  {
 
         program.process(() -> {
 
-            CF.parUnit(0).exe(() -> {
+            matrix = dataManager.getObject("matrix");
 
-                matrix = dataManager.getObject("matrix");
+            int nodeId = slotContext.runtimeContext.nodeID;
+            int numNodes = slotContext.programContext.nodeDOP;
+            MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);
+            ReusableMatrixEntry entry = new MutableMatrixEntry(-1, -1, Double.NaN);
+            BufferedReader br = null;
 
-                int nodeId = slotContext.runtimeContext.nodeID;
-                int numNodes = slotContext.programContext.nodeDOP;
-                MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);
-                ReusableMatrixEntry entry = new MutableMatrixEntry(-1, -1, Double.NaN);
-                BufferedReader br = null;
+            try {
+                br = new BufferedReader(new FileReader(FILE));
+                String line = null;
+                while ((line = br.readLine()) != null) {
 
-                try {
-                    br = new BufferedReader(new FileReader(FILE));
-                    String line = null;
-                    while ((line = br.readLine()) != null) {
+                    String[] parts = line.split(",");
+                    int row = Integer.parseInt(parts[0]);
+                    int col = Integer.parseInt(parts[1]);
+                    double val = Double.parseDouble(parts[2]);
 
-                        String[] parts = line.split(",");
-                        int row = Integer.parseInt(parts[0]);
-                        int col = Integer.parseInt(parts[1]);
-                        double val = Double.parseDouble(parts[2]);
-
-                        if (partitioner.getPartitionOfEntry(entry.set(row, col, Double.NaN)) == nodeId) {
-                            double matrixVal = matrix.get(row, col);
-                            if (matrixVal != val) {
-                                System.out.println(nodeId + ": matrix(" + row + "," + col + ") is " + matrixVal + " but should be " + val);
-                            }
-                            Preconditions.checkState(matrixVal == val);
+                    if (partitioner.getPartitionOfEntry(entry.set(row, col, Double.NaN)) == nodeId) {
+                        double matrixVal = matrix.get(row, col);
+                        if (matrixVal != val) {
+                            System.out.println(nodeId + ": matrix(" + row + "," + col + ") is " + matrixVal + " but should be " + val);
                         }
-                    }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    if (br != null) {
-                        try {
-                            br.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                        Preconditions.checkState(matrixVal == val);
                     }
                 }
-            });
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (br != null) {
+                    try {
+                        br.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         });
     }
 }

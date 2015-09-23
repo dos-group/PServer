@@ -34,21 +34,10 @@ public final class MLProgramContext {
 
     public final int nodeDOP;
 
-    public final int perNodeDOP;
-
     // ---------------------------------------------------
 
     @GsonUtils.Exclude
     private AtomicReference<CountDownLatch> globalSyncBarrier;
-
-    @GsonUtils.Exclude
-    public final CountDownLatch programLoadBarrier;
-
-    @GsonUtils.Exclude
-    public final CountDownLatch programInitBarrier;
-
-    @GsonUtils.Exclude
-    public final CountDownLatch programDoneBarrier;
 
     // ---------------------------------------------------
 
@@ -67,8 +56,7 @@ public final class MLProgramContext {
                             final UUID programID,
                             final String className,
                             final String simpleClassName,
-                            final int nodeDOP,
-                            final int perNodeDOP) {
+                            final int nodeDOP) {
 
         this.runtimeContext     = Preconditions.checkNotNull(runtimeContext);
         this.clientMachine      = Preconditions.checkNotNull(clientMachine);
@@ -76,14 +64,9 @@ public final class MLProgramContext {
         this.className          = Preconditions.checkNotNull(className);
         this.simpleClassName    = Preconditions.checkNotNull(simpleClassName);
         this.nodeDOP            = nodeDOP;
-        this.perNodeDOP         = perNodeDOP;
 
         this.globalSyncBarrier  = new AtomicReference<>(new CountDownLatch(nodeDOP - 1));
         this.threadIDSlotCtxMap = new ConcurrentHashMap<>();
-        this.programLoadBarrier = new CountDownLatch(1);
-        this.programInitBarrier = new CountDownLatch(1);
-        this.programDoneBarrier = new CountDownLatch(perNodeDOP);
-
         this.programStore       = new NonBlockingHashMap<>();
     }
 

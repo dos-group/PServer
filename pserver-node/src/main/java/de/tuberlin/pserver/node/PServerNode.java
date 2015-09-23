@@ -15,16 +15,12 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public final class PServerNode extends EventDispatcher {
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
-
-    //private static final Logger LOG = LoggerFactory.getLogger(PServerNode.class);
 
     private final MachineDescriptor machine;
 
@@ -38,12 +34,10 @@ public final class PServerNode extends EventDispatcher {
 
     private final ExecutionManager executionManager;
 
-    private final ExecutorService executor;
-
     private final RuntimeContext runtimeContext;
 
     // ---------------------------------------------------
-    // Constructors.
+    // Constructors / Deactivator.
     // ---------------------------------------------------
 
     public PServerNode(final PServerNodeFactory factory) {
@@ -56,9 +50,18 @@ public final class PServerNode extends EventDispatcher {
         this.dataManager        = factory.dataManager;
         this.executionManager   = factory.executionManager;
         this.runtimeContext     = factory.runtimeContext;
-        this.executor           = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
         netManager.addEventListener(ProgramSubmissionEvent.PSERVER_JOB_SUBMISSION_EVENT, new PServerJobHandler());
+    }
+
+    @Override
+    public void deactivate() {
+
+        netManager.deactivate();
+
+        infraManager.deactivate();
+
+        super.deactivate();
     }
 
     // ---------------------------------------------------
@@ -73,8 +76,6 @@ public final class PServerNode extends EventDispatcher {
             final Class<?> clazz = userCodeManager.implantClass(programSubmission.byteCode);
             if (!MLProgram.class.isAssignableFrom(clazz))
                 throw new IllegalStateException();
-            if (programSubmission.perNodeDOP > runtimeContext.numOfCores)
-                throw new IllegalStateException();
 
             @SuppressWarnings("unchecked")
             final Class<? extends MLProgram> programClass = (Class<? extends MLProgram>) clazz;
@@ -85,87 +86,65 @@ public final class PServerNode extends EventDispatcher {
                     programSubmission.programID,
                     clazz.getName(),
                     clazz.getSimpleName(),
-                    infraManager.getMachines().size(),
-                    programSubmission.perNodeDOP
+                    infraManager.getMachines().size()
             );
 
             executionManager.registerProgram(programContext);
 
-            for (int i = 0; i < programContext.perNodeDOP; ++i) {
-                final int logicThreadID = i;
+            new Thread(() -> {
 
-                executor.execute(() -> {
+                final long systemThreadID = Thread.currentThread().getId();
 
-                    final long systemThreadID = Thread.currentThread().getId();
+                try {
 
-                    try {
+                    final MLProgram programInvokeable = programClass.newInstance();
 
-                        final MLProgram programInvokeable = programClass.newInstance();
+                    final SlotContext slotContext = new SlotContext(
+                            runtimeContext,
+                            programContext,
+                            0,
+                            programInvokeable
+                    );
 
-                        final SlotContext slotContext = new SlotContext(
-                                runtimeContext,
-                                programContext,
-                                logicThreadID,
-                                programInvokeable
-                        );
+                    programContext.addSlotContext(systemThreadID, slotContext);
 
-                        programContext.addSlotContext(systemThreadID, slotContext);
+                    programInvokeable.injectContext(slotContext);
 
-                        programInvokeable.injectContext(slotContext);
+                    programInvokeable.run();
 
-                        programInvokeable.run();
+                    final List<Serializable> results = dataManager.getResults(slotContext.programContext.programID);
 
-                        if (logicThreadID == 0) {
+                    final ProgramResultEvent jre = new ProgramResultEvent(
+                            slotContext.runtimeContext.machine,
+                            slotContext.runtimeContext.nodeID,
+                            slotContext.programContext.programID,
+                            results
+                    );
 
-                            final List<Serializable> results = dataManager.getResults(slotContext.programContext.programID);
+                    netManager.sendEvent(programSubmission.clientMachine, jre);
 
-                            final ProgramResultEvent jre = new ProgramResultEvent(
-                                    slotContext.runtimeContext.machine,
-                                    slotContext.runtimeContext.nodeID,
-                                    slotContext.programContext.programID,
-                                    results
-                            );
+                } catch (Throwable ex) {
 
-                            netManager.sendEvent(programSubmission.clientMachine, jre);
-                        }
+                    final ProgramFailureEvent jfe = new ProgramFailureEvent(
+                            machine,
+                            programSubmission.programID,
+                            infraManager.getNodeID(),
+                            0,
+                            clazz.getSimpleName(),
+                            ExceptionUtils.getStackTrace(ex)
+                    );
 
-                    } catch (Throwable ex) {
+                    netManager.sendEvent(programSubmission.clientMachine, jfe);
 
-                        final ProgramFailureEvent jfe = new ProgramFailureEvent(
-                                machine,
-                                programSubmission.programID,
-                                infraManager.getNodeID(),
-                                logicThreadID,
-                                clazz.getSimpleName(),
-                                ExceptionUtils.getStackTrace(ex)
-                        );
+                } finally {
 
-                        netManager.sendEvent(programSubmission.clientMachine, jfe);
+                    dataManager.clearContext();
 
-                    } finally {
+                    programContext.removeSlotContext(systemThreadID);
 
-                        if (logicThreadID == 0) {
-
-                            dataManager.clearContext();
-
-                            programContext.removeSlotContext(systemThreadID);
-
-                            executionManager.unregisterProgram(programContext);
-                        }
-                    }
-                });
-            }
+                    executionManager.unregisterProgram(programContext);
+                }
+            }).start();
         }
-    }
-
-    // ---------------------------------------------------
-    // Public Methods.
-    // ---------------------------------------------------
-
-    @Override
-    public void deactivate() {
-        netManager.deactivate();
-        infraManager.deactivate();
-        super.deactivate();
     }
 }

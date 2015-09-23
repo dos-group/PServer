@@ -102,10 +102,8 @@ public final class PServerClient extends EventDispatcher {
     // Public Methods.
     // ---------------------------------------------------
 
-    public UUID execute(final Class<? extends MLProgram> jobClass) { return execute(jobClass, 1); }
-    public UUID execute(final Class<? extends MLProgram> jobClass, final int perNodeParallelism) {
+    public UUID execute(final Class<? extends MLProgram> jobClass) {
         Preconditions.checkNotNull(jobClass);
-        Preconditions.checkArgument(perNodeParallelism >= 1);
 
         final long start = System.nanoTime();
         final UUID jobUID = UUID.randomUUID();
@@ -113,7 +111,6 @@ public final class PServerClient extends EventDispatcher {
         final ProgramSubmissionEvent jobSubmission = new ProgramSubmissionEvent(
                 machine,
                 jobUID,
-                perNodeParallelism,
                 byteCode
         );
 

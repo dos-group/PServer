@@ -95,7 +95,7 @@ public class MatrixSparseLoadingTestJob extends MLProgram  {
     public static void main(String[] args) {
         System.setProperty("simulation.numNodes", "4");
         PServerExecutor.LOCAL
-                .run(MatrixSparseLoadingTestJob.class, 1)
+                .run(MatrixSparseLoadingTestJob.class)
                 .done();
     }
 
@@ -161,7 +161,7 @@ public class MatrixSparseLoadingTestJob extends MLProgram  {
         public static void main(String[] args) {
             System.setProperty("simulation.numNodes", "4");
             PServerExecutor.LOCAL
-                    .run(MatrixDenseLoadingTestJob.class, 1)
+                    .run(MatrixDenseLoadingTestJob.class)
                     .done();
         }
     }

@@ -10,8 +10,6 @@ public final class Program extends CFStatement {
     // Fields.
     // ---------------------------------------------------
 
-    public Body initPhase;
-
     public Body preProcessPhase;
 
     public Body processPhase;
@@ -29,8 +27,6 @@ public final class Program extends CFStatement {
     // ---------------------------------------------------
     // Life-Cycle.
     // ---------------------------------------------------
-
-    public Program initialize(final Body b) { initPhase = b; return this; }
 
     public Program preProcess(final Body b) { preProcessPhase = b; return this; }
 

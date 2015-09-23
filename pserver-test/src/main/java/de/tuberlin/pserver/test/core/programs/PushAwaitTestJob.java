@@ -6,7 +6,6 @@ import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.MLProgram;
 
-
 public class PushAwaitTestJob extends MLProgram {
 
     public static final int NUM_MSG = 20000;
@@ -14,7 +13,7 @@ public class PushAwaitTestJob extends MLProgram {
     @Unit(at = "0")
     public void pingNode(final Program program) {
 
-        program.process(() -> CF.serial().exe(() -> {
+        program.process(() -> {
 
             Thread.sleep(3000);
 
@@ -30,13 +29,13 @@ public class PushAwaitTestJob extends MLProgram {
             }
 
             System.out.println("-- FINISH NODE 0");
-        }));
+        });
     }
 
     @Unit(at = "1")
     public void pongNode(final Program program) {
 
-        program.process(() -> CF.serial().exe(() -> {
+        program.process(() -> {
 
             for (int i = 0; i < NUM_MSG; ++i) {
 
@@ -49,6 +48,6 @@ public class PushAwaitTestJob extends MLProgram {
             }
 
             System.out.println("-- FINISH NODE 1");
-        }));
+        });
     }
 }

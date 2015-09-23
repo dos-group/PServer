@@ -18,8 +18,6 @@ public final class Loop extends CFStatement {
 
     public static final int GLOBAL  = 2;
 
-    public static final int LOCAL   = 4;
-
     // ---------------------------------------------------
     // Inner Classes.
     // ---------------------------------------------------
@@ -84,8 +82,6 @@ public final class Loop extends CFStatement {
                 long t0 = System.currentTimeMillis();
 
                 long t1 = System.currentTimeMillis();
-
-                //sg.sync(slotContext);
 
                 sync(sg);
 
@@ -153,14 +149,9 @@ public final class Loop extends CFStatement {
         switch (mode) {
             case ASYNC:
                 return;
-            case LOCAL:
-                sg.sync(slotContext);
-                return;
             case GLOBAL:
-                sg.sync(slotContext);
                 if (sg.minSlotID == slotContext.slotID)
                     executionManager.globalSync(slotContext);
-                return;
         }
     }
 

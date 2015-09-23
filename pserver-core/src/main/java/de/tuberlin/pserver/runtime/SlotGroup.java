@@ -29,12 +29,6 @@ public final class SlotGroup {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void sync(final SlotContext sc) throws Exception {
-        final SharedVar<CyclicBarrier> slotGroupBarrier = new SharedVar<>(sc, new CyclicBarrier(size()));
-        slotGroupBarrier.get().await();
-        slotGroupBarrier.done();
-    }
-
     public int size() { return maxSlotID - minSlotID + 1; }
 
     @Override

@@ -6,7 +6,6 @@ import de.tuberlin.pserver.dsl.dataflow.shared.SharedVar;
 import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.SlotContext;
-import de.tuberlin.pserver.runtime.SlotGroup;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -59,36 +58,29 @@ public class Aggregator<T extends Serializable> {
 
     private T symmetric_apply(final AggregatorFunction<T> function) throws Exception {
 
-        final int slotID = sc.runtimeContext.executionManager.getActiveSlotGroup().minSlotID;
+        sc.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg);
 
-        sc.CF.parUnit(slotID).exe(() -> {
+        final int n = sc.programContext.nodeDOP - 1;
 
-            sc.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg);
+        final List<T> partialAggs = new ArrayList<>();
 
-            final int n = sc.programContext.nodeDOP - 1;
+        for (int i = 0; i < n + 1; ++i)
+            partialAggs.add(null);
 
-            final List<T> partialAggs = new ArrayList<>();
+        partialAggs.set(sc.runtimeContext.nodeID, partialAgg);
 
-            for (int i = 0; i < n + 1; ++i)
-                partialAggs.add(null);
+        sc.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
 
-            partialAggs.set(sc.runtimeContext.nodeID, partialAgg);
-
-            sc.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
-
-                @Override
-                @SuppressWarnings("unchecked")
-                public void handleDataEvent(int srcNodeID, Object value) {
-                    partialAggs.set(srcNodeID, (T)value);
-                }
-            });
-
-            final T agg = function.apply(partialAggs);
-
-            sharedGlobalAgg.set(agg);
+            @Override
+            @SuppressWarnings("unchecked")
+            public void handleDataEvent(int srcNodeID, Object value) {
+                partialAggs.set(srcNodeID, (T)value);
+            }
         });
 
-        sc.CF.syncSlots();
+        final T agg = function.apply(partialAggs);
+
+        sharedGlobalAgg.set(agg);
 
         final T resultAgg = sharedGlobalAgg.get();
 
@@ -101,69 +93,46 @@ public class Aggregator<T extends Serializable> {
 
     private T asymmetric_apply(final AggregatorFunction<T> function) throws Exception {
 
-        final SlotGroup slotGroup = sc.getActiveSlotGroup();
-
         // -- master node --
 
         if (sc.node(AGG_NODE_ID)) {
 
-            sc.CF.parUnit(slotGroup.minSlotID).exe(() -> {
+            final int n = sc.programContext.nodeDOP - 1;
 
-                final int n = sc.programContext.nodeDOP - 1;
+            final List<T> partialAggs = new ArrayList<>();
 
-                final List<T> partialAggs = new ArrayList<>();
+            partialAggs.add(partialAgg);
 
-                partialAggs.add(partialAgg);
+            sc.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
 
-                sc.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
-
-                    @Override
-                    @SuppressWarnings("unchecked")
-                    public void handleDataEvent(int srcNodeID, Object value) {
-                        partialAggs.add((T) value);
-                    }
-                });
-
-                final T agg = function.apply(partialAggs);
-
-                sc.runtimeContext.dataManager.pushTo(aggPushUID(), agg);
-
-                sharedGlobalAgg.set(agg);
-
-                //sc.CF.syncSlots();
+                @Override
+                @SuppressWarnings("unchecked")
+                public void handleDataEvent(int srcNodeID, Object value) {
+                    partialAggs.add((T) value);
+                }
             });
+
+            final T agg = function.apply(partialAggs);
+
+            sc.runtimeContext.dataManager.pushTo(aggPushUID(), agg);
+
+            sharedGlobalAgg.set(agg);
         }
-
-        //sc.CF.parUnit().node(AGG_NODE_ID).slot(slotIDs.getLeft() + 1, slotIDs.getRight()).exe(sc.CF::syncSlots);
-
-        // -- slave nodes --
-
-
-       // System.out.println("----------------------------------------------->> " + slotIDs.getLeft());
 
 
         if (sc.node(AGG_NODE_ID + 1, sc.programContext.nodeDOP - 1)) {
 
-            sc.CF.parUnit(slotGroup.minSlotID).exe(() -> {
+            sc.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg, new int[]{AGG_NODE_ID});
 
-                sc.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg, new int[]{AGG_NODE_ID});
+            sc.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, aggPushUID(), new DataManager.DataEventHandler() {
 
-                sc.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, aggPushUID(), new DataManager.DataEventHandler() {
-
-                    @Override
-                    @SuppressWarnings("unchecked")
-                    public void handleDataEvent(int srcNodeID, Object value) {
-                        sharedGlobalAgg.set((T) value);
-                    }
-                });
-
-                //sc.CF.syncSlots();
+                @Override
+                @SuppressWarnings("unchecked")
+                public void handleDataEvent(int srcNodeID, Object value) {
+                    sharedGlobalAgg.set((T) value);
+                }
             });
         }
-
-        //sc.CF.parUnit().node(AGG_NODE_ID + 1, sc.programContext.nodeDOP - 1).slot(slotIDs.getLeft() + 1, slotIDs.getRight()).exe(sc.CF::syncSlots);
-
-        sc.CF.syncSlots();
 
         final T resultAgg = sharedGlobalAgg.get();
 

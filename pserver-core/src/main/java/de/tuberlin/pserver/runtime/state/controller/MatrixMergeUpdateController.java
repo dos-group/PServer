@@ -45,17 +45,10 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
     @Override
     public void publishUpdate(final SlotContext sc) throws Exception {
 
-        sc.CF.syncSlots();
+        synchronized (shadowMatrix.lock) {
 
-        sc.CF.parUnit(0).exe( () -> {
-
-            synchronized (shadowMatrix.lock) {
-
-                shadowMatrix.object.assign(stateMatrix);
-            }
-        });
-
-        sc.CF.syncSlots();
+            shadowMatrix.object.assign(stateMatrix);
+        }
     }
 
     @Override
@@ -69,35 +62,23 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
 
             final MatrixUpdateMerger matrixUpdateMerger = (MatrixUpdateMerger) merger;
 
-            sc.CF.syncSlots();
 
-            sc.CF.parUnit(0).exe(() -> {
+            final DataManager dataManager = sc.runtimeContext.dataManager;
 
-                final DataManager dataManager = sc.runtimeContext.dataManager;
+            final DHTObject[] dhtObjects = dataManager.pullFrom(stateName + "-Shadow", dataManager.remoteNodeIDs);
 
-                final DHTObject[] dhtObjects = dataManager.pullFrom(stateName + "-Shadow", dataManager.remoteNodeIDs);
+            Preconditions.checkState(dhtObjects.length > 0);
 
-                Preconditions.checkState(dhtObjects.length > 0);
+            final List<Matrix> remoteMatrices = new ArrayList<>();
 
-                final List<Matrix> remoteMatrices = new ArrayList<>();
+            for (final DHTObject obj : dhtObjects) {
 
-                for (final DHTObject obj : dhtObjects) {
+                Preconditions.checkState(((EmbeddedDHTObject) obj).object instanceof Matrix);
 
-                    Preconditions.checkState(((EmbeddedDHTObject) obj).object instanceof Matrix);
+                final Matrix remoteMatrix = (Matrix) ((EmbeddedDHTObject) obj).object;
 
-                    final Matrix remoteMatrix = (Matrix) ((EmbeddedDHTObject) obj).object;
-
-                    remoteMatrices.add(remoteMatrix);
-                }
-
-                sc.programContext.put(stateName + "-Remote-Matrix-List", remoteMatrices);
-
-            });
-
-            sc.CF.syncSlots();
-
-            @SuppressWarnings("unchecked")
-            final List<Matrix> remoteMatrices = (List<Matrix>) sc.programContext.get(stateName + "-Remote-Matrix-List");
+                remoteMatrices.add(remoteMatrix);
+            }
 
             for (final Matrix remoteMatrix : remoteMatrices) {
 
@@ -106,13 +87,6 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
                     stateMatrix.set(i, j, matrixUpdateMerger.mergeElement(i, j, v, remoteMatrix.get(i, j)));
                 });
             }
-
-            sc.CF.syncSlots();
-
-            sc.CF.parUnit(0).exe(() -> sc.programContext.delete(stateName + "-Remote-Matrix-List"));
-
         }
-
     }
-
 }

@@ -45,7 +45,7 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
 
         this.buffer = new byte[(int)(matrix.rows() * matrix.cols()) * Doubles.BYTES];
 
-        this.matrixDelta = new EmbeddedDHTObject<>(new MatrixDeltaUpdate(slotContext.programContext.perNodeDOP));
+        this.matrixDelta = new EmbeddedDHTObject<>(new MatrixDeltaUpdate(slotContext.programContext.runtimeContext.numOfCores));
 
         slotContext.runtimeContext.dataManager.putObject(stateName + "-Delta", matrixDelta);
     }
@@ -56,7 +56,7 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
 
     @Override
     public void publishUpdate(final SlotContext sc) throws Exception {
-
+/*
         Preconditions.checkState(filter != null);
 
         Preconditions.checkState(filter instanceof MatrixUpdateFilter);
@@ -96,12 +96,12 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
             UnsafeOp.unsafe.putDouble(buffer, bufferOffset, v);
         });
 
-        sc.CF.syncSlots();
+        sc.CF.syncSlots();*/
     }
 
     @Override
     public void pullUpdate(final SlotContext sc) throws Exception {
-
+/*
         Preconditions.checkState(merger != null);
 
         Preconditions.checkState(merger instanceof MatrixUpdateMerger);
@@ -165,6 +165,6 @@ public class MatrixDeltaMergeUpdateController extends RemoteUpdateController {
 
         sc.CF.syncSlots();
 
-        sc.CF.parUnit(0).exe(() -> sc.programContext.delete(stateName + "-Remote-Matrix-Delta-List"));
+        sc.CF.parUnit(0).exe(() -> sc.programContext.delete(stateName + "-Remote-Matrix-Delta-List"));*/
     }
 }

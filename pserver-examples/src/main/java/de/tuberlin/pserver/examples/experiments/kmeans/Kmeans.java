@@ -130,14 +130,14 @@ public class Kmeans extends MLProgram {
     public static void cluster() {
         System.setProperty("pserver.profile", "wally");
         PServerExecutor.DISTRIBUTED
-                .run(Kmeans.class, 4)
+                .run(Kmeans.class)
                 .done();
     }
 
     public static void local() {
         System.setProperty("simulation.numNodes", "2");
         PServerExecutor.LOCAL
-                .run(Kmeans.class, 1)
+                .run(Kmeans.class)
                 .done();
     }
 }

@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.test.core.programs;
 
 
-import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
@@ -20,7 +19,7 @@ public class SingletonMatrixTestJob extends MLProgram {
 
     @Unit(at = "1 - 3")
     public void main(final Program program) {
-        program.process(() -> {
+        /*program.process(() -> {
 
             final int rows = ((ROWS / (slotContext.programContext.nodeDOP - 1)) / slotContext.programContext.perNodeDOP);
 
@@ -40,6 +39,6 @@ public class SingletonMatrixTestJob extends MLProgram {
                     }
                 });
             }
-        });
+        });*/
     }
 }

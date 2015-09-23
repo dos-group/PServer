@@ -95,23 +95,7 @@ public abstract class MLProgram extends EventDispatcher {
 
             programLinker.fetchStateObjects(this);
 
-            if (slotContext.slotID == 0) {
 
-                LOG.info(slotIDStr + "Enter " + program.slotContext.programContext.simpleClassName + " initialization phase.");
-
-                final long start = System.currentTimeMillis();
-
-                if (program.initPhase != null) program.initPhase.body();
-
-                final long end = System.currentTimeMillis();
-
-                LOG.info(slotIDStr + "Leave " + program.slotContext.programContext.simpleClassName
-                        + " initialization phase [duration: " + (end - start) + " ms].");
-
-                slotContext.programContext.programInitBarrier.countDown();
-            }
-
-            slotContext.programContext.programInitBarrier.await();
 
             {
                 LOG.info(slotIDStr + "Enter " + program.slotContext.programContext.simpleClassName + " pre-process phase.");
@@ -153,11 +137,5 @@ public abstract class MLProgram extends EventDispatcher {
             }
 
         program.leave();
-
-        synchronized (slotContext.programContext.programDoneBarrier) {
-            slotContext.programContext.programDoneBarrier.countDown();
-        }
-
-        slotContext.programContext.programDoneBarrier.await();
     }
 }

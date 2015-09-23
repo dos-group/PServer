@@ -18,9 +18,9 @@ public class MatrixDeltaUpdate implements SharedObject {
     // Constructors.
     // ---------------------------------------------------
 
-    public MatrixDeltaUpdate(final int numDeltaSlices) {
-        this.deltas = new ArrayList<>(numDeltaSlices);
-        for (int i = 0; i < numDeltaSlices; ++i)
+    public MatrixDeltaUpdate(final int dop) {
+        this.deltas = new ArrayList<>(dop);
+        for (int i = 0; i < dop; ++i)
             deltas.add(null);
     }
 
