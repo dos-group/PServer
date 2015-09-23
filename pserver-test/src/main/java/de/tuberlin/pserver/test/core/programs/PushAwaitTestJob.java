@@ -3,7 +3,6 @@ package de.tuberlin.pserver.test.core.programs;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.MLProgram;
 
 public class PushAwaitTestJob extends MLProgram {
@@ -21,7 +20,7 @@ public class PushAwaitTestJob extends MLProgram {
 
                 dataManager.pushTo("test-ping", i, new int[]{1});
 
-                dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, "test-pong", new DataManager.DataEventHandler() {
+                dataManager.awaitEvent(DataManager.CallType.SYNC, 1, "test-pong", new DataManager.DataEventHandler() {
                     @Override
                     public void handleDataEvent(int srcNodeID, Object value) {
                     }
@@ -39,7 +38,7 @@ public class PushAwaitTestJob extends MLProgram {
 
             for (int i = 0; i < NUM_MSG; ++i) {
 
-                dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, "test-ping", new DataManager.DataEventHandler() {
+                dataManager.awaitEvent(DataManager.CallType.SYNC, 1, "test-ping", new DataManager.DataEventHandler() {
                     @Override
                     public void handleDataEvent(int srcNodeID, Object value) {}
                 });

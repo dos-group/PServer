@@ -4,7 +4,6 @@ import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.MLProgram;
 
 
@@ -21,7 +20,7 @@ public class PingPongTestJob extends MLProgram {
 
                 dataManager.pushTo("ping", new Integer(i), new int[]{1});
 
-                dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, "pong", new DataManager.DataEventHandler() {
+                dataManager.awaitEvent(DataManager.CallType.SYNC, 1, "pong", new DataManager.DataEventHandler() {
                     @Override
                     public void handleDataEvent(int srcNodeID, Object value) {
                         final Integer i = (Integer) value;
@@ -42,7 +41,7 @@ public class PingPongTestJob extends MLProgram {
 
             for (int i = 0; i < NUM_MSG; ++i) {
 
-                dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, "ping", new DataManager.DataEventHandler() {
+                dataManager.awaitEvent(DataManager.CallType.SYNC, 1, "ping", new DataManager.DataEventHandler() {
                     @Override
                     public void handleDataEvent(int srcNodeID, Object value) {
                         final Integer i = (Integer)value;

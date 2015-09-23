@@ -107,7 +107,7 @@ public class RemoteMatrixSkeleton extends AbstractMatrix {
 
     @Override
     public void set(long row, long col, double value) {
-        final int slotID =  slotContext.runtimeContext.executionManager.getSlotContext().slotID;
+        final int slotID =  slotContext.runtimeContext.dataManager.getSlotContext().slotID;
         final NetEvents.NetEvent putRequestEvent = new NetEvents.NetEvent("put_request_" + name + "_" + slotID);
         putRequestEvent.setPayload(Triple.of(row, col, value));
         netManager.sendEvent(atNodeID, putRequestEvent);

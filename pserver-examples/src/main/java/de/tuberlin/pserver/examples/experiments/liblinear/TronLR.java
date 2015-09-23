@@ -18,7 +18,7 @@ public class TronLR implements TronFunction {
 
         final SharedDouble f_obj = new SharedDouble(sc, 0.0);
 
-        sc.CF.loop().parExe(dataPoints, (epoch, it) -> {
+        /*sc.CF.loop().parExe(dataPoints, (epoch, it) -> {
 
             double z = 0.0;
 
@@ -31,7 +31,7 @@ public class TronLR implements TronFunction {
             final double enyz = Math.exp(-yz);
 
             f_obj.add((yz >= 0) ? Math.log(1 + enyz) : -yz + Math.log(1 + Math.exp(yz)));
-        });
+        });*/
 
         return new Aggregator<>(sc, f_obj.done().get())
                 .apply(partialAggs -> partialAggs.stream()
@@ -45,7 +45,7 @@ public class TronLR implements TronFunction {
 
         final Matrix grad = new SharedVar<>(sc, w_broad.copy().assign(0.0)).acquire();
 
-        sc.CF.loop().parExe(dataPoints, (epoch, it) -> {
+        /*sc.CF.loop().parExe(dataPoints, (epoch, it) -> {
 
             double z = 0.0;
 
@@ -62,7 +62,7 @@ public class TronLR implements TronFunction {
                         grad.set(0, i, grad.get(0, i) + z * it.value(i));
                     }
                 }
-        });
+        });*/
 
         return new Aggregator<>(sc, grad)
                 .apply(partialGrads -> partialGrads.stream()
@@ -75,7 +75,7 @@ public class TronLR implements TronFunction {
 
         final Matrix blockHs = new SharedVar<>(sc, w_broad.copy().assign(0.0)).acquire();
 
-        sc.CF.loop().parExe(dataPoints, (epoch, it) -> {
+        /*sc.CF.loop().parExe(dataPoints, (epoch, it) -> {
 
             double z = 0.0;
             double wa = 0.0;
@@ -99,7 +99,7 @@ public class TronLR implements TronFunction {
                     }
                 }
             }
-        });
+        });*/
 
         return new Aggregator<>(sc, blockHs)
                 .apply(partialGrads -> partialGrads.stream()

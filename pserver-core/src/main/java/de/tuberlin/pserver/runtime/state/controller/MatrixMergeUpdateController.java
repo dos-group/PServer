@@ -3,14 +3,9 @@ package de.tuberlin.pserver.runtime.state.controller;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.SlotContext;
-import de.tuberlin.pserver.runtime.dht.DHTObject;
 import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
-import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
 
-import java.util.ArrayList;
-import java.util.List;
 
 public class MatrixMergeUpdateController extends RemoteUpdateController {
 
@@ -54,7 +49,7 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
     @Override
     public void pullUpdate(final SlotContext sc) throws Exception {
 
-        Preconditions.checkState(merger != null);
+        /*Preconditions.checkState(merger != null);
 
         Preconditions.checkState(merger instanceof MatrixUpdateMerger);
 
@@ -87,6 +82,6 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
                     stateMatrix.set(i, j, matrixUpdateMerger.mergeElement(i, j, v, remoteMatrix.get(i, j)));
                 });
             }
-        }
+        }*/
     }
 }

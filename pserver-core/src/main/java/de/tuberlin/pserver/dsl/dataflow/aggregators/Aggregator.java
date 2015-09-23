@@ -4,7 +4,6 @@ package de.tuberlin.pserver.dsl.dataflow.aggregators;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.dsl.dataflow.shared.SharedVar;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.SlotContext;
 
 import java.io.Serializable;
@@ -69,7 +68,7 @@ public class Aggregator<T extends Serializable> {
 
         partialAggs.set(sc.runtimeContext.nodeID, partialAgg);
 
-        sc.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
+        sc.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
 
             @Override
             @SuppressWarnings("unchecked")
@@ -103,7 +102,7 @@ public class Aggregator<T extends Serializable> {
 
             partialAggs.add(partialAgg);
 
-            sc.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
+            sc.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
 
                 @Override
                 @SuppressWarnings("unchecked")
@@ -124,7 +123,7 @@ public class Aggregator<T extends Serializable> {
 
             sc.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg, new int[]{AGG_NODE_ID});
 
-            sc.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, aggPushUID(), new DataManager.DataEventHandler() {
+            sc.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, 1, aggPushUID(), new DataManager.DataEventHandler() {
 
                 @Override
                 @SuppressWarnings("unchecked")

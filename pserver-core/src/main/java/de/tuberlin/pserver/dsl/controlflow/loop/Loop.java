@@ -1,10 +1,7 @@
 package de.tuberlin.pserver.dsl.controlflow.loop;
 
 import de.tuberlin.pserver.dsl.controlflow.base.CFStatement;
-import de.tuberlin.pserver.dsl.controlflow.loop.iterators.MatrixElementIteratorBody;
-import de.tuberlin.pserver.dsl.controlflow.loop.iterators.MatrixRowIteratorBody;
-import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.ExecutionManager;
+import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.SlotContext;
 import de.tuberlin.pserver.runtime.SlotGroup;
 
@@ -39,7 +36,7 @@ public final class Loop extends CFStatement {
     // Fields.
     // ---------------------------------------------------
 
-    private final ExecutionManager executionManager;
+    private final DataManager dataManager;
 
     private long epoch;
 
@@ -52,7 +49,7 @@ public final class Loop extends CFStatement {
     public Loop(final SlotContext sc) {
         super(sc);
 
-        this.executionManager = sc.runtimeContext.executionManager;
+        this.dataManager = sc.runtimeContext.dataManager;
     }
 
     // ---------------------------------------------------
@@ -69,36 +66,36 @@ public final class Loop extends CFStatement {
 
     public Loop exe(final LoopTermination t, final LoopBody b) throws Exception {
 
-        enter();
+        //enter();
 
-            final SlotGroup sg = executionManager.getActiveSlotGroup();
+        //final SlotGroup sg = executionManager.getActiveSlotGroup();
 
-            long duration, passDuration = 0, syncDuration = 0;
+        long duration, passDuration = 0, syncDuration = 0;
 
-            duration = System.currentTimeMillis();
+        duration = System.currentTimeMillis();
 
-            while (!t.terminate()) {
+        while (!t.terminate()) {
 
-                long t0 = System.currentTimeMillis();
+            long t0 = System.currentTimeMillis();
 
-                long t1 = System.currentTimeMillis();
+            long t1 = System.currentTimeMillis();
 
-                sync(sg);
+            //sync(sg);
 
-                syncDuration += System.currentTimeMillis() - t1;
+            syncDuration += System.currentTimeMillis() - t1;
 
-                b.body(epoch);
+            b.body(epoch);
 
-                ++epoch;
+            ++epoch;
 
-                passDuration += System.currentTimeMillis() - t0;
-            }
+            passDuration += System.currentTimeMillis() - t0;
+        }
 
-            duration = System.currentTimeMillis() - duration;
+        duration = System.currentTimeMillis() - duration;
 
-            setProfilingData(new IterationProfilingData(duration, epoch > 0 ? passDuration / epoch : passDuration, epoch > 0 ? syncDuration / epoch : syncDuration));
+        setProfilingData(new IterationProfilingData(duration, epoch > 0 ? passDuration / epoch : passDuration, epoch > 0 ? syncDuration / epoch : syncDuration));
 
-        leave();
+        //leave();
 
         return this;
     }
@@ -107,7 +104,7 @@ public final class Loop extends CFStatement {
     // Matrix Operations.
     // ---------------------------------------------------
 
-    public Loop parExe(final Matrix m, final MatrixRowIteratorBody b) throws Exception { return exe(parallelMatrixRowIterator(m), b); }
+    /*public Loop parExe(final Matrix m, final MatrixRowIteratorBody b) throws Exception { return exe(parallelMatrixRowIterator(m), b); }
 
     public Loop exe(final Matrix m, final MatrixRowIteratorBody b)throws Exception {
         return exe(m.rowIterator(), b);
@@ -121,11 +118,11 @@ public final class Loop extends CFStatement {
                 return t;
         };
         return exe(it, ib);
-    }
+    }*/
 
     // ---------------------------------------------------
 
-    public Loop parExe(final Matrix m, final MatrixElementIteratorBody b) throws Exception { return parExe(m, toRowMatrixIB(m, b)); }
+    /*public Loop parExe(final Matrix m, final MatrixElementIteratorBody b) throws Exception { return parExe(m, toRowMatrixIB(m, b)); }
 
     public Loop exe(final Matrix m, final MatrixElementIteratorBody b) throws Exception { return exe(m, toRowMatrixIB(m, b)); }
 
@@ -135,7 +132,7 @@ public final class Loop extends CFStatement {
                 b.body(epoch, rit.rowNum(), j, rit.value((int) j));
             }
         };
-    }
+    }*/
 
     // ---------------------------------------------------
 
@@ -151,12 +148,11 @@ public final class Loop extends CFStatement {
                 return;
             case GLOBAL:
                 if (sg.minSlotID == slotContext.slotID)
-                    executionManager.globalSync(slotContext);
+                    dataManager.globalSync(slotContext);
         }
     }
 
-    private Matrix.RowIterator parallelMatrixRowIterator(final Matrix m) {
-        return executionManager.parallelMatrixRowIterator(m);
-    }
-
+    //private Matrix.RowIterator parallelMatrixRowIterator(final Matrix m) {
+    //    return executionManager.parallelMatrixRowIterator(m);
+    //}
 }

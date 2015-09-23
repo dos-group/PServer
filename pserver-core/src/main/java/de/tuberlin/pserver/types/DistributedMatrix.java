@@ -9,7 +9,6 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.utils.MatrixAggregation;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.SlotContext;
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 
@@ -150,7 +149,7 @@ public class DistributedMatrix extends AbstractMatrix {
 
                 slotContext.runtimeContext.dataManager.pushTo("rowAgg", partialAgg);
                 final int n = slotContext.programContext.nodeDOP - 1;
-                slotContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "rowAgg",
+                slotContext.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, n, "rowAgg",
                         new DataManager.DataEventHandler() {
                             @Override
                             public void handleDataEvent(int srcNodeID, Object value) {
@@ -177,7 +176,7 @@ public class DistributedMatrix extends AbstractMatrix {
                 Matrix partialMatrix = matrix.subMatrix(shape.rowOffset, shape.colOffset, shape.rows, shape.cols);
                 slotContext.runtimeContext.dataManager.pushTo("partialMatrix", partialMatrix);
                 final int n = slotContext.programContext.nodeDOP - 1;
-                slotContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "partialMatrix",
+                slotContext.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, n, "partialMatrix",
                         new DataManager.DataEventHandler() {
                             @Override
                             public void handleDataEvent(int srcNodeID, Object value) {

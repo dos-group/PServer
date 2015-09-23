@@ -81,7 +81,7 @@ public class TSNEJob extends MLProgram {
     @Unit
     public void main(final Program program) {
 
-        program.process(() -> {
+        /*program.process(() -> {
             // calc affinity. P is affinity for input X
             P.assign(binarySearch(X, TOL, PERPLEXITY));
             // symmetrize
@@ -206,7 +206,7 @@ public class TSNEJob extends MLProgram {
 
                     });
 
-        }).postProcess(() -> result(Y));
+        }).postProcess(() -> result(Y));*/
     }
 
     // ---------------------------------------------------

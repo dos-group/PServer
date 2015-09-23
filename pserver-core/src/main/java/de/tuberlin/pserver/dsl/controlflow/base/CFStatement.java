@@ -46,12 +46,6 @@ public abstract class CFStatement {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void enter() { slotContext.runtimeContext.executionManager.pushFrame(this); }
-
-    public void leave() { slotContext.runtimeContext.executionManager.popFrame(); }
-
-    // ---------------------------------------------------
-
     public ProfilingData getProfilingData() { return profilingData; }
 
     public void printProfilingData() { System.out.println(profilingData.toString()); }

@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -99,6 +100,16 @@ public class DataManager extends EventDispatcher {
 
     private static final String PULL_EVENT_PREFIX = "pull__";
 
+    private static final String BSP_SYNC_BARRIER_EVENT = "bsp_sync_barrier_event";
+
+    public static enum CallType {
+
+        SYNC,
+
+        ASYNC
+    }
+
+
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
@@ -108,8 +119,6 @@ public class DataManager extends EventDispatcher {
     private final InfrastructureManager infraManager;
 
     private final NetManager netManager;
-
-    private final ExecutionManager executionManager;
 
     private final FileSystemManager fileSystemManager;
 
@@ -127,6 +136,9 @@ public class DataManager extends EventDispatcher {
 
     public final int[] remoteNodeIDs;
 
+    private final AtomicReference<MLProgramContext> programContextRef;
+
+
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
@@ -134,19 +146,20 @@ public class DataManager extends EventDispatcher {
     public DataManager(final IConfig config,
                        final InfrastructureManager infraManager,
                        final NetManager netManager,
-                       final ExecutionManager executionManager,
                        final FileSystemManager fileSystemManager,
                        final DHTManager dht) {
         super(true);
 
         this.infraManager       = Preconditions.checkNotNull(infraManager);
         this.netManager         = Preconditions.checkNotNull(netManager);
-        this.executionManager   = Preconditions.checkNotNull(executionManager);
         this.fileSystemManager  = fileSystemManager;
         this.dht                = Preconditions.checkNotNull(dht);
         this.nodeID             = infraManager.getNodeID();
         this.resultObjects      = new HashMap<>();
         this.matrixPartitionManager = new MatrixPartitionManager(netManager, fileSystemManager, this);
+
+        this.programContextRef = new AtomicReference<>(null);
+
 
         this.nodeIDs = IntStream.iterate(0, x -> x + 1).limit(infraManager.getMachines().size()).toArray();
         int numOfRemoteWorkers = infraManager.getMachines().size() - 1;
@@ -159,15 +172,61 @@ public class DataManager extends EventDispatcher {
             }
             ++i;
         }
+
+
+        this.netManager.addEventListener(BSP_SYNC_BARRIER_EVENT, event -> {
+
+            if (!programContextRef.get().programID.equals(event.getPayload()))
+                throw new IllegalStateException();
+
+            programContextRef.get().countDownBarrier();
+        });
     }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
+
+    public void registerProgram(final MLProgramContext programContext) {
+        Preconditions.checkNotNull(programContext);
+
+        programContextRef.set(programContext);
+
+        //final NestedIntervalTree.Interval in = new NestedIntervalTree.Interval(0, programContext.runtimeContext.numOfCores - 1);
+
+        //final SlotGroupAllocation sa = new SlotGroupAllocation(in);
+
+        //this.slotAssignment = new NestedIntervalTree<>(in, sa);
+    }
+
+    public void unregisterProgram(final MLProgramContext programContext) {
+        Preconditions.checkNotNull(programContext);
+
+        programContextRef.set(null);
+    }
+
+    public synchronized SlotContext getSlotContext() {
+
+        SlotContext sc = programContextRef.get().threadIDSlotCtxMap.get(Thread.currentThread().getId());
+
+        while (sc == null)
+            sc = programContextRef.get().threadIDSlotCtxMap.get(Thread.currentThread().getId());
+
+        return sc;
+    }
+
     public void clearContext() {
         matrixPartitionManager.clearContext();
         fileSystemManager.clearContext();
+    }
+
+
+    public void globalSync(final SlotContext slotContext) {
+        final NetEvents.NetEvent globalSyncEvent = new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT, true);
+        globalSyncEvent.setPayload(slotContext.programContext.programID);
+        netManager.broadcastEvent(globalSyncEvent);
+        slotContext.programContext.awaitGlobalSyncBarrier();
     }
 
     // ---------------------------------------------------
@@ -295,7 +354,7 @@ public class DataManager extends EventDispatcher {
     //public void awaitEvent(final ExecutionManager.CallType type, final String name, final DataEventHandler handler) {
     //    awaitEvent(type, remoteNodeIDs.length, name, handler); }
 
-    public void awaitEvent(final ExecutionManager.CallType type, final int n, final String name, final DataEventHandler handler) {
+    public void awaitEvent(final CallType type, final int n, final String name, final DataEventHandler handler) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(handler);
@@ -304,7 +363,7 @@ public class DataManager extends EventDispatcher {
         handler.setRemoveAfterAwait(true);
         handler.initLatch(n);
         netManager.addEventListener(PUSH_EVENT_PREFIX + name, handler);
-        if (type == ExecutionManager.CallType.SYNC) {
+        if (type == CallType.SYNC) {
             try {
                 handler.getLatch().await();
             } catch (InterruptedException e) {

@@ -32,8 +32,6 @@ public final class PServerNode extends EventDispatcher {
 
     private final DataManager dataManager;
 
-    private final ExecutionManager executionManager;
-
     private final RuntimeContext runtimeContext;
 
     // ---------------------------------------------------
@@ -48,7 +46,6 @@ public final class PServerNode extends EventDispatcher {
         this.netManager         = factory.netManager;
         this.userCodeManager    = factory.userCodeManager;
         this.dataManager        = factory.dataManager;
-        this.executionManager   = factory.executionManager;
         this.runtimeContext     = factory.runtimeContext;
 
         netManager.addEventListener(ProgramSubmissionEvent.PSERVER_JOB_SUBMISSION_EVENT, new PServerJobHandler());
@@ -89,7 +86,7 @@ public final class PServerNode extends EventDispatcher {
                     infraManager.getMachines().size()
             );
 
-            executionManager.registerProgram(programContext);
+            dataManager.registerProgram(programContext);
 
             new Thread(() -> {
 
@@ -142,7 +139,7 @@ public final class PServerNode extends EventDispatcher {
 
                     programContext.removeSlotContext(systemThreadID);
 
-                    executionManager.unregisterProgram(programContext);
+                    dataManager.unregisterProgram(programContext);
                 }
             }).start();
         }

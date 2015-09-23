@@ -34,10 +34,10 @@ public final class LibLinearSolver {
         Problem binaryProb = prob.genBinaryProblem(posLabel);
 
         SharedInt count = new SharedInt(sc, 0);
-        sc.CF.loop().parExe(binaryProb.dataPoints, (e, it) -> {
+        /*sc.CF.loop().parExe(binaryProb.dataPoints, (e, it) -> {
             if (it.value(it.cols() - 1) > 0)
                 count.inc();
-        });
+        });*/
 
         int pos = new Aggregator<>(sc, count.done().get())
                 .apply(c -> c.stream()

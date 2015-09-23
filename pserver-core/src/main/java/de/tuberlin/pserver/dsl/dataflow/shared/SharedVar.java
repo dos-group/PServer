@@ -31,7 +31,7 @@ public final class SharedVar<T> {
 
     private final SlotContext sc;
 
-    private final Pair<Integer, Long> sharedVarUID;
+    //private final Pair<Integer, Long> sharedVarUID;
 
     private Triple<AtomicReference<T>, ReentrantLock, AtomicInteger> managedVar;
 
@@ -41,28 +41,28 @@ public final class SharedVar<T> {
 
         this.sc = Preconditions.checkNotNull(sc);
 
-        final SlotGroup slotGroup = sc.getActiveSlotGroup();
+        //final SlotGroup slotGroup = sc.getActiveSlotGroup();
 
-        final int masterSlotID = slotGroup.minSlotID;
+        //final int masterSlotID = slotGroup.minSlotID;
 
-        final int refNum = slotGroup.maxSlotID - slotGroup.minSlotID + 1;
+        //final int refNum = slotGroup.maxSlotID - slotGroup.minSlotID + 1;
 
-        this.sharedVarUID = nextSharedVarUID(masterSlotID);
+        //this.sharedVarUID = nextSharedVarUID(masterSlotID);
 
         //sc.CF.parUnit().slot(masterSlotID).exe(() -> {
 
-            if (sc.slotID == masterSlotID) {
+            //if (sc.slotID == masterSlotID) {
 
-                final AtomicReference<T> valueRef = new AtomicReference<>(Preconditions.checkNotNull(value));
+                //final AtomicReference<T> valueRef = new AtomicReference<>(Preconditions.checkNotNull(value));
 
-                final ReentrantLock valueLock = new ReentrantLock(true);
+                //final ReentrantLock valueLock = new ReentrantLock(true);
 
-                final AtomicInteger refCount = new AtomicInteger(refNum);
+                //final AtomicInteger refCount = new AtomicInteger(refNum);
 
-                final Triple<AtomicReference<T>, ReentrantLock, AtomicInteger> managedVar = Triple.of(valueRef, valueLock, refCount);
+                //final Triple<AtomicReference<T>, ReentrantLock, AtomicInteger> managedVar = Triple.of(valueRef, valueLock, refCount);
 
-                sc.programContext.put(sharedVarUIDStr(), managedVar);
-            }
+                //sc.programContext.put(sharedVarUIDStr(), managedVar);
+            //}
         //});
     }
 
@@ -104,7 +104,7 @@ public final class SharedVar<T> {
 
             Preconditions.checkState(this.managedVar != null);
 
-            sc.programContext.delete(sharedVarUIDStr());
+            //sc.programContext.delete(sharedVarUIDStr());
         }
 
         return this.managedVar.getLeft().get();
@@ -114,7 +114,7 @@ public final class SharedVar<T> {
 
         while(this.managedVar == null) { // busy waiting.
 
-            this.managedVar = sc.programContext.get(sharedVarUIDStr());
+            //this.managedVar = sc.programContext.get(sharedVarUIDStr());
         }
 
         return this;
@@ -127,10 +127,10 @@ public final class SharedVar<T> {
 
     // ---------------------------------------------------
 
-    private String sharedVarUIDStr() {
+    //private String sharedVarUIDStr() {
 
-        return "__shared_var_" + sharedVarUID.toString() + "__";
-    }
+    //    return "__shared_var_" + sharedVarUID.toString() + "__";
+    //}
 
     // ---------------------------------------------------
 
