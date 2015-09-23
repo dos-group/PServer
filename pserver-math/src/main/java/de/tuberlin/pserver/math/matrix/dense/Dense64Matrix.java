@@ -7,6 +7,7 @@ import de.tuberlin.pserver.math.delegates.MathLibFactory;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
+import jdk.nashorn.internal.runtime.arrays.ArrayIndex;
 
 import java.io.Serializable;
 import java.util.Random;
@@ -183,26 +184,30 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
     }
 
     @Override
-    public Matrix subMatrix(long row, long col, long rows, long cols) {
+    public Matrix subMatrix(long rowOffset, long colOffset, long rows, long cols) {
         if (layout == Layout.ROW_LAYOUT) {
             final int length = (int)(rows * cols);
             final double[] subData = new double[length];
-            System.arraycopy(data, (int)(row * cols + col), subData, 0, length);
+            try {
+                System.arraycopy(data, (int) (rowOffset * cols + colOffset), subData, 0, length);
+            }
+            catch(ArrayIndexOutOfBoundsException e) {
+                throw new RuntimeException(String.format("subMatrix(%d, %d, %d, %d) caused ArrayIndexOfBoundsException", rowOffset, colOffset, rows, cols), e);
+            }
             return new Dense64Matrix(rows, cols, subData, layout);
         } else
             throw new UnsupportedOperationException();
     }
 
     @Override
-    public Matrix assign(final long row, final long col, final Matrix m) {
-        if (layout == Layout.ROW_LAYOUT && m.layout() == Layout.ROW_LAYOUT) {
-            if (cols == m.cols())
-                System.arraycopy(m.toArray(), 0, data, (int)(row * cols + col), m.toArray().length);
-            else
-                throw new IllegalStateException();
-            return this;
-        } else
-            throw new UnsupportedOperationException();
+    public Matrix assign(final long rowOffset, final long colOffset, final Matrix m) {
+        if (layout == Layout.ROW_LAYOUT && m.layout() == layout && cols == m.cols()) {
+            System.arraycopy(m.toArray(), 0, data, (int) (rowOffset * cols + colOffset), m.toArray().length);
+        }
+        else if(layout == Layout.COLUMN_LAYOUT && m.layout() == layout && rows == m.rows()) {
+            System.arraycopy(m.toArray(), 0, data, (int) (colOffset * rows + rowOffset), m.toArray().length);
+        }
+        return super.assign(rowOffset, colOffset, m);
     }
 
 //    @Override

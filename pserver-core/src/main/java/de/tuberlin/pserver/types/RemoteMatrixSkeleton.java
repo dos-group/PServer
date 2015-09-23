@@ -148,7 +148,7 @@ public class RemoteMatrixSkeleton extends AbstractMatrix {
 
     @Override public Matrix subMatrix(long row, long col, long rowSize, long colSize) { throw new UnsupportedOperationException(); }
 
-    @Override public Matrix assign(long row, long col, Matrix m) { throw new UnsupportedOperationException(); }
+    @Override public Matrix assign(long rowOffset, long colOffset, Matrix m) { throw new UnsupportedOperationException(); }
 
     @Override protected Matrix newInstance(long rows, long cols) { throw new UnsupportedOperationException(); }
 
