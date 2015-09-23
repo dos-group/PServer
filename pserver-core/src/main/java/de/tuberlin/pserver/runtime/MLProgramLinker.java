@@ -278,8 +278,9 @@ public final class MLProgramLinker {
                         final String stateObjName = st.nextToken().replaceAll("\\s+", "");
                         final RemoteUpdateController remoteUpdateController =
                                 programContext.get(remoteUpdateControllerName(stateObjName));
-                        if (remoteUpdateController == null)
-                            throw new IllegalStateException();
+                        if (remoteUpdateController == null) {
+                            throw new IllegalStateException("Could not get RemoteUpdateController for State '" + stateObjName + "' while analyzing StateMerger '" + field.getName() + "'");
+                        }
                         final UpdateMerger merger = (UpdateMerger) field.get(instance);
                         remoteUpdateController.setUpdateMerger(merger);
                     }
@@ -330,29 +331,17 @@ public final class MLProgramLinker {
 
                     } break;
                     case REPLICATED: {
+                        SharedObject so;
                         if ("".equals(decl.path)) {
-
-                            final SharedObject so = new MatrixBuilder()
+                            so = new MatrixBuilder()
                                     .dimension(decl.rows, decl.cols)
                                     .format(decl.format)
                                     .layout(decl.layout)
                                     .build();
-
-                            switch (decl.remoteUpdate) {
-                                case NO_UPDATE: break;
-                                case SIMPLE_MERGE_UPDATE:
-                                        programContext.put(remoteUpdateControllerName(decl.name),
-                                                new MatrixMergeUpdateController(slotContext, decl.name, (Matrix)so));
-                                    break;
-                                case DELTA_MERGE_UPDATE:
-                                        programContext.put(remoteUpdateControllerName(decl.name),
-                                                new MatrixDeltaMergeUpdateController(slotContext, decl.name, (Matrix)so));
-                                    break;
-                            }
-
                             dataManager.putObject(decl.name, so);
-                        } else {
-                            dataManager.loadAsMatrix(
+                        }
+                        else {
+                            so = dataManager.loadAsMatrix(
                                     slotContext,
                                     decl.path,
                                     decl.name,
@@ -364,6 +353,17 @@ public final class MLProgramLinker {
                                     decl.format,
                                     decl.layout
                             );
+                        }
+                        switch (decl.remoteUpdate) {
+                            case NO_UPDATE: break;
+                            case SIMPLE_MERGE_UPDATE:
+                                    programContext.put(remoteUpdateControllerName(decl.name),
+                                            new MatrixMergeUpdateController(slotContext, decl.name, (Matrix)so));
+                                break;
+                            case DELTA_MERGE_UPDATE:
+                                    programContext.put(remoteUpdateControllerName(decl.name),
+                                            new MatrixDeltaMergeUpdateController(slotContext, decl.name, (Matrix)so));
+                                break;
                         }
                     } break;
                     case PARTITIONED: {

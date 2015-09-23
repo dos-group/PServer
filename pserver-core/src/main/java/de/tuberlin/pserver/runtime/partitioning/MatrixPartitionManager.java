@@ -134,7 +134,7 @@ public final class MatrixPartitionManager {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void load(final SlotContext slotContext,
+    public Matrix load(final SlotContext slotContext,
                      final String filePath,
                      final String name,
                      final long rows, final long cols,
@@ -157,6 +157,7 @@ public final class MatrixPartitionManager {
         );
         matrixLoadTasks.put(name, mlt);
         fileLoadingBarrier.put(name, new AtomicInteger(slotContext.programContext.nodeDOP));
+        return getLoadingMatrix(mlt);
     }
 
     public void loadFilesIntoDHT() {

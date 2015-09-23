@@ -16,6 +16,7 @@ import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.SharedObject;
+import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.dht.DHTKey;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
 import de.tuberlin.pserver.runtime.dht.DHTObject;
@@ -190,7 +191,7 @@ public class DataManager extends EventDispatcher {
     // DATA LOADING
     // ---------------------------------------------------
 
-    public void loadAsMatrix(final SlotContext slotContext,
+    public Matrix loadAsMatrix(final SlotContext slotContext,
                              final String filePath,
                              final String name,
                              final long rows,
@@ -201,7 +202,7 @@ public class DataManager extends EventDispatcher {
                              final Format matrixFormat,
                              final Layout matrixLayout) {
 
-        matrixPartitionManager.load(
+        return matrixPartitionManager.load(
                 slotContext,
                 filePath,
                 name,
