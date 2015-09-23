@@ -65,47 +65,54 @@ public class MatrixMergeUpdateController extends RemoteUpdateController {
 
         Preconditions.checkState(merger instanceof MatrixUpdateMerger);
 
-        final MatrixUpdateMerger matrixUpdateMerger = (MatrixUpdateMerger)merger;
+        if(sc.runtimeContext.dataManager.remoteNodeIDs.length > 0) {
 
-        sc.CF.syncSlots();
+            final MatrixUpdateMerger matrixUpdateMerger = (MatrixUpdateMerger) merger;
 
-        sc.CF.parUnit(0).exe( () -> {
+            sc.CF.syncSlots();
 
-            final DataManager dataManager = sc.runtimeContext.dataManager;
+            sc.CF.parUnit(0).exe(() -> {
 
-            final DHTObject[] dhtObjects = dataManager.pullFrom(stateName + "-Shadow", dataManager.remoteNodeIDs);
+                final DataManager dataManager = sc.runtimeContext.dataManager;
 
-            Preconditions.checkState(dhtObjects.length > 0);
+                final DHTObject[] dhtObjects = dataManager.pullFrom(stateName + "-Shadow", dataManager.remoteNodeIDs);
 
-            final List<Matrix> remoteMatrices = new ArrayList<>();
+                Preconditions.checkState(dhtObjects.length > 0);
 
-            for (final DHTObject obj : dhtObjects) {
+                final List<Matrix> remoteMatrices = new ArrayList<>();
 
-                Preconditions.checkState(((EmbeddedDHTObject) obj).object instanceof Matrix);
+                for (final DHTObject obj : dhtObjects) {
 
-                final Matrix remoteMatrix = (Matrix)((EmbeddedDHTObject) obj).object;
+                    Preconditions.checkState(((EmbeddedDHTObject) obj).object instanceof Matrix);
 
-                remoteMatrices.add(remoteMatrix);
+                    final Matrix remoteMatrix = (Matrix) ((EmbeddedDHTObject) obj).object;
+
+                    remoteMatrices.add(remoteMatrix);
+                }
+
+                sc.programContext.put(stateName + "-Remote-Matrix-List", remoteMatrices);
+
+            });
+
+            sc.CF.syncSlots();
+
+            @SuppressWarnings("unchecked")
+            final List<Matrix> remoteMatrices = (List<Matrix>) sc.programContext.get(stateName + "-Remote-Matrix-List");
+
+            for (final Matrix remoteMatrix : remoteMatrices) {
+
+                sc.CF.loop().exe(stateMatrix, (e, i, j, v) -> {
+
+                    stateMatrix.set(i, j, matrixUpdateMerger.mergeElement(i, j, v, remoteMatrix.get(i, j)));
+                });
             }
 
-            sc.programContext.put(stateName + "-Remote-Matrix-List", remoteMatrices);
-        });
+            sc.CF.syncSlots();
 
-        sc.CF.syncSlots();
+            sc.CF.parUnit(0).exe(() -> sc.programContext.delete(stateName + "-Remote-Matrix-List"));
 
-        @SuppressWarnings("unchecked")
-        final List<Matrix> remoteMatrices = (List<Matrix>) sc.programContext.get(stateName + "-Remote-Matrix-List");
-
-        for (final Matrix remoteMatrix : remoteMatrices) {
-
-            sc.CF.loop().exe(stateMatrix, (e, i, j, v) -> {
-
-                stateMatrix.set(i, j, matrixUpdateMerger.mergeElement(i, j, v, remoteMatrix.get(i, j)));
-            });
         }
 
-        sc.CF.syncSlots();
-
-        sc.CF.parUnit(0).exe(() -> sc.programContext.delete(stateName + "-Remote-Matrix-List"));
     }
+
 }
