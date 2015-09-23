@@ -8,9 +8,7 @@ import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
 
-import javax.rmi.CORBA.Util;
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Random;
 
 public class Dense64Matrix extends AbstractMatrix implements Serializable {
@@ -106,21 +104,6 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
     public Matrix mul(Matrix B, Matrix C) {
         Utils.checkShapeMatrixMatrixMult(this, B, C);
         return matrixOpDelegate.mul(this, B, C);
-    }
-
-    @Override
-    public Matrix scale(double a, Matrix B) {
-        return super.scale(a, B);
-    }
-
-    @Override
-    public Matrix transpose(Matrix B) {
-        return super.transpose(B);
-    }
-
-    @Override
-    public Matrix invert(Matrix B) {
-        return super.invert(B);
     }
 
     @Override
@@ -222,12 +205,12 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
             throw new UnsupportedOperationException();
     }
 
-    @Override
-    public String toString() {
-        return "Dense64Matrix{" +
-                "data=" + Arrays.toString(data) +
-                '}';
-    }
+//    @Override
+//    public String toString() {
+//        return "Dense64Matrix{" +
+//                "data=" + Arrays.toString(data) +
+//                '}';
+//    }
 
     // ---------------------------------------------------
 
@@ -283,7 +266,6 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
             this.rowsToFetch = endRow - startRow;
             this.rand = new Random();
             reset();
-            System.out.println("inner Dense64Matrix.rowIterator! start: "+start+"; end: "+end+"; rowsToFetch: "+ rowsToFetch +";");
         }
 
         // ---------------------------------------------------
