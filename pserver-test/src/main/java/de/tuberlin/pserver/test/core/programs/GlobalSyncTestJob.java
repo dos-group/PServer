@@ -3,7 +3,7 @@ package de.tuberlin.pserver.test.core.programs;
 
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.loop.Loop;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.runtime.MLProgram;
 
 import java.util.Random;
@@ -11,9 +11,9 @@ import java.util.Random;
 public class GlobalSyncTestJob extends MLProgram {
 
     @Unit
-    public void main(final Program program) {
+    public void main(final Lifecycle lifecycle) {
 
-        program.process(() -> {
+        lifecycle.process(() -> {
 
             final Random rand = new Random();
 

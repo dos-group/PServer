@@ -2,7 +2,7 @@ package de.tuberlin.pserver.test.core.programs;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.dsl.dataflow.shared.SharedInt;
 import de.tuberlin.pserver.runtime.MLProgram;
 
@@ -10,9 +10,9 @@ import de.tuberlin.pserver.runtime.MLProgram;
 public class SharedVarTestJob extends MLProgram {
 
     @Unit
-    public void main(final Program program) {
+    public void main(final Lifecycle lifecycle) {
 
-        program.process(() -> {
+        lifecycle.process(() -> {
 
             final SharedInt sharedInt = new SharedInt(slotContext, 0);
 

@@ -3,24 +3,21 @@ package de.tuberlin.pserver.examples.experiments.tsne;
 import com.google.common.collect.Lists;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
-import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
 import de.tuberlin.pserver.types.DistributedMatrix;
-import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.List;
-import java.util.Random;
 
 public class TSNEJob extends MLProgram {
 
@@ -79,7 +76,7 @@ public class TSNEJob extends MLProgram {
     // ---------------------------------------------------
 
     @Unit
-    public void main(final Program program) {
+    public void main(final Lifecycle lifecycle) {
 
         /*program.process(() -> {
             // calc affinity. P is affinity for input X

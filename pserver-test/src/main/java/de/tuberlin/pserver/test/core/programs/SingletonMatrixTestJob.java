@@ -2,7 +2,7 @@ package de.tuberlin.pserver.test.core.programs;
 
 
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.matrix.Matrix;
@@ -18,7 +18,7 @@ public class SingletonMatrixTestJob extends MLProgram {
     public Matrix W;
 
     @Unit(at = "1 - 3")
-    public void main(final Program program) {
+    public void main(final Lifecycle lifecycle) {
         /*program.process(() -> {
 
             final int rows = ((ROWS / (slotContext.programContext.nodeDOP - 1)) / slotContext.programContext.perNodeDOP);

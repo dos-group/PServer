@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.test.core.programs;
 
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.MLProgram;
 
@@ -10,9 +10,9 @@ public class PushAwaitTestJob extends MLProgram {
     public static final int NUM_MSG = 20000;
 
     @Unit(at = "0")
-    public void pingNode(final Program program) {
+    public void pingNode(final Lifecycle lifecycle) {
 
-        program.process(() -> {
+        lifecycle.process(() -> {
 
             Thread.sleep(3000);
 
@@ -32,9 +32,9 @@ public class PushAwaitTestJob extends MLProgram {
     }
 
     @Unit(at = "1")
-    public void pongNode(final Program program) {
+    public void pongNode(final Lifecycle lifecycle) {
 
-        program.process(() -> {
+        lifecycle.process(() -> {
 
             for (int i = 0; i < NUM_MSG; ++i) {
 

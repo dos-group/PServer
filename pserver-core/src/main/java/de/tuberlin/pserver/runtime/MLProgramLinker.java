@@ -4,7 +4,7 @@ package de.tuberlin.pserver.runtime;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.dsl.controlflow.unit.UnitDeclaration;
 import de.tuberlin.pserver.dsl.state.StateDeclaration;
 import de.tuberlin.pserver.dsl.state.annotations.State;
@@ -129,18 +129,18 @@ public final class MLProgramLinker {
         }
     }
 
-    public void defineUnits(final MLProgram programInvokeable, final Program program) {
+    public void defineUnits(final MLProgram programInvokeable, final Lifecycle lifecycle) {
         Preconditions.checkNotNull(programInvokeable);
-        Preconditions.checkNotNull(program);
+        Preconditions.checkNotNull(lifecycle);
         Preconditions.checkNotNull(unitDecls);
 
         for (final UnitDeclaration decl : unitDecls) {
 
-            if (ArrayUtils.contains(decl.atNodes, program.slotContext.runtimeContext.nodeID)) {
+            if (ArrayUtils.contains(decl.atNodes, lifecycle.slotContext.runtimeContext.nodeID)) {
 
                 try {
 
-                    decl.method.invoke(programInvokeable, program);
+                    decl.method.invoke(programInvokeable, lifecycle);
 
                 } catch (IllegalAccessException | InvocationTargetException e) {
 
@@ -173,7 +173,7 @@ public final class MLProgramLinker {
                     if (method.getParameterTypes().length != 1)
                         throw new IllegalStateException();
 
-                    if (method.getParameterTypes()[0] != Program.class)
+                    if (method.getParameterTypes()[0] != Lifecycle.class)
                         throw new IllegalStateException();
 
                     final Unit unitProperties = (Unit) an;

@@ -2,8 +2,7 @@ package de.tuberlin.pserver.examples.experiments.glove;
 
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.loop.Loop;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.annotations.StateExtractor;
 import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
@@ -16,9 +15,6 @@ import de.tuberlin.pserver.runtime.state.filter.MatrixUpdateFilter;
 import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
 import de.tuberlin.pserver.runtime.state.merger.VectorUpdateMerger;
 import de.tuberlin.pserver.types.PartitionType;
-import org.apache.commons.lang3.mutable.MutableDouble;
-
-import java.util.Random;
 
 public final class GloVeJobAdaGradPull extends MLProgram {
 
@@ -77,7 +73,7 @@ public final class GloVeJobAdaGradPull extends MLProgram {
     // ---------------------------------------------------
 
     @Unit
-    public void main(final Program program) {
+    public void main(final Lifecycle lifecycle) {
 
         /*program.preProcess(() -> {
 

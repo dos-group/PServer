@@ -3,7 +3,7 @@ package de.tuberlin.pserver.examples.experiments.kmeans;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.loop.Loop;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
@@ -52,7 +52,7 @@ public class Kmeans extends MLProgram {
 
 
     @Unit
-    public void main(final Program program) {
+    public void main(final Lifecycle lifecycle) {
 
         Random rand = new Random(42);
         double[] data = new double[(int)(K * COLS)];
@@ -62,7 +62,7 @@ public class Kmeans extends MLProgram {
         final Matrix centroids = new Dense64Matrix(K, COLS, data);
 
 
-        program.process(() -> {
+        lifecycle.process(() -> {
 
             centroidsUpdate.assign(0);
 

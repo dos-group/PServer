@@ -2,7 +2,7 @@ package de.tuberlin.pserver.crdt;
 
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.MLProgram;
 
@@ -12,9 +12,9 @@ public class PingPongTestJob extends MLProgram {
     public static final int NUM_MSG = 50;
 
     @Unit(at = "0")
-    public void pingNode(final Program program) {
+    public void pingNode(final Lifecycle lifecycle) {
 
-        program.process(() -> {
+        lifecycle.process(() -> {
 
             for (int i = 0; i < NUM_MSG; ++i) {
 
@@ -35,9 +35,9 @@ public class PingPongTestJob extends MLProgram {
     }
 
     @Unit(at = "1")
-    public void pongNode(final Program program) {
+    public void pongNode(final Lifecycle lifecycle) {
 
-        program.process(() -> {
+        lifecycle.process(() -> {
 
             for (int i = 0; i < NUM_MSG; ++i) {
 

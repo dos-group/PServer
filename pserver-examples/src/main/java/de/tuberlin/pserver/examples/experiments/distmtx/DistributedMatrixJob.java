@@ -2,7 +2,7 @@ package de.tuberlin.pserver.examples.experiments.distmtx;
 
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.Format;
@@ -17,9 +17,9 @@ public class DistributedMatrixJob extends MLProgram {
     public DistributedMatrix X;
 
     @Unit
-    public void main(final Program program) {
+    public void main(final Lifecycle lifecycle) {
 
-        program.process(() -> {
+        lifecycle.process(() -> {
 
             /*CF.loop().exe(X, (i, iter) -> {
                 X.set(iter.rowNum(), 0, slotContext.programContext.runtimeContext.nodeID + 1);

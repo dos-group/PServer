@@ -2,7 +2,7 @@ package de.tuberlin.pserver.examples.experiments.test;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.Format;
@@ -38,8 +38,8 @@ public class SubmitMatrixLoadingTestJob extends MLProgram {
 
 
     @Override
-    public void define(Program program) {
-        program.process(() -> {
+    public void define(Lifecycle lifecycle) {
+        lifecycle.process(() -> {
             int nodeId = slotContext.runtimeContext.nodeID;
             int numNodes = slotContext.programContext.nodeDOP;
             MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);

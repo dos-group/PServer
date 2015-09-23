@@ -4,7 +4,7 @@ import de.tuberlin.pserver.dsl.controlflow.base.Body;
 import de.tuberlin.pserver.dsl.controlflow.base.CFStatement;
 import de.tuberlin.pserver.runtime.SlotContext;
 
-public final class Program extends CFStatement {
+public final class Lifecycle extends CFStatement {
 
     // ---------------------------------------------------
     // Fields.
@@ -20,7 +20,7 @@ public final class Program extends CFStatement {
     // Constructor.
     // ---------------------------------------------------
 
-    public Program(final SlotContext slotContext) {
+    public Lifecycle(final SlotContext slotContext) {
         super(slotContext);
     }
 
@@ -28,9 +28,9 @@ public final class Program extends CFStatement {
     // Life-Cycle.
     // ---------------------------------------------------
 
-    public Program preProcess(final Body b) { preProcessPhase = b; return this; }
+    public Lifecycle preProcess(final Body b) { preProcessPhase = b; return this; }
 
-    public Program process(final Body b) { processPhase = b; return this; }
+    public Lifecycle process(final Body b) { processPhase = b; return this; }
 
-    public Program postProcess(final Body b) { postProcessPhase = b; return this; }
+    public Lifecycle postProcess(final Body b) { postProcessPhase = b; return this; }
 }

@@ -4,7 +4,7 @@ package de.tuberlin.pserver.test.core.programs;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.runtime.MLProgram;
 
 import java.util.concurrent.CyclicBarrier;
@@ -14,11 +14,11 @@ public class EventSystemSendReceiveTestJob extends MLProgram {
     public static final int NUM_MSG = 20000;
 
     @Unit(at = "0")
-    public void pingNode(final Program program) {
+    public void pingNode(final Lifecycle lifecycle) {
 
         final NetManager netManager = slotContext.runtimeContext.netManager;
 
-        program.process(() -> {
+        lifecycle.process(() -> {
 
             final CyclicBarrier barrier = new CyclicBarrier(2);
 
@@ -48,11 +48,11 @@ public class EventSystemSendReceiveTestJob extends MLProgram {
 
 
     @Unit(at = "1")
-    public void pongNode(final Program program) {
+    public void pongNode(final Lifecycle lifecycle) {
 
         final NetManager netManager = slotContext.runtimeContext.netManager;
 
-        program.process(() -> {
+        lifecycle.process(() -> {
 
             final CyclicBarrier barrier = new CyclicBarrier(2);
 

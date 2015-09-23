@@ -3,7 +3,7 @@ package de.tuberlin.pserver.runtime;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.events.EventDispatcher;
 import de.tuberlin.pserver.dsl.controlflow.ControlFlow;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
 import de.tuberlin.pserver.dsl.dataflow.DataFlow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ public abstract class MLProgram extends EventDispatcher {
 
     public SlotContext slotContext;
 
-    private Program program;
+    private Lifecycle lifecycle;
 
     private MLProgramLinker programLinker;
 
@@ -51,7 +51,7 @@ public abstract class MLProgram extends EventDispatcher {
 
         this.dataManager = slotContext.runtimeContext.dataManager;
 
-        this.program = new Program(slotContext);
+        this.lifecycle = new Lifecycle(slotContext);
 
         this.CF = slotContext.CF;
 
@@ -70,7 +70,7 @@ public abstract class MLProgram extends EventDispatcher {
     // Lifecycle.
     // ---------------------------------------------------
 
-    public void define(final Program program) {}
+    public void define(final Lifecycle lifecycle) {}
 
     // ---------------------------------------------------
     // Lifecycle Execution.
@@ -78,7 +78,7 @@ public abstract class MLProgram extends EventDispatcher {
 
     public void run() throws Exception {
 
-        define(program);
+        define(lifecycle);
 
         final String slotIDStr = "[" + slotContext.runtimeContext.nodeID
                 + " | " + slotContext.slotID + "] ";
@@ -87,46 +87,46 @@ public abstract class MLProgram extends EventDispatcher {
 
         programLinker.link(slotContext, this);
 
-        programLinker.defineUnits(this, program);
+        programLinker.defineUnits(this, lifecycle);
 
         programLinker.fetchStateObjects(this);
 
         {
-            LOG.info(slotIDStr + "Enter " + program.slotContext.programContext.simpleClassName + " pre-process phase.");
+            LOG.info(slotIDStr + "Enter " + lifecycle.slotContext.programContext.simpleClassName + " pre-process phase.");
 
             final long start = System.currentTimeMillis();
 
-            if (program.preProcessPhase != null) program.preProcessPhase.body();
+            if (lifecycle.preProcessPhase != null) lifecycle.preProcessPhase.body();
 
             final long end = System.currentTimeMillis();
 
-            LOG.info(slotIDStr + "Leave " + program.slotContext.programContext.simpleClassName
+            LOG.info(slotIDStr + "Leave " + lifecycle.slotContext.programContext.simpleClassName
                     + " pre-process phase [duration: " + (end - start) + " ms].");
         }
 
         {
-            LOG.info(slotIDStr + "Enter " + program.slotContext.programContext.simpleClassName + " process phase.");
+            LOG.info(slotIDStr + "Enter " + lifecycle.slotContext.programContext.simpleClassName + " process phase.");
 
             final long start = System.currentTimeMillis();
 
-            if (program.processPhase != null) program.processPhase.body();
+            if (lifecycle.processPhase != null) lifecycle.processPhase.body();
 
             final long end = System.currentTimeMillis();
 
-            LOG.info(slotIDStr + "Leave " + program.slotContext.programContext.simpleClassName +
+            LOG.info(slotIDStr + "Leave " + lifecycle.slotContext.programContext.simpleClassName +
                     " process phase [duration: " + (end - start) + " ms].");
         }
 
         {
-            LOG.info(slotIDStr + "Enter " + program.slotContext.programContext.simpleClassName + " post-process phase.");
+            LOG.info(slotIDStr + "Enter " + lifecycle.slotContext.programContext.simpleClassName + " post-process phase.");
 
             final long start = System.currentTimeMillis();
 
-            if (program.postProcessPhase != null) program.postProcessPhase.body();
+            if (lifecycle.postProcessPhase != null) lifecycle.postProcessPhase.body();
 
             final long end = System.currentTimeMillis();
 
-            LOG.info(slotIDStr + "Leave " + program.slotContext.programContext.simpleClassName
+            LOG.info(slotIDStr + "Leave " + lifecycle.slotContext.programContext.simpleClassName
                     + " post-process phase [duration: " + (end - start) + " ms].");
         }
 
