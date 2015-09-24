@@ -3,7 +3,6 @@ package de.tuberlin.pserver.crdt;
 import java.io.Serializable;
 
 public class Operation implements Serializable{
-    private static final int END = -1;
     private int type;
 
     public Operation(int type) {
@@ -13,5 +12,4 @@ public class Operation implements Serializable{
     public int getType() {
         return this.type;
     }
-
 }

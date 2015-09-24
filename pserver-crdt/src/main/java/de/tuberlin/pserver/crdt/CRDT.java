@@ -1,10 +1,7 @@
 package de.tuberlin.pserver.crdt;
 
-
-import de.tuberlin.pserver.runtime.DataManager;
-
 public interface CRDT {
-    public static final int END = -1;
+    int END = -1;
 
 
     //void applyUpdate(int srcNodeID, Operation op, DataManager dm);

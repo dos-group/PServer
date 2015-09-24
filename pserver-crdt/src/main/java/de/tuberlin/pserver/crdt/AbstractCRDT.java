@@ -1,10 +1,11 @@
 package de.tuberlin.pserver.crdt;
 
-import de.tuberlin.pserver.registers.RegisterOperation;
 import de.tuberlin.pserver.runtime.DataManager;
 
-import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
 
 
 // TODO: improve buffer performance => sometimes one or two operations are missing at a replica
@@ -18,7 +19,6 @@ public abstract class AbstractCRDT implements CRDT {
     private final Set<Integer> runningNodes = new HashSet<>();
     private final Set<Integer> finishedNodes = new HashSet<>();
     private final Queue<Operation> outBuffer = new LinkedList<>();
-    //private final Queue<Operation> inBuffer = new LinkedBlockingQueue<>();
 
     private boolean allNodesRunning = false;
     private boolean allNodesFinished = false;
@@ -47,10 +47,10 @@ public abstract class AbstractCRDT implements CRDT {
             }
         });
 
-        dataManager.addDataEventListener("Operation_"+id, new DataManager.DataEventHandler() {
+        dataManager.addDataEventListener("Operation_" + id, new DataManager.DataEventHandler() {
             @Override
             public void handleDataEvent(int srcNodeID, Object value) {
-                if(((Operation)value).getType() == CRDT.END) {
+                if (((Operation) value).getType() == CRDT.END) {
                     addFinishedNode(srcNodeID, dataManager);
                     //inBuffer.add(new RegisterOperation<Integer>(END, null, null));
                     //update(srcNodeID, (Operation) value, dataManager);
@@ -78,8 +78,6 @@ public abstract class AbstractCRDT implements CRDT {
             }
         }
 
-       // broadcastBuffer(dataManager);
-
         System.out.println("[DEBUG] All nodes: " + isAllNodesRunning());
         System.out.println("[DEBUG] BufferB: " + outBuffer.size());
 
@@ -87,7 +85,6 @@ public abstract class AbstractCRDT implements CRDT {
 
         while(!isAllNodesFinished()) {
             try {
-                //broadcastBuffer(dataManager);
                 Thread.sleep(50);
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -102,6 +99,17 @@ public abstract class AbstractCRDT implements CRDT {
     public boolean isAllNodesFinished() {
         return allNodesFinished;
     }
+
+    public void applyOperation(Operation op, DataManager dm) {
+        //inBuffer.add(op);
+        update(-1, op, dm);
+        broadcast(op, dm);
+    }
+
+    public Queue getBuffer() {
+        return this.outBuffer;
+    }
+    //public Queue getInBuffer() { return this.inBuffer; }
 
     protected void addFinishedNode(int nodeID, DataManager dataManager) {
         finishedNodes.add(nodeID);
@@ -121,6 +129,12 @@ public abstract class AbstractCRDT implements CRDT {
         }
     }
 
+    protected void buffer(Operation op) {
+        outBuffer.add(op);
+    }
+
+    protected abstract void update(int srcNodeId, Operation op, DataManager dm);
+
     private void broadcastBuffer(DataManager dm) {
         if(outBuffer.size() > 0) {
             System.out.println("[DEBUG] Broadcasting buffer size " + outBuffer.size());
@@ -131,22 +145,4 @@ public abstract class AbstractCRDT implements CRDT {
             //TODO: some exception?
         }
     }
-
-    protected void buffer(Operation op) {
-        outBuffer.add(op);
-    }
-
-    public void applyOperation(Operation op, DataManager dm) {
-        //inBuffer.add(op);
-        update(-1, op, dm);
-        broadcast(op, dm);
-    }
-
-    public Queue getBuffer() {
-        return this.outBuffer;
-    }
-    //public Queue getInBuffer() { return this.inBuffer; }
-
-    protected abstract void update(int srcNodeId, Operation op, DataManager dm);
-
 }

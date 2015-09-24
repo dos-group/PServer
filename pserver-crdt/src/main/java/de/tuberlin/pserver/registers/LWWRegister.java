@@ -24,7 +24,6 @@ public class LWWRegister<T extends Comparable> extends AbstractRegister<T> imple
         // TODO: is there a way to avoid this cast? It is on a critical path
         RegisterOperation<T> rop = (RegisterOperation) op;
 
-        //System.out.println(rop.getValue() + "; " + rop.getDate().getTime());
         if (rop.getDate().after(this.date)) {
             updateRegister(rop.getValue(), rop.getDate());
         }

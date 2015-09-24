@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.registers;
 
 import de.tuberlin.pserver.crdt.AbstractCRDT;
-import de.tuberlin.pserver.crdt.Operation;
 import de.tuberlin.pserver.runtime.DataManager;
 
 public abstract class AbstractRegister<T> extends AbstractCRDT implements RegisterCRDT<T> {

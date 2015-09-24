@@ -67,55 +67,6 @@ public class GCounterTestJob extends MLProgram {
         });
     }
 
-
-    /*@Override
-    public void define(Program program) {
-        super.define(program);
-
-
-
-
-            /*CF.parUnit(2).slot(0).exe(() -> {
-                GCounter gc = new GCounter("one", dataManager);
-                GCounter gc2 = new GCounter("two", dataManager);
-
-                for (int i = 0; i < 100000; i++) {
-                    gc.applyOperation(new CounterOperation(CounterOperation.ADD, 1), dataManager);
-                    if ((i % 2) == 0) {
-                        gc2.applyOperation(new CounterOperation(CounterOperation.ADD, 1), dataManager);
-                    }
-                }
-
-                gc.finish(dataManager);
-                gc2.finish(dataManager);
-
-                System.out.println("[DEBUG] Count of node " + slotContext.programContext.runtimeContext.nodeID + ": " + gc.getCount());
-                System.out.println("[DEBUG] Count of node " + slotContext.programContext.runtimeContext.nodeID + ": " + gc2.getCount());
-                System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID + ": " + gc.getBuffer());
-                System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID + ": " + gc2.getBuffer());
-            });
-
-            CF.parUnit(3).slot(0).exe(() -> {
-                GCounter gc = new GCounter("one", dataManager);
-                GCounter gc2 = new GCounter("two", dataManager);
-
-                for (int i = 0; i < 150000; i++) {
-                    gc.applyOperation(new CounterOperation(CounterOperation.ADD, 1), dataManager);
-                    if ((i % 2) == 0) {
-                        gc2.applyOperation(new CounterOperation(CounterOperation.ADD, 1), dataManager);
-                    }
-                }
-
-                gc.finish(dataManager);
-                gc2.finish(dataManager);
-
-                System.out.println("[DEBUG] Count of node " + slotContext.programContext.runtimeContext.nodeID + ": " + gc.getCount());
-                System.out.println("[DEBUG] Count of node " + slotContext.programContext.runtimeContext.nodeID + ": " + gc2.getCount());
-                System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID + ": " + gc.getBuffer());
-                System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID + ": " + gc2.getBuffer());
-            });*/
-
-
     public static void main(final String[] args) {
 
         // Set the number of simulated nodes, can also be

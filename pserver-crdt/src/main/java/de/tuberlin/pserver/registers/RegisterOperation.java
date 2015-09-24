@@ -15,10 +15,6 @@ public class RegisterOperation<T> extends Operation {
         this.value = value;
     }
 
-    public void setDate(Date date) {
-        this.date = date;
-    }
-
     public Date getDate() {
         return this.date;
     }

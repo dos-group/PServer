@@ -2,10 +2,8 @@ package de.tuberlin.pserver.registers.testjobs;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.counters.CounterOperation;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.registers.ConcurrentResolver;
 import de.tuberlin.pserver.registers.LWWRegister;
 import de.tuberlin.pserver.registers.RegisterOperation;
 import de.tuberlin.pserver.runtime.MLProgram;
@@ -25,7 +23,6 @@ public class LWWRegisterTestJob extends MLProgram {
                 for (int i = 0; i <= 10000; i++) {
                     lwwr.applyOperation(new RegisterOperation<>(RegisterOperation.WRITE, i,
                             Calendar.getInstance().getTime()), dataManager);
-                    //Thread.sleep(1);
                 }
 
                 lwwr.finish(dataManager);
@@ -34,11 +31,7 @@ public class LWWRegisterTestJob extends MLProgram {
                         " slot " + slotContext.slotID + ": " + lwwr.getValue());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + lwwr.getBuffer());
-                //System.out.println("[DEBUG] Queue of node " + slotContext.programContext.runtimeContext.nodeID +
-                //        " slot " + slotContext.slotID + ": " + lwwr.getInBuffer());
-
             });
-
         });
     }
 
@@ -52,7 +45,6 @@ public class LWWRegisterTestJob extends MLProgram {
                     lwwr.applyOperation(new RegisterOperation<>(RegisterOperation.WRITE, i,
                             Calendar.getInstance().getTime()), dataManager);
                     Thread.sleep(500);
-                    //System.out.println(i);
                 }
 
                 lwwr.finish(dataManager);
@@ -61,10 +53,7 @@ public class LWWRegisterTestJob extends MLProgram {
                         " slot " + slotContext.slotID + ": " + lwwr.getValue());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + lwwr.getBuffer());
-                //System.out.println("[DEBUG] Queue of node " + slotContext.programContext.runtimeContext.nodeID +
-                //        " slot " + slotContext.slotID + ": " + lwwr.getInBuffer());
             });
-
         });
     }
 
