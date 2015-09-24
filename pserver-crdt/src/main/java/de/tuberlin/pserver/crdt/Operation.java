@@ -2,21 +2,16 @@ package de.tuberlin.pserver.crdt;
 
 import java.io.Serializable;
 
-public class Operation implements Serializable {
+public class Operation implements Serializable{
+    private static final int END = -1;
     private int type;
-    private int value;
 
-
-    public Operation(int type, int value) {
+    public Operation(int type) {
         this.type = type;
-        this.value = value;
     }
 
     public int getType() {
-        return type;
+        return this.type;
     }
 
-    public int getValue() {
-        return value;
-    }
 }

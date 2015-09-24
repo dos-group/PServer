@@ -8,4 +8,5 @@ public class NonNegativeCounter {
         2. enforce local invariant => no node may issue more decrements than it issued increments
         3. synchronize by allowing nodes to reserve the right to a certain amount of decrements
      */
+    // TODO: Do we need this?
 }

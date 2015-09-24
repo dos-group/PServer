@@ -4,9 +4,8 @@ package de.tuberlin.pserver.crdt;
 import de.tuberlin.pserver.runtime.DataManager;
 
 public interface CRDT {
-    int END = -1;
-    int ADD = 0;
-    int SUBTRACT = 1;
+    public static final int END = -1;
+
 
     //void applyUpdate(int srcNodeID, Operation op, DataManager dm);
     //void broadcast(int op, int value, DataManager dm);

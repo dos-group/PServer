@@ -4,12 +4,10 @@ import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.Operation;
 import de.tuberlin.pserver.runtime.DataManager;
 
-import javax.naming.OperationNotSupportedException;
 import java.io.Serializable;
 import java.util.EmptyStackException;
 
 public class GCounter extends AbstractCounter implements CRDT, Serializable {
-    private long count = 0;
 
     public GCounter(String id, DataManager dataManager) {
         super(id, dataManager);
@@ -17,22 +15,16 @@ public class GCounter extends AbstractCounter implements CRDT, Serializable {
     }
 
     @Override
-    public long getCount() {
-        // Defensive copy so the value can not be changed without evoking the add method which broadcasts updates
-        // TODO: Does this defensive copy make sense?
-        long tmp = count;
-        return tmp;
-    }
-
-    @Override
     protected void update(int srcNodeID, Operation op, DataManager dm) {
-        if(op.getType() == ADD) {
-            count += op.getValue();
-        } else if(op.getType() == END) {
-            addFinishedNode(srcNodeID, dm);
-        } else {
-            // TODO: throw a specific exception
-            throw new EmptyStackException();
-        }
+        CounterOperation cop = (CounterOperation) op;
+
+      //  while(cop != null) {
+            if (cop.getType() == CounterOperation.ADD) {
+                count += cop.getValue();
+            } else {
+                // TODO: throw a specific exception
+                throw new EmptyStackException();
+            }
+      //  }
     }
 }

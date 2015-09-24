@@ -7,7 +7,6 @@ import de.tuberlin.pserver.runtime.DataManager;
 import java.io.Serializable;
 
 public class Counter extends AbstractCounter implements CRDT, Serializable {
-    private long count = 0;
 
     public Counter(String id, DataManager dataManager) {
         super(id, dataManager);
@@ -15,22 +14,15 @@ public class Counter extends AbstractCounter implements CRDT, Serializable {
     }
 
     @Override
-    public long getCount() {
-        // Defensive copy so the value can not be changed without evoking the add method which broadcasts updates
-        // TODO: Does this defensive copy make sense?
-        long tmp = count;
-        return tmp;
-    }
-
-    @Override
     protected void update(int srcNodeID, Operation op, DataManager dm) {
-        if(op.getType() == ADD) {
-            count += op.getValue();
-        } else if(op.getType() == SUBTRACT) {
-            count -= op.getValue();
-        } else if(op.getType() == END) {
-            addFinishedNode(srcNodeID, dm);
-        } else {
+        CounterOperation cop = (CounterOperation) op;
+        if(cop.getType() == CounterOperation.ADD) {
+            count += cop.getValue();
+        }
+        else if(cop.getType() == CounterOperation.SUBTRACT) {
+            count -= cop.getValue();
+        }
+        else {
             // TODO: throw a specific exception
         }
     }
