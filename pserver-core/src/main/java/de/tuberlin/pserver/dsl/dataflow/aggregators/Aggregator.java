@@ -68,12 +68,12 @@ public class Aggregator<T extends Serializable> {
 
         partialAggs.set(pc.runtimeContext.nodeID, partialAgg);
 
-        pc.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
+        pc.runtimeContext.dataManager.receive(DataManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
 
             @Override
             @SuppressWarnings("unchecked")
             public void handleDataEvent(int srcNodeID, Object value) {
-                partialAggs.set(srcNodeID, (T)value);
+                partialAggs.set(srcNodeID, (T) value);
             }
         });
 
@@ -102,7 +102,7 @@ public class Aggregator<T extends Serializable> {
 
             partialAggs.add(partialAgg);
 
-            pc.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
+            pc.runtimeContext.dataManager.receive(DataManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
 
                 @Override
                 @SuppressWarnings("unchecked")
@@ -123,7 +123,7 @@ public class Aggregator<T extends Serializable> {
 
             pc.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg, new int[]{AGG_NODE_ID});
 
-            pc.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, 1, aggPushUID(), new DataManager.DataEventHandler() {
+            pc.runtimeContext.dataManager.receive(DataManager.CallType.SYNC, 1, aggPushUID(), new DataManager.DataEventHandler() {
 
                 @Override
                 @SuppressWarnings("unchecked")

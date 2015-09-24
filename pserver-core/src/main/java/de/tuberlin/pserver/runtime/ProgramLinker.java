@@ -320,22 +320,29 @@ public final class ProgramLinker {
 
                     } break;
                     case REPLICATED: {
-                        SharedObject so;
+                        SharedObject so = null;
                         if ("".equals(decl.path)) {
-                            so = new MatrixBuilder()
-                                    .dimension(decl.rows, decl.cols)
-                                    .format(decl.format)
-                                    .layout(decl.layout)
-                                    .build();
-                            dataManager.putObject(decl.name, so);
+
+                            if (ArrayUtils.contains(decl.atNodes, programContext.runtimeContext.nodeID)) {
+
+                                so = new MatrixBuilder()
+                                        .dimension(decl.rows, decl.cols)
+                                        .format(decl.format)
+                                        .layout(decl.layout)
+                                        .build();
+
+                                dataManager.putObject(decl.name, so);
+                            }
                         }
                         else {
+
                             so = dataManager.loadAsMatrix(
                                     programContext,
                                     decl.path,
                                     decl.name,
                                     decl.rows,
                                     decl.cols,
+                                    decl.atNodes,
                                     decl.globalScope,
                                     decl.partitionType,
                                     decl.recordFormatConfigClass.newInstance(),
@@ -357,22 +364,31 @@ public final class ProgramLinker {
                     } break;
                     case PARTITIONED: {
                         if ("".equals(decl.path)) {
-                            final SharedObject so = new DistributedMatrix(
-                                    programContext,
-                                    decl.rows, decl.cols,
-                                    PartitionType.ROW_PARTITIONED,
-                                    decl.layout,
-                                    decl.format,
-                                    false
-                            );
-                            dataManager.putObject(decl.name, so);
+
+                            if (ArrayUtils.contains(decl.atNodes, programContext.runtimeContext.nodeID)) {
+
+                                final SharedObject so = new DistributedMatrix(
+                                        programContext,
+                                        decl.rows, decl.cols,
+                                        decl.atNodes,
+                                        PartitionType.ROW_PARTITIONED,
+                                        decl.layout,
+                                        decl.format,
+                                        false
+                                );
+
+                                dataManager.putObject(decl.name, so);
+                            }
+
                         } else {
+
                             dataManager.loadAsMatrix(
                                     programContext,
                                     decl.path,
                                     decl.name,
                                     decl.rows,
                                     decl.cols,
+                                    decl.atNodes,
                                     decl.globalScope,
                                     decl.partitionType,
                                     decl.recordFormatConfigClass.newInstance(),
@@ -382,15 +398,21 @@ public final class ProgramLinker {
                         }
                     } break;
                     case LOGICALLY_PARTITIONED:
-                        final SharedObject so = new DistributedMatrix(
-                                programContext,
-                                decl.rows, decl.cols,
-                                PartitionType.ROW_PARTITIONED,
-                                decl.layout,
-                                decl.format,
-                                true
-                        );
-                        dataManager.putObject(decl.name, so);
+
+                        if (ArrayUtils.contains(decl.atNodes, programContext.runtimeContext.nodeID)) {
+
+                            final SharedObject so = new DistributedMatrix(
+                                    programContext,
+                                    decl.rows, decl.cols,
+                                    decl.atNodes,
+                                    PartitionType.ROW_PARTITIONED,
+                                    decl.layout,
+                                    decl.format,
+                                    true
+                            );
+
+                            dataManager.putObject(decl.name, so);
+                        }
                         break;
                     default:
                         throw new UnsupportedOperationException();

@@ -12,7 +12,7 @@ public final class Loop extends CFStatement {
 
     public static final int ASYNC   = 1;
 
-    public static final int GLOBAL  = 2;
+    public static final int GLOBAL = 2;
 
     // ---------------------------------------------------
     // Inner Classes.
@@ -79,7 +79,7 @@ public final class Loop extends CFStatement {
 
             long t1 = System.currentTimeMillis();
 
-            //sync(sg);
+            sync();
 
             syncDuration += System.currentTimeMillis() - t1;
 
@@ -141,14 +141,14 @@ public final class Loop extends CFStatement {
     // Private Methods.
     // ---------------------------------------------------
 
-    /*private void sync(final SlotGroup sg) throws Exception {
+    private void sync() throws Exception {
         switch (mode) {
             case ASYNC:
                 return;
             case GLOBAL:
                 dataManager.globalSync(programContext);
         }
-    }*/
+    }
 
     //private Matrix.RowIterator parallelMatrixRowIterator(final Matrix m) {
     //    return executionManager.parallelMatrixRowIterator(m);

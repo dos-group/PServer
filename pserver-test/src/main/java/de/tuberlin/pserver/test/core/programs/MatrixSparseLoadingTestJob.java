@@ -43,6 +43,7 @@ public class MatrixSparseLoadingTestJob extends Program {
                     FILE,
                     "matrix",
                     ROWS, COLS,
+                    new int[] {0, 1, 2, 3},
                     GlobalScope.PARTITIONED,
                     PartitionType.ROW_PARTITIONED,
                     new RowColValRecordFormatConfig(),

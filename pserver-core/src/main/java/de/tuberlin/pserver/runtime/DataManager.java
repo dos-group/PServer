@@ -42,6 +42,7 @@ public class DataManager extends EventDispatcher {
     // Inner Classes.
     // ---------------------------------------------------
 
+
     public static abstract class DataEventHandler implements IEventHandler {
 
         private ResettableCountDownLatch latch = null;
@@ -255,6 +256,7 @@ public class DataManager extends EventDispatcher {
                              final String name,
                              final long rows,
                              final long cols,
+                             final int[] atNodes,
                              final GlobalScope globalScope,
                              final PartitionType partitionType,
                              final AbstractRecordFormatConfig recordFormat,
@@ -267,6 +269,7 @@ public class DataManager extends EventDispatcher {
                 name,
                 rows,
                 cols,
+                atNodes,
                 globalScope,
                 partitionType,
                 recordFormat,
@@ -331,9 +334,9 @@ public class DataManager extends EventDispatcher {
         //netManager.dispatchEvent(event);
     }
 
-    /*public void awaitEvent(final ExecutionManager.CallType type, final String name, final DataEventHandler handler) {
-        awaitEvent(type, remoteNodeIDs.length, name, handler); }
-    public void awaitEvent(final ExecutionManager.CallType type, final int n, final String name, final DataEventHandler handler) {
+    /*public void receive(final ExecutionManager.CallType type, final String name, final DataEventHandler handler) {
+        receive(type, remoteNodeIDs.length, name, handler); }
+    public void receive(final ExecutionManager.CallType type, final int n, final String name, final DataEventHandler handler) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(handler);
@@ -351,10 +354,29 @@ public class DataManager extends EventDispatcher {
         }
     }*/
 
-    //public void awaitEvent(final ExecutionManager.CallType type, final String name, final DataEventHandler handler) {
-    //    awaitEvent(type, remoteNodeIDs.length, name, handler); }
+    //public void receive(final ExecutionManager.CallType type, final String name, final DataEventHandler handler) {
+    //    receive(type, remoteNodeIDs.length, name, handler); }
 
-    public void awaitEvent(final CallType type, final int n, final String name, final DataEventHandler handler) {
+
+
+    public <T> void receive(final int n, final String name, final Handler<T> handler) {
+        receive(CallType.SYNC, n, name, new DataEventHandler() {
+
+            @Override
+            public void handleDataEvent(int srcNodeID, Object obj) {
+
+                final T value = (T) obj;
+                handler.handle(srcNodeID, value);
+            }
+        });
+    }
+
+
+
+    public void receive(final int n, final String name, final DataEventHandler handler) {
+        receive(CallType.SYNC, n, name, handler);
+    }
+    public void receive(final CallType type, final int n, final String name, final DataEventHandler handler) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(handler);

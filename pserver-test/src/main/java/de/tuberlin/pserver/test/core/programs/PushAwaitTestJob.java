@@ -20,7 +20,7 @@ public class PushAwaitTestJob extends Program {
 
                 dataManager.pushTo("test-ping", i, new int[]{1});
 
-                dataManager.awaitEvent(DataManager.CallType.SYNC, 1, "test-pong", new DataManager.DataEventHandler() {
+                dataManager.receive(DataManager.CallType.SYNC, 1, "test-pong", new DataManager.DataEventHandler() {
                     @Override
                     public void handleDataEvent(int srcNodeID, Object value) {
                     }
@@ -38,9 +38,10 @@ public class PushAwaitTestJob extends Program {
 
             for (int i = 0; i < NUM_MSG; ++i) {
 
-                dataManager.awaitEvent(DataManager.CallType.SYNC, 1, "test-ping", new DataManager.DataEventHandler() {
+                dataManager.receive(DataManager.CallType.SYNC, 1, "test-ping", new DataManager.DataEventHandler() {
                     @Override
-                    public void handleDataEvent(int srcNodeID, Object value) {}
+                    public void handleDataEvent(int srcNodeID, Object value) {
+                    }
                 });
 
                 dataManager.pushTo("test-pong", i, new int[] { 0 });

@@ -3,6 +3,7 @@ package de.tuberlin.pserver.mcruntime;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.math.matrix.Matrix;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,6 +93,13 @@ public final class Parallel {
 
         For(dop, 0, invokes.size() - 1, (i) -> {
             invokes.get(i.intValue()).call();
+        });
+    }
+
+    public static void For(final Matrix m, final ParallelForMatrixBody body) throws Exception {
+        For(0, (int)m.rows(), (i) -> {
+            for (long j = 0; j < m.cols(); ++j)
+                body.perform(i, j, m.get(i, j));
         });
     }
 

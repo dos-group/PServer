@@ -5,6 +5,7 @@ import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 
 import java.util.Arrays;
+import java.util.stream.IntStream;
 
 public class MatrixByRowPartitioner implements IMatrixPartitioner {
 
@@ -14,21 +15,27 @@ public class MatrixByRowPartitioner implements IMatrixPartitioner {
 
     private final int nodeID;
 
-    private final int numNodes;
+    //private final int numNodes;
 
     private final long rows;
 
     private final long cols;
 
+    private final int[] atNodes;
+
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    public MatrixByRowPartitioner(int nodeID, int numNodes, long rows, long cols) {
+    public MatrixByRowPartitioner(int nodeID, int[] atNodes, long rows, long cols) {
         this.nodeID   = nodeID;
-        this.numNodes = numNodes;
+        this.atNodes  = atNodes;
         this.rows     = rows;
         this.cols     = cols;
+    }
+
+    public MatrixByRowPartitioner(int nodeID, int numNodes, long rows, long cols) {
+        this(nodeID, IntStream.iterate(0, x -> x + 1).limit(numNodes).toArray(), rows, cols);
     }
 
     // ---------------------------------------------------
@@ -37,17 +44,18 @@ public class MatrixByRowPartitioner implements IMatrixPartitioner {
 
     @Override
     public int getPartitionOfEntry(final MatrixEntry entry) {
-        double numOfRowsPerInstance = (double) rows / numNodes;
+        double numOfRowsPerInstance = (double) rows / atNodes.length;
         int partition = (int) (entry.getRow() / numOfRowsPerInstance);
-        if(partition >= numNodes) {
-            throw new IllegalStateException("The calculated partition id (row = "+entry.getRow()+", rows = "+rows+", numNodes = "+numNodes+") -> " + partition + " must not exceed numNodes.");
+        if(partition >= atNodes.length) {
+            throw new IllegalStateException("The calculated partition id (row = "+entry.getRow()+", rows = "
+                    + rows + ", numNodes = " + atNodes.length +") -> " + partition + " must not exceed numNodes.");
         }
-        return partition;
+        return atNodes[partition];
     }
 
     @Override
     public Matrix.PartitionShape getPartitionShape() {
-        double rowsPerNode = (double) rows / numNodes;
+        double rowsPerNode = (double) rows / atNodes.length;
         long rowOffset = (int) Math.ceil(rowsPerNode * nodeID);
         long numRows = (int) (Math.ceil(rowsPerNode * (nodeID + 1)) - rowOffset);
         return new Matrix.PartitionShape(numRows, cols, rowOffset, 0);

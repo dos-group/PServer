@@ -20,7 +20,9 @@ public class DistributedMatrix extends AbstractMatrix {
 
     private final ProgramContext programContext;
 
-    private final int nodeDOP, nodeID;
+    //private final int nodeDOP, nodeID;
+
+    private final int[] atNodes;
 
     private final PartitionType partitionType;
 
@@ -37,11 +39,12 @@ public class DistributedMatrix extends AbstractMatrix {
     // ---------------------------------------------------
 
     public DistributedMatrix(final DistributedMatrix m) {
-        this(m.programContext, m.rows, m.cols, m.partitionType, m.layout, m.format, m.completeMatrix);
+        this(m.programContext, m.rows, m.cols, m.atNodes, m.partitionType, m.layout, m.format, m.completeMatrix);
     }
 
     public DistributedMatrix(final ProgramContext programContext,
                              final long rows, final long cols,
+                             final int[] atNodes,
                              final PartitionType partitionType,
                              final Layout layout,
                              final Format format,
@@ -50,8 +53,9 @@ public class DistributedMatrix extends AbstractMatrix {
         super(rows, cols, layout);
 
         this.programContext = Preconditions.checkNotNull(programContext);
-        this.nodeDOP        = programContext.nodeDOP;
-        this.nodeID         = programContext.runtimeContext.nodeID;
+        //this.nodeDOP        = programContext.nodeDOP;
+        //this.nodeID         = programContext.runtimeContext.nodeID;
+        this.atNodes        = Preconditions.checkNotNull(atNodes);
         this.partitionType  = Preconditions.checkNotNull(partitionType);
         this.shape          = createShape(rows, cols);
         this.format         = format;
@@ -149,14 +153,14 @@ public class DistributedMatrix extends AbstractMatrix {
 
                 programContext.runtimeContext.dataManager.pushTo("rowAgg", partialAgg);
                 final int n = programContext.nodeDOP - 1;
-                programContext.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, n, "rowAgg",
+                programContext.runtimeContext.dataManager.receive(DataManager.CallType.SYNC, n, "rowAgg",
                         new DataManager.DataEventHandler() {
                             @Override
                             public void handleDataEvent(int srcNodeID, Object value) {
-                                final Matrix remotePartialAgg = (Matrix)value;
+                                final Matrix remotePartialAgg = (Matrix) value;
                                 final long offset = rows / programContext.nodeDOP * srcNodeID;
                                 for (int i = 0; i < remotePartialAgg.rows(); ++i)
-                                   totalAgg.set(0, offset + i, remotePartialAgg.get(0, i));
+                                    totalAgg.set(0, offset + i, remotePartialAgg.get(0, i));
                             }
                         }
                 );
@@ -176,11 +180,11 @@ public class DistributedMatrix extends AbstractMatrix {
                 Matrix partialMatrix = matrix.subMatrix(shape.rowOffset, shape.colOffset, shape.rows, shape.cols);
                 programContext.runtimeContext.dataManager.pushTo("partialMatrix", partialMatrix);
                 final int n = programContext.nodeDOP - 1;
-                programContext.runtimeContext.dataManager.awaitEvent(DataManager.CallType.SYNC, n, "partialMatrix",
+                programContext.runtimeContext.dataManager.receive(DataManager.CallType.SYNC, n, "partialMatrix",
                         new DataManager.DataEventHandler() {
                             @Override
                             public void handleDataEvent(int srcNodeID, Object value) {
-                                final Matrix remotePartialMatrix = (Matrix)value;
+                                final Matrix remotePartialMatrix = (Matrix) value;
                                 matrix.assign(srcNodeID * shape.rows, 0, remotePartialMatrix);
                             }
                         }
@@ -201,7 +205,7 @@ public class DistributedMatrix extends AbstractMatrix {
         switch (partitionType) {
             case NOT_PARTITIONED: return new PartitionShape(rows, cols, 0, 0);
             case ROW_PARTITIONED: {
-                return new MatrixByRowPartitioner(nodeID, nodeDOP, rows, cols).getPartitionShape();
+                return new MatrixByRowPartitioner(programContext.runtimeContext.nodeID, atNodes.length, rows, cols).getPartitionShape();
             }
             case COLUMN_PARTITIONED: throw new UnsupportedOperationException();
             case BLOCK_PARTITIONED: throw new UnsupportedOperationException();

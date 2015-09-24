@@ -44,6 +44,7 @@ public final class MatrixPartitionManager {
         final String name;
         final long rows;
         final long cols;
+        final int[] atNodes;
         final GlobalScope globalScope;
         final PartitionType partitionType;
         final AbstractRecordFormatConfig recordFormat;
@@ -56,6 +57,7 @@ public final class MatrixPartitionManager {
                               final String name,
                               final long rows,
                               final long cols,
+                              final int[] atNodes,
                               final GlobalScope globalScope,
                               final PartitionType partitionType,
                               final AbstractRecordFormatConfig recordFormat,
@@ -66,6 +68,7 @@ public final class MatrixPartitionManager {
             this.name               = name;
             this.rows               = rows;
             this.cols               = cols;
+            this.atNodes            = atNodes;
             this.globalScope        = globalScope;
             this.partitionType      = partitionType;
             this.recordFormat       = recordFormat;
@@ -138,6 +141,7 @@ public final class MatrixPartitionManager {
                      final String filePath,
                      final String name,
                      final long rows, final long cols,
+                     final int[] atNodes,
                      final GlobalScope globalScope,
                      final PartitionType partitionType,
                      final AbstractRecordFormatConfig recordFormat,
@@ -149,6 +153,7 @@ public final class MatrixPartitionManager {
                 filePath,
                 name,
                 rows, cols,
+                atNodes,
                 globalScope,
                 globalScope == GlobalScope.REPLICATED ? PartitionType.NOT_PARTITIONED : partitionType,
                 recordFormat,
@@ -216,6 +221,7 @@ public final class MatrixPartitionManager {
                             task.programContext,
                             task.rows,
                             task.cols,
+                            task.atNodes,
                             task.partitionType,
                             task.matrixLayout,
                             task.matrixFormat,
@@ -227,6 +233,7 @@ public final class MatrixPartitionManager {
                             task.programContext,
                             task.rows,
                             task.cols,
+                            task.atNodes,
                             task.partitionType,
                             task.matrixLayout,
                             task.matrixFormat,
@@ -266,7 +273,7 @@ public final class MatrixPartitionManager {
         int foreignEntriesThreshold = 2048;
         final IMatrixPartitioner matrixPartitioner = new MatrixByRowPartitioner(
                 task.programContext.runtimeContext.nodeID,
-                task.programContext.nodeDOP,
+                task.atNodes.length,
                 task.rows,
                 task.cols
         );

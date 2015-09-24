@@ -20,7 +20,7 @@ public class PingPongTestJob extends Program {
 
                 dataManager.pushTo("ping", new Integer(i), new int[]{1});
 
-                dataManager.awaitEvent(DataManager.CallType.SYNC, 1, "pong", new DataManager.DataEventHandler() {
+                dataManager.receive(DataManager.CallType.SYNC, 1, "pong", new DataManager.DataEventHandler() {
                     @Override
                     public void handleDataEvent(int srcNodeID, Object value) {
                         final Integer i = (Integer) value;
@@ -41,10 +41,10 @@ public class PingPongTestJob extends Program {
 
             for (int i = 0; i < NUM_MSG; ++i) {
 
-                dataManager.awaitEvent(DataManager.CallType.SYNC, 1, "ping", new DataManager.DataEventHandler() {
+                dataManager.receive(DataManager.CallType.SYNC, 1, "ping", new DataManager.DataEventHandler() {
                     @Override
                     public void handleDataEvent(int srcNodeID, Object value) {
-                        final Integer i = (Integer)value;
+                        final Integer i = (Integer) value;
                         System.out.println("received ping " + i);
                     }
                 });
