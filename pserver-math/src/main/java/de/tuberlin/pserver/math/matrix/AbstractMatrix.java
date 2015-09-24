@@ -2,9 +2,8 @@ package de.tuberlin.pserver.math.matrix;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.math.utils.Functions;
-import de.tuberlin.pserver.math.utils.Utils;
 import de.tuberlin.pserver.math.utils.MatrixAggregation;
+import de.tuberlin.pserver.math.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
