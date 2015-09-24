@@ -1,9 +1,10 @@
 package de.tuberlin.pserver.test.core.programs;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
-import de.tuberlin.pserver.dsl.dataflow.shared.SharedInt;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.UnitMng;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
+import de.tuberlin.pserver.runtime.mcruntime.shared.SharedInt;
 import de.tuberlin.pserver.runtime.Program;
 
 
@@ -16,7 +17,7 @@ public class SharedVarTestJob extends Program {
 
             final SharedInt sharedInt = new SharedInt(programContext, 0);
 
-            CF.loop().exe(1000, (e) -> sharedInt.inc());
+            UnitMng.loop(1000, (e) -> sharedInt.inc());
 
             Preconditions.checkState(sharedInt.get() == 1000);
 

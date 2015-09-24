@@ -6,8 +6,8 @@ import com.google.gson.Gson;
 import de.tuberlin.pserver.commons.hashtable.NonBlockingHashMap;
 import de.tuberlin.pserver.commons.json.GsonUtils;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.dsl.controlflow.ControlFlow;
-import de.tuberlin.pserver.dsl.dataflow.DataFlow;
+import de.tuberlin.pserver.dsl.unit.UnitMng;
+import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 
 import java.util.Map;
 import java.util.UUID;
@@ -35,9 +35,9 @@ public final class ProgramContext {
 
     public final int nodeDOP;
 
-    public ControlFlow CF;
+    public UnitMng CF;
 
-    public DataFlow DF;
+    public TransactionMng DF;
 
     // ---------------------------------------------------
 
@@ -70,8 +70,9 @@ public final class ProgramContext {
         this.globalSyncBarrier  = new AtomicReference<>(new CountDownLatch(nodeDOP - 1));
         this.programStore       = new NonBlockingHashMap<>();
 
-        this.CF                 = new ControlFlow(this);
-        this.DF                 = new DataFlow(this);
+        UnitMng.setProgramContext(this);
+
+        TransactionMng.setProgramContext(this);
     }
 
     // ---------------------------------------------------

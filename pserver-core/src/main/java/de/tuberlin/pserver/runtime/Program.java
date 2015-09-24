@@ -2,9 +2,7 @@ package de.tuberlin.pserver.runtime;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.events.EventDispatcher;
-import de.tuberlin.pserver.dsl.controlflow.ControlFlow;
-import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
-import de.tuberlin.pserver.dsl.dataflow.DataFlow;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,15 +21,9 @@ public abstract class Program extends EventDispatcher {
 
     private Lifecycle lifecycle;
 
-    private ProgramLinker programLinker;
+    private ProgramCompiler programCompiler;
 
     public ProgramContext programContext;
-
-    // ---------------------------------------------------
-
-    public ControlFlow CF;
-
-    public DataFlow DF;
 
     // ---------------------------------------------------
     // Constructors.
@@ -51,11 +43,7 @@ public abstract class Program extends EventDispatcher {
 
         this.lifecycle = new Lifecycle(programContext);
 
-        this.CF = programContext.CF;
-
-        this.DF = programContext.DF;
-
-        programLinker = new ProgramLinker(programContext, getClass());
+        this.programCompiler = new ProgramCompiler(programContext, getClass());
     }
 
     public void result(final Serializable... obj) {
@@ -70,11 +58,11 @@ public abstract class Program extends EventDispatcher {
 
         final String slotIDStr = "[" + programContext.runtimeContext.nodeID + "]";
 
-        programLinker.link(this);
+        programCompiler.link(this);
 
-        programLinker.defineUnits(this, lifecycle);
+        programCompiler.defineUnits(this, lifecycle);
 
-        programLinker.fetchStateObjects(this);
+        programCompiler.fetchStateObjects(this);
 
         {
             LOG.info(slotIDStr + "Enter " + lifecycle.programContext.simpleClassName + " pre-process phase.");

@@ -1,9 +1,11 @@
 package de.tuberlin.pserver.examples.experiments.kmeans;
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.loop.Loop;
-import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
+import de.tuberlin.pserver.dsl.transaction.TransactionMng;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.UnitMng;
+import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
@@ -66,12 +68,12 @@ public class Kmeans extends Program {
 
             centroidsUpdate.assign(0);
 
-            CF.loop().sync(Loop.GLOBAL).exe(10, (iteration) -> {
+            UnitMng.loop(10, Loop.GLOBAL, (iteration) -> {
                 int nodeId = programContext.runtimeContext.nodeID;
 
                 // BEGIN: PULL MODEL FROM OTHER NODES AND MERGE
                 System.out.println(nodeId + ": pre pull centroidsUpdate: " + centroidsUpdate);
-                DF.pullUpdate();
+                TransactionMng.pullUpdate();
                 System.out.println(nodeId + ": post pull centroidsUpdate: " + centroidsUpdate);
                 for (int i = 0; i < K; i++) {
                     if (centroidsUpdate.get(i, COLS) > 0) {
@@ -106,7 +108,7 @@ public class Kmeans extends Program {
                 }
                 // END: STANDARD KMEANS ON LOCAL PARTITION
 
-                DF.publishUpdate();
+                TransactionMng.publishUpdate();
             });
 
         }).postProcess(() -> {

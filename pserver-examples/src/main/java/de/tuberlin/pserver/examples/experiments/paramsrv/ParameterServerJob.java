@@ -2,16 +2,17 @@ package de.tuberlin.pserver.examples.experiments.paramsrv;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.loop.Loop;
-import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.UnitMng;
+import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.math.tuples.Tuple3;
-import de.tuberlin.pserver.mcruntime.Parallel;
+import de.tuberlin.pserver.runtime.mcruntime.Parallel;
 import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.Program;
 
@@ -31,7 +32,7 @@ public class ParameterServerJob extends Program {
     public void serverMain(final Lifecycle lifecycle) {
         final DataManager dataManager = programContext.runtimeContext.dataManager;
         lifecycle.process(() -> {
-            CF.loop().sync(Loop.GLOBAL).exe(15, (epoch) -> {
+            UnitMng.loop(15, Loop.GLOBAL, (epoch) -> {
 
                 dataManager.receive(3, "parameterPull-Request", (srcNodeID, value) -> {
 
@@ -44,7 +45,7 @@ public class ParameterServerJob extends Program {
                         responseParams.add(new Tuple3<>(param._1, param._2, parameters.get(param._1, param._2)));
                     }
 
-                    dataManager.pushTo("parameterPull-Response", responseParams, new int[] { srcNodeID });
+                    dataManager.pushTo("parameterPull-Response", responseParams, new int[]{srcNodeID});
                 });
 
                 dataManager.receive(3, "gradientPush", (srcNodeID, value) -> {
@@ -60,7 +61,7 @@ public class ParameterServerJob extends Program {
         final DataManager dataManager = programContext.runtimeContext.dataManager;
         lifecycle.process(() -> {
 
-            CF.loop().sync(Loop.GLOBAL).exe(15, (epoch) -> {
+            UnitMng.loop(15, Loop.GLOBAL, (epoch) -> {
 
                 Parallel.For(input, (i, j, value) -> {
 
@@ -72,12 +73,12 @@ public class ParameterServerJob extends Program {
 
                     dataManager.receive(1, "parameterPull-Response", (srcNodeID, response) -> {
 
-                        params.addAll((List)response);
+                        params.addAll((List) response);
                     });
 
                     params.clear();
 
-                    dataManager.pushTo("gradientPush", new Tuple3<>(0, 0, 1.0), new int[] {0});
+                    dataManager.pushTo("gradientPush", new Tuple3<>(0, 0, 1.0), new int[]{0});
                 });
             });
         });

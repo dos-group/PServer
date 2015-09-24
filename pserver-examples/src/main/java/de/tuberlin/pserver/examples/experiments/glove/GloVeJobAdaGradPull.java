@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.examples.experiments.glove;
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.annotations.StateExtractor;
 import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
@@ -52,7 +52,7 @@ public final class GloVeJobAdaGradPull extends Program {
 
     // ---------------------------------------------------
 
-    @StateExtractor(stateObjects = "W, GradSq")
+    @StateExtractor(state = "W, GradSq")
     public final MatrixUpdateFilter deltaFilter = (i, j, o, n) -> {
         final double sn = n * 10000;
         final double so = o * 10000;

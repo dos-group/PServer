@@ -1,9 +1,10 @@
 package de.tuberlin.pserver.test.core.programs;
 
 
-import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.loop.Loop;
-import de.tuberlin.pserver.dsl.controlflow.program.Lifecycle;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.UnitMng;
+import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.runtime.Program;
 
 import java.util.Random;
@@ -17,7 +18,7 @@ public class GlobalSyncTestJob extends Program {
 
             final Random rand = new Random();
 
-            CF.loop().sync(Loop.GLOBAL).exe(10, (e) -> {
+            UnitMng.loop(10, Loop.GLOBAL, (e) -> {
 
                 Thread.sleep(rand.nextInt(1000));
 
