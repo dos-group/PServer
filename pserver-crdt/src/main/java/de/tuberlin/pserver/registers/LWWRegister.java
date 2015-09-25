@@ -6,7 +6,7 @@ import de.tuberlin.pserver.runtime.DataManager;
 import java.util.Calendar;
 import java.util.Date;
 
-// TODO: allow passing in a custom resolveConcurrent method
+// TODO: in the Shapiro paper, concurrent updates are solved by concatenating MAC address to the timestamp...
 // Last Writer Wins Register
 public class LWWRegister<T extends Comparable> extends AbstractRegister<T> implements RegisterCRDT<T> {
     // TODO: this should be set to beginning of time or so
