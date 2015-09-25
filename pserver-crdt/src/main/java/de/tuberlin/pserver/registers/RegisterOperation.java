@@ -4,6 +4,7 @@ import de.tuberlin.pserver.crdt.Operation;
 
 import java.util.Date;
 
+// TODO: what about the date variable, is it needed in all register operations?
 public class RegisterOperation<T> extends Operation {
     public static final int WRITE = 1;
     Date date;
