@@ -20,7 +20,7 @@ public class LWWRegister<T extends Comparable> extends AbstractRegister<T> imple
     }
 
     @Override
-    protected void update(int srcNodeId, Operation op, DataManager dm) {
+    protected boolean update(int srcNodeId, Operation op, DataManager dm) {
         // TODO: is there a way to avoid this cast? It is on a critical path
         RegisterOperation<T> rop = (RegisterOperation) op;
 
@@ -32,6 +32,7 @@ public class LWWRegister<T extends Comparable> extends AbstractRegister<T> imple
                 updateRegister(rop.getValue(), rop.getDate());
             }
         }
+        return true;
     }
 
     private void updateRegister(T value, Date date) {

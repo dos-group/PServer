@@ -15,7 +15,7 @@ public class GCounter extends AbstractCounter implements CRDT, Serializable {
     }
 
     @Override
-    protected void update(int srcNodeID, Operation op, DataManager dm) {
+    protected boolean update(int srcNodeID, Operation op, DataManager dm) {
         CounterOperation cop = (CounterOperation) op;
 
       //  while(cop != null) {
@@ -25,6 +25,7 @@ public class GCounter extends AbstractCounter implements CRDT, Serializable {
                 // TODO: throw a specific exception
                 throw new EmptyStackException();
             }
+        return true;
       //  }
     }
 }

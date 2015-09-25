@@ -102,8 +102,9 @@ public abstract class AbstractCRDT implements CRDT {
 
     public void applyOperation(Operation op, DataManager dm) {
         //inBuffer.add(op);
-        update(-1, op, dm);
-        broadcast(op, dm);
+        if(update(-1, op, dm)) {
+            broadcast(op, dm);
+        }
     }
 
     public Queue getBuffer() {
@@ -133,7 +134,7 @@ public abstract class AbstractCRDT implements CRDT {
         outBuffer.add(op);
     }
 
-    protected abstract void update(int srcNodeId, Operation op, DataManager dm);
+    protected abstract boolean update(int srcNodeId, Operation op, DataManager dm);
 
     private void broadcastBuffer(DataManager dm) {
         if(outBuffer.size() > 0) {

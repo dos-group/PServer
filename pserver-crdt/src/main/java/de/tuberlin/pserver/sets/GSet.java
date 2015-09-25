@@ -11,11 +11,12 @@ public class GSet<T> extends AbstractGSet {
     }
 
     @Override
-    protected void update(int srcNodeId, Operation op, DataManager dm) {
+    protected boolean update(int srcNodeId, Operation op, DataManager dm) {
         SetOperation<T> sop = (SetOperation<T>)op;
 
         if(sop.getType() == SetOperation.ADD) {
             value.add(sop.getValue());
         }
+        return true;
     }
 }

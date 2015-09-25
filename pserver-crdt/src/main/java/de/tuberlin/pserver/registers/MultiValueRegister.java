@@ -22,7 +22,7 @@ import java.util.Set;
         }
 
         @Override
-        protected void update(int srcNodeId, Operation op, DataManager dm) {
+        protected boolean update(int srcNodeId, Operation op, DataManager dm) {
             // TODO: is there a way to avoid this cast? It is on a critical path
             RegisterOperation<T> rop = (RegisterOperation) op;
 
@@ -34,6 +34,7 @@ import java.util.Set;
             else if(rop.getDate().equals(this.date)) {
                 appendToRegister(rop.getValue());
             }
+            return true;
         }
 
         private void updateRegister(Set<T> value, Date date) {

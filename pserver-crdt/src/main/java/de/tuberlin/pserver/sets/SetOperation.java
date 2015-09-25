@@ -8,6 +8,7 @@ import java.util.Set;
 public class SetOperation<T> extends Operation {
     // TODO: Semantics of "add" to set and "add" value to counter could be confusing...
     public static final int ADD = 1;
+    public static final int REMOVE = 2;
     private Set<T> value;
 
     public SetOperation(int type, Set<T> value) {

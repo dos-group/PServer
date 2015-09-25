@@ -7,7 +7,7 @@ import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.registers.LWWRegister;
 import de.tuberlin.pserver.registers.RegisterOperation;
 import de.tuberlin.pserver.runtime.MLProgram;
-import de.tuberlin.pserver.sets.GSet;
+import de.tuberlin.pserver.sets.TwoPSet;
 import de.tuberlin.pserver.sets.SetOperation;
 
 import java.util.Calendar;
@@ -19,24 +19,24 @@ import java.util.Calendar;
 // TODO: this only works to a precision of milliseconds (Date class)!
 // Is it ok to use System.nanoTime in multicore systems? http://www.principiaprogramatica.com/?p=16
 // TODO: this needs more testing and debugging + cleanup
-public class GSetTestJob extends MLProgram {
+public class TwoPSetTestJob extends MLProgram {
 
     @Unit(at = "0")
     public void test(Program program) {
         program.process(() -> {
             CF.parUnit(0).exe(() -> {
-                GSet<Integer> gSet = new GSet<>("one", dataManager);
+                TwoPSet<Integer> tps = new TwoPSet<>("one", dataManager);
 
                 for (int i = 0; i <= 10; i++) {
-                    gSet.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
+                    tps.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
                 }
 
-                gSet.finish(dataManager);
+                tps.finish(dataManager);
 
                 System.out.println("[DEBUG] Set of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + gSet.getValue());
+                        " slot " + slotContext.slotID + ": " + tps.getValue());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + gSet.getBuffer());
+                        " slot " + slotContext.slotID + ": " + tps.getBuffer());
             });
         });
     }
@@ -45,19 +45,25 @@ public class GSetTestJob extends MLProgram {
     public void test2(Program program) {
         program.process(() -> {
             CF.parUnit(0).exe(() -> {
-                GSet<Integer> gSet = new GSet<>("one", dataManager);
+                TwoPSet<Integer> tps = new TwoPSet<>("one", dataManager);
 
-                for (int i = 20; i <= 30; i++) {
+                for (int i = 4; i <= 15; i++) {
 
-                    gSet.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
+                    tps.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
+                }
+                Thread.sleep(500);
+
+                for (int i = 5; i <= 11; i++) {
+
+                    tps.applyOperation(new SetOperation<>(SetOperation.REMOVE, i), dataManager);
                 }
 
-                gSet.finish(dataManager);
+                tps.finish(dataManager);
 
                 System.out.println("[DEBUG] Set of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + gSet.getValue());
+                        " slot " + slotContext.slotID + ": " + tps.getValue());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + gSet.getBuffer());
+                        " slot " + slotContext.slotID + ": " + tps.getBuffer());
             });
         });
     }
@@ -73,7 +79,7 @@ public class GSetTestJob extends MLProgram {
         PServerExecutor.LOCAL
                 // Second param is number of slots (threads executing the job) per node,
                 // should be 1 at the beginning.
-                .run(GSetTestJob.class, 1)
+                .run(TwoPSetTestJob.class, 1)
                 .done();
     }
 }

@@ -14,7 +14,7 @@ public class Counter extends AbstractCounter implements CRDT, Serializable {
     }
 
     @Override
-    protected void update(int srcNodeID, Operation op, DataManager dm) {
+    protected boolean update(int srcNodeID, Operation op, DataManager dm) {
         CounterOperation cop = (CounterOperation) op;
         if(cop.getType() == CounterOperation.ADD) {
             count += cop.getValue();
@@ -25,5 +25,6 @@ public class Counter extends AbstractCounter implements CRDT, Serializable {
         else {
             // TODO: throw a specific exception
         }
+        return true;
     }
 }
