@@ -27,7 +27,7 @@ public class PNSetTestJob extends MLProgram {
             CF.parUnit(0).exe(() -> {
                 PNSet<Integer> pns = new PNSet<>("one", dataManager);
 
-                for (int i = 0; i <= 10; i++) {
+                for (int i = 0; i < 10; i++) {
                     pns.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
                 }
 
@@ -47,7 +47,7 @@ public class PNSetTestJob extends MLProgram {
             CF.parUnit(0).exe(() -> {
                 PNSet<Integer> pns = new PNSet<>("one", dataManager);
 
-                for (int i = 4; i <= 15; i++) {
+                for (int i = 10; i <= 15; i++) {
 
                     pns.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
                 }

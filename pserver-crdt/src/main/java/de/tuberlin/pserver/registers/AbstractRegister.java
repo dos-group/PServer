@@ -3,7 +3,7 @@ package de.tuberlin.pserver.registers;
 import de.tuberlin.pserver.crdt.AbstractCRDT;
 import de.tuberlin.pserver.runtime.DataManager;
 
-public abstract class AbstractRegister<T> extends AbstractCRDT implements RegisterCRDT<T> {
+public abstract class AbstractRegister<T> extends AbstractCRDT<T> implements RegisterCRDT<T> {
     protected T value;
 
     public AbstractRegister(String id, DataManager dataManager) {

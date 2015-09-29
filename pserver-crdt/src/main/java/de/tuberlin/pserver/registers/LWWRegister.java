@@ -20,9 +20,9 @@ public class LWWRegister<T extends Comparable> extends AbstractRegister<T> imple
     }
 
     @Override
-    protected boolean update(int srcNodeId, Operation op, DataManager dm) {
+    protected boolean update(int srcNodeId, Operation<T> op, DataManager dm) {
         // TODO: is there a way to avoid this cast? It is on a critical path
-        RegisterOperation<T> rop = (RegisterOperation) op;
+        RegisterOperation<T> rop = (RegisterOperation<T>) op;
 
         if (rop.getDate().after(this.date)) {
             updateRegister(rop.getValue(), rop.getDate());

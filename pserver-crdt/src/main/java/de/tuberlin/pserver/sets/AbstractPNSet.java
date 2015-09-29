@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 // TODO: What if the map just keeps growing over time? Perhaps there should be some garbage collection.
 public abstract class AbstractPNSet<T> extends AbstractSet<T> {
@@ -24,7 +25,7 @@ public abstract class AbstractPNSet<T> extends AbstractSet<T> {
             counterMap.put(value, 1L);
         }
         else {
-            counterMap.put(value, count++);
+            counterMap.put(value, ++count);
         }
         return true;
     }
@@ -36,20 +37,12 @@ public abstract class AbstractPNSet<T> extends AbstractSet<T> {
             counterMap.put(value, -1L);
         }
         else {
-            counterMap.put(value, count--);
+            counterMap.put(value, --count);
         }
         return true;
     }
 
     public Set<T> getSet() {
-        Set<T> set = new HashSet<>();
-
-        for(T key : counterMap.keySet()) {
-            if(counterMap.get(key) > 0) {
-                set.add(key);
-            }
-        }
-
-        return set;
+        return counterMap.keySet().stream().filter(key -> counterMap.get(key) > 0).collect(Collectors.toSet());
     }
 }
