@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+//TODO: toString operation?
 public class SetOperation<T> extends AbstractOperation<T> {
     // TODO: Semantics of "add" to set and "add" value to counter could be confusing...
     public static final int ADD = 1;

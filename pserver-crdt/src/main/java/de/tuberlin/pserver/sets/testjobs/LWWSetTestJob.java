@@ -56,6 +56,7 @@ public class LWWSetTestJob extends MLProgram {
 
                     lwws.applyOperation(new SetOperation<>(SetOperation.ADD, i, Calendar.getInstance().getTime()), dataManager);
                 }
+
                 Thread.sleep(500);
 
                 for (int i = 5; i <= 11; i++) {
@@ -66,7 +67,7 @@ public class LWWSetTestJob extends MLProgram {
                 lwws.finish(dataManager);
 
                 System.out.println("[DEBUG] Set of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + lwws.getValue());
+                        " slot " + slotContext.slotID + ": " + lwws.getSet());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + lwws.getBuffer());
             });
