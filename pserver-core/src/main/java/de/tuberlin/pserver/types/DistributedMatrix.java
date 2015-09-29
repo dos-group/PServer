@@ -12,14 +12,12 @@ import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.SlotContext;
 import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
-import de.tuberlin.pserver.runtime.partitioning.IPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
+import de.tuberlin.pserver.runtime.partitioning.PartitioningConfig;
 import de.tuberlin.pserver.runtime.partitioning.RemotePartition;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Vector;
 
 public class DistributedMatrix extends AbstractMatrix {
 
@@ -31,43 +29,49 @@ public class DistributedMatrix extends AbstractMatrix {
 
     private final int nodeDOP, nodeID;
 
-    private final PartitionType partitionType;
+    private final IMatrixPartitioner partitioner;
+
+    private final PartitioningConfig partitioningConfig;
 
     private final PartitionShape shape;
 
     private final Format format;
 
     private final Matrix matrix;
-
-    public final boolean completeMatrix;
     
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
     public DistributedMatrix(final DistributedMatrix m) {
-        this(m.slotContext, m.rows, m.cols, m.partitionType, m.layout, m.format, m.completeMatrix);
+        this(m.slotContext, m.rows, m.cols, m.partitioner.getClass(), m.partitioningConfig, m.layout, m.format);
     }
 
     public DistributedMatrix(final SlotContext slotContext,
                              final long rows, final long cols,
-                             final PartitionType partitionType,
+                             final Class<? extends IMatrixPartitioner> partitionerClass,
+                             final PartitioningConfig partitioningConfig,
                              final Layout layout,
-                             final Format format,
-                             final boolean completeMatrix) {
+                             final Format format) {
 
         super(rows, cols, layout);
 
         this.slotContext    = Preconditions.checkNotNull(slotContext);
         this.nodeDOP        = slotContext.programContext.nodeDOP;
         this.nodeID         = slotContext.runtimeContext.nodeID;
-        this.partitionType  = Preconditions.checkNotNull(partitionType);
-        this.shape          = createShape(rows, cols);
+        Preconditions.checkNotNull(partitionerClass);
+        this.partitioningConfig = Preconditions.checkNotNull(partitioningConfig);
+        try {
+            partitioner = partitionerClass.getDeclaredConstructor(partitioningConfig.getClass(), SlotContext.class).newInstance(partitioningConfig, slotContext);
+        }
+        catch(Exception e) {
+            throw new RuntimeException("Failed to instantiate IMatrixPartitioner", e);
+        }
+        this.shape          = partitioner.getPartitionShape();
         this.format         = format;
-        this.completeMatrix = completeMatrix;
 
-        final long _rows = completeMatrix ? rows : shape.rows;
-        final long _cols = completeMatrix ? cols : shape.cols;
+        final long _rows = shape.rows;
+        final long _cols = shape.cols;
         this.matrix  = new MatrixBuilder()
                 .dimension(_rows, _cols)
                 .layout(layout)
@@ -206,34 +210,12 @@ public class DistributedMatrix extends AbstractMatrix {
     // Private Methods.
     // ---------------------------------------------------
 
-    private PartitionShape createShape(final long rows, final long cols) {
-        switch (partitionType) {
-            case NOT_PARTITIONED: return new PartitionShape(rows, cols, 0, 0);
-            case ROW_PARTITIONED: {
-                return new MatrixByRowPartitioner(nodeID, nodeDOP, rows, cols).getPartitionShape();
-            }
-            case COLUMN_PARTITIONED: throw new UnsupportedOperationException();
-            case BLOCK_PARTITIONED: throw new UnsupportedOperationException();
-            default: throw new IllegalStateException();
-        }
-    }
-
     public long translateRow(final long row) {
-        switch (partitionType) {
-            case ROW_PARTITIONED: return completeMatrix ? row : row - shape.rowOffset;
-            case COLUMN_PARTITIONED: throw new UnsupportedOperationException();
-            case BLOCK_PARTITIONED: throw new UnsupportedOperationException();
-            default: throw new IllegalStateException();
-        }
+        return partitioner.translateGlobalToLocalRow(row);
     }
 
     public long translateCol(final long col) {
-        switch (partitionType) {
-            case ROW_PARTITIONED: return col;
-            case COLUMN_PARTITIONED: throw new IllegalStateException();
-            case BLOCK_PARTITIONED: throw new IllegalStateException();
-            default: throw new IllegalStateException();
-        }
+        return partitioner.translateGlobalToLocalRow(col);
     }
 
     public Matrix.RowIterator createLocalRowIterator(final Matrix.RowIterator iter) {
@@ -247,9 +229,7 @@ public class DistributedMatrix extends AbstractMatrix {
             @Override public void reset() { iter.reset(); }
             @Override public long rows() { return iter.rows(); }
             @Override public long cols() { return iter.cols(); }
-            @Override public int rowNum() { return completeMatrix
-                    ? iter.rowNum()
-                    : iter.rowNum() + (int)shape.rowOffset; }
+            @Override public int rowNum() { return (int) partitioner.translateLocalToGlobalRow(iter.rowNum()); }
         };
     }
 
