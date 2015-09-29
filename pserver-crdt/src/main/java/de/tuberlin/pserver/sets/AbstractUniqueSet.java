@@ -4,7 +4,7 @@ package de.tuberlin.pserver.sets;
 import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.sets.exceptions.NotUniqueException;
 
-public abstract class AbstractUniqueSet<T> extends AbstractSet{
+public abstract class AbstractUniqueSet<T> extends AbstractSet<T> {
 
     public AbstractUniqueSet(String id, DataManager dataManager) {
         super(id, dataManager);

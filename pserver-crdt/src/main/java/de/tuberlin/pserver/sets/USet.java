@@ -7,7 +7,7 @@ import de.tuberlin.pserver.runtime.DataManager;
  * The Unique Set assumes each value inserted into the set is unique. Hence, there is no need for a tombstone set.
  */
 
-public class USet<T> extends AbstractUniqueSet {
+public class USet<T> extends AbstractUniqueSet<T> {
 
     public USet(String id, DataManager dataManager) {
         super(id, dataManager);
@@ -15,7 +15,7 @@ public class USet<T> extends AbstractUniqueSet {
     }
 
     @Override
-    protected boolean update(int srcNodeId, Operation op, DataManager dm) {
+    protected boolean update(int srcNodeId, Operation<T> op, DataManager dm) {
         SetOperation<T> sop = (SetOperation<T>)op;
 
         if(sop.getType() == SetOperation.ADD) {

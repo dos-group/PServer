@@ -15,7 +15,7 @@ public class LWWSet<T> extends AbstractLWWSet<T> {
     }
 
     @Override
-    protected boolean update(int srcNodeId, Operation op, DataManager dm) {
+    protected boolean update(int srcNodeId, Operation<T> op, DataManager dm) {
         SetOperation<T> lwws = (SetOperation<T>) op;
 
         if(lwws.getType() == SetOperation.ADD) {

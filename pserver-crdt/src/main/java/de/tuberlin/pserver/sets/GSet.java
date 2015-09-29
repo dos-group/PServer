@@ -3,7 +3,7 @@ package de.tuberlin.pserver.sets;
 import de.tuberlin.pserver.crdt.Operation;
 import de.tuberlin.pserver.runtime.DataManager;
 
-public class GSet<T> extends AbstractGSet {
+public class GSet<T> extends AbstractGSet<T> {
 
     public GSet(String id, DataManager dataManager) {
         super(id, dataManager);
@@ -11,7 +11,7 @@ public class GSet<T> extends AbstractGSet {
     }
 
     @Override
-    protected boolean update(int srcNodeId, Operation op, DataManager dm) {
+    protected boolean update(int srcNodeId, Operation<T> op, DataManager dm) {
         SetOperation<T> sop = (SetOperation<T>)op;
 
         if(sop.getType() == SetOperation.ADD) {

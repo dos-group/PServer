@@ -5,21 +5,33 @@ import de.tuberlin.pserver.runtime.DataManager;
 import java.io.Serializable;
 import java.util.*;
 
+// TODO: in add and remove, would it be ok to return false (i.e. not broadcast) if the update is not applied?
+// TODO: think about concurrent add/remove/getset calls...
 public abstract class AbstractLWWSet<T> extends AbstractSet<T> {
-    private Map<T, Long> addMap = new HashMap<>();
-    private Map<T, Long> removeMap = new HashMap<>();
+    private final Map<T, Long> addMap = new HashMap<>();
+    private final Map<T, Long> removeMap = new HashMap<>();
 
     public AbstractLWWSet(String id, DataManager dataManager) {
         super(id, dataManager);
     }
 
     public boolean add(SetOperation<T> sop) {
-        addMap.put(sop.getValue(), sop.getTime());
+        if (addMap.get(sop.getValue()) == null) {
+            addMap.put(sop.getValue(), sop.getTime());
+        }
+        else if (sop.getTime() > addMap.get(sop.getValue())) {
+            addMap.put(sop.getValue(), sop.getTime());
+        }
         return true;
     }
 
     public boolean remove(SetOperation<T> sop) {
-        removeMap.put(sop.getValue(), sop.getTime());
+        if (removeMap.get(sop.getValue()) == null) {
+            removeMap.put(sop.getValue(), sop.getTime());
+        }
+        else if (sop.getTime() > removeMap.get(sop.getValue())) {
+            removeMap.put(sop.getValue(), sop.getTime());
+        }
         return true;
     }
 

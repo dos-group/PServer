@@ -7,7 +7,7 @@ import de.tuberlin.pserver.runtime.DataManager;
  * In a Two-Phase Set an element may be added and removed but never added again thereafter.
  */
 
-public class TwoPSet<T> extends AbstractTwoPSet {
+public class TwoPSet<T> extends AbstractTwoPSet<T> {
 
     public TwoPSet(String id, DataManager dataManager) {
         super(id, dataManager);
@@ -15,7 +15,7 @@ public class TwoPSet<T> extends AbstractTwoPSet {
     }
 
     @Override
-    protected boolean update(int srcNodeId, Operation op, DataManager dm) {
+    protected boolean update(int srcNodeId, Operation<T> op, DataManager dm) {
         SetOperation<T> sop = (SetOperation<T>)op;
 
         if(sop.getType() == SetOperation.ADD) {
