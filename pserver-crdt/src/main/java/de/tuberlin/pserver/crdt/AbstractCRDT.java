@@ -15,7 +15,7 @@ import java.util.Set;
 // TODO: what if only one node is running?
 // TODO: maybe use blocking queues for buffers
 
-public abstract class AbstractCRDT implements CRDT {
+public abstract class AbstractCRDT<T> implements CRDT<T> {
     private final Set<Integer> runningNodes = new HashSet<>();
     private final Set<Integer> finishedNodes = new HashSet<>();
     private final Queue<Operation> outBuffer = new LinkedList<>();
@@ -81,7 +81,7 @@ public abstract class AbstractCRDT implements CRDT {
         System.out.println("[DEBUG] All nodes: " + isAllNodesRunning());
         System.out.println("[DEBUG] BufferB: " + outBuffer.size());
 
-        broadcast(new Operation(END), dataManager);
+        broadcast(new EndOperation(), dataManager);
 
         while(!isAllNodesFinished()) {
             try {
@@ -134,7 +134,7 @@ public abstract class AbstractCRDT implements CRDT {
         outBuffer.add(op);
     }
 
-    protected abstract boolean update(int srcNodeId, Operation op, DataManager dm);
+    protected abstract boolean update(int srcNodeId, Operation<T> op, DataManager dm);
 
     private void broadcastBuffer(DataManager dm) {
         if(outBuffer.size() > 0) {

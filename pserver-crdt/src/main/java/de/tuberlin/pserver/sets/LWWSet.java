@@ -16,13 +16,13 @@ public class LWWSet<T> extends AbstractLWWSet<T> {
 
     @Override
     protected boolean update(int srcNodeId, Operation op, DataManager dm) {
-        SetOperation<Pair<T>> lwws = (SetOperation<Pair<T>>) op;
+        SetOperation<T> lwws = (SetOperation<T>) op;
 
         if(lwws.getType() == SetOperation.ADD) {
-            return add(lwws.getValue());
+            return add(lwws);
         }
         else if(lwws.getType() == SetOperation.REMOVE) {
-            return remove(lwws.getValue());
+            return remove(lwws);
         }
         else {
             return false;

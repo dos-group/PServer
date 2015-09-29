@@ -33,8 +33,7 @@ public class LWWSetTestJob extends MLProgram {
                 LWWSet<Integer> lwws = new LWWSet<>("one", dataManager);
 
                 for (int i = 0; i <= 10; i++) {
-                    lwws.applyOperation(new SetOperation<>(SetOperation.ADD,
-                            new AbstractLWWSet.Pair<>(i, Calendar.getInstance().getTime())), dataManager);
+                    lwws.applyOperation(new SetOperation<>(SetOperation.ADD, i, Calendar.getInstance().getTime()), dataManager);
                 }
 
                 lwws.finish(dataManager);
@@ -42,7 +41,7 @@ public class LWWSetTestJob extends MLProgram {
                 System.out.println("[DEBUG] Set of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + lwws.getSet());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + lwws.getSet());
+                        " slot " + slotContext.slotID + ": " + lwws.getBuffer());
             });
         });
     }
@@ -55,15 +54,13 @@ public class LWWSetTestJob extends MLProgram {
 
                 for (int i = 4; i <= 15; i++) {
 
-                    lwws.applyOperation(new SetOperation<>(SetOperation.ADD,
-                            new AbstractLWWSet.Pair<>(i, Calendar.getInstance().getTime())), dataManager);
+                    lwws.applyOperation(new SetOperation<>(SetOperation.ADD, i, Calendar.getInstance().getTime()), dataManager);
                 }
                 Thread.sleep(500);
 
                 for (int i = 5; i <= 11; i++) {
 
-                    lwws.applyOperation(new SetOperation<>(SetOperation.REMOVE,
-                            new AbstractLWWSet.Pair<>(i, Calendar.getInstance().getTime())), dataManager);
+                    lwws.applyOperation(new SetOperation<>(SetOperation.REMOVE, i, Calendar.getInstance().getTime()), dataManager);
                 }
 
                 lwws.finish(dataManager);

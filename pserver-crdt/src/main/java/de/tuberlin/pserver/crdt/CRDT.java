@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.crdt;
 
-public interface CRDT {
+public interface CRDT<T> {
     int END = -1;
 
 

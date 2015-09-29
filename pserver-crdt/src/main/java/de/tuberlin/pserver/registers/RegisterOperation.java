@@ -1,26 +1,21 @@
 package de.tuberlin.pserver.registers;
 
+import de.tuberlin.pserver.crdt.AbstractOperation;
 import de.tuberlin.pserver.crdt.Operation;
 
 import java.util.Date;
 
 // TODO: what about the date variable, is it needed in all register operations?
-public class RegisterOperation<T> extends Operation {
+public class RegisterOperation<T> extends AbstractOperation<T> {
     public static final int WRITE = 1;
-    Date date;
-    T value;
+    private final Date date;
 
     public RegisterOperation(int type, T value, Date date) {
-        super(type);
+        super(type, value);
         this.date = date;
-        this.value = value;
     }
 
     public Date getDate() {
         return this.date;
-    }
-
-    public T getValue() {
-        return this.value;
     }
 }

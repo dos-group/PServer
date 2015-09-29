@@ -6,24 +6,20 @@ import java.io.Serializable;
 import java.util.*;
 
 public abstract class AbstractLWWSet<T> extends AbstractSet<T> {
-    private Map<T, Date> addMap = new HashMap<>();
-    private Map<T, Date> removeMap = new HashMap<>();
+    private Map<T, Long> addMap = new HashMap<>();
+    private Map<T, Long> removeMap = new HashMap<>();
 
     public AbstractLWWSet(String id, DataManager dataManager) {
         super(id, dataManager);
     }
 
-    public boolean add(Set<Pair<T>> items) {
-        for(Pair<T> item : items) {
-            addMap.put(item.getPairValue(), item.getPairTimestamp());
-        }
+    public boolean add(SetOperation<T> sop) {
+        addMap.put(sop.getValue(), sop.getTime());
         return true;
     }
 
-    public boolean remove(Set<Pair<T>> items) {
-        for(Pair<T> item : items) {
-            removeMap.put(item.getPairValue(), item.getPairTimestamp());
-        }
+    public boolean remove(SetOperation<T> sop) {
+        removeMap.put(sop.getValue(), sop.getTime());
         return true;
     }
 
@@ -32,7 +28,7 @@ public abstract class AbstractLWWSet<T> extends AbstractSet<T> {
 
         for(T key : addMap.keySet()) {
             if(removeMap.get(key) != null){
-                if(addMap.get(key).after(removeMap.get(key))) {
+                if(addMap.get(key) > removeMap.get(key)) {
                     set.add(key);
                 }
             }
@@ -41,23 +37,5 @@ public abstract class AbstractLWWSet<T> extends AbstractSet<T> {
             }
         }
         return set;
-    }
-
-    public static class Pair<T> implements Serializable {
-        private T value;
-        private Date timestamp;
-
-        public Pair(T value, Date timestamp) {
-            this.value = value;
-            this.timestamp = timestamp;
-        }
-
-        T getPairValue() {
-            return value;
-        }
-
-        public Date getPairTimestamp() {
-            return timestamp;
-        }
     }
 }
