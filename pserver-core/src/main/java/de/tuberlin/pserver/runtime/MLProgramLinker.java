@@ -233,7 +233,7 @@ public final class MLProgramLinker {
                             stateProperties.localScope(),
                             stateProperties.globalScope(),
                             parseNodeRanges(stateProperties.at()),
-                            stateProperties.partitionType(),
+                            stateProperties.partitionerClass(),
                             stateProperties.rows(),
                             stateProperties.cols(),
                             stateProperties.layout(),
@@ -348,7 +348,7 @@ public final class MLProgramLinker {
                                     decl.rows,
                                     decl.cols,
                                     decl.globalScope,
-                                    decl.partitionType,
+                                    decl.partitionerClass,
                                     decl.recordFormatConfigClass.newInstance(),
                                     decl.format,
                                     decl.layout
@@ -371,10 +371,10 @@ public final class MLProgramLinker {
                             final SharedObject so = new DistributedMatrix(
                                     slotContext,
                                     decl.rows, decl.cols,
-                                    PartitionType.ROW_PARTITIONED,
+                                    decl.partitionerClass,
                                     decl.layout,
-                                    decl.format,
-                                    false
+                                    decl.format
+                                    //, false
                             );
                             dataManager.putObject(decl.name, so);
                         } else {
@@ -385,7 +385,7 @@ public final class MLProgramLinker {
                                     decl.rows,
                                     decl.cols,
                                     decl.globalScope,
-                                    decl.partitionType,
+                                    decl.partitionerClass,
                                     decl.recordFormatConfigClass.newInstance(),
                                     decl.format,
                                     decl.layout
@@ -396,10 +396,10 @@ public final class MLProgramLinker {
                         final SharedObject so = new DistributedMatrix(
                                 slotContext,
                                 decl.rows, decl.cols,
-                                PartitionType.ROW_PARTITIONED,
+                                decl.partitionerClass,
                                 decl.layout,
-                                decl.format,
-                                true
+                                decl.format
+                                //, true
                         );
                         dataManager.putObject(decl.name, so);
                         break;

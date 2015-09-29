@@ -1,9 +1,8 @@
-package de.tuberlin.pserver.runtime.partitioning.mtxentries;
+package de.tuberlin.pserver.runtime.partitioning;
 
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.SlotContext;
-import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
-import de.tuberlin.pserver.runtime.partitioning.PartitioningConfig;
+import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 
 /**
  * Partitions a matrix into one partition of the same size as the matrix. Used if no partitioning is applied.
@@ -12,9 +11,9 @@ public class CompletePartitioner extends IMatrixPartitioner {
 
     private final Matrix.PartitionShape shape;
 
-    public CompletePartitioner(PartitioningConfig config, SlotContext context) {
-        super(config, context);
-        shape = new Matrix.PartitionShape(config.matrixNumRows, config.matrixNumCols, 0, 0);
+    public CompletePartitioner(long rows, long cols, SlotContext context) {
+        super(rows, cols, context);
+        shape = new Matrix.PartitionShape(rows, cols, 0, 0);
     }
 
     @Override
@@ -45,5 +44,15 @@ public class CompletePartitioner extends IMatrixPartitioner {
     @Override
     public long translateLocalToGlobalCol(long col) throws IllegalArgumentException {
         return col;
+    }
+
+    @Override
+    public int getNumRowPartitions() {
+        return 1;
+    }
+
+    @Override
+    public int getNumColPartitions() {
+        return 1;
     }
 }

@@ -11,6 +11,7 @@ import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
+import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
 import de.tuberlin.pserver.types.PartitionType;
 import org.apache.hadoop.conf.Configuration;
 
@@ -90,7 +91,7 @@ public final class HDFSFileSystemManagerServer implements FileSystemManager, Inp
     @SuppressWarnings("unchecked")
     public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath,
                                                                       final AbstractRecordFormatConfig recordFormat,
-                                                                      final PartitionType partitionType) {
+                                                                      final IMatrixPartitioner partitioner) {
         HDFSInputFile inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
         if (inputFile == null) {
             inputFile = new HDFSInputFile(config, netManager, filePath, recordFormat);

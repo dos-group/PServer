@@ -10,6 +10,7 @@ import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
+import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
 import de.tuberlin.pserver.types.PartitionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,11 +57,11 @@ public final class LocalFileSystemManager implements FileSystemManager {
     @SuppressWarnings("unchecked")
     public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath,
                                                                       final AbstractRecordFormatConfig recordFormat,
-                                                                      final PartitionType partitionType) {
+                                                                      final IMatrixPartitioner partitioner) {
 
         ILocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
         if (inputFile == null) {
-            inputFile = new LocalInputFile(filePath, recordFormat, partitionType);
+            inputFile = new LocalInputFile(filePath, recordFormat, partitioner);
             inputFileMap.put(filePath, inputFile);
             registeredIteratorMap.put(filePath, new ArrayList<>());
         }

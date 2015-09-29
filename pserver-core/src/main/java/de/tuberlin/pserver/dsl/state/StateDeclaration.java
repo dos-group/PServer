@@ -6,6 +6,7 @@ import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
+import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
 import de.tuberlin.pserver.types.PartitionType;
 
 public final class StateDeclaration {
@@ -24,7 +25,7 @@ public final class StateDeclaration {
 
     public final int[] atNodes;
 
-    public final PartitionType partitionType;
+    public final Class<? extends IMatrixPartitioner> partitionerClass;
 
     public final long rows;
 
@@ -49,7 +50,7 @@ public final class StateDeclaration {
                             final LocalScope localScope,
                             final GlobalScope globalScope,
                             final int[] atNodes,
-                            final PartitionType partitionType,
+                            final Class<? extends IMatrixPartitioner> partitionerClass,
                             final long rows,
                             final long cols,
                             final Layout layout,
@@ -63,7 +64,7 @@ public final class StateDeclaration {
         this.localScope     = localScope;
         this.globalScope    = globalScope;
         this.atNodes        = atNodes;
-        this.partitionType  = partitionType;
+        this.partitionerClass  = partitionerClass;
         this.rows           = rows;
         this.cols           = cols;
         this.layout         = layout;

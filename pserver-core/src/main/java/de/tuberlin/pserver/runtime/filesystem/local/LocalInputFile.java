@@ -6,14 +6,12 @@ import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSection;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
+import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
 import de.tuberlin.pserver.types.PartitionType;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.LineNumberReader;
+import java.io.*;
 import java.util.Iterator;
 
 public class LocalInputFile implements ILocalInputFile<IRecord> {
@@ -28,7 +26,8 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
     private final FileSection fileSection;
 
-    private final PartitionType partitionType;
+    private final IMatrixPartitioner partitioner;
+
 
     // ---------------------------------------------------
     // Constructor.
@@ -36,11 +35,11 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
     public LocalInputFile(final String filePath,
                           final AbstractRecordFormatConfig format,
-                          final PartitionType partitionType) {
+                          final IMatrixPartitioner partitioner) {
 
         this.filePath       = Preconditions.checkNotNull(filePath);
         this.format         = Preconditions.checkNotNull(format);
-        this.partitionType  = Preconditions.checkNotNull(partitionType);
+        this.partitioner    = partitioner;
         this.fileSection    = new FileSection();
     }
 
@@ -51,35 +50,33 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
     @Override
     public void computeLocalFileSection(final int numNodes, final int nodeID) {
         final long totalLines = getNumberOfLines();
-        try {
-            switch(partitionType) {
-                case NOT_PARTITIONED:
-                    fileSection.set(totalLines, totalLines, 0, totalLines);
-                    break;
-                case ROW_PARTITIONED: {
-                    final long numLinesPerSection = totalLines / numNodes;
-                    final long linesToRead = (nodeID == (numNodes - 1)) ?
-                            numLinesPerSection + (totalLines % numLinesPerSection) : numLinesPerSection;
-                    final long blockLineOffset = numLinesPerSection * nodeID;
-                    BufferedReader br = new BufferedReader(new FileReader(filePath));
-                    int eolcc = getLineEndingCharCount(br);
-                    br.close();
-                    br = new BufferedReader(new FileReader(filePath));
-                    long startOffset = 0;
-                    for (int i = 0; i < totalLines; ++i) {
-                        if (i < blockLineOffset)
-                            startOffset += br.readLine().length() + eolcc;
-                        else
-                            break;
-                    }
-                    br.close();
-                    fileSection.set(totalLines, linesToRead, startOffset, blockLineOffset);
-                } break;
-                case COLUMN_PARTITIONED: throw new UnsupportedOperationException();
-                case BLOCK_PARTITIONED: throw new UnsupportedOperationException();
+        // we assume here, that number of row-partitions determine file splitting. This is not necessarily true i.e. if a line in a file contains row-values for one column.
+        // RecordFormatConfig should give a hint for that
+        if(partitioner.getNumRowPartitions() == 1) {
+            fileSection.set(totalLines, totalLines, 0, totalLines);
+        }
+        else {
+            try {
+                final long numLinesPerSection = totalLines / numNodes;
+                final long linesToRead = (nodeID == (numNodes - 1)) ?
+                        numLinesPerSection + (totalLines % numLinesPerSection) : numLinesPerSection;
+                final long blockLineOffset = numLinesPerSection * nodeID;
+                BufferedReader br = new BufferedReader(new FileReader(filePath));
+                int eolcc = getLineEndingCharCount(br);
+                br.close();
+                br = new BufferedReader(new FileReader(filePath));
+                long startOffset = 0;
+                for (int i = 0; i < totalLines; ++i) {
+                    if (i < blockLineOffset)
+                        startOffset += br.readLine().length() + eolcc;
+                    else
+                        break;
+                }
+                br.close();
+                fileSection.set(totalLines, linesToRead, startOffset, blockLineOffset);
+            } catch (IOException ioe) {
+                throw new IllegalStateException(ioe);
             }
-        } catch (IOException ioe) {
-            throw new IllegalStateException(ioe);
         }
     }
 

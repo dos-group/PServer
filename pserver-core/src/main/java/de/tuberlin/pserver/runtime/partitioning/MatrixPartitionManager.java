@@ -45,7 +45,7 @@ public final class MatrixPartitionManager {
         final long rows;
         final long cols;
         final GlobalScope globalScope;
-        final PartitionType partitionType;
+        final Class<? extends IMatrixPartitioner> partitionerClass;
         final AbstractRecordFormatConfig recordFormat;
         final Format matrixFormat;
         final Layout matrixLayout;
@@ -57,7 +57,7 @@ public final class MatrixPartitionManager {
                               final long rows,
                               final long cols,
                               final GlobalScope globalScope,
-                              final PartitionType partitionType,
+                              Class<? extends IMatrixPartitioner> partitionerClass,
                               final AbstractRecordFormatConfig recordFormat,
                               final Format matrixFormat,
                               final Layout matrixLayout) {
@@ -67,11 +67,11 @@ public final class MatrixPartitionManager {
             this.rows               = rows;
             this.cols               = cols;
             this.globalScope        = globalScope;
-            this.partitionType      = partitionType;
+            this.partitionerClass   = partitionerClass;
             this.recordFormat       = recordFormat;
             this.matrixFormat       = matrixFormat;
             this.matrixLayout       = matrixLayout;
-            this.fileIterator       = fileSystemManager.createFileIterator(filePath, recordFormat, partitionType);
+            this.fileIterator       = fileSystemManager.createFileIterator(filePath, recordFormat, IMatrixPartitioner.newInstance(partitionerClass, rows, cols, slotContext));
         }
     }
 
@@ -139,7 +139,7 @@ public final class MatrixPartitionManager {
                      final String name,
                      final long rows, final long cols,
                      final GlobalScope globalScope,
-                     final PartitionType partitionType,
+                     final Class<? extends IMatrixPartitioner> partitionerClass,
                      final AbstractRecordFormatConfig recordFormat,
                      final Format matrixFormat,
                      final Layout matrixLayout) {
@@ -150,7 +150,7 @@ public final class MatrixPartitionManager {
                 name,
                 rows, cols,
                 globalScope,
-                globalScope == GlobalScope.REPLICATED ? PartitionType.NOT_PARTITIONED : partitionType,
+                partitionerClass,
                 recordFormat,
                 matrixFormat,
                 matrixLayout
@@ -163,19 +163,13 @@ public final class MatrixPartitionManager {
     public void loadFilesIntoDHT() {
 
         // Skip, if no loading is required.
-        if (matrixLoadTasks.size() == 0)
+        if (matrixLoadTasks.size() == 0) {
             return;
-
+        }
         fileSystemManager.computeInputSplitsForRegisteredFiles();
         finishedLoadingLatch = new CountDownLatch(matrixLoadTasks.size());
         for (final MatrixLoadTask task : matrixLoadTasks.values()) {
-            switch (task.partitionType) {
-                case NOT_PARTITIONED: loadMatrix_notPartitioned(task); break;
-                case ROW_PARTITIONED: loadMatrix_rowPartitioned(task); break;
-                case COLUMN_PARTITIONED: throw new UnsupportedOperationException();
-                case BLOCK_PARTITIONED: throw new UnsupportedOperationException();
-                default: throw new IllegalStateException();
-            }
+            loadMatrix(task);
         }
         while(finishedLoadingLatch.getCount() > 0) {
             LOG.debug("waiting for " + finishedLoadingLatch.getCount() + " loading tasks to finish:");
@@ -216,10 +210,10 @@ public final class MatrixPartitionManager {
                             task.slotContext,
                             task.rows,
                             task.cols,
-                            task.partitionType,
+                            task.partitionerClass,
                             task.matrixLayout,
-                            task.matrixFormat,
-                            false
+                            task.matrixFormat
+                            //, false
                     );
                 } break;
                 case LOGICALLY_PARTITIONED:
@@ -227,10 +221,10 @@ public final class MatrixPartitionManager {
                             task.slotContext,
                             task.rows,
                             task.cols,
-                            task.partitionType,
+                            task.partitionerClass,
                             task.matrixLayout,
-                            task.matrixFormat,
-                            true
+                            task.matrixFormat
+                            //, true
                     );
                     break;
             }
@@ -240,38 +234,14 @@ public final class MatrixPartitionManager {
     }
 
     @SuppressWarnings("unchecked")
-    private void loadMatrix_notPartitioned(final MatrixLoadTask task) {
-        final FileDataIterator<? extends IRecord> fileIterator = task.fileIterator;
-        final Matrix matrix = getLoadingMatrix(task);
-        ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
-        while (fileIterator.hasNext()) {
-            final IRecord record = fileIterator.next();
-            // iterate through entries in record
-            while (record.hasNext()) {
-                MatrixEntry entry = record.next(reusable);
-                if(entry.getRow() >= task.rows || entry.getCol() >= task.cols)
-                    continue;
-                matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
-            }
-        }
-        netManager.broadcastEvent(new MatrixPartitionManager.FinishedLoadingFileEvent(task.name));
-        finishedTask(task.name);
-    }
-
-    @SuppressWarnings("unchecked")
-    private void loadMatrix_rowPartitioned(final MatrixLoadTask task) {
+    private void loadMatrix(final MatrixLoadTask task) {
         // prepare to read entries that belong to foreign matrix partitions
         Map<Integer, List<MatrixEntry>> foreignEntries = new HashMap<>();
         // threshold that indicates how many entries are gathered before sending
         int foreignEntriesThreshold = 2048;
-        final IMatrixPartitioner matrixPartitioner = new MatrixByRowPartitioner(
-                task.slotContext.runtimeContext.nodeID,
-                task.slotContext.programContext.nodeDOP,
-                task.rows,
-                task.cols
-        );
-        final FileDataIterator<? extends IRecord> fileIterator = task.fileIterator;
         final Matrix matrix = getLoadingMatrix(task);
+        final IMatrixPartitioner matrixPartitioner = new MatrixByRowPartitioner(task.rows, task.cols, task.slotContext);
+        final FileDataIterator<? extends IRecord> fileIterator = task.fileIterator;
         ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
 
         int nodeId = task.slotContext.runtimeContext.nodeID;
