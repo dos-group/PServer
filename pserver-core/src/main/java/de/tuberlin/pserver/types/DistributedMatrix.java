@@ -13,9 +13,9 @@ import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.SlotContext;
 import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
-import de.tuberlin.pserver.runtime.partitioning.PartitioningConfig;
 import de.tuberlin.pserver.runtime.partitioning.RemotePartition;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,8 +31,6 @@ public class DistributedMatrix extends AbstractMatrix {
 
     private final IMatrixPartitioner partitioner;
 
-    private final PartitioningConfig partitioningConfig;
-
     private final PartitionShape shape;
 
     private final Format format;
@@ -44,13 +42,12 @@ public class DistributedMatrix extends AbstractMatrix {
     // ---------------------------------------------------
 
     public DistributedMatrix(final DistributedMatrix m) {
-        this(m.slotContext, m.rows, m.cols, m.partitioner.getClass(), m.partitioningConfig, m.layout, m.format);
+        this(m.slotContext, m.rows, m.cols, m.partitioner.getClass(), m.layout, m.format);
     }
 
     public DistributedMatrix(final SlotContext slotContext,
-                             final long rows, final long cols,
+                             final long rows,final long cols,
                              final Class<? extends IMatrixPartitioner> partitionerClass,
-                             final PartitioningConfig partitioningConfig,
                              final Layout layout,
                              final Format format) {
 
@@ -60,13 +57,7 @@ public class DistributedMatrix extends AbstractMatrix {
         this.nodeDOP        = slotContext.programContext.nodeDOP;
         this.nodeID         = slotContext.runtimeContext.nodeID;
         Preconditions.checkNotNull(partitionerClass);
-        this.partitioningConfig = Preconditions.checkNotNull(partitioningConfig);
-        try {
-            partitioner = partitionerClass.getDeclaredConstructor(partitioningConfig.getClass(), SlotContext.class).newInstance(partitioningConfig, slotContext);
-        }
-        catch(Exception e) {
-            throw new RuntimeException("Failed to instantiate IMatrixPartitioner", e);
-        }
+        partitioner         = IMatrixPartitioner.newInstance(partitionerClass, rows, cols, slotContext);
         this.shape          = partitioner.getPartitionShape();
         this.format         = format;
 
@@ -233,7 +224,7 @@ public class DistributedMatrix extends AbstractMatrix {
         };
     }
 
-    private DistributedMatrix constructIntersectingMatrix(DistributedMatrix sourceMatrix, PartitionShape targetPartition) {
+    private DistributedMatrix constructIntersectingMatrix(DistributedMatrix sourceMatrix, DistributedMatrix targetMatrix, Map<RemotePartition,PartitionShape> partitionMapping) {
 
 
         // TODO: THIS DOESNT WORK LIKE THIS
@@ -241,11 +232,7 @@ public class DistributedMatrix extends AbstractMatrix {
         // - dimension
         // - partitioning from which a targetPartition is derived
 
-
-        // TODO: how to set slotContext, partitionType, layout, format correctly?
-        DistributedMatrix result = new DistributedMatrix(sourceMatrix.slotContext, targetPartition.rows, targetPartition.cols, sourceMatrix.partitionType, sourceMatrix.layout, sourceMatrix.format, false);
-
-        Map<Integer,RemotePartition> remotePartitions = getIntersectingRemotePartitions(sourceMatrix, targetPartition);
+        Map<Integer,RemotePartition> remotePartitions = getIntersectingRemotePartitions(sourceMatrix, targetMatrix.getPartitionShape());
         // offer own partition, if any
         RemotePartition ownPartition = remotePartitions.get(nodeID);
         if(ownPartition != null) {
@@ -276,7 +263,7 @@ public class DistributedMatrix extends AbstractMatrix {
     /**
      * Calculates the minimal set of RemotePartitions that need to be fetched in order to construct a Matrix of a given
      * PartitionShape from a given DistributedMatrix. <br>
-     * In other words it calculates all PartitionShapes of sourceMatrix that intersect targetShape "divided" by the
+     * In other words it calculates all PartitionShapes of sourceMatrix that intersect targetShape annotated with the
      * nodeId the shape resides on.
      * SourceMatrix x TargetShape -> {RemotePartitions}
      * @param sourceMatrix The Matrix from which another Matrix shall be constructed
@@ -286,6 +273,7 @@ public class DistributedMatrix extends AbstractMatrix {
     private static Map<Integer,RemotePartition> getIntersectingRemotePartitions(DistributedMatrix sourceMatrix, PartitionShape targetShape) {
         Map<Integer,RemotePartition> remotePartitions = new HashMap<>(sourceMatrix.nodeDOP);
         for (int i = 0; i < sourceMatrix.nodeDOP; i++) {
+            // new style with slotContext is shitty for this! instead use at-annotation!
             IMatrixPartitioner remotePartitioner = new MatrixByRowPartitioner(i, sourceMatrix.nodeDOP, sourceMatrix.rows, sourceMatrix.cols);
             PartitionShape remoteShape = remotePartitioner.getPartitionShape();
             PartitionShape intersection = targetShape.intersect(remoteShape);
@@ -300,7 +288,13 @@ public class DistributedMatrix extends AbstractMatrix {
     @Override
     public Matrix transpose() {
         PartitionShape transposedShape = new PartitionShape(shape.cols, shape.rows, shape.colOffset, shape.rowOffset);
-        DistributedMatrix remoteView = constructIntersectingMatrix(this, transposedShape);
+        Collection<RemotePartition> remotePartitions = getIntersectingRemotePartitions(this, transposedShape).values();
+        Map<RemotePartition,PartitionShape> remoteToLocalPartitionMapping = new HashMap<>();
+        for(RemotePartition remotePartition : remotePartitions) {
+            PartitionShape transposedOffsets = new PartitionShape(remotePartition.shape.rows, remotePartition.shape.cols, remotePartition.shape.colOffset, remotePartition.shape.rowOffset);
+            remoteToLocalPartitionMapping.put(remotePartition, transposedOffsets);
+        }
+        DistributedMatrix remoteView = constructIntersectingMatrix(this, null /* new dist matrix */, remoteToLocalPartitionMapping);
         return remoteView;
     }
 }

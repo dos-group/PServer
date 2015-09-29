@@ -299,7 +299,7 @@ public final class ExecutionManager {
         Preconditions.checkNotNull(matrix);
         final SlotContext slotContext = getSlotContext();
         final int scopeDOP = getScopeDOP();
-        Matrix.PartitionShape shape = new MatrixByRowPartitioner(slotContext.slotID, scopeDOP, matrix.rows(), matrix.cols()).getPartitionShape();
+        Matrix.PartitionShape shape = new MatrixByRowPartitioner(matrix.rows(), matrix.cols(), slotContext).getPartitionShape();
         return matrix.rowIterator((int) shape.rowOffset, (int) shape.rows);
     }
 

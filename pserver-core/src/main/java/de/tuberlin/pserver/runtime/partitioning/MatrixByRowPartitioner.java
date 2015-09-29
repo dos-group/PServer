@@ -12,8 +12,8 @@ public class MatrixByRowPartitioner extends IMatrixPartitioner {
     // Public Methods.
     // ---------------------------------------------------
 
-    public MatrixByRowPartitioner(PartitioningConfig config, SlotContext context) {
-        super(config, context);
+    public MatrixByRowPartitioner(long rows, long cols, SlotContext context) {
+        super(rows, cols, context);
         shape = getPartitionShape();
     }
 
@@ -23,10 +23,10 @@ public class MatrixByRowPartitioner extends IMatrixPartitioner {
 
     @Override
     public int getPartitionOfEntry(final MatrixEntry entry) {
-        double numOfRowsPerInstance = (double) config.matrixNumRows / context.programContext.nodeDOP;
+        double numOfRowsPerInstance = (double) rows / context.programContext.nodeDOP;
         int partition = (int) (entry.getRow() / numOfRowsPerInstance);
         if(partition >= context.programContext.nodeDOP) {
-            throw new IllegalStateException("The calculated partition id (row = "+entry.getRow()+", rows = "+config.matrixNumRows+", numNodes = "+context.programContext.nodeDOP+") -> " + partition + " must not exceed numNodes.");
+            throw new IllegalStateException("The calculated partition id (row = "+entry.getRow()+", rows = "+rows+", numNodes = "+context.programContext.nodeDOP+") -> " + partition + " must not exceed numNodes.");
         }
         return partition;
     }
@@ -34,10 +34,10 @@ public class MatrixByRowPartitioner extends IMatrixPartitioner {
     @Override
     public Matrix.PartitionShape getPartitionShape() {
         if(shape == null) {
-            double rowsPerNode = (double) config.matrixNumRows / context.programContext.nodeDOP;
+            double rowsPerNode = (double) rows / context.programContext.nodeDOP;
             long rowOffset = (int) Math.ceil(rowsPerNode * context.runtimeContext.nodeID);
             long numRows = (int) (Math.ceil(rowsPerNode * (context.runtimeContext.nodeID + 1)) - rowOffset);
-            shape = new Matrix.PartitionShape(numRows, config.matrixNumCols, rowOffset, 0);
+            shape = new Matrix.PartitionShape(numRows, cols, rowOffset, 0);
         }
         return shape;
     }
@@ -68,6 +68,16 @@ public class MatrixByRowPartitioner extends IMatrixPartitioner {
     @Override
     public long translateLocalToGlobalCol(long col) throws IllegalArgumentException {
         return col;
+    }
+
+    @Override
+    public int getNumRowPartitions() {
+        return context.programContext.nodeDOP;
+    }
+
+    @Override
+    public int getNumColPartitions() {
+        return 1;
     }
 
     //    // TODO: onvert this into a unit test

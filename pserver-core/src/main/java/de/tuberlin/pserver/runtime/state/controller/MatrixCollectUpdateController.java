@@ -22,7 +22,8 @@ public class MatrixCollectUpdateController extends RemoteUpdateController {
                                          final DistributedMatrix matrix) {
         super(slotContext, stateName);
 
-        Preconditions.checkState(matrix.completeMatrix);
+        // Preconditions.checkState(matrix.completeMatrix);
+        // instead check if numRowPartitions == 1 && numColPartitions == 1
 
         this.matrix = Preconditions.checkNotNull(matrix);
     }
