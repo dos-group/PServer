@@ -12,6 +12,8 @@ public abstract class TransactionExecutor {
     // Fields.
     // ---------------------------------------------------
 
+    protected static final String PUSH_WRITE_TRANSACTION_REQUEST  = "pull_write_transaction_request";
+
     protected static final String PULL_WRITE_TRANSACTION_REQUEST  = "pull_write_transaction_request";
 
     protected static final String PULL_WRITE_TRANSACTION_RESPONSE = "pull_write_transaction_response";
@@ -50,11 +52,9 @@ public abstract class TransactionExecutor {
                                              final RuntimeContext runtimeContext,
                                              final TransactionController controller) {
         switch (type) {
-            case PUSH_WRITE:
-                break;
+            case PUSH_WRITE: return new PushWriteExecutor(runtimeContext, controller);
             case PULL_WRITE: return new PullWriteExecutor(runtimeContext, controller);
             case READ:
-                break;
         }
         return null;
     }

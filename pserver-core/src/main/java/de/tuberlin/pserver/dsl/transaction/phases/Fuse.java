@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.dsl.transaction.phases;
 
 
-public interface Fuse<T> extends TransactionPhase<T> {
+public interface Fuse extends TransactionPhase {
 
-    public T fuse(final T[] remoteObjects) throws Exception;
+    public <T> T fuse(final T[] remoteObjects) throws Exception;
 }

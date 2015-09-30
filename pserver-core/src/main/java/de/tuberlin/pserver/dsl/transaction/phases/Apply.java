@@ -1,7 +1,9 @@
 package de.tuberlin.pserver.dsl.transaction.phases;
 
 
-public interface Apply<T> extends TransactionPhase<T> {
+import java.util.List;
 
-    public T apply(final T object) throws Exception;
+public interface Apply<I, O> extends TransactionPhase {
+
+    public O apply(final List<I> object) throws Exception;
 }

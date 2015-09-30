@@ -89,6 +89,11 @@ public final class ProgramCompiler {
         final long start = System.currentTimeMillis();
 
         analyzeStateAnnotations();
+
+        for (final StateDeclaration decl : stateDecls) {
+            programContext.put(stateDeclarationName(decl.name), decl);
+        }
+
         analyzeTransactionAnnotations(instance);
         allocateStateObjects(programContext);
 
@@ -97,9 +102,6 @@ public final class ProgramCompiler {
         analyzeAndWireDeltaMergerAnnotations(instance);
 
         dataManager.loadInputData();
-        for (final StateDeclaration decl : stateDecls) {
-            programContext.put(stateDeclarationName(decl.name), decl);
-        }
 
         programContext.put(stateDeclarationListName(), stateDecls);
 
@@ -213,11 +215,13 @@ public final class ProgramCompiler {
             for (final Annotation an : field.getDeclaredAnnotations()) {
                 if (an instanceof Transaction) {
                     final Transaction transactionProperties = (Transaction) an;
+                    final StateDeclaration stateDecl = programContext.get(stateDeclarationName(transactionProperties.state()));
                     final TransactionDeclaration decl = new TransactionDeclaration(
                             field.getName(),
                             transactionProperties.state(),
                             transactionProperties.type(),
-                            "".equals(transactionProperties.nodes()) ? dataManager.remoteNodeIDs : parseNodeRanges(transactionProperties.nodes())
+                            runtimeContext.nodeID,
+                            stateDecl.atNodes
                     );
                     final TransactionDefinition definition = (TransactionDefinition)field.get(instance);
                     final TransactionController controller = new TransactionController(runtimeContext, decl, definition);

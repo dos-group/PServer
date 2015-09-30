@@ -2,6 +2,7 @@ package de.tuberlin.pserver.dsl.transaction;
 
 
 import com.google.common.base.Preconditions;
+import org.apache.commons.lang3.ArrayUtils;
 
 public final class TransactionDeclaration {
 
@@ -24,6 +25,7 @@ public final class TransactionDeclaration {
     public TransactionDeclaration(final String transactionName,
                                   final String stateName,
                                   final TransactionType type,
+                                  final int nodeID,
                                   final int[] nodes) {
 
         this.transactionName = Preconditions.checkNotNull(transactionName);
@@ -32,6 +34,6 @@ public final class TransactionDeclaration {
 
         this.type  = Preconditions.checkNotNull(type);
 
-        this.nodes = nodes;
+        this.nodes = ArrayUtils.removeElements(nodes, nodeID);
     }
 }

@@ -8,7 +8,7 @@ import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 
 import java.util.UUID;
 
-public class TransactionDefinition<T> {
+public class TransactionDefinition {
 
     // ---------------------------------------------------
     // Fields.
@@ -16,11 +16,11 @@ public class TransactionDefinition<T> {
 
     public final UUID uid = UUID.randomUUID();
 
-    public final Prepare<T> preparePhase;
+    public final Prepare preparePhase;
 
-    public final Fuse<T> fusionPhase;
+    public final Fuse fusionPhase;
 
-    public final Apply<T> applyPhase;
+    public final Apply applyPhase;
 
     private String transactionName;
 
@@ -28,27 +28,27 @@ public class TransactionDefinition<T> {
     // Constructors.
     // ---------------------------------------------------
 
-    public TransactionDefinition(final Apply<T> applyPhase) {
+    public TransactionDefinition(final Apply applyPhase) {
 
         this(null, null, applyPhase);
     }
 
-    public TransactionDefinition(final Fuse<T> fusionPhase,
-                                 final Apply<T> applyPhase) {
+    public TransactionDefinition(final Fuse fusionPhase,
+                                 final Apply applyPhase) {
 
         this(null, fusionPhase, applyPhase);
     }
 
-    public TransactionDefinition(final Prepare<T> preparePhase,
-                                 final Apply<T> applyPhase) {
+    public TransactionDefinition(final Prepare preparePhase,
+                                 final Apply applyPhase) {
 
         this(preparePhase, null, applyPhase);
     }
 
 
-    public TransactionDefinition(final Prepare<T> preparePhase,
-                                 final Fuse<T> fusionPhase,
-                                 final Apply<T> applyPhase) {
+    public TransactionDefinition(final Prepare preparePhase,
+                                 final Fuse fusionPhase,
+                                 final Apply applyPhase) {
 
         this.preparePhase = preparePhase;
 

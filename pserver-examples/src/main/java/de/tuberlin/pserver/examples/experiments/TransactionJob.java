@@ -17,7 +17,6 @@ import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.math.matrix.Matrix;
 
-import java.util.List;
 import java.util.Random;
 
 public class TransactionJob extends Program {
@@ -33,35 +32,24 @@ public class TransactionJob extends Program {
     // Transactions.
     // ---------------------------------------------------
 
-    @Transaction(state = "model", type = TransactionType.PULL_WRITE)
-    public TransactionDefinition<List<Matrix>> modelSync = new TransactionDefinition<>(
+    @Transaction(state = "model", type = TransactionType.PUSH_WRITE)
+    public TransactionDefinition modelSync = new TransactionDefinition(
 
-            new Prepare<List<Matrix>>() {
-                @Override
-                public List<Matrix> prepare(List<Matrix> object) throws Exception {
+        (Prepare<Matrix, Matrix>) model -> model,
 
+        (Apply<Matrix, Void>) remoteModels -> {
 
-
-                    return object;
-                }
-            },
-
-            new Apply<List<Matrix>>() {
-
-                @Override
-                public List<Matrix> apply(final List<Matrix> remoteModels) throws Exception {
-                    for (int i = 0; i < 100; i++) {
-                        for (int j = 0; j < 100; j++) {
-                            double val = 0.0;
-                            for (final Matrix remoteModel : remoteModels)
-                                val += remoteModel.get(i, j);
-                            val += model.get(i, j);
-                            model.set(i, j, (model.get(i, j) + val) / 4);
-                        }
-                    }
-                    return null;
+            for (int i = 0; i < 100; i++) {
+                for (int j = 0; j < 100; j++) {
+                    double val = 0.0;
+                    for (final Matrix remoteModel : remoteModels)
+                        val += remoteModel.get(i, j);
+                    val += model.get(i, j);
+                    model.set(i, j, (model.get(i, j) + val) / 4);
                 }
             }
+            return null;
+        }
     );
 
     // ---------------------------------------------------
