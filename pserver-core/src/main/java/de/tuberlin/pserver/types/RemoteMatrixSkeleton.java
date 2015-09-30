@@ -2,6 +2,7 @@ package de.tuberlin.pserver.types;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.compiler.ProgramContext;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.net.NetEvents;
@@ -10,7 +11,6 @@ import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.ProgramContext;
 import org.apache.commons.lang3.mutable.MutableDouble;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;

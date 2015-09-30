@@ -5,7 +5,7 @@ import com.google.common.base.Preconditions;
 
 import java.lang.reflect.Method;
 
-public class UnitDeclaration {
+public final class UnitDeclaration {
 
     // ---------------------------------------------------
     // Fields.
@@ -14,6 +14,8 @@ public class UnitDeclaration {
     public final Method method;
 
     public final int[] atNodes;
+
+    public final String name;
 
     // ---------------------------------------------------
     // Constructors.
@@ -24,5 +26,7 @@ public class UnitDeclaration {
         this.method  = Preconditions.checkNotNull(method);
 
         this.atNodes = Preconditions.checkNotNull(atNodes);
+
+        this.name    = method.getName();
     }
 }

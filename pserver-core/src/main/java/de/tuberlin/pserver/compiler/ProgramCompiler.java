@@ -1,18 +1,24 @@
-package de.tuberlin.pserver.runtime;
+package de.tuberlin.pserver.compiler;
 
 
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
-import de.tuberlin.pserver.dsl.unit.annotations.Unit;
-import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.dsl.unit.UnitDeclaration;
 import de.tuberlin.pserver.dsl.state.StateDeclaration;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.annotations.StateExtractor;
 import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
+import de.tuberlin.pserver.dsl.transaction.TransactionController;
+import de.tuberlin.pserver.dsl.transaction.TransactionDeclaration;
+import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
+import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
+import de.tuberlin.pserver.dsl.unit.UnitDeclaration;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
+import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.runtime.state.controller.MatrixDeltaMergeUpdateController;
 import de.tuberlin.pserver.runtime.state.controller.MatrixMergeUpdateController;
 import de.tuberlin.pserver.runtime.state.controller.RemoteUpdateController;
@@ -50,9 +56,11 @@ public final class ProgramCompiler {
 
     private final RuntimeContext runtimeContext;
 
-    private List<UnitDeclaration> unitDecls;
-
     private List<StateDeclaration> stateDecls;
+
+    private List<TransactionDeclaration> transactionDecls;
+
+    private List<UnitDeclaration> unitDecls;
 
     // ---------------------------------------------------
     // Constructors.
@@ -73,57 +81,40 @@ public final class ProgramCompiler {
 
     public void link(final Program instance) throws Exception {
 
-        //programContext.CF.parUnit().slot(0).exe(() -> {
-
         unitDecls = new ArrayList<>();
-
         analyzeExecutableUnits();
-
         stateDecls = new ArrayList<>();
-
         final String slotIDStr = "[" + runtimeContext.nodeID + "]";
-
         LOG.info(slotIDStr + "Enter " + programContext.simpleClassName + " linking phase.");
-
         final long start = System.currentTimeMillis();
 
-        analyzeStateObjects();
-
+        analyzeStateAnnotations();
+        analyzeTransactionAnnotations(instance);
         allocateStateObjects(programContext);
 
+        // Old stuff.
         analyzeAndWireDeltaFilterAnnotations(instance);
-
         analyzeAndWireDeltaMergerAnnotations(instance);
 
         dataManager.loadInputData();
-
         for (final StateDeclaration decl : stateDecls) {
-
             programContext.put(stateDeclarationName(decl.name), decl);
         }
 
         programContext.put(stateDeclarationListName(), stateDecls);
 
         Thread.sleep(5000); // TODO: Wait until all objects are placed in DHT and accessible...
-
         final long end = System.currentTimeMillis();
-
         LOG.info(slotIDStr + "Leave " + programContext.simpleClassName
                 + " loading linking [duration: " + (end - start) + " ms].");
     }
 
     public void fetchStateObjects(final Program program) throws Exception {
-
         stateDecls = programContext.get(stateDeclarationListName());
-
         for (final StateDeclaration decl : stateDecls) {
-
             final Field f = programClass.getDeclaredField(decl.name);
-
             final Object stateObj = dataManager.getObject(decl.name);
-
             Preconditions.checkState(stateObj != null);
-
             f.set(program, stateObj);
         }
     }
@@ -132,17 +123,11 @@ public final class ProgramCompiler {
         Preconditions.checkNotNull(programInvokeable);
         Preconditions.checkNotNull(lifecycle);
         Preconditions.checkNotNull(unitDecls);
-
         for (final UnitDeclaration decl : unitDecls) {
-
             if (ArrayUtils.contains(decl.atNodes, lifecycle.programContext.runtimeContext.nodeID)) {
-
                 try {
-
                     decl.method.invoke(programInvokeable, lifecycle);
-
                 } catch (IllegalAccessException | InvocationTargetException e) {
-
                     throw new IllegalStateException(e);
                 }
             }
@@ -154,64 +139,49 @@ public final class ProgramCompiler {
     // ---------------------------------------------------
 
     private void analyzeExecutableUnits() {
-
         final List<Integer> availableNodeIDs  = new ArrayList<>();
         for (int i = 0; i < programContext.nodeDOP; ++i)
             availableNodeIDs.add(i);
-
         // The global unit has no specific node assignments.
         int globalUnitDeclIndex = -1;
-
         for (final Method method : programClass.getDeclaredMethods()) {
             for (final Annotation an : method.getDeclaredAnnotations()) {
                 if (an instanceof Unit) {
-
                     if (method.getReturnType() != void.class)
                         throw new IllegalStateException();
-
                     if (method.getParameterTypes().length != 1)
                         throw new IllegalStateException();
-
                     if (method.getParameterTypes()[0] != Lifecycle.class)
                         throw new IllegalStateException();
 
                     final Unit unitProperties = (Unit) an;
-
                     final int[] executingNodeIDs = parseNodeRanges(unitProperties.at());
 
-                    /*if (executingNodeIDs.length == 0 && globalUnitDeclIndex == -1) // TODO
+                    if (executingNodeIDs.length == 0 && globalUnitDeclIndex == -1) // TODO
                         globalUnitDeclIndex = unitDecls.size();
                     else
                         if (globalUnitDeclIndex != -1)
-                            throw new IllegalStateException("globalUnitDeclIndex = " + globalUnitDeclIndex + " | executingNodeIDs.length = " + executingNodeIDs.length);*/
+                            throw new IllegalStateException("globalUnitDeclIndex = " + globalUnitDeclIndex + " | executingNodeIDs.length = " + executingNodeIDs.length);
 
                     for (final Integer nodeID : executingNodeIDs) {
                         if (!availableNodeIDs.remove(nodeID))
                             throw new IllegalStateException();
                     }
 
-                    final UnitDeclaration decl = new UnitDeclaration(
-                            method,
-                            executingNodeIDs
-                    );
-
-                    unitDecls.add(decl);
+                    unitDecls.add(new UnitDeclaration(method, executingNodeIDs));
                 }
             }
         }
 
         if (globalUnitDeclIndex != -1) {
-
             if (availableNodeIDs.size() == 0)
                 throw new IllegalStateException();
-
             final UnitDeclaration globalUnitDecl = unitDecls.remove(globalUnitDeclIndex);
-
             unitDecls.add(new UnitDeclaration(globalUnitDecl.method, Ints.toArray(availableNodeIDs)));
         }
     }
 
-    private void analyzeStateObjects() {
+    private void analyzeStateAnnotations() {
         for (final Field field : programClass.getDeclaredFields()) {
             for (final Annotation an : field.getDeclaredAnnotations()) {
                 if (an instanceof State) {
@@ -221,7 +191,7 @@ public final class ProgramCompiler {
                             field.getType(),
                             stateProperties.localScope(),
                             stateProperties.globalScope(),
-                            parseNodeRanges(stateProperties.at()),
+                            "".equals(stateProperties.at()) ? dataManager.nodeIDs : parseNodeRanges(stateProperties.at()),
                             stateProperties.partitionType(),
                             stateProperties.rows(),
                             stateProperties.cols(),
@@ -232,6 +202,28 @@ public final class ProgramCompiler {
                             stateProperties.remoteUpdate()
                     );
                     stateDecls.add(decl);
+                }
+            }
+        }
+    }
+
+    private void analyzeTransactionAnnotations(final Program instance) throws Exception {
+        transactionDecls = new ArrayList<>();
+        for (final Field field : programClass.getDeclaredFields()) {
+            for (final Annotation an : field.getDeclaredAnnotations()) {
+                if (an instanceof Transaction) {
+                    final Transaction transactionProperties = (Transaction) an;
+                    final TransactionDeclaration decl = new TransactionDeclaration(
+                            field.getName(),
+                            transactionProperties.state(),
+                            transactionProperties.type(),
+                            "".equals(transactionProperties.nodes()) ? dataManager.remoteNodeIDs : parseNodeRanges(transactionProperties.nodes())
+                    );
+                    final TransactionDefinition definition = (TransactionDefinition)field.get(instance);
+                    final TransactionController controller = new TransactionController(runtimeContext, decl, definition);
+                    definition.setTransactionName(decl.transactionName);
+                    programContext.put(decl.transactionName, controller);
+                    transactionDecls.add(decl);
                 }
             }
         }

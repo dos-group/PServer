@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.dsl.unit.controlflow.loop;
 
+import de.tuberlin.pserver.compiler.ProgramContext;
 import de.tuberlin.pserver.dsl.unit.controlflow.base.CFStatement;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.ProgramContext;
 
 public final class Loop extends CFStatement {
 
@@ -112,7 +112,7 @@ public final class Loop extends CFStatement {
             case ASYNC:
                 return;
             case GLOBAL:
-                dataManager.globalSync(programContext);
+                dataManager.globalSync();
         }
     }
 }

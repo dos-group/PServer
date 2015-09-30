@@ -2,19 +2,19 @@ package de.tuberlin.pserver.examples.experiments.paramsrv;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.unit.annotations.Unit;
-import de.tuberlin.pserver.dsl.unit.UnitMng;
-import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
-import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
+import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.unit.UnitMng;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
+import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.math.tuples.Tuple3;
-import de.tuberlin.pserver.runtime.mcruntime.Parallel;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.Program;
+import de.tuberlin.pserver.runtime.mcruntime.Parallel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +61,7 @@ public class ParameterServerJob extends Program {
         final DataManager dataManager = programContext.runtimeContext.dataManager;
         lifecycle.process(() -> {
 
-            UnitMng.loop(15, Loop.GLOBAL, (epoch) -> {
+            UnitMng.loop(15, Loop.ASYNC, (epoch) -> {
 
                 Parallel.For(input, (i, j, value) -> {
 

@@ -2,6 +2,7 @@ package de.tuberlin.pserver.types;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.compiler.ProgramContext;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
@@ -9,7 +10,6 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.utils.MatrixAggregation;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 
 public class DistributedMatrix extends AbstractMatrix {

@@ -1,5 +1,7 @@
 package de.tuberlin.pserver.node;
 
+import de.tuberlin.pserver.compiler.Program;
+import de.tuberlin.pserver.compiler.ProgramContext;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
 import de.tuberlin.pserver.core.events.IEventHandler;
@@ -7,12 +9,11 @@ import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.Program;
-import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.runtime.events.ProgramFailureEvent;
 import de.tuberlin.pserver.runtime.events.ProgramResultEvent;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
+import de.tuberlin.pserver.runtime.mcruntime.MCRuntime;
 import de.tuberlin.pserver.runtime.usercode.UserCodeManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
@@ -95,6 +96,8 @@ public final class PServerNode extends EventDispatcher {
 
                 try {
 
+                    MCRuntime.INSTANCE.create(runtimeContext.numOfCores);
+
                     final Program program = programClass.newInstance();
 
                     program.injectContext(programContext);
@@ -130,6 +133,8 @@ public final class PServerNode extends EventDispatcher {
                     dataManager.clearContext();
 
                     dataManager.unregisterProgram(programContext);
+
+                    MCRuntime.INSTANCE.deactivate();
                 }
             }).start();
         }

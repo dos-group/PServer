@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.test.core.programs;
 
+import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.runtime.Program;
 
 
 public class UnitControlFlowTestJob extends Program {

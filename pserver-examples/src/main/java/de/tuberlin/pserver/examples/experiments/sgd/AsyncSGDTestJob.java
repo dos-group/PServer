@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.examples.experiments.sgd;
 
-import de.tuberlin.pserver.runtime.Program;
+import de.tuberlin.pserver.compiler.Program;
 
 public final class AsyncSGDTestJob extends Program {
 /*

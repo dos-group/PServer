@@ -1,11 +1,11 @@
 package de.tuberlin.pserver.client;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.config.IConfigFactory;
 import de.tuberlin.pserver.core.infra.ClusterSimulator;
 import de.tuberlin.pserver.node.PServerMain;
-import de.tuberlin.pserver.runtime.Program;
 import org.apache.log4j.ConsoleAppender;
 
 import java.io.Serializable;

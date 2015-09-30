@@ -3,6 +3,7 @@ package de.tuberlin.pserver.runtime;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.ds.ResettableCountDownLatch;
+import de.tuberlin.pserver.compiler.ProgramContext;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
@@ -139,7 +140,6 @@ public class DataManager extends EventDispatcher {
 
     private final AtomicReference<ProgramContext> programContextRef;
 
-
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
@@ -158,7 +158,6 @@ public class DataManager extends EventDispatcher {
         this.nodeID             = infraManager.getNodeID();
         this.resultObjects      = new HashMap<>();
         this.matrixPartitionManager = new MatrixPartitionManager(netManager, fileSystemManager, this);
-
         this.programContextRef = new AtomicReference<>(null);
 
 
@@ -174,12 +173,9 @@ public class DataManager extends EventDispatcher {
             ++i;
         }
 
-
         this.netManager.addEventListener(BSP_SYNC_BARRIER_EVENT, event -> {
-
             if (!programContextRef.get().programID.equals(event.getPayload()))
                 throw new IllegalStateException();
-
             programContextRef.get().countDownBarrier();
         });
     }
@@ -191,31 +187,13 @@ public class DataManager extends EventDispatcher {
 
     public void registerProgram(final ProgramContext programContext) {
         Preconditions.checkNotNull(programContext);
-
         programContextRef.set(programContext);
-
-        //final NestedIntervalTree.Interval in = new NestedIntervalTree.Interval(0, programContext.runtimeContext.numOfCores - 1);
-
-        //final SlotGroupAllocation sa = new SlotGroupAllocation(in);
-
-        //this.slotAssignment = new NestedIntervalTree<>(in, sa);
     }
 
     public void unregisterProgram(final ProgramContext programContext) {
         Preconditions.checkNotNull(programContext);
-
         programContextRef.set(null);
     }
-
-    /*public synchronized SlotContext getSlotContext() {
-
-        SlotContext sc = programContextRef.get().threadIDSlotCtxMap.get(Thread.currentThread().getId());
-
-        while (sc == null)
-            sc = programContextRef.get().threadIDSlotCtxMap.get(Thread.currentThread().getId());
-
-        return sc;
-    }*/
 
     public void clearContext() {
         matrixPartitionManager.clearContext();
@@ -223,11 +201,11 @@ public class DataManager extends EventDispatcher {
     }
 
 
-    public void globalSync(final ProgramContext programContext) {
+    public void globalSync() {
         final NetEvents.NetEvent globalSyncEvent = new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT, true);
-        globalSyncEvent.setPayload(programContext.programID);
+        globalSyncEvent.setPayload(programContextRef.get().programID);
         netManager.broadcastEvent(globalSyncEvent);
-        programContext.awaitGlobalSyncBarrier();
+        programContextRef.get().awaitGlobalSyncBarrier();
     }
 
     // ---------------------------------------------------
@@ -357,21 +335,16 @@ public class DataManager extends EventDispatcher {
     //public void receive(final ExecutionManager.CallType type, final String name, final DataEventHandler handler) {
     //    receive(type, remoteNodeIDs.length, name, handler); }
 
-
-
     public <T> void receive(final int n, final String name, final Handler<T> handler) {
         receive(CallType.SYNC, n, name, new DataEventHandler() {
 
             @Override
             public void handleDataEvent(int srcNodeID, Object obj) {
-
                 final T value = (T) obj;
                 handler.handle(srcNodeID, value);
             }
         });
     }
-
-
 
     public void receive(final int n, final String name, final DataEventHandler handler) {
         receive(CallType.SYNC, n, name, handler);

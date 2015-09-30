@@ -1,12 +1,13 @@
 package de.tuberlin.pserver.runtime.mcruntime;
 
 import de.tuberlin.pserver.commons.ds.NestedIntervalTree;
+import de.tuberlin.pserver.core.common.Deactivatable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public enum MCRuntime {
-    INSTANCE(4); // Runtime.getRuntime().availableProcessors()
+public enum MCRuntime implements Deactivatable {
+    INSTANCE(Runtime.getRuntime().availableProcessors());
 
     // ---------------------------------------------------
     // Fields.
@@ -39,6 +40,15 @@ public enum MCRuntime {
         Parallel.setMCRuntime(this);
 
         create(numSlots);
+    }
+
+    @Override
+    public void deactivate() {
+
+        for (WorkerSlot workerSlot : workerSlots) {
+
+            workerSlot.shutdown();
+        }
     }
 
     // ---------------------------------------------------
@@ -137,19 +147,11 @@ public enum MCRuntime {
         this.slotAssignment = new NestedIntervalTree<>(initialSlotGroup.asInterval(), initialSlotGroup);
     }
 
-    public void shutdown() {
-
-        for (WorkerSlot workerSlot : workerSlots) {
-
-            workerSlot.shutdown();
-        }
-    }
-
     // ---------------------------------------------------
     // Private Methods.
     // ---------------------------------------------------
 
-    private void create(final int numSlots) {
+    public void create(final int numSlots) {
 
         for (int i = 0; i < numSlots; ++i) {
 
@@ -174,30 +176,4 @@ public enum MCRuntime {
         }
         return sb.toString();
     }
-
-    /*
-    public void releaseSlots(final SlotGroup sg) throws Exception {
-        if (!slotAssignment.exist(sg.asInterval()))
-           return;
-        if (slotAssignment.isDeepestInterval(sg.slotIDRange)) {
-            slotAssignment.remove(sg.slotIDRange);
-        }
-    }
-
-    public void releaseSlots(final SlotGroup sg) throws Exception {
-        synchronized (this) {
-            if (!slotAssignment.exist(sg.asInterval()))
-                return;
-        }
-        while (!slotAssignment.isDeepestInterval(sg.slotIDRange)) {
-            synchronized (this) {
-                wait();
-            }
-        }
-        synchronized (this) {
-            slotAssignment.remove(sg.slotIDRange);
-            notifyAll();
-        }
-    }
-    */
 }

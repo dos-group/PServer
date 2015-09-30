@@ -2,9 +2,9 @@ package de.tuberlin.pserver.dsl.transaction.aggregators;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.runtime.mcruntime.shared.SharedVar;
+import de.tuberlin.pserver.compiler.ProgramContext;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.ProgramContext;
+import de.tuberlin.pserver.runtime.mcruntime.shared.SharedVar;
 
 import java.io.Serializable;
 import java.util.ArrayList;

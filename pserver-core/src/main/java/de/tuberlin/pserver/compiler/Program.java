@@ -1,8 +1,11 @@
-package de.tuberlin.pserver.runtime;
+package de.tuberlin.pserver.compiler;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.events.EventDispatcher;
+import de.tuberlin.pserver.dsl.unit.controlflow.base.Body;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
+import de.tuberlin.pserver.math.SharedObject;
+import de.tuberlin.pserver.runtime.DataManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,5 +105,20 @@ public abstract class Program extends EventDispatcher {
             LOG.info(slotIDStr + "Leave " + lifecycle.programContext.simpleClassName
                     + " post-process phase [duration: " + (end - start) + " ms].");
         }
+    }
+
+    // ---------------------------------------------------
+
+    public static SharedObject[] state(SharedObject... objects) { return objects; }
+
+    public static void atomic(SharedObject[] stateObjects, final Body body) throws Exception {
+
+        for (final SharedObject stateObj :stateObjects)
+            stateObj.lock();
+
+        body.body();
+
+        for (final SharedObject stateObj :stateObjects)
+            stateObj.unlock();
     }
 }

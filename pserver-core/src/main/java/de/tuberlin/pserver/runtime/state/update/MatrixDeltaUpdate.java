@@ -5,12 +5,15 @@ import de.tuberlin.pserver.math.SharedObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class MatrixDeltaUpdate implements SharedObject {
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
+
+    private final ReentrantLock lock = new ReentrantLock(true);
 
     private final List<byte[]> deltas;
 
@@ -45,4 +48,10 @@ public class MatrixDeltaUpdate implements SharedObject {
     @Override public void setArray(final double[] data) { throw new UnsupportedOperationException(); }
 
     // ---------------------------------------------------
+
+    @Override
+    public void lock() { lock.lock(); }
+
+    @Override
+    public void unlock() { lock.unlock(); }
 }

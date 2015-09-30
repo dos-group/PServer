@@ -40,7 +40,7 @@ public abstract class AbstractMatrix implements Matrix {
         this.cols = cols;
         this.layout = Preconditions.checkNotNull(layout);
         Preconditions.checkArgument(java.util.Arrays.asList(Layout.values()).contains(layout), "Unknown MemoryLayout: " + layout.toString());
-        this.lock = new ReentrantLock();
+        this.lock = new ReentrantLock(true);
     }
 
     // ---------------------------------------------------

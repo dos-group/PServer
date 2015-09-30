@@ -4,8 +4,8 @@ package de.tuberlin.pserver.runtime.state.controller;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Doubles;
 import de.tuberlin.pserver.commons.compression.Compressor;
+import de.tuberlin.pserver.compiler.ProgramContext;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
 import de.tuberlin.pserver.runtime.state.update.MatrixDeltaUpdate;
 

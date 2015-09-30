@@ -1,10 +1,10 @@
 package de.tuberlin.pserver.crdt;
 
 import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.Program;
 
 
 public class PingPongTestJob extends Program {

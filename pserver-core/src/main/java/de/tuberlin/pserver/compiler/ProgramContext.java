@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.runtime;
+package de.tuberlin.pserver.compiler;
 
 
 import com.google.common.base.Preconditions;
@@ -6,8 +6,9 @@ import com.google.gson.Gson;
 import de.tuberlin.pserver.commons.hashtable.NonBlockingHashMap;
 import de.tuberlin.pserver.commons.json.GsonUtils;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
+import de.tuberlin.pserver.dsl.unit.UnitMng;
+import de.tuberlin.pserver.runtime.RuntimeContext;
 
 import java.util.Map;
 import java.util.UUID;
@@ -42,7 +43,10 @@ public final class ProgramContext {
     // ---------------------------------------------------
 
     @GsonUtils.Exclude
-    private AtomicReference<CountDownLatch> globalSyncBarrier;
+    private final AtomicReference<CountDownLatch> globalSyncBarrier;
+
+    //@GsonUtils.Exclude
+    //private CountDownLatch globalUnitSyncBarrier;
 
     // ---------------------------------------------------
 

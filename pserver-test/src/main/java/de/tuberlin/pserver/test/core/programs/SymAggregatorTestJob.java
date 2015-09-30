@@ -1,10 +1,10 @@
 package de.tuberlin.pserver.test.core.programs;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.compiler.Program;
+import de.tuberlin.pserver.dsl.transaction.aggregators.Aggregator;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.dsl.transaction.aggregators.Aggregator;
-import de.tuberlin.pserver.runtime.Program;
 
 
 public class SymAggregatorTestJob extends Program {

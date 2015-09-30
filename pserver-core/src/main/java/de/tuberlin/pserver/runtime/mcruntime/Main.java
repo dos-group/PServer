@@ -7,6 +7,8 @@ public class Main {
 
         final MCRuntime mcRuntime = MCRuntime.INSTANCE;
 
+        //mcRuntime.create(4);
+
         // -----------------------------------------------------------------------
         /*
         { // Simple Parallel Body, DOP 1
@@ -229,11 +231,18 @@ public class Main {
 
                 try {
 
-                    Parallel.For(0, 100, (i) -> {
+                    Parallel.Do(4, () -> {
+
+                        System.out.println("Hello at core " + Parallel.slotID());
+
+                    });
+
+
+                    /*Parallel.For(0, 100, (i) -> {
 
                         System.out.println("Iteration " + i + " at core " + Parallel.slotID());
 
-                    });
+                    });*/
 
 
                 } catch (Exception e) {
@@ -241,11 +250,16 @@ public class Main {
                 }
             };
 
+
+            for (int i = 0; i < 100; i++) {
+
+            }
+
             prg.run();
 
             System.out.println("FINISHED TEST (7)");
         }
 
-        mcRuntime.shutdown();
+        mcRuntime.deactivate();
     }
 }

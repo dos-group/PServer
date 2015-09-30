@@ -1,19 +1,18 @@
 package de.tuberlin.pserver.examples.experiments.glove;
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.unit.annotations.Unit;
-import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
+import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.annotations.StateExtractor;
 import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.Program;
 import de.tuberlin.pserver.runtime.state.filter.MatrixUpdateFilter;
 import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
-import de.tuberlin.pserver.runtime.state.merger.VectorUpdateMerger;
 import de.tuberlin.pserver.types.PartitionType;
 
 public final class GloVeJobAdaGradPull extends Program {
@@ -62,13 +61,8 @@ public final class GloVeJobAdaGradPull extends Program {
 
     // ---------------------------------------------------
 
-    @StateMerger(stateObjects = "W, GradSq")
+    @StateMerger(stateObjects = "W, GradSq, B, GradSqB")
     public final MatrixUpdateMerger matrixMerger = (i, j, val, remoteVal) -> (val + remoteVal) / 2;
-
-    // ---------------------------------------------------
-
-    @StateMerger(stateObjects = "B, GradSqB")
-    public final VectorUpdateMerger vectorMerger = (i, val, remoteVal) -> (val + remoteVal) / 2;
 
     // ---------------------------------------------------
 

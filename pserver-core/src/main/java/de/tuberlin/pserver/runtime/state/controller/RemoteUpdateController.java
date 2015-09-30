@@ -2,7 +2,7 @@ package de.tuberlin.pserver.runtime.state.controller;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.runtime.ProgramContext;
+import de.tuberlin.pserver.compiler.ProgramContext;
 import de.tuberlin.pserver.runtime.state.filter.UpdateFilter;
 import de.tuberlin.pserver.runtime.state.merger.UpdateMerger;
 

@@ -31,7 +31,7 @@ public class CoreTests {
     // --------------------------------------------------
 
     // TODO: Every test is running for its own, but running the whole integration suite stalls.
-    // TODO: Some test programs must interfere due to not properly cleaning program and runtime state after termination.
+    // TODO: Some test programs must interfere due to not properly cleaning program and runtime stateName after termination.
 
 
     @Test

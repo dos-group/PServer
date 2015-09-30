@@ -98,8 +98,8 @@ public final class Parallel {
 
     public static void For(final Matrix m, final ParallelForMatrixBody body) throws Exception {
         For(0, (int)m.rows(), (i) -> {
-            for (long j = 0; j < m.cols(); ++j)
-                body.perform(i, j, m.get(i, j));
+            for (int j = 0; j < m.cols(); ++j)
+                body.perform(i.intValue(), j, m.get(i, j));
         });
     }
 
