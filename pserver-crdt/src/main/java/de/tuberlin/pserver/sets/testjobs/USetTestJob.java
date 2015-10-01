@@ -22,13 +22,13 @@ public class USetTestJob extends MLProgram {
                 USet<Integer> us = new USet<>("one", dataManager);
 
                 for (int i = 0; i <= 10; i++) {
-                    us.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
+                    us.add(i, dataManager);
                 }
 
                 us.finish(dataManager);
 
                 System.out.println("[DEBUG] Set of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + us.getValue());
+                        " slot " + slotContext.slotID + ": " + us.getSet());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + us.getBuffer());
             });
@@ -42,25 +42,19 @@ public class USetTestJob extends MLProgram {
                 USet<Integer> us = new USet<>("one", dataManager);
 
                 for (int i = 16; i <= 20; i++) {
-
-                    us.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
+                    us.add(i, dataManager);
                 }
 
                 Thread.sleep(500);
 
                 for (int i = 5; i <= 10; i++) {
-
-                    us.applyOperation(new SetOperation<>(SetOperation.REMOVE, i), dataManager);
+                    us.remove(i, dataManager);
                 }
-
-                // Exception:
-                //us.applyOperation(new SetOperation<>(SetOperation.ADD, 1), dataManager);
-
 
                 us.finish(dataManager);
 
                 System.out.println("[DEBUG] Set of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + us.getValue());
+                        " slot " + slotContext.slotID + ": " + us.getSet());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + us.getBuffer());
             });

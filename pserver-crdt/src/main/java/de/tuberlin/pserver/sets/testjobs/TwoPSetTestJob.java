@@ -28,13 +28,13 @@ public class TwoPSetTestJob extends MLProgram {
                 TwoPSet<Integer> tps = new TwoPSet<>("one", dataManager);
 
                 for (int i = 0; i <= 10; i++) {
-                    tps.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
+                    tps.add(i, dataManager);
                 }
 
                 tps.finish(dataManager);
 
                 System.out.println("[DEBUG] Set of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + tps.getValue());
+                        " slot " + slotContext.slotID + ": " + tps.getSet());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + tps.getBuffer());
             });
@@ -48,20 +48,18 @@ public class TwoPSetTestJob extends MLProgram {
                 TwoPSet<Integer> tps = new TwoPSet<>("one", dataManager);
 
                 for (int i = 4; i <= 15; i++) {
-
-                    tps.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
+                    tps.add(i, dataManager);
                 }
                 Thread.sleep(500);
 
                 for (int i = 5; i <= 11; i++) {
-
-                    tps.applyOperation(new SetOperation<>(SetOperation.REMOVE, i), dataManager);
+                    tps.remove(i, dataManager);
                 }
 
                 tps.finish(dataManager);
 
                 System.out.println("[DEBUG] Set of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + tps.getValue());
+                        " slot " + slotContext.slotID + ": " + tps.getSet());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + tps.getBuffer());
             });

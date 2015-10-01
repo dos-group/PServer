@@ -10,7 +10,7 @@ import java.util.*;
  *
  * The OR Set doesn't make any fucking sense in my opinion... At least not the way it is proposed and implemented here
  */
-public class ORSet<T> extends AbstractORSet<T> {
+public class ORSet<T> extends AbstractSet<T> {
     private Map<T,List<UUID>> map = new HashMap<>();
 
     public ORSet(String id, DataManager dataManager) {
@@ -23,17 +23,62 @@ public class ORSet<T> extends AbstractORSet<T> {
         SetOperation<T> sop = (SetOperation<T>) op;
 
         if(op.getType() == SetOperation.ADD) {
-            return add(sop);
+            return addElement(sop.getValue(), sop.getId());
         }
         else if(op.getType() == SetOperation.REMOVE) {
-            return remove(sop);
+            return removeElement(sop.getValue(), sop.getId());
         }
         else {
             throw new IllegalOperationException("This operation is not supported by ORSet");
         }
     }
 
-    public boolean add(SetOperation<T> sop) {
+    @Override
+    public boolean add(T value, DataManager dataManager) {
+        UUID id = UUID.randomUUID();
+
+        if(addElement(value, id)) {
+            broadcast(new SetOperation<>(SetOperation.ADD, value, id), dataManager);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean remove(T value, DataManager dataManager) {
+        UUID id = getId(value);
+
+        if(removeElement(value, id)) {
+            broadcast(new SetOperation<T>(SetOperation.REMOVE, value, id), dataManager);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean addElement(T value, UUID id) {
+        final ArrayList<UUID> list;
+
+        System.out.println("Add: " + value + ", " + id);
+        if(map.get(value) == null) {
+            list = new ArrayList<>();
+            list.add(id);
+            map.put(value, list);
+        }
+        else {
+            map.get(value).add(id);
+        }
+        return true;
+    }
+
+    private boolean removeElement(T value, UUID id) {
+        System.out.println("Remove: " + value + ", " + id);
+        boolean a = map.get(value).remove(id);
+
+        if(map.get(value).size() == 0) { map.remove(value);}
+        return a;
+    }
+
+   /* public boolean add(SetOperation<T> sop) {
         System.out.println("Add: " + sop.getValue() + ", " + sop.getId());
         if(map.get(sop.getValue()) == null) {
             ArrayList<UUID> list = new ArrayList<>();
@@ -56,10 +101,9 @@ public class ORSet<T> extends AbstractORSet<T> {
         }
 
         return false;
-    }
+    }*/
 
     public Set<T> getSet() {
-
         return map.keySet();
     }
 
@@ -68,10 +112,6 @@ public class ORSet<T> extends AbstractORSet<T> {
             return map.get(value).get(0);
         }
 
-        return null;
-    }
-
-    public SetOperation<T> getOperation(T value, int type) {
         return null;
     }
 }

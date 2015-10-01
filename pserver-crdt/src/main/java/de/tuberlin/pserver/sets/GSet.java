@@ -1,12 +1,18 @@
 package de.tuberlin.pserver.sets;
 
+import de.tuberlin.pserver.crdt.IllegalOperationException;
 import de.tuberlin.pserver.crdt.Operation;
 import de.tuberlin.pserver.runtime.DataManager;
 
-public class GSet<T> extends AbstractGSet<T> {
+import java.util.HashSet;
+import java.util.Set;
+
+public class GSet<T> extends AbstractSet<T> {
+    private final Set<T> set;
 
     public GSet(String id, DataManager dataManager) {
         super(id, dataManager);
+        this.set = new HashSet<>();
         run(dataManager);
     }
 
@@ -15,8 +21,42 @@ public class GSet<T> extends AbstractGSet<T> {
         SetOperation<T> sop = (SetOperation<T>)op;
 
         if(sop.getType() == SetOperation.ADD) {
-            value.add(sop.getValue());
+            return addElement(sop.getValue());
         }
-        return true;
+        else {
+            // TODO: formulate exception
+            throw new IllegalOperationException("blub");
+        }
+    }
+
+    @Override
+    public boolean add(T element, DataManager dataManager) {
+        if(addElement(element)) {
+            broadcast(new SetOperation<>(SetOperation.ADD, element), dataManager);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean remove(T element, DataManager dataManager) {
+        if(removeElement(element)) {
+            broadcast(new SetOperation<>(SetOperation.REMOVE, element), dataManager);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public Set<T> getSet() {
+        return this.set;
+    }
+
+    private boolean addElement(T element) {
+        return set.add(element);
+    }
+
+    private boolean removeElement(T element) {
+        return set.remove(element);
     }
 }

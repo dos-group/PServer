@@ -4,14 +4,8 @@ package de.tuberlin.pserver.sets.testjobs;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.registers.LWWRegister;
-import de.tuberlin.pserver.registers.RegisterOperation;
 import de.tuberlin.pserver.runtime.MLProgram;
-import de.tuberlin.pserver.sets.AbstractLWWSet;
 import de.tuberlin.pserver.sets.PNSet;
-import de.tuberlin.pserver.sets.SetOperation;
-
-import java.util.Calendar;
 
 // TODO: this needs testing and debugging
 public class PNSetTestJob extends MLProgram {
@@ -23,7 +17,7 @@ public class PNSetTestJob extends MLProgram {
                 PNSet<Integer> pns = new PNSet<>("one", dataManager);
 
                 for (int i = 0; i < 10; i++) {
-                    pns.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
+                    pns.add(i, dataManager);
                 }
 
                 pns.finish(dataManager);
@@ -43,15 +37,13 @@ public class PNSetTestJob extends MLProgram {
                 PNSet<Integer> pns = new PNSet<>("one", dataManager);
 
                 for (int i = 10; i <= 15; i++) {
-
-                    pns.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
+                    pns.add(i, dataManager);
                 }
 
                 Thread.sleep(500);
 
                 for (int i = 5; i <= 11; i++) {
-
-                    pns.applyOperation(new SetOperation<>(SetOperation.REMOVE, i), dataManager);
+                    pns.remove(i, dataManager);
                 }
 
                 pns.finish(dataManager);

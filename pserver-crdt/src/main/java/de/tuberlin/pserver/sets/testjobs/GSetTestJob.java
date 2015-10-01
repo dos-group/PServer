@@ -28,13 +28,14 @@ public class GSetTestJob extends MLProgram {
                 GSet<Integer> gSet = new GSet<>("one", dataManager);
 
                 for (int i = 0; i <= 10; i++) {
-                    gSet.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
+                    //gSet.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
+                    gSet.add(i, dataManager);
                 }
 
                 gSet.finish(dataManager);
 
                 System.out.println("[DEBUG] Set of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + gSet.getValue());
+                        " slot " + slotContext.slotID + ": " + gSet.getSet());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + gSet.getBuffer());
             });
@@ -49,13 +50,14 @@ public class GSetTestJob extends MLProgram {
 
                 for (int i = 20; i <= 30; i++) {
 
-                    gSet.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
+                    //gSet.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
+                    gSet.add(i, dataManager);
                 }
 
                 gSet.finish(dataManager);
 
                 System.out.println("[DEBUG] Set of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + gSet.getValue());
+                        " slot " + slotContext.slotID + ": " + gSet.getSet());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + gSet.getBuffer());
             });

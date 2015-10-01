@@ -4,14 +4,8 @@ package de.tuberlin.pserver.sets.testjobs;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.registers.LWWRegister;
-import de.tuberlin.pserver.registers.RegisterOperation;
 import de.tuberlin.pserver.runtime.MLProgram;
-import de.tuberlin.pserver.sets.AbstractLWWSet;
 import de.tuberlin.pserver.sets.LWWSet;
-import de.tuberlin.pserver.sets.SetOperation;
-
-import java.util.Calendar;
 
 /**
  * A Grow-Only Set supports operations add and lookup. There is no remove operation!
@@ -33,7 +27,7 @@ public class LWWSetTestJob extends MLProgram {
                 LWWSet<Integer> lwws = new LWWSet<>("one", dataManager);
 
                 for (int i = 0; i <= 10; i++) {
-                    lwws.applyOperation(new SetOperation<>(SetOperation.ADD, i, Calendar.getInstance().getTime()), dataManager);
+                    lwws.add(i, dataManager);
                 }
 
                 lwws.finish(dataManager);
@@ -53,15 +47,13 @@ public class LWWSetTestJob extends MLProgram {
                 LWWSet<Integer> lwws = new LWWSet<>("one", dataManager);
 
                 for (int i = 4; i <= 15; i++) {
-
-                    lwws.applyOperation(new SetOperation<>(SetOperation.ADD, i, Calendar.getInstance().getTime()), dataManager);
+                    lwws.add(i, dataManager);
                 }
 
                 Thread.sleep(500);
 
                 for (int i = 5; i <= 11; i++) {
-
-                    lwws.applyOperation(new SetOperation<>(SetOperation.REMOVE, i, Calendar.getInstance().getTime()), dataManager);
+                    lwws.remove(i, dataManager);
                 }
 
                 lwws.finish(dataManager);

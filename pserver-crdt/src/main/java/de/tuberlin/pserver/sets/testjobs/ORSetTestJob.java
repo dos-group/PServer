@@ -4,15 +4,8 @@ package de.tuberlin.pserver.sets.testjobs;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.registers.LWWRegister;
-import de.tuberlin.pserver.registers.RegisterOperation;
 import de.tuberlin.pserver.runtime.MLProgram;
-import de.tuberlin.pserver.sets.AbstractLWWSet;
 import de.tuberlin.pserver.sets.ORSet;
-import de.tuberlin.pserver.sets.SetOperation;
-
-import java.util.Calendar;
-import java.util.UUID;
 
 // TODO: this needs testing and debugging and major cleanup
 public class ORSetTestJob extends MLProgram {
@@ -24,10 +17,12 @@ public class ORSetTestJob extends MLProgram {
                 ORSet<Integer> ors = new ORSet<>("one", dataManager);
 
                 for (int i = 0; i < 10; i++) {
-                    ors.applyOperation(new SetOperation<>(SetOperation.ADD, i, UUID.randomUUID()), dataManager);
+                    //ors.applyOperation(new SetOperation<>(SetOperation.ADD, i, UUID.randomUUID()), dataManager);
+                    ors.add(i, dataManager);
                 }
 
-                ors.applyOperation(new SetOperation<>(SetOperation.ADD, 7, UUID.randomUUID()), dataManager);
+                //ors.applyOperation(new SetOperation<>(SetOperation.ADD, 7, UUID.randomUUID()), dataManager);
+                ors.add(7, dataManager);
 
                 ors.finish(dataManager);
 
@@ -47,14 +42,16 @@ public class ORSetTestJob extends MLProgram {
 
                 for (int i = 10; i <= 15; i++) {
 
-                    ors.applyOperation(new SetOperation<>(SetOperation.ADD, i, UUID.randomUUID()), dataManager);
+                    //ors.applyOperation(new SetOperation<>(SetOperation.ADD, i, UUID.randomUUID()), dataManager);
+                    ors.add(i, dataManager);
                 }
 
                 Thread.sleep(500);
 
                for (int i = 5; i <= 18; i++) {
                     if(ors.getId(i) != null) {
-                        ors.applyOperation(new SetOperation<>(SetOperation.REMOVE, i, ors.getId(i)), dataManager);
+                        //ors.applyOperation(new SetOperation<>(SetOperation.REMOVE, i, ors.getId(i)), dataManager);
+                        ors.remove(i, dataManager);
                     }
                 }
 
