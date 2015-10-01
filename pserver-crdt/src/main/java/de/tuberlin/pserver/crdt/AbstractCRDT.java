@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.crdt;
 
 import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.sets.SetOperation;
 
 import java.util.HashSet;
 import java.util.LinkedList;

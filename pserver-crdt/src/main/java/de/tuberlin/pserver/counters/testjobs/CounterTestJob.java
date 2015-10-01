@@ -4,8 +4,6 @@ package de.tuberlin.pserver.counters.testjobs;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.counters.Counter;
 import de.tuberlin.pserver.counters.CounterOperation;
-import de.tuberlin.pserver.crdt.CRDT;
-import de.tuberlin.pserver.crdt.Operation;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.runtime.MLProgram;

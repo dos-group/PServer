@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.registers;
 
 import de.tuberlin.pserver.crdt.AbstractOperation;
-import de.tuberlin.pserver.crdt.Operation;
 
 import java.util.Date;
 

@@ -1,12 +1,9 @@
 package de.tuberlin.pserver.crdt;
 
+import java.util.Collection;
+
+// TODO: Do I want to extend java collection? / java Set etc.
+// TODO: Auxiliary functions such as for each etc.
 public interface CRDT<T> {
     int END = -1;
-
-
-    //void applyUpdate(int srcNodeID, Operation op, DataManager dm);
-    //void broadcast(int op, int value, DataManager dm);
-
-    // Signal the end of processing on this crdt and that all replicas should wait for "finished" signal before ending
-    // public void consolidate();
 }

@@ -8,30 +8,33 @@ import de.tuberlin.pserver.registers.LWWRegister;
 import de.tuberlin.pserver.registers.RegisterOperation;
 import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.sets.AbstractLWWSet;
-import de.tuberlin.pserver.sets.PNSet;
+import de.tuberlin.pserver.sets.ORSet;
 import de.tuberlin.pserver.sets.SetOperation;
 
 import java.util.Calendar;
+import java.util.UUID;
 
-// TODO: this needs testing and debugging
-public class PNSetTestJob extends MLProgram {
+// TODO: this needs testing and debugging and major cleanup
+public class ORSetTestJob extends MLProgram {
 
     @Unit(at = "0")
     public void test(Program program) {
         program.process(() -> {
             CF.parUnit(0).exe(() -> {
-                PNSet<Integer> pns = new PNSet<>("one", dataManager);
+                ORSet<Integer> ors = new ORSet<>("one", dataManager);
 
                 for (int i = 0; i < 10; i++) {
-                    pns.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
+                    ors.applyOperation(new SetOperation<>(SetOperation.ADD, i, UUID.randomUUID()), dataManager);
                 }
 
-                pns.finish(dataManager);
+                ors.applyOperation(new SetOperation<>(SetOperation.ADD, 7, UUID.randomUUID()), dataManager);
+
+                ors.finish(dataManager);
 
                 System.out.println("[DEBUG] Set of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + pns.getSet());
+                        " slot " + slotContext.slotID + ": " + ors.getSet());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + pns.getBuffer());
+                        " slot " + slotContext.slotID + ": " + ors.getBuffer());
             });
         });
     }
@@ -40,26 +43,27 @@ public class PNSetTestJob extends MLProgram {
     public void test2(Program program) {
         program.process(() -> {
             CF.parUnit(0).exe(() -> {
-                PNSet<Integer> pns = new PNSet<>("one", dataManager);
+                ORSet<Integer> ors = new ORSet<>("one", dataManager);
 
                 for (int i = 10; i <= 15; i++) {
 
-                    pns.applyOperation(new SetOperation<>(SetOperation.ADD, i), dataManager);
+                    ors.applyOperation(new SetOperation<>(SetOperation.ADD, i, UUID.randomUUID()), dataManager);
                 }
 
                 Thread.sleep(500);
 
-                for (int i = 5; i <= 11; i++) {
-
-                    pns.applyOperation(new SetOperation<>(SetOperation.REMOVE, i), dataManager);
+               for (int i = 5; i <= 18; i++) {
+                    if(ors.getId(i) != null) {
+                        ors.applyOperation(new SetOperation<>(SetOperation.REMOVE, i, ors.getId(i)), dataManager);
+                    }
                 }
 
-                pns.finish(dataManager);
+                ors.finish(dataManager);
 
                 System.out.println("[DEBUG] Set of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + pns.getSet());
+                        " slot " + slotContext.slotID + ": " + ors.getSet());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + pns.getBuffer());
+                        " slot " + slotContext.slotID + ": " + ors.getBuffer());
             });
         });
     }
@@ -75,7 +79,7 @@ public class PNSetTestJob extends MLProgram {
         PServerExecutor.LOCAL
                 // Second param is number of slots (threads executing the job) per node,
                 // should be 1 at the beginning.
-                .run(PNSetTestJob.class, 1)
+                .run(ORSetTestJob.class, 1)
                 .done();
     }
 }
