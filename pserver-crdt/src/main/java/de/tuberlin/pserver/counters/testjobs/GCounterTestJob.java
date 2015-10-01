@@ -19,9 +19,11 @@ public class GCounterTestJob extends MLProgram {
                 GCounter gc2 = new GCounter("two", dataManager);
 
                 for (int i = 0; i < 10000; i++) {
-                    gc.applyOperation(new CounterOperation(CounterOperation.ADD, 1), dataManager);
+                    //gc.applyOperation(new CounterOperation(CounterOperation.ADD, 1), dataManager);
+                    gc.add(1, dataManager);
                     if ((i % 2) == 0) {
-                        gc2.applyOperation(new CounterOperation(CounterOperation.ADD, 1), dataManager);
+                        //gc2.applyOperation(new CounterOperation(CounterOperation.ADD, 1), dataManager);
+                        gc2.add(1, dataManager);
                     }
                 }
 
@@ -48,9 +50,11 @@ public class GCounterTestJob extends MLProgram {
                 GCounter gc2 = new GCounter("two", dataManager);
 
                 for (int i = 0; i < 100000; i++) {
-                    gc.applyOperation(new CounterOperation(CounterOperation.ADD, 1), dataManager);
+                    //gc.applyOperation(new CounterOperation(CounterOperation.ADD, 1), dataManager);
+                    gc.add(1, dataManager);
                     if ((i % 2) == 0) {
-                        gc2.applyOperation(new CounterOperation(CounterOperation.ADD, 1), dataManager);
+                        //gc2.applyOperation(new CounterOperation(CounterOperation.ADD, 1), dataManager);
+                        gc2.add(1, dataManager);
                     }
                 }
 

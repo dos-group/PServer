@@ -21,14 +21,13 @@ public class LWWRegisterTestJob extends MLProgram {
                 LWWRegister<Integer> lwwr = new LWWRegister<>("one", dataManager, (i1, i2) -> i1 > i2);
 
                 for (int i = 0; i <= 10000; i++) {
-                    lwwr.applyOperation(new RegisterOperation<>(RegisterOperation.WRITE, i,
-                            Calendar.getInstance().getTime()), dataManager);
+                    lwwr.set(i, dataManager);
                 }
 
                 lwwr.finish(dataManager);
 
                 System.out.println("[DEBUG] Register of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + lwwr.getValue());
+                        " slot " + slotContext.slotID + ": " + lwwr.getRegister());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + lwwr.getBuffer());
             });
@@ -42,15 +41,14 @@ public class LWWRegisterTestJob extends MLProgram {
                 LWWRegister<Integer> lwwr = new LWWRegister<>("one", dataManager, (i1, i2) -> i1 > i2);
 
                 for (int i = 0; i <= 10; i++) {
-                    lwwr.applyOperation(new RegisterOperation<>(RegisterOperation.WRITE, i,
-                            Calendar.getInstance().getTime()), dataManager);
+                    lwwr.set(i, dataManager);
                     Thread.sleep(500);
                 }
 
                 lwwr.finish(dataManager);
 
                 System.out.println("[DEBUG] Register of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + lwwr.getValue());
+                        " slot " + slotContext.slotID + ": " + lwwr.getRegister());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + lwwr.getBuffer());
             });

@@ -63,11 +63,12 @@ public abstract class AbstractCRDT<T> implements CRDT<T> {
         });
     }
 
-
+    @Override
     public void run(DataManager dataManager) {
         dataManager.pushTo("Running_" + id, 0, dataManager.remoteNodeIDs);
     }
 
+    @Override
     public void finish(DataManager dataManager) {
         System.out.println("[DEBUG] All nodes: " + isAllNodesRunning());
 
@@ -93,19 +94,12 @@ public abstract class AbstractCRDT<T> implements CRDT<T> {
         }
     }
 
-    public boolean isAllNodesRunning() {
+    private boolean isAllNodesRunning() {
         return allNodesRunning;
     }
 
-    public boolean isAllNodesFinished() {
+    private boolean isAllNodesFinished() {
         return allNodesFinished;
-    }
-
-    public void applyOperation(Operation op, DataManager dm) {
-        //inBuffer.add(op);
-        if(update(-1, op, dm)) {
-            broadcast(op, dm);
-        }
     }
 
     public Queue getBuffer() {
@@ -131,7 +125,7 @@ public abstract class AbstractCRDT<T> implements CRDT<T> {
         }
     }
 
-    protected void buffer(Operation op) {
+    private void buffer(Operation op) {
         outBuffer.add(op);
     }
 

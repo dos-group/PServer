@@ -17,14 +17,15 @@ public class CounterTestJob extends MLProgram {
     public void test(Program program) {
         program.process(() -> {
             CF.parUnit(0).exe(() -> {
-                Random r = new Random(Calendar.getInstance().getTimeInMillis());
                 Counter gc = new Counter("one", dataManager);
                 Counter gc2 = new Counter("two", dataManager);
 
                 for (int i = 0; i < 10000; i++) {
-                    gc.applyOperation(new CounterOperation(CounterOperation.SUBTRACT, 2), dataManager);
+                    //gc.applyOperation(new CounterOperation(CounterOperation.SUBTRACT, 2), dataManager);
+                    gc.subtract(1, dataManager);
                     if ((i % 2) == 0) {
-                        gc2.applyOperation(new CounterOperation(CounterOperation.SUBTRACT, 2), dataManager);
+                        //gc2.applyOperation(new CounterOperation(CounterOperation.SUBTRACT, 2), dataManager);
+                        gc2.subtract(1, dataManager);
                     }
                 }
 
@@ -51,9 +52,11 @@ public class CounterTestJob extends MLProgram {
                 Counter gc2 = new Counter("two", dataManager);
 
                 for (int i = 0; i < 50000; i++) {
-                    gc.applyOperation(new CounterOperation(CounterOperation.ADD, 1), dataManager);
+                    //gc.applyOperation(new CounterOperation(CounterOperation.ADD, 1), dataManager);
+                    gc.add(1, dataManager);
                     if ((i % 2) == 0) {
-                        gc2.applyOperation(new CounterOperation(CounterOperation.ADD, 1), dataManager);
+                        //gc2.applyOperation(new CounterOperation(CounterOperation.ADD, 1), dataManager);
+                        gc2.add(1, dataManager);
                     }
                 }
 
