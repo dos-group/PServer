@@ -84,7 +84,7 @@ public class TransactionJob1 extends Program {
     // ---------------------------------------------------
 
     public static void main(final String[] args) {
-        System.setProperty("simulation.numNodes", "2");
+        System.setProperty("simulation.numNodes", "1");
         PServerExecutor.LOCAL
                 .run(TransactionJob1.class)
                 .done();
