@@ -8,6 +8,11 @@ import java.util.Collection;
 // TODO: Auxiliary functions such as for each etc.
 public interface CRDT<T> {
     int END = -1;
+    int SUM = 1;
+    int SUBTRACT = 2;
+    int ADD = 3;
+    int REMOVE = 4;
+    int WRITE = 5;
 
 
     void run(DataManager dataManager);
