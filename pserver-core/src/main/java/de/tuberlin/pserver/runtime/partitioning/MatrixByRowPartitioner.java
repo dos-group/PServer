@@ -5,6 +5,7 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.SlotContext;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 
+import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
@@ -92,6 +93,23 @@ public class MatrixByRowPartitioner extends IMatrixPartitioner {
     public IMatrixPartitioner ofNode(int nodeId) {
         Preconditions.checkArgument(Arrays.asList(atNodes).contains(nodeId), "Can not construct MatrixByRowPartitioner of node '%d' because it is part of this partitioning. Participating nodes are: %s", nodeId, Arrays.toString(atNodes));
         return new MatrixByRowPartitioner(rows, cols, nodeId, atNodes);
+    }
+
+    public static void main(String[] args) throws NoSuchMethodException, ClassNotFoundException {
+
+        for(Constructor constructor : MatrixByRowPartitioner.class.getDeclaredConstructors()) {
+            StringBuilder sb = new StringBuilder();
+            for(Class<?> paramClass : constructor.getParameterTypes()) {
+                System.out.println(paramClass);
+                sb.append(paramClass.getCanonicalName());
+                sb.append(",");
+            }
+            System.out.println(sb.toString());
+        }
+
+        Object test = MatrixByRowPartitioner.class.getDeclaredConstructor(long.class, long.class, int.class, int[].class);
+
+        //IMatrixPartitioner.newInstance(MatrixByRowPartitioner.class, 10, 10, 0, new int[] {0,1,2,3});
     }
 
     //    // TODO: onvert this into a unit test

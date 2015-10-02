@@ -42,12 +42,12 @@ public class DistributedMatrix extends AbstractMatrix {
     // ---------------------------------------------------
 
     public DistributedMatrix(final DistributedMatrix m) {
-        this(m.slotContext, m.rows, m.cols, m.partitioner.getClass(), m.layout, m.format);
+        this(m.slotContext, m.rows, m.cols, m.partitioner, m.layout, m.format);
     }
 
     public DistributedMatrix(final SlotContext slotContext,
                              final long rows,final long cols,
-                             final Class<? extends IMatrixPartitioner> partitionerClass,
+                             final IMatrixPartitioner partitioner,
                              final Layout layout,
                              final Format format) {
 
@@ -56,8 +56,8 @@ public class DistributedMatrix extends AbstractMatrix {
         this.slotContext    = Preconditions.checkNotNull(slotContext);
         this.nodeDOP        = slotContext.programContext.nodeDOP;
         this.nodeID         = slotContext.runtimeContext.nodeID;
-        Preconditions.checkNotNull(partitionerClass);
-        partitioner         = IMatrixPartitioner.newInstance(partitionerClass, rows, cols, slotContext);
+        Preconditions.checkNotNull(partitioner);
+        this.partitioner         = partitioner;
         this.shape          = partitioner.getPartitionShape();
         this.format         = format;
 
@@ -208,7 +208,7 @@ public class DistributedMatrix extends AbstractMatrix {
     }
 
     public long translateCol(final long col) {
-        return partitioner.translateGlobalToLocalRow(col);
+        return partitioner.translateGlobalToLocalCol(col);
     }
 
     public Matrix.RowIterator createLocalRowIterator(final Matrix.RowIterator iter) {
@@ -301,7 +301,7 @@ public class DistributedMatrix extends AbstractMatrix {
             remoteToLocalPartitionMapping.put(remotePartition, transposedOffsets);
         }
         // fetch remote partitions and construct resulting matrix according to position-mapping
-        DistributedMatrix result = new DistributedMatrix(slotContext, cols, rows, partitioner.getClass(), layout, format);
+        DistributedMatrix result = new DistributedMatrix(slotContext, cols, rows, partitioner, layout, format);
         DistributedMatrix remoteView = constructIntersectingMatrix(this, result, remoteToLocalPartitionMapping);
         return remoteView;
     }

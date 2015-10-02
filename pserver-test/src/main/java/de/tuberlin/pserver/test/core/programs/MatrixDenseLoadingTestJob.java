@@ -1,9 +1,13 @@
 package de.tuberlin.pserver.test.core.programs;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.dsl.state.StateDeclaration;
+import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.LocalScope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
@@ -23,30 +27,21 @@ public class MatrixDenseLoadingTestJob extends MLProgram  {
     private static final long ROWS = 1000;
     private static final long COLS = 250;
 
+    private final String FILE = "pserver-test/src/main/resources/rowcolval_dataset_1000_250_shuffeled.csv";
+
+    @State(
+            path = FILE,
+            rows = ROWS,
+            cols = COLS,
+            globalScope = GlobalScope.PARTITIONED,
+            recordFormat = RowColValRecordFormatConfig.class,
+            format = Format.DENSE_FORMAT,
+            layout = Layout.ROW_LAYOUT
+    )
     public Matrix matrix;
-
-    private final String FILE;
-
-    public MatrixDenseLoadingTestJob() {
-        FILE = getClass().getClassLoader().getResource("rowcolval_dataset_1000_250_shuffeled.csv").getFile();
-    }
 
     @Unit
     public void main(final Program program) {
-
-        if (slotContext.slotID == 0) {
-            dataManager.loadAsMatrix(
-                    slotContext,
-                    FILE,
-                    "matrix",
-                    ROWS, COLS,
-                    GlobalScope.PARTITIONED,
-                    PartitionType.ROW_PARTITIONED,
-                    new RowColValRecordFormatConfig(),
-                    Format.DENSE_FORMAT,
-                    Layout.ROW_LAYOUT
-            );
-        }
 
         program.process(() -> {
 
@@ -56,7 +51,7 @@ public class MatrixDenseLoadingTestJob extends MLProgram  {
 
                 int nodeId = slotContext.runtimeContext.nodeID;
                 int numNodes = slotContext.programContext.nodeDOP;
-                MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);
+                MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(ROWS, COLS, nodeId, numNodes);
                 ReusableMatrixEntry entry = new MutableMatrixEntry(-1, -1, Double.NaN);
                 BufferedReader br = null;
 
@@ -92,5 +87,12 @@ public class MatrixDenseLoadingTestJob extends MLProgram  {
                 }
             });
         });
+    }
+
+    public static void main(String[] args) {
+        System.setProperty("simulation.numNodes", "4");
+        PServerExecutor.LOCAL
+                .run(MatrixDenseLoadingTestJob.class, 1)
+                .done();
     }
 }

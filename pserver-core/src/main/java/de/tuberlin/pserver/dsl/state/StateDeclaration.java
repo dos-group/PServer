@@ -17,6 +17,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.stream.IntStream;
 
 public final class StateDeclaration {
 
@@ -83,13 +84,14 @@ public final class StateDeclaration {
         this.remoteUpdate   = remoteUpdate;
     }
 
-    public static StateDeclaration fromAnnotatedField(State state, Field field) {
+    public static StateDeclaration fromAnnotatedField(State state, Field field, int[] fallBackAtNodes) {
+        int[] parsedAtNodes = ParseUtils.parseNodeRanges(state.at());
         return new StateDeclaration(
                 field.getName(),
                 field.getType(),
                 state.localScope(),
                 state.globalScope(),
-                ParseUtils.parseNodeRanges(state.at()),
+                parsedAtNodes.length > 0 ? parsedAtNodes : fallBackAtNodes,
                 state.partitionerClass(),
                 state.rows(),
                 state.cols(),

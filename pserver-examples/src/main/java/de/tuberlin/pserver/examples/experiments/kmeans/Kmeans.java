@@ -45,11 +45,7 @@ public class Kmeans extends MLProgram {
     public Matrix centroidsUpdate;
 
     @StateMerger(stateObjects = "centroidsUpdate")
-    public final MatrixUpdateMerger centroidsUpdateMerger = (i, j, val, remoteVal) -> {
-        System.out.println("called! i: "+i+", j: "+j+", val: "+val+", remoteVal: "+remoteVal);
-        return val + remoteVal;
-    };
-
+    public final MatrixUpdateMerger centroidsUpdateMerger = (i, j, val, remoteVal) -> val + remoteVal;
 
     @Unit
     public void main(final Program program) {
@@ -70,9 +66,9 @@ public class Kmeans extends MLProgram {
                 int nodeId = slotContext.runtimeContext.nodeID;
 
                 // BEGIN: PULL MODEL FROM OTHER NODES AND MERGE
-                System.out.println(nodeId + ": pre pull centroidsUpdate: " + centroidsUpdate);
+                //System.out.println(nodeId + ": pre pull centroidsUpdate: " + centroidsUpdate);
                 DF.pullUpdate();
-                System.out.println(nodeId + ": post pull centroidsUpdate: " + centroidsUpdate);
+                //System.out.println(nodeId + ": post pull centroidsUpdate: " + centroidsUpdate);
                 for (int i = 0; i < K; i++) {
                     if (centroidsUpdate.get(i, COLS) > 0) {
                         Matrix update = centroidsUpdate.getRow(i, 0, COLS);

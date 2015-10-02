@@ -25,36 +25,27 @@ public class MatrixSparseLoadingTestJob extends MLProgram  {
     private static final long ROWS = 1000;
     private static final long COLS = 250;
 
+    private final String FILE = "pserver-test/src/main/resources/rowcolval_dataset_1000_250_shuffeled.csv";
+
+    @State(
+            path = FILE,
+            rows = ROWS,
+            cols = COLS,
+            globalScope = GlobalScope.PARTITIONED,
+            recordFormat = RowColValRecordFormatConfig.class,
+            format = Format.SPARSE_FORMAT,
+            layout = Layout.ROW_LAYOUT
+    )
     public Matrix matrix;
-
-    private final String FILE;
-
-    public MatrixSparseLoadingTestJob() {
-        FILE = getClass().getClassLoader().getResource("rowcolval_dataset_1000_250_shuffeled.csv").getFile();
-    }
 
     @Unit
     public void main(final Program program) {
-
-        if (slotContext.slotID == 0) {
-            dataManager.loadAsMatrix(
-                    slotContext,
-                    FILE,
-                    "matrix",
-                    ROWS, COLS,
-                    GlobalScope.PARTITIONED,
-                    PartitionType.ROW_PARTITIONED,
-                    new RowColValRecordFormatConfig(),
-                    Format.SPARSE_FORMAT,
-                    Layout.ROW_LAYOUT
-            );
-        }
 
         program.process(() -> {
 
             int nodeId = slotContext.runtimeContext.nodeID;
             int numNodes = slotContext.programContext.nodeDOP;
-            MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);
+            MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(ROWS, COLS, nodeId, numNodes);
 
             ReusableMatrixEntry entry = new MutableMatrixEntry(-1, -1, Double.NaN);
 
@@ -120,7 +111,7 @@ public class MatrixSparseLoadingTestJob extends MLProgram  {
 
                 int nodeId = slotContext.runtimeContext.nodeID;
                 int numNodes = slotContext.programContext.nodeDOP;
-                MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);
+                MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(ROWS, COLS, nodeId, numNodes);
 
                 ReusableMatrixEntry entry = new MutableMatrixEntry(-1, -1, Double.NaN);
 
