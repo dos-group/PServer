@@ -6,6 +6,7 @@ import de.tuberlin.pserver.dsl.unit.controlflow.base.Body;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +25,7 @@ public abstract class Program extends EventDispatcher {
 
     private Lifecycle lifecycle;
 
-    private ProgramCompiler programCompiler;
+    private Compiler compiler;
 
     public ProgramContext programContext;
 
@@ -46,7 +47,7 @@ public abstract class Program extends EventDispatcher {
 
         this.lifecycle = new Lifecycle(programContext);
 
-        this.programCompiler = new ProgramCompiler(programContext, getClass());
+        this.compiler = new Compiler(programContext, getClass());
     }
 
     public void result(final Serializable... obj) {
@@ -61,11 +62,11 @@ public abstract class Program extends EventDispatcher {
 
         final String slotIDStr = "[" + programContext.runtimeContext.nodeID + "]";
 
-        programCompiler.link(this);
+        compiler.link(this);
 
-        programCompiler.defineUnits(this, lifecycle);
+        compiler.defineUnits(this, lifecycle);
 
-        programCompiler.fetchStateObjects(this);
+        compiler.fetchStateObjects(this);
 
         {
             LOG.info(slotIDStr + "Enter " + lifecycle.programContext.simpleClassName + " pre-process phase.");

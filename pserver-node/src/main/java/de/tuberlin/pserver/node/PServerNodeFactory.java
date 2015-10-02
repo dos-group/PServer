@@ -80,7 +80,7 @@ public enum PServerNodeFactory {
         this.userCodeManager    = new UserCodeManager(this.getClass().getClassLoader());
         this.rpcManager         = new RPCManager(netManager);
 
-        infraManager.start(); // blocking until all nodes are registered at zookeeper
+        infraManager.start(); // blocking until all at are registered at zookeeper
         infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connectTo);
 
         this.fileSystemManager  = createFileSystem(infraManager.getNodeID());

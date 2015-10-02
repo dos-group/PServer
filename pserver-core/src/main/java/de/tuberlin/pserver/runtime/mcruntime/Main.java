@@ -75,19 +75,19 @@ public class Main {
 
                     Parallel.Do(dop, () -> {
 
-                        //System.out.println("[" + slotID() + "]" + " level 0");
+                        //System.out.println("[" + id() + "]" + " level 0");
 
                         Parallel.Do(dop, () -> {
 
-                            //System.out.println("[" + slotID() + "]" + " level 1");
+                            //System.out.println("[" + id() + "]" + " level 1");
 
                             Parallel.Do(dop, () -> {
 
-                                //System.out.println("[" + slotID() + "]" + " level 2");
+                                //System.out.println("[" + id() + "]" + " level 2");
 
                                 Parallel.Do(dop, () -> {
 
-                                    //System.out.println("[" + slotID() + "]" + " level 3");
+                                    //System.out.println("[" + id() + "]" + " level 3");
 
                                 });
                             });
@@ -117,19 +117,19 @@ public class Main {
 
                         Parallel.Do(dop, () -> {
 
-                            //System.out.println("[" + slotID() + "]" + " level 0");
+                            //System.out.println("[" + id() + "]" + " level 0");
 
                             Parallel.Do(dop - 1, () -> {
 
-                                //System.out.println("[" + slotID() + "]" + " level 1");
+                                //System.out.println("[" + id() + "]" + " level 1");
 
                                 Parallel.Do(dop - 2, () -> {
 
-                                    //System.out.println("[" + slotID() + "]" + " level 2");
+                                    //System.out.println("[" + id() + "]" + " level 2");
 
                                     Parallel.Do(dop - 3, () -> {
 
-                                        //System.out.println("[" + slotID() + "]" + " level 3");
+                                        //System.out.println("[" + id() + "]" + " level 3");
                                     });
                                 });
                             });
@@ -161,14 +161,14 @@ public class Main {
 
                             Parallel.Do(2, () -> {
 
-                                //System.out.println("[" + slotID() + "]" + " BLOCK A");
+                                //System.out.println("[" + id() + "]" + " BLOCK A");
 
                             });
 
 
                             Parallel.Do(2, () -> {
 
-                                //System.out.println("[" + slotID() + "]" + " BLOCK B");
+                                //System.out.println("[" + id() + "]" + " BLOCK B");
 
                             });
                         });
@@ -199,14 +199,14 @@ public class Main {
 
                             Parallel.Do(1, () -> {
 
-                                //System.out.println("[" + slotID() + "]" + " BLOCK A");
+                                //System.out.println("[" + id() + "]" + " BLOCK A");
 
                             });
 
 
                             Parallel.Do(3, () -> {
 
-                                //System.out.println("[" + slotID() + "]" + " BLOCK B");
+                                //System.out.println("[" + id() + "]" + " BLOCK B");
 
                             });
                         });
@@ -233,14 +233,14 @@ public class Main {
 
                     Parallel.Do(4, () -> {
 
-                        System.out.println("Hello at core " + Parallel.slotID());
+                        System.out.println("Hello at core " + Parallel.id());
 
                     });
 
 
                     /*Parallel.For(0, 100, (i) -> {
 
-                        System.out.println("Iteration " + i + " at core " + Parallel.slotID());
+                        System.out.println("Iteration " + i + " at core " + Parallel.id());
 
                     });*/
 

@@ -3,7 +3,6 @@ package de.tuberlin.pserver.runtime;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.ds.ResettableCountDownLatch;
-import de.tuberlin.pserver.compiler.ProgramContext;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
@@ -306,9 +305,9 @@ public class DataManager extends EventDispatcher {
         Preconditions.checkNotNull(name);
         final NetEvents.NetEvent event = new NetEvents.NetEvent(PUSH_EVENT_PREFIX + name, true);
         event.setPayload(value);
-        // remote nodes.
+        // remote at.
         netManager.sendEvent(remoteNodeIDs, event);
-        // local nodes.
+        // local at.
         //netManager.dispatchEvent(event);
     }
 
@@ -400,7 +399,7 @@ public class DataManager extends EventDispatcher {
         responseHandler.initLatch(nodeIDs.length);
         netManager.addEventListener(PUSH_EVENT_PREFIX + name, responseHandler);
 
-        // send pull request to all nodes.
+        // send pull request to all at.
         NetEvents.NetEvent event = new NetEvents.NetEvent(PULL_EVENT_PREFIX + name, true);
         netManager.sendEvent(nodeIDs, event);
 

@@ -3,20 +3,27 @@ package de.tuberlin.pserver.examples.experiments.glove;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.annotations.StateExtractor;
-import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
-import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
+import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
+import de.tuberlin.pserver.dsl.transaction.TransactionMng;
+import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
+import de.tuberlin.pserver.dsl.transaction.phases.Apply;
+import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
+import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.state.filter.MatrixUpdateFilter;
-import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
+import de.tuberlin.pserver.runtime.mcruntime.Parallel;
 import de.tuberlin.pserver.types.PartitionType;
+import org.apache.commons.lang3.mutable.MutableDouble;
+
+import java.util.Random;
 
 public final class GloVeJobAdaGradPull extends Program {
 
+    // ---------------------------------------------------
+    // Constants.
     // ---------------------------------------------------
 
     private static final int        ROWS = 50;
@@ -32,44 +39,77 @@ public final class GloVeJobAdaGradPull extends Program {
     private static final int        NUM_EPOCHS = 15;
 
     // ---------------------------------------------------
+    // State.
+    // ---------------------------------------------------
 
     @State(globalScope = GlobalScope.PARTITIONED, partitionType = PartitionType.ROW_PARTITIONED,
             rows = COLS, cols = COLS, path = "datasets/text8_coocc.csv")
     public Matrix X;
 
-    @State(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = COLS * 2, remoteUpdate = RemoteUpdate.DELTA_MERGE_UPDATE)
+    @State(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = COLS * 2)
     public Matrix W;
 
-    @State(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = COLS * 2, remoteUpdate = RemoteUpdate.SIMPLE_MERGE_UPDATE)
+    @State(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = COLS * 2)
     public Matrix GradSq;
 
-    @State(globalScope = GlobalScope.REPLICATED, rows = 1, cols = COLS * 2, layout = Layout.COLUMN_LAYOUT, remoteUpdate = RemoteUpdate.SIMPLE_MERGE_UPDATE)
+    @State(globalScope = GlobalScope.REPLICATED, rows = 1, cols = COLS * 2, layout = Layout.COLUMN_LAYOUT)
     public Matrix B;
 
-    @State(globalScope = GlobalScope.REPLICATED, rows = 1, cols = COLS * 2, layout = Layout.COLUMN_LAYOUT, remoteUpdate = RemoteUpdate.SIMPLE_MERGE_UPDATE)
+    @State(globalScope = GlobalScope.REPLICATED, rows = 1, cols = COLS * 2, layout = Layout.COLUMN_LAYOUT)
     public Matrix GradSqB;
 
     // ---------------------------------------------------
-
-    @StateExtractor(state = "W, GradSq")
-    public final MatrixUpdateFilter deltaFilter = (i, j, o, n) -> {
-        final double sn = n * 10000;
-        final double so = o * 10000;
-        final double d = sn > 0 ? sn : 1;
-        return (((so - sn) / d) > 0.2);
-    };
-
+    // Transactions.
     // ---------------------------------------------------
 
-    @StateMerger(stateObjects = "W, GradSq, B, GradSqB")
-    public final MatrixUpdateMerger matrixMerger = (i, j, val, remoteVal) -> (val + remoteVal) / 2;
+    @Transaction(state = "W", type = TransactionType.PULL)
+    public final TransactionDefinition syncW = new TransactionDefinition(
 
+            (Apply<Matrix, Void>) (updates) -> {
+                for (final Matrix update : updates)
+                    Parallel.For(update, (i, j, v) -> W.set(i, j, (W.get(i, j) + update.get(i, j)) / 2));
+                return null;
+            }
+    );
+
+    @Transaction(state = "GradSq", type = TransactionType.PULL)
+    public final TransactionDefinition syncGradSq = new TransactionDefinition(
+
+            (Apply<Matrix, Void>) (updates) -> {
+                for (final Matrix update : updates)
+                    Parallel.For(update, (i, j, v) -> GradSq.set(i, j, (GradSq.get(i, j) + update.get(i, j)) / 2));
+                return null;
+            }
+    );
+
+    @Transaction(state = "B", type = TransactionType.PULL)
+    public final TransactionDefinition syncB = new TransactionDefinition(
+
+            (Apply<Matrix, Void>) (updates) -> {
+                for (final Matrix update : updates)
+                    Parallel.For(update, (i, j, v) -> B.set(i, j, (B.get(i, j) + update.get(i, j)) / 2));
+                return null;
+            }
+    );
+
+    @Transaction(state = "GradSqB", type = TransactionType.PULL)
+    public final TransactionDefinition syncGradSqB = new TransactionDefinition(
+
+            (Apply<Matrix, Void>) (updates) -> {
+                for (final Matrix update : updates)
+                    Parallel.For(update, (i, j, v) -> GradSqB.set(i, j, (GradSqB.get(i, j) + update.get(i, j)) / 2));
+                return null;
+            }
+    );
+
+    // ---------------------------------------------------
+    // Units.
     // ---------------------------------------------------
 
     @Unit
-    public void main(final Lifecycle lifecycle) {
+    public void unit(final Lifecycle lifecycle) {
 
-        /*program.preProcess(() -> {
+        lifecycle.preProcess(() -> {
 
             final Random rand = new Random();
             for (int i = 0; i < W.rows(); ++i) {
@@ -86,13 +126,13 @@ public final class GloVeJobAdaGradPull extends Program {
 
         }).process(() -> {
 
-            CF.loop().sync(Loop.ASYNC).exe(NUM_EPOCHS, (e0) -> {
+            UnitMng.loop(NUM_EPOCHS, (e0) -> {
 
                 final MutableDouble costI = new MutableDouble(0.0);
 
                 LOG.info("Epoch = " + e0);
 
-                CF.loop().parExe(X, (e, wordVecIdx, j, v) -> {
+                Parallel.For(X, (wordVecIdx, j, v) -> {
 
                     final long ctxVecIdx = j + COLS;
 
@@ -132,10 +172,12 @@ public final class GloVeJobAdaGradPull extends Program {
                     GradSqB.set(0, ctxVecIdx, GradSqB.get(0, ctxVecIdx) + fdiff * fdiff);
                 });
 
-                DF.publishUpdate();
-                DF.pullUpdate();
+                TransactionMng.commit(syncW);
+                TransactionMng.commit(syncGradSq);
+                TransactionMng.commit(syncB);
+                TransactionMng.commit(syncGradSqB);
             });
-        });*/
+        });
     }
 
     // ---------------------------------------------------

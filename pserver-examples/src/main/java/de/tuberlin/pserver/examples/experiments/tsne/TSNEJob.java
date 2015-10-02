@@ -4,15 +4,12 @@ import com.google.common.collect.Lists;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
-import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.tuples.Tuple2;
-import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
 import de.tuberlin.pserver.types.DistributedMatrix;
 
 import java.io.PrintWriter;
@@ -53,14 +50,13 @@ public class TSNEJob extends Program {
     public DistributedMatrix P;
 
     // model. linear embedding.
-    @State(
-            globalScope = GlobalScope.REPLICATED,
-            rows = ROWS, cols = EMBEDDING_DIMENSION,
-            path = "datasets/mnist_10_initY.csv",
-            remoteUpdate = RemoteUpdate.SIMPLE_MERGE_UPDATE)
+    @State(globalScope = GlobalScope.REPLICATED,
+           rows = ROWS, cols = EMBEDDING_DIMENSION,
+           path = "datasets/mnist_10_initY.csv")
+
     public Matrix Y;
 
-    @StateMerger(stateObjects = "Y")
+    /*@StateMerger(stateObjects = "Y")
     public final MatrixUpdateMerger YUpdater = (i, j, val, remoteVal) -> {
         Matrix.PartitionShape shape = P.getPartitionShape();
         if(i >= shape.rowOffset && i < shape.rowOffset + shape.rows) {
@@ -69,7 +65,7 @@ public class TSNEJob extends Program {
         else {
             return remoteVal;
         }
-    };
+    };*/
 
     // ---------------------------------------------------
     // Public Methods.

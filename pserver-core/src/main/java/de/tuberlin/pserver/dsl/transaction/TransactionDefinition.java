@@ -14,8 +14,6 @@ public class TransactionDefinition {
     // Fields.
     // ---------------------------------------------------
 
-    public final UUID uid = UUID.randomUUID();
-
     public final Prepare preparePhase;
 
     public final Fuse fusionPhase;

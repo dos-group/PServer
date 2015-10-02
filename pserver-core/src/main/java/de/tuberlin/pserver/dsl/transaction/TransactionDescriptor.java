@@ -2,9 +2,10 @@ package de.tuberlin.pserver.dsl.transaction;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import org.apache.commons.lang3.ArrayUtils;
 
-public final class TransactionDeclaration {
+public final class TransactionDescriptor {
 
     // ---------------------------------------------------
     // Fields.
@@ -14,7 +15,11 @@ public final class TransactionDeclaration {
 
     public final String stateName;
 
+    public final TransactionDefinition definition;
+
     public final TransactionType type;
+
+    public final boolean cacheRequestObject;
 
     public final int[] nodes;
 
@@ -22,18 +27,26 @@ public final class TransactionDeclaration {
     // Constructors.
     // ---------------------------------------------------
 
-    public TransactionDeclaration(final String transactionName,
-                                  final String stateName,
-                                  final TransactionType type,
-                                  final int nodeID,
-                                  final int[] nodes) {
+    public TransactionDescriptor(final String transactionName,
+                                 final String stateName,
+                                 final TransactionDefinition definition,
+                                 final TransactionType type,
+                                 final boolean cacheRequestObject,
+                                 final int nodeID,
+                                 final int[] nodes) {
 
         this.transactionName = Preconditions.checkNotNull(transactionName);
 
         this.stateName = Preconditions.checkNotNull(stateName);
 
+        this.definition = Preconditions.checkNotNull(definition);
+
         this.type  = Preconditions.checkNotNull(type);
 
+        this.cacheRequestObject = cacheRequestObject;
+
         this.nodes = ArrayUtils.removeElements(nodes, nodeID);
+
+        definition.setTransactionName(transactionName);
     }
 }

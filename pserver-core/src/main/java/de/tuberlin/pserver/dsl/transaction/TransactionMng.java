@@ -1,14 +1,12 @@
 package de.tuberlin.pserver.dsl.transaction;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.compiler.ProgramCompiler;
-import de.tuberlin.pserver.compiler.ProgramContext;
+import de.tuberlin.pserver.compiler.Compiler;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.dsl.state.StateDeclaration;
-import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.dht.DHTKey;
-import de.tuberlin.pserver.runtime.state.controller.RemoteUpdateController;
 
 import java.util.List;
 import java.util.StringTokenizer;
@@ -46,19 +44,19 @@ public final class TransactionMng {
     // Old Stuff.
     // ---------------------------------------------------
 
-    public static void publishUpdate(final String objNames) throws Exception {
+    /*public static void publishUpdate(final String objNames) throws Exception {
         Preconditions.checkNotNull(objNames);
         final StringTokenizer st = new StringTokenizer(objNames, ",");
         while (st.hasMoreTokens()) {
             final String name = st.nextToken().replaceAll("\\s+", "");
             final RemoteUpdateController remoteUpdateController =
-                    programContext.get(ProgramCompiler.remoteUpdateControllerName(name));
+                    programContext.get(Compiler.remoteUpdateControllerName(name));
             remoteUpdateController.publishUpdate();
         }
     }
 
     public static void publishUpdate() throws Exception {
-        final List<StateDeclaration> stateDecls = programContext.get(ProgramCompiler.stateDeclarationListName());
+        final List<StateDeclaration> stateDecls = programContext.get(Compiler.stateDeclarationListName());
         for (final StateDeclaration stateDecl : stateDecls) {
             if (stateDecl.remoteUpdate != RemoteUpdate.NO_UPDATE) {
                 publishUpdate(stateDecl.name);
@@ -72,27 +70,31 @@ public final class TransactionMng {
         while (st.hasMoreTokens()) {
             final String name = st.nextToken().replaceAll("\\s+", "");
             final RemoteUpdateController remoteUpdateController =
-                    programContext.get(ProgramCompiler.remoteUpdateControllerName(name));
+                    programContext.get(Compiler.remoteUpdateControllerName(name));
             remoteUpdateController.pullUpdate();
         }
     }
 
     public static void pullUpdate() throws Exception {
-        final List<StateDeclaration> stateDecls = programContext.get(ProgramCompiler.stateDeclarationListName());
+        final List<StateDeclaration> stateDecls = programContext.get(Compiler.stateDeclarationListName());
         for (final StateDeclaration stateDecl : stateDecls) {
             if (stateDecl.remoteUpdate != RemoteUpdate.NO_UPDATE) {
                 pullUpdate(stateDecl.name);
             }
         }
-    }
+    }*/
 
     // ---------------------------------------------------
 
+    public static <T> T commit(final TransactionDefinition transactionDefinition) throws Exception{
+        return commit(transactionDefinition, null);
+    }
+
     @SuppressWarnings("unchecked")
-    public static void commit(final TransactionDefinition transactionDefinition) throws Exception{
+    public static <T> T commit(final TransactionDefinition transactionDefinition, final Object requestObject) throws Exception{
         final String transactionName = transactionDefinition.getTransactionName();
         final TransactionController controller = programContext.get(transactionName);
         Preconditions.checkState(controller != null);
-        controller.executeTransaction();
+        return (T)controller.executeTransaction(requestObject);
     }
 }

@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.runtime.partitioning;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.compiler.ProgramContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
@@ -316,8 +316,8 @@ public final class MatrixPartitionManager {
     }
 
     /**
-     * Is called whenever an nodes finished processing an input split. This is triggered either by reaching the end
-     * of the own input split or by receiving a @link FinishedLoadingFileEvent. If all nodes finished processing,
+     * Is called whenever an at finished processing an input split. This is triggered either by reaching the end
+     * of the own input split or by receiving a @link FinishedLoadingFileEvent. If all at finished processing,
      * the matrix can be put into the DHT.
      */
     private void finishedTask(final String name) {

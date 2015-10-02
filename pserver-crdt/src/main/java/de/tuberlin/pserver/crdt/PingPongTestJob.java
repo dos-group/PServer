@@ -63,7 +63,7 @@ public class PingPongTestJob extends Program {
 
     public static void main(final String[] args) {
 
-        // Set the number of simulated nodes, can also be
+        // Set the number of simulated at, can also be
         // configured via 'pserver/pserver-core/src/main/resources/reference.simulation.conf'
         System.setProperty("simulation.numNodes", "2");
         // Set the memory each simulated node gets.

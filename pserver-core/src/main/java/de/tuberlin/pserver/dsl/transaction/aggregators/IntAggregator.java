@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.dsl.transaction.aggregators;
 
 
-import de.tuberlin.pserver.compiler.ProgramContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 
 public class IntAggregator extends Aggregator<Integer> {
 

@@ -27,14 +27,14 @@ public class SingletonMatrixTestJob extends Program {
 
                 CF.parUnit(k).exe(() -> {
 
-                    for (int i = programContext.slotID * rows; i < programContext.slotID * rows + rows; ++i) {
+                    for (int i = programContext.id * rows; i < programContext.id * rows + rows; ++i) {
                         for (int j = 0; j < COLS; ++j) {
 
-                            W.set(i, j, programContext.slotID);
+                            W.set(i, j, programContext.id);
                             final double value = W.get(i, j);
 
-                            Preconditions.checkState(value == programContext.slotID,
-                                    value + " != " + programContext.slotID + " - " + programContext);
+                            Preconditions.checkState(value == programContext.id,
+                                    value + " != " + programContext.id + " - " + programContext);
                         }
                     }
                 });

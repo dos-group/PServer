@@ -3,7 +3,7 @@ package de.tuberlin.pserver.runtime.mcruntime.shared;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AtomicDouble;
-import de.tuberlin.pserver.compiler.ProgramContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 
 public class SharedDouble {
 

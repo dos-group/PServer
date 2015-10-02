@@ -33,7 +33,7 @@ public final class Parallel {
     // MCRuntime Primitives.
     // ---------------------------------------------------
 
-    public static int slotID() { return mcRuntime.currentSlot().slotID; }
+    public static int id() { return mcRuntime.currentSlot().slotID; }
 
     public static void Serial(final ParallelBody body)
             throws Exception {
@@ -43,6 +43,12 @@ public final class Parallel {
             ws.run(1, body);
         } else
             throw new IllegalStateException();
+    }
+
+    public static void Do(final ParallelBody parallelBody)
+            throws Exception {
+
+        Do(mcRuntime.getNumOfWorkerSlots(), parallelBody);
     }
 
     public static void Do(final int dop, final ParallelBody parallelBody)
@@ -67,8 +73,8 @@ public final class Parallel {
 
         Do(dop, () -> {
             final double elementsPerCore = (double) (end - start) / dop;
-            final long elementOffset = (int) Math.ceil(elementsPerCore * slotID());
-            final long numElements = (int) (Math.ceil(elementsPerCore * (slotID() + 1)) - elementOffset);
+            final long elementOffset = (int) Math.ceil(elementsPerCore * id());
+            final long numElements = (int) (Math.ceil(elementsPerCore * (id() + 1)) - elementOffset);
             for (long i = elementOffset; i < elementOffset + numElements; ++i)
                 body.perform(i);
         });

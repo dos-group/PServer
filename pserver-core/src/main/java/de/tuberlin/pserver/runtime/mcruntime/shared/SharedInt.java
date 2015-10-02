@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.runtime.mcruntime.shared;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.compiler.ProgramContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

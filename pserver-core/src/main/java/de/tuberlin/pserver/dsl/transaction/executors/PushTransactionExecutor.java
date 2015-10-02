@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.dsl.transaction.executors;
 
-
-import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
+import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
+import de.tuberlin.pserver.dsl.transaction.events.TransactionRequestEvent;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.RuntimeContext;
@@ -11,24 +11,25 @@ import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PushWriteExecutor extends TransactionExecutor {
+public class PushTransactionExecutor extends TransactionExecutor {
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    private final String requestTransactionID;
+    public final TransactionDefinition transactionDefinition;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    public PushWriteExecutor(final RuntimeContext runtimeContext,
-                             final TransactionController controller) {
+    public PushTransactionExecutor(final RuntimeContext runtimeContext,
+                                   final TransactionController controller) {
 
         super(runtimeContext, controller);
-        final String name = controller.getTransactionDeclaration().transactionName;
-        this.requestTransactionID  = PUSH_WRITE_TRANSACTION_REQUEST + "_" + name;
+
+        this.transactionDefinition = controller.getTransactionDescriptor().definition;
+
         register();
     }
 
@@ -37,15 +38,16 @@ public class PushWriteExecutor extends TransactionExecutor {
     // ---------------------------------------------------
 
     @Override
-    public void execute() throws Exception {
-        final SharedObject stateObject = ((EmbeddedDHTObject)runtimeContext.dataManager.getLocal(controller.getTransactionDeclaration().stateName)[0]).object;
+    public synchronized Object execute(final Object requestObject) throws Exception {
+        final SharedObject stateObject = ((EmbeddedDHTObject)runtimeContext.dataManager.getLocal(controller.getTransactionDescriptor().stateName)[0]).object;
         stateObject.lock();
-        final Prepare preparePhase = controller.getTransactionDefinition().preparePhase;
+        final boolean cacheRequest = controller.getTransactionDescriptor().cacheRequestObject;
+        final Prepare preparePhase = transactionDefinition.preparePhase;
         final Object preparedStateObject = (preparePhase != null) ? preparePhase.prepare(stateObject) : stateObject;
-        final NetEvents.NetEvent request = new NetEvents.NetEvent(requestTransactionID);
-        request.setPayload(preparedStateObject);
-        runtimeContext.netManager.sendEvent(controller.getTransactionDeclaration().nodes, request);
+        final TransactionRequestEvent request = new TransactionRequestEvent(transactionName, preparedStateObject, cacheRequest);
+        runtimeContext.netManager.sendEvent(controller.getTransactionDescriptor().nodes, request);
         stateObject.unlock();
+        return null;
     }
 
     // ---------------------------------------------------
@@ -53,15 +55,15 @@ public class PushWriteExecutor extends TransactionExecutor {
     // ---------------------------------------------------
 
     private void register() {
-        runtimeContext.netManager.addEventListener(requestTransactionID, event -> {
+        runtimeContext.netManager.addEventListener(TransactionRequestEvent.TRANSACTION_REQUEST + transactionName, event -> {
             try {
-                final NetEvents.NetEvent request = (NetEvents.NetEvent) event;
+                final TransactionRequestEvent request = (TransactionRequestEvent) event;
                 final SharedObject object = (SharedObject) request.getPayload();
-                final SharedObject stateObject = ((EmbeddedDHTObject)runtimeContext.dataManager.getLocal(controller.getTransactionDeclaration().stateName)[0]).object;
+                final SharedObject stateObject = ((EmbeddedDHTObject)runtimeContext.dataManager.getLocal(controller.getTransactionDescriptor().stateName)[0]).object;
                 final List<SharedObject> remoteObjects = new ArrayList<>();
                 remoteObjects.add(object);
                 stateObject.lock();
-                controller.getTransactionDefinition().applyPhase.apply(remoteObjects);
+                transactionDefinition.applyPhase.apply(remoteObjects);
                 stateObject.unlock();
             } catch (Exception ex) {
                 throw new IllegalStateException(ex);

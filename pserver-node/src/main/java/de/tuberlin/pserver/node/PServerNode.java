@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.node;
 
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.compiler.ProgramContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
 import de.tuberlin.pserver.core.events.IEventHandler;

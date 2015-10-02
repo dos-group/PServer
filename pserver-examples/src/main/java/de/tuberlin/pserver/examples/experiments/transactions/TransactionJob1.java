@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.examples.experiments;
+package de.tuberlin.pserver.examples.experiments.transactions;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;
@@ -7,7 +7,7 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
-import de.tuberlin.pserver.dsl.transaction.TransactionType;
+import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
 import de.tuberlin.pserver.dsl.transaction.phases.Apply;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
@@ -19,7 +19,7 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 
 import java.util.Random;
 
-public class TransactionJob extends Program {
+public class TransactionJob1 extends Program {
 
     // ---------------------------------------------------
     // State.
@@ -32,7 +32,7 @@ public class TransactionJob extends Program {
     // Transactions.
     // ---------------------------------------------------
 
-    @Transaction(state = "model", type = TransactionType.PUSH_WRITE)
+    @Transaction(state = "model", type = TransactionType.PULL)
     public TransactionDefinition modelSync = new TransactionDefinition(
 
         (Prepare<Matrix, Matrix>) model -> model,
@@ -59,7 +59,7 @@ public class TransactionJob extends Program {
     @Unit
     public void unit(final Lifecycle lifecycle) {
 
-        lifecycle.process(() ->
+        lifecycle.process(() -> {
 
             UnitMng.loop(10, Loop.ASYNC, (e) -> {
 
@@ -75,8 +75,8 @@ public class TransactionJob extends Program {
                 });
 
                 TransactionMng.commit(modelSync);
-            })
-        );
+            });
+        });
     }
 
     // ---------------------------------------------------
@@ -86,7 +86,7 @@ public class TransactionJob extends Program {
     public static void main(final String[] args) {
         System.setProperty("simulation.numNodes", "2");
         PServerExecutor.LOCAL
-                .run(TransactionJob.class)
+                .run(TransactionJob1.class)
                 .done();
     }
 }

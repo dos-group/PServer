@@ -2,7 +2,7 @@ package de.tuberlin.pserver.types;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.compiler.ProgramContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.net.NetEvents;

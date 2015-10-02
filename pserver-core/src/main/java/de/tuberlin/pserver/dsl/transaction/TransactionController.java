@@ -11,9 +11,7 @@ public class TransactionController {
     // Fields.
     // ---------------------------------------------------
 
-    private final TransactionDeclaration declaration;
-
-    private final TransactionDefinition definition;
+    private final TransactionDescriptor transactionDescriptor;
 
     private final TransactionExecutor transactionExecutor;
 
@@ -22,25 +20,20 @@ public class TransactionController {
     // ---------------------------------------------------
 
     public TransactionController(final RuntimeContext runtimeContext,
-                                 final TransactionDeclaration declaration,
-                                 final TransactionDefinition definition) {
+                                 final TransactionDescriptor transactionDescriptor) {
 
-        this.declaration = Preconditions.checkNotNull(declaration);
+        this.transactionDescriptor = Preconditions.checkNotNull(transactionDescriptor);
 
-        this.definition  = Preconditions.checkNotNull(definition);
-
-        this.transactionExecutor = TransactionExecutor.create(declaration.type, runtimeContext, this);
+        this.transactionExecutor = TransactionExecutor.create(transactionDescriptor.type, runtimeContext, this);
     }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    public TransactionDefinition getTransactionDefinition() { return definition; }
+    public TransactionDescriptor getTransactionDescriptor() { return transactionDescriptor; }
 
-    public TransactionDeclaration getTransactionDeclaration() { return declaration; }
-
-    public void executeTransaction() throws Exception {
-        transactionExecutor.execute();
+    public Object executeTransaction(final Object requestObject) throws Exception {
+        return transactionExecutor.execute(requestObject);
     }
 }

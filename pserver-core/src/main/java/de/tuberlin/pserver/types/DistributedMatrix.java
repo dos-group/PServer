@@ -2,7 +2,7 @@ package de.tuberlin.pserver.types;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.compiler.ProgramContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;

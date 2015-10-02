@@ -5,10 +5,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import de.tuberlin.pserver.dsl.state.StateDeclaration;
 import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.annotations.StateExtractor;
-import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
-import de.tuberlin.pserver.dsl.transaction.TransactionDeclaration;
+import de.tuberlin.pserver.dsl.transaction.TransactionDescriptor;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
 import de.tuberlin.pserver.dsl.unit.UnitDeclaration;
@@ -18,12 +16,8 @@ import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.runtime.RuntimeContext;
-import de.tuberlin.pserver.runtime.state.controller.MatrixDeltaMergeUpdateController;
-import de.tuberlin.pserver.runtime.state.controller.MatrixMergeUpdateController;
-import de.tuberlin.pserver.runtime.state.controller.RemoteUpdateController;
-import de.tuberlin.pserver.runtime.state.filter.MatrixUpdateFilter;
-import de.tuberlin.pserver.runtime.state.merger.UpdateMerger;
 import de.tuberlin.pserver.types.DistributedMatrix;
 import de.tuberlin.pserver.types.PartitionType;
 import de.tuberlin.pserver.types.RemoteMatrixSkeleton;
@@ -40,13 +34,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-public final class ProgramCompiler {
+public final class Compiler {
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProgramCompiler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Compiler.class);
 
     private final ProgramContext programContext;
 
@@ -58,7 +52,7 @@ public final class ProgramCompiler {
 
     private List<StateDeclaration> stateDecls;
 
-    private List<TransactionDeclaration> transactionDecls;
+    //private List<TransactionDescriptor> transactionDecls;
 
     private List<UnitDeclaration> unitDecls;
 
@@ -66,8 +60,8 @@ public final class ProgramCompiler {
     // Constructors.
     // ---------------------------------------------------
 
-    public ProgramCompiler(final ProgramContext programContext,
-                           final Class<? extends Program> programClass) {
+    public Compiler(final ProgramContext programContext,
+                    final Class<? extends Program> programClass) {
 
         this.programContext   = Preconditions.checkNotNull(programContext);
         this.programClass     = Preconditions.checkNotNull(programClass);
@@ -96,11 +90,6 @@ public final class ProgramCompiler {
 
         analyzeTransactionAnnotations(instance);
         allocateStateObjects(programContext);
-
-        // Old stuff.
-        analyzeAndWireDeltaFilterAnnotations(instance);
-        analyzeAndWireDeltaMergerAnnotations(instance);
-
         dataManager.loadInputData();
 
         programContext.put(stateDeclarationListName(), stateDecls);
@@ -191,7 +180,6 @@ public final class ProgramCompiler {
                     final StateDeclaration decl = new StateDeclaration(
                             field.getName(),
                             field.getType(),
-                            stateProperties.localScope(),
                             stateProperties.globalScope(),
                             "".equals(stateProperties.at()) ? dataManager.nodeIDs : parseNodeRanges(stateProperties.at()),
                             stateProperties.partitionType(),
@@ -200,8 +188,7 @@ public final class ProgramCompiler {
                             stateProperties.layout(),
                             stateProperties.format(),
                             stateProperties.recordFormat(),
-                            stateProperties.path(),
-                            stateProperties.remoteUpdate()
+                            stateProperties.path()
                     );
                     stateDecls.add(decl);
                 }
@@ -210,65 +197,24 @@ public final class ProgramCompiler {
     }
 
     private void analyzeTransactionAnnotations(final Program instance) throws Exception {
-        transactionDecls = new ArrayList<>();
+        //transactionDecls = new ArrayList<>();
         for (final Field field : programClass.getDeclaredFields()) {
             for (final Annotation an : field.getDeclaredAnnotations()) {
                 if (an instanceof Transaction) {
                     final Transaction transactionProperties = (Transaction) an;
                     final StateDeclaration stateDecl = programContext.get(stateDeclarationName(transactionProperties.state()));
-                    final TransactionDeclaration decl = new TransactionDeclaration(
+                    final TransactionDescriptor descritpor = new TransactionDescriptor(
                             field.getName(),
                             transactionProperties.state(),
+                            (TransactionDefinition)field.get(instance),
                             transactionProperties.type(),
+                            transactionProperties.cache(),
                             runtimeContext.nodeID,
                             stateDecl.atNodes
                     );
-                    final TransactionDefinition definition = (TransactionDefinition)field.get(instance);
-                    final TransactionController controller = new TransactionController(runtimeContext, decl, definition);
-                    definition.setTransactionName(decl.transactionName);
-                    programContext.put(decl.transactionName, controller);
-                    transactionDecls.add(decl);
-                }
-            }
-        }
-    }
-
-    private void analyzeAndWireDeltaFilterAnnotations(final Program instance) throws Exception {
-        for (final Field field : Preconditions.checkNotNull(programClass).getDeclaredFields()) {
-            for (final Annotation an : field.getDeclaredAnnotations()) {
-                if (an instanceof StateExtractor) {
-                    final StateExtractor filterProperties = (StateExtractor) an;
-                    StringTokenizer st = new StringTokenizer(filterProperties.state(), ",");
-                    while (st.hasMoreTokens()) {
-                        final String stateObjName = st.nextToken().replaceAll("\\s+","");
-                        final RemoteUpdateController remoteUpdateController =
-                                programContext.get(remoteUpdateControllerName(stateObjName));
-                        if (remoteUpdateController == null)
-                            throw new IllegalStateException();
-                        final MatrixUpdateFilter filter = (MatrixUpdateFilter)field.get(instance);
-                        remoteUpdateController.setUpdateFilter(filter);
-                    }
-                }
-            }
-        }
-    }
-
-    private void analyzeAndWireDeltaMergerAnnotations(final Program instance) throws Exception {
-        for (final Field field : Preconditions.checkNotNull(programClass).getDeclaredFields()) {
-            for (final Annotation an : field.getDeclaredAnnotations()) {
-                if (an instanceof StateMerger) {
-                    final StateMerger mergerProperties = (StateMerger) an;
-                    StringTokenizer st = new StringTokenizer(mergerProperties.stateObjects(), ",");
-                    while (st.hasMoreTokens()) {
-                        final String stateObjName = st.nextToken().replaceAll("\\s+", "");
-                        final RemoteUpdateController remoteUpdateController =
-                                programContext.get(remoteUpdateControllerName(stateObjName));
-                        if (remoteUpdateController == null) {
-                            throw new IllegalStateException("Could not get RemoteUpdateController for State '" + stateObjName + "' while analyzing StateMerger '" + field.getName() + "'");
-                        }
-                        final UpdateMerger merger = (UpdateMerger) field.get(instance);
-                        remoteUpdateController.setUpdateMerger(merger);
-                    }
+                    final TransactionController controller = new TransactionController(runtimeContext, descritpor);
+                    programContext.put(descritpor.transactionName, controller);
+                    //transactionDecls.add(descritpor);
                 }
             }
         }
@@ -316,12 +262,11 @@ public final class ProgramCompiler {
 
                     } break;
                     case REPLICATED: {
-                        SharedObject so = null;
                         if ("".equals(decl.path)) {
 
                             if (ArrayUtils.contains(decl.atNodes, programContext.runtimeContext.nodeID)) {
 
-                                so = new MatrixBuilder()
+                                final SharedObject so = new MatrixBuilder()
                                         .dimension(decl.rows, decl.cols)
                                         .format(decl.format)
                                         .layout(decl.layout)
@@ -331,8 +276,7 @@ public final class ProgramCompiler {
                             }
                         }
                         else {
-
-                            so = dataManager.loadAsMatrix(
+                            dataManager.loadAsMatrix(
                                     programContext,
                                     decl.path,
                                     decl.name,
@@ -345,17 +289,6 @@ public final class ProgramCompiler {
                                     decl.format,
                                     decl.layout
                             );
-                        }
-                        switch (decl.remoteUpdate) {
-                            case NO_UPDATE: break;
-                            case SIMPLE_MERGE_UPDATE:
-                                    programContext.put(remoteUpdateControllerName(decl.name),
-                                            new MatrixMergeUpdateController(programContext, decl.name, (Matrix)so));
-                                break;
-                            case DELTA_MERGE_UPDATE:
-                                    programContext.put(remoteUpdateControllerName(decl.name),
-                                            new MatrixDeltaMergeUpdateController(programContext, decl.name, (Matrix)so));
-                                break;
                         }
                     } break;
                     case PARTITIONED: {
@@ -457,6 +390,4 @@ public final class ProgramCompiler {
     public static String stateDeclarationListName() { return "__state_declarations__"; }
 
     public static String stateDeclarationName(final String name) { return "__state_declaration_" + name; }
-
-    public static String remoteUpdateControllerName(final String name) { return "__remote_update_controller_" + name; }
 }

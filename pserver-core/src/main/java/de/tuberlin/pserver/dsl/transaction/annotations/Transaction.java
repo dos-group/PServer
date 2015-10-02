@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.dsl.transaction.annotations;
 
-import de.tuberlin.pserver.dsl.transaction.TransactionType;
+import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -15,5 +15,7 @@ public @interface Transaction {
 
     public TransactionType type();
 
-    public String nodes() default "";
+    public String at() default "";
+
+    public boolean cache() default false;
 }
