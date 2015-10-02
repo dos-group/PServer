@@ -2,27 +2,21 @@ package de.tuberlin.pserver.examples.experiments.tsne;
 
 import com.google.common.collect.Lists;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
-import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
-import de.tuberlin.pserver.math.Format;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.tuples.Tuple2;
-import de.tuberlin.pserver.runtime.MLProgram;
-import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
 import de.tuberlin.pserver.types.DistributedMatrix;
-import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.List;
-import java.util.Random;
 
-public class TSNEJob extends MLProgram {
+public class TSNEJob extends Program {
 
     // ---------------------------------------------------
     // Constants.
@@ -56,14 +50,13 @@ public class TSNEJob extends MLProgram {
     public DistributedMatrix P;
 
     // model. linear embedding.
-    @State(
-            globalScope = GlobalScope.REPLICATED,
-            rows = ROWS, cols = EMBEDDING_DIMENSION,
-            path = "datasets/mnist_10_initY.csv",
-            remoteUpdate = RemoteUpdate.SIMPLE_MERGE_UPDATE)
+    @State(globalScope = GlobalScope.REPLICATED,
+           rows = ROWS, cols = EMBEDDING_DIMENSION,
+           path = "datasets/mnist_10_initY.csv")
+
     public Matrix Y;
 
-    @StateMerger(stateObjects = "Y")
+    /*@StateMerger(stateObjects = "Y")
     public final MatrixUpdateMerger YUpdater = (i, j, val, remoteVal) -> {
         Matrix.PartitionShape shape = P.getPartitionShape();
         if(i >= shape.rowOffset && i < shape.rowOffset + shape.rows) {
@@ -72,21 +65,16 @@ public class TSNEJob extends MLProgram {
         else {
             return remoteVal;
         }
-    };
+    };*/
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
     @Unit
-    public void main(final Program program) {
+    public void main(final Lifecycle lifecycle) {
 
-        program.initialize(() -> {
-            // random init of model. TODO: use matrix util to do this
-            //final Random rand = new Random(0);
-            //Y.applyOnElements(e -> e = rand.nextDouble());
-
-        }).process(() -> {
+        /*program.process(() -> {
             // calc affinity. P is affinity for input X
             P.assign(binarySearch(X, TOL, PERPLEXITY));
             // symmetrize
@@ -181,7 +169,7 @@ public class TSNEJob extends MLProgram {
                         Y.add(iY, Y);
 
                         DF.publishUpdate();
-                        executionManager.globalSync(slotContext);
+                        executionManager.globalSync(programContext);
                         DF.pullUpdate();
 
                         // center Y
@@ -211,7 +199,7 @@ public class TSNEJob extends MLProgram {
 
                     });
 
-        }).postProcess(() -> result(Y));
+        }).postProcess(() -> result(Y));*/
     }
 
     // ---------------------------------------------------
@@ -307,7 +295,7 @@ public class TSNEJob extends MLProgram {
     public static void cluster() {
         System.setProperty("pserver.profile", "wally");
         PServerExecutor.DISTRIBUTED
-                .run(TSNEJob.class, 4)
+                .run(TSNEJob.class)
                 .done();
     }
 
@@ -317,7 +305,7 @@ public class TSNEJob extends MLProgram {
         final List<List<Serializable>> res = Lists.newArrayList();
 
         PServerExecutor.LOCAL
-                .run(TSNEJob.class, 1)
+                .run(TSNEJob.class)
                 .results(res)
                 .done();
 

@@ -2,7 +2,6 @@ package de.tuberlin.pserver.runtime.partitioning;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.SlotContext;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 
 import java.lang.reflect.Constructor;
@@ -10,6 +9,10 @@ import java.util.Arrays;
 import java.util.stream.IntStream;
 
 public class MatrixByRowPartitioner extends IMatrixPartitioner {
+
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
 
     private Matrix.PartitionShape shape;
 
@@ -37,7 +40,7 @@ public class MatrixByRowPartitioner extends IMatrixPartitioner {
         if(partition >= atNodes.length) {
             throw new IllegalStateException("The calculated partition id (row = "+entry.getRow()+", rows = "+rows+", numNodes = "+atNodes.length+") -> " + partition + " must not exceed numNodes.");
         }
-        return partition;
+        return atNodes[partition];
     }
 
     @Override

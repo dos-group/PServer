@@ -1,30 +1,41 @@
 package de.tuberlin.pserver.examples.experiments.kmeans;
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.loop.Loop;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
-import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
+import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
+import de.tuberlin.pserver.dsl.transaction.TransactionMng;
+import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
+import de.tuberlin.pserver.dsl.transaction.phases.Apply;
+import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
+import de.tuberlin.pserver.dsl.unit.UnitMng;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
+import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
-import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.runtime.filesystem.record.config.RowRecordFormatConfig;
-import de.tuberlin.pserver.runtime.state.merger.MatrixUpdateMerger;
+import de.tuberlin.pserver.runtime.mcruntime.Parallel;
 
 import java.util.Random;
 
-public class Kmeans extends MLProgram {
+public class Kmeans extends Program {
+
+    // ---------------------------------------------------
+    // Constants.
+    // ---------------------------------------------------
 
     private static final long ROWS = 1000;
     private static final long COLS = 2;
     private static final int K = 2;
 
-    // loaded by pserver
     private static final String FILE = "datasets/stripes2.csv";
+
+    // ---------------------------------------------------
+    // State.
+    // ---------------------------------------------------
 
     @State(
             globalScope = GlobalScope.PARTITIONED,
@@ -39,16 +50,29 @@ public class Kmeans extends MLProgram {
     @State(
             globalScope = GlobalScope.REPLICATED,
             rows = K,
-            cols = COLS + 1,
-            remoteUpdate = RemoteUpdate.SIMPLE_MERGE_UPDATE
+            cols = COLS + 1
     )
     public Matrix centroidsUpdate;
 
-    @StateMerger(stateObjects = "centroidsUpdate")
-    public final MatrixUpdateMerger centroidsUpdateMerger = (i, j, val, remoteVal) -> val + remoteVal;
+    // ---------------------------------------------------
+    // Transactions.
+    // ---------------------------------------------------
 
+    @Transaction(state = "centroidsUpdate", type = TransactionType.PULL)
+    public final TransactionDefinition centroidsUpdateSync = new TransactionDefinition(
+
+            (Apply<Matrix, Void>) (updates) -> {
+                for (final Matrix update : updates)
+                    Parallel.For(update, (i, j, v) -> centroidsUpdate.set(i, j, centroidsUpdate.get(i, j) + update.get(i, j)));
+                return null;
+            }
+    );
+
+    // ---------------------------------------------------
+    // Units.
+    // --------------------------------------------------
     @Unit
-    public void main(final Program program) {
+    public void main(final Lifecycle lifecycle) {
 
         Random rand = new Random(42);
         double[] data = new double[(int)(K * COLS)];
@@ -58,16 +82,16 @@ public class Kmeans extends MLProgram {
         final Matrix centroids = new Dense64Matrix(K, COLS, data);
 
 
-        program.process(() -> {
+        lifecycle.process(() -> {
 
             centroidsUpdate.assign(0);
 
-            CF.loop().sync(Loop.GLOBAL).exe(10, (iteration) -> {
-                int nodeId = slotContext.runtimeContext.nodeID;
+            UnitMng.loop(10, Loop.GLOBAL, (iteration) -> {
+                int nodeId = programContext.runtimeContext.nodeID;
 
                 // BEGIN: PULL MODEL FROM OTHER NODES AND MERGE
                 //System.out.println(nodeId + ": pre pull centroidsUpdate: " + centroidsUpdate);
-                DF.pullUpdate();
+                TransactionMng.commit(centroidsUpdateSync);
                 //System.out.println(nodeId + ": post pull centroidsUpdate: " + centroidsUpdate);
                 for (int i = 0; i < K; i++) {
                     if (centroidsUpdate.get(i, COLS) > 0) {
@@ -81,6 +105,7 @@ public class Kmeans extends MLProgram {
                 // END: PULL MODEL FROM OTHER NODES AND MERGE
 
                 // BEGIN: STANDARD KMEANS ON LOCAL PARTITION
+
                 Matrix.RowIterator iter = matrix.rowIterator();
                 while (iter.hasNext()) {
                     Matrix point = iter.get();
@@ -100,15 +125,14 @@ public class Kmeans extends MLProgram {
                     updateDelta.set(0, COLS, 1);
                     centroidsUpdate.assignRow(closestCentroidId, centroidsUpdate.getRow(closestCentroidId).add(updateDelta));
                 }
-                // END: STANDARD KMEANS ON LOCAL PARTITION
 
-                DF.publishUpdate();
+                // END: STANDARD KMEANS ON LOCAL PARTITION
             });
 
         }).postProcess(() -> {
 
             for (int i = 0; i < K; i++) {
-                int nodeId = slotContext.runtimeContext.nodeID;
+                int nodeId = programContext.runtimeContext.nodeID;
                 System.out.println("centroid[node:" + nodeId + ",row:" + i + "]=" + centroids.getRow(i));
             }
 
@@ -119,6 +143,7 @@ public class Kmeans extends MLProgram {
     // ---------------------------------------------------
     // Entry Point.
     // ---------------------------------------------------
+
     public static void main(String[] args) {
         local();
     }
@@ -126,14 +151,14 @@ public class Kmeans extends MLProgram {
     public static void cluster() {
         System.setProperty("pserver.profile", "wally");
         PServerExecutor.DISTRIBUTED
-                .run(Kmeans.class, 4)
+                .run(Kmeans.class)
                 .done();
     }
 
     public static void local() {
         System.setProperty("simulation.numNodes", "2");
         PServerExecutor.LOCAL
-                .run(Kmeans.class, 1)
+                .run(Kmeans.class)
                 .done();
     }
 }

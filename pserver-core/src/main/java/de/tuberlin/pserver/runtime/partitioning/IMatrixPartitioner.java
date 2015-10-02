@@ -2,13 +2,10 @@ package de.tuberlin.pserver.runtime.partitioning;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.SlotContext;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.IntStream;
 
 public abstract class IMatrixPartitioner {

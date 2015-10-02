@@ -1,30 +1,30 @@
 package de.tuberlin.pserver.node;
 
+import de.tuberlin.pserver.compiler.Program;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
 import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.runtime.*;
+import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.runtime.events.ProgramFailureEvent;
 import de.tuberlin.pserver.runtime.events.ProgramResultEvent;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
+import de.tuberlin.pserver.runtime.mcruntime.MCRuntime;
 import de.tuberlin.pserver.runtime.usercode.UserCodeManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public final class PServerNode extends EventDispatcher {
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
-
-    //private static final Logger LOG = LoggerFactory.getLogger(PServerNode.class);
 
     private final MachineDescriptor machine;
 
@@ -36,14 +36,10 @@ public final class PServerNode extends EventDispatcher {
 
     private final DataManager dataManager;
 
-    private final ExecutionManager executionManager;
-
-    private final ExecutorService executor;
-
     private final RuntimeContext runtimeContext;
 
     // ---------------------------------------------------
-    // Constructors.
+    // Constructors / Deactivator.
     // ---------------------------------------------------
 
     public PServerNode(final PServerNodeFactory factory) {
@@ -54,11 +50,19 @@ public final class PServerNode extends EventDispatcher {
         this.netManager         = factory.netManager;
         this.userCodeManager    = factory.userCodeManager;
         this.dataManager        = factory.dataManager;
-        this.executionManager   = factory.executionManager;
         this.runtimeContext     = factory.runtimeContext;
-        this.executor           = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
         netManager.addEventListener(ProgramSubmissionEvent.PSERVER_JOB_SUBMISSION_EVENT, new PServerJobHandler());
+    }
+
+    @Override
+    public void deactivate() {
+
+        netManager.deactivate();
+
+        infraManager.deactivate();
+
+        super.deactivate();
     }
 
     // ---------------------------------------------------
@@ -71,101 +75,68 @@ public final class PServerNode extends EventDispatcher {
         public void handleEvent(final Event e) {
             final ProgramSubmissionEvent programSubmission = (ProgramSubmissionEvent)e;
             final Class<?> clazz = userCodeManager.implantClass(programSubmission.byteCode);
-            if (!MLProgram.class.isAssignableFrom(clazz))
-                throw new IllegalStateException();
-            if (programSubmission.perNodeDOP > runtimeContext.numOfCores)
+            if (!Program.class.isAssignableFrom(clazz))
                 throw new IllegalStateException();
 
             @SuppressWarnings("unchecked")
-            final Class<? extends MLProgram> programClass = (Class<? extends MLProgram>) clazz;
+            final Class<? extends Program> programClass = (Class<? extends Program>) clazz;
 
-            final MLProgramContext programContext = new MLProgramContext(
+            final ProgramContext programContext = new ProgramContext(
                     runtimeContext,
                     programSubmission.clientMachine,
                     programSubmission.programID,
                     clazz.getName(),
                     clazz.getSimpleName(),
-                    infraManager.getMachines().size(),
-                    programSubmission.perNodeDOP
+                    infraManager.getMachines().size()
             );
 
-            executionManager.registerProgram(programContext);
+            dataManager.registerProgram(programContext);
 
-            for (int i = 0; i < programContext.perNodeDOP; ++i) {
-                final int logicThreadID = i;
+            new Thread(() -> {
 
-                executor.execute(() -> {
+                try {
 
-                    final long systemThreadID = Thread.currentThread().getId();
+                    MCRuntime.INSTANCE.create(runtimeContext.numOfCores);
 
-                    try {
+                    final Program program = programClass.newInstance();
 
-                        final MLProgram programInvokeable = programClass.newInstance();
+                    program.injectContext(programContext);
 
-                        final SlotContext slotContext = new SlotContext(
-                                runtimeContext,
-                                programContext,
-                                logicThreadID,
-                                programInvokeable
-                        );
+                    program.run();
 
-                        programContext.addSlotContext(systemThreadID, slotContext);
+                    final List<Serializable> results = dataManager.getResults(programContext.programID);
 
-                        programInvokeable.injectContext(slotContext);
+                    final ProgramResultEvent jre = new ProgramResultEvent(
+                            runtimeContext.machine,
+                            runtimeContext.nodeID,
+                            programContext.programID,
+                            results
+                    );
 
-                        programInvokeable.run();
+                    netManager.sendEvent(programSubmission.clientMachine, jre);
 
-                        if (logicThreadID == 0) {
+                } catch (Throwable ex) {
 
-                            final List<Serializable> results = dataManager.getResults(slotContext.programContext.programID);
+                    final ProgramFailureEvent jfe = new ProgramFailureEvent(
+                            machine,
+                            programSubmission.programID,
+                            infraManager.getNodeID(),
+                            0,
+                            clazz.getSimpleName(),
+                            ExceptionUtils.getStackTrace(ex)
+                    );
 
-                            final ProgramResultEvent jre = new ProgramResultEvent(
-                                    slotContext.runtimeContext.machine,
-                                    slotContext.runtimeContext.nodeID,
-                                    slotContext.programContext.programID,
-                                    results
-                            );
+                    netManager.sendEvent(programSubmission.clientMachine, jfe);
 
-                            netManager.sendEvent(programSubmission.clientMachine, jre);
-                        }
+                } finally {
 
-                    } catch (Throwable ex) {
+                    dataManager.clearContext();
 
-                        final ProgramFailureEvent jfe = new ProgramFailureEvent(
-                                machine,
-                                programSubmission.programID,
-                                infraManager.getNodeID(),
-                                logicThreadID,
-                                clazz.getSimpleName(),
-                                ExceptionUtils.getStackTrace(ex)
-                        );
+                    dataManager.unregisterProgram(programContext);
 
-                        netManager.sendEvent(programSubmission.clientMachine, jfe);
-
-                    } finally {
-
-                        if (logicThreadID == 0) {
-
-                            dataManager.clearContext();
-
-                            programContext.removeSlotContext(systemThreadID);
-
-                            executionManager.unregisterProgram(programContext);
-                        }
-                    }
-                });
-            }
+                    MCRuntime.INSTANCE.deactivate();
+                }
+            }).start();
         }
-    }
-
-    // ---------------------------------------------------
-    // Public Methods.
-    // ---------------------------------------------------
-
-    @Override
-    public void deactivate() {
-        netManager.deactivate();
-        infraManager.deactivate();
-        super.deactivate();
     }
 }

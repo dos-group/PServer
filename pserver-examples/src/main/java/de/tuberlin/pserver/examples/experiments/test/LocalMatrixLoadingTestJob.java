@@ -2,12 +2,13 @@ package de.tuberlin.pserver.examples.experiments.test;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
@@ -16,10 +17,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-/**
- * Created by fsander on 07.09.15.
- */
-public class LocalMatrixLoadingTestJob extends MLProgram {
+public class LocalMatrixLoadingTestJob extends Program {
 
     private static final long ROWS = 10000;
     private static final long COLS = 2500;
@@ -39,11 +37,11 @@ public class LocalMatrixLoadingTestJob extends MLProgram {
     public Matrix matrix;
 
 
-    @Override
-    public void define(Program program) {
-        program.process(() -> {
-            int nodeId = slotContext.runtimeContext.nodeID;
-            int numNodes = slotContext.programContext.nodeDOP;
+    @Unit
+    public void define(Lifecycle lifecycle) {
+        lifecycle.process(() -> {
+            int nodeId = programContext.runtimeContext.nodeID;
+            int numNodes = programContext.nodeDOP;
             MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(ROWS, COLS, nodeId, numNodes);
 
             ReusableMatrixEntry entry = new MutableMatrixEntry(-1, -1, Double.NaN);
@@ -84,7 +82,7 @@ public class LocalMatrixLoadingTestJob extends MLProgram {
     public static void main(String[] args) {
         System.setProperty("simulation.numNodes", "4");
         PServerExecutor.LOCAL
-                .run(SubmitMatrixLoadingTestJob.class, 1)
+                .run(LocalMatrixLoadingTestJob.class)
                 .done();
     }
 

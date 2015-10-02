@@ -318,7 +318,7 @@ public final class DHTManager extends EventDispatcher {
     /**
      * The put apply stores, according to a given key, a <code>Value</code> object in the distributed hash table.
      * The apply also accept a array of values, so-called value partitions. These partitions are distributed over
-     * the nodes in the cluster. The key provides the complete metadata of all distributed partitions, the so-called
+     * the at in the cluster. The key provides the complete metadata of all distributed partitions, the so-called
      * partition directory.
      * @param key The key that is associated with the value object.
      * @param vals A value object, or a array of value partitions.
@@ -425,7 +425,7 @@ public final class DHTManager extends EventDispatcher {
     public void put(final DHTKey key, final AbstractBufferedDHTObject.Segment[] segments) {
         Preconditions.checkNotNull(key);
         Preconditions.checkNotNull(segments);
-        // Group all segments according to their storage locations/dht nodes.
+        // Group all segments according to their storage locations/dht at.
         final Map<MachineDescriptor, List<AbstractBufferedDHTObject.Segment>> putRequests = new HashMap<>();
         for (final AbstractBufferedDHTObject.Segment segment : segments) {
             final MachineDescriptor md = key.getDHTNodeFromSegmentIndex(segment.segmentIndex);
@@ -485,7 +485,7 @@ public final class DHTManager extends EventDispatcher {
             }
         }
         try {
-            // Wait until all value partitions are collected from remote nodes.
+            // Wait until all value partitions are collected from remote at.
             operationCompleteLatch.await();
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);
@@ -519,7 +519,7 @@ public final class DHTManager extends EventDispatcher {
         Preconditions.checkNotNull(key);
         Preconditions.checkNotNull(segmentIndices);
         final AbstractBufferedDHTObject.Segment[] segments = new AbstractBufferedDHTObject.Segment[segmentIndices.length];
-        // Build all requests and group them according to the dht nodes.
+        // Build all requests and group them according to the dht at.
         final Map<MachineDescriptor, List<Integer>> requests = new HashMap<>();
         for (final int segmentIndex : segmentIndices) {
             final MachineDescriptor md = key.getDHTNodeFromSegmentIndex(segmentIndex);
@@ -554,7 +554,7 @@ public final class DHTManager extends EventDispatcher {
             }
         }
         try {
-            // Wait until all segments are collected from remote nodes.
+            // Wait until all segments are collected from remote at.
             operationCompleteLatch.await();
         } catch (InterruptedException e) {
             throw new IllegalStateException(e);

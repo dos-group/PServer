@@ -10,7 +10,6 @@ import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.core.net.RPCManager;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
@@ -60,8 +59,6 @@ public enum PServerNodeFactory {
 
     public final RPCManager rpcManager;
 
-    public final ExecutionManager executionManager;
-
     public final RuntimeContext runtimeContext;
 
     // ---------------------------------------------------
@@ -83,13 +80,12 @@ public enum PServerNodeFactory {
         this.userCodeManager    = new UserCodeManager(this.getClass().getClassLoader());
         this.rpcManager         = new RPCManager(netManager);
 
-        infraManager.start(); // blocking until all nodes are registered at zookeeper
+        infraManager.start(); // blocking until all at are registered at zookeeper
         infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connectTo);
 
         this.fileSystemManager  = createFileSystem(infraManager.getNodeID());
         this.dht                = new DHTManager(this.config, infraManager, netManager);
-        this.executionManager   = new ExecutionManager(Runtime.getRuntime().availableProcessors(), netManager);
-        this.dataManager        = new DataManager(this.config, infraManager, netManager, executionManager, fileSystemManager, dht);
+        this.dataManager        = new DataManager(this.config, infraManager, netManager, fileSystemManager, dht);
 
 
         this.runtimeContext = new RuntimeContext(
@@ -99,8 +95,7 @@ public enum PServerNodeFactory {
                 infraManager.getNodeID(),
                 netManager,
                 DHTManager.getInstance(),
-                dataManager,
-                executionManager
+                dataManager
         );
 
         netManager.addEventListener(NetEvents.NetEventTypes.ECHO_REQUEST, event -> {

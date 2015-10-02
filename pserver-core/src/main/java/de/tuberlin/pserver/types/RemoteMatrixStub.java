@@ -1,11 +1,11 @@
 package de.tuberlin.pserver.types;
 
 
+import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.SlotContext;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -15,34 +15,30 @@ public class RemoteMatrixStub extends AbstractMatrix {
     // Constructor.
     // ---------------------------------------------------
 
-    public RemoteMatrixStub(final SlotContext slotContext,
+    public RemoteMatrixStub(final ProgramContext programContext,
                             final String name,
                             final Matrix matrix) {
 
         super(matrix.rows(), matrix.cols(), matrix.layout());
 
-        final NetManager netManager = slotContext.runtimeContext.netManager;
+        final NetManager netManager = programContext.runtimeContext.netManager;
 
-        for (int i = 0; i < slotContext.programContext.perNodeDOP; ++i) {
+        netManager.addEventListener("get_request_" + name, event -> {
+            final NetEvents.NetEvent getRequestEvent = (NetEvents.NetEvent) event;
+            @SuppressWarnings("unchecked")
+            final Pair<Long, Long> pos = (Pair<Long, Long>) getRequestEvent.getPayload();
+            final NetEvents.NetEvent getResponseEvent = new NetEvents.NetEvent("get_response_" + name);
+            getResponseEvent.setPayload(matrix.get(pos.getLeft(), pos.getRight()));
+            netManager.sendEvent(((NetEvents.NetEvent) event).srcMachineID, getResponseEvent);
+        });
 
-            final int slotID = i;
+        netManager.addEventListener("put_request_" + name, event -> {
+            final NetEvents.NetEvent putRequestEvent = (NetEvents.NetEvent) event;
+            @SuppressWarnings("unchecked")
+            final Triple<Long, Long, Double> pos = (Triple<Long, Long, Double>) putRequestEvent.getPayload();
+            matrix.set(pos.getLeft(), pos.getMiddle(), pos.getRight());
+        });
 
-            netManager.addEventListener("get_request_" + name + "_" + slotID, event -> {
-                final NetEvents.NetEvent getRequestEvent = (NetEvents.NetEvent) event;
-                @SuppressWarnings("unchecked")
-                final Pair<Long, Long> pos = (Pair<Long, Long>) getRequestEvent.getPayload();
-                final NetEvents.NetEvent getResponseEvent = new NetEvents.NetEvent("get_response_" + name + "_" + slotID);
-                getResponseEvent.setPayload(matrix.get(pos.getLeft(), pos.getRight()));
-                netManager.sendEvent(((NetEvents.NetEvent) event).srcMachineID, getResponseEvent);
-            });
-
-            netManager.addEventListener("put_request_" + name + "_" + slotID, event -> {
-                final NetEvents.NetEvent putRequestEvent = (NetEvents.NetEvent) event;
-                @SuppressWarnings("unchecked")
-                final Triple<Long, Long, Double> pos = (Triple<Long, Long, Double>) putRequestEvent.getPayload();
-                matrix.set(pos.getLeft(), pos.getMiddle(), pos.getRight());
-            });
-        }
     }
 
     // ---------------------------------------------------

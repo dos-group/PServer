@@ -64,10 +64,10 @@ public enum PServerClientFactory {
         this.infraManager   = new InfrastructureManager(machine, config, true);
         this.netManager     = new NetManager(machine, infraManager, 16);
 
-        infraManager.start(); // blocking until all nodes are registered at zookeeper
+        infraManager.start(); // blocking until all at are registered at zookeeper
         infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connectTo);
 
-        // block until all nodes are really ready for job submission
+        // block until all at are really ready for job submission
         final Set<UUID> responses = new HashSet<>();
         infraManager.getMachines().forEach(md -> responses.add(md.machineID));
         netManager.addEventListener(

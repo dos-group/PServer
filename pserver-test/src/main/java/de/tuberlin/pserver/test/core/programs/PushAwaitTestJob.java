@@ -1,20 +1,18 @@
 package de.tuberlin.pserver.test.core.programs;
 
-import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.compiler.Program;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.ExecutionManager;
-import de.tuberlin.pserver.runtime.MLProgram;
 
-
-public class PushAwaitTestJob extends MLProgram {
+public class PushAwaitTestJob extends Program {
 
     public static final int NUM_MSG = 20000;
 
     @Unit(at = "0")
-    public void pingNode(final Program program) {
+    public void pingNode(final Lifecycle lifecycle) {
 
-        program.process(() -> CF.serial().exe(() -> {
+        lifecycle.process(() -> {
 
             Thread.sleep(3000);
 
@@ -22,7 +20,7 @@ public class PushAwaitTestJob extends MLProgram {
 
                 dataManager.pushTo("test-ping", i, new int[]{1});
 
-                dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, "test-pong", new DataManager.DataEventHandler() {
+                dataManager.receive(DataManager.CallType.SYNC, 1, "test-pong", new DataManager.DataEventHandler() {
                     @Override
                     public void handleDataEvent(int srcNodeID, Object value) {
                     }
@@ -30,25 +28,26 @@ public class PushAwaitTestJob extends MLProgram {
             }
 
             System.out.println("-- FINISH NODE 0");
-        }));
+        });
     }
 
     @Unit(at = "1")
-    public void pongNode(final Program program) {
+    public void pongNode(final Lifecycle lifecycle) {
 
-        program.process(() -> CF.serial().exe(() -> {
+        lifecycle.process(() -> {
 
             for (int i = 0; i < NUM_MSG; ++i) {
 
-                dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, "test-ping", new DataManager.DataEventHandler() {
+                dataManager.receive(DataManager.CallType.SYNC, 1, "test-ping", new DataManager.DataEventHandler() {
                     @Override
-                    public void handleDataEvent(int srcNodeID, Object value) {}
+                    public void handleDataEvent(int srcNodeID, Object value) {
+                    }
                 });
 
                 dataManager.pushTo("test-pong", i, new int[] { 0 });
             }
 
             System.out.println("-- FINISH NODE 1");
-        }));
+        });
     }
 }

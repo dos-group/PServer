@@ -167,7 +167,7 @@ zookeeper-setup)
 
 		# remove all server entries from zookeeper config file
 		sed '/^server/d' "${ZOOKEEPER_CONFIG_FILE}" > "${ZOOKEEPER_CONFIG_FILE}.tmp" && mv "${ZOOKEEPER_CONFIG_FILE}.tmp" "${ZOOKEEPER_CONFIG_FILE}"
-		# add zookeeper nodes to config
+		# add zookeeper at to config
 		create_zookeeper_host_list "2888:3888" >> "${ZOOKEEPER_CONFIG_FILE}"
 		# remove dataDir from zookeeper config
 		sed '/^dataDir/d' "${ZOOKEEPER_CONFIG_FILE}" > "${ZOOKEEPER_CONFIG_FILE}.tmp" && mv "${ZOOKEEPER_CONFIG_FILE}.tmp" "${ZOOKEEPER_CONFIG_FILE}"

@@ -1,28 +1,28 @@
 package de.tuberlin.pserver.examples.experiments.distmtx;
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
+import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.Format;
-import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.types.DistributedMatrix;
 import de.tuberlin.pserver.types.PartitionType;
 
-public class DistributedMatrixJob extends MLProgram {
+public class DistributedMatrixJob extends Program {
 
     @State(globalScope = GlobalScope.LOGICALLY_PARTITIONED,
             rows = 20, cols = 20, format = Format.DENSE_FORMAT)
     public DistributedMatrix X;
 
     @Unit
-    public void main(final Program program) {
+    public void main(final Lifecycle lifecycle) {
 
-        program.process(() -> {
+        lifecycle.process(() -> {
 
             /*CF.loop().exe(X, (i, iter) -> {
-                X.set(iter.rowNum(), 0, slotContext.programContext.runtimeContext.nodeID + 1);
+                X.set(iter.rowNum(), 0, programContext.programContext.runtimeContext.nodeID + 1);
             });
 
             X.collectRemotePartitions();
@@ -35,8 +35,8 @@ public class DistributedMatrixJob extends MLProgram {
             /*final Matrix.RowIterator iter = X.rowIterator();
             while (iter.hasNext()) {
                 iter.next();
-                System.out.println(slotContext.programContext.runtimeContext.nodeID + " -> " + iter.rowNum());
-                X.set(iter.rowNum(), 0, slotContext.programContext.runtimeContext.nodeID * 10);
+                System.out.println(programContext.programContext.runtimeContext.nodeID + " -> " + iter.rowNum());
+                X.set(iter.rowNum(), 0, programContext.programContext.runtimeContext.nodeID * 10);
             }
 
             double s = X.aggregateRows(Vector::sum).sum();
@@ -51,7 +51,7 @@ public class DistributedMatrixJob extends MLProgram {
     public static void main(final String[] args) {
 
         PServerExecutor.LOCAL
-                .run(DistributedMatrixJob.class, 1)
+                .run(DistributedMatrixJob.class)
                 .done();
     }
 }

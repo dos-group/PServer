@@ -1,22 +1,22 @@
 package de.tuberlin.pserver.test.core.programs;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.dsl.dataflow.aggregators.Aggregator;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.compiler.Program;
+import de.tuberlin.pserver.dsl.transaction.aggregators.Aggregator;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 
 
-public class SymAggregatorTestJob extends MLProgram {
+public class SymAggregatorTestJob extends Program {
 
     @Unit
-    public void main(final Program program) {
+    public void main(final Lifecycle lifecycle) {
 
-        program.process(() -> {
+        lifecycle.process(() -> {
 
-            final int partialAgg = slotContext.runtimeContext.nodeID * 1000;
+            final int partialAgg = programContext.runtimeContext.nodeID * 1000;
 
-            final int globalAgg = new Aggregator<>(slotContext, partialAgg)
+            final int globalAgg = new Aggregator<>(programContext, partialAgg)
                     .apply(pa -> pa.stream().mapToInt(Integer::intValue).sum());
 
             Preconditions.checkState(globalAgg == 6000);

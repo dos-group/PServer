@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -42,6 +43,7 @@ public class DataManager extends EventDispatcher {
     // ---------------------------------------------------
     // Inner Classes.
     // ---------------------------------------------------
+
 
     public static abstract class DataEventHandler implements IEventHandler {
 
@@ -101,6 +103,16 @@ public class DataManager extends EventDispatcher {
 
     private static final String PULL_EVENT_PREFIX = "pull__";
 
+    private static final String BSP_SYNC_BARRIER_EVENT = "bsp_sync_barrier_event";
+
+    public static enum CallType {
+
+        SYNC,
+
+        ASYNC
+    }
+
+
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
@@ -110,8 +122,6 @@ public class DataManager extends EventDispatcher {
     private final InfrastructureManager infraManager;
 
     private final NetManager netManager;
-
-    private final ExecutionManager executionManager;
 
     private final FileSystemManager fileSystemManager;
 
@@ -129,6 +139,8 @@ public class DataManager extends EventDispatcher {
 
     public final int[] remoteNodeIDs;
 
+    private final AtomicReference<ProgramContext> programContextRef;
+
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
@@ -136,19 +148,19 @@ public class DataManager extends EventDispatcher {
     public DataManager(final IConfig config,
                        final InfrastructureManager infraManager,
                        final NetManager netManager,
-                       final ExecutionManager executionManager,
                        final FileSystemManager fileSystemManager,
                        final DHTManager dht) {
         super(true);
 
         this.infraManager       = Preconditions.checkNotNull(infraManager);
         this.netManager         = Preconditions.checkNotNull(netManager);
-        this.executionManager   = Preconditions.checkNotNull(executionManager);
         this.fileSystemManager  = fileSystemManager;
         this.dht                = Preconditions.checkNotNull(dht);
         this.nodeID             = infraManager.getNodeID();
         this.resultObjects      = new HashMap<>();
         this.matrixPartitionManager = new MatrixPartitionManager(netManager, fileSystemManager, this);
+        this.programContextRef = new AtomicReference<>(null);
+
 
         this.nodeIDs = IntStream.iterate(0, x -> x + 1).limit(infraManager.getMachines().size()).toArray();
         int numOfRemoteWorkers = infraManager.getMachines().size() - 1;
@@ -161,15 +173,40 @@ public class DataManager extends EventDispatcher {
             }
             ++i;
         }
+
+        this.netManager.addEventListener(BSP_SYNC_BARRIER_EVENT, event -> {
+            if (!programContextRef.get().programID.equals(event.getPayload()))
+                throw new IllegalStateException();
+            programContextRef.get().countDownBarrier();
+        });
     }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
+
+    public void registerProgram(final ProgramContext programContext) {
+        Preconditions.checkNotNull(programContext);
+        programContextRef.set(programContext);
+    }
+
+    public void unregisterProgram(final ProgramContext programContext) {
+        Preconditions.checkNotNull(programContext);
+        programContextRef.set(null);
+    }
+
     public void clearContext() {
         matrixPartitionManager.clearContext();
         fileSystemManager.clearContext();
+    }
+
+
+    public void globalSync() {
+        final NetEvents.NetEvent globalSyncEvent = new NetEvents.NetEvent(BSP_SYNC_BARRIER_EVENT, true);
+        globalSyncEvent.setPayload(programContextRef.get().programID);
+        netManager.broadcastEvent(globalSyncEvent);
+        programContextRef.get().awaitGlobalSyncBarrier();
     }
 
     // ---------------------------------------------------
@@ -192,9 +229,8 @@ public class DataManager extends EventDispatcher {
     // ---------------------------------------------------
     // DATA LOADING
     // ---------------------------------------------------
-
-    public Matrix loadAsMatrix(final SlotContext slotContext, final StateDeclaration stateDeclaration) {
-        return matrixPartitionManager.load(slotContext, stateDeclaration);
+    public Matrix loadAsMatrix(final ProgramContext programContext, final StateDeclaration stateDeclaration) {
+        return matrixPartitionManager.load(programContext, stateDeclaration);
     }
 
     // ---------------------------------------------------
@@ -247,15 +283,15 @@ public class DataManager extends EventDispatcher {
         Preconditions.checkNotNull(name);
         final NetEvents.NetEvent event = new NetEvents.NetEvent(PUSH_EVENT_PREFIX + name, true);
         event.setPayload(value);
-        // remote nodes.
+        // remote at.
         netManager.sendEvent(remoteNodeIDs, event);
-        // local nodes.
+        // local at.
         //netManager.dispatchEvent(event);
     }
 
-    /*public void awaitEvent(final ExecutionManager.CallType type, final String name, final DataEventHandler handler) {
-        awaitEvent(type, remoteNodeIDs.length, name, handler); }
-    public void awaitEvent(final ExecutionManager.CallType type, final int n, final String name, final DataEventHandler handler) {
+    /*public void receive(final ExecutionManager.CallType type, final String name, final DataEventHandler handler) {
+        receive(type, remoteNodeIDs.length, name, handler); }
+    public void receive(final ExecutionManager.CallType type, final int n, final String name, final DataEventHandler handler) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(handler);
@@ -273,10 +309,24 @@ public class DataManager extends EventDispatcher {
         }
     }*/
 
-    //public void awaitEvent(final ExecutionManager.CallType type, final String name, final DataEventHandler handler) {
-    //    awaitEvent(type, remoteNodeIDs.length, name, handler); }
+    //public void receive(final ExecutionManager.CallType type, final String name, final DataEventHandler handler) {
+    //    receive(type, remoteNodeIDs.length, name, handler); }
 
-    public void awaitEvent(final ExecutionManager.CallType type, final int n, final String name, final DataEventHandler handler) {
+    public <T> void receive(final int n, final String name, final Handler<T> handler) {
+        receive(CallType.SYNC, n, name, new DataEventHandler() {
+
+            @Override
+            public void handleDataEvent(int srcNodeID, Object obj) {
+                final T value = (T) obj;
+                handler.handle(srcNodeID, value);
+            }
+        });
+    }
+
+    public void receive(final int n, final String name, final DataEventHandler handler) {
+        receive(CallType.SYNC, n, name, handler);
+    }
+    public void receive(final CallType type, final int n, final String name, final DataEventHandler handler) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(handler);
@@ -285,7 +335,7 @@ public class DataManager extends EventDispatcher {
         handler.setRemoveAfterAwait(true);
         handler.initLatch(n);
         netManager.addEventListener(PUSH_EVENT_PREFIX + name, handler);
-        if (type == ExecutionManager.CallType.SYNC) {
+        if (type == CallType.SYNC) {
             try {
                 handler.getLatch().await();
             } catch (InterruptedException e) {
@@ -327,7 +377,7 @@ public class DataManager extends EventDispatcher {
         responseHandler.initLatch(nodeIDs.length);
         netManager.addEventListener(PUSH_EVENT_PREFIX + name, responseHandler);
 
-        // send pull request to all nodes.
+        // send pull request to all at.
         NetEvents.NetEvent event = new NetEvents.NetEvent(PULL_EVENT_PREFIX + name, true);
         netManager.sendEvent(nodeIDs, event);
 
@@ -453,11 +503,8 @@ public class DataManager extends EventDispatcher {
         return resultObjects.get(jobUID);
     }
 
-    public void loadInputData(final SlotContext ctx) throws Exception{
-        Preconditions.checkNotNull(ctx);
-        Preconditions.checkNotNull(fileSystemManager);
-        if (ctx.slotID == 0) {
-            matrixPartitionManager.loadFilesIntoDHT();
-        }
+    public void loadInputData() throws Exception{
+        Preconditions.checkState(fileSystemManager != null);
+        matrixPartitionManager.loadFilesIntoDHT();
     }
 }

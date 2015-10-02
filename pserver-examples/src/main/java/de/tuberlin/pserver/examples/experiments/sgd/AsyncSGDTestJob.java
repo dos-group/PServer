@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.examples.experiments.sgd;
 
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.compiler.Program;
 
-public final class AsyncSGDTestJob extends MLProgram {
+public final class AsyncSGDTestJob extends Program {
 /*
     // ---------------------------------------------------
     // Fields.
@@ -29,7 +29,7 @@ public final class AsyncSGDTestJob extends MLProgram {
     @Override
     public void prologue() {
 
-        model.createModel(slotContext);
+        model.createModel(programContext);
 
         dataManager.loadAsMatrix("datasets/demo_dataset.csv", GenerateLocalTestData.ROWS_DEMO_DATASET, GenerateLocalTestData.COLS_DEMO_DATASET);
     }
@@ -45,7 +45,7 @@ public final class AsyncSGDTestJob extends MLProgram {
 
         final PartialLossFunction partialLossFunction = new PartialLossFunction.SquareLoss();
 
-        final Optimizer optimizer = new SGDOptimizer(slotContext, SGDOptimizer.TYPE.SGD_SIMPLE, false)
+        final Optimizer optimizer = new SGDOptimizer(programContext, SGDOptimizer.TYPE.SGD_SIMPLE, false)
                 .setNumberOfIterations(300)
                 .setLearningRate(0.005)
                 .setLossFunction(new LossFunction.GenericLossFunction(predictionFunction, partialLossFunction))

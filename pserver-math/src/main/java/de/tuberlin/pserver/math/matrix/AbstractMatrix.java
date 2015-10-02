@@ -2,9 +2,8 @@ package de.tuberlin.pserver.math.matrix;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.math.utils.Functions;
-import de.tuberlin.pserver.math.utils.Utils;
 import de.tuberlin.pserver.math.utils.MatrixAggregation;
+import de.tuberlin.pserver.math.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +40,7 @@ public abstract class AbstractMatrix implements Matrix {
         this.cols = cols;
         this.layout = Preconditions.checkNotNull(layout);
         Preconditions.checkArgument(java.util.Arrays.asList(Layout.values()).contains(layout), "Unknown MemoryLayout: " + layout.toString());
-        this.lock = new ReentrantLock();
+        this.lock = new ReentrantLock(true);
     }
 
     // ---------------------------------------------------

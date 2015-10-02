@@ -78,7 +78,7 @@ public final class ClusterSimulator implements Deactivatable {
                 throw new IllegalStateException(e);
             }
 
-            // Write number of nodes to zookeeper.
+            // Write number of at to zookeeper.
             ZookeeperClient zookeeperClient = new ZookeeperClient(zkServer);
             try {
                 zookeeperClient.writeNumNodes(numNodes);

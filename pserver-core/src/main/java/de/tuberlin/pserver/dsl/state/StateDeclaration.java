@@ -5,8 +5,6 @@ import com.google.common.primitives.Ints;
 import de.tuberlin.pserver.commons.utils.ParseUtils;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
-import de.tuberlin.pserver.dsl.state.properties.LocalScope;
-import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
@@ -29,8 +27,6 @@ public final class StateDeclaration {
 
     public final Class<?>  stateType;
 
-    public final LocalScope localScope;
-
     public final GlobalScope globalScope;
 
     public final int[] atNodes;
@@ -49,15 +45,12 @@ public final class StateDeclaration {
 
     public final String path;
 
-    public final RemoteUpdate remoteUpdate;
-
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
     public StateDeclaration(final String name,
                             final Class<?> stateType,
-                            final LocalScope localScope,
                             final GlobalScope globalScope,
                             final int[] atNodes,
                             final Class<? extends IMatrixPartitioner> partitionerClass,
@@ -66,12 +59,10 @@ public final class StateDeclaration {
                             final Layout layout,
                             final Format format,
                             final Class<? extends AbstractRecordFormatConfig> recordFormatConfigClass,
-                            final String path,
-                            final RemoteUpdate remoteUpdate) {
+                            final String path) {
 
         this.name           = name;
         this.stateType      = stateType;
-        this.localScope     = localScope;
         this.globalScope    = globalScope;
         this.atNodes        = atNodes;
         this.partitionerClass  = partitionerClass;
@@ -81,7 +72,6 @@ public final class StateDeclaration {
         this.format         = format;
         this.recordFormatConfigClass = recordFormatConfigClass;
         this.path           = path;
-        this.remoteUpdate   = remoteUpdate;
     }
 
     public static StateDeclaration fromAnnotatedField(State state, Field field, int[] fallBackAtNodes) {
@@ -89,7 +79,6 @@ public final class StateDeclaration {
         return new StateDeclaration(
                 field.getName(),
                 field.getType(),
-                state.localScope(),
                 state.globalScope(),
                 parsedAtNodes.length > 0 ? parsedAtNodes : fallBackAtNodes,
                 state.partitionerClass(),
@@ -98,8 +87,7 @@ public final class StateDeclaration {
                 state.layout(),
                 state.format(),
                 state.recordFormat(),
-                state.path(),
-                state.remoteUpdate()
+                state.path()
         );
     }
 

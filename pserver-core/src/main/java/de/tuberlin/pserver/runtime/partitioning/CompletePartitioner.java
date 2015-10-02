@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.runtime.partitioning;
 
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.SlotContext;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 
 /**

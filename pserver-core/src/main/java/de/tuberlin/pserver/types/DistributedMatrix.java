@@ -8,9 +8,7 @@ import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.math.utils.MatrixAggregation;
-import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.ExecutionManager;
-import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.RemotePartition;
@@ -25,7 +23,7 @@ public class DistributedMatrix extends AbstractMatrix {
     // Fields.
     // ---------------------------------------------------
 
-    private final SlotContext slotContext;
+    private final ProgramContext programContext;
 
     private final int nodeDOP, nodeID;
 
@@ -42,10 +40,10 @@ public class DistributedMatrix extends AbstractMatrix {
     // ---------------------------------------------------
 
     public DistributedMatrix(final DistributedMatrix m) {
-        this(m.slotContext, m.rows, m.cols, m.partitioner, m.layout, m.format);
+        this(m.programContext, m.rows, m.cols, m.partitioner, m.layout, m.format);
     }
 
-    public DistributedMatrix(final SlotContext slotContext,
+    public DistributedMatrix(final ProgramContext programContext,
                              final long rows,final long cols,
                              final IMatrixPartitioner partitioner,
                              final Layout layout,
@@ -53,9 +51,9 @@ public class DistributedMatrix extends AbstractMatrix {
 
         super(rows, cols, layout);
 
-        this.slotContext    = Preconditions.checkNotNull(slotContext);
-        this.nodeDOP        = slotContext.programContext.nodeDOP;
-        this.nodeID         = slotContext.runtimeContext.nodeID;
+        this.programContext    = Preconditions.checkNotNull(programContext);
+        this.nodeDOP        = programContext.nodeDOP;
+        this.nodeID         = programContext.runtimeContext.nodeID;
         Preconditions.checkNotNull(partitioner);
         this.partitioner         = partitioner;
         this.shape          = partitioner.getPartitionShape();
@@ -151,14 +149,14 @@ public class DistributedMatrix extends AbstractMatrix {
 //                    totalAgg.set(0, row, value);
 //                }
 //
-//                slotContext.runtimeContext.dataManager.pushTo("rowAgg", partialAgg);
-//                final int n = slotContext.programContext.nodeDOP - 1;
-//                slotContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "rowAgg",
+//                programContext.runtimeContext.dataManager.pushTo("rowAgg", partialAgg);
+//                final int n = programContext.programContext.nodeDOP - 1;
+//                programContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "rowAgg",
 //                        new DataManager.DataEventHandler() {
 //                            @Override
 //                            public void handleDataEvent(int srcNodeID, Object value) {
 //                                final Matrix remotePartialAgg = (Matrix)value;
-//                                final long offset = rows / slotContext.programContext.nodeDOP * srcNodeID;
+//                                final long offset = rows / programContext.programContext.nodeDOP * srcNodeID;
 //                                for (int i = 0; i < remotePartialAgg.rows(); ++i)
 //                                   totalAgg.set(0, offset + i, remotePartialAgg.get(0, i));
 //                            }
@@ -179,9 +177,9 @@ public class DistributedMatrix extends AbstractMatrix {
 //        switch (partitionType) {
 //            case ROW_PARTITIONED: {
 //                Matrix partialMatrix = matrix.subMatrix(shape.rowOffset, shape.colOffset, shape.rows, shape.cols);
-//                slotContext.runtimeContext.dataManager.pushTo("partialMatrix", partialMatrix);
-//                final int n = slotContext.programContext.nodeDOP - 1;
-//                slotContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "partialMatrix",
+//                programContext.runtimeContext.dataManager.pushTo("partialMatrix", partialMatrix);
+//                final int n = programContext.programContext.nodeDOP - 1;
+//                programContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "partialMatrix",
 //                        new DataManager.DataEventHandler() {
 //                            @Override
 //                            public void handleDataEvent(int srcNodeID, Object value) {
@@ -243,11 +241,11 @@ public class DistributedMatrix extends AbstractMatrix {
             long innerColOffset = ownPartition.shape.colOffset - sourceMatrix.shape.colOffset;
             Matrix subMatrix = matrix.subMatrix(innerRowOffset, innerColOffset, ownPartition.shape.rows, ownPartition.shape.cols);
             result.matrix.assign(ownPartition.shape.rowOffset, ownPartition.shape.colOffset, subMatrix);
-            slotContext.runtimeContext.dataManager.pushTo("partialMatrix", subMatrix);
+            programContext.runtimeContext.dataManager.pushTo("partialMatrix", subMatrix);
             remotePartitions.remove(ownPartition);
         }
         int n = remotePartitions.size() - (ownPartition != null ? 1 : 0);
-        slotContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "partialMatrix",
+        programContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "partialMatrix",
                 new DataManager.DataEventHandler() {
                     @Override
                     public void handleDataEvent(int srcNodeID, Object value) {
@@ -301,7 +299,7 @@ public class DistributedMatrix extends AbstractMatrix {
             remoteToLocalPartitionMapping.put(remotePartition, transposedOffsets);
         }
         // fetch remote partitions and construct resulting matrix according to position-mapping
-        DistributedMatrix result = new DistributedMatrix(slotContext, cols, rows, partitioner, layout, format);
+        DistributedMatrix result = new DistributedMatrix(programContext, cols, rows, partitioner, layout, format);
         DistributedMatrix remoteView = constructIntersectingMatrix(this, result, remoteToLocalPartitionMapping);
         return remoteView;
     }
