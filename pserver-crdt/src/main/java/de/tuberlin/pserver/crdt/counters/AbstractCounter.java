@@ -3,7 +3,7 @@ package de.tuberlin.pserver.crdt.counters;
 import de.tuberlin.pserver.crdt.AbstractCRDT;
 import de.tuberlin.pserver.runtime.DataManager;
 
-public abstract class AbstractCounter extends AbstractCRDT implements CounterCRDT {
+public abstract class AbstractCounter extends AbstractCRDT implements ICounter {
     protected long count = 0;
 
     public AbstractCounter(String id, DataManager dataManager) {

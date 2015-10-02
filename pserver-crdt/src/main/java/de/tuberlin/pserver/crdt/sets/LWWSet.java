@@ -1,14 +1,14 @@
 package de.tuberlin.pserver.crdt.sets;
 
 import de.tuberlin.pserver.crdt.CRDT;
-import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.crdt.operations.SetOperation;
+import de.tuberlin.pserver.crdt.operations.IOperation;
+import de.tuberlin.pserver.crdt.operations.TaggedOperation;
 import de.tuberlin.pserver.runtime.DataManager;
 
 import java.util.*;
 
 /**
- * An element is in the set if it is in the add-Set and not in the remove-Set with a higher timestamp.
+ * An element is in the set if it is in the add-ISet and not in the remove-ISet with a higher timestamp.
  */
 // TODO: what about if this grows infinitely until it is too large for memory? Manual Garbage collection somehow?
 public class LWWSet<T> extends AbstractSet<T> {
@@ -25,14 +25,14 @@ public class LWWSet<T> extends AbstractSet<T> {
     }
 
     @Override
-    protected boolean update(int srcNodeId, Operation<T> op, DataManager dm) {
-        SetOperation<T> lwws = (SetOperation<T>) op;
+    protected boolean update(int srcNodeId, IOperation<T> op) {
+        TaggedOperation<T,Date> lwws = (TaggedOperation<T,Date>) op;
 
         if(lwws.getType() == CRDT.ADD) {
-            return addElement(lwws.getValue(), lwws.getTime());
+            return addElement(lwws.getValue(), lwws.getTag().getTime());
         }
         else if(lwws.getType() == CRDT.REMOVE) {
-            return removeElement(lwws.getValue(), lwws.getTime());
+            return removeElement(lwws.getValue(), lwws.getTag().getTime());
         }
         else {
             return false;
@@ -40,20 +40,20 @@ public class LWWSet<T> extends AbstractSet<T> {
     }
 
     @Override
-    public boolean add(T element, DataManager dataManager) {
+    public boolean add(T element) {
         Date time = Calendar.getInstance().getTime();
         if(addElement(element, time.getTime())) {
-            broadcast(new SetOperation<T>(CRDT.ADD, element, time), dataManager);
+            broadcast(new TaggedOperation<>(CRDT.ADD, element, time), dataManager);
             return true;
         }
         return false;
     }
 
     @Override
-    public boolean remove(T element, DataManager dataManager) {
+    public boolean remove(T element) {
         Date time = Calendar.getInstance().getTime();
         if(removeElement(element, time.getTime())) {
-            broadcast(new SetOperation<>(CRDT.REMOVE, element, time), dataManager);
+            broadcast(new TaggedOperation<>(CRDT.REMOVE, element, time), dataManager);
             return true;
         }
         return false;

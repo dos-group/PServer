@@ -16,12 +16,12 @@ public class USetTestJob extends MLProgram {
                 USet<Integer> us = new USet<>("one", dataManager);
 
                 for (int i = 0; i <= 10; i++) {
-                    us.add(i, dataManager);
+                    us.add(i);
                 }
 
                 us.finish(dataManager);
 
-                System.out.println("[DEBUG] Set of node " + slotContext.programContext.runtimeContext.nodeID +
+                System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + us.getSet());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + us.getBuffer());
@@ -36,18 +36,18 @@ public class USetTestJob extends MLProgram {
                 USet<Integer> us = new USet<>("one", dataManager);
 
                 for (int i = 16; i <= 20; i++) {
-                    us.add(i, dataManager);
+                    us.add(i);
                 }
 
                 Thread.sleep(500);
 
                 for (int i = 5; i <= 10; i++) {
-                    us.remove(i, dataManager);
+                    us.remove(i);
                 }
 
                 us.finish(dataManager);
 
-                System.out.println("[DEBUG] Set of node " + slotContext.programContext.runtimeContext.nodeID +
+                System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + us.getSet());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + us.getBuffer());
@@ -57,10 +57,10 @@ public class USetTestJob extends MLProgram {
 
     public static void main(final String[] args) {
 
-        // Set the number of simulated nodes, can also be
+        // ISet the number of simulated nodes, can also be
         // configured via 'pserver/pserver-core/src/main/resources/reference.simulation.conf'
         System.setProperty("simulation.numNodes", "2");
-        // Set the memory each simulated node gets.
+        // ISet the memory each simulated node gets.
         System.setProperty("jvmOptions", "[\"-Xmx256m\"]");
 
         PServerExecutor.LOCAL

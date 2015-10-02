@@ -2,8 +2,8 @@ package de.tuberlin.pserver.crdt.sets;
 
 import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
+import de.tuberlin.pserver.crdt.operations.IOperation;
 import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.crdt.operations.SetOperation;
 import de.tuberlin.pserver.runtime.DataManager;
 
 import java.util.HashSet;
@@ -19,8 +19,8 @@ public class GSet<T> extends AbstractSet<T> {
     }
 
     @Override
-    protected boolean update(int srcNodeId, Operation<T> op, DataManager dm) {
-        SetOperation<T> sop = (SetOperation<T>)op;
+    protected boolean update(int srcNodeId, IOperation<T> op) {
+        Operation<T> sop = (Operation<T>)op;
 
         if(sop.getType() == CRDT.ADD) {
             return addElement(sop.getValue());
@@ -32,18 +32,18 @@ public class GSet<T> extends AbstractSet<T> {
     }
 
     @Override
-    public boolean add(T element, DataManager dataManager) {
+    public boolean add(T element) {
         if(addElement(element)) {
-            broadcast(new SetOperation<>(CRDT.ADD, element), dataManager);
+            broadcast(new Operation<>(CRDT.ADD, element), dataManager);
             return true;
         }
         return false;
     }
 
     @Override
-    public boolean remove(T element, DataManager dataManager) {
+    public boolean remove(T element) {
         if(removeElement(element)) {
-            broadcast(new SetOperation<>(CRDT.REMOVE, element), dataManager);
+            broadcast(new Operation<>(CRDT.REMOVE, element), dataManager);
             return true;
         }
         return false;

@@ -17,7 +17,7 @@ public class LWWRegisterTestJob extends MLProgram {
                 LWWRegister<Integer> lwwr = new LWWRegister<>("one", dataManager, (i1, i2) -> i1 > i2);
 
                 for (int i = 0; i <= 10000; i++) {
-                    lwwr.set(i, dataManager);
+                    lwwr.set(i);
                 }
 
                 lwwr.finish(dataManager);
@@ -37,7 +37,7 @@ public class LWWRegisterTestJob extends MLProgram {
                 LWWRegister<Integer> lwwr = new LWWRegister<>("one", dataManager, (i1, i2) -> i1 > i2);
 
                 for (int i = 0; i <= 10; i++) {
-                    lwwr.set(i, dataManager);
+                    lwwr.set(i);
                     Thread.sleep(500);
                 }
 
@@ -53,10 +53,10 @@ public class LWWRegisterTestJob extends MLProgram {
 
     public static void main(final String[] args) {
 
-        // Set the number of simulated nodes, can also be
+        // ISet the number of simulated nodes, can also be
         // configured via 'pserver/pserver-core/src/main/resources/reference.simulation.conf'
         System.setProperty("simulation.numNodes", "2");
-        // Set the memory each simulated node gets.
+        // ISet the memory each simulated node gets.
         System.setProperty("jvmOptions", "[\"-Xmx256m\"]");
 
         PServerExecutor.LOCAL

@@ -2,15 +2,15 @@ package de.tuberlin.pserver.crdt.sets;
 
 import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
+import de.tuberlin.pserver.crdt.operations.IOperation;
 import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.crdt.operations.SetOperation;
 import de.tuberlin.pserver.runtime.DataManager;
 
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * In a Two-Phase Set an element may be added and removed but never added again thereafter.
+ * In a Two-Phase ISet an element may be added and removed but never added again thereafter.
  */
 
 public class TwoPSet<T> extends AbstractSet<T> {
@@ -27,9 +27,9 @@ public class TwoPSet<T> extends AbstractSet<T> {
     }
 
     @Override
-    protected boolean update(int srcNodeId, Operation<T> op, DataManager dm) {
+    protected boolean update(int srcNodeId, IOperation<T> op) {
         // TODO: I hate this cast....
-        SetOperation<T> sop = (SetOperation<T>)op;
+        Operation<T> sop = (Operation<T>)op;
 
         if(sop.getType() == CRDT.ADD) {
             return addElement(op.getValue());
@@ -44,18 +44,18 @@ public class TwoPSet<T> extends AbstractSet<T> {
     }
 
     @Override
-    public boolean add(T element, DataManager dataManager) {
+    public boolean add(T element) {
         if(addElement(element)) {
-            broadcast(new SetOperation<T>(CRDT.ADD, element), dataManager);
+            broadcast(new Operation<T>(CRDT.ADD, element), dataManager);
             return true;
         }
         return false;
     }
 
     @Override
-    public boolean remove(T element, DataManager dataManager) {
+    public boolean remove(T element) {
         if(removeElement(element)) {
-            broadcast(new SetOperation<T>(CRDT.REMOVE, element), dataManager);
+            broadcast(new Operation<T>(CRDT.REMOVE, element), dataManager);
             return true;
         }
         return false;

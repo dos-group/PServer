@@ -7,7 +7,7 @@ import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.runtime.MLProgram;
 
 /**
- * A Grow-Only Set supports operations add and lookup. There is no remove operation!
+ * A Grow-Only ISet supports operations add and lookup. There is no remove operation!
  */
 
 // TODO: this only works to a precision of milliseconds (Date class)!
@@ -26,12 +26,12 @@ public class LWWSetTestJob extends MLProgram {
                 LWWSet<Integer> lwws = new LWWSet<>("one", dataManager);
 
                 for (int i = 0; i <= 10; i++) {
-                    lwws.add(i, dataManager);
+                    lwws.add(i);
                 }
 
                 lwws.finish(dataManager);
 
-                System.out.println("[DEBUG] Set of node " + slotContext.programContext.runtimeContext.nodeID +
+                System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + lwws.getSet());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + lwws.getBuffer());
@@ -46,18 +46,18 @@ public class LWWSetTestJob extends MLProgram {
                 LWWSet<Integer> lwws = new LWWSet<>("one", dataManager);
 
                 for (int i = 4; i <= 15; i++) {
-                    lwws.add(i, dataManager);
+                    lwws.add(i);
                 }
 
                 Thread.sleep(500);
 
                 for (int i = 5; i <= 11; i++) {
-                    lwws.remove(i, dataManager);
+                    lwws.remove(i);
                 }
 
                 lwws.finish(dataManager);
 
-                System.out.println("[DEBUG] Set of node " + slotContext.programContext.runtimeContext.nodeID +
+                System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + lwws.getSet());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + lwws.getBuffer());
@@ -67,10 +67,10 @@ public class LWWSetTestJob extends MLProgram {
 
     public static void main(final String[] args) {
 
-        // Set the number of simulated nodes, can also be
+        // ISet the number of simulated nodes, can also be
         // configured via 'pserver/pserver-core/src/main/resources/reference.simulation.conf'
         System.setProperty("simulation.numNodes", "2");
-        // Set the memory each simulated node gets.
+        // ISet the memory each simulated node gets.
         System.setProperty("jvmOptions", "[\"-Xmx256m\"]");
 
         PServerExecutor.LOCAL

@@ -4,7 +4,7 @@ import de.tuberlin.pserver.runtime.DataManager;
 
 import java.util.Collection;
 
-// TODO: Do I want to extend java collection? / java Set etc.
+// TODO: Do I want to extend java collection? / java ISet etc.
 // TODO: Auxiliary functions such as for each etc.
 public interface CRDT<T> {
     int END = -1;

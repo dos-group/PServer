@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.crdt;
 
 import de.tuberlin.pserver.crdt.operations.EndOperation;
-import de.tuberlin.pserver.crdt.operations.Operation;
+import de.tuberlin.pserver.crdt.operations.IOperation;
 import de.tuberlin.pserver.runtime.DataManager;
 
 import java.util.HashSet;
@@ -10,7 +10,6 @@ import java.util.Queue;
 import java.util.Set;
 
 
-// TODO: improve buffer performance => sometimes one or two operations are missing at a replica
 // TODO: what about exceptions in general
 // TODO: what about when counters reach MAX_INT => exception or keep counting somehow?
 // TODO: what if someone uses the same id for two crdts?
@@ -18,18 +17,28 @@ import java.util.Set;
 // TODO: maybe use blocking queues for buffers
 
 public abstract class AbstractCRDT<T> implements CRDT<T> {
-    private final Set<Integer> runningNodes = new HashSet<>();
-    private final Set<Integer> finishedNodes = new HashSet<>();
-    private final Queue<Operation> outBuffer = new LinkedList<>();
+    private final Set<Integer> runningNodes;
+    private final Set<Integer> finishedNodes;
+    private final Queue<IOperation> buffer;
 
-    private boolean allNodesRunning = false;
-    private boolean allNodesFinished = false;
+    protected final DataManager dataManager;
     protected final String id;
+
+    private boolean allNodesRunning;
+    private boolean allNodesFinished;
 
 
     public AbstractCRDT(String id, DataManager dataManager) {
+        this.runningNodes = new HashSet<>();
+        this.finishedNodes = new HashSet<>();
+        this.buffer = new LinkedList<>();
 
+        this.dataManager = dataManager;
         this.id = id;
+
+        this.allNodesRunning = false;
+        this.allNodesFinished = false;
+
 
         dataManager.addDataEventListener("Running_"+id, new DataManager.DataEventHandler() {
             @Override
@@ -43,7 +52,7 @@ public abstract class AbstractCRDT<T> implements CRDT<T> {
 
                     // This is necessary to reach replicas that were not online when the first "Running" message was sent
                     dataManager.pushTo("Running_"+id, 0, dataManager.remoteNodeIDs);
-                    System.out.println("[DEBUG] BufferA: " + outBuffer.size());
+                    System.out.println("[DEBUG] BufferA: " + buffer.size());
                     //broadcastBuffer(dataManager);
                 }
             }
@@ -52,13 +61,13 @@ public abstract class AbstractCRDT<T> implements CRDT<T> {
         dataManager.addDataEventListener("Operation_" + id, new DataManager.DataEventHandler() {
             @Override
             public void handleDataEvent(int srcNodeID, Object value) {
-                if (((Operation) value).getType() == CRDT.END) {
+                if (((IOperation) value).getType() == CRDT.END) {
                     addFinishedNode(srcNodeID, dataManager);
                     //inBuffer.add(new RegisterOperation<Integer>(END, null, null));
-                    //update(srcNodeID, (Operation) value, dataManager);
+                    //update(srcNodeID, (IOperation) value, dataManager);
                 } else {
-                    //inBuffer.add((Operation)value);
-                    update(srcNodeID, (Operation) value, dataManager);
+                    //inBuffer.add((IOperation)value);
+                    update(srcNodeID, (IOperation) value);
                 }
             }
         });
@@ -73,7 +82,7 @@ public abstract class AbstractCRDT<T> implements CRDT<T> {
     public void finish(DataManager dataManager) {
         System.out.println("[DEBUG] All nodes: " + isAllNodesRunning());
 
-        while(!isAllNodesRunning()) {// && !(inBuffer.size() == 0) && !(outBuffer.size() == 0)) {
+        while(!isAllNodesRunning()) {
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
@@ -82,7 +91,7 @@ public abstract class AbstractCRDT<T> implements CRDT<T> {
         }
 
         System.out.println("[DEBUG] All nodes: " + isAllNodesRunning());
-        System.out.println("[DEBUG] BufferB: " + outBuffer.size());
+        System.out.println("[DEBUG] BufferB: " + buffer.size());
 
         broadcast(new EndOperation(), dataManager);
 
@@ -104,7 +113,7 @@ public abstract class AbstractCRDT<T> implements CRDT<T> {
     }
 
     public Queue getBuffer() {
-        return this.outBuffer;
+        return this.buffer;
     }
     //public Queue getInBuffer() { return this.inBuffer; }
 
@@ -116,7 +125,7 @@ public abstract class AbstractCRDT<T> implements CRDT<T> {
         }
     }
 
-    protected void broadcast(Operation op, DataManager dm) {
+    protected void broadcast(IOperation op, DataManager dm) {
         // send to all nodes
         if(isAllNodesRunning()) {
             broadcastBuffer(dm);
@@ -126,17 +135,17 @@ public abstract class AbstractCRDT<T> implements CRDT<T> {
         }
     }
 
-    private void buffer(Operation op) {
-        outBuffer.add(op);
+    private void buffer(IOperation op) {
+        buffer.add(op);
     }
 
-    protected abstract boolean update(int srcNodeId, Operation<T> op, DataManager dm);
+    protected abstract boolean update(int srcNodeId, IOperation<T> op);
 
     private void broadcastBuffer(DataManager dm) {
-        if(outBuffer.size() > 0) {
-            System.out.println("[DEBUG] Broadcasting buffer size " + outBuffer.size());
-            while(outBuffer.size() > 0) {
-                dm.pushTo("Operation_"+id, outBuffer.poll(), dm.remoteNodeIDs);
+        if(buffer.size() > 0) {
+            System.out.println("[DEBUG] Broadcasting buffer size " + buffer.size());
+            while(buffer.size() > 0) {
+                dm.pushTo("Operation_"+id, buffer.poll(), dm.remoteNodeIDs);
             }
         } else {
             //TODO: some exception?

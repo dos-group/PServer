@@ -2,13 +2,11 @@ package de.tuberlin.pserver.crdt.counters;
 
 import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
-import de.tuberlin.pserver.crdt.operations.CounterOperation;
+import de.tuberlin.pserver.crdt.operations.IOperation;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.runtime.DataManager;
 
-import java.io.Serializable;
-
-public class Counter extends AbstractCounter implements CRDT, Serializable {
+public class Counter extends AbstractCounter implements CRDT {
 
     public Counter(String id, DataManager dataManager) {
         super(id, dataManager);
@@ -16,8 +14,8 @@ public class Counter extends AbstractCounter implements CRDT, Serializable {
     }
 
     @Override
-    protected boolean update(int srcNodeID, Operation op, DataManager dm) {
-        CounterOperation cop = (CounterOperation) op;
+    protected boolean update(int srcNodeID, IOperation op) {
+        Operation<Integer> cop = (Operation<Integer>) op;
 
         if(cop.getType() == CRDT.SUM) {
             return addCount(cop.getValue());
@@ -32,17 +30,17 @@ public class Counter extends AbstractCounter implements CRDT, Serializable {
     }
 
     @Override
-    public boolean add(int i, DataManager dataManager) {
+    public boolean add(int i) {
         if(addCount(i)) {
-            broadcast(new CounterOperation(CRDT.SUM, i), dataManager);
+            broadcast(new Operation<>(CRDT.SUM, i), dataManager);
             return true;
         }
         return false;
     }
 
-    public boolean subtract(int i, DataManager dataManager) {
+    public boolean subtract(int i) {
         if(subtractCount(i)) {
-            broadcast(new CounterOperation(CRDT.SUBTRACT, i), dataManager);
+            broadcast(new Operation<>(CRDT.SUBTRACT, i), dataManager);
             return true;
         }
         return false;

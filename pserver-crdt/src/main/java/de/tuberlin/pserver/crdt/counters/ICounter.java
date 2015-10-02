@@ -2,8 +2,8 @@ package de.tuberlin.pserver.crdt.counters;
 
 import de.tuberlin.pserver.runtime.DataManager;
 
-public interface CounterCRDT {
+public interface ICounter {
 
     long getCount();
-    boolean add(int l, DataManager dataManager);
+    boolean add(int l);
 }

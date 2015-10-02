@@ -2,7 +2,7 @@ package de.tuberlin.pserver.crdt.counters;
 
 import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
-import de.tuberlin.pserver.crdt.operations.CounterOperation;
+import de.tuberlin.pserver.crdt.operations.IOperation;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.runtime.DataManager;
 
@@ -16,8 +16,8 @@ public class GCounter extends AbstractCounter implements CRDT, Serializable {
     }
 
     @Override
-    protected boolean update(int srcNodeID, Operation op, DataManager dm) {
-        CounterOperation cop = (CounterOperation) op;
+    protected boolean update(int srcNodeID, IOperation op) {
+        Operation<Integer> cop = (Operation<Integer>) op;
 
         if (cop.getType() == CRDT.SUM) {
             return addCount(cop.getValue());
@@ -28,9 +28,9 @@ public class GCounter extends AbstractCounter implements CRDT, Serializable {
     }
 
     @Override
-    public boolean add(int i, DataManager dataManager) {
+    public boolean add(int i) {
         if(addCount(i)) {
-            broadcast(new CounterOperation(CRDT.SUM, i), dataManager);
+            broadcast(new Operation<>(CRDT.SUM, i), dataManager);
             return true;
         }
         return false;

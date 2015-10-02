@@ -17,11 +17,9 @@ public class GCounterTestJob extends MLProgram {
                 GCounter gc2 = new GCounter("two", dataManager);
 
                 for (int i = 0; i < 10000; i++) {
-                    //gc.applyOperation(new CounterOperation(CRDT.SUM, 1), dataManager);
-                    gc.add(1, dataManager);
+                    gc.add(1);
                     if ((i % 2) == 0) {
-                        //gc2.applyOperation(new CounterOperation(CRDT.SUM, 1), dataManager);
-                        gc2.add(1, dataManager);
+                        gc2.add(1);
                     }
                 }
 
@@ -48,11 +46,9 @@ public class GCounterTestJob extends MLProgram {
                 GCounter gc2 = new GCounter("two", dataManager);
 
                 for (int i = 0; i < 100000; i++) {
-                    //gc.applyOperation(new CounterOperation(CRDT.SUM, 1), dataManager);
-                    gc.add(1, dataManager);
+                    gc.add(1);
                     if ((i % 2) == 0) {
-                        //gc2.applyOperation(new CounterOperation(CRDT.SUM, 1), dataManager);
-                        gc2.add(1, dataManager);
+                        gc2.add(1);
                     }
                 }
 
@@ -69,10 +65,10 @@ public class GCounterTestJob extends MLProgram {
 
     public static void main(final String[] args) {
 
-        // Set the number of simulated nodes, can also be
+        // ISet the number of simulated nodes, can also be
         // configured via 'pserver/pserver-core/src/main/resources/reference.simulation.conf'
         System.setProperty("simulation.numNodes", "2");
-        // Set the memory each simulated node gets.
+        // ISet the memory each simulated node gets.
         System.setProperty("jvmOptions", "[\"-Xmx256m\"]");
 
         PServerExecutor.LOCAL

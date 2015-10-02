@@ -2,8 +2,8 @@ package de.tuberlin.pserver.crdt.registers;
 
 import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
-import de.tuberlin.pserver.crdt.operations.AbstractOperation;
-import de.tuberlin.pserver.crdt.operations.Operation;
+import de.tuberlin.pserver.crdt.operations.IOperation;
+import de.tuberlin.pserver.crdt.operations.TaggedOperation;
 import de.tuberlin.pserver.runtime.DataManager;
 
 import java.util.Calendar;
@@ -12,7 +12,7 @@ import java.util.Date;
 // TODO: in the Shapiro paper, concurrent updates are solved by concatenating MAC address to the timestamp...
 // TODO: maybe don't even bother with the Date class, just do everything in long
 // Last Writer Wins Register
-public class LWWRegister<T extends Comparable> extends AbstractRegister<T> implements RegisterCRDT<T> {
+public class LWWRegister<T extends Comparable> extends AbstractRegister<T> implements Register<T> {
     // TODO: this should be set to beginning of time or so
     private T register;
     private long time = Calendar.getInstance().getTimeInMillis();
@@ -25,12 +25,12 @@ public class LWWRegister<T extends Comparable> extends AbstractRegister<T> imple
     }
 
     @Override
-    protected boolean update(int srcNodeId, Operation<T> op, DataManager dm) {
+    protected boolean update(int srcNodeId, IOperation<T> op) {
         // TODO: is there a way to avoid this cast? It is on a critical path
-        AbstractOperation.RegisterOperation<T> rop = (AbstractOperation.RegisterOperation<T>) op;
+        TaggedOperation<T,Date> rop = (TaggedOperation<T, Date>) op;
 
         if(rop.getType() == CRDT.WRITE) {
-            return setRegister(rop.getValue(), rop.getDate().getTime());
+            return setRegister(rop.getValue(), rop.getTag().getTime());
         }
         else {
             // TODO: error text
@@ -59,9 +59,9 @@ public class LWWRegister<T extends Comparable> extends AbstractRegister<T> imple
     }
 
     @Override
-    public boolean set(T element, DataManager dataManager) {
+    public boolean set(T element) {
         if(setRegister(element, Calendar.getInstance().getTimeInMillis())) {
-            broadcast(new AbstractOperation.RegisterOperation<>(CRDT.WRITE, element, new Date(time)), dataManager);
+            broadcast(new TaggedOperation<>(CRDT.WRITE, element, new Date(time)), dataManager);
             return true;
         }
         return false;

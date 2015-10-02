@@ -2,15 +2,15 @@ package de.tuberlin.pserver.crdt.sets;
 
 import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
-import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.crdt.operations.SetOperation;
+import de.tuberlin.pserver.crdt.operations.IOperation;
+import de.tuberlin.pserver.crdt.operations.TaggedOperation;
 import de.tuberlin.pserver.runtime.DataManager;
 
 import java.util.*;
 
 /**
  *
- * The OR Set doesn't make any fucking sense in my opinion... At least not the way it is proposed and implemented here
+ * The OR ISet doesn't make any fucking sense in my opinion... At least not the way it is proposed and implemented here
  */
 public class ORSet<T> extends AbstractSet<T> {
     private Map<T,List<UUID>> map = new HashMap<>();
@@ -21,14 +21,14 @@ public class ORSet<T> extends AbstractSet<T> {
     }
 
     @Override
-    protected boolean update(int srcNodeId, Operation<T> op, DataManager dm) {
-        SetOperation<T> sop = (SetOperation<T>) op;
+    protected boolean update(int srcNodeId, IOperation<T> op) {
+        TaggedOperation<T,UUID> sop = (TaggedOperation<T,UUID>) op;
 
         if(op.getType() == CRDT.ADD) {
-            return addElement(sop.getValue(), sop.getId());
+            return addElement(sop.getValue(), sop.getTag());
         }
         else if(op.getType() == CRDT.REMOVE) {
-            return removeElement(sop.getValue(), sop.getId());
+            return removeElement(sop.getValue(), sop.getTag());
         }
         else {
             throw new IllegalOperationException("This operation is not supported by ORSet");
@@ -36,22 +36,22 @@ public class ORSet<T> extends AbstractSet<T> {
     }
 
     @Override
-    public boolean add(T value, DataManager dataManager) {
+    public boolean add(T value) {
         UUID id = UUID.randomUUID();
 
         if(addElement(value, id)) {
-            broadcast(new SetOperation<>(CRDT.ADD, value, id), dataManager);
+            broadcast(new TaggedOperation<>(CRDT.ADD, value, id), dataManager);
             return true;
         }
         return false;
     }
 
     @Override
-    public boolean remove(T value, DataManager dataManager) {
+    public boolean remove(T value) {
         UUID id = getId(value);
 
         if(removeElement(value, id)) {
-            broadcast(new SetOperation<T>(CRDT.REMOVE, value, id), dataManager);
+            broadcast(new TaggedOperation<>(CRDT.REMOVE, value, id), dataManager);
             return true;
         }
         return false;
@@ -80,7 +80,7 @@ public class ORSet<T> extends AbstractSet<T> {
         return a;
     }
 
-   /* public boolean add(SetOperation<T> sop) {
+   /* public boolean add(TaggedOperation<T> sop) {
         System.out.println("Add: " + sop.getValue() + ", " + sop.getId());
         if(map.get(sop.getValue()) == null) {
             ArrayList<UUID> list = new ArrayList<>();
@@ -93,7 +93,7 @@ public class ORSet<T> extends AbstractSet<T> {
         return true;
     }
 
-    public boolean remove(SetOperation<T> sop) {
+    public boolean remove(TaggedOperation<T> sop) {
         System.out.println("Remove: " + sop.getValue() + ", " + sop.getId());
         if(map.get(sop.getValue()) != null) {
             boolean a = map.get(sop.getValue()).remove(sop.getId());
