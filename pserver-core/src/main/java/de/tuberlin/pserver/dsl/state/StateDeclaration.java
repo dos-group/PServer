@@ -1,5 +1,9 @@
 package de.tuberlin.pserver.dsl.state;
 
+import com.google.common.base.Preconditions;
+import com.google.common.primitives.Ints;
+import de.tuberlin.pserver.commons.utils.ParseUtils;
+import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.dsl.state.properties.LocalScope;
 import de.tuberlin.pserver.dsl.state.properties.RemoteUpdate;
@@ -8,6 +12,11 @@ import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
 import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
 import de.tuberlin.pserver.types.PartitionType;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
 
 public final class StateDeclaration {
 
@@ -73,4 +82,23 @@ public final class StateDeclaration {
         this.path           = path;
         this.remoteUpdate   = remoteUpdate;
     }
+
+    public static StateDeclaration fromAnnotatedField(State state, Field field) {
+        return new StateDeclaration(
+                field.getName(),
+                field.getType(),
+                state.localScope(),
+                state.globalScope(),
+                ParseUtils.parseNodeRanges(state.at()),
+                state.partitionerClass(),
+                state.rows(),
+                state.cols(),
+                state.layout(),
+                state.format(),
+                state.recordFormat(),
+                state.path(),
+                state.remoteUpdate()
+        );
+    }
+
 }

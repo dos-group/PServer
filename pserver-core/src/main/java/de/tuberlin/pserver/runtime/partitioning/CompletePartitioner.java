@@ -11,14 +11,14 @@ public class CompletePartitioner extends IMatrixPartitioner {
 
     private final Matrix.PartitionShape shape;
 
-    public CompletePartitioner(long rows, long cols, SlotContext context) {
-        super(rows, cols, context);
+    public CompletePartitioner(long rows, long cols, int nodeId, int[] atNodes) {
+        super(rows, cols, nodeId, atNodes);
         shape = new Matrix.PartitionShape(rows, cols, 0, 0);
     }
 
     @Override
     public int getPartitionOfEntry(MatrixEntry entry) {
-        return context.runtimeContext.nodeID;
+        return nodeId;
     }
 
     @Override
@@ -54,5 +54,10 @@ public class CompletePartitioner extends IMatrixPartitioner {
     @Override
     public int getNumColPartitions() {
         return 1;
+    }
+
+    @Override
+    public IMatrixPartitioner ofNode(int nodeId) {
+        return new CompletePartitioner(rows, cols, nodeId, new int[] {nodeId});
     }
 }

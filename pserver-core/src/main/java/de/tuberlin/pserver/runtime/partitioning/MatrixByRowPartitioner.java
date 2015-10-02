@@ -1,8 +1,12 @@
 package de.tuberlin.pserver.runtime.partitioning;
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.SlotContext;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
+
+import java.util.Arrays;
+import java.util.stream.IntStream;
 
 public class MatrixByRowPartitioner extends IMatrixPartitioner {
 
@@ -12,9 +16,13 @@ public class MatrixByRowPartitioner extends IMatrixPartitioner {
     // Public Methods.
     // ---------------------------------------------------
 
-    public MatrixByRowPartitioner(long rows, long cols, SlotContext context) {
-        super(rows, cols, context);
+    public MatrixByRowPartitioner(long rows, long cols, int nodeId, int[] atNodes) {
+        super(rows, cols, nodeId, atNodes);
         shape = getPartitionShape();
+    }
+
+    public MatrixByRowPartitioner(long rows, long cols, int nodeId, int numNodes) {
+        this(rows, cols, nodeId, IntStream.iterate(0, x -> x + 1).limit(numNodes).toArray());
     }
 
     // ---------------------------------------------------
@@ -23,10 +31,10 @@ public class MatrixByRowPartitioner extends IMatrixPartitioner {
 
     @Override
     public int getPartitionOfEntry(final MatrixEntry entry) {
-        double numOfRowsPerInstance = (double) rows / context.programContext.nodeDOP;
+        double numOfRowsPerInstance = (double) rows / atNodes.length;
         int partition = (int) (entry.getRow() / numOfRowsPerInstance);
-        if(partition >= context.programContext.nodeDOP) {
-            throw new IllegalStateException("The calculated partition id (row = "+entry.getRow()+", rows = "+rows+", numNodes = "+context.programContext.nodeDOP+") -> " + partition + " must not exceed numNodes.");
+        if(partition >= atNodes.length) {
+            throw new IllegalStateException("The calculated partition id (row = "+entry.getRow()+", rows = "+rows+", numNodes = "+atNodes.length+") -> " + partition + " must not exceed numNodes.");
         }
         return partition;
     }
@@ -34,9 +42,9 @@ public class MatrixByRowPartitioner extends IMatrixPartitioner {
     @Override
     public Matrix.PartitionShape getPartitionShape() {
         if(shape == null) {
-            double rowsPerNode = (double) rows / context.programContext.nodeDOP;
-            long rowOffset = (int) Math.ceil(rowsPerNode * context.runtimeContext.nodeID);
-            long numRows = (int) (Math.ceil(rowsPerNode * (context.runtimeContext.nodeID + 1)) - rowOffset);
+            double rowsPerNode = (double) rows / atNodes.length;
+            long rowOffset = (int) Math.ceil(rowsPerNode * nodeId);
+            long numRows = (int) (Math.ceil(rowsPerNode * (nodeId + 1)) - rowOffset);
             shape = new Matrix.PartitionShape(numRows, cols, rowOffset, 0);
         }
         return shape;
@@ -72,12 +80,18 @@ public class MatrixByRowPartitioner extends IMatrixPartitioner {
 
     @Override
     public int getNumRowPartitions() {
-        return context.programContext.nodeDOP;
+        return atNodes.length;
     }
 
     @Override
     public int getNumColPartitions() {
         return 1;
+    }
+
+    @Override
+    public IMatrixPartitioner ofNode(int nodeId) {
+        Preconditions.checkArgument(Arrays.asList(atNodes).contains(nodeId), "Can not construct MatrixByRowPartitioner of node '%d' because it is part of this partitioning. Participating nodes are: %s", nodeId, Arrays.toString(atNodes));
+        return new MatrixByRowPartitioner(rows, cols, nodeId, atNodes);
     }
 
     //    // TODO: onvert this into a unit test

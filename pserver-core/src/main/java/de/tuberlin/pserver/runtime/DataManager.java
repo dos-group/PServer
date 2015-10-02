@@ -12,6 +12,7 @@ import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
+import de.tuberlin.pserver.dsl.state.StateDeclaration;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
@@ -192,29 +193,8 @@ public class DataManager extends EventDispatcher {
     // DATA LOADING
     // ---------------------------------------------------
 
-    public Matrix loadAsMatrix(final SlotContext slotContext,
-                             final String filePath,
-                             final String name,
-                             final long rows,
-                             final long cols,
-                             final GlobalScope globalScope,
-                             final Class<? extends IMatrixPartitioner> partitionerClass,
-                             final AbstractRecordFormatConfig recordFormat,
-                             final Format matrixFormat,
-                             final Layout matrixLayout) {
-
-        return matrixPartitionManager.load(
-                slotContext,
-                filePath,
-                name,
-                rows,
-                cols,
-                globalScope,
-                partitionerClass,
-                recordFormat,
-                matrixFormat,
-                matrixLayout
-        );
+    public Matrix loadAsMatrix(final SlotContext slotContext, final StateDeclaration stateDeclaration) {
+        return matrixPartitionManager.load(slotContext, stateDeclaration);
     }
 
     // ---------------------------------------------------
