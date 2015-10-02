@@ -8,7 +8,8 @@ import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.Matrix.RowIterator;
+import de.tuberlin.pserver.ml.optimization.*;
+import de.tuberlin.pserver.ml.optimization.GradientDescent.GDOptimizer;
 import de.tuberlin.pserver.runtime.MLProgram;
 
 import java.io.Serializable;
@@ -19,31 +20,18 @@ public class LogisticRegression extends MLProgram {
     private static final String NUM_NODES = "1";
     private static final int PER_NODE_PARALLELISM = 1;
 
-    /*
     private static final String X_TRAIN_PATH = "/Users/Chris/Downloads/X_train.csv";
     private static final String Y_TRAIN_PATH = "/Users/Chris/Downloads/Y_train.csv";
     private static final String X_TEST_PATH = "/Users/Chris/Downloads/X_test.csv";
     private static final String Y_TEST_PATH = "/Users/Chris/Downloads/Y_test.csv";
 
-    private static final int N_TRAIN = 160;
-    private static final int N_TEST = 40;
+    private static final int N_TRAIN = 3200;
+    private static final int N_TEST = 800;
     private static final int D = 3;
 
-    */
-
-    private static final String X_TRAIN_PATH = "/Users/Chris/Downloads/X_house_train.csv";
-    private static final String Y_TRAIN_PATH = "/Users/Chris/Downloads/Y_house_train.csv";
-    private static final String X_TEST_PATH = "/Users/Chris/Downloads/X_house_test.csv";
-    private static final String Y_TEST_PATH = "/Users/Chris/Downloads/Y_house_test.csv";
-
-    private static final int N_TRAIN = 538;
-    private static final int N_TEST = 135;
-    private static final int D = 2;
-
-
-    private static double STEP_SIZE = 1e-2;
-    private static int NUM_EPOCHS = 20;
-    private static double LAMBDA = 1e-6;
+    private static double STEP_SIZE = 1e-3;
+    private static int NUM_EPOCHS = 1000;
+    private static double LAMBDA = 1.0;
     private static int PERIOD = 1;
 
 
@@ -51,13 +39,13 @@ public class LogisticRegression extends MLProgram {
     public Matrix X_train;
 
     @State(globalScope = GlobalScope.PARTITIONED, rows = N_TRAIN, cols = 1, path = Y_TRAIN_PATH)
-    public Matrix Y_train;
+    public Matrix y_train;
 
     @State(globalScope = GlobalScope.PARTITIONED, rows = N_TEST, cols = D, path = X_TEST_PATH)
     public Matrix X_test;
 
     @State(globalScope = GlobalScope.PARTITIONED, rows = N_TEST, cols = 1, path = Y_TEST_PATH)
-    public Matrix Y_test;
+    public Matrix y_test;
 
     @State(globalScope = GlobalScope.REPLICATED, rows = 1, cols = D)
     public Matrix W;
@@ -69,78 +57,29 @@ public class LogisticRegression extends MLProgram {
 
         }).process(() -> {
 
-            final RowIterator trainIterator = X_train.rowIterator();
-            final RowIterator testIterator = X_test.rowIterator();
+            LossFunction lossFct = new LossFunction.GenericLossFunction(
+                    new PredictionFunction.LinearPrediction(),
+                    new PartialLossFunction.LogLoss(),
+                    new RegularizationFunction.L2Regularization()
+            );
 
-            CF.loop().exe(NUM_EPOCHS, (epoch) -> {
-                int i = 0;
-                while (trainIterator.hasNext()) {
-                    trainIterator.nextRandom();
-                    final Matrix xi = trainIterator.get();
-                    final double yi = Y_train.get(trainIterator.rowNum());
+            GDOptimizer optimizer = new GDOptimizer(slotContext)
+                    .setMaxIterations(NUM_EPOCHS)
+                    .setBatchSize(1)
+                    .setInitialLearningRate(STEP_SIZE)
+                    .setLearningRateFunction(new LearningRateFunction.ConstantLearningRate())
+                    .setLossFunction(lossFct)
+                    .setRegularization(LAMBDA)
+                    .setShuffle(false);
 
-                    //updateW(xi, W, yi, STEP_SIZE);
-                    updateWReg(xi, W, yi, STEP_SIZE, LAMBDA);
-                }
-                trainIterator.reset();
-
-                if (epoch % PERIOD == 0) {
-                    System.out.println("Objective[" + epoch + "]: " + likelihoodReg(trainIterator, Y_train, W, LAMBDA));
-                    System.out.println("Loss[" + epoch + "]: " + zeroOneLoss(testIterator, Y_test, W));
-                }
-            });
+            optimizer.optimize(X_train, y_train, W);
 
         }).postProcess(() -> {
             result(W);
         });
     }
 
-    public static double sigmoid(double z) {
-        return 1. / (1. + Math.exp(-z));
-    }
-
-    public static void updateW(Matrix x, Matrix W, double y, double stepSize) {
-        W.add(x.scale(stepSize * y * sigmoid(-y * x.dot(W))), W);
-    }
-
-    public static double likelihood(RowIterator dataIterator, Matrix Y, Matrix W) {
-        double sum = 0.0;
-
-        while (dataIterator.hasNext()) {
-            dataIterator.next();
-            final Matrix xi = dataIterator.get();
-            final double yi = Y.get(dataIterator.rowNum());
-
-            double zi = xi.dot(W);
-            sum += Math.log(sigmoid(yi * zi));
-        }
-        dataIterator.reset();
-        return sum;
-    }
-
-    public static void updateWReg(Matrix x, Matrix W, double y, double stepSize, double lambda) {
-        Matrix Wnew = W.add(x.scale(stepSize * y * sigmoid(-y * x.dot(W))));
-        W.set(0,0,0.0);
-        Wnew.sub(W.scale(stepSize*lambda), W);
-    }
-
-    public static double likelihoodReg(RowIterator dataIterator, Matrix Y, Matrix W, double lambda) {
-        double sum = 0.0;
-
-        while (dataIterator.hasNext()) {
-            dataIterator.next();
-            final Matrix xi = dataIterator.get();
-            final double yi = Y.get(dataIterator.rowNum());
-
-            double zi = xi.dot(W);
-            sum += Math.log(sigmoid(yi * zi));
-        }
-        sum -= 0.5 * lambda * (W.applyOnElements(e -> Math.pow(e, 2)).sum() - Math.pow(W.get(0), 2));
-
-        dataIterator.reset();
-        return sum;
-    }
-
+    /*
     public static double zeroOneLoss(RowIterator dataIterator, Matrix Y, Matrix W) {
         double loss = 0.0;
 
@@ -160,6 +99,7 @@ public class LogisticRegression extends MLProgram {
         dataIterator.reset();
         return loss;
     }
+    */
 
 
     public static void local() {
