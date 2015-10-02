@@ -12,7 +12,7 @@ import de.tuberlin.pserver.types.PartitionType;
 
 public class DistributedMatrixJob extends MLProgram {
 
-    @State(globalScope = GlobalScope.LOGICALLY_PARTITIONED, partitionType = PartitionType.ROW_PARTITIONED,
+    @State(globalScope = GlobalScope.LOGICALLY_PARTITIONED,
             rows = 20, cols = 20, format = Format.DENSE_FORMAT)
     public DistributedMatrix X;
 

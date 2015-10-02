@@ -172,7 +172,7 @@ public final class MatrixPartitionManager {
                             task.slotContext,
                             task.decl.rows,
                             task.decl.cols,
-                            task.decl.partitionerClass,
+                            IMatrixPartitioner.newInstance(task.decl.partitionerClass, task.decl.rows, task.decl.cols, task.slotContext.runtimeContext.nodeID, task.decl.atNodes),
                             task.decl.layout,
                             task.decl.format
                             //, false
@@ -183,7 +183,7 @@ public final class MatrixPartitionManager {
                             task.slotContext,
                             task.decl.rows,
                             task.decl.cols,
-                            task.decl.partitionerClass,
+                            IMatrixPartitioner.newInstance(task.decl.partitionerClass, task.decl.rows, task.decl.cols, task.slotContext.runtimeContext.nodeID, task.decl.atNodes),
                             task.decl.layout,
                             task.decl.format
                             //, true

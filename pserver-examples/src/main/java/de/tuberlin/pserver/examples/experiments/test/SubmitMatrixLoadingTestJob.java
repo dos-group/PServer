@@ -42,7 +42,7 @@ public class SubmitMatrixLoadingTestJob extends MLProgram {
         program.process(() -> {
             int nodeId = slotContext.runtimeContext.nodeID;
             int numNodes = slotContext.programContext.nodeDOP;
-            MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(nodeId, numNodes, ROWS, COLS);
+            MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(ROWS, COLS, nodeId, numNodes);
 
             ReusableMatrixEntry entry = new MutableMatrixEntry(-1, -1, Double.NaN);
 

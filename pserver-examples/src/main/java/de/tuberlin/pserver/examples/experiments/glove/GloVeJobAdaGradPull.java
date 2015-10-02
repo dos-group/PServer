@@ -38,7 +38,7 @@ public final class GloVeJobAdaGradPull extends MLProgram {
 
     // ---------------------------------------------------
 
-    @State(globalScope = GlobalScope.PARTITIONED, partitionType = PartitionType.ROW_PARTITIONED,
+    @State(globalScope = GlobalScope.PARTITIONED,
             rows = COLS, cols = COLS, path = "datasets/text8_coocc.csv")
     public Matrix X;
 

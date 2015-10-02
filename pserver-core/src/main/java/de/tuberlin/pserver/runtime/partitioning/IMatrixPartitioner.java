@@ -1,9 +1,14 @@
 package de.tuberlin.pserver.runtime.partitioning;
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.SlotContext;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.IntStream;
 
 public abstract class IMatrixPartitioner {
@@ -14,6 +19,19 @@ public abstract class IMatrixPartitioner {
     protected final int[] atNodes;
 
     public IMatrixPartitioner(long rows, long cols, int nodeId, int[] atNodes) {
+        boolean contained = false;
+        for(int node : atNodes) {
+            if(node == nodeId) {
+                contained = true;
+                break;
+            }
+        }
+        Preconditions.checkArgument(
+                contained,
+                "Failed to instantiate IMatrixPartitioner: nodeId '%s' is not contained in nodeList: %s",
+                nodeId,
+                Arrays.toString(atNodes)
+        );
         this.rows    = rows;
         this.cols    = cols;
         this.nodeId  = nodeId;
@@ -27,10 +45,10 @@ public abstract class IMatrixPartitioner {
     public static IMatrixPartitioner newInstance(Class<? extends IMatrixPartitioner> implClass, long rows, long cols, int nodeId, int[] atNodes) {
         IMatrixPartitioner result;
         try {
-            result = implClass.getDeclaredConstructor(Long.class, Long.class, Integer.class, Integer[].class).newInstance(rows, cols, nodeId, atNodes);
+            result = implClass.getDeclaredConstructor(long.class, long.class, int.class, int[].class).newInstance(rows, cols, nodeId, atNodes);
         }
-        catch(Exception e) {
-            throw new RuntimeException("Failed to instantiate IMatrixPartitioner", e);
+        catch(NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+            throw new RuntimeException("Failed to instantiate IMatrixPartitioner implementation " + implClass.getName(), e);
         }
         return result;
     }

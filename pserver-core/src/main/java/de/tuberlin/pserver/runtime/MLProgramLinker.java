@@ -13,6 +13,7 @@ import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
+import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
 import de.tuberlin.pserver.runtime.state.controller.MatrixDeltaMergeUpdateController;
 import de.tuberlin.pserver.runtime.state.controller.MatrixMergeUpdateController;
 import de.tuberlin.pserver.runtime.state.controller.RemoteUpdateController;
@@ -32,6 +33,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.stream.IntStream;
 
 public final class MLProgramLinker {
 
@@ -207,7 +209,7 @@ public final class MLProgramLinker {
             for (final Annotation an : field.getDeclaredAnnotations()) {
                 if (an instanceof State) {
                     final State stateProperties = (State) an;
-                    final StateDeclaration decl = StateDeclaration.fromAnnotatedField(stateProperties, field);
+                    final StateDeclaration decl = StateDeclaration.fromAnnotatedField(stateProperties, field, IntStream.iterate(0, x -> x + 1).limit(runtimeContext.numOfNodes).toArray());
                     stateDecls.add(decl);
                 }
             }
@@ -326,7 +328,7 @@ public final class MLProgramLinker {
                             final SharedObject so = new DistributedMatrix(
                                     slotContext,
                                     decl.rows, decl.cols,
-                                    decl.partitionerClass,
+                                    IMatrixPartitioner.newInstance(decl.partitionerClass, decl.rows, decl.cols, slotContext.runtimeContext.nodeID, decl.atNodes),
                                     decl.layout,
                                     decl.format
                                     //, false
@@ -340,7 +342,7 @@ public final class MLProgramLinker {
                         final SharedObject so = new DistributedMatrix(
                                 slotContext,
                                 decl.rows, decl.cols,
-                                decl.partitionerClass,
+                                IMatrixPartitioner.newInstance(decl.partitionerClass, decl.rows, decl.cols, slotContext.runtimeContext.nodeID, decl.atNodes),
                                 decl.layout,
                                 decl.format
                                 //, true
