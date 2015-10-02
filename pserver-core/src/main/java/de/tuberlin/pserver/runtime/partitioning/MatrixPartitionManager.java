@@ -3,9 +3,7 @@ package de.tuberlin.pserver.runtime.partitioning;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
-import de.tuberlin.pserver.math.Format;
-import de.tuberlin.pserver.math.Layout;
+import de.tuberlin.pserver.dsl.state.StateDeclaration;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.runtime.DataManager;
@@ -19,7 +17,6 @@ import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
 import de.tuberlin.pserver.types.DistributedMatrix;
-import de.tuberlin.pserver.types.PartitionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,38 +38,22 @@ public final class MatrixPartitionManager {
     private final class MatrixLoadTask {
 
         final SlotContext slotContext;
-        final String name;
-        final long rows;
-        final long cols;
-        final GlobalScope globalScope;
-        final Class<? extends IMatrixPartitioner> partitionerClass;
-        final AbstractRecordFormatConfig recordFormat;
-        final Format matrixFormat;
-        final Layout matrixLayout;
+        final StateDeclaration decl;
         final FileDataIterator fileIterator;
 
-        public MatrixLoadTask(final SlotContext slotContext,
-                              final String filePath,
-                              final String name,
-                              final long rows,
-                              final long cols,
-                              final GlobalScope globalScope,
-                              Class<? extends IMatrixPartitioner> partitionerClass,
-                              final AbstractRecordFormatConfig recordFormat,
-                              final Format matrixFormat,
-                              final Layout matrixLayout) {
-
-            this.slotContext        = slotContext;
-            this.name               = name;
-            this.rows               = rows;
-            this.cols               = cols;
-            this.globalScope        = globalScope;
-            this.partitionerClass   = partitionerClass;
-            this.recordFormat       = recordFormat;
-            this.matrixFormat       = matrixFormat;
-            this.matrixLayout       = matrixLayout;
-            this.fileIterator       = fileSystemManager.createFileIterator(filePath, recordFormat, IMatrixPartitioner.newInstance(partitionerClass, rows, cols, slotContext));
+        public MatrixLoadTask(SlotContext slotContext, StateDeclaration decl) {
+            this.slotContext  = slotContext;
+            this.decl         = decl;
+            AbstractRecordFormatConfig recordFormatConfig;
+            try {
+                recordFormatConfig = decl.recordFormatConfigClass.newInstance();
+            }
+            catch(IllegalAccessException | InstantiationException e) {
+                throw new RuntimeException("Could not instantiate RecordFormatConfig", e);
+            }
+            this.fileIterator = fileSystemManager.createFileIterator(decl.path, recordFormatConfig, IMatrixPartitioner.newInstance(decl.partitionerClass, decl.rows, decl.cols, slotContext.runtimeContext.nodeID, decl.atNodes));
         }
+
     }
 
     // ---------------------------------------------------
@@ -134,29 +115,10 @@ public final class MatrixPartitionManager {
     // Public Methods.
     // ---------------------------------------------------
 
-    public Matrix load(final SlotContext slotContext,
-                     final String filePath,
-                     final String name,
-                     final long rows, final long cols,
-                     final GlobalScope globalScope,
-                     final Class<? extends IMatrixPartitioner> partitionerClass,
-                     final AbstractRecordFormatConfig recordFormat,
-                     final Format matrixFormat,
-                     final Layout matrixLayout) {
-
-        final MatrixLoadTask mlt = new MatrixLoadTask(
-                slotContext,
-                filePath,
-                name,
-                rows, cols,
-                globalScope,
-                partitionerClass,
-                recordFormat,
-                matrixFormat,
-                matrixLayout
-        );
-        matrixLoadTasks.put(name, mlt);
-        fileLoadingBarrier.put(name, new AtomicInteger(slotContext.programContext.nodeDOP));
+    public Matrix load(final SlotContext slotContext, final StateDeclaration stateDeclaration) {
+        final MatrixLoadTask mlt = new MatrixLoadTask(slotContext, stateDeclaration);
+        matrixLoadTasks.put(stateDeclaration.name, mlt);
+        fileLoadingBarrier.put(stateDeclaration.name, new AtomicInteger(slotContext.programContext.nodeDOP));
         return getLoadingMatrix(mlt);
     }
 
@@ -195,63 +157,64 @@ public final class MatrixPartitionManager {
     // ---------------------------------------------------
 
     private Matrix getLoadingMatrix(final MatrixLoadTask task) {
-        Matrix matrix = loadingMatrices.get(task.name);
+        Matrix matrix = loadingMatrices.get(task.decl.name);
         if (matrix == null) {
-            switch (task.globalScope) {
+            switch (task.decl.globalScope) {
                 case REPLICATED: {
                     matrix = new MatrixBuilder()
-                            .dimension(task.rows, task.cols)
-                            .format(task.matrixFormat)
-                            .layout(task.matrixLayout)
+                            .dimension(task.decl.rows, task.decl.cols)
+                            .format(task.decl.format)
+                            .layout(task.decl.layout)
                             .build();
                 } break;
                 case PARTITIONED: {
                     matrix = new DistributedMatrix(
                             task.slotContext,
-                            task.rows,
-                            task.cols,
-                            task.partitionerClass,
-                            task.matrixLayout,
-                            task.matrixFormat
+                            task.decl.rows,
+                            task.decl.cols,
+                            task.decl.partitionerClass,
+                            task.decl.layout,
+                            task.decl.format
                             //, false
                     );
                 } break;
                 case LOGICALLY_PARTITIONED:
                     matrix = new DistributedMatrix(
                             task.slotContext,
-                            task.rows,
-                            task.cols,
-                            task.partitionerClass,
-                            task.matrixLayout,
-                            task.matrixFormat
+                            task.decl.rows,
+                            task.decl.cols,
+                            task.decl.partitionerClass,
+                            task.decl.layout,
+                            task.decl.format
                             //, true
                     );
                     break;
             }
-            loadingMatrices.put(task.name, matrix);
+            loadingMatrices.put(task.decl.name, matrix);
         }
         return matrix;
     }
 
     @SuppressWarnings("unchecked")
     private void loadMatrix(final MatrixLoadTask task) {
+        int nodeId = task.slotContext.runtimeContext.nodeID;
+
         // prepare to read entries that belong to foreign matrix partitions
         Map<Integer, List<MatrixEntry>> foreignEntries = new HashMap<>();
         // threshold that indicates how many entries are gathered before sending
         int foreignEntriesThreshold = 2048;
         final Matrix matrix = getLoadingMatrix(task);
-        final IMatrixPartitioner matrixPartitioner = new MatrixByRowPartitioner(task.rows, task.cols, task.slotContext);
+        final IMatrixPartitioner matrixPartitioner = new MatrixByRowPartitioner(task.decl.rows, task.decl.cols, nodeId, task.decl.atNodes);
         final FileDataIterator<? extends IRecord> fileIterator = task.fileIterator;
         ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
 
-        int nodeId = task.slotContext.runtimeContext.nodeID;
         MatrixEntry entry;
         while (fileIterator.hasNext()) {
             final IRecord record = fileIterator.next();
             // iterate through entries in record
             while (record.hasNext()) {
                 entry = record.next(reusable);
-                if(entry.getRow() >= task.rows || entry.getCol() >= task.cols)
+                if(entry.getRow() >= task.decl.rows || entry.getCol() >= task.decl.cols)
                     continue;
                 // get the partition this record belongs to
                 int targetPartition = matrixPartitioner.getPartitionOfEntry(entry);
@@ -274,8 +237,8 @@ public final class MatrixPartitionManager {
         for (Map.Entry<Integer, List<MatrixEntry>> map : foreignEntries.entrySet()) {
             sendPartition(map.getKey(), map.getValue(), task);
         }
-        netManager.broadcastEvent(new MatrixPartitionManager.FinishedLoadingFileEvent(task.name));
-        finishedTask(task.name);
+        netManager.broadcastEvent(new MatrixPartitionManager.FinishedLoadingFileEvent(task.decl.name));
+        finishedTask(task.decl.name);
     }
 
     /**
@@ -307,7 +270,7 @@ public final class MatrixPartitionManager {
     private void sendPartition(int targetNodeId, List<MatrixEntry> entries, MatrixLoadTask task) {
         if (entries != null && !entries.isEmpty()) {
             MatrixEntry[] entriesArray = entries.toArray(new MatrixEntry[entries.size()]);
-            netManager.sendEvent(targetNodeId, new MatrixPartitionManager.MatrixEntryPartitionEvent(entriesArray, task.name));
+            netManager.sendEvent(targetNodeId, new MatrixPartitionManager.MatrixEntryPartitionEvent(entriesArray, task.decl.name));
             entries.clear();
         }
     }

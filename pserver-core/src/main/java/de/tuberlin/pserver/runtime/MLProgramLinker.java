@@ -10,7 +10,6 @@ import de.tuberlin.pserver.dsl.state.StateDeclaration;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.annotations.StateExtractor;
 import de.tuberlin.pserver.dsl.state.annotations.StateMerger;
-import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
@@ -20,7 +19,6 @@ import de.tuberlin.pserver.runtime.state.controller.RemoteUpdateController;
 import de.tuberlin.pserver.runtime.state.filter.MatrixUpdateFilter;
 import de.tuberlin.pserver.runtime.state.merger.UpdateMerger;
 import de.tuberlin.pserver.types.DistributedMatrix;
-import de.tuberlin.pserver.types.PartitionType;
 import de.tuberlin.pserver.types.RemoteMatrixSkeleton;
 import de.tuberlin.pserver.types.RemoteMatrixStub;
 import org.apache.commons.lang3.ArrayUtils;
@@ -176,37 +174,19 @@ public final class MLProgramLinker {
         for (final Method method : programClass.getDeclaredMethods()) {
             for (final Annotation an : method.getDeclaredAnnotations()) {
                 if (an instanceof Unit) {
-
-                    if (method.getReturnType() != void.class)
-                        throw new IllegalStateException();
-
-                    if (method.getParameterTypes().length != 1)
-                        throw new IllegalStateException();
-
-                    if (method.getParameterTypes()[0] != Program.class)
-                        throw new IllegalStateException();
-
-                    final Unit unitProperties = (Unit) an;
-
-                    final int[] executingNodeIDs = parseNodeRanges(unitProperties.at());
+                    UnitDeclaration unitDecl = UnitDeclaration.fromAnnotatedMethod(method, (Unit) an);
+                    final int[] executingNodeIDs = unitDecl.atNodes;
 
                     if (executingNodeIDs.length == 0 && globalUnitDeclIndex == -1)
                         globalUnitDeclIndex = unitDecls.size();
-                    else
-                        if (globalUnitDeclIndex != -1)
-                            throw new IllegalStateException();
+                    else  if (globalUnitDeclIndex != -1)
+                        throw new IllegalStateException();
 
                     for (final Integer nodeID : executingNodeIDs) {
                         if (!availableNodeIDs.remove(nodeID))
                             throw new IllegalStateException();
                     }
-
-                    final UnitDeclaration decl = new UnitDeclaration(
-                            method,
-                            executingNodeIDs
-                    );
-
-                    unitDecls.add(decl);
+                    unitDecls.add(unitDecl);
                 }
             }
         }
@@ -227,21 +207,7 @@ public final class MLProgramLinker {
             for (final Annotation an : field.getDeclaredAnnotations()) {
                 if (an instanceof State) {
                     final State stateProperties = (State) an;
-                    final StateDeclaration decl = new StateDeclaration(
-                            field.getName(),
-                            field.getType(),
-                            stateProperties.localScope(),
-                            stateProperties.globalScope(),
-                            parseNodeRanges(stateProperties.at()),
-                            stateProperties.partitionerClass(),
-                            stateProperties.rows(),
-                            stateProperties.cols(),
-                            stateProperties.layout(),
-                            stateProperties.format(),
-                            stateProperties.recordFormat(),
-                            stateProperties.path(),
-                            stateProperties.remoteUpdate()
-                    );
+                    final StateDeclaration decl = StateDeclaration.fromAnnotatedField(stateProperties, field);
                     stateDecls.add(decl);
                 }
             }
@@ -341,18 +307,7 @@ public final class MLProgramLinker {
                             dataManager.putObject(decl.name, so);
                         }
                         else {
-                            so = dataManager.loadAsMatrix(
-                                    slotContext,
-                                    decl.path,
-                                    decl.name,
-                                    decl.rows,
-                                    decl.cols,
-                                    decl.globalScope,
-                                    decl.partitionerClass,
-                                    decl.recordFormatConfigClass.newInstance(),
-                                    decl.format,
-                                    decl.layout
-                            );
+                            so = dataManager.loadAsMatrix(slotContext, decl);
                         }
                         switch (decl.remoteUpdate) {
                             case NO_UPDATE: break;
@@ -378,18 +333,7 @@ public final class MLProgramLinker {
                             );
                             dataManager.putObject(decl.name, so);
                         } else {
-                            dataManager.loadAsMatrix(
-                                    slotContext,
-                                    decl.path,
-                                    decl.name,
-                                    decl.rows,
-                                    decl.cols,
-                                    decl.globalScope,
-                                    decl.partitionerClass,
-                                    decl.recordFormatConfigClass.newInstance(),
-                                    decl.format,
-                                    decl.layout
-                            );
+                            dataManager.loadAsMatrix(slotContext, decl);
                         }
                     } break;
                     case LOGICALLY_PARTITIONED:
@@ -408,38 +352,6 @@ public final class MLProgramLinker {
                 }
             } else
                 throw new UnsupportedOperationException();
-        }
-    }
-
-    // ---------------------------------------------------
-    // Annotation Property Parsing.
-    // ---------------------------------------------------
-
-    private int[] parseNodeRanges(final String rangeDefinition) {
-
-        if (rangeDefinition.contains("-")) { // interval definition
-
-            final StringTokenizer tokenizer = new StringTokenizer(Preconditions.checkNotNull(rangeDefinition), "-");
-            final List<Integer> vals = new ArrayList<>();
-            final int fromNodeID = Integer.valueOf(tokenizer.nextToken().replaceAll("\\s+", ""));
-            final int toNodeID = Integer.valueOf(tokenizer.nextToken().replaceAll("\\s+", ""));
-
-            if (tokenizer.hasMoreTokens())
-                throw new IllegalStateException();
-
-            for (int i = fromNodeID; i <= toNodeID; ++i) vals.add(i);
-
-            return Ints.toArray(vals);
-
-        } else { // comma separated definition
-
-            final StringTokenizer tokenizer = new StringTokenizer(Preconditions.checkNotNull(rangeDefinition), ",");
-            final List<Integer> vals = new ArrayList<>();
-
-            while (tokenizer.hasMoreTokens())
-                vals.add(Integer.valueOf(tokenizer.nextToken().replaceAll("\\s+", "")));
-
-            return Ints.toArray(vals);
         }
     }
 

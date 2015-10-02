@@ -137,64 +137,66 @@ public class DistributedMatrix extends AbstractMatrix {
     // ---------------------------------------------------
 
     public Matrix aggregateRows(final MatrixAggregation f) {
-        switch (partitionType) {
-            case ROW_PARTITIONED: {
-
-                final Matrix partialAgg = new MatrixBuilder().dimension(1, shape.rows).layout(layout).format(format).build();
-                final Matrix totalAgg = new MatrixBuilder().dimension(1, rows).layout(layout).format(format).build();
-                final RowIterator iter = rowIterator();
-                while(iter.hasNext()) {
-                    iter.next();
-                    final int row = iter.rowNum();
-                    final double value = f.apply(getRow(row));
-                    partialAgg.set(0, row - shape.rowOffset, value);
-                    totalAgg.set(0, row, value);
-                }
-
-                slotContext.runtimeContext.dataManager.pushTo("rowAgg", partialAgg);
-                final int n = slotContext.programContext.nodeDOP - 1;
-                slotContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "rowAgg",
-                        new DataManager.DataEventHandler() {
-                            @Override
-                            public void handleDataEvent(int srcNodeID, Object value) {
-                                final Matrix remotePartialAgg = (Matrix)value;
-                                final long offset = rows / slotContext.programContext.nodeDOP * srcNodeID;
-                                for (int i = 0; i < remotePartialAgg.rows(); ++i)
-                                   totalAgg.set(0, offset + i, remotePartialAgg.get(0, i));
-                            }
-                        }
-                );
-                return totalAgg;
-            }
-            case COLUMN_PARTITIONED: throw new IllegalStateException();
-            case BLOCK_PARTITIONED: throw new IllegalStateException();
-            default: throw new IllegalStateException();
-        }
+//        switch (partitionType) {
+//            case ROW_PARTITIONED: {
+//
+//                final Matrix partialAgg = new MatrixBuilder().dimension(1, shape.rows).layout(layout).format(format).build();
+//                final Matrix totalAgg = new MatrixBuilder().dimension(1, rows).layout(layout).format(format).build();
+//                final RowIterator iter = rowIterator();
+//                while(iter.hasNext()) {
+//                    iter.next();
+//                    final int row = iter.rowNum();
+//                    final double value = f.apply(getRow(row));
+//                    partialAgg.set(0, row - shape.rowOffset, value);
+//                    totalAgg.set(0, row, value);
+//                }
+//
+//                slotContext.runtimeContext.dataManager.pushTo("rowAgg", partialAgg);
+//                final int n = slotContext.programContext.nodeDOP - 1;
+//                slotContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "rowAgg",
+//                        new DataManager.DataEventHandler() {
+//                            @Override
+//                            public void handleDataEvent(int srcNodeID, Object value) {
+//                                final Matrix remotePartialAgg = (Matrix)value;
+//                                final long offset = rows / slotContext.programContext.nodeDOP * srcNodeID;
+//                                for (int i = 0; i < remotePartialAgg.rows(); ++i)
+//                                   totalAgg.set(0, offset + i, remotePartialAgg.get(0, i));
+//                            }
+//                        }
+//                );
+//                return totalAgg;
+//            }
+//            case COLUMN_PARTITIONED: throw new IllegalStateException();
+//            case BLOCK_PARTITIONED: throw new IllegalStateException();
+//            default: throw new IllegalStateException();
+//        }
+        return null;
     }
 
     public DistributedMatrix collectRemotePartitions() {
-        if (!completeMatrix)
-            throw new IllegalStateException();
-        switch (partitionType) {
-            case ROW_PARTITIONED: {
-                Matrix partialMatrix = matrix.subMatrix(shape.rowOffset, shape.colOffset, shape.rows, shape.cols);
-                slotContext.runtimeContext.dataManager.pushTo("partialMatrix", partialMatrix);
-                final int n = slotContext.programContext.nodeDOP - 1;
-                slotContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "partialMatrix",
-                        new DataManager.DataEventHandler() {
-                            @Override
-                            public void handleDataEvent(int srcNodeID, Object value) {
-                                final Matrix remotePartialMatrix = (Matrix)value;
-                                matrix.assign(srcNodeID * shape.rows, 0, remotePartialMatrix);
-                            }
-                        }
-                );
-            } break;
-            case COLUMN_PARTITIONED: throw new IllegalStateException();
-            case BLOCK_PARTITIONED: throw new IllegalStateException();
-            default: throw new IllegalStateException();
-        }
-        return this;
+//        if (!completeMatrix)
+//            throw new IllegalStateException();
+//        switch (partitionType) {
+//            case ROW_PARTITIONED: {
+//                Matrix partialMatrix = matrix.subMatrix(shape.rowOffset, shape.colOffset, shape.rows, shape.cols);
+//                slotContext.runtimeContext.dataManager.pushTo("partialMatrix", partialMatrix);
+//                final int n = slotContext.programContext.nodeDOP - 1;
+//                slotContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "partialMatrix",
+//                        new DataManager.DataEventHandler() {
+//                            @Override
+//                            public void handleDataEvent(int srcNodeID, Object value) {
+//                                final Matrix remotePartialMatrix = (Matrix)value;
+//                                matrix.assign(srcNodeID * shape.rows, 0, remotePartialMatrix);
+//                            }
+//                        }
+//                );
+//            } break;
+//            case COLUMN_PARTITIONED: throw new IllegalStateException();
+//            case BLOCK_PARTITIONED: throw new IllegalStateException();
+//            default: throw new IllegalStateException();
+//        }
+//        return this;
+        return null;
     }
 
     // ---------------------------------------------------
@@ -226,13 +228,13 @@ public class DistributedMatrix extends AbstractMatrix {
 
     private DistributedMatrix constructIntersectingMatrix(DistributedMatrix sourceMatrix, DistributedMatrix targetMatrix, Map<RemotePartition,PartitionShape> partitionMapping) {
 
-
-        // TODO: THIS DOESNT WORK LIKE THIS
-        // we need to create a DistributedMatrix with specified:
-        // - dimension
-        // - partitioning from which a targetPartition is derived
-
-        Map<Integer,RemotePartition> remotePartitions = getIntersectingRemotePartitions(sourceMatrix, targetMatrix.getPartitionShape());
+        for(Map.Entry<RemotePartition,PartitionShape> entry : partitionMapping.entrySet()) {
+            if(entry.getKey().nodeId != nodeID) {
+                Matrix subMatrix = null; // TODO: = fetch remote
+                targetMatrix.matrix.assign(entry.getValue().rowOffset, entry.getValue().colOffset, subMatrix);
+            }
+        }
+        /*
         // offer own partition, if any
         RemotePartition ownPartition = remotePartitions.get(nodeID);
         if(ownPartition != null) {
@@ -256,8 +258,8 @@ public class DistributedMatrix extends AbstractMatrix {
                     }
                 }
         );
-
-        return result;
+        */
+        return targetMatrix;
     }
 
     /**
@@ -272,10 +274,11 @@ public class DistributedMatrix extends AbstractMatrix {
      */
     private static Map<Integer,RemotePartition> getIntersectingRemotePartitions(DistributedMatrix sourceMatrix, PartitionShape targetShape) {
         Map<Integer,RemotePartition> remotePartitions = new HashMap<>(sourceMatrix.nodeDOP);
-        for (int i = 0; i < sourceMatrix.nodeDOP; i++) {
-            // new style with slotContext is shitty for this! instead use at-annotation!
-            IMatrixPartitioner remotePartitioner = new MatrixByRowPartitioner(i, sourceMatrix.nodeDOP, sourceMatrix.rows, sourceMatrix.cols);
-            PartitionShape remoteShape = remotePartitioner.getPartitionShape();
+        // iterate over all nodes, the source matrix is partitioned across
+        for(int i : sourceMatrix.partitioner.getNodes()) {
+            // get partition shape of (possibly) remote node
+            PartitionShape remoteShape = sourceMatrix.partitioner.ofNode(i).getPartitionShape();
+            // calculate intersection
             PartitionShape intersection = targetShape.intersect(remoteShape);
             if(intersection != null) { // null if no intersection
                 remotePartitions.put(i, new RemotePartition(intersection, i));
@@ -287,14 +290,19 @@ public class DistributedMatrix extends AbstractMatrix {
 
     @Override
     public Matrix transpose() {
+        // create transposed local shape
         PartitionShape transposedShape = new PartitionShape(shape.cols, shape.rows, shape.colOffset, shape.rowOffset);
+        // get all remote partitions that intersect transposed local shape
         Collection<RemotePartition> remotePartitions = getIntersectingRemotePartitions(this, transposedShape).values();
+        // calculate for each remote partition the position where it is to be stored in the resulting matrix
         Map<RemotePartition,PartitionShape> remoteToLocalPartitionMapping = new HashMap<>();
         for(RemotePartition remotePartition : remotePartitions) {
             PartitionShape transposedOffsets = new PartitionShape(remotePartition.shape.rows, remotePartition.shape.cols, remotePartition.shape.colOffset, remotePartition.shape.rowOffset);
             remoteToLocalPartitionMapping.put(remotePartition, transposedOffsets);
         }
-        DistributedMatrix remoteView = constructIntersectingMatrix(this, null /* new dist matrix */, remoteToLocalPartitionMapping);
+        // fetch remote partitions and construct resulting matrix according to position-mapping
+        DistributedMatrix result = new DistributedMatrix(slotContext, cols, rows, partitioner.getClass(), layout, format);
+        DistributedMatrix remoteView = constructIntersectingMatrix(this, result, remoteToLocalPartitionMapping);
         return remoteView;
     }
 }

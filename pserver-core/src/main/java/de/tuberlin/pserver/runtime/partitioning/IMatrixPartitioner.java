@@ -4,22 +4,30 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.SlotContext;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 
+import java.util.stream.IntStream;
+
 public abstract class IMatrixPartitioner {
 
-    protected final long        rows;
-    protected final long        cols;
-    protected final SlotContext context;
+    protected final long  rows;
+    protected final long  cols;
+    protected final int   nodeId;
+    protected final int[] atNodes;
 
-    public IMatrixPartitioner(long rows, long cols, SlotContext context) {
+    public IMatrixPartitioner(long rows, long cols, int nodeId, int[] atNodes) {
         this.rows    = rows;
         this.cols    = cols;
-        this.context = context;
+        this.nodeId  = nodeId;
+        this.atNodes = atNodes;
     }
 
-    public static IMatrixPartitioner newInstance(Class<? extends IMatrixPartitioner> implClass, long rows, long cols, SlotContext slotContext) {
+    public IMatrixPartitioner(long rows, long cols, int nodeId, int numNodes) {
+        this(rows, cols, nodeId, IntStream.iterate(0, x -> x + 1).limit(numNodes).toArray());
+    }
+
+    public static IMatrixPartitioner newInstance(Class<? extends IMatrixPartitioner> implClass, long rows, long cols, int nodeId, int[] atNodes) {
         IMatrixPartitioner result;
         try {
-            result = implClass.getDeclaredConstructor(Long.class, Long.class, SlotContext.class).newInstance(rows, cols, slotContext);
+            result = implClass.getDeclaredConstructor(Long.class, Long.class, Integer.class, Integer[].class).newInstance(rows, cols, nodeId, atNodes);
         }
         catch(Exception e) {
             throw new RuntimeException("Failed to instantiate IMatrixPartitioner", e);
@@ -48,5 +56,15 @@ public abstract class IMatrixPartitioner {
     public abstract int getNumRowPartitions();
 
     public abstract int getNumColPartitions();
+
+    public int getNodeId() {
+        return nodeId;
+    }
+
+    public int[] getNodes() {
+        return atNodes;
+    }
+
+    public abstract IMatrixPartitioner ofNode(int nodeId);
 
 }
