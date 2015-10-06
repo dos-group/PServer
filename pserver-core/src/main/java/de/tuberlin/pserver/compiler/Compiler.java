@@ -116,7 +116,6 @@ public final class Compiler {
                             runtimeContext.nodeID,
                             programTable.getState(transactionProperties.state()).atNodes
                     );
-
                     final TransactionController controller = new TransactionController(runtimeContext, descriptor);
                     programTable.addTransactionController(controller);
                 }

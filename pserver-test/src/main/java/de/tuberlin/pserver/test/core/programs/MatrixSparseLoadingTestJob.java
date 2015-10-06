@@ -14,17 +14,25 @@ import de.tuberlin.pserver.runtime.filesystem.record.config.RowColValRecordForma
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 public class MatrixSparseLoadingTestJob extends Program {
 
     private static final long ROWS = 1000;
     private static final long COLS = 250;
 
-    private final String FILE = "pserver-test/src/main/resources/rowcolval_dataset_1000_250_shuffeled.csv";
+    // use this, if you want to run this test directly outside the IntegrationTestSuite
+//  private final String FILE = "pserver-test/src/main/resources/rowcolval_dataset_1000_250_shuffeled.csv";
+
+    private final String FILE = "src/main/resources/rowcolval_dataset_1000_250_shuffeled.csv";
+
+    private static final Logger LOG = LoggerFactory.getLogger(MatrixSparseLoadingTestJob.class);
 
     @State(
             path = FILE,

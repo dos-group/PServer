@@ -6,7 +6,7 @@ import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.MatrixBuilder;
+import de.tuberlin.pserver.utils.MatrixBuilder;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
@@ -16,7 +16,6 @@ import de.tuberlin.pserver.runtime.partitioning.mtxentries.ImmutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
-import de.tuberlin.pserver.types.DistributedMatrix;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +34,7 @@ public final class MatrixPartitionManager {
     // Inner Classes.
     // ---------------------------------------------------
 
-    private final class MatrixLoadTask {
+    public final class MatrixLoadTask {
 
         final ProgramContext programContext;
         final StateDescriptor decl;
@@ -115,7 +114,7 @@ public final class MatrixPartitionManager {
     // Public Methods.
     // ---------------------------------------------------
 
-    public Matrix load(final ProgramContext programContext, final StateDescriptor stateDescriptor) {
+    public Matrix addLoadTaskReturnFutureTarget(final ProgramContext programContext, final StateDescriptor stateDescriptor) {
         final MatrixLoadTask mlt = new MatrixLoadTask(programContext, stateDescriptor);
         matrixLoadTasks.put(stateDescriptor.stateName, mlt);
         fileLoadingBarrier.put(stateDescriptor.stateName, new AtomicInteger(programContext.nodeDOP));
@@ -159,44 +158,7 @@ public final class MatrixPartitionManager {
     private Matrix getLoadingMatrix(final MatrixLoadTask task) {
         Matrix matrix = loadingMatrices.get(task.decl.stateName);
         if (matrix == null) {
-            switch (task.decl.scope) {
-                case REPLICATED: {
-                    matrix = new MatrixBuilder()
-                            .dimension(task.decl.rows, task.decl.cols)
-                            .format(task.decl.format)
-                            .layout(task.decl.layout)
-                            .build();
-                } break;
-                case PARTITIONED: {
-
-                    final IMatrixPartitioner matrixPartitioner = IMatrixPartitioner.newInstance(
-                            task.decl.partitionerClass,
-                            task.decl.rows,
-                            task.decl.cols,
-                            task.programContext.runtimeContext.nodeID,
-                            task.decl.atNodes
-                    );
-
-                    matrix = new DistributedMatrix(
-                            task.programContext,
-                            task.decl.rows,
-                            task.decl.cols,
-                            matrixPartitioner,
-                            task.decl.layout,
-                            task.decl.format
-                    );
-                } break;
-                case LOGICALLY_PARTITIONED:
-                    matrix = new DistributedMatrix(
-                            task.programContext,
-                            task.decl.rows,
-                            task.decl.cols,
-                            IMatrixPartitioner.newInstance(task.decl.partitionerClass, task.decl.rows, task.decl.cols, task.programContext.runtimeContext.nodeID, task.decl.atNodes),
-                            task.decl.layout,
-                            task.decl.format
-                    );
-                    break;
-            }
+            matrix = MatrixBuilder.fromMatrixLoadTask(task.decl, task.programContext);
             loadingMatrices.put(task.decl.stateName, matrix);
         }
         return matrix;

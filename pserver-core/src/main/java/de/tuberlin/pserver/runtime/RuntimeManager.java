@@ -11,7 +11,7 @@ import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.compiler.UnitDescriptor;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.MatrixBuilder;
+import de.tuberlin.pserver.utils.MatrixBuilder;
 import de.tuberlin.pserver.runtime.dht.DHTKey;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
 import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
@@ -175,7 +175,7 @@ public final class RuntimeManager {
                             }
                         }
                         else {
-                            matrixPartitionManager.load(programContext, decl);
+                            matrixPartitionManager.addLoadTaskReturnFutureTarget(programContext, decl);
                         }
                     } break;
                     case PARTITIONED: {
@@ -190,7 +190,7 @@ public final class RuntimeManager {
                             );
                             putDHT(decl.stateName, so);
                         } else {
-                            matrixPartitionManager.load(programContext, decl);
+                            matrixPartitionManager.addLoadTaskReturnFutureTarget(programContext, decl);
                         }
                     } break;
                     case LOGICALLY_PARTITIONED:
