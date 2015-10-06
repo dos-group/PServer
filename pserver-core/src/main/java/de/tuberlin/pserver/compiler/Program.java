@@ -5,8 +5,8 @@ import de.tuberlin.pserver.core.events.EventDispatcher;
 import de.tuberlin.pserver.dsl.unit.controlflow.base.Body;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.SharedObject;
-import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.ProgramContext;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,11 +21,9 @@ public abstract class Program extends EventDispatcher {
 
     protected static final Logger LOG = LoggerFactory.getLogger(Program.class);
 
-    protected DataManager dataManager;
+    protected RuntimeManager runtimeManager;
 
     private Lifecycle lifecycle;
-
-    private Compiler compiler;
 
     public ProgramContext programContext;
 
@@ -39,34 +37,24 @@ public abstract class Program extends EventDispatcher {
     // Public Methods.
     // ---------------------------------------------------
 
+    public Lifecycle getLifecycle() { return lifecycle; }
+
     public void injectContext(final ProgramContext programContext) throws Exception {
 
         this.programContext = Preconditions.checkNotNull(programContext);
 
-        this.dataManager = programContext.runtimeContext.dataManager;
+        this.runtimeManager = programContext.runtimeContext.runtimeManager;
 
         this.lifecycle = new Lifecycle(programContext);
-
-        this.compiler = new Compiler(programContext, getClass());
     }
 
     public void result(final Serializable... obj) {
-        dataManager.setResults(programContext.programID, Arrays.asList(obj));
+        programContext.setResults(Arrays.asList(obj));
     }
-
-    // ---------------------------------------------------
-    // Public Methods.
-    // ---------------------------------------------------
 
     public void run() throws Exception {
 
         final String slotIDStr = "[" + programContext.runtimeContext.nodeID + "]";
-
-        compiler.link(this);
-
-        compiler.defineUnits(this, lifecycle);
-
-        compiler.fetchStateObjects(this);
 
         {
             LOG.info(slotIDStr + "Enter " + lifecycle.programContext.simpleClassName + " pre-process phase.");

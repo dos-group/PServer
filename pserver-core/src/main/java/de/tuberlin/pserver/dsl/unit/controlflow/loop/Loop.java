@@ -2,7 +2,6 @@ package de.tuberlin.pserver.dsl.unit.controlflow.loop;
 
 import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.dsl.unit.controlflow.base.CFStatement;
-import de.tuberlin.pserver.runtime.DataManager;
 
 public final class Loop extends CFStatement {
 
@@ -10,9 +9,9 @@ public final class Loop extends CFStatement {
     // Constants.
     // ---------------------------------------------------
 
-    public static final int ASYNC   = 1;
+    public static final int ASYNCHRONOUS = 1;
 
-    public static final int GLOBAL = 2;
+    public static final int BULK_SYNCHRONOUS = 2;
 
     // ---------------------------------------------------
     // Inner Classes.
@@ -26,7 +25,9 @@ public final class Loop extends CFStatement {
 
         public LoopProfilingData(final long duration, final long passDuration, final long syncDuration) {
             super(duration);
+
             this.passDuration = passDuration;
+
             this.syncDuration = syncDuration;
         }
     }
@@ -35,11 +36,9 @@ public final class Loop extends CFStatement {
     // Fields.
     // ---------------------------------------------------
 
-    private final DataManager dataManager;
-
     private long epoch;
 
-    private int mode = ASYNC;
+    private int mode = ASYNCHRONOUS;
 
     // ---------------------------------------------------
     // Constructor.
@@ -47,8 +46,6 @@ public final class Loop extends CFStatement {
 
     public Loop(final ProgramContext pc) {
         super(pc);
-
-        this.dataManager = pc.runtimeContext.dataManager;
     }
 
     // ---------------------------------------------------
@@ -64,10 +61,6 @@ public final class Loop extends CFStatement {
     public Loop exe(final long n, final LoopBody b) throws Exception { return exe(() -> !(epoch < n), b); }
 
     public Loop exe(final LoopTermination t, final LoopBody b) throws Exception {
-
-        //enter();
-
-        //final SlotGroup sg = executionManager.getActiveSlotGroup();
 
         long duration, passDuration = 0, syncDuration = 0;
 
@@ -94,8 +87,6 @@ public final class Loop extends CFStatement {
 
         setProfilingData(new LoopProfilingData(duration, epoch > 0 ? passDuration / epoch : passDuration, epoch > 0 ? syncDuration / epoch : syncDuration));
 
-        //leave();
-
         return this;
     }
 
@@ -109,10 +100,10 @@ public final class Loop extends CFStatement {
 
     private void sync() throws Exception {
         switch (mode) {
-            case ASYNC:
+            case ASYNCHRONOUS:
                 return;
-            case GLOBAL:
-                dataManager.globalSync();
+            case BULK_SYNCHRONOUS:
+                programContext.synchronizeUnit(ProgramContext.GLOBAL_BARRIER);
         }
     }
 }

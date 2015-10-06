@@ -4,7 +4,8 @@ import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.MsgEventHandler;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 
 
 public class PingPongTestJob extends Program {
@@ -18,11 +19,11 @@ public class PingPongTestJob extends Program {
 
             for (int i = 0; i < NUM_MSG; ++i) {
 
-                dataManager.pushTo("ping", new Integer(i), new int[]{1});
+                runtimeManager.send("ping", new Integer(i), new int[]{1});
 
-                dataManager.receive(DataManager.CallType.SYNC, 1, "pong", new DataManager.DataEventHandler() {
+                runtimeManager.receive(RuntimeManager.ReceiveType.SYNC, 1, "pong", new MsgEventHandler() {
                     @Override
-                    public void handleDataEvent(int srcNodeID, Object value) {
+                    public void handleMsg(int srcNodeID, Object value) {
                         final Integer i = (Integer) value;
                         System.out.println("received pong " + i);
                     }
@@ -41,15 +42,15 @@ public class PingPongTestJob extends Program {
 
             for (int i = 0; i < NUM_MSG; ++i) {
 
-                dataManager.receive(DataManager.CallType.SYNC, 1, "ping", new DataManager.DataEventHandler() {
+                runtimeManager.receive(RuntimeManager.ReceiveType.SYNC, 1, "ping", new MsgEventHandler() {
                     @Override
-                    public void handleDataEvent(int srcNodeID, Object value) {
+                    public void handleMsg(int srcNodeID, Object value) {
                         final Integer i = (Integer) value;
                         System.out.println("received ping " + i);
                     }
                 });
 
-                dataManager.pushTo("pong", new Integer(i), new int[] { 0 });
+                runtimeManager.send("pong", new Integer(i), new int[]{0});
             }
 
             System.out.println("-- FINISH NODE " + programContext);

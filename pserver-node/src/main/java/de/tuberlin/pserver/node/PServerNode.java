@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.node;
 
-import de.tuberlin.pserver.compiler.Program;
+import de.tuberlin.pserver.compiler.*;
+import de.tuberlin.pserver.compiler.Compiler;
 import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
@@ -8,8 +9,8 @@ import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.runtime.RuntimeContext;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.events.ProgramFailureEvent;
 import de.tuberlin.pserver.runtime.events.ProgramResultEvent;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
@@ -34,7 +35,7 @@ public final class PServerNode extends EventDispatcher {
 
     private final UserCodeManager userCodeManager;
 
-    private final DataManager dataManager;
+    private final RuntimeManager runtimeManager;
 
     private final RuntimeContext runtimeContext;
 
@@ -49,7 +50,7 @@ public final class PServerNode extends EventDispatcher {
         this.infraManager       = factory.infraManager;
         this.netManager         = factory.netManager;
         this.userCodeManager    = factory.userCodeManager;
-        this.dataManager        = factory.dataManager;
+        this.runtimeManager     = factory.runtimeManager;
         this.runtimeContext     = factory.runtimeContext;
 
         netManager.addEventListener(ProgramSubmissionEvent.PSERVER_JOB_SUBMISSION_EVENT, new PServerJobHandler());
@@ -73,70 +74,86 @@ public final class PServerNode extends EventDispatcher {
 
         @Override
         public void handleEvent(final Event e) {
+
             final ProgramSubmissionEvent programSubmission = (ProgramSubmissionEvent)e;
+
             final Class<?> clazz = userCodeManager.implantClass(programSubmission.byteCode);
+
             if (!Program.class.isAssignableFrom(clazz))
                 throw new IllegalStateException();
 
             @SuppressWarnings("unchecked")
             final Class<? extends Program> programClass = (Class<? extends Program>) clazz;
 
-            final ProgramContext programContext = new ProgramContext(
-                    runtimeContext,
-                    programSubmission.clientMachine,
-                    programSubmission.programID,
-                    clazz.getName(),
-                    clazz.getSimpleName(),
-                    infraManager.getMachines().size()
-            );
+            final Program instance;
 
-            dataManager.registerProgram(programContext);
+            try {
+                instance = programClass.newInstance();
 
-            new Thread(() -> {
+                final int nodeDOP = infraManager.getMachines().size();
 
-                try {
+                final ProgramTable programTable = new Compiler(runtimeContext, programClass).compile(instance, nodeDOP);
 
-                    MCRuntime.INSTANCE.create(runtimeContext.numOfCores);
+                final ProgramContext programContext = new ProgramContext(
+                        runtimeContext,
+                        programSubmission.clientMachine,
+                        programSubmission.programID,
+                        clazz.getName(),
+                        clazz.getSimpleName(),
+                        programTable,
+                        nodeDOP
+                );
 
-                    final Program program = programClass.newInstance();
+                new Thread(() -> {
 
-                    program.injectContext(programContext);
+                    try {
 
-                    program.run();
+                        MCRuntime.INSTANCE.create(runtimeContext.numOfCores);
 
-                    final List<Serializable> results = dataManager.getResults(programContext.programID);
+                        instance.injectContext(programContext);
 
-                    final ProgramResultEvent jre = new ProgramResultEvent(
-                            runtimeContext.machine,
-                            runtimeContext.nodeID,
-                            programContext.programID,
-                            results
-                    );
+                        runtimeManager.bind(instance);
 
-                    netManager.sendEvent(programSubmission.clientMachine, jre);
+                        instance.run();
 
-                } catch (Throwable ex) {
+                        final List<Serializable> results = programContext.getResults();
 
-                    final ProgramFailureEvent jfe = new ProgramFailureEvent(
-                            machine,
-                            programSubmission.programID,
-                            infraManager.getNodeID(),
-                            0,
-                            clazz.getSimpleName(),
-                            ExceptionUtils.getStackTrace(ex)
-                    );
+                        final ProgramResultEvent jre = new ProgramResultEvent(
+                                runtimeContext.machine,
+                                runtimeContext.nodeID,
+                                programContext.programID,
+                                results
+                        );
 
-                    netManager.sendEvent(programSubmission.clientMachine, jfe);
+                        netManager.sendEvent(programSubmission.clientMachine, jre);
 
-                } finally {
+                    } catch (Throwable ex) {
 
-                    dataManager.clearContext();
+                        final ProgramFailureEvent jfe = new ProgramFailureEvent(
+                                machine,
+                                programSubmission.programID,
+                                infraManager.getNodeID(),
+                                0,
+                                clazz.getSimpleName(),
+                                ExceptionUtils.getStackTrace(ex)
+                        );
 
-                    dataManager.unregisterProgram(programContext);
+                        netManager.sendEvent(programSubmission.clientMachine, jfe);
 
-                    MCRuntime.INSTANCE.deactivate();
-                }
-            }).start();
+                    } finally {
+
+                        runtimeManager.clearContext();
+
+                        programContext.deactivate();
+
+                        MCRuntime.INSTANCE.deactivate();
+                    }
+
+                }).start();
+
+            } catch (Exception ex) {
+                throw new IllegalStateException(ex);
+            }
         }
     }
 }

@@ -2,6 +2,8 @@ package de.tuberlin.pserver.runtime.mcruntime.shared;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.ProgramContext;
+import de.tuberlin.pserver.runtime.mcruntime.MCRuntime;
+import de.tuberlin.pserver.runtime.mcruntime.SlotGroup;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
@@ -11,6 +13,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class SharedVar<T> {
+
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
 
     private static final ThreadLocal<MutableLong> threadLocalSharedVarCounter;
 
@@ -30,35 +36,39 @@ public final class SharedVar<T> {
 
     private final ProgramContext pc;
 
-    //private final Pair<Integer, Long> sharedVarUID;
+    private final Pair<Integer, Long> sharedVarUID;
 
     private Triple<AtomicReference<T>, ReentrantLock, AtomicInteger> managedVar;
 
+    // ---------------------------------------------------
+    // Constructors.
     // ---------------------------------------------------
 
     public SharedVar(final ProgramContext pc, final T value) throws Exception {
 
         this.pc = Preconditions.checkNotNull(pc);
 
-        //final SlotGroup slotGroup = pc.getActiveSlotGroup();
+        final SlotGroup slotGroup = MCRuntime.INSTANCE.currentSlotGroup();
 
-        //final int masterSlotID = slotGroup.minSlotID;
+        final int masterSlotID = slotGroup.minSlotID;
 
-        //final int refNum = slotGroup.maxSlotID - slotGroup.minSlotID + 1;
+        final int refNum = slotGroup.maxSlotID - slotGroup.minSlotID + 1;
 
-        //this.sharedVarUID = nextSharedVarUID(masterSlotID);
+        this.sharedVarUID = nextSharedVarUID(masterSlotID);
 
         final AtomicReference<T> valueRef = new AtomicReference<>(Preconditions.checkNotNull(value));
 
         final ReentrantLock valueLock = new ReentrantLock(true);
 
-        //final AtomicInteger refCount = new AtomicInteger(refNum);
+        final AtomicInteger refCount = new AtomicInteger(refNum);
 
-        //final Triple<AtomicReference<T>, ReentrantLock, AtomicInteger> managedVar = Triple.of(valueRef, valueLock, refCount);
+        final Triple<AtomicReference<T>, ReentrantLock, AtomicInteger> managedVar = Triple.of(valueRef, valueLock, refCount);
 
-        //pc.put(sharedVarUIDStr(), managedVar);
+        pc.put(sharedVarUIDStr(), managedVar);
     }
 
+    // ---------------------------------------------------
+    // Public Methods.
     // ---------------------------------------------------
 
     public void set(final T value) {
@@ -97,7 +107,7 @@ public final class SharedVar<T> {
 
             Preconditions.checkState(this.managedVar != null);
 
-            //pc.delete(sharedVarUIDStr());
+            pc.delete(sharedVarUIDStr());
         }
 
         return this.managedVar.getLeft().get();
@@ -105,10 +115,10 @@ public final class SharedVar<T> {
 
     public SharedVar<T> fetch() {
 
-        /*while(this.managedVar == null) { // busy waiting.
+        while(this.managedVar == null) { // busy waiting.
 
             this.managedVar = pc.get(sharedVarUIDStr());
-        }*/
+        }
 
         return this;
     }
@@ -119,13 +129,10 @@ public final class SharedVar<T> {
     }
 
     // ---------------------------------------------------
-
-    //private String sharedVarUIDStr() {
-
-    //    return "__shared_var_" + sharedVarUID.toString() + "__";
-    //}
-
+    // Private Methods.
     // ---------------------------------------------------
+
+    private String sharedVarUIDStr() { return "__shared_var_" + sharedVarUID.toString() + "__"; }
 
     private static Pair<Integer, Long> nextSharedVarUID(final int allocatorSlot) {
 

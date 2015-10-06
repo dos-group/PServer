@@ -35,7 +35,5 @@ public class ParseUtils {
 
             return Ints.toArray(vals);
         }
-
     }
-
 }

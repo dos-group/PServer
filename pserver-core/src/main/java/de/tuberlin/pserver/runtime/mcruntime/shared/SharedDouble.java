@@ -7,11 +7,23 @@ import de.tuberlin.pserver.runtime.ProgramContext;
 
 public class SharedDouble {
 
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
     private final SharedVar<AtomicDouble> sharedDouble;
+
+    // ---------------------------------------------------
+    // Constructors.
+    // ---------------------------------------------------
 
     public SharedDouble(final ProgramContext pc, final double value) throws Exception {
         this.sharedDouble = new SharedVar<>(Preconditions.checkNotNull(pc), new AtomicDouble(value));
     }
+
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
 
     public double inc() { return sharedDouble.get().addAndGet(1.0); }
 

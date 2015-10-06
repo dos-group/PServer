@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.Format;
@@ -14,7 +14,6 @@ import de.tuberlin.pserver.runtime.filesystem.record.config.RowColValRecordForma
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
-import de.tuberlin.pserver.types.PartitionType;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -31,7 +30,7 @@ public class MatrixSparseLoadingTestJob extends Program {
             path = FILE,
             rows = ROWS,
             cols = COLS,
-            globalScope = GlobalScope.PARTITIONED,
+            scope = Scope.PARTITIONED,
             recordFormat = RowColValRecordFormatConfig.class,
             format = Format.SPARSE_FORMAT,
             layout = Layout.ROW_LAYOUT

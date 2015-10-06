@@ -2,6 +2,7 @@ package de.tuberlin.pserver.dsl.transaction;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.compiler.TransactionDescriptor;
 import de.tuberlin.pserver.dsl.transaction.executors.TransactionExecutor;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 

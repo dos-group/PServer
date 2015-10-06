@@ -6,7 +6,6 @@ import de.tuberlin.pserver.dsl.transaction.phases.Apply;
 import de.tuberlin.pserver.dsl.transaction.phases.Fuse;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 
-import java.util.UUID;
 
 public class TransactionDefinition {
 

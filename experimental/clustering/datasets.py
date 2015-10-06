@@ -24,10 +24,10 @@ youtube_features = {
 }
 
 
-def load_youtube_set(name, n_features=None, class_=1):
-    X_train, Y_train = load_svmlight_file(YOUTUBE_TRAIN_SET_PATH % name,
+def load_youtube_set(stateName, n_features=None, class_=1):
+    X_train, Y_train = load_svmlight_file(YOUTUBE_TRAIN_SET_PATH % stateName,
                                           n_features=n_features)
-    X_test, Y_test = load_svmlight_file(YOUTUBE_TEST_SET_PATH % name,
+    X_test, Y_test = load_svmlight_file(YOUTUBE_TEST_SET_PATH % stateName,
                                         n_features=n_features)
     Y_train[Y_train != class_] = -1
     Y_test[Y_test != class_] = -1
@@ -48,10 +48,10 @@ def fetch_dataset(data_set_name, params):
         X_train, Y_train = load_svmlight_file(DOROTHEA_TRAIN_SET_PATH)
         X_test, Y_test = load_svmlight_file(DOROTHEA_TEST_SET_PATH)
     if data_set_name.startswith("youtube"):
-        name = data_set_name[len("youtube_"):]
+        stateName = data_set_name[len("youtube_"):]
         X_train, Y_train, X_test, Y_test = load_youtube_set(
-            name,
-            youtube_features[name])
+            stateName,
+            youtube_features[stateName])
         print X_train.shape[1], "features"
 
     if data_set_name.startswith("mv_gaussian"):

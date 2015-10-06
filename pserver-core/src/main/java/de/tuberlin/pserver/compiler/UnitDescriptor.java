@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.dsl.unit;
+package de.tuberlin.pserver.compiler;
 
 
 import com.google.common.base.Preconditions;
@@ -8,7 +8,7 @@ import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 
 import java.lang.reflect.Method;
 
-public final class UnitDeclaration {
+public final class UnitDescriptor {
 
     // ---------------------------------------------------
     // Fields.
@@ -16,24 +16,28 @@ public final class UnitDeclaration {
 
     public final Method method;
 
-    public final int[] atNodes;
+    public final String unitName;
 
-    public final String name;
+    public int[] atNodes;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    public UnitDeclaration(final Method method, final int[] atNodes) {
+    public UnitDescriptor(final Method method, final int[] atNodes) {
 
         this.method  = Preconditions.checkNotNull(method);
 
-        this.atNodes = Preconditions.checkNotNull(atNodes);
+        this.unitName = method.getName();
 
-        this.name    = method.getName();
+        this.atNodes = Preconditions.checkNotNull(atNodes);
     }
 
-    public static UnitDeclaration fromAnnotatedMethod(Method method, Unit unit) {
+    // ---------------------------------------------------
+    // Public Method.
+    // ---------------------------------------------------
+
+    public static UnitDescriptor fromAnnotatedMethod(final Method method, final Unit unit) {
 
         if (method.getReturnType() != void.class)
             throw new IllegalStateException();
@@ -46,11 +50,9 @@ public final class UnitDeclaration {
 
         final int[] executingNodeIDs = ParseUtils.parseNodeRanges(unit.at());
 
-        return new UnitDeclaration(
+        return new UnitDescriptor(
                 method,
                 executingNodeIDs
         );
-
     }
-
 }

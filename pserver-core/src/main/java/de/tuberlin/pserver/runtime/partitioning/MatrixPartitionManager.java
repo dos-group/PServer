@@ -4,10 +4,10 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.dsl.state.StateDeclaration;
+import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
-import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
@@ -38,10 +38,10 @@ public final class MatrixPartitionManager {
     private final class MatrixLoadTask {
 
         final ProgramContext programContext;
-        final StateDeclaration decl;
+        final StateDescriptor decl;
         final FileDataIterator fileIterator;
 
-        public MatrixLoadTask(ProgramContext programContext, StateDeclaration decl) {
+        public MatrixLoadTask(ProgramContext programContext, StateDescriptor decl) {
             this.programContext  = programContext;
             this.decl         = decl;
             AbstractRecordFormatConfig recordFormatConfig;
@@ -66,7 +66,7 @@ public final class MatrixPartitionManager {
 
     private final FileSystemManager fileSystemManager;
 
-    private final DataManager dataManager;
+    private final RuntimeManager runtimeManager;
 
     private final Map<String, MatrixLoadTask> matrixLoadTasks;
 
@@ -81,12 +81,12 @@ public final class MatrixPartitionManager {
     // ---------------------------------------------------
 
     public MatrixPartitionManager(final NetManager netManager,
-                                  final FileSystemManager fileSystemManager,
-                                  final DataManager dataManager) {
+                                  final FileSystemManager fileManager,
+                                  final RuntimeManager runtimeManager) {
 
         this.netManager         = Preconditions.checkNotNull(netManager);
-        this.fileSystemManager  = fileSystemManager;
-        this.dataManager        = Preconditions.checkNotNull(dataManager);
+        this.fileSystemManager  = fileManager;
+        this.runtimeManager     = Preconditions.checkNotNull(runtimeManager);
         this.matrixLoadTasks    = new ConcurrentHashMap<>();
         this.fileLoadingBarrier = new ConcurrentHashMap<>();
         this.loadingMatrices    = new ConcurrentHashMap<>();
@@ -115,10 +115,10 @@ public final class MatrixPartitionManager {
     // Public Methods.
     // ---------------------------------------------------
 
-    public Matrix load(final ProgramContext programContext, final StateDeclaration stateDeclaration) {
-        final MatrixLoadTask mlt = new MatrixLoadTask(programContext, stateDeclaration);
-        matrixLoadTasks.put(stateDeclaration.name, mlt);
-        fileLoadingBarrier.put(stateDeclaration.name, new AtomicInteger(programContext.nodeDOP));
+    public Matrix load(final ProgramContext programContext, final StateDescriptor stateDescriptor) {
+        final MatrixLoadTask mlt = new MatrixLoadTask(programContext, stateDescriptor);
+        matrixLoadTasks.put(stateDescriptor.stateName, mlt);
+        fileLoadingBarrier.put(stateDescriptor.stateName, new AtomicInteger(programContext.nodeDOP));
         return getLoadingMatrix(mlt);
     }
 
@@ -157,9 +157,9 @@ public final class MatrixPartitionManager {
     // ---------------------------------------------------
 
     private Matrix getLoadingMatrix(final MatrixLoadTask task) {
-        Matrix matrix = loadingMatrices.get(task.decl.name);
+        Matrix matrix = loadingMatrices.get(task.decl.stateName);
         if (matrix == null) {
-            switch (task.decl.globalScope) {
+            switch (task.decl.scope) {
                 case REPLICATED: {
                     matrix = new MatrixBuilder()
                             .dimension(task.decl.rows, task.decl.cols)
@@ -168,14 +168,22 @@ public final class MatrixPartitionManager {
                             .build();
                 } break;
                 case PARTITIONED: {
+
+                    final IMatrixPartitioner matrixPartitioner = IMatrixPartitioner.newInstance(
+                            task.decl.partitionerClass,
+                            task.decl.rows,
+                            task.decl.cols,
+                            task.programContext.runtimeContext.nodeID,
+                            task.decl.atNodes
+                    );
+
                     matrix = new DistributedMatrix(
                             task.programContext,
                             task.decl.rows,
                             task.decl.cols,
-                            IMatrixPartitioner.newInstance(task.decl.partitionerClass, task.decl.rows, task.decl.cols, task.programContext.runtimeContext.nodeID, task.decl.atNodes),
+                            matrixPartitioner,
                             task.decl.layout,
                             task.decl.format
-                            //, false
                     );
                 } break;
                 case LOGICALLY_PARTITIONED:
@@ -186,11 +194,10 @@ public final class MatrixPartitionManager {
                             IMatrixPartitioner.newInstance(task.decl.partitionerClass, task.decl.rows, task.decl.cols, task.programContext.runtimeContext.nodeID, task.decl.atNodes),
                             task.decl.layout,
                             task.decl.format
-                            //, true
                     );
                     break;
             }
-            loadingMatrices.put(task.decl.name, matrix);
+            loadingMatrices.put(task.decl.stateName, matrix);
         }
         return matrix;
     }
@@ -211,16 +218,22 @@ public final class MatrixPartitionManager {
         MatrixEntry entry;
         while (fileIterator.hasNext()) {
             final IRecord record = fileIterator.next();
+
             // iterate through entries in record
             while (record.hasNext()) {
                 entry = record.next(reusable);
+
                 if(entry.getRow() >= task.decl.rows || entry.getCol() >= task.decl.cols)
                     continue;
+
                 // get the partition this record belongs to
                 int targetPartition = matrixPartitioner.getPartitionOfEntry(entry);
                 // if record belongs to own node, set the value
                 if (targetPartition == nodeId) {
                     synchronized (matrix) {
+
+                        //System.out.println("(" + entry.getRow() + ", " + entry.getCol() + ") = " + entry.getValue());
+
                         matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
                     }
                 } else {
@@ -237,8 +250,8 @@ public final class MatrixPartitionManager {
         for (Map.Entry<Integer, List<MatrixEntry>> map : foreignEntries.entrySet()) {
             sendPartition(map.getKey(), map.getValue(), task);
         }
-        netManager.broadcastEvent(new MatrixPartitionManager.FinishedLoadingFileEvent(task.decl.name));
-        finishedTask(task.decl.name);
+        netManager.broadcastEvent(new MatrixPartitionManager.FinishedLoadingFileEvent(task.decl.stateName));
+        finishedTask(task.decl.stateName);
     }
 
     /**
@@ -252,7 +265,7 @@ public final class MatrixPartitionManager {
             // is it possible that a FinishedLoading event overtakes a SendPartition event?
             // this assumes it is not:
             final Matrix matrix = loadingMatrices.get(name);
-            dataManager.putObject(name, matrix);
+            runtimeManager.putDHT(name, matrix);
             finishedLoadingLatch.countDown();
         }
     }
@@ -270,7 +283,7 @@ public final class MatrixPartitionManager {
     private void sendPartition(int targetNodeId, List<MatrixEntry> entries, MatrixLoadTask task) {
         if (entries != null && !entries.isEmpty()) {
             MatrixEntry[] entriesArray = entries.toArray(new MatrixEntry[entries.size()]);
-            netManager.sendEvent(targetNodeId, new MatrixPartitionManager.MatrixEntryPartitionEvent(entriesArray, task.decl.name));
+            netManager.sendEvent(targetNodeId, new MatrixPartitionManager.MatrixEntryPartitionEvent(entriesArray, task.decl.stateName));
             entries.clear();
         }
     }

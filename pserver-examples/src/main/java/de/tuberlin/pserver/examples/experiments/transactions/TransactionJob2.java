@@ -3,7 +3,7 @@ package de.tuberlin.pserver.examples.experiments.transactions;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
@@ -21,7 +21,7 @@ public class TransactionJob2 extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(globalScope = GlobalScope.SINGLETON, cols = 100, rows = 100, at = "0")
+    @State(scope = Scope.SINGLETON, cols = 100, rows = 100, at = "0")
     public Matrix globalModel;
 
     private final int[] paramIndices = new int[] { 12, 23, 67, 73, 87 };
@@ -53,7 +53,7 @@ public class TransactionJob2 extends Program {
 
         lifecycle.process(() -> {
 
-            //UnitMng.loop(10, Loop.ASYNC, (e) -> {
+            //UnitMng.loop(10, Loop.ASYNCHRONOUS, (e) -> {
 
             atomic(state(globalModel), () -> {
                 for (int paramIdx : paramIndices) {
@@ -72,7 +72,7 @@ public class TransactionJob2 extends Program {
 
         lifecycle.process(() -> {
 
-            //UnitMng.loop(10, Loop.ASYNC, (e) -> {
+            //UnitMng.loop(10, Loop.ASYNCHRONOUS, (e) -> {
 
             Thread.sleep(10);
 

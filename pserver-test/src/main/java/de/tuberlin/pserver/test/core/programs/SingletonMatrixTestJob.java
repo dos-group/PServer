@@ -1,44 +1,39 @@
 package de.tuberlin.pserver.test.core.programs;
 
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Matrix;
 
 public class SingletonMatrixTestJob extends Program {
 
-    private static final int ROWS = 1000;
+    private static final int ROWS = 100;
 
-    private static final int COLS = 1000;
+    private static final int COLS = 100;
 
-    @State(globalScope = GlobalScope.SINGLETON, at = "0", rows = ROWS, cols = COLS)
+    @State(scope = Scope.SINGLETON, at = "0", rows = ROWS, cols = COLS)
     public Matrix W;
 
     @Unit(at = "1 - 3")
     public void main(final Lifecycle lifecycle) {
-        /*program.process(() -> {
+        lifecycle.process(() -> {
 
-            final int rows = ((ROWS / (programContext.programContext.nodeDOP - 1)) / programContext.programContext.perNodeDOP);
+            final int rows = (ROWS / (programContext.runtimeContext.numOfNodes));
 
-            for (int k = 0; k < programContext.programContext.perNodeDOP; ++k) {
+            for (int i = programContext.runtimeContext.nodeID * rows; i < programContext.runtimeContext.nodeID * rows + rows; ++i) {
+                for (int j = 0; j < COLS; ++j) {
 
-                CF.parUnit(k).exe(() -> {
+                    W.set(i, j, programContext.runtimeContext.nodeID);
+                    final double value = W.get(i, j);
 
-                    for (int i = programContext.id * rows; i < programContext.id * rows + rows; ++i) {
-                        for (int j = 0; j < COLS; ++j) {
-
-                            W.set(i, j, programContext.id);
-                            final double value = W.get(i, j);
-
-                            Preconditions.checkState(value == programContext.id,
-                                    value + " != " + programContext.id + " - " + programContext);
-                        }
-                    }
-                });
+                    Preconditions.checkState(value == programContext.runtimeContext.nodeID,
+                            value + " != " + programContext.runtimeContext.nodeID + " - " + programContext);
+                }
             }
-        });*/
+        });
     }
 }

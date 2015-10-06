@@ -3,7 +3,7 @@ package de.tuberlin.pserver.examples.experiments.glove;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
@@ -15,12 +15,11 @@ import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.mcruntime.Parallel;
-import de.tuberlin.pserver.types.PartitionType;
 import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.util.Random;
 
-public final class GloVeJobAdaGradPull extends Program {
+public final class GloVe extends Program {
 
     // ---------------------------------------------------
     // Constants.
@@ -42,20 +41,20 @@ public final class GloVeJobAdaGradPull extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(globalScope = GlobalScope.PARTITIONED,
+    @State(scope = Scope.PARTITIONED,
             rows = COLS, cols = COLS, path = "datasets/text8_coocc.csv")
     public Matrix X;
 
-    @State(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = COLS * 2)
+    @State(scope = Scope.REPLICATED, rows = ROWS, cols = COLS * 2)
     public Matrix W;
 
-    @State(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = COLS * 2)
+    @State(scope = Scope.REPLICATED, rows = ROWS, cols = COLS * 2)
     public Matrix GradSq;
 
-    @State(globalScope = GlobalScope.REPLICATED, rows = 1, cols = COLS * 2, layout = Layout.COLUMN_LAYOUT)
+    @State(scope = Scope.REPLICATED, rows = 1, cols = COLS * 2, layout = Layout.COLUMN_LAYOUT)
     public Matrix B;
 
-    @State(globalScope = GlobalScope.REPLICATED, rows = 1, cols = COLS * 2, layout = Layout.COLUMN_LAYOUT)
+    @State(scope = Scope.REPLICATED, rows = 1, cols = COLS * 2, layout = Layout.COLUMN_LAYOUT)
     public Matrix GradSqB;
 
     // ---------------------------------------------------
@@ -186,7 +185,7 @@ public final class GloVeJobAdaGradPull extends Program {
 
     public static void main(final String[] args) {
         PServerExecutor.LOCAL
-                .run(GloVeJobAdaGradPull.class)
+                .run(GloVe.class)
                 .done();
     }
 }

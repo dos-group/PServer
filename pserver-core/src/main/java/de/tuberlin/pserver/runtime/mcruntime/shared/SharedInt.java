@@ -8,11 +8,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class SharedInt {
 
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
     private final SharedVar<AtomicInteger> sharedInt;
+
+    // ---------------------------------------------------
+    // Constructors.
+    // ---------------------------------------------------
 
     public SharedInt(final ProgramContext pc, final int value) throws Exception {
         this.sharedInt = new SharedVar<>(Preconditions.checkNotNull(pc), new AtomicInteger(value));
     }
+
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
 
     public int inc() { return sharedInt.get().addAndGet(1); }
 

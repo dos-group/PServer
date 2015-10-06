@@ -73,7 +73,7 @@ public class PullTransactionExecutor extends TransactionExecutor {
             final TransactionRequestEvent request = (TransactionRequestEvent)event;
 
             try {
-                final SharedObject stateObject = ((EmbeddedDHTObject) runtimeContext.dataManager.getLocal(controller.getTransactionDescriptor().stateName)[0]).object;
+                final SharedObject stateObject = ((EmbeddedDHTObject) runtimeContext.runtimeManager.getDHT(controller.getTransactionDescriptor().stateName)).object;
                 stateObject.lock();
                 final Prepare preparePhase = transactionDefinition.preparePhase;
                 final Object prepareInput = request.getPayload() == null ? stateObject : request.requestObject;

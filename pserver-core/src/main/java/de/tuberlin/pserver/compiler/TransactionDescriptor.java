@@ -1,9 +1,13 @@
-package de.tuberlin.pserver.dsl.transaction;
+package de.tuberlin.pserver.compiler;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
+import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
 import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import org.apache.commons.lang3.ArrayUtils;
+
+import java.lang.reflect.Field;
 
 public final class TransactionDescriptor {
 
@@ -48,5 +52,25 @@ public final class TransactionDescriptor {
         this.nodes = ArrayUtils.removeElements(nodes, nodeID);
 
         definition.setTransactionName(transactionName);
+    }
+
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
+
+    public static TransactionDescriptor fromAnnotatedField(final Program instance,
+                                                           final Transaction transaction,
+                                                           final Field field,
+                                                           final int nodeID,
+                                                           final int[] atNodes) throws Exception {
+        return new TransactionDescriptor(
+                field.getName(),
+                transaction.state(),
+                (TransactionDefinition)field.get(instance),
+                transaction.type(),
+                transaction.cache(),
+                nodeID,
+                atNodes
+        );
     }
 }

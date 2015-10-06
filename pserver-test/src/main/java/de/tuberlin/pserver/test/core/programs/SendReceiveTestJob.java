@@ -3,9 +3,10 @@ package de.tuberlin.pserver.test.core.programs;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.MsgEventHandler;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 
-public class PushAwaitTestJob extends Program {
+public class SendReceiveTestJob extends Program {
 
     public static final int NUM_MSG = 20000;
 
@@ -18,11 +19,12 @@ public class PushAwaitTestJob extends Program {
 
             for (int i = 0; i < NUM_MSG; ++i) {
 
-                dataManager.pushTo("test-ping", i, new int[]{1});
+                runtimeManager.send("test-ping", i, new int[]{1});
 
-                dataManager.receive(DataManager.CallType.SYNC, 1, "test-pong", new DataManager.DataEventHandler() {
+                runtimeManager.receive(RuntimeManager.ReceiveType.SYNC, 1, "test-pong", new MsgEventHandler() {
+
                     @Override
-                    public void handleDataEvent(int srcNodeID, Object value) {
+                    public void handleMsg(int srcNodeID, Object value) {
                     }
                 });
             }
@@ -38,13 +40,14 @@ public class PushAwaitTestJob extends Program {
 
             for (int i = 0; i < NUM_MSG; ++i) {
 
-                dataManager.receive(DataManager.CallType.SYNC, 1, "test-ping", new DataManager.DataEventHandler() {
+                runtimeManager.receive(RuntimeManager.ReceiveType.SYNC, 1, "test-ping", new MsgEventHandler() {
+
                     @Override
-                    public void handleDataEvent(int srcNodeID, Object value) {
+                    public void handleMsg(int srcNodeID, Object value) {
                     }
                 });
 
-                dataManager.pushTo("test-pong", i, new int[] { 0 });
+                runtimeManager.send("test-pong", i, new int[]{0});
             }
 
             System.out.println("-- FINISH NODE 1");

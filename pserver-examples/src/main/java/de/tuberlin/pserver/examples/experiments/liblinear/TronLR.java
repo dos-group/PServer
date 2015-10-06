@@ -31,14 +31,16 @@ public class TronLR implements TronFunction {
             final double enyz = Math.exp(-yz);
 
             f_obj.add((yz >= 0) ? Math.log(1 + enyz) : -yz + Math.log(1 + Math.exp(yz)));
-        });*/
+        });
 
         return new Aggregator<>(sc, f_obj.done().get())
                 .apply(partialAggs -> partialAggs.stream()
                                 .map(Double::doubleValue)
                                 .reduce((a, b) -> a + b)
                                 .get() * param.C + (0.5 * w_broad.dot(w_broad))
-                );
+                );*/
+
+        return 0;
     }
 
     public Matrix gradient(final Matrix dataPoints, final Matrix w_broad, final Parameter param) throws Exception {
@@ -62,13 +64,14 @@ public class TronLR implements TronFunction {
                         grad.set(0, i, grad.get(0, i) + z * it.value(i));
                     }
                 }
-        });*/
+        });
 
         return new Aggregator<>(sc, grad)
                 .apply(partialGrads -> partialGrads.stream()
                                 .reduce((a, b) -> a.add(b, a))
                                 .get().scale(param.C).add(grad)
-                );
+                );*/
+        return null;
     }
 
     public Matrix hessianVector(final Matrix dataPoints, final Matrix w_broad, final Parameter param, final Matrix s) throws Exception {
@@ -101,10 +104,11 @@ public class TronLR implements TronFunction {
             }
         });*/
 
-        return new Aggregator<>(sc, blockHs)
+        /*return new Aggregator<>(sc, blockHs)
                 .apply(partialGrads -> partialGrads.stream()
                                 .reduce((a, b) -> a.add(b, a))
                                 .get().scale(param.C).add(s)
-                );
+                );*/
+        return null;
     }
 }

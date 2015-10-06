@@ -38,7 +38,7 @@ public final class LibLinearSolver {
                 count.inc();
         });*/
 
-        int pos = new Aggregator<>(pc, count.done().get())
+        /*int pos = new Aggregator<>(pc, count.done().get())
                 .apply(c -> c.stream()
                                 .mapToInt(Integer::intValue)
                                 .sum()
@@ -52,7 +52,7 @@ public final class LibLinearSolver {
                 break;
             case UNKNOWN:
                 break;
-        }
+        }*/
 
         return null;
     }
@@ -119,7 +119,7 @@ public final class LibLinearSolver {
 
         final Matrix partialLabelSet = new Dense64Matrix(1, ls.length, ls);
 
-        final Matrix labelSet = new Aggregator<>(pc, partialLabelSet).apply(partialAggs -> {
+        /*final Matrix labelSet = new Aggregator<>(pc, partialLabelSet).apply(partialAggs -> {
             Matrix result = partialAggs.size() > 0 ? partialAggs.get(0) : new Dense64Matrix(1, 1);
             for (int i = 1; i < partialAggs.size(); i++) {
                 result.concat(partialAggs.get(i), result);
@@ -138,6 +138,7 @@ public final class LibLinearSolver {
         if(param.solverType == SolverType.L2_LR)
             model.threshold = 0.5;
 
-        return model;
+        return model;*/
+        return null;
     }
 }

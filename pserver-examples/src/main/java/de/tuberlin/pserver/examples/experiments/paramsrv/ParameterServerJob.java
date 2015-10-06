@@ -4,35 +4,26 @@ package de.tuberlin.pserver.examples.experiments.paramsrv;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
-import de.tuberlin.pserver.dsl.unit.UnitMng;
+import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.tuples.Tuple2;
-import de.tuberlin.pserver.math.tuples.Tuple3;
-import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.mcruntime.Parallel;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ParameterServerJob extends Program {
 
-    @State(globalScope = GlobalScope.SINGLETON, format = Format.SPARSE_FORMAT, rows = 1, cols = 1000, at = "0")
+    @State(scope = Scope.SINGLETON, format = Format.SPARSE_FORMAT, rows = 1, cols = 1000, at = "0")
     public Matrix parameters;
 
-    @State(globalScope = GlobalScope.PARTITIONED, format = Format.SPARSE_FORMAT, rows = 100, cols = 100, at = "1 - 3")
+    @State(scope = Scope.PARTITIONED, format = Format.SPARSE_FORMAT, rows = 100, cols = 100, at = "1 - 3")
     public Matrix input;
 
 
     @Unit(at = "0")
     public void serverMain(final Lifecycle lifecycle) {
-        final DataManager dataManager = programContext.runtimeContext.dataManager;
+        /*final DataManager dataManager = programContext.runtimeContext.dataManager;
         lifecycle.process(() -> {
-            UnitMng.loop(15, Loop.GLOBAL, (epoch) -> {
+            UnitMng.loop(15, Loop.BULK_SYNCHRONOUS, (epoch) -> {
 
                 dataManager.receive(3, "parameterPull-Request", (srcNodeID, value) -> {
 
@@ -52,16 +43,16 @@ public class ParameterServerJob extends Program {
 
                 });
             });
-        });
+        });*/
     }
 
 
     @Unit(at = "1 - 3")
     public void workerMain(final Lifecycle lifecycle) {
-        final DataManager dataManager = programContext.runtimeContext.dataManager;
+        /*final DataManager dataManager = programContext.runtimeContext.dataManager;
         lifecycle.process(() -> {
 
-            UnitMng.loop(15, Loop.ASYNC, (epoch) -> {
+            UnitMng.loop(15, Loop.ASYNCHRONOUS, (epoch) -> {
 
                 Parallel.For(input, (i, j, value) -> {
 
@@ -81,7 +72,7 @@ public class ParameterServerJob extends Program {
                     dataManager.pushTo("gradientPush", new Tuple3<>(0, 0, 1.0), new int[]{0});
                 });
             });
-        });
+        });*/
     }
 
 

@@ -4,7 +4,7 @@ package de.tuberlin.pserver.examples.experiments.transactions;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
@@ -25,7 +25,7 @@ public class TransactionJob1 extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(globalScope = GlobalScope.REPLICATED, cols = 100, rows = 100)
+    @State(scope = Scope.REPLICATED, cols = 100, rows = 100)
     public Matrix model;
 
     // ---------------------------------------------------
@@ -61,7 +61,7 @@ public class TransactionJob1 extends Program {
 
         lifecycle.process(() -> {
 
-            UnitMng.loop(10, Loop.ASYNC, (e) -> {
+            UnitMng.loop(10, Loop.ASYNCHRONOUS, (e) -> {
 
                 atomic(state(model), () -> {
 

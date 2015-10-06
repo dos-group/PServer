@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.Format;
@@ -29,7 +29,7 @@ public class SubmitMatrixLoadingTestJob extends Program {
     private static final String PROGRAM_FILE = "/home/fridtjof.sander/rowcolval_dataset_" + ROWS + "_" + COLS + "_shuffeled.csv";
 
     @State(
-            globalScope = GlobalScope.PARTITIONED,
+            scope = Scope.PARTITIONED,
             rows = ROWS,
             cols = COLS,
             path = PSERVER_FILE,

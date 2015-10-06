@@ -18,7 +18,7 @@ public class GlobalSyncTestJob extends Program {
 
             final Random rand = new Random();
 
-            UnitMng.loop(10, Loop.GLOBAL, (e) -> {
+            UnitMng.loop(10, Loop.BULK_SYNCHRONOUS, (e) -> {
 
                 Thread.sleep(rand.nextInt(1000));
 

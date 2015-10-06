@@ -26,8 +26,8 @@ public final class UnitMng {
     // Public Methods.
     // ---------------------------------------------------
 
-    public static void barrier() {
-        programContext.runtimeContext.dataManager.globalSync();
+    public static void barrier(final String unitName) throws Exception {
+        programContext.synchronizeUnit(unitName);
     }
 
     // ---------------------------------------------------

@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Matrix;
@@ -41,16 +41,16 @@ public class TSNEJob extends Program {
     // ---------------------------------------------------
 
     // input. i.e. activation vectors of a neuronal network
-    @State(globalScope = GlobalScope.REPLICATED, rows = ROWS, cols = INPUT_COLS, path = "datasets/mnist_10_X.csv")
+    @State(scope = Scope.REPLICATED, rows = ROWS, cols = INPUT_COLS, path = "datasets/mnist_10_X.csv")
     public Matrix X;
 
 
     // high dimensional affinity function (for two vectors of input space)
-    @State(globalScope = GlobalScope.PARTITIONED, rows = ROWS, cols = ROWS)
+    @State(scope = Scope.PARTITIONED, rows = ROWS, cols = ROWS)
     public DistributedMatrix P;
 
     // model. linear embedding.
-    @State(globalScope = GlobalScope.REPLICATED,
+    @State(scope = Scope.REPLICATED,
            rows = ROWS, cols = EMBEDDING_DIMENSION,
            path = "datasets/mnist_10_initY.csv")
 

@@ -3,7 +3,7 @@ package de.tuberlin.pserver.test.core.programs;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.GlobalScope;
+import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
@@ -30,7 +30,7 @@ public class MatrixDenseLoadingTestJob extends Program {
             path = FILE,
             rows = ROWS,
             cols = COLS,
-            globalScope = GlobalScope.PARTITIONED,
+            scope = Scope.PARTITIONED,
             recordFormat = RowColValRecordFormatConfig.class,
             format = Format.DENSE_FORMAT,
             layout = Layout.ROW_LAYOUT
@@ -42,7 +42,7 @@ public class MatrixDenseLoadingTestJob extends Program {
 
         lifecycle.process(() -> {
 
-            matrix = dataManager.getObject("matrix");
+            matrix = runtimeManager.getDHT("matrix");
             int nodeId = programContext.runtimeContext.nodeID;
             int numNodes = programContext.nodeDOP;
             MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(ROWS, COLS, nodeId, numNodes);

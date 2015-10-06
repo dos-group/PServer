@@ -2,8 +2,9 @@ package de.tuberlin.pserver.dsl.transaction.aggregators;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.runtime.MsgEventHandler;
 import de.tuberlin.pserver.runtime.ProgramContext;
-import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.mcruntime.shared.SharedVar;
 
 import java.io.Serializable;
@@ -14,9 +15,11 @@ public class Aggregator<T extends Serializable> {
 
     // TODO: PRESERVE ORDER OF RECEIVED PARTIAL AGGREGATES ? !
 
-    private static final int AGG_NODE_ID = 0;
-
     // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
+    private static final int AGG_NODE_ID = 0;
 
     static public interface AggregatorFunction<T> {
 
@@ -34,6 +37,8 @@ public class Aggregator<T extends Serializable> {
     private final boolean symmetricAgg;
 
     // ---------------------------------------------------
+    // Constructors.
+    // ---------------------------------------------------
 
     public Aggregator(final ProgramContext pc, final T partialAgg) throws Exception { this(pc, partialAgg, true); }
     public Aggregator(final ProgramContext pc, final T partialAgg, final boolean symmetricAgg) throws Exception {
@@ -48,16 +53,20 @@ public class Aggregator<T extends Serializable> {
     }
 
     // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
 
     public T apply(final AggregatorFunction<T> function) throws Exception {
         return symmetricAgg ? symmetric_apply(function) : asymmetric_apply(function);
     }
 
     // ---------------------------------------------------
+    // Private Methods.
+    // ---------------------------------------------------
 
     private T symmetric_apply(final AggregatorFunction<T> function) throws Exception {
 
-        pc.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg);
+        pc.runtimeContext.runtimeManager.send(aggPushUID(), partialAgg);
 
         final int n = pc.nodeDOP - 1;
 
@@ -68,11 +77,11 @@ public class Aggregator<T extends Serializable> {
 
         partialAggs.set(pc.runtimeContext.nodeID, partialAgg);
 
-        pc.runtimeContext.dataManager.receive(DataManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
+        pc.runtimeContext.runtimeManager.receive(RuntimeManager.ReceiveType.SYNC, n, aggPushUID(), new MsgEventHandler() {
 
             @Override
             @SuppressWarnings("unchecked")
-            public void handleDataEvent(int srcNodeID, Object value) {
+            public void handleMsg(int srcNodeID, Object value) {
                 partialAggs.set(srcNodeID, (T) value);
             }
         });
@@ -102,18 +111,18 @@ public class Aggregator<T extends Serializable> {
 
             partialAggs.add(partialAgg);
 
-            pc.runtimeContext.dataManager.receive(DataManager.CallType.SYNC, n, aggPushUID(), new DataManager.DataEventHandler() {
+            pc.runtimeContext.runtimeManager.receive(RuntimeManager.ReceiveType.SYNC, n, aggPushUID(), new MsgEventHandler() {
 
                 @Override
                 @SuppressWarnings("unchecked")
-                public void handleDataEvent(int srcNodeID, Object value) {
+                public void handleMsg(int srcNodeID, Object value) {
                     partialAggs.add((T) value);
                 }
             });
 
             final T agg = function.apply(partialAggs);
 
-            pc.runtimeContext.dataManager.pushTo(aggPushUID(), agg);
+            pc.runtimeContext.runtimeManager.send(aggPushUID(), agg);
 
             sharedGlobalAgg.set(agg);
         }
@@ -121,13 +130,12 @@ public class Aggregator<T extends Serializable> {
 
         if (pc.node(AGG_NODE_ID + 1, pc.nodeDOP - 1)) {
 
-            pc.runtimeContext.dataManager.pushTo(aggPushUID(), partialAgg, new int[]{AGG_NODE_ID});
+            pc.runtimeContext.runtimeManager.send(aggPushUID(), partialAgg, new int[]{AGG_NODE_ID});
 
-            pc.runtimeContext.dataManager.receive(DataManager.CallType.SYNC, 1, aggPushUID(), new DataManager.DataEventHandler() {
-
+            pc.runtimeContext.runtimeManager.receive(RuntimeManager.ReceiveType.SYNC, 1, aggPushUID(), new MsgEventHandler() {
                 @Override
                 @SuppressWarnings("unchecked")
-                public void handleDataEvent(int srcNodeID, Object value) {
+                public void handleMsg(int srcNodeID, Object value) {
                     sharedGlobalAgg.set((T) value);
                 }
             });

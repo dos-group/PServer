@@ -5,13 +5,25 @@ import de.tuberlin.pserver.runtime.ProgramContext;
 
 public class IntAggregator extends Aggregator<Integer> {
 
+    // ---------------------------------------------------
+    // Constants.
+    // ---------------------------------------------------
+
     public enum Operation {
         ADD, COUNT, MIN, MAX
     }
 
+    // ---------------------------------------------------
+    // Constructors.
+    // ---------------------------------------------------
+
     public IntAggregator(final ProgramContext pc, final Integer partialAgg) throws Exception {
         super(pc, partialAgg);
     }
+
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
 
     public Integer apply(final Operation op) throws Exception {
         switch (op) {

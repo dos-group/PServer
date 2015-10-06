@@ -417,7 +417,7 @@ public final class DHTManager extends EventDispatcher {
     }
 
     /**
-     * Put back updated value segments to their dht storage.
+     * Put back updated value segments to their dhtManager storage.
      * @param key The key that is associated with the value object.
      * @param segment Updated segments of a value object.
      */
@@ -425,7 +425,7 @@ public final class DHTManager extends EventDispatcher {
     public void put(final DHTKey key, final AbstractBufferedDHTObject.Segment[] segments) {
         Preconditions.checkNotNull(key);
         Preconditions.checkNotNull(segments);
-        // Group all segments according to their storage locations/dht at.
+        // Group all segments according to their storage locations/dhtManager at.
         final Map<MachineDescriptor, List<AbstractBufferedDHTObject.Segment>> putRequests = new HashMap<>();
         for (final AbstractBufferedDHTObject.Segment segment : segments) {
             final MachineDescriptor md = key.getDHTNodeFromSegmentIndex(segment.segmentIndex);
@@ -460,7 +460,7 @@ public final class DHTManager extends EventDispatcher {
     // ---------------------------------------------------
 
     /**
-     * Get a <Code>Value</Code> from the dht.
+     * Get a <Code>Value</Code> from the dhtManager.
      * @param key The key that is associated with the value object.
      * @return The gathered <Code>Value</Code> partitions.
      */
@@ -519,7 +519,7 @@ public final class DHTManager extends EventDispatcher {
         Preconditions.checkNotNull(key);
         Preconditions.checkNotNull(segmentIndices);
         final AbstractBufferedDHTObject.Segment[] segments = new AbstractBufferedDHTObject.Segment[segmentIndices.length];
-        // Build all requests and group them according to the dht at.
+        // Build all requests and group them according to the dhtManager at.
         final Map<MachineDescriptor, List<Integer>> requests = new HashMap<>();
         for (final int segmentIndex : segmentIndices) {
             final MachineDescriptor md = key.getDHTNodeFromSegmentIndex(segmentIndex);
@@ -585,7 +585,7 @@ public final class DHTManager extends EventDispatcher {
     // ---------------------------------------------------
 
     /**
-     * Delete a <code>Value</code> object (and associated partitions) in the dht.
+     * Delete a <code>Value</code> object (and associated partitions) in the dhtManager.
      * @param key The key that is associated with the value object.
      */
     public void delete(final DHTKey key) {

@@ -49,28 +49,12 @@ public final class SlotGroup {
     public NestedIntervalTree.Interval asInterval() { return slotIDRange; }
 
     public void barrier() throws Exception {
-
-        if (size() == 1) {
+        if (size() == 1)
             return;
-        }
-
         try {
-
             barrier.await(40000, TimeUnit.MILLISECONDS);
-
         } catch (TimeoutException | BrokenBarrierException e) {
-
-            System.out.println(e + " -- " + this.toString());
-
-            //MCRuntime.INSTANCE.printSlotStackTraces();
-
-            /*System.out.println("getNumberWaiting() = " + barrier.getNumberWaiting()
-                    + " | barrier.getParties() = " + barrier.getParties()
-                    + " | " + this.toString()
-                    + " | " + "[" + minSlotID + ", " + maxSlotID + "]"
-                    + " | " + Thread.currentThread().getName()
-                    + " | " + e.getClass().getSimpleName());*/
-
+            System.out.println(MCRuntime.INSTANCE.getSlotJavaStackTraces());
             throw e;
         }
     }
@@ -90,5 +74,5 @@ public final class SlotGroup {
         return result;
     }
 
-    // @Override  public String toString() { return "[" + minSlotID + ", " + maxSlotID + "]"; }
+    @Override  public String toString() { return "[" + minSlotID + ", " + maxSlotID + "]"; }
 }

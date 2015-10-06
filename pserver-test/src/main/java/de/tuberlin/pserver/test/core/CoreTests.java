@@ -33,7 +33,6 @@ public class CoreTests {
     // TODO: Every test is running for its own, but running the whole integration suite stalls.
     // TODO: Some test programs must interfere due to not properly cleaning program and runtime stateName after termination.
 
-
     @Test
     public void testUnitControlFlow() { assert client.execute(UnitControlFlowTestJob.class) != null; }
 
@@ -41,7 +40,7 @@ public class CoreTests {
     public void testSingletonMatrix() { assert client.execute(SingletonMatrixTestJob.class) != null; }
 
     @Test
-    public void testPushAwait() { assert client.execute(PushAwaitTestJob.class) != null; }
+    public void testSendReceive() { assert client.execute(SendReceiveTestJob.class) != null; }
 
     @Test
     public void testEventSystemSendReceive() { assert client.execute(EventSystemSendReceiveTestJob.class) != null; }
@@ -58,13 +57,11 @@ public class CoreTests {
     @Test
     public void testAsymmetricAggregator() { assert client.execute(ASymAggregatorTestJob.class) != null; }
 
-    // -------------------------
+    @Test
+    public void testMatrixDenseLoading() { assert client.execute(MatrixDenseLoadingTestJob.class) != null; }
 
-    //@Test
-    //public void testMatrixDenseLoading() { assert client.execute(MatrixDenseLoadingTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
-
-    //@Test
-    //public void testMatrixSparseLoading() { assert client.execute(MatrixSparseLoadingTestJob.class, IntegrationTestSuite.NUM_SLOTS) != null; }
+    @Test
+    public void testMatrixSparseLoading() { assert client.execute(MatrixSparseLoadingTestJob.class) != null; }
 
     // --------------------------------------------------
 

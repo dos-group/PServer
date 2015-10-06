@@ -39,7 +39,7 @@ public class PushTransactionExecutor extends TransactionExecutor {
 
     @Override
     public synchronized Object execute(final Object requestObject) throws Exception {
-        final SharedObject stateObject = ((EmbeddedDHTObject)runtimeContext.dataManager.getLocal(controller.getTransactionDescriptor().stateName)[0]).object;
+        final SharedObject stateObject = ((EmbeddedDHTObject)runtimeContext.runtimeManager.getDHT(controller.getTransactionDescriptor().stateName)).object;
         stateObject.lock();
         final boolean cacheRequest = controller.getTransactionDescriptor().cacheRequestObject;
         final Prepare preparePhase = transactionDefinition.preparePhase;
@@ -59,7 +59,7 @@ public class PushTransactionExecutor extends TransactionExecutor {
             try {
                 final TransactionRequestEvent request = (TransactionRequestEvent) event;
                 final SharedObject object = (SharedObject) request.getPayload();
-                final SharedObject stateObject = ((EmbeddedDHTObject)runtimeContext.dataManager.getLocal(controller.getTransactionDescriptor().stateName)[0]).object;
+                final SharedObject stateObject = ((EmbeddedDHTObject)runtimeContext.runtimeManager.getDHT(controller.getTransactionDescriptor().stateName)).object;
                 final List<SharedObject> remoteObjects = new ArrayList<>();
                 remoteObjects.add(object);
                 stateObject.lock();
