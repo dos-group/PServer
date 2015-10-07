@@ -11,7 +11,7 @@ import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
+import de.tuberlin.pserver.runtime.filesystem.record.config.IRecordIteratorProducer;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ImmutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
@@ -43,7 +43,7 @@ public final class MatrixPartitionManager {
         public MatrixLoadTask(ProgramContext programContext, StateDescriptor decl) {
             this.programContext  = programContext;
             this.decl         = decl;
-            AbstractRecordFormatConfig recordFormatConfig;
+            IRecordIteratorProducer recordFormatConfig;
             try {
                 recordFormatConfig = decl.recordFormatConfigClass.newInstance();
             }

@@ -7,8 +7,8 @@ import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.ProgramContext;
-import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
-import de.tuberlin.pserver.runtime.filesystem.record.config.RowColValRecordFormatConfig;
+import de.tuberlin.pserver.runtime.filesystem.record.config.IRecordIteratorProducer;
+import de.tuberlin.pserver.runtime.filesystem.record.config.RowColValRecordIteratorFormatConfig;
 import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 
@@ -38,7 +38,7 @@ public final class StateBuilder {
 
     private String path;
 
-    private Class<? extends AbstractRecordFormatConfig> recordFormat;
+    private Class<? extends IRecordIteratorProducer> recordFormat;
 
     private Class<? extends IMatrixPartitioner> partitioner;
 
@@ -71,7 +71,7 @@ public final class StateBuilder {
 
     public StateBuilder format(Format format) { this.format = format; return this; }
 
-    public StateBuilder recordFormat(Class<? extends AbstractRecordFormatConfig> recordFormat) { this.recordFormat = recordFormat; return this; }
+    public StateBuilder recordFormat(Class<? extends IRecordIteratorProducer> recordFormat) { this.recordFormat = recordFormat; return this; }
 
     public StateBuilder path(String path) { this.path = path; return this; }
 
@@ -92,7 +92,7 @@ public final class StateBuilder {
         this.cols = 0;
         this.layout = Layout.ROW_LAYOUT;
         this.format = Format.DENSE_FORMAT;
-        this.recordFormat = RowColValRecordFormatConfig.class;
+        this.recordFormat = RowColValRecordIteratorFormatConfig.class;
         this.path = "";
     }
 }

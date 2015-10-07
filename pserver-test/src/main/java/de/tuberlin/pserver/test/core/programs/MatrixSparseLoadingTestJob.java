@@ -10,7 +10,7 @@ import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.filesystem.record.config.RowColValRecordFormatConfig;
+import de.tuberlin.pserver.runtime.filesystem.record.config.RowColValRecordIteratorFormatConfig;
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Paths;
 
 public class MatrixSparseLoadingTestJob extends Program {
 
@@ -39,7 +38,7 @@ public class MatrixSparseLoadingTestJob extends Program {
             rows = ROWS,
             cols = COLS,
             scope = Scope.PARTITIONED,
-            recordFormat = RowColValRecordFormatConfig.class,
+            recordFormat = RowColValRecordIteratorFormatConfig.class,
             format = Format.SPARSE_FORMAT,
             layout = Layout.ROW_LAYOUT
     )

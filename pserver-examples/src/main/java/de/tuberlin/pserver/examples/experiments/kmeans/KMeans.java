@@ -16,7 +16,7 @@ import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
-import de.tuberlin.pserver.runtime.filesystem.record.config.RowRecordFormatConfig;
+import de.tuberlin.pserver.runtime.filesystem.record.config.RowRecordIteratorFormatConfig;
 import de.tuberlin.pserver.runtime.mcruntime.Parallel;
 
 import java.util.Random;
@@ -42,7 +42,7 @@ public class KMeans extends Program {
             cols = COLS,
             path = FILE,
             format = Format.DENSE_FORMAT,
-            recordFormat = RowRecordFormatConfig.class
+            recordFormat = RowRecordIteratorFormatConfig.class
     )
     public Matrix matrix;
 

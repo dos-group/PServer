@@ -3,8 +3,8 @@ package de.tuberlin.pserver.dsl.state.annotations;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
-import de.tuberlin.pserver.runtime.filesystem.record.config.RowColValRecordFormatConfig;
+import de.tuberlin.pserver.runtime.filesystem.record.config.IRecordIteratorProducer;
+import de.tuberlin.pserver.runtime.filesystem.record.config.RowColValRecordIteratorFormatConfig;
 import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 
@@ -31,7 +31,7 @@ public @interface State {;
 
     Format format() default Format.DENSE_FORMAT;
 
-    Class<? extends AbstractRecordFormatConfig> recordFormat() default RowColValRecordFormatConfig.class;
+    Class<? extends IRecordIteratorProducer> recordFormat() default RowColValRecordIteratorFormatConfig.class;
 
     String path() default "";
 }
