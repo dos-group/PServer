@@ -86,34 +86,22 @@ public class KMeans extends Program {
 
             centroids.setArray(data);
 
+
         }).process(() -> {
 
             centroidsUpdate.assign(0);
 
             UnitMng.loop(10, Loop.BULK_SYNCHRONOUS, (iteration) -> {
                 int nodeId = programContext.runtimeContext.nodeID;
-
-                // BEGIN: PULL MODEL FROM OTHER NODES AND MERGE
-                //System.out.println(nodeId + ": pre pull centroidsUpdate: " + centroidsUpdate);
-                TransactionMng.commit(centroidsUpdateSync);
-                //System.out.println(nodeId + ": post pull centroidsUpdate: " + centroidsUpdate);
-                for (int i = 0; i < K; i++) {
-                    if (centroidsUpdate.get(i, COLS) > 0) {
-                        Matrix update = centroidsUpdate.getRow(i, 0, COLS);
-                        if (centroidsUpdate.get(i, COLS) > 0) {
-                            centroids.assignRow(i, update.scale(1. / centroidsUpdate.get(i, COLS), update));
-                        }
-                    }
-                }
-                centroidsUpdate.assign(0);
-                // END: PULL MODEL FROM OTHER NODES AND MERGE
-
+                System.out.println("centroids: " + centroids);
                 // BEGIN: STANDARD KMEANS ON LOCAL PARTITION
 
                 Matrix.RowIterator iter = matrix.rowIterator();
+                System.out.println("iterating over " + iter.rows() + " rows");
                 while (iter.hasNext()) {
                     Matrix point = iter.get();
                     iter.next();
+                    System.out.println("current point: " + point);
                     double closestDistance = Double.MAX_VALUE;
                     long closestCentroidId = -1;
                     for (long centroidId = 0; centroidId < K; centroidId++) {
@@ -125,6 +113,7 @@ public class KMeans extends Program {
                             closestCentroidId = centroidId;
                         }
                     }
+                    System.out.println("closest centroid: " + closestCentroidId);
                     Matrix updateDelta = point.copy(1, COLS + 1);
                     updateDelta.set(0, COLS, 1);
 
@@ -132,6 +121,22 @@ public class KMeans extends Program {
                 }
 
                 // END: STANDARD KMEANS ON LOCAL PARTITION
+
+                // BEGIN: PULL MODEL FROM OTHER NODES AND MERGE
+                System.out.println(nodeId + ": pre pull centroidsUpdate: " + centroidsUpdate);
+                TransactionMng.commit(centroidsUpdateSync);
+                System.out.println(nodeId + ": post pull centroidsUpdate: " + centroidsUpdate);
+                for (int i = 0; i < K; i++) {
+                    if (centroidsUpdate.get(i, COLS) > 0) {
+                        Matrix update = centroidsUpdate.getRow(i, 0, COLS);
+                        if (centroidsUpdate.get(i, COLS) > 0) {
+                            centroids.assignRow(i, update.scale(1. / centroidsUpdate.get(i, COLS), update));
+                        }
+                    }
+                }
+                centroidsUpdate.assign(0);
+                // END: PULL MODEL FROM OTHER NODES AND MERGE
+
             });
 
         }).postProcess(() -> {
