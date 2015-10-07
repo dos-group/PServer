@@ -15,5 +15,13 @@ public interface PredictionFunction {
             return X.dot(W);
         }
     }
+
+    class LinearBinaryPrediction implements PredictionFunction {
+
+        @Override
+        public double predict(final Matrix X, final Matrix W) {
+            return Math.signum(X.dot(W));
+        }
+    }
 }
 

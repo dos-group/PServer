@@ -88,6 +88,11 @@ public class GDOptimizer implements Optimizer, LoopTermination {
         return this;
     }
 
+    public GDOptimizer setSyncMode(int syncMode) {
+        this.syncMode = syncMode;
+        return this;
+    }
+
     @Override
     public Matrix optimize(Matrix X, Matrix y, Matrix W) throws Exception {
 
@@ -106,11 +111,24 @@ public class GDOptimizer implements Optimizer, LoopTermination {
             final double learningRate =
                     learningRateFunction.decayLearningRate(epoch, initialLearningRate);
 
-            int count = 0;
-
             while (XIterator.hasNext()) {
 
-                for (int sample = 0; sample < batchSize; ++sample) {
+                if (batchSize > 1) {
+
+                    for (int sample = 0; sample < batchSize; ++sample) {
+
+                        if (shuffle) {
+                            XIterator.nextRandom();
+                        } else {
+                            XIterator.next();
+                        }
+
+                        batchX.assignRow(sample, XIterator.get());
+                        batchY.assignRow(sample, y.getRow(XIterator.rowNum()));
+                    }
+
+                    gradient = lossFunction.gradient(batchX, batchY, W, regularization, newtonMethod);
+                } else {
 
                     if (shuffle) {
                         XIterator.nextRandom();
@@ -118,13 +136,9 @@ public class GDOptimizer implements Optimizer, LoopTermination {
                         XIterator.next();
                     }
 
-                    batchX.assignRow(sample, XIterator.get());
-                    batchY.assignRow(sample, y.getRow(XIterator.rowNum()));
-
-                    count++;
+                    gradient = lossFunction.gradient(XIterator.get(), y.getRow(XIterator.rowNum()),
+                            W, regularization, newtonMethod);
                 }
-
-                gradient = lossFunction.gradient(batchX, batchY, W, regularization, newtonMethod);
 
                 if (!newtonMethod) {
                     gradient.scale(learningRate, gradient);
