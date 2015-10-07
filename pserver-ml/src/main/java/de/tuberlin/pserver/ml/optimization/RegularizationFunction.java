@@ -17,7 +17,7 @@ public interface RegularizationFunction {
         @Override
         public double regularize(final Matrix W, final double lambda) {
             // do not include intercept
-            return 0.5 * lambda * W.dot(W) - W.get(0) * W.get(0);
+            return 0.5 * lambda * (W.dot(W) - W.get(0) * W.get(0));
         }
 
         @Override

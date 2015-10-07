@@ -52,11 +52,11 @@ public interface LossFunction {
             double sumLoss = 0.0;
 
             while (XIterator.hasNext()) {
-                sumLoss += partialLossFunction.loss(XIterator.get(), yIterator.get().get(0),
-                        predictionFunction.predict(XIterator.get(), W));
-
                 XIterator.next();
                 yIterator.next();
+
+                sumLoss += partialLossFunction.loss(XIterator.get(), yIterator.get().get(0),
+                        predictionFunction.predict(XIterator.get(), W));
             }
 
             return sumLoss + regularizationFunction.regularize(W, lambda);

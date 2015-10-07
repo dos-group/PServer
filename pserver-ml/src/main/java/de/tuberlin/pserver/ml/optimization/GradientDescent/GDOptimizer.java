@@ -1,12 +1,11 @@
 package de.tuberlin.pserver.ml.optimization.GradientDescent;
 
-import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.dsl.controlflow.loop.Loop;
-import de.tuberlin.pserver.dsl.controlflow.loop.LoopTermination;
+import de.tuberlin.pserver.dsl.unit.UnitMng;
+import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
+import de.tuberlin.pserver.dsl.unit.controlflow.loop.LoopTermination;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
 import de.tuberlin.pserver.ml.optimization.*;
-import de.tuberlin.pserver.runtime.SlotContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,8 +13,6 @@ import org.slf4j.LoggerFactory;
 public class GDOptimizer implements Optimizer, LoopTermination {
 
     private static final Logger LOG = LoggerFactory.getLogger(GDOptimizer.class);
-
-    private SlotContext ctx;
 
     private int maxIterations;
 
@@ -40,9 +37,7 @@ public class GDOptimizer implements Optimizer, LoopTermination {
     private double regularization;
 
 
-    public GDOptimizer(final SlotContext ctx) {
-        this.ctx = Preconditions.checkNotNull(ctx);
-
+    public GDOptimizer() {
         this.maxIterations = 100;
         this.batchSize = 1;
         this.initialLearningRate = 1.0;
@@ -54,7 +49,7 @@ public class GDOptimizer implements Optimizer, LoopTermination {
                 new PartialLossFunction.SquareLoss(),
                 new RegularizationFunction.L2Regularization());
         this.learningRateFunction = new LearningRateFunction.ConstantLearningRate();
-        this.syncMode = Loop.ASYNC;
+        this.syncMode = Loop.ASYNCHRONOUS;
         this.regularization = 1e-4;
     }
 
@@ -100,7 +95,7 @@ public class GDOptimizer implements Optimizer, LoopTermination {
 
         converged = false;
 
-        ctx.CF.loop().sync(syncMode).exe(this, (epoch) -> {
+        UnitMng.loop(this, syncMode, (epoch) -> {
 
             Matrix gradient = new MatrixBuilder().dimension(1, X.cols()).build();
 
