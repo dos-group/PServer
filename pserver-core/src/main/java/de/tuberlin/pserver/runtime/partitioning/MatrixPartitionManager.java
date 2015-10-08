@@ -231,9 +231,6 @@ public final class MatrixPartitionManager {
                 // if record belongs to own node, set the value
                 if (targetPartition == nodeId) {
                     synchronized (matrix) {
-
-                        //System.out.println("(" + entry.getRow() + ", " + entry.getCol() + ") = " + entry.getValue());
-
                         matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
                     }
                 } else {

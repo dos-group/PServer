@@ -18,6 +18,7 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
 import de.tuberlin.pserver.runtime.filesystem.record.config.RowRecordFormatConfig;
 import de.tuberlin.pserver.runtime.mcruntime.Parallel;
+import de.tuberlin.pserver.runtime.mcruntime.ParallelForMatrixBody;
 
 import java.util.Random;
 
@@ -108,34 +109,38 @@ public class KMeans extends Program {
                 centroidsUpdate.assign(0);
                 // END: PULL MODEL FROM OTHER NODES AND MERGE
 
-                // BEGIN: STANDARD KMEANS ON LOCAL PARTITION
+                // BEGIN: STANDARD KMEANS ON LOCAL PARTITION+
 
-                Matrix.RowIterator iter = matrix.rowIterator();
-                while (iter.hasNext()) {
-                    Matrix point = iter.get();
-                    iter.next();
-                    double closestDistance = Double.MAX_VALUE;
-                    long closestCentroidId = -1;
-                    for (long centroidId = 0; centroidId < K; centroidId++) {
-                        Matrix centroid = centroids.getRow(centroidId);
-                        Matrix diff = centroid.sub(point);
-                        double distance = diff.norm(2);
-                        if (distance < closestDistance) {
-                            closestDistance = distance;
-                            closestCentroidId = centroidId;
+                //atomic(state(matrix), () -> {
+                    Matrix.RowIterator iter = matrix.rowIterator();
+                    while (iter.hasNext()) {
+                        Matrix point = iter.get();
+                        iter.next();
+
+                        double closestDistance = Double.MAX_VALUE;
+                        long closestCentroidId = -1;
+                        for (long centroidId = 0; centroidId < K; centroidId++) {
+                            Matrix centroid = centroids.getRow(centroidId);
+                            Matrix diff = centroid.sub(point);
+                            double distance = diff.norm(2);
+                            if (distance < closestDistance) {
+                                closestDistance = distance;
+                                closestCentroidId = centroidId;
+                            }
                         }
-                    }
-                    Matrix updateDelta = point.copy(1, COLS + 1);
-                    updateDelta.set(0, COLS, 1);
+                        Matrix updateDelta = point.copy(1, COLS + 1);
+                        updateDelta.set(0, COLS, 1);
 
-                    centroidsUpdate.assignRow(closestCentroidId, centroidsUpdate.getRow(closestCentroidId).add(updateDelta));
-                }
+                        centroidsUpdate.assignRow(closestCentroidId, centroidsUpdate.getRow(closestCentroidId).add(updateDelta));
+                    }
+                //});
+
+                //System.out.println();
 
                 // END: STANDARD KMEANS ON LOCAL PARTITION
             });
 
         }).postProcess(() -> {
-
             for (int i = 0; i < K; i++) {
                 int nodeId = programContext.runtimeContext.nodeID;
                 System.out.println("centroid[node:" + nodeId + ",row:" + i + "]=" + centroids.getRow(i));
@@ -159,7 +164,7 @@ public class KMeans extends Program {
     }
 
     public static void local() {
-        System.setProperty("simulation.numNodes", "1");
+        System.setProperty("simulation.numNodes", "4");
         PServerExecutor.LOCAL
                 .run(KMeans.class)
                 .done();

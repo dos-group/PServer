@@ -11,7 +11,6 @@ import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
 import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
-import de.tuberlin.pserver.types.PartitionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

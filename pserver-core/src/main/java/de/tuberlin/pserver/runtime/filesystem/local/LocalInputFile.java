@@ -53,7 +53,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
         // we assume here, that number of row-partitions determine file splitting. This is not necessarily true i.e. if a line in a file contains row-values for one column.
         // RecordFormatConfig should give a hint for that
         if(partitioner.getNumRowPartitions() == 1) {
-            fileSection.set(totalLines, totalLines, 0, totalLines);
+            fileSection.set(totalLines, totalLines, 0, 0); // TODO: Here is the error....
         }
         else {
             try {

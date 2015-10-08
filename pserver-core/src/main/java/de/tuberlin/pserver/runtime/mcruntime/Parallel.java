@@ -109,6 +109,10 @@ public final class Parallel {
         });
     }
 
+    public static void For(final Matrix m, final ParallelForRowMatrixBody body) throws Exception {
+        For(0, (int)m.rows(), body::perform);
+    }
+
     // ---------------------------------------------------
     // Private Methods.
     // ---------------------------------------------------

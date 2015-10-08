@@ -2,13 +2,12 @@ package de.tuberlin.pserver.runtime;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.compiler.ProgramTable;
+import de.tuberlin.pserver.compiler.*;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.compiler.StateDescriptor;
-import de.tuberlin.pserver.compiler.UnitDescriptor;
+import de.tuberlin.pserver.dsl.transaction.TransactionController;
+import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBuilder;
@@ -97,6 +96,102 @@ public final class RuntimeManager {
         fileManager.clearContext();
     }
 
+    public void allocateState(final ProgramContext programContext, StateDescriptor decl) throws Exception {
+        if (Matrix.class.isAssignableFrom(decl.stateType)) {
+            switch (decl.scope) {
+                case SINGLETON: {
+
+                    if (decl.atNodes.length != 1)
+                        throw new IllegalStateException();
+
+                    if (decl.atNodes[0] < 0 || decl.atNodes[0] > nodeIDs.length - 1)
+                        throw new IllegalStateException();
+
+                    if (infraManager.getNodeID() == decl.atNodes[0]) {
+
+                        final SharedObject so = new MatrixBuilder()
+                                .dimension(decl.rows, decl.cols)
+                                .format(decl.format)
+                                .layout(decl.layout)
+                                .build();
+
+                        putDHT(decl.stateName, so);
+
+                        new RemoteMatrixStub(programContext, decl.stateName, (Matrix)so);
+
+                    } else {
+
+                        final RemoteMatrixSkeleton remoteMatrixSkeleton = new RemoteMatrixSkeleton(
+                                programContext,
+                                decl.stateName,
+                                decl.atNodes[0],
+                                decl.rows,
+                                decl.cols,
+                                decl.format,
+                                decl.layout
+                        );
+
+                        putDHT(decl.stateName, remoteMatrixSkeleton);
+                    }
+
+                } break;
+                case REPLICATED: {
+                    if ("".equals(decl.path)) {
+
+                        if (ArrayUtils.contains(decl.atNodes, programContext.runtimeContext.nodeID)) {
+
+                            final SharedObject so = new MatrixBuilder()
+                                    .dimension(decl.rows, decl.cols)
+                                    .format(decl.format)
+                                    .layout(decl.layout)
+                                    .build();
+
+                            putDHT(decl.stateName, so);
+                        }
+                    }
+                    else {
+                        matrixPartitionManager.load(programContext, decl);
+                    }
+                } break;
+                case PARTITIONED: {
+                    if ("".equals(decl.path)) {
+                        final SharedObject so = new DistributedMatrix(
+                                programContext,
+                                decl.rows, decl.cols,
+                                IMatrixPartitioner.newInstance(decl.partitionerClass, decl.rows, decl.cols, programContext.runtimeContext.nodeID, decl.atNodes),
+                                decl.layout,
+                                decl.format
+                                //, false
+                        );
+                        putDHT(decl.stateName, so);
+                    } else {
+                        matrixPartitionManager.load(programContext, decl);
+                    }
+                } break;
+                case LOGICALLY_PARTITIONED:
+                    final SharedObject so = new DistributedMatrix(
+                            programContext,
+                            decl.rows, decl.cols,
+                            IMatrixPartitioner.newInstance(decl.partitionerClass, decl.rows, decl.cols, programContext.runtimeContext.nodeID, decl.atNodes),
+                            decl.layout,
+                            decl.format
+                            //, true
+                    );
+                    putDHT(decl.stateName, so);
+                    break;
+                default:
+                    throw new UnsupportedOperationException();
+            }
+        } else
+            throw new UnsupportedOperationException();
+    }
+
+    public TransactionDefinition createTransaction(final ProgramContext programContext, final TransactionDescriptor descriptor) {
+        final TransactionController controller = new TransactionController(programContext.runtimeContext, descriptor);
+        programContext.programTable.addTransactionController(controller);
+        return descriptor.definition;
+    }
+
     // ---------------------------------------------------
 
     private void bindState(final ProgramTable programTable, final Program instance) throws Exception {
@@ -122,93 +217,7 @@ public final class RuntimeManager {
 
     private void allocateState(final ProgramContext programContext) throws Exception {
         for (final StateDescriptor decl : programContext.programTable.getState()) {
-            if (Matrix.class.isAssignableFrom(decl.stateType)) {
-                switch (decl.scope) {
-                    case SINGLETON: {
-
-                        if (decl.atNodes.length != 1)
-                            throw new IllegalStateException();
-
-                        if (decl.atNodes[0] < 0 || decl.atNodes[0] > nodeIDs.length - 1)
-                            throw new IllegalStateException();
-
-                        if (infraManager.getNodeID() == decl.atNodes[0]) {
-
-                            final SharedObject so = new MatrixBuilder()
-                                    .dimension(decl.rows, decl.cols)
-                                    .format(decl.format)
-                                    .layout(decl.layout)
-                                    .build();
-
-                            putDHT(decl.stateName, so);
-
-                            new RemoteMatrixStub(programContext, decl.stateName, (Matrix)so);
-
-                        } else {
-
-                            final RemoteMatrixSkeleton remoteMatrixSkeleton = new RemoteMatrixSkeleton(
-                                    programContext,
-                                    decl.stateName,
-                                    decl.atNodes[0],
-                                    decl.rows,
-                                    decl.cols,
-                                    decl.format,
-                                    decl.layout
-                            );
-
-                            putDHT(decl.stateName, remoteMatrixSkeleton);
-                        }
-
-                    } break;
-                    case REPLICATED: {
-                        if ("".equals(decl.path)) {
-
-                            if (ArrayUtils.contains(decl.atNodes, programContext.runtimeContext.nodeID)) {
-
-                                final SharedObject so = new MatrixBuilder()
-                                        .dimension(decl.rows, decl.cols)
-                                        .format(decl.format)
-                                        .layout(decl.layout)
-                                        .build();
-
-                                putDHT(decl.stateName, so);
-                            }
-                        }
-                        else {
-                            matrixPartitionManager.load(programContext, decl);
-                        }
-                    } break;
-                    case PARTITIONED: {
-                        if ("".equals(decl.path)) {
-                            final SharedObject so = new DistributedMatrix(
-                                    programContext,
-                                    decl.rows, decl.cols,
-                                    IMatrixPartitioner.newInstance(decl.partitionerClass, decl.rows, decl.cols, programContext.runtimeContext.nodeID, decl.atNodes),
-                                    decl.layout,
-                                    decl.format
-                                    //, false
-                            );
-                            putDHT(decl.stateName, so);
-                        } else {
-                            matrixPartitionManager.load(programContext, decl);
-                        }
-                    } break;
-                    case LOGICALLY_PARTITIONED:
-                        final SharedObject so = new DistributedMatrix(
-                                programContext,
-                                decl.rows, decl.cols,
-                                IMatrixPartitioner.newInstance(decl.partitionerClass, decl.rows, decl.cols, programContext.runtimeContext.nodeID, decl.atNodes),
-                                decl.layout,
-                                decl.format
-                                //, true
-                        );
-                        putDHT(decl.stateName, so);
-                        break;
-                    default:
-                        throw new UnsupportedOperationException();
-                }
-            } else
-                throw new UnsupportedOperationException();
+            allocateState(programContext, decl);
         }
     }
 

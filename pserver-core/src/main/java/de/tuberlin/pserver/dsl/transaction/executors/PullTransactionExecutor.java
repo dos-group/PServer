@@ -7,7 +7,6 @@ import de.tuberlin.pserver.dsl.transaction.events.TransactionResponseEvent;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.RuntimeContext;
-import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +29,8 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
     // ---------------------------------------------------
 
+    private final Object monitor = new Object();
+
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
@@ -40,6 +41,8 @@ public class PullTransactionExecutor extends TransactionExecutor {
         super(runtimeContext, controller);
 
         this.transactionDefinition = controller.getTransactionDescriptor().definition;
+
+        this.responseLatch = new CountDownLatch(controller.getTransactionDescriptor().nodes.length);
 
         register();
     }
@@ -58,8 +61,12 @@ public class PullTransactionExecutor extends TransactionExecutor {
                 cacheRequest
         );
         runtimeContext.netManager.sendEvent(controller.getTransactionDescriptor().nodes, request);
-        responseLatch = new CountDownLatch(controller.getTransactionDescriptor().nodes.length);
         responseLatch.await();
+
+        synchronized (monitor) {
+            responseLatch = new CountDownLatch(controller.getTransactionDescriptor().nodes.length);
+        }
+
         return transactionDefinition.applyPhase.apply(resultObjects);
     }
 
@@ -67,13 +74,18 @@ public class PullTransactionExecutor extends TransactionExecutor {
     // Private Methods.
     // ---------------------------------------------------
 
+    private SharedObject stateObject = null;
+
     private void register() {
 
         runtimeContext.netManager.addEventListener(TransactionRequestEvent.TRANSACTION_REQUEST + transactionName, event -> {
             final TransactionRequestEvent request = (TransactionRequestEvent)event;
 
             try {
-                final SharedObject stateObject = ((EmbeddedDHTObject) runtimeContext.runtimeManager.getDHT(controller.getTransactionDescriptor().stateName)).object;
+                if (stateObject == null) {
+                    stateObject = runtimeContext.runtimeManager.getDHT(controller.getTransactionDescriptor().stateName);
+                }
+
                 stateObject.lock();
                 final Prepare preparePhase = transactionDefinition.preparePhase;
                 final Object prepareInput = request.getPayload() == null ? stateObject : request.requestObject;
@@ -91,7 +103,10 @@ public class PullTransactionExecutor extends TransactionExecutor {
         runtimeContext.netManager.addEventListener(TransactionResponseEvent.TRANSACTION_RESPONSE + transactionName, event -> {
             final TransactionResponseEvent response = (TransactionResponseEvent)event;
             resultObjects.add(response.responseObject);
-            responseLatch.countDown();
+            
+            synchronized (monitor) {
+                responseLatch.countDown();
+            }
         });
     }
 }

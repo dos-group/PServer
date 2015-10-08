@@ -6,7 +6,6 @@ import de.tuberlin.pserver.dsl.transaction.events.TransactionRequestEvent;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.RuntimeContext;
-import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +38,7 @@ public class PushTransactionExecutor extends TransactionExecutor {
 
     @Override
     public synchronized Object execute(final Object requestObject) throws Exception {
-        final SharedObject stateObject = ((EmbeddedDHTObject)runtimeContext.runtimeManager.getDHT(controller.getTransactionDescriptor().stateName)).object;
+        final SharedObject stateObject = runtimeContext.runtimeManager.getDHT(controller.getTransactionDescriptor().stateName);
         stateObject.lock();
         final boolean cacheRequest = controller.getTransactionDescriptor().cacheRequestObject;
         final Prepare preparePhase = transactionDefinition.preparePhase;
@@ -59,7 +58,7 @@ public class PushTransactionExecutor extends TransactionExecutor {
             try {
                 final TransactionRequestEvent request = (TransactionRequestEvent) event;
                 final SharedObject object = (SharedObject) request.getPayload();
-                final SharedObject stateObject = ((EmbeddedDHTObject)runtimeContext.runtimeManager.getDHT(controller.getTransactionDescriptor().stateName)).object;
+                final SharedObject stateObject = runtimeContext.runtimeManager.getDHT(controller.getTransactionDescriptor().stateName);
                 final List<SharedObject> remoteObjects = new ArrayList<>();
                 remoteObjects.add(object);
                 stateObject.lock();

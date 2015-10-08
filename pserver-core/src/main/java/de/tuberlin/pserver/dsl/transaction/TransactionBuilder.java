@@ -2,6 +2,7 @@ package de.tuberlin.pserver.dsl.transaction;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.compiler.TransactionDescriptor;
 import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.runtime.ProgramContext;
 
@@ -48,9 +49,17 @@ public final class TransactionBuilder {
 
     // ---------------------------------------------------
 
-    public TransactionDefinition build(final String name, final TransactionDefinition definition) {
-
-        return definition;
+    public TransactionDefinition build(final String transactionName, final TransactionDefinition definition) {
+        final TransactionDescriptor descriptor = new TransactionDescriptor(
+                transactionName,
+                stateName,
+                definition,
+                type,
+                cache,
+                programContext.runtimeContext.nodeID,
+                programContext.programTable.getState(stateName).atNodes
+        );
+        return programContext.runtimeContext.runtimeManager.createTransaction(programContext, descriptor);
     }
 
     // ---------------------------------------------------

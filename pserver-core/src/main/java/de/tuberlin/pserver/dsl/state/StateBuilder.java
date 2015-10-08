@@ -2,6 +2,8 @@ package de.tuberlin.pserver.dsl.state;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.commons.utils.ParseUtils;
+import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
@@ -21,8 +23,6 @@ public final class StateBuilder {
     private final ProgramContext programContext;
 
     // ---------------------------------------------------
-
-    private String stateName;
 
     private Scope scope;
 
@@ -77,9 +77,21 @@ public final class StateBuilder {
 
     // ---------------------------------------------------
 
-    public Matrix build(final String name) {
-
-        return null;
+    public Matrix build(final String stateName) throws Exception {
+        final StateDescriptor descriptor = new StateDescriptor(
+                stateName,
+                Matrix.class,
+                scope,
+                ParseUtils.parseNodeRanges(at),
+                partitioner,
+                rows, cols,
+                layout,
+                format,
+                recordFormat,
+                path
+        );
+        programContext.runtimeContext.runtimeManager.allocateState(programContext, descriptor);
+        return programContext.runtimeContext.runtimeManager.getDHT(stateName);
     }
 
     // ---------------------------------------------------
