@@ -95,7 +95,7 @@ public class KMeans extends Program {
                 int nodeId = programContext.runtimeContext.nodeID;
                 // BEGIN: PULL MODEL FROM OTHER NODES AND MERGE
                 //System.out.println(nodeId + ": pre pull centroidsUpdate: " + centroidsUpdate);
-                TransactionMng.commit(centroidsUpdateSync);
+                /*TransactionMng.commit(centroidsUpdateSync);
                 //System.out.println(nodeId + ": post pull centroidsUpdate: " + centroidsUpdate);
                 for (int i = 0; i < K; i++) {
                     if (centroidsUpdate.get(i, COLS) > 0) {
@@ -105,7 +105,7 @@ public class KMeans extends Program {
                         }
                     }
                 }
-                centroidsUpdate.assign(0);
+                centroidsUpdate.assign(0);*/
                 // END: PULL MODEL FROM OTHER NODES AND MERGE
 
                 // BEGIN: STANDARD KMEANS ON LOCAL PARTITION+
@@ -181,7 +181,7 @@ public class KMeans extends Program {
     }
 
     public static void local() {
-        System.setProperty("simulation.numNodes", "2");
+        System.setProperty("simulation.numNodes", "4");
         PServerExecutor.LOCAL
                 .run(KMeans.class)
                 .done();
