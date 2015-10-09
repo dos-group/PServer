@@ -21,7 +21,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-public class MatrixDenseLoadingTestJob extends Program {
+public class MatrixDenseLoadingRowColValTestJob extends Program {
 
     private static final long ROWS = 1000;
     private static final long COLS = 250;
@@ -31,7 +31,7 @@ public class MatrixDenseLoadingTestJob extends Program {
 
     private final String FILE = "src/main/resources/rowcolval_dataset_1000_250_shuffeled.csv";
 
-    private static final Logger LOG = LoggerFactory.getLogger(MatrixDenseLoadingTestJob.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MatrixDenseLoadingRowColValTestJob.class);
 
     @State(
             path = FILE,
@@ -92,7 +92,7 @@ public class MatrixDenseLoadingTestJob extends Program {
     public static void main(String[] args) {
         System.setProperty("simulation.numNodes", "4");
         PServerExecutor.LOCAL
-                .run(MatrixDenseLoadingTestJob.class)
+                .run(MatrixDenseLoadingRowColValTestJob.class)
                 .done();
     }
 }
