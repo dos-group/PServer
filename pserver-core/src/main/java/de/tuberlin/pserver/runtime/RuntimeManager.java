@@ -10,21 +10,20 @@ import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.utils.MatrixBuilder;
 import de.tuberlin.pserver.runtime.dht.DHTKey;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
 import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
-import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.MatrixPartitionManager;
-import de.tuberlin.pserver.types.DistributedMatrix;
 import de.tuberlin.pserver.types.RemoteMatrixSkeleton;
 import de.tuberlin.pserver.types.RemoteMatrixStub;
+import de.tuberlin.pserver.utils.MatrixBuilder;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 public final class RuntimeManager {
@@ -247,6 +246,50 @@ public final class RuntimeManager {
                 throw new IllegalStateException(e);
             }
         }
+    }
+
+    // ----------------- PULL PRIMITIVE ------------------
+
+    public static interface PullHandler {
+        public abstract Object handlePull(final String name);
+    }
+
+    public void registerPullHandler(final String name, final PullHandler handler) {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(handler);
+        netManager.addEventListener(MsgEventHandler.MSG_EVENT_PREFIX + name, e -> {
+            final NetEvents.NetEvent event = (NetEvents.NetEvent) e;
+            final int srcNodeID = infraManager.getNodeIDFromMachineUID(event.srcMachineID);
+            final Object result = handler.handlePull(name);
+            RuntimeManager.this.send(name, result, new int[]{srcNodeID});
+        });
+    }
+
+    public Object[] pull(final String name) { return pull(name, remoteNodeIDs); }
+    public Object[] pull(final String name, final int[] nodeIDs) {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(nodeIDs);
+        final Object[] pullResponses = new Object[nodeIDs.length];
+        final AtomicInteger responseCounter = new AtomicInteger(0);
+        final MsgEventHandler responseHandler = new MsgEventHandler() {
+            @Override
+            public void handleMsg(int srcNodeID, final Object value) {
+                pullResponses[responseCounter.getAndIncrement()] = value;
+            }
+        };
+        responseHandler.setDispatcher(netManager);
+        responseHandler.setInfraManager(infraManager);
+        responseHandler.setRemoveAfterAwait(true);
+        responseHandler.initLatch(nodeIDs.length);
+        netManager.addEventListener(MsgEventHandler.MSG_EVENT_PREFIX + name, responseHandler);
+        NetEvents.NetEvent event = new NetEvents.NetEvent(MsgEventHandler.MSG_EVENT_PREFIX + name, true);
+        netManager.sendEvent(nodeIDs, event);
+        try {
+            responseHandler.getLatch().await();
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
+        return pullResponses;
     }
 
     // ---------------------------------------------------
