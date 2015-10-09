@@ -58,7 +58,10 @@ public class CoreTests {
     public void testAsymmetricAggregator() { assert client.execute(ASymAggregatorTestJob.class) != null; }
 
     @Test
-    public void testMatrixDenseLoading() { assert client.execute(MatrixDenseLoadingTestJob.class) != null; }
+    public void testMatrixDenseLoadingRowColVal() { assert client.execute(MatrixDenseLoadingRowColValTestJob.class) != null; }
+
+    @Test
+    public void testMatrixDenseLoadingRow() { assert client.execute(MatrixDenseLoadingRowTestJob.class) != null; }
 
     @Test
     public void testMatrixSparseLoading() { assert client.execute(MatrixSparseLoadingTestJob.class) != null; }

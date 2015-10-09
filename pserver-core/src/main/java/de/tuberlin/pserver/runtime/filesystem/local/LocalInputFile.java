@@ -193,7 +193,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
         @Override
         public IRecord next() {
-            return recordIterator.next(currentLine++);
+            return recordIterator.next(fileSection.blockLineOffset + currentLine++);
         }
 
         // ---------------------------------------------------
