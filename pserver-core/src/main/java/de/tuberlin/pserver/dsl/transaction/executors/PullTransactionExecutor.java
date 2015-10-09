@@ -103,7 +103,6 @@ public class PullTransactionExecutor extends TransactionExecutor {
         runtimeContext.netManager.addEventListener(TransactionResponseEvent.TRANSACTION_RESPONSE + transactionName, event -> {
             final TransactionResponseEvent response = (TransactionResponseEvent)event;
             resultObjects.add(response.responseObject);
-            
             synchronized (monitor) {
                 responseLatch.countDown();
             }
