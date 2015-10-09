@@ -4,6 +4,7 @@ package de.tuberlin.pserver.runtime.mcruntime;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -103,14 +104,18 @@ public final class Parallel {
     }
 
     public static void For(final Matrix m, final ParallelForMatrixBody body) throws Exception {
-        For(0, (int)m.rows(), (i) -> {
+        Matrix.RowIterator iter = m.rowIterator();
+        For(0, iter.size(), (i) -> {
+            Preconditions.checkState(iter.hasNext(), "iter.size = " + iter.size() + ", fetched = " + i);
+            Matrix row = iter.get();
+            iter.next();
             for (int j = 0; j < m.cols(); ++j)
-                body.perform(i.intValue(), j, m.get(i, j));
+                body.perform(i.intValue(), j, row.get(0, j));
         });
     }
 
     public static void For(final Matrix m, final ParallelForRowMatrixBody body) throws Exception {
-        For(0, (int)m.rows(), body::perform);
+        For(0, m.rowIterator().size(), body::perform);
     }
 
     // ---------------------------------------------------

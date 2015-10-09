@@ -217,8 +217,7 @@ public class DistributedMatrix extends AbstractMatrix {
             @Override public Matrix get() { return iter.get(); }
             @Override public Matrix get(int from, int size) { return iter.get(from, size); }
             @Override public void reset() { iter.reset(); }
-            @Override public long rows() { return iter.rows(); }
-            @Override public long cols() { return iter.cols(); }
+            @Override public int size() { return iter.size(); }
             @Override public int rowNum() { return (int) partitioner.translateLocalToGlobalRow(iter.rowNum()); }
         };
     }

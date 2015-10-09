@@ -33,9 +33,7 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
 
         void reset();
 
-        long rows();
-
-        long cols();
+        int size();
 
         int rowNum();
     }
