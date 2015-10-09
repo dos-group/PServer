@@ -6,11 +6,10 @@ import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.MatrixBuilder;
+import de.tuberlin.pserver.utils.MatrixBuilder;
 import de.tuberlin.pserver.math.utils.MatrixAggregation;
 import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
-import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.RemotePartition;
 
 import java.util.Collection;
@@ -218,8 +217,7 @@ public class DistributedMatrix extends AbstractMatrix {
             @Override public Matrix get() { return iter.get(); }
             @Override public Matrix get(int from, int size) { return iter.get(from, size); }
             @Override public void reset() { iter.reset(); }
-            @Override public long rows() { return iter.rows(); }
-            @Override public long cols() { return iter.cols(); }
+            @Override public int size() { return iter.size(); }
             @Override public int rowNum() { return (int) partitioner.translateLocalToGlobalRow(iter.rowNum()); }
         };
     }

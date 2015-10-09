@@ -486,10 +486,9 @@ public abstract class AbstractMatrix implements Matrix {
         }
 
         @Override
-        public long rows() { return target.rows; }
-
-        @Override
-        public long cols() { return target.cols; }
+        public int size() {
+            return endRow - startRow + 1;
+        }
 
         @Override
         public int rowNum() { return currentRow; }

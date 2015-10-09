@@ -10,10 +10,12 @@ import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.filesystem.record.config.RowColValRecordFormatConfig;
+import de.tuberlin.pserver.runtime.filesystem.record.RowColValRecordIteratorProducer;
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -24,14 +26,19 @@ public class MatrixSparseLoadingTestJob extends Program {
     private static final long ROWS = 1000;
     private static final long COLS = 250;
 
-    private final String FILE = "pserver-test/src/main/resources/rowcolval_dataset_1000_250_shuffeled.csv";
+    // use this, if you want to run this test directly outside the IntegrationTestSuite
+//  private final String FILE = "pserver-test/src/main/resources/rowcolval_dataset_1000_250_shuffeled.csv";
+
+    private final String FILE = "src/main/resources/rowcolval_dataset_1000_250_shuffeled.csv";
+
+    private static final Logger LOG = LoggerFactory.getLogger(MatrixSparseLoadingTestJob.class);
 
     @State(
             path = FILE,
             rows = ROWS,
             cols = COLS,
             scope = Scope.PARTITIONED,
-            recordFormat = RowColValRecordFormatConfig.class,
+            recordFormat = RowColValRecordIteratorProducer.class,
             format = Format.SPARSE_FORMAT,
             layout = Layout.ROW_LAYOUT
     )

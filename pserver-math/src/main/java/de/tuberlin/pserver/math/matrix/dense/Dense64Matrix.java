@@ -7,7 +7,6 @@ import de.tuberlin.pserver.math.delegates.MathLibFactory;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
-import jdk.nashorn.internal.runtime.arrays.ArrayIndex;
 
 import java.io.Serializable;
 import java.util.Random;
@@ -339,10 +338,9 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
         }
 
         @Override
-        public long rows() { return self.rows; }
-
-        @Override
-        public long cols() { return self.cols; }
+        public int size() {
+            return rowsToFetch;
+        }
 
         @Override
         public int rowNum() { return currentRow; }

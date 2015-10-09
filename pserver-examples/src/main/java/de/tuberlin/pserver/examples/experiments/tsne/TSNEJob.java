@@ -8,7 +8,7 @@ import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.MatrixBuilder;
+import de.tuberlin.pserver.utils.MatrixBuilder;
 import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.types.DistributedMatrix;
 
