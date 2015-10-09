@@ -5,7 +5,7 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
+import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
 import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
 
 import java.lang.reflect.Field;
@@ -34,7 +34,7 @@ public final class StateDescriptor {
 
     public final Format format;
 
-    public final Class<? extends AbstractRecordFormatConfig> recordFormatConfigClass;
+    public final Class<? extends IRecordIteratorProducer> recordFormatConfigClass;
 
     public final String path;
 
@@ -51,7 +51,7 @@ public final class StateDescriptor {
                            final long cols,
                            final Layout layout,
                            final Format format,
-                           final Class<? extends AbstractRecordFormatConfig> recordFormatConfigClass,
+                           final Class<? extends IRecordIteratorProducer> recordFormatConfigClass,
                            final String path) {
 
         this.stateName      = stateName;

@@ -31,7 +31,7 @@ public final class AsyncSGDTestJob extends Program {
 
         model.createModel(programContext);
 
-        dataManager.loadAsMatrix("datasets/demo_dataset.csv", GenerateLocalTestData.ROWS_DEMO_DATASET, GenerateLocalTestData.COLS_DEMO_DATASET);
+        dataManager.addLoadTaskReturnFutureTarget("datasets/demo_dataset.csv", GenerateLocalTestData.ROWS_DEMO_DATASET, GenerateLocalTestData.COLS_DEMO_DATASET);
     }
 
     @Override

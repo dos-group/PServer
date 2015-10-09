@@ -5,14 +5,11 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSection;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
+import de.tuberlin.pserver.runtime.filesystem.record.IRecordIterator;
+import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
 import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
-import de.tuberlin.pserver.types.PartitionType;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 
 import java.io.*;
-import java.util.Iterator;
 
 public class LocalInputFile implements ILocalInputFile<IRecord> {
 
@@ -22,7 +19,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
     private final String filePath;
 
-    private final AbstractRecordFormatConfig format;
+    private final IRecordIteratorProducer format;
 
     private final FileSection fileSection;
 
@@ -34,7 +31,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
     // ---------------------------------------------------
 
     public LocalInputFile(final String filePath,
-                          final AbstractRecordFormatConfig format,
+                          final IRecordIteratorProducer format,
                           final IMatrixPartitioner partitioner) {
 
         this.filePath       = Preconditions.checkNotNull(filePath);
@@ -81,7 +78,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
     }
 
     @Override
-    public FileDataIterator<IRecord> iterator() { return new CSVFileDataIterator(fileSection); }
+    public FileDataIterator<IRecord> iterator() { return new LocalFileDataIterator(fileSection); }
 
     // ---------------------------------------------------
     // Private Methods.
@@ -137,27 +134,25 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
     // ---------------------------------------------------
 
-    private class CSVFileDataIterator implements FileDataIterator<IRecord> {
+    private class LocalFileDataIterator implements FileDataIterator<IRecord> {
 
-        private final FileReader fileReader;
+        // private final FileReader fileReader;
 
-        private final CSVParser csvFileParser;
+        //private final CSVParser csvFileParser;
 
-        private final Iterator<CSVRecord> csvIterator;
+        // private final Iterator<CSVRecord> csvIterator;
 
-        private final FileSection fileSection;
+        private final InputStream inputStream;
+
+        private IRecordIterator recordIterator;
 
         private long currentLine = 0;
 
         // ---------------------------------------------------
 
-        public CSVFileDataIterator(final FileSection fileSection) {
+        public LocalFileDataIterator(final FileSection fileSection) {
             try {
-
-                this.fileSection = Preconditions.checkNotNull(fileSection);
-                this.fileReader     = new FileReader(Preconditions.checkNotNull(filePath));
-                this.csvFileParser  = new CSVParser(fileReader, format.getCsvFormat());
-                this.csvIterator    = csvFileParser.iterator();
+                inputStream         = new FileInputStream(Preconditions.checkNotNull(filePath));
 
             } catch(Exception e) {
                 close();
@@ -170,10 +165,8 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
         @Override
         public void initialize() {
             try {
-                if (fileSection != null)
-                    fileReader.skip(fileSection.startOffset);
-                else
-                    throw new IllegalStateException();
+                inputStream.skip(fileSection.startOffset);
+                recordIterator = format.getRecordIterator(inputStream);
             } catch(Exception e) {
                 throw new IllegalStateException(e);
             }
@@ -192,28 +185,23 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
         @Override
         public boolean hasNext() {
-            final boolean hasNext = currentLine < fileSection.linesToRead && csvIterator.hasNext();
+            final boolean hasNext = currentLine < fileSection.linesToRead && recordIterator.hasNext();
             if (!hasNext)
                 close();
             return hasNext;
         }
 
-        IRecord reusableRecord = format.getRecordFactory().wrap(null, null, -1);
-
         @Override
         public IRecord next() {
-            final CSVRecord record = csvIterator.next();
-            return reusableRecord.set(record, format.getProjection(), fileSection.blockLineOffset + currentLine++);
+            return recordIterator.next(currentLine++);
         }
 
         // ---------------------------------------------------
 
         private void close() {
             try {
-                if (csvFileParser != null)
-                    csvFileParser.close();
-                if (fileReader != null)
-                    fileReader.close();
+                if (inputStream != null)
+                    inputStream.close();
             } catch (IOException ioe) {
                 throw new IllegalStateException(ioe);
             }

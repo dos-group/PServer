@@ -10,7 +10,7 @@ import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.MatrixBuilder;
+import de.tuberlin.pserver.utils.MatrixBuilder;
 import de.tuberlin.pserver.runtime.dht.DHTKey;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
 import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
@@ -137,47 +137,23 @@ public final class RuntimeManager {
                 } break;
                 case REPLICATED: {
                     if ("".equals(decl.path)) {
-
                         if (ArrayUtils.contains(decl.atNodes, programContext.runtimeContext.nodeID)) {
-
-                            final SharedObject so = new MatrixBuilder()
-                                    .dimension(decl.rows, decl.cols)
-                                    .format(decl.format)
-                                    .layout(decl.layout)
-                                    .build();
-
-                            putDHT(decl.stateName, so);
+                            putDHT(decl.stateName, MatrixBuilder.fromMatrixLoadTask(decl, programContext));
                         }
                     }
                     else {
-                        matrixPartitionManager.load(programContext, decl);
+                        matrixPartitionManager.addLoadTaskReturnFutureTarget(programContext, decl);
                     }
                 } break;
                 case PARTITIONED: {
                     if ("".equals(decl.path)) {
-                        final SharedObject so = new DistributedMatrix(
-                                programContext,
-                                decl.rows, decl.cols,
-                                IMatrixPartitioner.newInstance(decl.partitionerClass, decl.rows, decl.cols, programContext.runtimeContext.nodeID, decl.atNodes),
-                                decl.layout,
-                                decl.format
-                                //, false
-                        );
-                        putDHT(decl.stateName, so);
+                        putDHT(decl.stateName, MatrixBuilder.fromMatrixLoadTask(decl, programContext));
                     } else {
-                        matrixPartitionManager.load(programContext, decl);
+                        matrixPartitionManager.addLoadTaskReturnFutureTarget(programContext, decl);
                     }
                 } break;
                 case LOGICALLY_PARTITIONED:
-                    final SharedObject so = new DistributedMatrix(
-                            programContext,
-                            decl.rows, decl.cols,
-                            IMatrixPartitioner.newInstance(decl.partitionerClass, decl.rows, decl.cols, programContext.runtimeContext.nodeID, decl.atNodes),
-                            decl.layout,
-                            decl.format
-                            //, true
-                    );
-                    putDHT(decl.stateName, so);
+                    putDHT(decl.stateName, MatrixBuilder.fromMatrixLoadTask(decl, programContext));
                     break;
                 default:
                     throw new UnsupportedOperationException();
