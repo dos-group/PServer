@@ -2,7 +2,7 @@ package de.tuberlin.pserver.ml.optimization;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.MatrixBuilder;
+import de.tuberlin.pserver.utils.MatrixBuilder;
 
 
 public class Scorer {
@@ -16,9 +16,9 @@ public class Scorer {
     }
 
     public double score(Matrix X, Matrix y, Matrix W) throws Exception {
-        Matrix yPred = new MatrixBuilder().dimension(X.rows(), y.cols()).build();
+        Matrix yPred = new MatrixBuilder().dimension(y.rows(), y.cols()).build();
 
-        for (int i = 0; i < X.rows(); ++i) {
+        for (int i = 0; i < y.rows(); ++i) {
             yPred.set(i, 0, predictionFunction.predict(X.getRow(i), W));
         }
 
