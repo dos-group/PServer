@@ -29,7 +29,7 @@ public class LWWSetTestJob extends MLProgram {
                     lwws.add(i);
                 }
 
-                lwws.finish(dataManager);
+                lwws.finish();
 
                 System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + lwws.getSet());
@@ -55,7 +55,7 @@ public class LWWSetTestJob extends MLProgram {
                     lwws.remove(i);
                 }
 
-                lwws.finish(dataManager);
+                lwws.finish();
 
                 System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + lwws.getSet());

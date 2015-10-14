@@ -21,7 +21,7 @@ public class ORSetTestJob extends MLProgram {
 
                 ors.add(7);
 
-                ors.finish(dataManager);
+                ors.finish();
 
                 System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + ors.getSet());
@@ -50,9 +50,9 @@ public class ORSetTestJob extends MLProgram {
                     }
                 }
 
-                ors.finish(dataManager);
+                ors.finish();
 
-                System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
+                System.out.println("[DEBUG] Set of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + ors.getSet());
                 System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + ors.getBuffer());

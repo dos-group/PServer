@@ -1,25 +1,43 @@
 package de.tuberlin.pserver.crdt.operations;
 
-import org.apache.zookeeper.server.util.Profiler;
+import java.io.Serializable;
 
-import java.util.Date;
+public interface Operation<T> extends Serializable {
 
-public class Operation<T> implements IOperation<T> {
-    private final int type;
-    private final T value;
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
 
-    public Operation(int type, T value) {
-        this.type = type;
-        this.value = value;
+    /** The end token for CRDT operations. Sending this token signals that a replica is finished sending updates.*/
+    int END = -1;
+
+    /** Increment token for CRDT operations. (i.e. "a + b") */
+    int INCREMENT = 1;
+
+    /** Decrement token for CRDT operations. (i.e. "a - b") */
+    int DECREMENT = 2;
+
+    /** Add token for CRDT operations. (i.e. "add this element to a replica)" */
+    int ADD = 3;
+
+    /** Remove token for CRDT operations. (i.e. "remove this element from a replica") */
+    int REMOVE = 4;
+
+    /** Write token for CRDT operations. (i.e. "write to register") */
+    int WRITE = 5;
+
+    default String getOperationType() {
+        switch(getType()) {
+            case END:       return "END";
+            case INCREMENT: return "INCREMENT";
+            case DECREMENT: return "DECREMENT";
+            case ADD:       return "ADD";
+            case REMOVE:    return "REMOVE";
+            case WRITE:     return "WRITE";
+            default:        return "UNKNOWN";
+        }
     }
 
-    @Override
-    public int getType() {
-        return this.type;
-    }
-
-    @Override
-    public T getValue() {
-        return this.value;
-    }
+    int getType();
+    T getValue();
 }

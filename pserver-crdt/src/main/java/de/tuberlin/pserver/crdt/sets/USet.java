@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.crdt.sets;
 
 import de.tuberlin.pserver.crdt.CRDT;
-import de.tuberlin.pserver.crdt.operations.IOperation;
 import de.tuberlin.pserver.crdt.operations.Operation;
+import de.tuberlin.pserver.crdt.operations.SimpleOperation;
 import de.tuberlin.pserver.runtime.DataManager;
 import de.tuberlin.pserver.crdt.exceptions.NotUniqueException;
 
@@ -18,17 +18,16 @@ public class USet<T> extends AbstractSet<T> {
 
     public USet(String id, DataManager dataManager) {
         super(id, dataManager);
-        run(dataManager);
     }
 
     @Override
-    protected boolean update(int srcNodeId, IOperation<T> op) {
-        Operation<T> sop = (Operation<T>)op;
+    protected boolean update(int srcNodeId, Operation op) {
+        SimpleOperation<T> sop = (SimpleOperation<T>)op;
 
-        if(sop.getType() == CRDT.ADD) {
+        if(sop.getType() == Operation.ADD) {
             return addElement(sop.getValue());
         }
-        else if(sop.getType() == CRDT.REMOVE) {
+        else if(sop.getType() == Operation.REMOVE) {
             return removeElement(sop.getValue());
         }
         else {
@@ -39,7 +38,7 @@ public class USet<T> extends AbstractSet<T> {
     @Override
     public boolean add(T value) {
         if(addElement(value)) {
-            broadcast(new Operation<>(CRDT.ADD, value), dataManager);
+            broadcast(new SimpleOperation<>(Operation.ADD, value));
             return true;
         }
         return false;
@@ -48,7 +47,7 @@ public class USet<T> extends AbstractSet<T> {
     @Override
     public boolean remove(T value) {
         if(removeElement(value)) {
-            broadcast(new Operation<>(CRDT.REMOVE, value), dataManager);
+            broadcast(new SimpleOperation<>(Operation.REMOVE, value));
             return true;
         }
         return false;

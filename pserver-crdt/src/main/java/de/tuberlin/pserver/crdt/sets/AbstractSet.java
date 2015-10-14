@@ -10,4 +10,8 @@ public abstract class AbstractSet<T> extends AbstractCRDT<T> implements ISet<T> 
     public AbstractSet(String id, DataManager dataManager) {
         super(id, dataManager);
     }
+
+    public boolean contains(T element) {
+        return getSet().contains(element);
+    }
 }

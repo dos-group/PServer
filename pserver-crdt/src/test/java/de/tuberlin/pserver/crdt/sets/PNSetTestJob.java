@@ -19,7 +19,7 @@ public class PNSetTestJob extends MLProgram {
                     pns.add(i);
                 }
 
-                pns.finish(dataManager);
+                pns.finish();
 
                 System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + pns.getSet());
@@ -45,7 +45,7 @@ public class PNSetTestJob extends MLProgram {
                     pns.remove(i);
                 }
 
-                pns.finish(dataManager);
+                pns.finish();
 
                 System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + pns.getSet());

@@ -2,7 +2,7 @@ package de.tuberlin.pserver.crdt.registers;
 
 import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
-import de.tuberlin.pserver.crdt.operations.IOperation;
+import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.TaggedOperation;
 import de.tuberlin.pserver.runtime.DataManager;
 
@@ -21,15 +21,14 @@ import java.util.Set;
 
         public MultiValueRegister(String id, DataManager dataManager) {
             super(id, dataManager);
-            run(dataManager);
         }
 
         @Override
-        protected boolean update(int srcNodeId, IOperation<T> op) {
+        protected boolean update(int srcNodeId, Operation op) {
             // TODO: is there a way to avoid this cast? It is on a critical path
             TaggedOperation<T,Date> rop = (TaggedOperation<T,Date>) op;
 
-            if(rop.getType() == CRDT.WRITE) {
+            if(rop.getType() == Operation.WRITE) {
                 if(rop.getTag().getTime() > this.time) {
                     return setRegister(rop.getValue(), rop.getTag().getTime());
                 }
@@ -50,12 +49,12 @@ import java.util.Set;
             long t = Calendar.getInstance().getTimeInMillis();
             if(t > this.time) {
                 setRegister(element, t);
-                broadcast(new TaggedOperation<>(CRDT.WRITE, element, new Date(t)), dataManager);
+                broadcast(new TaggedOperation<>(Operation.WRITE, element, new Date(t)));
                 return true;
             }
             else if(t == this.time) {
                 appendToRegister(element);
-                broadcast(new TaggedOperation<>(CRDT.WRITE, element, new Date(t)), dataManager);
+                broadcast(new TaggedOperation<>(Operation.WRITE, element, new Date(t)));
                 return true;
             }
 

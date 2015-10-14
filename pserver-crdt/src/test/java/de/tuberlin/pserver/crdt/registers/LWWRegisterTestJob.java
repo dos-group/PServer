@@ -20,7 +20,7 @@ public class LWWRegisterTestJob extends MLProgram {
                     lwwr.set(i);
                 }
 
-                lwwr.finish(dataManager);
+                lwwr.finish();
 
                 System.out.println("[DEBUG] Register of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + lwwr.getRegister());
@@ -41,7 +41,7 @@ public class LWWRegisterTestJob extends MLProgram {
                     Thread.sleep(500);
                 }
 
-                lwwr.finish(dataManager);
+                lwwr.finish();
 
                 System.out.println("[DEBUG] Register of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + lwwr.getRegister());

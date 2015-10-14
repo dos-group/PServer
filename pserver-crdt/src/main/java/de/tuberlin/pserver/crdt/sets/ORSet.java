@@ -2,7 +2,7 @@ package de.tuberlin.pserver.crdt.sets;
 
 import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
-import de.tuberlin.pserver.crdt.operations.IOperation;
+import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.TaggedOperation;
 import de.tuberlin.pserver.runtime.DataManager;
 
@@ -10,24 +10,23 @@ import java.util.*;
 
 /**
  *
- * The OR ISet doesn't make any fucking sense in my opinion... At least not the way it is proposed and implemented here
+ * The OR Set doesn't make any fucking sense in my opinion... At least not the way it is proposed and implemented here
  */
 public class ORSet<T> extends AbstractSet<T> {
     private Map<T,List<UUID>> map = new HashMap<>();
 
     public ORSet(String id, DataManager dataManager) {
         super(id, dataManager);
-        run(dataManager);
     }
 
     @Override
-    protected boolean update(int srcNodeId, IOperation<T> op) {
+    protected boolean update(int srcNodeId, Operation op) {
         TaggedOperation<T,UUID> sop = (TaggedOperation<T,UUID>) op;
 
-        if(op.getType() == CRDT.ADD) {
+        if(op.getType() == Operation.ADD) {
             return addElement(sop.getValue(), sop.getTag());
         }
-        else if(op.getType() == CRDT.REMOVE) {
+        else if(op.getType() == Operation.REMOVE) {
             return removeElement(sop.getValue(), sop.getTag());
         }
         else {
@@ -40,7 +39,7 @@ public class ORSet<T> extends AbstractSet<T> {
         UUID id = UUID.randomUUID();
 
         if(addElement(value, id)) {
-            broadcast(new TaggedOperation<>(CRDT.ADD, value, id), dataManager);
+            broadcast(new TaggedOperation<>(Operation.ADD, value, id));
             return true;
         }
         return false;
@@ -51,7 +50,7 @@ public class ORSet<T> extends AbstractSet<T> {
         UUID id = getId(value);
 
         if(removeElement(value, id)) {
-            broadcast(new TaggedOperation<>(CRDT.REMOVE, value, id), dataManager);
+            broadcast(new TaggedOperation<>(Operation.REMOVE, value, id));
             return true;
         }
         return false;
@@ -79,31 +78,6 @@ public class ORSet<T> extends AbstractSet<T> {
         if(map.get(value).size() == 0) { map.remove(value);}
         return a;
     }
-
-   /* public boolean add(TaggedOperation<T> sop) {
-        System.out.println("Add: " + sop.getValue() + ", " + sop.getId());
-        if(map.get(sop.getValue()) == null) {
-            ArrayList<UUID> list = new ArrayList<>();
-            list.add(sop.getId());
-            map.put(sop.getValue(), list);
-        }
-        else {
-            map.get(sop.getValue()).add(sop.getId());
-        }
-        return true;
-    }
-
-    public boolean remove(TaggedOperation<T> sop) {
-        System.out.println("Remove: " + sop.getValue() + ", " + sop.getId());
-        if(map.get(sop.getValue()) != null) {
-            boolean a = map.get(sop.getValue()).remove(sop.getId());
-
-            if(map.get(sop.getValue()).size() == 0) { map.remove(sop.getValue());}
-            return a;
-        }
-
-        return false;
-    }*/
 
     public Set<T> getSet() {
         return map.keySet();

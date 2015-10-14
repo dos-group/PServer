@@ -6,25 +6,25 @@ import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
 import de.tuberlin.pserver.dsl.controlflow.program.Program;
 import de.tuberlin.pserver.runtime.MLProgram;
 
-public class CounterTestJob extends MLProgram {
+public class SimpleCounterTestJob extends MLProgram {
 
     @Unit(at = "0")
     public void test(Program program) {
         program.process(() -> {
             CF.parUnit(0).exe(() -> {
-                Counter gc = new Counter("one", dataManager);
-                Counter gc2 = new Counter("two", dataManager);
+                SimpleCounter gc = new SimpleCounter("one", dataManager);
+                SimpleCounter gc2 = new SimpleCounter("two", dataManager);
 
                 for (int i = 0; i < 10000; i++) {
-                    gc.subtract(1);
+                    gc.decrement(1);
 
                     if ((i % 2) == 0) {
-                        gc2.subtract(1);
+                        gc2.decrement(1);
                     }
                 }
 
-                gc.finish(dataManager);
-                gc2.finish(dataManager);
+                gc.finish();
+                gc2.finish();
 
                 System.out.println("[DEBUG] Count of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + gc.getCount());
@@ -42,19 +42,19 @@ public class CounterTestJob extends MLProgram {
     public void test2(Program program) {
         program.process(() -> {
             CF.parUnit(1).slot(0).exe(() -> {
-                Counter gc = new Counter("one", dataManager);
-                Counter gc2 = new Counter("two", dataManager);
+                SimpleCounter gc = new SimpleCounter("one", dataManager);
+                SimpleCounter gc2 = new SimpleCounter("two", dataManager);
 
                 for (int i = 0; i < 50000; i++) {
-                    gc.add(1);
+                    gc.increment(1);
 
                     if ((i % 2) == 0) {
-                        gc2.add(1);
+                        gc2.increment(1);
                     }
                 }
 
-                gc.finish(dataManager);
-                gc2.finish(dataManager);
+                gc.finish();
+                gc2.finish();
 
                 System.out.println("[DEBUG] Count of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + gc.getCount());
@@ -79,7 +79,7 @@ public class CounterTestJob extends MLProgram {
         PServerExecutor.LOCAL
                 // Second param is number of slots (threads executing the job) per node,
                 // should be 1 at the beginning.
-                .run(CounterTestJob.class, 1)
+                .run(SimpleCounterTestJob.class, 1)
                 .done();
     }
 }

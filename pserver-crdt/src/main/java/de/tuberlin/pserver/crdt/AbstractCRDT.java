@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.crdt;
 
 import de.tuberlin.pserver.crdt.operations.EndOperation;
-import de.tuberlin.pserver.crdt.operations.IOperation;
+import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.runtime.DataManager;
 
 import java.util.HashSet;
@@ -15,20 +15,62 @@ import java.util.Set;
 // TODO: what if someone uses the same id for two crdts?
 // TODO: what if only one node is running?
 // TODO: maybe use blocking queues for buffers
+// TODO: comments and documentation
+// TODO: improve the P2P discovery and termination
+// TODO: what if there is not one replica on every node? => pass number of replicas into constructor!?
+// TODO: change constructor to CRDT.newReplica(...) to reflect that it is replicas being dealt with?
+// TODO: Javadoc package descriptions
 
-public abstract class AbstractCRDT<T> implements CRDT<T> {
+/**
+ * <p>
+ * This class provides a skeletal implementation of the {@code CRDT} interface, to minimize the effort required to
+ * implement this interface in subclasses.
+ *</p>
+ *<p>
+ * In particular, this class provides functionality for starting/finishing a CRDT and broadcasting/receiving updates.
+ *</p>
+ *<p>
+ * To implement a CRDT, the programmer needs to extend this class, implement the desired local data structure of one
+ * replica, call the {@code broadcast} method when operations should be sent to all replicas and provide an
+ * implementation of the {@code update} method. All further communication between replicas and starting/finishing of the
+ * CRDT are handled by this class.
+ *</p>
+ *<p>
+ * When extending this class make sure to call the {@code super()} constructor which will enable the above functionalities.
+ *</p>
+ *
+ * @param <T> the type of elements in this CRDT
+ */
+public abstract class AbstractCRDT<T> implements CRDT {
+
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
     private final Set<Integer> runningNodes;
-    private final Set<Integer> finishedNodes;
-    private final Queue<IOperation> buffer;
 
-    protected final DataManager dataManager;
-    protected final String id;
+    private final Set<Integer> finishedNodes;
+
+    private final Queue<Operation> buffer;
+
+    private final String id;
+
+    private final DataManager dataManager;
 
     private boolean allNodesRunning;
+
     private boolean allNodesFinished;
 
+    // ---------------------------------------------------
+    // Constructor.
+    // ---------------------------------------------------
 
-    public AbstractCRDT(String id, DataManager dataManager) {
+    /** Sole constructor
+     *
+     * @param id the ID of the CRDT that this replica belongs to
+     * @param dataManager the {@code DataManager} belonging to this {@code MLProgram}
+     * */
+    protected AbstractCRDT(String id, DataManager dataManager) {
         this.runningNodes = new HashSet<>();
         this.finishedNodes = new HashSet<>();
         this.buffer = new LinkedList<>();
@@ -39,12 +81,11 @@ public abstract class AbstractCRDT<T> implements CRDT<T> {
         this.allNodesRunning = false;
         this.allNodesFinished = false;
 
-
         dataManager.addDataEventListener("Running_"+id, new DataManager.DataEventHandler() {
             @Override
             public void handleDataEvent(int srcNodeID, Object value) {
                 runningNodes.add(srcNodeID);
-                System.out.println("[DEBUG] Running: " + runningNodes.size());
+                //System.out.println(runningNodes.size());
 
                 if (runningNodes.size() == dataManager.remoteNodeIDs.length) {
                     allNodesRunning = true;
@@ -52,8 +93,6 @@ public abstract class AbstractCRDT<T> implements CRDT<T> {
 
                     // This is necessary to reach replicas that were not online when the first "Running" message was sent
                     dataManager.pushTo("Running_"+id, 0, dataManager.remoteNodeIDs);
-                    System.out.println("[DEBUG] BufferA: " + buffer.size());
-                    //broadcastBuffer(dataManager);
                 }
             }
         });
@@ -61,25 +100,33 @@ public abstract class AbstractCRDT<T> implements CRDT<T> {
         dataManager.addDataEventListener("Operation_" + id, new DataManager.DataEventHandler() {
             @Override
             public void handleDataEvent(int srcNodeID, Object value) {
-                if (((IOperation) value).getType() == CRDT.END) {
-                    addFinishedNode(srcNodeID, dataManager);
-                    //inBuffer.add(new RegisterOperation<Integer>(END, null, null));
-                    //update(srcNodeID, (IOperation) value, dataManager);
-                } else {
-                    //inBuffer.add((IOperation)value);
-                    update(srcNodeID, (IOperation) value);
-                }
+                if(value instanceof Operation) {
+                    //Suppress the unchecked warning cause by generics cast from object to Operation<T>
+                    @SuppressWarnings("unchecked")
+                    Operation<?> op = (Operation<?>) value;
+                    if (op.getType() == Operation.END) {
+                        addFinishedNode(srcNodeID);
+                    } else {
+                            update(srcNodeID, op);
+                    }}
             }
         });
+
+        ready();
     }
 
-    @Override
-    public void run(DataManager dataManager) {
-        dataManager.pushTo("Running_" + id, 0, dataManager.remoteNodeIDs);
-    }
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
 
+    /**
+     * Should be called when a CRDT replica is finished producing and applying local updates. It will cause this replica
+     * to wait for all replicas of this CRDT to finish and will apply any updates received to reach the replica's final
+     * state. (This is a blocking call)
+     */
+    // TODO: this is blocking if not all nodes start/finish...
     @Override
-    public void finish(DataManager dataManager) {
+    public final void finish() {
         System.out.println("[DEBUG] All nodes: " + isAllNodesRunning());
 
         while(!isAllNodesRunning()) {
@@ -93,7 +140,7 @@ public abstract class AbstractCRDT<T> implements CRDT<T> {
         System.out.println("[DEBUG] All nodes: " + isAllNodesRunning());
         System.out.println("[DEBUG] BufferB: " + buffer.size());
 
-        broadcast(new EndOperation(), dataManager);
+        broadcast(new EndOperation());
 
         while(!isAllNodesFinished()) {
             try {
@@ -104,6 +151,53 @@ public abstract class AbstractCRDT<T> implements CRDT<T> {
         }
     }
 
+    /**
+     * Gets the {@code buffer} queue associated with this CRDT replica. The buffer contains operations applied to the
+     * replica locally but not yet broadcast to other replicas.
+     *
+     * @return a copy of the CRDTs current buffer
+     */
+    public final Queue getBuffer() {
+        return new LinkedList<>(this.buffer);
+    }
+
+    // ---------------------------------------------------
+    // Protected Methods.
+    // ---------------------------------------------------
+
+    /**
+     * Broadcasts an {@code Operation} to all replicas belonging to this CRDT (same {@code id}) or buffers the
+     * {@code Operation} for later broadcasting if not all replicas are online yet.
+     *
+     * @param op the operation that should be broadcast
+     */
+    protected final void broadcast(Operation op) {
+        // send to all nodes
+        if(isAllNodesRunning()) {
+            broadcastBuffer();
+            dataManager.pushTo("Operation_"+id, op, dataManager.remoteNodeIDs);
+        } else {
+            buffer(op);
+        }
+    }
+
+    /**
+     * Applies an {@code Operation} received from another replica to the local replica of a CRDT.
+     *
+     * @param srcNodeId the id of the node that broadcast the operation
+     * @param op the operation to be applied locally
+     * @return true if the operation was successfully applied
+     */
+    protected abstract boolean update(int srcNodeId, Operation<?> op);
+
+    // ---------------------------------------------------
+    // Private Methods.
+    // ---------------------------------------------------
+
+    private void ready() {
+        dataManager.pushTo("Running_" + id, 0, dataManager.remoteNodeIDs);
+    }
+
     private boolean isAllNodesRunning() {
         return allNodesRunning;
     }
@@ -112,43 +206,26 @@ public abstract class AbstractCRDT<T> implements CRDT<T> {
         return allNodesFinished;
     }
 
-    public Queue getBuffer() {
-        return this.buffer;
-    }
-    //public Queue getInBuffer() { return this.inBuffer; }
-
-    protected void addFinishedNode(int nodeID, DataManager dataManager) {
-        finishedNodes.add(nodeID);
-        //allNodesRunning = false;
-        if(finishedNodes.size() == dataManager.remoteNodeIDs.length) {
-            allNodesFinished = true;
-        }
-    }
-
-    protected void broadcast(IOperation op, DataManager dm) {
-        // send to all nodes
-        if(isAllNodesRunning()) {
-            broadcastBuffer(dm);
-            dm.pushTo("Operation_"+id, op, dm.remoteNodeIDs);
-        } else {
-            buffer(op);
-        }
-    }
-
-    private void buffer(IOperation op) {
+    private void buffer(Operation op) {
         buffer.add(op);
     }
 
-    protected abstract boolean update(int srcNodeId, IOperation<T> op);
-
-    private void broadcastBuffer(DataManager dm) {
+    private boolean broadcastBuffer() {
         if(buffer.size() > 0) {
             System.out.println("[DEBUG] Broadcasting buffer size " + buffer.size());
-            while(buffer.size() > 0) {
-                dm.pushTo("Operation_"+id, buffer.poll(), dm.remoteNodeIDs);
+            while (buffer.size() > 0) {
+                dataManager.pushTo("Operation_" + id, buffer.poll(), dataManager.remoteNodeIDs);
             }
-        } else {
-            //TODO: some exception?
+            return true;
+        }
+        return false;
+    }
+
+    private void addFinishedNode(int nodeID) {
+        finishedNodes.add(nodeID);
+
+        if(finishedNodes.size() == dataManager.remoteNodeIDs.length) {
+            allNodesFinished = true;
         }
     }
 }

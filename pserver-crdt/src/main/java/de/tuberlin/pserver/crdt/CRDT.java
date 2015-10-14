@@ -1,20 +1,25 @@
 package de.tuberlin.pserver.crdt;
 
-import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.crdt.operations.Operation;
 
-import java.util.Collection;
+/**
+ * <p>
+ * The root interface in the CRDT hierarchy. This interface is meant to be implemented by classes that represent
+ * Operation-Based Commutative Replicated Data Types as defined by Shapiro et al. (see below). This library offers no
+ * direct implementations of the CRDT interface but instead provides implementations of more specific sub-interfaces.
+ *</p>
+ * <p>
+ * Marc Shapiro, Nuno Preguyca, Carlso Baquero, Marek Zawirski. A comprehensive study of Convergent and Commutative
+ * Replicated Data Types. [Research Report] RR-7506, Inria - Centre Paris-Rocquencourt; INRIA. 2011, pp.50.)
+ * </p>
+ */
 
-// TODO: Do I want to extend java collection? / java ISet etc.
-// TODO: Auxiliary functions such as for each etc.
-public interface CRDT<T> {
-    int END = -1;
-    int SUM = 1;
-    int SUBTRACT = 2;
-    int ADD = 3;
-    int REMOVE = 4;
-    int WRITE = 5;
+public interface CRDT {
 
-
-    void run(DataManager dataManager);
-    void finish(DataManager dataManager);
+    /**
+     * Signals that this replica has finished broadcasting updates. It then waits to receive the
+     * {@link Operation#END END}
+     * token from all other existing replicas and applies all outstanding operations to reach the final state of this CRDT.
+     */
+    void finish();
 }

@@ -23,7 +23,7 @@ public class MultiValueRegisterTestJob extends MLProgram {
                     mvr.set(i);
                 }
 
-                mvr.finish(dataManager);
+                mvr.finish();
 
                 System.out.println("[DEBUG] Register of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + mvr.getRegister());
@@ -43,7 +43,7 @@ public class MultiValueRegisterTestJob extends MLProgram {
                     mvr.set(i);
                 }
 
-                mvr.finish(dataManager);
+                mvr.finish();
 
                 System.out.println("[DEBUG] Register of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + mvr.getRegister());

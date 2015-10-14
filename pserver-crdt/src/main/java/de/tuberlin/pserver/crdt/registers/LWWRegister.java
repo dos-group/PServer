@@ -2,7 +2,7 @@ package de.tuberlin.pserver.crdt.registers;
 
 import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
-import de.tuberlin.pserver.crdt.operations.IOperation;
+import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.TaggedOperation;
 import de.tuberlin.pserver.runtime.DataManager;
 
@@ -21,15 +21,14 @@ public class LWWRegister<T extends Comparable> extends AbstractRegister<T> imple
     public LWWRegister(String id, DataManager dataManager, ConcurrentResolver<T> resolver) {
         super(id, dataManager);
         this.resolver = resolver;
-        run(dataManager);
     }
 
     @Override
-    protected boolean update(int srcNodeId, IOperation<T> op) {
+    protected boolean update(int srcNodeId, Operation op) {
         // TODO: is there a way to avoid this cast? It is on a critical path
         TaggedOperation<T,Date> rop = (TaggedOperation<T, Date>) op;
 
-        if(rop.getType() == CRDT.WRITE) {
+        if(rop.getType() == Operation.WRITE) {
             return setRegister(rop.getValue(), rop.getTag().getTime());
         }
         else {
@@ -61,7 +60,7 @@ public class LWWRegister<T extends Comparable> extends AbstractRegister<T> imple
     @Override
     public boolean set(T element) {
         if(setRegister(element, Calendar.getInstance().getTimeInMillis())) {
-            broadcast(new TaggedOperation<>(CRDT.WRITE, element, new Date(time)), dataManager);
+            broadcast(new TaggedOperation<>(Operation.WRITE, element, new Date(time)));
             return true;
         }
         return false;

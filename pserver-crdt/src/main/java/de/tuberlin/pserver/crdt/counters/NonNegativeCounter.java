@@ -1,5 +1,9 @@
 package de.tuberlin.pserver.crdt.counters;
 
+/**
+ * An implementation of the {@code Counter} interface which supports calls to {@code increment()} and
+ * {@code decrement()} but never allows the count to become negative.
+ */
 public class NonNegativeCounter {
     /*
     This is difficult because it mean upholding a global invariant (count >= 0). Therefore there has to be a tradeoff.

@@ -25,7 +25,7 @@ public class TwoPSetTestJob extends MLProgram {
                     tps.add(i);
                 }
 
-                tps.finish(dataManager);
+                tps.finish();
 
                 System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + tps.getSet());
@@ -50,7 +50,7 @@ public class TwoPSetTestJob extends MLProgram {
                     tps.remove(i);
                 }
 
-                tps.finish(dataManager);
+                tps.finish();
 
                 System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + tps.getSet());

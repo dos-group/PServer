@@ -2,8 +2,8 @@ package de.tuberlin.pserver.crdt.sets;
 
 import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
-import de.tuberlin.pserver.crdt.operations.IOperation;
 import de.tuberlin.pserver.crdt.operations.Operation;
+import de.tuberlin.pserver.crdt.operations.SimpleOperation;
 import de.tuberlin.pserver.runtime.DataManager;
 
 import java.util.HashSet;
@@ -22,20 +22,18 @@ public class TwoPSet<T> extends AbstractSet<T> {
 
         this.set = new HashSet<>();
         this.tombstone = new HashSet<>();
-
-        run(dataManager);
     }
 
     @Override
-    protected boolean update(int srcNodeId, IOperation<T> op) {
+    protected boolean update(int srcNodeId, Operation op) {
         // TODO: I hate this cast....
-        Operation<T> sop = (Operation<T>)op;
+        SimpleOperation<T> sop = (SimpleOperation<T>)op;
 
-        if(sop.getType() == CRDT.ADD) {
-            return addElement(op.getValue());
+        if(sop.getType() == Operation.ADD) {
+            return addElement(sop.getValue());
         }
-        else if(sop.getType() == CRDT.REMOVE) {
-            return removeElement(op.getValue());
+        else if(sop.getType() == Operation.REMOVE) {
+            return removeElement(sop.getValue());
         }
         else {
             // TODO: specifiy exception.
@@ -46,7 +44,7 @@ public class TwoPSet<T> extends AbstractSet<T> {
     @Override
     public boolean add(T element) {
         if(addElement(element)) {
-            broadcast(new Operation<T>(CRDT.ADD, element), dataManager);
+            broadcast(new SimpleOperation<T>(Operation.ADD, element));
             return true;
         }
         return false;
@@ -55,7 +53,7 @@ public class TwoPSet<T> extends AbstractSet<T> {
     @Override
     public boolean remove(T element) {
         if(removeElement(element)) {
-            broadcast(new Operation<T>(CRDT.REMOVE, element), dataManager);
+            broadcast(new SimpleOperation<T>(Operation.REMOVE, element));
             return true;
         }
         return false;
@@ -63,7 +61,7 @@ public class TwoPSet<T> extends AbstractSet<T> {
 
     @Override
     public Set<T> getSet() {
-        return this.set;
+        return new HashSet<>(this.set);
     }
 
     private boolean addElement(T element) {

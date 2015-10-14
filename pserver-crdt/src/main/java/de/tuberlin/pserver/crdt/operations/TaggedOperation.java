@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.crdt.operations;
 
-public class TaggedOperation<T,U> extends Operation<T> {
+public class TaggedOperation<T,U> extends SimpleOperation<T> {
     private final U tag;
 
     public TaggedOperation(int type, T value, U tag) {

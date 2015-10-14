@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.crdt.sets;
 
 import de.tuberlin.pserver.crdt.CRDT;
-import de.tuberlin.pserver.crdt.operations.IOperation;
+import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.TaggedOperation;
 import de.tuberlin.pserver.runtime.DataManager;
 
@@ -20,18 +20,16 @@ public class LWWSet<T> extends AbstractSet<T> {
         
         addMap = new HashMap<>();
         removeMap = new HashMap<>();
-        
-        run(dataManager);
     }
 
     @Override
-    protected boolean update(int srcNodeId, IOperation<T> op) {
+    protected boolean update(int srcNodeId, Operation op) {
         TaggedOperation<T,Date> lwws = (TaggedOperation<T,Date>) op;
 
-        if(lwws.getType() == CRDT.ADD) {
+        if(lwws.getType() == Operation.ADD) {
             return addElement(lwws.getValue(), lwws.getTag().getTime());
         }
-        else if(lwws.getType() == CRDT.REMOVE) {
+        else if(lwws.getType() == Operation.REMOVE) {
             return removeElement(lwws.getValue(), lwws.getTag().getTime());
         }
         else {
@@ -43,7 +41,7 @@ public class LWWSet<T> extends AbstractSet<T> {
     public boolean add(T element) {
         Date time = Calendar.getInstance().getTime();
         if(addElement(element, time.getTime())) {
-            broadcast(new TaggedOperation<>(CRDT.ADD, element, time), dataManager);
+            broadcast(new TaggedOperation<>(Operation.ADD, element, time));
             return true;
         }
         return false;
@@ -53,7 +51,7 @@ public class LWWSet<T> extends AbstractSet<T> {
     public boolean remove(T element) {
         Date time = Calendar.getInstance().getTime();
         if(removeElement(element, time.getTime())) {
-            broadcast(new TaggedOperation<>(CRDT.REMOVE, element, time), dataManager);
+            broadcast(new TaggedOperation<>(Operation.REMOVE, element, time));
             return true;
         }
         return false;

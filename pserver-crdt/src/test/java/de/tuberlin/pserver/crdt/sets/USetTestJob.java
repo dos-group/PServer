@@ -19,7 +19,7 @@ public class USetTestJob extends MLProgram {
                     us.add(i);
                 }
 
-                us.finish(dataManager);
+                us.finish();
 
                 System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + us.getSet());
@@ -45,7 +45,7 @@ public class USetTestJob extends MLProgram {
                     us.remove(i);
                 }
 
-                us.finish(dataManager);
+                us.finish();
 
                 System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + us.getSet());

@@ -2,8 +2,8 @@ package de.tuberlin.pserver.crdt.sets;
 
 import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
-import de.tuberlin.pserver.crdt.operations.IOperation;
 import de.tuberlin.pserver.crdt.operations.Operation;
+import de.tuberlin.pserver.crdt.operations.SimpleOperation;
 import de.tuberlin.pserver.runtime.DataManager;
 
 import java.util.HashMap;
@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 /**
  *
- * Maintain a counter for each element. The element is in the set if its count is > 0.
+ * Maintain a counter for each element. The element is in the set if its count is &gt; 0.
  */
 // TODO: At the moment, negative values are allowed. Perhaps it would be good to give a choice for not allowing negative count.
 public class PNSet<T> extends AbstractSet<T> {
@@ -22,17 +22,16 @@ public class PNSet<T> extends AbstractSet<T> {
     public PNSet(String id, DataManager dataManager) {
         super(id, dataManager);
         counter = new HashMap<>();
-        run(dataManager);
     }
 
     @Override
-    protected boolean update(int srcNodeId, IOperation<T> op) {
-        Operation<T> sop = (Operation<T>) op;
+    protected boolean update(int srcNodeId, Operation op) {
+        SimpleOperation<T> sop = (SimpleOperation<T>) op;
 
-        if(sop.getType() == CRDT.ADD) {
+        if(sop.getType() == Operation.ADD) {
             return addElement(sop.getValue());
         }
-        else if(sop.getType() == CRDT.REMOVE) {
+        else if(sop.getType() == Operation.REMOVE) {
             return removeElement(sop.getValue());
         }
         else {
@@ -43,7 +42,7 @@ public class PNSet<T> extends AbstractSet<T> {
     @Override
     public boolean add(T element) {
         if(addElement(element)) {
-            broadcast(new Operation<T>(CRDT.ADD, element), dataManager);
+            broadcast(new SimpleOperation<T>(Operation.ADD, element));
             return true;
         }
         return false;
@@ -52,7 +51,7 @@ public class PNSet<T> extends AbstractSet<T> {
     @Override
     public boolean remove(T element) {
         if(removeElement(element)) {
-            broadcast(new Operation<T>(CRDT.REMOVE, element), dataManager);
+            broadcast(new SimpleOperation<T>(Operation.REMOVE, element));
             return true;
         }
         return false;

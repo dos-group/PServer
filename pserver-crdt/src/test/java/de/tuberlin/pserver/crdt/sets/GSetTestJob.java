@@ -22,11 +22,11 @@ public class GSetTestJob extends MLProgram {
                 GSet<Integer> gSet = new GSet<>("one", dataManager);
 
                 for (int i = 0; i <= 10; i++) {
-                    //gSet.applyOperation(new SetOperation<>(CRDT.ADD, i), dataManager);
+                    //gSet.applyOperation(new SetOperation<>(Operation.ADD, i), dataManager);
                     gSet.add(i);
                 }
 
-                gSet.finish(dataManager);
+                gSet.finish();
 
                 System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + gSet.getSet());
@@ -44,11 +44,11 @@ public class GSetTestJob extends MLProgram {
 
                 for (int i = 20; i <= 30; i++) {
 
-                    //gSet.applyOperation(new SetOperation<>(CRDT.ADD, i), dataManager);
+                    //gSet.applyOperation(new SetOperation<>(Operation.ADD, i), dataManager);
                     gSet.add(i);
                 }
 
-                gSet.finish(dataManager);
+                gSet.finish();
 
                 System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + gSet.getSet());

@@ -17,14 +17,14 @@ public class GCounterTestJob extends MLProgram {
                 GCounter gc2 = new GCounter("two", dataManager);
 
                 for (int i = 0; i < 10000; i++) {
-                    gc.add(1);
+                    gc.increment(1);
                     if ((i % 2) == 0) {
-                        gc2.add(1);
+                        gc2.increment(1);
                     }
                 }
 
-                gc.finish(dataManager);
-                gc2.finish(dataManager);
+                gc.finish();
+                gc2.finish();
 
                 System.out.println("[DEBUG] Count of node " + slotContext.programContext.runtimeContext.nodeID +
                         " slot " + slotContext.slotID + ": " + gc.getCount());
@@ -46,14 +46,14 @@ public class GCounterTestJob extends MLProgram {
                 GCounter gc2 = new GCounter("two", dataManager);
 
                 for (int i = 0; i < 100000; i++) {
-                    gc.add(1);
+                    gc.increment(1);
                     if ((i % 2) == 0) {
-                        gc2.add(1);
+                        gc2.increment(1);
                     }
                 }
 
-                gc.finish(dataManager);
-                gc2.finish(dataManager);
+                gc.finish();
+                gc2.finish();
 
                 System.out.println("[DEBUG] Count of node " + slotContext.programContext.runtimeContext.nodeID + ": " + gc.getCount());
                 System.out.println("[DEBUG] Count of node " + slotContext.programContext.runtimeContext.nodeID + ": " + gc2.getCount());
