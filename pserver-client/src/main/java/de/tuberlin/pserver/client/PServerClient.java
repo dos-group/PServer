@@ -103,6 +103,10 @@ public final class PServerClient extends EventDispatcher {
     // ---------------------------------------------------
 
     public UUID execute(final Class<? extends Program> jobClass) {
+        return execute(jobClass, new String[0]);
+    }
+
+    public UUID execute(final Class<? extends Program> jobClass, String[] args) {
         Preconditions.checkNotNull(jobClass);
 
         final long start = System.nanoTime();
@@ -111,7 +115,8 @@ public final class PServerClient extends EventDispatcher {
         final ProgramSubmissionEvent jobSubmission = new ProgramSubmissionEvent(
                 machine,
                 jobUID,
-                byteCode
+                byteCode,
+                args
         );
 
         final CountDownLatch jobLatch = new CountDownLatch(infraManager.getMachines().size());
@@ -128,7 +133,7 @@ public final class PServerClient extends EventDispatcher {
         }
 
         LOG.info("Job '" + jobClass.getSimpleName()
-                + "' [" + jobSubmission.programID +"] finished in "
+                + "' [" + jobSubmission.programID + "] finished in "
                 + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms.");
 
 

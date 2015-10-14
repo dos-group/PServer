@@ -30,6 +30,8 @@ public enum PServerExecutor {
 
     private UUID currentJob = null;
 
+    private String[] args;
+
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
@@ -37,11 +39,17 @@ public enum PServerExecutor {
     private PServerExecutor(final boolean isLocal) {
         org.apache.log4j.Logger.getRootLogger().addAppender(new ConsoleAppender());
         this.isLocal = isLocal;
+        this.args = new String[0];
     }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
+
+    public PServerExecutor arguments(String[] args) {
+        this.args = args;
+        return this;
+    }
 
     public PServerExecutor run(final Class<? extends Program> jobClass) {
         if (isLocal) {
@@ -53,7 +61,7 @@ public enum PServerExecutor {
             simulator = null;
 
         client = PServerClientFactory.createPServerClient();
-        currentJob = client.execute(Preconditions.checkNotNull(jobClass));
+        currentJob = client.execute(Preconditions.checkNotNull(jobClass), args);
         return this;
     }
 
