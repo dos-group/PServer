@@ -2,9 +2,8 @@ package de.tuberlin.pserver.math.matrix;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.math.utils.Functions;
-import de.tuberlin.pserver.math.utils.Utils;
 import de.tuberlin.pserver.math.utils.MatrixAggregation;
+import de.tuberlin.pserver.math.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +40,7 @@ public abstract class AbstractMatrix implements Matrix {
         this.cols = cols;
         this.layout = Preconditions.checkNotNull(layout);
         Preconditions.checkArgument(java.util.Arrays.asList(Layout.values()).contains(layout), "Unknown MemoryLayout: " + layout.toString());
-        this.lock = new ReentrantLock();
+        this.lock = new ReentrantLock(true);
     }
 
     // ---------------------------------------------------
@@ -82,7 +81,7 @@ public abstract class AbstractMatrix implements Matrix {
     public Matrix aggregateRows(final MatrixAggregation f, Matrix result) {
         Preconditions.checkArgument(result.rows() == rows && result.cols() == 1);
         for (int row = 0; row < rows; row++) {
-            result.set(row, 1, f.apply(getRow(row)));
+            result.set(row, 0, f.apply(getRow(row)));
         }
         return result;
     }
@@ -306,7 +305,7 @@ public abstract class AbstractMatrix implements Matrix {
     @Override
     public double sum() {
         double sum = 0;
-        for (int row = 0; row < row; row++) {
+        for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
                 sum += this.get(row, col);
             }
@@ -395,6 +394,28 @@ public abstract class AbstractMatrix implements Matrix {
         return C;
     }
 
+    @Override
+    public Matrix assign(long rowOffset, long colOffset, Matrix m) {
+        for (long row = rowOffset; row < rows; row++) {
+            for (long col = colOffset; col < cols; col++) {
+                set(row, col, m.get(row - rowOffset, col - colOffset));
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("AbstractMatrix["+rows+"|"+cols+"]: ");
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                stringBuilder.append("("+row+","+col+","+get(row,col)+") ");
+            }
+        }
+        return stringBuilder.toString();
+    }
+
 // ---------------------------------------------------
     // Inner Classes.
     // ---------------------------------------------------
@@ -465,10 +486,9 @@ public abstract class AbstractMatrix implements Matrix {
         }
 
         @Override
-        public long rows() { return target.rows; }
-
-        @Override
-        public long cols() { return target.cols; }
+        public int size() {
+            return endRow - startRow + 1;
+        }
 
         @Override
         public int rowNum() { return currentRow; }

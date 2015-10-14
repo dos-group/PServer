@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.client;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.EventDispatcher;
@@ -8,7 +9,6 @@ import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.runtime.MLProgram;
 import de.tuberlin.pserver.runtime.events.ProgramFailureEvent;
 import de.tuberlin.pserver.runtime.events.ProgramResultEvent;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
@@ -102,10 +102,8 @@ public final class PServerClient extends EventDispatcher {
     // Public Methods.
     // ---------------------------------------------------
 
-    public UUID execute(final Class<? extends MLProgram> jobClass) { return execute(jobClass, 1); }
-    public UUID execute(final Class<? extends MLProgram> jobClass, final int perNodeParallelism) {
+    public UUID execute(final Class<? extends Program> jobClass) {
         Preconditions.checkNotNull(jobClass);
-        Preconditions.checkArgument(perNodeParallelism >= 1);
 
         final long start = System.nanoTime();
         final UUID jobUID = UUID.randomUUID();
@@ -113,7 +111,6 @@ public final class PServerClient extends EventDispatcher {
         final ProgramSubmissionEvent jobSubmission = new ProgramSubmissionEvent(
                 machine,
                 jobUID,
-                perNodeParallelism,
                 byteCode
         );
 

@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.runtime.filesystem;
 
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
-import de.tuberlin.pserver.types.PartitionType;
+import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
+import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
 
 public interface FileSystemManager {
 
@@ -20,8 +20,8 @@ public interface FileSystemManager {
 
     public abstract <T extends IRecord> FileDataIterator<T> createFileIterator(
                             final String filePath,
-                            final AbstractRecordFormatConfig recordFormat,
-                            final PartitionType partitionType);
+                            final IRecordIteratorProducer recordFormat,
+                            final IMatrixPartitioner partitioner);
 
     public abstract void clearContext();
 }

@@ -6,16 +6,14 @@ import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.config.AbstractRecordFormatConfig;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
+import de.tuberlin.pserver.runtime.filesystem.record.IRecordIterator;
+import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.*;
 
 public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
@@ -42,11 +40,9 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
 
     protected transient long splitLength;
 
-    protected transient AbstractRecordFormatConfig format;
+    protected transient IRecordIteratorProducer format;
 
-    protected transient CSVParser csvFileParser;
-
-    protected transient Iterator<CSVRecord> csvIterator;
+    protected transient IRecordIterator recordIterator;
 
     // --------------------------------------------------------------------------------------------
     //  The configuration parameters. Configured on the instance and serialized to be shipped.
@@ -68,16 +64,12 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
     //  Constructors
     // --------------------------------------------------------------------------------------------
 
-    public HDFSInputFile(final IConfig config, final NetManager netManager, final String filePath, AbstractRecordFormatConfig format) {
+    public HDFSInputFile(final IConfig config, final NetManager netManager, final String filePath, IRecordIteratorProducer format) {
         this.config     = Preconditions.checkNotNull(config);
         this.path       = Preconditions.checkNotNull(filePath);
         this.filePath   = new Path(filePath);
         this.netManager = Preconditions.checkNotNull(netManager);
         this.format     = Preconditions.checkNotNull(format);
-    }
-
-    public HDFSInputFile(final IConfig config, final NetManager netManager, final String filePath) {
-        this(config, netManager, filePath, AbstractRecordFormatConfig.DEFAULT);
     }
 
     // --------------------------------------------------------------------------------------------
@@ -327,21 +319,17 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
             this.stream.readLine();
         }
 
-        this.csvFileParser = new CSVParser(new InputStreamReader(this.stream), format.getCsvFormat());
-        this.csvIterator = csvFileParser.iterator();
+        this.recordIterator = format.getRecordIterator(this.stream);
     }
 
     @Override
     public boolean reachedEnd() throws IOException {
-        return !csvIterator.hasNext();
+        return !recordIterator.hasNext();
     }
 
     @Override
     public IRecord nextRecord(IRecord reuse) throws IOException {
-        if(reuse == null) {
-            return format.getRecordFactory().wrap(csvIterator.next(), format.getProjection(), 0);
-        }
-        return reuse.set(csvIterator.next(), format.getProjection(), 0);
+        return recordIterator.next(0);
     }
 
     public void close() throws IOException {

@@ -1,64 +1,59 @@
 package de.tuberlin.pserver.crdt;
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.ExecutionManager;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.compiler.Program;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
+import de.tuberlin.pserver.runtime.MsgEventHandler;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 
 
-public class PingPongTestJob extends MLProgram {
+public class PingPongTestJob extends Program {
 
     public static final int NUM_MSG = 50;
 
     @Unit(at = "0")
-    public void pingNode(final Program program) {
+    public void pingNode(final Lifecycle lifecycle) {
 
-        program.process(() -> {
+        lifecycle.process(() -> {
 
-            CF.parUnit(0).exe(() -> { // node 0 with slot 0 executes this section...
+            for (int i = 0; i < NUM_MSG; ++i) {
 
-                for (int i = 0; i < NUM_MSG; ++i) {
+                runtimeManager.send("ping", new Integer(i), new int[]{1});
 
-                    dataManager.pushTo("ping", new Integer(i), new int[]{1});
+                runtimeManager.receive(RuntimeManager.ReceiveType.SYNC, 1, "pong", new MsgEventHandler() {
+                    @Override
+                    public void handleMsg(int srcNodeID, Object value) {
+                        final Integer i = (Integer) value;
+                        System.out.println("received pong " + i);
+                    }
+                });
+            }
 
-                    dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, "pong", new DataManager.DataEventHandler() {
-                        @Override
-                        public void handleDataEvent(int srcNodeID, Object value) {
-                            final Integer i = (Integer) value;
-                            System.out.println("received pong " + i);
-                        }
-                    });
-                }
+            System.out.println("-- FINISH NODE " + programContext);
 
-                System.out.println("-- FINISH NODE " + slotContext);
-            });
         });
     }
 
     @Unit(at = "1")
-    public void pongNode(final Program program) {
+    public void pongNode(final Lifecycle lifecycle) {
 
-        program.process(() -> {
+        lifecycle.process(() -> {
 
-            CF.parUnit(1).slot(0).exe(() -> { // node 1 with slot 0 executes this section...
+            for (int i = 0; i < NUM_MSG; ++i) {
 
-                for (int i = 0; i < NUM_MSG; ++i) {
+                runtimeManager.receive(RuntimeManager.ReceiveType.SYNC, 1, "ping", new MsgEventHandler() {
+                    @Override
+                    public void handleMsg(int srcNodeID, Object value) {
+                        final Integer i = (Integer) value;
+                        System.out.println("received ping " + i);
+                    }
+                });
 
-                    dataManager.awaitEvent(ExecutionManager.CallType.SYNC, 1, "ping", new DataManager.DataEventHandler() {
-                        @Override
-                        public void handleDataEvent(int srcNodeID, Object value) {
-                            final Integer i = (Integer)value;
-                            System.out.println("received ping " + i);
-                        }
-                    });
+                runtimeManager.send("pong", new Integer(i), new int[]{0});
+            }
 
-                    dataManager.pushTo("pong", new Integer(i), new int[] { 0 });
-                }
-
-                System.out.println("-- FINISH NODE " + slotContext);
-            });
+            System.out.println("-- FINISH NODE " + programContext);
         });
     }
 
@@ -69,16 +64,16 @@ public class PingPongTestJob extends MLProgram {
 
     public static void main(final String[] args) {
 
-        // ISet the number of simulated nodes, can also be
+        // Set the number of simulated at, can also be
         // configured via 'pserver/pserver-core/src/main/resources/reference.simulation.conf'
         System.setProperty("simulation.numNodes", "2");
-        // ISet the memory each simulated node gets.
+        // Set the memory each simulated node gets.
         //System.setProperty("jvmOptions", "[\"-Xmx1024m\"]");
 
         PServerExecutor.LOCAL
                 // Second param is number of slots (threads executing the job) per node,
                 // should be 1 at the beginning.
-                .run(PingPongTestJob.class, 1)
+                .run(PingPongTestJob.class)
                 .done();
     }
 }

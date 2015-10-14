@@ -87,7 +87,7 @@ public final class ZookeeperClient {
             try {
                 curator.create().forPath(ZOOKEEPER_ROOT, new byte[0]);
             } catch (KeeperException.NodeExistsException e) {
-                // These nodes only need to exist. No matter who created them.
+                // These at only need to exist. No matter who created them.
             }
         }
         stat = curator.checkExists().forPath(ZOOKEEPER_NODES);
@@ -95,7 +95,7 @@ public final class ZookeeperClient {
             try {
                 curator.create().forPath(ZOOKEEPER_NODES, new byte[0]);
             } catch (KeeperException.NodeExistsException e) {
-                // These nodes only need to exist. No matter who created them.
+                // These at only need to exist. No matter who created them.
             }
         }
     }
@@ -107,7 +107,7 @@ public final class ZookeeperClient {
                 try {
                     curator.create().forPath(path, new byte[0]);
                 } catch (KeeperException.NodeExistsException e) {
-                    // These nodes only need to exist. No matter who created them.
+                    // These at only need to exist. No matter who created them.
                 }
             }
         } catch (Exception e) {

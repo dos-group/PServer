@@ -1,26 +1,25 @@
 package de.tuberlin.pserver.test.core.programs;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.dsl.dataflow.shared.SharedInt;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.compiler.Program;
+import de.tuberlin.pserver.dsl.unit.UnitMng;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
+import de.tuberlin.pserver.runtime.mcruntime.shared.SharedInt;
 
 
-public class SharedVarTestJob extends MLProgram {
+public class SharedVarTestJob extends Program {
 
     @Unit
-    public void main(final Program program) {
+    public void main(final Lifecycle lifecycle) {
 
-        program.process(() -> {
+        lifecycle.process(() -> {
 
-            final SharedInt sharedInt = new SharedInt(slotContext, 0);
+            final SharedInt sharedInt = new SharedInt(programContext, 0);
 
-            CF.loop().exe(1000, (e) -> sharedInt.inc());
+            UnitMng.loop(1000, (e) -> sharedInt.inc());
 
-            CF.syncSlots();
-
-            CF.serial().exe(() -> Preconditions.checkState(sharedInt.get() == 4000));
+            Preconditions.checkState(sharedInt.get() == 1000);
 
             sharedInt.done();
         });

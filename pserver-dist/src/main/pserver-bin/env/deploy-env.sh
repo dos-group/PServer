@@ -49,7 +49,7 @@ function process_logs() {
 # tools/deploy.conf
 #
 
-DEFAULT_PSERVER_DESTINATION_DIRECTORY="/data/$(whoami)/pserver"    # directory on wally nodes the pserver binaries will be copied into
+DEFAULT_PSERVER_DESTINATION_DIRECTORY="/data/$(whoami)/pserver"    # directory on wally at the pserver binaries will be copied into
 DEFAULT_PSERVER_STAGING_DIRECTORY="${DEFAULT_PSERVER_DESTINATION_DIRECTORY}"
 DEFAULT_PSERVER_STAGING_HOST="localhost"
 DEFAULT_ZOOKEEPER_INSTALL_DIR="/data/$(whoami)/zookeeper"

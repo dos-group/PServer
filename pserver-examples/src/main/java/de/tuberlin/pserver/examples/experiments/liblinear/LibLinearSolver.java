@@ -1,15 +1,14 @@
 package de.tuberlin.pserver.examples.experiments.liblinear;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.dsl.dataflow.aggregators.Aggregator;
-import de.tuberlin.pserver.dsl.dataflow.shared.SharedInt;
+import de.tuberlin.pserver.runtime.ProgramContext;
+import de.tuberlin.pserver.dsl.transaction.aggregators.Aggregator;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
-import de.tuberlin.pserver.runtime.SlotContext;
+import de.tuberlin.pserver.runtime.mcruntime.shared.SharedInt;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Arrays;
-import java.util.List;
 
 // TODO: need primitive to compute at one slot and use result at all.
 
@@ -20,11 +19,11 @@ import java.util.List;
 
 public final class LibLinearSolver {
 
-    private final SlotContext sc;
+    private final ProgramContext pc;
 
-    public LibLinearSolver(final SlotContext sc) {
+    public LibLinearSolver(final ProgramContext pc) {
 
-        this.sc = Preconditions.checkNotNull(sc);
+        this.pc = Preconditions.checkNotNull(pc);
     }
 
     private GeneralizedLinearModel train_one(final Problem prob, final Parameter param, final double posLabel) throws Exception {
@@ -33,13 +32,13 @@ public final class LibLinearSolver {
 
         Problem binaryProb = prob.genBinaryProblem(posLabel);
 
-        SharedInt count = new SharedInt(sc, 0);
-        sc.CF.loop().parExe(binaryProb.dataPoints, (e, it) -> {
+        SharedInt count = new SharedInt(pc, 0);
+        /*sc.CF.loop().parExe(binaryProb.dataPoints, (e, it) -> {
             if (it.value(it.cols() - 1) > 0)
                 count.inc();
-        });
+        });*/
 
-        int pos = new Aggregator<>(sc, count.done().get())
+        /*int pos = new Aggregator<>(pc, count.done().get())
                 .apply(c -> c.stream()
                                 .mapToInt(Integer::intValue)
                                 .sum()
@@ -53,7 +52,7 @@ public final class LibLinearSolver {
                 break;
             case UNKNOWN:
                 break;
-        }
+        }*/
 
         return null;
     }
@@ -120,7 +119,7 @@ public final class LibLinearSolver {
 
         final Matrix partialLabelSet = new Dense64Matrix(1, ls.length, ls);
 
-        final Matrix labelSet = new Aggregator<>(sc, partialLabelSet).apply(partialAggs -> {
+        /*final Matrix labelSet = new Aggregator<>(pc, partialLabelSet).apply(partialAggs -> {
             Matrix result = partialAggs.size() > 0 ? partialAggs.get(0) : new Dense64Matrix(1, 1);
             for (int i = 1; i < partialAggs.size(); i++) {
                 result.concat(partialAggs.get(i), result);
@@ -139,6 +138,7 @@ public final class LibLinearSolver {
         if(param.solverType == SolverType.L2_LR)
             model.threshold = 0.5;
 
-        return model;
+        return model;*/
+        return null;
     }
 }

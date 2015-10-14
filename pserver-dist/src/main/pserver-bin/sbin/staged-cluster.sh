@@ -75,7 +75,7 @@ fetch-logs)
                 rm -rf "${PSERVER_LOG_DIR_TMP}" 2>/dev/null || true
             fi
             mkdir -p "${PSERVER_LOG_DIR_TMP}" 2>/dev/null || true
-            # gather logs from nodes to staging server
+            # gather logs from at to staging server
             ssh -n $STAGING_SSH_OPTS ${PSERVER_STAGING_HOST} -- "${PSERVER_STAGING_DIRECTORY}/${PSERVER_ROOT_DIR_NAME}/sbin/cluster.sh fetch-logs ${STAGING_PARAM_FORWARDING}"
             # copy log files from staging to local
             scp -q $STAGING_SSH_OPTS ${PSERVER_STAGING_HOST}:"${PSERVER_DESTINATION_LOG_DIR}/*" ${PSERVER_LOG_DIR_TMP}/. 2> /dev/null

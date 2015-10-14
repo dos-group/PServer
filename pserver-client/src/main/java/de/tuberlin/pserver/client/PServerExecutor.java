@@ -1,14 +1,12 @@
 package de.tuberlin.pserver.client;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.core.config.IConfig;
 import de.tuberlin.pserver.core.config.IConfigFactory;
 import de.tuberlin.pserver.core.infra.ClusterSimulator;
 import de.tuberlin.pserver.node.PServerMain;
-import de.tuberlin.pserver.runtime.MLProgram;
 import org.apache.log4j.ConsoleAppender;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.List;
@@ -23,8 +21,6 @@ public enum PServerExecutor {
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
-
-    private static final Logger LOG = LoggerFactory.getLogger(PServerExecutor.class);
 
     private final boolean isLocal;
 
@@ -47,8 +43,7 @@ public enum PServerExecutor {
     // Public Methods.
     // ---------------------------------------------------
 
-    public PServerExecutor run(final Class<? extends MLProgram> jobClass) { return run(jobClass, 1); }
-    public PServerExecutor run(final Class<? extends MLProgram> jobClass, final int perNodeParallelism) {
+    public PServerExecutor run(final Class<? extends Program> jobClass) {
         if (isLocal) {
             simulator = new ClusterSimulator(
                     IConfigFactory.load(IConfig.Type.PSERVER_SIMULATION),
@@ -58,7 +53,7 @@ public enum PServerExecutor {
             simulator = null;
 
         client = PServerClientFactory.createPServerClient();
-        currentJob = client.execute(Preconditions.checkNotNull(jobClass), perNodeParallelism);
+        currentJob = client.execute(Preconditions.checkNotNull(jobClass));
         return this;
     }
 

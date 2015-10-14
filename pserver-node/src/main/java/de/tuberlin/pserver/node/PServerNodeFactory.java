@@ -9,9 +9,8 @@ import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.core.net.RPCManager;
-import de.tuberlin.pserver.runtime.DataManager;
-import de.tuberlin.pserver.runtime.ExecutionManager;
 import de.tuberlin.pserver.runtime.RuntimeContext;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemType;
@@ -50,17 +49,15 @@ public enum PServerNodeFactory {
 
     public final NetManager netManager;
 
-    public final FileSystemManager fileSystemManager;
+    public final FileSystemManager fileManager;
 
     public final UserCodeManager userCodeManager;
 
-    public final DHTManager dht;
+    public final DHTManager dhtManager;
 
-    public final DataManager dataManager;
+    public final RuntimeManager runtimeManager;
 
     public final RPCManager rpcManager;
-
-    public final ExecutionManager executionManager;
 
     public final RuntimeContext runtimeContext;
 
@@ -74,23 +71,18 @@ public enum PServerNodeFactory {
 
         this.config             = Preconditions.checkNotNull(config);
         this.machine            = configureMachine();
-
-        LOG.debug("Starting PServer Node with id : " + machine.machineID.toString().substring(0,2));
-
         this.memoryManager      = null; //new MemoryManager(config);
         this.infraManager       = new InfrastructureManager(machine, config, false);
         this.netManager         = new NetManager(machine, infraManager, 16);
         this.userCodeManager    = new UserCodeManager(this.getClass().getClassLoader());
         this.rpcManager         = new RPCManager(netManager);
 
-        infraManager.start(); // blocking until all nodes are registered at zookeeper
+        infraManager.start(); // blocking until all at are registered at zookeeper
         infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connectTo);
 
-        this.fileSystemManager  = createFileSystem(infraManager.getNodeID());
-        this.dht                = new DHTManager(this.config, infraManager, netManager);
-        this.executionManager   = new ExecutionManager(Runtime.getRuntime().availableProcessors(), netManager);
-        this.dataManager        = new DataManager(this.config, infraManager, netManager, executionManager, fileSystemManager, dht);
-
+        this.fileManager        = createFileSystem(infraManager.getNodeID());
+        this.dhtManager         = new DHTManager(this.config, infraManager, netManager);
+        this.runtimeManager     = new RuntimeManager(infraManager, netManager, fileManager, dhtManager);
 
         this.runtimeContext = new RuntimeContext(
                 machine,
@@ -99,8 +91,7 @@ public enum PServerNodeFactory {
                 infraManager.getNodeID(),
                 netManager,
                 DHTManager.getInstance(),
-                dataManager,
-                executionManager
+                runtimeManager
         );
 
         netManager.addEventListener(NetEvents.NetEventTypes.ECHO_REQUEST, event -> {
@@ -133,6 +124,9 @@ public enum PServerNodeFactory {
         } catch(Throwable t) {
             throw new IllegalStateException(t);
         }
+
+        LOG.debug("Starting PServer Node with id : " + machine.machineID.toString().substring(0,2));
+
         return machine;
     }
 

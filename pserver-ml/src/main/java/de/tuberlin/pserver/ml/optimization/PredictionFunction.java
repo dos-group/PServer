@@ -5,21 +5,22 @@ import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
 
 public interface PredictionFunction {
 
-    public abstract double predict(final Matrix features, final Matrix weights);
+    public abstract double predict(final Matrix X, final Matrix W);
 
-    public abstract Matrix gradient(final Matrix features, final Matrix weights);
 
-    // ---------------------------------------------------
-
-    class LinearPredictionFunction implements PredictionFunction {
+    class LinearPrediction implements PredictionFunction {
 
         @Override
-        public double predict(final Matrix features, final Matrix weights) {
-            return features.dot(weights);
+        public double predict(final Matrix X, final Matrix W) {
+            return X.dot(W);
         }
+    }
 
-        public Matrix gradient(final Matrix features, final Matrix weights) {
-            return new Dense64Matrix((Dense64Matrix)weights);
+    class LinearBinaryPrediction implements PredictionFunction {
+
+        @Override
+        public double predict(final Matrix X, final Matrix W) {
+            return Math.signum(X.dot(W));
         }
     }
 }

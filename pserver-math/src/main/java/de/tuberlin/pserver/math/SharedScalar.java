@@ -5,6 +5,8 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 public class SharedScalar implements SharedObject {
 
     // ---------------------------------------------------
@@ -12,6 +14,8 @@ public class SharedScalar implements SharedObject {
     // ---------------------------------------------------
 
     private static final Logger LOG = LoggerFactory.getLogger(SharedScalar.class);
+
+    private final ReentrantLock lock = new ReentrantLock(true);
 
     private Object owner;
 
@@ -50,4 +54,10 @@ public class SharedScalar implements SharedObject {
 
     @Override
     public void setArray(double[] data) { Preconditions.checkState(data.length == 1); this.data = data; }
+
+    @Override
+    public void lock() { lock.lock(); }
+
+    @Override
+    public void unlock() { lock.unlock(); }
 }

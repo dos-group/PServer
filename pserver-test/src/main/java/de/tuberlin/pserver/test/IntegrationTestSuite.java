@@ -20,8 +20,6 @@ public class IntegrationTestSuite {
 
     public static final int NUM_NODES = 4;
 
-    public static final int NUM_SLOTS = 4;
-
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------

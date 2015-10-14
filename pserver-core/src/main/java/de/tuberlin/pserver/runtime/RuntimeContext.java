@@ -22,11 +22,9 @@ public final class RuntimeContext {
 
     public final NetManager netManager;
 
-    public final DHTManager dht;
+    public final DHTManager dhtManager;
 
-    public final DataManager dataManager;
-
-    public final ExecutionManager executionManager;
+    public final RuntimeManager runtimeManager;
 
     // ---------------------------------------------------
     // Constructors.
@@ -37,17 +35,15 @@ public final class RuntimeContext {
                           final int numOfCores,
                           final int nodeID,
                           final NetManager netManager,
-                          final DHTManager dht,
-                          final DataManager dataManager,
-                          final ExecutionManager executionManager) {
+                          final DHTManager dhtManager,
+                          final RuntimeManager runtimeManager) {
 
         this.machine            = Preconditions.checkNotNull(machine);
         this.numOfNodes         = numOfNodes;
-        this.numOfCores = numOfCores;
+        this.numOfCores         = numOfCores;
         this.nodeID             = nodeID;
-        this.dht                = Preconditions.checkNotNull(dht);
+        this.dhtManager         = Preconditions.checkNotNull(dhtManager);
         this.netManager         = Preconditions.checkNotNull(netManager);
-        this.dataManager        = Preconditions.checkNotNull(dataManager);
-        this.executionManager   = Preconditions.checkNotNull(executionManager);
+        this.runtimeManager     = Preconditions.checkNotNull(runtimeManager);
     }
 }

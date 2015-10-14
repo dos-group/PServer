@@ -33,9 +33,7 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
 
         void reset();
 
-        long rows();
-
-        long cols();
+        int size();
 
         int rowNum();
     }
@@ -73,6 +71,17 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
 
         public boolean contains(long row, long col) {
             return row < rows && col < cols;
+        }
+
+        public PartitionShape intersect(PartitionShape other) {
+            long maxRowStart = Math.max(rowOffset, other.rowOffset);
+            long minRowEnd   = Math.min(rowOffset + rows, other.rowOffset + other.rows);
+            long maxColStart = Math.max(colOffset, other.colOffset);
+            long minColEnd   = Math.min(colOffset + cols, other.colOffset + other.cols);
+            if(maxRowStart <= minRowEnd && maxColStart <= minColEnd) {
+                return new PartitionShape(minRowEnd - maxRowStart, minColEnd - maxColStart, maxRowStart, maxColStart);
+            }
+            return null;
         }
 
         @Override public String toString() { return "PartitionShape ("+rows+"+"+rowOffset+","+cols+"+"+colOffset+")"; }
@@ -156,7 +165,7 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
 
     Matrix assignColumn(final long col, final Matrix v);
 
-    Matrix assign(final long row, final long col, final Matrix m);
+    Matrix assign(final long rowOffset, final long colOffset, final Matrix m);
 
     // ---------------------------------------------------
 
