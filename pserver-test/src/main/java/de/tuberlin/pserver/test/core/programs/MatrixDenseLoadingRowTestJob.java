@@ -7,9 +7,8 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.Format;
-import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.Format;
+import de.tuberlin.pserver.math.matrix.Layout;
 import de.tuberlin.pserver.runtime.filesystem.record.RowRecordIteratorProducer;
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
@@ -33,7 +32,7 @@ public class MatrixDenseLoadingRowTestJob extends Program {
 
     private static final Logger LOG = LoggerFactory.getLogger(MatrixDenseLoadingRowTestJob.class);
 
-    @State(
+    /*@State(
             path = FILE,
             rows = ROWS,
             cols = COLS,
@@ -42,12 +41,12 @@ public class MatrixDenseLoadingRowTestJob extends Program {
             format = Format.DENSE_FORMAT,
             layout = Layout.ROW_LAYOUT
     )
-    public Matrix matrix;
+    public Matrix matrix;*/
 
     @Unit
     public void main(final Lifecycle lifecycle) {
 
-        lifecycle.process(() -> {
+        /*lifecycle.process(() -> {
 
             matrix = runtimeManager.getDHT("matrix");
             int nodeId = programContext.runtimeContext.nodeID;
@@ -87,7 +86,7 @@ public class MatrixDenseLoadingRowTestJob extends Program {
                     }
                 }
             }
-        });
+        });*/
     }
 
     public static void main(String[] args) {

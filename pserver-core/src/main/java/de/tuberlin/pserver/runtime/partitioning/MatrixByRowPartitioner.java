@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.runtime.partitioning;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 
 import java.lang.reflect.Constructor;
@@ -14,7 +14,7 @@ public class MatrixByRowPartitioner extends IMatrixPartitioner {
     // Fields.
     // ---------------------------------------------------
 
-    private Matrix.PartitionShape shape;
+    private PartitionShape shape;
 
     // ---------------------------------------------------
     // Public Methods.
@@ -44,12 +44,12 @@ public class MatrixByRowPartitioner extends IMatrixPartitioner {
     }
 
     @Override
-    public Matrix.PartitionShape getPartitionShape() {
+    public PartitionShape getPartitionShape() {
         if(shape == null) {
             double rowsPerNode = (double) rows / atNodes.length;
             long rowOffset = (int) Math.ceil(rowsPerNode * nodeId);
             long numRows = (int) (Math.ceil(rowsPerNode * (nodeId + 1)) - rowOffset);
-            shape = new Matrix.PartitionShape(numRows, cols, rowOffset, 0);
+            shape = new PartitionShape(numRows, cols, rowOffset, 0);
         }
         return shape;
     }

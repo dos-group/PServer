@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.runtime.partitioning.mtxentries;
 
-public abstract class AbstractMatrixEntry implements MatrixEntry {
+public abstract class AbstractMatrixEntry<V extends Number> implements MatrixEntry<V> {
 
     @Override
     public String toString() {

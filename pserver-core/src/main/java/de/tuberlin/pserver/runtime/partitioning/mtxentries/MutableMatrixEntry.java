@@ -6,21 +6,21 @@ package de.tuberlin.pserver.runtime.partitioning.mtxentries;
  * This implementation is mutable and is useful in situations where an iteration over entries would cause multiple
  * unnecessary object instantiations.
  */
-public class MutableMatrixEntry extends AbstractMatrixEntry implements ReusableMatrixEntry {
+public class MutableMatrixEntry<V extends Number> extends AbstractMatrixEntry<V> implements ReusableMatrixEntry<V> {
 
     private long row;
 
     private long col;
 
-    private double value;
+    private V value;
 
-    public MutableMatrixEntry(long row, long col, double value) {
+    public MutableMatrixEntry(long row, long col, V value) {
         this.row = row;
         this.col = col;
         this.value = value;
     }
 
-    public MutableMatrixEntry set(long row, long col, double value) {
+    public MutableMatrixEntry set(long row, long col, V value) {
         this.row = row;
         this.col = col;
         this.value = value;
@@ -38,7 +38,7 @@ public class MutableMatrixEntry extends AbstractMatrixEntry implements ReusableM
     }
 
     @Override
-    public double getValue() {
+    public V getValue() {
         return value;
     }
 }

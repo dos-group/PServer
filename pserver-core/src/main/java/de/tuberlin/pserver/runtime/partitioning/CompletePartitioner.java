@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.runtime.partitioning;
 
-import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 
 /**
@@ -8,11 +8,11 @@ import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
  */
 public class CompletePartitioner extends IMatrixPartitioner {
 
-    private final Matrix.PartitionShape shape;
+    private final PartitionShape shape;
 
     public CompletePartitioner(long rows, long cols, int nodeId, int[] atNodes) {
         super(rows, cols, nodeId, atNodes);
-        shape = new Matrix.PartitionShape(rows, cols, 0, 0);
+        shape = new PartitionShape(rows, cols, 0, 0);
     }
 
     @Override
@@ -21,7 +21,7 @@ public class CompletePartitioner extends IMatrixPartitioner {
     }
 
     @Override
-    public Matrix.PartitionShape getPartitionShape() {
+    public PartitionShape getPartitionShape() {
         return shape;
     }
 

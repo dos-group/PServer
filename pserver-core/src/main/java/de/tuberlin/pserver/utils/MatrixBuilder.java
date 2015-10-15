@@ -3,11 +3,11 @@ package de.tuberlin.pserver.utils;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.compiler.StateDescriptor;
-import de.tuberlin.pserver.math.Format;
-import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
-import de.tuberlin.pserver.math.matrix.sparse.Sparse64Matrix;
+import de.tuberlin.pserver.math.matrix.*;
+import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
+import de.tuberlin.pserver.math.matrix.dense.DenseMatrix64F;
+import de.tuberlin.pserver.math.matrix.sparse.SparseMatrix32F;
+import de.tuberlin.pserver.math.matrix.sparse.SparseMatrix64F;
 import de.tuberlin.pserver.math.utils.Utils;
 import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
@@ -25,14 +25,14 @@ public final class MatrixBuilder {
 
     private Layout layout;
 
-    private double[] data;
+    private ElementType elementType;
 
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
     public MatrixBuilder() {
-        reset();
+        clear();
     }
 
     // ---------------------------------------------------
@@ -55,8 +55,18 @@ public final class MatrixBuilder {
         return this;
     }
 
-    public MatrixBuilder data(final double[] data) {
-        this.data = Preconditions.checkNotNull(data);
+    public MatrixBuilder elementType(final ElementType type) {
+        this.elementType = Preconditions.checkNotNull(type);
+        return this;
+    }
+
+    public MatrixBuilder elementType(final Class<?> type) {
+        if (type == DenseMatrix32F.class || type == SparseMatrix32F.class)
+            this.elementType = ElementType.FLOAT_MATRIX;
+        else if (type == DenseMatrix64F.class || type == SparseMatrix64F.class)
+            this.elementType = ElementType.DOUBLE_MATRIX;
+        else
+            throw new IllegalStateException();
         return this;
     }
 
@@ -94,27 +104,41 @@ public final class MatrixBuilder {
         throw new IllegalStateException("Unkown scope: " + decl.scope.toString());
     }
 
-    public Matrix build() {
+    @SuppressWarnings("unchecked")
+    public <V extends Number, MAT extends Matrix<V>> MAT build() {
+        MAT m = null;
         switch (format) {
             case SPARSE_FORMAT:
-                    return new Sparse64Matrix(rows, cols, layout);
+                switch (elementType) {
+                    case FLOAT_MATRIX:
+                        m = (MAT)new SparseMatrix32F(rows, cols, layout);
+                        break;
+                    case DOUBLE_MATRIX:
+                        m = (MAT)new SparseMatrix64F(rows, cols, layout);
+                        break;
+                }
             case DENSE_FORMAT:
-                    if (data == null)
-                        return new Dense64Matrix(rows, cols, new double[Utils.toInt(rows * cols)], layout);
-                    else
-                        return new Dense64Matrix(rows, cols, data, layout);
+                switch (elementType) {
+                    case FLOAT_MATRIX:
+                        m = (MAT)new DenseMatrix32F(rows, cols, new float[Utils.toInt(rows * cols)], layout);
+                        break;
+                    case DOUBLE_MATRIX:
+                        m = (MAT)new DenseMatrix64F(rows, cols, new double[Utils.toInt(rows * cols)], layout);
+                        break;
+                }
         }
-        throw new IllegalStateException();
+        return m;
     }
 
     // ---------------------------------------------------
     // Private Methods.
     // ---------------------------------------------------
 
-    private void reset() {
+    private void clear() {
         rows    = -1;
         cols    = -1;
         format  = Format.DENSE_FORMAT;
         layout  = Layout.ROW_LAYOUT;
+        elementType = ElementType.FLOAT_MATRIX;
     }
 }

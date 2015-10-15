@@ -2,15 +2,19 @@ package de.tuberlin.pserver.types;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.MatrixBase;
+import de.tuberlin.pserver.math.operations.BinaryOperator;
+import de.tuberlin.pserver.math.operations.MatrixAggregation;
+import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
+import de.tuberlin.pserver.math.operations.UnaryOperator;
 import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.core.events.Event;
 import de.tuberlin.pserver.core.events.IEventHandler;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.math.Format;
-import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.math.matrix.AbstractMatrix;
-import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.Format;
+import de.tuberlin.pserver.math.matrix.Layout;
 import org.apache.commons.lang3.mutable.MutableDouble;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
@@ -18,7 +22,7 @@ import org.apache.commons.lang3.tuple.Triple;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
-public class RemoteMatrixSkeleton extends AbstractMatrix {
+public class RemoteMatrixSkeleton<V extends Number> implements Matrix<V> {
 
     // ---------------------------------------------------
     // Fields.
@@ -58,7 +62,7 @@ public class RemoteMatrixSkeleton extends AbstractMatrix {
                                 final Format format,
                                 final Layout layout) {
 
-        super(rows, cols, layout);
+        //super(rows, cols, layout);
 
         this.programContext = Preconditions.checkNotNull(programContext);
         this.name           = Preconditions.checkNotNull(name);
@@ -91,6 +95,13 @@ public class RemoteMatrixSkeleton extends AbstractMatrix {
     // Public Methods..
     // ---------------------------------------------------
 
+    /*@Override
+    public void set(long row, long col, V value) {
+        final NetEvents.NetEvent putRequestEvent = new NetEvents.NetEvent("put_request_" + name);
+        putRequestEvent.setPayload(Triple.of(row, col, value));
+        netManager.sendEvent(atNodeID, putRequestEvent);
+    }
+
     @Override
     public double get(long row, long col) {
         final NetEvents.NetEvent getRequestEvent = new NetEvents.NetEvent("get_request_" + name);
@@ -103,48 +114,312 @@ public class RemoteMatrixSkeleton extends AbstractMatrix {
         }
         return returnedValue.doubleValue();
 
+    }*/
+
+
+    @Override
+    public Matrix<V> copy() {
+        return null;
     }
 
     @Override
-    public void set(long row, long col, double value) {
-        final NetEvents.NetEvent putRequestEvent = new NetEvents.NetEvent("put_request_" + name);
-        putRequestEvent.setPayload(Triple.of(row, col, value));
-        netManager.sendEvent(atNodeID, putRequestEvent);
+    public Matrix<V> copy(long rows, long cols) {
+        return null;
     }
 
-    // ---------------------------------------------------
+    @Override
+    public void set(long row, long col, V value) {
 
-    @Override public double get(long index) { throw new UnsupportedOperationException(); }
+    }
 
-    @Override public Matrix getRow(long row) { throw new UnsupportedOperationException(); }
+    @Override
+    public Matrix<V> setDiagonalsToZero() {
+        return null;
+    }
 
-    @Override public Matrix getRow(long row, long from, long to) { throw new UnsupportedOperationException(); }
+    @Override
+    public Matrix<V> setDiagonalsToZero(Matrix<V> B) {
+        return null;
+    }
 
-    @Override public Matrix getCol(long col) { throw new UnsupportedOperationException(); }
+    @Override
+    public void setArray(Object data) {
 
-    @Override public Matrix getCol(long col, long from, long to) { throw new UnsupportedOperationException(); }
+    }
 
-    @Override public Matrix assign(Matrix m) { throw new UnsupportedOperationException(); }
+    @Override
+    public V get(long index) {
+        return null;
+    }
 
-    @Override public Matrix assign(double v) { throw new UnsupportedOperationException(); }
+    @Override
+    public V get(long row, long col) {
+        return null;
+    }
 
-    @Override public Matrix assignRow(long row, Matrix v) { throw new UnsupportedOperationException(); }
 
-    @Override public Matrix assignColumn(long col, Matrix v) { throw new UnsupportedOperationException(); }
+    @Override
+    public Matrix<V> getRow(long row) {
+        return null;
+    }
 
-    @Override public Matrix copy() { throw new UnsupportedOperationException(); }
+    @Override
+    public Matrix<V> getRow(long row, long from, long to) {
+        return null;
+    }
 
-    @Override public Matrix subMatrix(long row, long col, long rowSize, long colSize) { throw new UnsupportedOperationException(); }
+    @Override
+    public Matrix<V> getCol(long col) {
+        return null;
+    }
 
-    @Override public Matrix assign(long rowOffset, long colOffset, Matrix m) { throw new UnsupportedOperationException(); }
+    @Override
+    public Matrix<V> getCol(long col, long from, long to) {
+        return null;
+    }
 
-    @Override protected Matrix newInstance(long rows, long cols) { throw new UnsupportedOperationException(); }
+    @Override
+    public Object toArray() {
+        return null;
+    }
 
-    @Override public double[] toArray() { throw new UnsupportedOperationException(); }
+    @Override
+    public Matrix<V> applyOnElements(UnaryOperator<V> f) {
+        return null;
+    }
 
-    @Override public void setArray(double[] data) { throw new UnsupportedOperationException(); }
+    @Override
+    public Matrix<V> applyOnElements(UnaryOperator<V> f, Matrix<V> B) {
+        return null;
+    }
 
-    @Override public RowIterator rowIterator() { throw new UnsupportedOperationException(); }
+    @Override
+    public Matrix<V> applyOnElements(Matrix<V> B, BinaryOperator<V> f) {
+        return null;
+    }
 
-    @Override public RowIterator rowIterator(int startRow, int endRow) { throw new UnsupportedOperationException(); }
+    @Override
+    public Matrix<V> applyOnElements(Matrix<V> B, BinaryOperator<V> f, Matrix<V> C) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> applyOnElements(MatrixElementUnaryOperator<V> f) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> applyOnElements(MatrixElementUnaryOperator<V> f, Matrix<V> B) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> applyOnNonZeroElements(MatrixElementUnaryOperator<V> f) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> applyOnNonZeroElements(MatrixElementUnaryOperator<V> f, Matrix<V> B) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> assign(Matrix<V> v) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> assign(V v) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> assignRow(long row, Matrix<V> v) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> assignColumn(long col, Matrix<V> v) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> assign(long rowOffset, long colOffset, Matrix<V> m) {
+        return null;
+    }
+
+    @Override
+    public V aggregate(BinaryOperator<V> combiner, UnaryOperator<V> mapper, Matrix<V> result) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> aggregateRows(MatrixAggregation<V> f) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> aggregateRows(MatrixAggregation<V> f, Matrix<V> result) {
+        return null;
+    }
+
+    @Override
+    public V sum() {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> add(Matrix<V> B) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> add(Matrix<V> B, Matrix<V> C) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> addVectorToRows(Matrix<V> v) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> addVectorToRows(Matrix<V> v, Matrix<V> B) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> addVectorToCols(Matrix<V> v) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> addVectorToCols(Matrix<V> v, Matrix<V> B) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> sub(Matrix<V> B) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> sub(Matrix<V> B, Matrix<V> C) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> mul(Matrix<V> B) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> mul(Matrix<V> B, Matrix<V> C) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> scale(V a) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> scale(V a, Matrix<V> B) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> transpose() {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> transpose(Matrix<V> B) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> invert() {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> invert(Matrix<V> B) {
+        return null;
+    }
+
+    @Override
+    public V norm(int p) {
+        return null;
+    }
+
+    @Override
+    public V dot(Matrix<V> B) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> subMatrix(long rowOffset, long colOffset, long rows, long cols) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> concat(Matrix<V> B) {
+        return null;
+    }
+
+    @Override
+    public Matrix<V> concat(Matrix<V> B, Matrix<V> C) {
+        return null;
+    }
+
+    @Override
+    public RowIterator<V, Matrix<V>> rowIterator() {
+        return null;
+    }
+
+    @Override
+    public RowIterator<V, Matrix<V>> rowIterator(long startRow, long endRow) {
+        return null;
+    }
+
+    @Override
+    public long rows() {
+        return 0;
+    }
+
+    @Override
+    public long cols() {
+        return 0;
+    }
+
+    @Override
+    public long sizeOf() {
+        return 0;
+    }
+
+    @Override
+    public Layout layout() {
+        return null;
+    }
+
+    @Override
+    public void lock() {
+
+    }
+
+    @Override
+    public void unlock() {
+
+    }
+
+    @Override
+    public void setOwner(Object owner) {
+
+    }
+
+    @Override
+    public Object getOwner() {
+        return null;
+    }
 }

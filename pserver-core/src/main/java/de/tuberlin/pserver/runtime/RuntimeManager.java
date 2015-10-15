@@ -10,6 +10,7 @@ import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.runtime.dht.DHTKey;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
 import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
@@ -96,7 +97,8 @@ public final class RuntimeManager {
     }
 
     public void allocateState(final ProgramContext programContext, StateDescriptor decl) throws Exception {
-        if (Matrix.class.isAssignableFrom(decl.stateType)) {
+
+        if (MatrixBase.class.isAssignableFrom(decl.stateType)) {
             switch (decl.scope) {
                 case SINGLETON: {
 
@@ -112,6 +114,7 @@ public final class RuntimeManager {
                                 .dimension(decl.rows, decl.cols)
                                 .format(decl.format)
                                 .layout(decl.layout)
+                                .elementType(decl.stateType)
                                 .build();
 
                         putDHT(decl.stateName, so);

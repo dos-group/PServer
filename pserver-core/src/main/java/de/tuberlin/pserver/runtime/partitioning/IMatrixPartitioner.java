@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.runtime.partitioning;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 
 import java.lang.reflect.InvocationTargetException;
@@ -10,10 +10,21 @@ import java.util.stream.IntStream;
 
 public abstract class IMatrixPartitioner {
 
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
     protected final long  rows;
+
     protected final long  cols;
+
     protected final int   nodeId;
+
     protected final int[] atNodes;
+
+    // ---------------------------------------------------
+    // Constructors.
+    // ---------------------------------------------------
 
     public IMatrixPartitioner(long rows, long cols, int nodeId, int[] atNodes) {
         boolean contained = false;
@@ -39,29 +50,16 @@ public abstract class IMatrixPartitioner {
         this(rows, cols, nodeId, IntStream.iterate(0, x -> x + 1).limit(numNodes).toArray());
     }
 
-    public static IMatrixPartitioner newInstance(Class<? extends IMatrixPartitioner> implClass, long rows, long cols, int nodeId, int[] atNodes) {
-        IMatrixPartitioner result;
-        try {
-            result = implClass.getDeclaredConstructor(long.class, long.class, int.class, int[].class).newInstance(rows, cols, nodeId, atNodes);
-        }
-        catch(NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
-            throw new RuntimeException("Failed to instantiate IMatrixPartitioner implementation " + implClass.getName(), e);
-        }
-        return result;
-    }
+    // ---------------------------------------------------
+    // Abstract Methods.
+    // ---------------------------------------------------
 
     public abstract int getPartitionOfEntry(MatrixEntry entry);
 
-    public abstract Matrix.PartitionShape getPartitionShape();
+    public abstract PartitionShape getPartitionShape();
 
-    /**
-     * Given a "global" row in the complete matrix, this method translates it's position in the current partition.
-     */
     public abstract long translateGlobalToLocalRow(long row) throws IllegalArgumentException;
 
-    /**
-     * Given a "global" col in the complete matrix, this method translates it's position in the current partition.
-     */
     public abstract long translateGlobalToLocalCol(long col) throws IllegalArgumentException;
 
     public abstract long translateLocalToGlobalRow(long row) throws IllegalArgumentException;
@@ -82,4 +80,15 @@ public abstract class IMatrixPartitioner {
 
     public abstract IMatrixPartitioner ofNode(int nodeId);
 
+
+    public static IMatrixPartitioner newInstance(Class<? extends IMatrixPartitioner> implClass, long rows, long cols, int nodeId, int[] atNodes) {
+        IMatrixPartitioner result;
+        try {
+            result = implClass.getDeclaredConstructor(long.class, long.class, int.class, int[].class).newInstance(rows, cols, nodeId, atNodes);
+        }
+        catch(NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+            throw new RuntimeException("Failed to instantiate IMatrixPartitioner implementation " + implClass.getName(), e);
+        }
+        return result;
+    }
 }

@@ -1,15 +1,15 @@
 package de.tuberlin.pserver.types;
 
 
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.math.matrix.AbstractMatrix;
-import de.tuberlin.pserver.math.matrix.Matrix;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
-public class RemoteMatrixStub extends AbstractMatrix {
+public class RemoteMatrixStub {
 
     // ---------------------------------------------------
     // Constructor.
@@ -18,8 +18,6 @@ public class RemoteMatrixStub extends AbstractMatrix {
     public RemoteMatrixStub(final ProgramContext programContext,
                             final String name,
                             final Matrix matrix) {
-
-        super(matrix.rows(), matrix.cols(), matrix.layout());
 
         final NetManager netManager = programContext.runtimeContext.netManager;
 
@@ -40,48 +38,4 @@ public class RemoteMatrixStub extends AbstractMatrix {
         });
 
     }
-
-    // ---------------------------------------------------
-    // Public Methods..
-    // ---------------------------------------------------
-
-    @Override public double get(long row, long col) { throw new UnsupportedOperationException(); }
-
-    @Override public void set(long row, long col, double value) { throw new UnsupportedOperationException(); }
-
-    // ---------------------------------------------------
-
-    @Override public double get(long index) { throw new UnsupportedOperationException(); }
-
-    @Override public Matrix getRow(long row) { throw new UnsupportedOperationException(); }
-
-    @Override public Matrix getRow(long row, long from, long to) { throw new UnsupportedOperationException(); }
-
-    @Override public Matrix getCol(long col) { throw new UnsupportedOperationException(); }
-
-    @Override public Matrix getCol(long col, long from, long to) { throw new UnsupportedOperationException(); }
-
-    @Override public Matrix assign(Matrix m) { throw new UnsupportedOperationException(); }
-
-    @Override public Matrix assign(double v) { throw new UnsupportedOperationException(); }
-
-    @Override public Matrix assignRow(long row, Matrix v) { throw new UnsupportedOperationException(); }
-
-    @Override public Matrix assignColumn(long col, Matrix v) { throw new UnsupportedOperationException(); }
-
-    @Override public Matrix copy() { throw new UnsupportedOperationException(); }
-
-    @Override public Matrix subMatrix(long row, long col, long rowSize, long colSize) { throw new UnsupportedOperationException(); }
-
-    @Override public Matrix assign(long rowOffset, long colOffset, Matrix m) { throw new UnsupportedOperationException(); }
-
-    @Override protected Matrix newInstance(long rows, long cols) { throw new UnsupportedOperationException(); }
-
-    @Override public double[] toArray() { throw new UnsupportedOperationException(); }
-
-    @Override public void setArray(double[] data) { throw new UnsupportedOperationException(); }
-
-    @Override public RowIterator rowIterator() { throw new UnsupportedOperationException(); }
-
-    @Override public RowIterator rowIterator(int startRow, int endRow) { throw new UnsupportedOperationException(); }
 }

@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.math;
+package de.tuberlin.pserver.math.matrix;
 
 
 public enum Layout {

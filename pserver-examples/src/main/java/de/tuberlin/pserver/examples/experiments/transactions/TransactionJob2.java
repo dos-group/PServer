@@ -12,7 +12,7 @@ import de.tuberlin.pserver.dsl.transaction.phases.Apply;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix32F;
 
 
 public class TransactionJob2 extends Program {
@@ -22,7 +22,7 @@ public class TransactionJob2 extends Program {
     // ---------------------------------------------------
 
     @State(scope = Scope.SINGLETON, cols = 100, rows = 100, at = "0")
-    public Matrix globalModel;
+    public Matrix32F globalModel;
 
     private final int[] paramIndices = new int[] { 12, 23, 67, 73, 87 };
 
@@ -33,9 +33,9 @@ public class TransactionJob2 extends Program {
     @Transaction(state = "globalModel", type = TransactionType.PULL)
     public final TransactionDefinition paramFetch = new TransactionDefinition(
 
-        (Prepare<int[], double[]>) (paramIndices) -> {
+        (Prepare<int[], float[]>) (paramIndices) -> {
             int i = 0;
-            final double[] params = new double[paramIndices.length];
+            final float[] params = new float[paramIndices.length];
             for (int paramIdx : paramIndices)
                 params[i++] = globalModel.get(0, paramIdx);
             return params;
@@ -57,7 +57,7 @@ public class TransactionJob2 extends Program {
 
             atomic(state(globalModel), () -> {
                 for (int paramIdx : paramIndices) {
-                    globalModel.set(0, paramIdx, 11.5);
+                    globalModel.set(0, paramIdx, 11.5f);
                 }
             });
 

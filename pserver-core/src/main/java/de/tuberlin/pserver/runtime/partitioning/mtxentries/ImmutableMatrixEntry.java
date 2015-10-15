@@ -1,21 +1,19 @@
 package de.tuberlin.pserver.runtime.partitioning.mtxentries;
 
-/**
- * Created by fsander on 30.06.15.
- */
-public class ImmutableMatrixEntry extends AbstractMatrixEntry {
+
+public class ImmutableMatrixEntry<V extends Number> extends AbstractMatrixEntry<V> {
 
     private final long row;
     private final long col;
-    private final double value;
+    private final V value;
 
-    public ImmutableMatrixEntry(MatrixEntry entry) {
+    public ImmutableMatrixEntry(MatrixEntry<V> entry) {
         this.row = entry.getRow();
         this.col = entry.getCol();
         this.value = entry.getValue();
     }
 
-    public ImmutableMatrixEntry(long row, long col, double value) {
+    public ImmutableMatrixEntry(long row, long col, V value) {
         this.row = row;
         this.col = col;
         this.value = value;
@@ -32,7 +30,7 @@ public class ImmutableMatrixEntry extends AbstractMatrixEntry {
     }
 
     @Override
-    public double getValue() {
+    public V getValue() {
         return value;
     }
 }

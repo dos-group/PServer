@@ -4,7 +4,6 @@ package de.tuberlin.pserver.runtime.mcruntime;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,13 +62,13 @@ public final class Parallel {
         }
     }
 
-    public static void For(final int start, final int end, final ParallelForBody<Long> body)
+    public static void For(final long start, final long end, final ParallelForBody<Long> body)
             throws Exception {
 
         For(mcRuntime.getNumOfWorkerSlots(), start, end, body);
     }
 
-    public static void For(final int dop, final int start, final int end, final ParallelForBody<Long> body)
+    public static void For(final int dop, final long start, final long end, final ParallelForBody<Long> body)
             throws Exception {
 
         Do(dop, () -> {
@@ -103,18 +102,18 @@ public final class Parallel {
         });
     }
 
-    public static void For(final Matrix m, final ParallelForMatrixBody body) throws Exception {
-        Matrix.RowIterator iter = m.rowIterator();
+    public static <V extends Number> void For(final Matrix<V> m, final ParallelForMatrixBody<V> body) throws Exception {
+        Matrix.RowIterator<V, Matrix<V>> iter = m.rowIterator();
         For(0, iter.size(), (i) -> {
             Preconditions.checkState(iter.hasNext(), "iter.size = " + iter.size() + ", fetched = " + i);
-            Matrix row = iter.get();
+            final Matrix<V> row = iter.get();
             iter.next();
             for (int j = 0; j < m.cols(); ++j)
                 body.perform(i.intValue(), j, row.get(0, j));
         });
     }
 
-    public static void For(final Matrix m, final ParallelForRowMatrixBody body) throws Exception {
+    public static <V extends Number> void For(final Matrix<V> m, final ParallelForRowMatrixBody body) throws Exception {
         For(0, m.rowIterator().size(), body::perform);
     }
 

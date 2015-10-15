@@ -13,9 +13,8 @@ import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
-import de.tuberlin.pserver.math.Format;
-import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
+import de.tuberlin.pserver.math.matrix.Format;
+import de.tuberlin.pserver.math.matrix.dense.DenseMatrix64F;
 import de.tuberlin.pserver.runtime.filesystem.record.RowRecordIteratorProducer;
 import de.tuberlin.pserver.runtime.mcruntime.Parallel;
 
@@ -44,15 +43,15 @@ public class KMeans extends Program {
             format = Format.DENSE_FORMAT,
             recordFormat = RowRecordIteratorProducer.class
     )
-    public Matrix matrix;
+    public DenseMatrix64F matrix;
 
     @State(scope = Scope.REPLICATED,
             rows = K,
             cols = COLS + 1
     )
-    public Matrix centroidsUpdate;
+    public DenseMatrix64F centroidsUpdate;
 
-    public final Matrix centroids = new Dense64Matrix(K, COLS);
+    public final DenseMatrix64F centroids = new DenseMatrix64F(K, COLS);
 
     // ---------------------------------------------------
     // Transactions.
@@ -61,8 +60,8 @@ public class KMeans extends Program {
     @Transaction(state = "centroidsUpdate", type = TransactionType.PULL)
     public final TransactionDefinition centroidsUpdateSync = new TransactionDefinition(
 
-            (Apply<Matrix, Void>) (updates) -> {
-                for (final Matrix update : updates) {
+            (Apply<DenseMatrix64F, Void>) (updates) -> {
+                for (final DenseMatrix64F update : updates) {
                     Parallel.For(update, (i, j, v) -> centroidsUpdate.set(i, j, centroidsUpdate.get(i, j) + update.get(i, j)));
                 }
                 return null;
@@ -89,16 +88,16 @@ public class KMeans extends Program {
 
         }).process(() -> {
 
-            centroidsUpdate.assign(0);
+            centroidsUpdate.assign(0.);
 
             UnitMng.loop(10, Loop.BULK_SYNCHRONOUS, (iteration) -> {
                 int nodeId = programContext.runtimeContext.nodeID;
 
                 // BEGIN: STANDARD KMEANS ON LOCAL PARTITION+
                 atomic(state(matrix), () -> {
-                    Matrix.RowIterator iter = matrix.rowIterator();
+                    DenseMatrix64F.RowIterator iter = matrix.rowIterator();
                     while (iter.hasNext()) {
-                        Matrix point = iter.get();
+                        DenseMatrix64F point = iter.get();
                         iter.next();
                         double closestDistance = Double.MAX_VALUE;
                         long closestCentroidId = -1;
@@ -109,8 +108,8 @@ public class KMeans extends Program {
                                 closestCentroidId = centroidId;
                             }
                         }
-                        Matrix updateDelta = point.copy(1, COLS + 1);
-                        updateDelta.set(0, COLS, 1);
+                        DenseMatrix64F updateDelta = (DenseMatrix64F)point.copy(1, COLS + 1);
+                        updateDelta.set(0, COLS, 1.);
 
                         centroidsUpdate.assignRow(closestCentroidId, centroidsUpdate.getRow(closestCentroidId).add(updateDelta));
                     }
@@ -121,13 +120,13 @@ public class KMeans extends Program {
                 TransactionMng.commit(centroidsUpdateSync);
                 for (int i = 0; i < K; i++) {
                     if (centroidsUpdate.get(i, COLS) > 0) {
-                        Matrix update = centroidsUpdate.getRow(i, 0, COLS);
+                        DenseMatrix64F update = (DenseMatrix64F)centroidsUpdate.getRow(i, 0, COLS);
                         if (centroidsUpdate.get(i, COLS) > 0) {
                             centroids.assignRow(i, update.scale(1. / centroidsUpdate.get(i, COLS), update));
                         }
                     }
                 }
-                centroidsUpdate.assign(0);
+                centroidsUpdate.assign(0.);
                 // END: PULL MODEL FROM OTHER NODES AND MERGE
 
             });

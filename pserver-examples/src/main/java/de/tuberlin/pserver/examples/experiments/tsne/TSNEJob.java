@@ -8,6 +8,8 @@ import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix32F;
+import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
 import de.tuberlin.pserver.utils.MatrixBuilder;
 import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.types.DistributedMatrix;
@@ -42,7 +44,7 @@ public class TSNEJob extends Program {
 
     // input. i.e. activation vectors of a neuronal network
     @State(scope = Scope.REPLICATED, rows = ROWS, cols = INPUT_COLS, path = "datasets/mnist_10_X.csv")
-    public Matrix X;
+    public Matrix32F X;
 
 
     // high dimensional affinity function (for two vectors of input space)
@@ -54,7 +56,7 @@ public class TSNEJob extends Program {
            rows = ROWS, cols = EMBEDDING_DIMENSION,
            path = "datasets/mnist_10_initY.csv")
 
-    public Matrix Y;
+    public Matrix32F Y;
 
     /*@StateMerger(stateObjects = "Y")
     public final MatrixUpdateMerger YUpdater = (i, j, val, remoteVal) -> {
@@ -206,35 +208,35 @@ public class TSNEJob extends Program {
     // Helper Methods.
     // ---------------------------------------------------
 
-    private Matrix binarySearch(Matrix X, Double tol, Double perplexity) {
+    private Matrix32F binarySearch(Matrix32F X, Double tol, Double perplexity) {
 
-        Matrix.PartitionShape shape = P.getPartitionShape();
+        PartitionShape shape = P.getPartitionShape();
 
         long n = shape.rows;
 
-        final Matrix P_tmp      = new MatrixBuilder().dimension(shape.rows, shape.cols).build();
+        final Matrix32F P_tmp      = new MatrixBuilder().dimension(shape.rows, shape.cols).build();
         // beta = 1/(2*sigma^2). sigma is depended on a point. so we have n sigmas
-        final Matrix beta       = new MatrixBuilder().dimension(1, n).build();
+        final Matrix32F beta       = new MatrixBuilder().dimension(1, n).build();
 
-        beta.assign(1.0);
+        beta.assign(1f);
 
-        final Matrix sumX = X.applyOnElements(e -> Math.pow(e, 2)).aggregateRows(Matrix::sum);
+        final Matrix32F sumX = X.applyOnElements(e -> (float)Math.pow(e, 2)).aggregateRows(Matrix<Float>::sum);
         // X * X^. Then we have N x N. scale with -2. Add sumX row-wise and col-wise.
         // distance matrix of X
-        final Matrix D = X.mul(X.transpose()).scale(-2).addVectorToRows(sumX).transpose().addVectorToRows(sumX);
+        final Matrix32F D = X.mul(X.transpose()).scale(-2f).addVectorToRows(sumX).transpose().addVectorToRows(sumX);
 
-        final double logU = Math.log(perplexity);
+        final float logU = (float)Math.log(perplexity);
 
         for (long i=0; i < n; ++i) {
 
-            double betaMin = Double.NEGATIVE_INFINITY;
-            double betaMax = Double.POSITIVE_INFINITY;
+            float betaMin = Float.NEGATIVE_INFINITY;
+            float betaMax = Float.POSITIVE_INFINITY;
 
-            final Matrix Di = D.getRow(shape.rowOffset + i);
-            Tuple2<Double, Matrix> hBeta = computeHBeta(Di, beta.get(i), i);
+            final Matrix32F Di = D.getRow(shape.rowOffset + i);
+            Tuple2<Float, Matrix32F> hBeta = computeHBeta(Di, beta.get(i), i);
 
             double H = hBeta._1;
-            Matrix Pi = hBeta._2;
+            Matrix32F Pi = hBeta._2;
             // Evaluate whether the perplexity is within tolerance
 
             double HDiff = H - logU;
@@ -267,23 +269,22 @@ public class TSNEJob extends Program {
         return P_tmp;
     }
 
-    private Tuple2<Double, Matrix> computeHBeta(Matrix d, Double beta, Long index){
-        final Matrix P = new MatrixBuilder().dimension(1, d.cols()).build();
-        P.set(0, index, 0.0);
+    private Tuple2<Float, Matrix32F> computeHBeta(Matrix32F d, Float beta, Long index){
+        final Matrix32F P = new MatrixBuilder().dimension(1, d.cols()).build();
+        P.set(0, index, 0f);
 
         // parExe over all elements i != j
         for (long i=0; i < P.cols(); ++i) {
             if (i != index) {
-                P.set(0, i, Math.exp(-1 * d.get(i) * beta));
+                P.set(0, i, (float) Math.exp(-1 * d.get(i) * beta));
             }
         }
 
-        final Matrix PD = P.applyOnElements(d, (e1, e2) -> e1 * e2);
-        final double sumP = P.sum();
-        final double H = Math.log(sumP) + beta * PD.sum() / sumP;
+        final Matrix32F PD = P.applyOnElements(d, (e1, e2) -> e1 * e2);
+        final float sumP = P.sum();
+        final float H = (float)Math.log(sumP) + beta * PD.sum() / sumP;
 
         P.applyOnElements(e -> e / sumP, P);
-
 
         return new Tuple2<>(H, P);
     }

@@ -1,11 +1,12 @@
 package de.tuberlin.pserver.runtime.partitioning;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.compiler.StateDescriptor;
-import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.utils.MatrixBuilder;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
@@ -37,7 +38,9 @@ public final class MatrixPartitionManager {
     public final class MatrixLoadTask {
 
         final ProgramContext programContext;
+
         final StateDescriptor decl;
+
         final FileDataIterator fileIterator;
 
         public MatrixLoadTask(ProgramContext programContext, StateDescriptor decl) {
@@ -114,7 +117,7 @@ public final class MatrixPartitionManager {
     // Public Methods.
     // ---------------------------------------------------
 
-    public Matrix addLoadTaskReturnFutureTarget(final ProgramContext programContext, final StateDescriptor stateDescriptor) {
+    public MatrixBase addLoadTaskReturnFutureTarget(final ProgramContext programContext, final StateDescriptor stateDescriptor) {
         final MatrixLoadTask mlt = new MatrixLoadTask(programContext, stateDescriptor);
         matrixLoadTasks.put(stateDescriptor.stateName, mlt);
         fileLoadingBarrier.put(stateDescriptor.stateName, new AtomicInteger(programContext.nodeDOP));
@@ -129,9 +132,7 @@ public final class MatrixPartitionManager {
         }
         fileSystemManager.computeInputSplitsForRegisteredFiles();
         finishedLoadingLatch = new CountDownLatch(matrixLoadTasks.size());
-        for (final MatrixLoadTask task : matrixLoadTasks.values()) {
-            loadMatrix(task);
-        }
+        matrixLoadTasks.values().forEach(this::loadMatrix);
         while(finishedLoadingLatch.getCount() > 0) {
             LOG.debug("waiting for " + finishedLoadingLatch.getCount() + " loading tasks to finish:");
             for(String taskName : fileLoadingBarrier.keySet()) {
@@ -158,7 +159,7 @@ public final class MatrixPartitionManager {
     private Matrix getLoadingMatrix(final MatrixLoadTask task) {
         Matrix matrix = loadingMatrices.get(task.decl.stateName);
         if (matrix == null) {
-            matrix = MatrixBuilder.fromMatrixLoadTask(task.decl, task.programContext);
+            matrix = (Matrix)MatrixBuilder.fromMatrixLoadTask(task.decl, task.programContext);
             loadingMatrices.put(task.decl.stateName, matrix);
         }
         return matrix;
@@ -223,7 +224,7 @@ public final class MatrixPartitionManager {
         if (counter <= 0) {
             // is it possible that a FinishedLoading event overtakes a SendPartition event?
             // this assumes it is not:
-            final Matrix matrix = loadingMatrices.get(name);
+            final MatrixBase matrix = loadingMatrices.get(name);
             runtimeManager.putDHT(name, matrix);
             finishedLoadingLatch.countDown();
         }

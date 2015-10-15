@@ -50,10 +50,10 @@ public class SharedScalar implements SharedObject {
     public long sizeOf() { return Double.BYTES; }
 
     @Override
-    public double[] toArray() { return data; }
+    public Object toArray() { return data; }
 
     @Override
-    public void setArray(double[] data) { Preconditions.checkState(data.length == 1); this.data = data; }
+    public void setArray(Object data) { Preconditions.checkState(((double[])data).length == 1); this.data = (double[])data; }
 
     @Override
     public void lock() { lock.lock(); }
