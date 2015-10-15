@@ -76,6 +76,14 @@ public final class RuntimeManager {
     // Public Methods.
     // ---------------------------------------------------
 
+    public int[] getNodeIDs() { return nodeIDs; }
+
+    public int[] getRemoteNodeIDs() { return remoteNodeIDs; }
+
+    // ---------------------------------------------------
+    // Program Binding.
+    // ---------------------------------------------------
+
     public void bind(final Program instance) throws Exception {
         allocateState(instance.programContext);
         matrixPartitionManager.loadFilesIntoDHT();
@@ -200,6 +208,20 @@ public final class RuntimeManager {
     // Message-Passing Interface.
     // ---------------------------------------------------
 
+    public void addMsgEventListener(final String name, final MsgEventHandler handler) {
+        addMsgEventListener(remoteNodeIDs.length, name, handler);
+    }
+
+    public void addMsgEventListener(final int n, final String name, final MsgEventHandler handler) {
+        handler.setInfraManager(infraManager);
+        handler.initLatch(n);
+        netManager.addEventListener(MsgEventHandler.MSG_EVENT_PREFIX + name, handler);
+    }
+
+    public void removeMsgEventListener(final String name, final MsgEventHandler handler) {
+        netManager.removeEventListener(MsgEventHandler.MSG_EVENT_PREFIX + name, handler);
+    }
+    
     public synchronized void send(final String name, final Object value, final int[] nodeIDs) {
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(nodeIDs);

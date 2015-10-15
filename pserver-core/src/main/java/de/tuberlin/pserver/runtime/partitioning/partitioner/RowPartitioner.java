@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.runtime.partitioning;
+package de.tuberlin.pserver.runtime.partitioning.partitioner;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Matrix;
@@ -8,7 +8,7 @@ import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
-public class MatrixByRowPartitioner extends IMatrixPartitioner {
+public class RowPartitioner extends IMatrixPartitioner {
 
     // ---------------------------------------------------
     // Fields.
@@ -20,12 +20,12 @@ public class MatrixByRowPartitioner extends IMatrixPartitioner {
     // Public Methods.
     // ---------------------------------------------------
 
-    public MatrixByRowPartitioner(long rows, long cols, int nodeId, int[] atNodes) {
+    public RowPartitioner(long rows, long cols, int nodeId, int[] atNodes) {
         super(rows, cols, nodeId, atNodes);
         shape = getPartitionShape();
     }
 
-    public MatrixByRowPartitioner(long rows, long cols, int nodeId, int numNodes) {
+    public RowPartitioner(long rows, long cols, int nodeId, int numNodes) {
         this(rows, cols, nodeId, IntStream.iterate(0, x -> x + 1).limit(numNodes).toArray());
     }
 
@@ -95,12 +95,12 @@ public class MatrixByRowPartitioner extends IMatrixPartitioner {
     @Override
     public IMatrixPartitioner ofNode(int nodeId) {
         Preconditions.checkArgument(Arrays.asList(atNodes).contains(nodeId), "Can not construct MatrixByRowPartitioner of node '%d' because it is part of this partitioning. Participating nodes are: %s", nodeId, Arrays.toString(atNodes));
-        return new MatrixByRowPartitioner(rows, cols, nodeId, atNodes);
+        return new RowPartitioner(rows, cols, nodeId, atNodes);
     }
 
     public static void main(String[] args) throws NoSuchMethodException, ClassNotFoundException {
 
-        for(Constructor constructor : MatrixByRowPartitioner.class.getDeclaredConstructors()) {
+        for(Constructor constructor : RowPartitioner.class.getDeclaredConstructors()) {
             StringBuilder sb = new StringBuilder();
             for(Class<?> paramClass : constructor.getParameterTypes()) {
                 System.out.println(paramClass);
@@ -110,7 +110,7 @@ public class MatrixByRowPartitioner extends IMatrixPartitioner {
             System.out.println(sb.toString());
         }
 
-        Object test = MatrixByRowPartitioner.class.getDeclaredConstructor(long.class, long.class, int.class, int[].class);
+        Object test = RowPartitioner.class.getDeclaredConstructor(long.class, long.class, int.class, int[].class);
 
         //IMatrixPartitioner.newInstance(MatrixByRowPartitioner.class, 10, 10, 0, new int[] {0,1,2,3});
     }
@@ -164,5 +164,4 @@ public class MatrixByRowPartitioner extends IMatrixPartitioner {
 //            }
 //        }
 //    }
-
 }

@@ -9,6 +9,12 @@ import de.tuberlin.pserver.dsl.unit.controlflow.loop.LoopTermination;
 public final class UnitMng {
 
     // ---------------------------------------------------
+    // Constants.
+    // ---------------------------------------------------
+
+    public static final String GLOBAL_BARRIER = "global_barrier";
+
+    // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 

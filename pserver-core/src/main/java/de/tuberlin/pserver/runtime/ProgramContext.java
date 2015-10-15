@@ -26,8 +26,6 @@ public final class ProgramContext implements Deactivatable {
     // Constants.
     // ---------------------------------------------------
 
-    public static final String GLOBAL_BARRIER = "global_barrier";
-
     public static final String BARRIER_EVENT  = "barrier_event_";
 
     // ---------------------------------------------------
@@ -92,14 +90,14 @@ public final class ProgramContext implements Deactivatable {
         this.handlers           = new TreeMap<>();
 
         IEventHandler handler = event -> {
-            CountDownLatch barrier = barriers.get(GLOBAL_BARRIER).get();
+            CountDownLatch barrier = barriers.get(UnitMng.GLOBAL_BARRIER).get();
             while (barrier.getCount() == 0) {
-                barrier = barriers.get(GLOBAL_BARRIER).get();
+                barrier = barriers.get(UnitMng.GLOBAL_BARRIER).get();
             }
             barrier.countDown();
         };
 
-        barriers.put(GLOBAL_BARRIER, new AtomicReference<>(new CountDownLatch(nodeDOP - 1)));
+        barriers.put(UnitMng.GLOBAL_BARRIER, new AtomicReference<>(new CountDownLatch(nodeDOP - 1)));
         handlers.put(BARRIER_EVENT, handler);
         this.runtimeContext.netManager.addEventListener(BARRIER_EVENT, handler);
 
@@ -144,7 +142,7 @@ public final class ProgramContext implements Deactivatable {
     // ---------------------------------------------------
 
     public void synchronizeUnit(final String unitName) throws Exception {
-        if (GLOBAL_BARRIER.equals(unitName)) {
+        if (UnitMng.GLOBAL_BARRIER.equals(unitName)) {
 
             final NetEvents.NetEvent syncEvent = new NetEvents.NetEvent(BARRIER_EVENT, true);
             runtimeContext.netManager.broadcastEvent(syncEvent);

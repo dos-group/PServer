@@ -11,8 +11,8 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
 import de.tuberlin.pserver.runtime.filesystem.record.RowColValRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
-import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
+import de.tuberlin.pserver.runtime.partitioning.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.partitioning.partitioner.RowPartitioner;
 
 public final class StateBuilder {
 
@@ -99,7 +99,7 @@ public final class StateBuilder {
     public void clear() {
         this.scope = Scope.REPLICATED;
         this.at = "";
-        this.partitioner = MatrixByRowPartitioner.class;
+        this.partitioner = RowPartitioner.class;
         this.rows = 0;
         this.cols = 0;
         this.layout = Layout.ROW_LAYOUT;

@@ -6,7 +6,7 @@ import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.partitioning.partitioner.IMatrixPartitioner;
 
 import java.lang.reflect.Field;
 
@@ -78,7 +78,7 @@ public final class StateDescriptor {
                 field.getType(),
                 state.scope(),
                 parsedAtNodes.length > 0 ? parsedAtNodes : fallBackAtNodes,
-                state.partitionerClass(),
+                state.partitioner(),
                 state.rows(),
                 state.cols(),
                 state.layout(),

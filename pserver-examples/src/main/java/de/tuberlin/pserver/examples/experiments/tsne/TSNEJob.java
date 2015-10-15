@@ -5,12 +5,21 @@ import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
+import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
+import de.tuberlin.pserver.dsl.transaction.TransactionMng;
+import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
+import de.tuberlin.pserver.dsl.transaction.phases.Apply;
+import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
+import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
+import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.runtime.mcruntime.Parallel;
 import de.tuberlin.pserver.utils.MatrixBuilder;
 import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.types.DistributedMatrix;
+import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -37,13 +46,12 @@ public class TSNEJob extends Program {
     private static final double TOL = 1e-5;
 
     // ---------------------------------------------------
-    // Fields.
+    // State.
     // ---------------------------------------------------
 
     // input. i.e. activation vectors of a neuronal network
     @State(scope = Scope.REPLICATED, rows = ROWS, cols = INPUT_COLS, path = "datasets/mnist_10_X.csv")
     public Matrix X;
-
 
     // high dimensional affinity function (for two vectors of input space)
     @State(scope = Scope.PARTITIONED, rows = ROWS, cols = ROWS)
@@ -56,25 +64,26 @@ public class TSNEJob extends Program {
 
     public Matrix Y;
 
-    /*@StateMerger(stateObjects = "Y")
-    public final MatrixUpdateMerger YUpdater = (i, j, val, remoteVal) -> {
-        Matrix.PartitionShape shape = P.getPartitionShape();
-        if(i >= shape.rowOffset && i < shape.rowOffset + shape.rows) {
-            return val;
-        }
-        else {
-            return remoteVal;
-        }
-    };*/
+    // ---------------------------------------------------
+    // Transactions.
+    // ---------------------------------------------------
+
+    @Transaction(state = "Y", type = TransactionType.PULL)
+    public TransactionDefinition syncY = new TransactionDefinition(
+
+            (Prepare<Matrix, Matrix>) object -> null,
+
+            (Apply<Matrix, Void>) object -> null
+    );
 
     // ---------------------------------------------------
-    // Public Methods.
+    // Units.
     // ---------------------------------------------------
 
     @Unit
     public void main(final Lifecycle lifecycle) {
 
-        /*program.process(() -> {
+        lifecycle.process(() -> {
             // calc affinity. P is affinity for input X
             P.assign(binarySearch(X, TOL, PERPLEXITY));
             // symmetrize
@@ -86,120 +95,116 @@ public class TSNEJob extends Program {
             // early exaggeration
             P.scale(EARLY_EXAGGERATION, P);
 
-
             final long n = Y.rows();
             final long d = Y.cols();
 
             // Q is affinity for model Y
-            final Matrix Q            = new MatrixBuilder().dimension(n, n).build();
+            final Matrix Q = new MatrixBuilder().dimension(n, n).build();
             // for calc of Q
-            final Matrix Y_squared    = new MatrixBuilder().dimension(n, d).build();
+            final Matrix Y_squared = new MatrixBuilder().dimension(n, d).build();
             // strengthen good direction, weaken bad ones (in gradient descent)
-            final Matrix gains        = new MatrixBuilder().dimension(n, d).build();
+            final Matrix gains = new MatrixBuilder().dimension(n, d).build();
             // previous gradient. moment of direction "movement"
-            final Matrix iY           = new MatrixBuilder().dimension(n, d).build();
+            final Matrix iY = new MatrixBuilder().dimension(n, d).build();
             // current gradient
-            final Matrix dY           = new MatrixBuilder().dimension(n, d).build();
+            final Matrix dY = new MatrixBuilder().dimension(n, d).build();
             // need to center Y in each iteration. define reusable matrix here
-            final Matrix mean         = new MatrixBuilder().dimension(1, d).build();
+            final Matrix mean = new MatrixBuilder().dimension(1, d).build();
 
             gains.assign(1.0);
 
             // annealing factor
             final MutableDouble momentum = new MutableDouble(0.0);
 
-            CF.loop()
-                    .exe(NUM_EPOCHS, (epoch) -> {
+            UnitMng.loop(NUM_EPOCHS, (epoch) -> {
 
-                        // calc distance matrix of Y
-                        Y.applyOnElements(e -> Math.pow(e, 2), Y_squared);
-                        final Matrix sum_Y = Y_squared.aggregateRows(Matrix::sum);
-                        final Matrix num = Y.mul(Y.transpose())
-                                .scale(-2)
-                                .addVectorToRows(sum_Y)
-                                .transpose()
-                                .addVectorToRows(sum_Y)
-                                .applyOnElements(e -> 1.0 / (e + 1.0));
-                        // should be that way. but who knows...
-                        num.setDiagonalsToZero(num);
-                        // num for Y is the same D for X
-                        // its the distance matrix for Y...
+                // calc distance matrix of Y
+                Y.applyOnElements(e -> Math.pow(e, 2), Y_squared);
+                final Matrix sum_Y = Y_squared.aggregateRows(Matrix::sum);
+                final Matrix num = Y.mul(Y.transpose())
+                        .scale(-2)
+                        .addVectorToRows(sum_Y)
+                        .transpose()
+                        .addVectorToRows(sum_Y)
+                        .applyOnElements(e -> 1.0 / (e + 1.0));
+                // should be that way. but who knows...
+                num.setDiagonalsToZero(num);
+                // num for Y is the same D for X
+                // its the distance matrix for Y...
 
-                        // ---------------------------------------------------
-                        // (2) SINGLETON OPERATION!!!
-                        // ---------------------------------------------------
-                        final double sumNum = num.aggregateRows(Matrix::sum).sum();
+                // ---------------------------------------------------
+                // (2) SINGLETON OPERATION!!!
+                // ---------------------------------------------------
+                final double sumNum = num.aggregateRows(Matrix::sum).sum();
 
-                        num.scale(1.0 / sumNum, Q);
-                        Q.applyOnElements(e -> Math.max(e, 1e-12), Q);
+                num.scale(1.0 / sumNum, Q);
+                Q.applyOnElements(e -> Math.max(e, 1e-12), Q);
 
-                        //final Matrix PQ = P.sub(Q);
+                //final Matrix PQ = P.sub(Q);
 
-                        Matrix.PartitionShape shape = P.getPartitionShape();
-                        CF.loop().exe(shape.rows, (i) -> {
-                            // TODO: get target vector of dY instead. possible? or resuable?
-                            final Matrix sumVec = new MatrixBuilder().dimension(1, d).build();
-                            CF.loop().exe(P.cols(), (j) -> {
-                                final Double pq = P.get(shape.rowOffset + i, j) - Q.get(i, j);//PQ.get(i, j);
-                                final Double num_j = num.get(i, j);
-                                sumVec.add(
-                                        Y.getRow(i).sub(Y.getRow(j)) // yi - yj
-                                                .scale(pq * num_j),
-                                        sumVec);
-                            });
-                            dY.assignRow(shape.rowOffset + i, sumVec);
-                        });
-
-                        momentum.setValue((epoch < 20) ? INITIAL_MOMENTUM : FINAL_MOMENTUM);
-
-                        // set gain
-                        CF.loop()
-                                .exe(gains, (e, i, j, v) -> {
-                                    final Double dY_j = dY.get(i, j);
-                                    final Double iY_j = iY.get(i, j);
-                                    final Double gain_j = gains.get(i, j);
-                                    // same as in reference. but why?
-                                    gains.set(i, j, (dY_j > 0) == (iY_j > 0) ? gain_j * 0.8 : gain_j + 0.2);
-                                });
-
-                        gains.applyOnElements(e -> Math.max(e, MIN_GAIN), gains);
-
-                        // calc new gradient and apply
-                        iY.scale(momentum.getValue()).sub(dY.applyOnElements(gains, (e1, e2) -> e1 * e2).scale(LEARNING_RATE), iY);
-                        Y.add(iY, Y);
-
-                        DF.publishUpdate();
-                        executionManager.globalSync(programContext);
-                        DF.pullUpdate();
-
-                        // center Y
-                        mean.assign(0.0);
-                        for (int i = 0; i < Y.rows(); ++i)
-                            mean.add(Y.getRow(i), mean);
-                        mean.scale(-1. / Y.rows(), mean);
-                        Y.addVectorToRows(mean, Y);
-
-                        if ((epoch + 1) % 10 == 0) {
-                            double C = 0.0;
-                            for (int i = 0; i < P.rows(); ++i) {
-                                for (int j = 0; j < P.cols(); ++j) {
-                                    if (i != j) {
-                                        C += P.get(i, j) * Math.log(P.get(i, j) / Q.get(i, j));
-                                    }
-                                }
-                            }
-                            LOG.info("Iteration " + (epoch + 1) + ", Error: " + C);
-                        }
-
-                        if (epoch == 100) {
-                            P.scale(1.0 / EARLY_EXAGGERATION, P);
-                        }
-
-                        LOG.debug("Y: " + Y.getRow(0).toString());
-
+                Matrix.PartitionShape shape = P.getPartitionShape();
+                Parallel.For(shape.rows, (i) -> {
+                    // TODO: get target vector of dY instead. possible? or resuable?
+                    final Matrix sumVec = new MatrixBuilder().dimension(1, d).build();
+                    UnitMng.loop(P.cols(), (j) -> {
+                        final Double pq = P.get(shape.rowOffset + i, j) - Q.get(i, j);//PQ.get(i, j);
+                        final Double num_j = num.get(i, j);
+                        sumVec.add(
+                                Y.getRow(i).sub(Y.getRow(j)) // yi - yj
+                                        .scale(pq * num_j),
+                                sumVec);
                     });
+                    dY.assignRow(shape.rowOffset + i, sumVec);
+                });
 
-        }).postProcess(() -> result(Y));*/
+                momentum.setValue((epoch < 20) ? INITIAL_MOMENTUM : FINAL_MOMENTUM);
+
+                // set gain
+                Parallel.For(gains, (i, j, v) -> {
+                    final Double dY_j = dY.get(i, j);
+                    final Double iY_j = iY.get(i, j);
+                    final Double gain_j = gains.get(i, j);
+                    // same as in reference. but why?
+                    gains.set(i, j, (dY_j > 0) == (iY_j > 0) ? gain_j * 0.8 : gain_j + 0.2);
+                });
+
+                gains.applyOnElements(e -> Math.max(e, MIN_GAIN), gains);
+
+                // calc new gradient and apply
+                iY.scale(momentum.getValue()).sub(dY.applyOnElements(gains, (e1, e2) -> e1 * e2).scale(LEARNING_RATE), iY);
+                Y.add(iY, Y);
+
+                UnitMng.barrier(UnitMng.GLOBAL_BARRIER);
+                TransactionMng.commit(syncY);
+
+                // center Y
+                mean.assign(0.0);
+                for (int i = 0; i < Y.rows(); ++i)
+                    mean.add(Y.getRow(i), mean);
+                mean.scale(-1. / Y.rows(), mean);
+                Y.addVectorToRows(mean, Y);
+
+                if ((epoch + 1) % 10 == 0) {
+                    double C = 0.0;
+                    for (int i = 0; i < P.rows(); ++i) {
+                        for (int j = 0; j < P.cols(); ++j) {
+                            if (i != j) {
+                                C += P.get(i, j) * Math.log(P.get(i, j) / Q.get(i, j));
+                            }
+                        }
+                    }
+                    LOG.info("Iteration " + (epoch + 1) + ", Error: " + C);
+                }
+
+                if (epoch == 100) {
+                    P.scale(1.0 / EARLY_EXAGGERATION, P);
+                }
+
+                LOG.debug("Y: " + Y.getRow(0).toString());
+
+            });
+
+        }).postProcess(() -> result(Y));
     }
 
     // ---------------------------------------------------
@@ -284,7 +289,6 @@ public class TSNEJob extends Program {
 
         P.applyOnElements(e -> e / sumP, P);
 
-
         return new Tuple2<>(H, P);
     }
 
@@ -321,8 +325,6 @@ public class TSNEJob extends Program {
         } catch (Exception e) {
             LOG.error(e.getMessage());
         }
-
-
     }
 
     public static void main(final String[] args) {

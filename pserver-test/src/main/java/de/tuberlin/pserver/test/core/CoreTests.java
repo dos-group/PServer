@@ -33,7 +33,7 @@ public class CoreTests {
     // TODO: Every test is running for its own, but running the whole integration suite stalls.
     // TODO: Some test programs must interfere due to not properly cleaning program and runtime stateName after termination.
 
-    @Test
+    /*@Test
     public void testUnitControlFlow() { assert client.execute(UnitControlFlowTestJob.class) != null; }
 
     @Test
@@ -64,7 +64,10 @@ public class CoreTests {
     public void testMatrixDenseLoadingRow() { assert client.execute(MatrixDenseLoadingRowTestJob.class) != null; }
 
     @Test
-    public void testMatrixSparseLoading() { assert client.execute(MatrixSparseLoadingTestJob.class) != null; }
+    public void testMatrixSparseLoading() { assert client.execute(MatrixSparseLoadingTestJob.class) != null; }*/
+
+    @Test
+    public void testReplicatedMatrix() { assert client.execute(ReplicatedMatrixTestJob.class) != null; }
 
     // --------------------------------------------------
 

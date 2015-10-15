@@ -27,7 +27,7 @@ public final class GloVe extends Program {
 
     // 1496250 ms (Local: 4 Nodes with 8 Threads per Node)
 
-    // 1541774 ms (Local: 4 Nodes with 8 Threads per Node)
+    // 1541774 ms (Local: 4 Nodes with 2 Threads per Node)
 
     // ---------------------------------------------------
     // Constants.

@@ -1,16 +1,17 @@
-package de.tuberlin.pserver.runtime.partitioning;
+package de.tuberlin.pserver.runtime.partitioning.partitioner;
 
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 
 /**
- * Partitions a matrix into one partition of the same size as the matrix. Used if no partitioning is applied.
+ * Partitions a matrix into one partition of the same size as the matrix.
+ * Used if no partitioning is applied.
  */
-public class CompletePartitioner extends IMatrixPartitioner {
+public class VirtualRowPartitioner extends IMatrixPartitioner {
 
     private final Matrix.PartitionShape shape;
 
-    public CompletePartitioner(long rows, long cols, int nodeId, int[] atNodes) {
+    public VirtualRowPartitioner(long rows, long cols, int nodeId, int[] atNodes) {
         super(rows, cols, nodeId, atNodes);
         shape = new Matrix.PartitionShape(rows, cols, 0, 0);
     }
@@ -57,6 +58,6 @@ public class CompletePartitioner extends IMatrixPartitioner {
 
     @Override
     public IMatrixPartitioner ofNode(int nodeId) {
-        return new CompletePartitioner(rows, cols, nodeId, new int[] {nodeId});
+        return new VirtualRowPartitioner(rows, cols, nodeId, new int[] {nodeId});
     }
 }

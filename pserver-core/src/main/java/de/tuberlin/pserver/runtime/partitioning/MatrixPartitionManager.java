@@ -6,13 +6,16 @@ import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.runtime.partitioning.mtxentries.ImmutableMatrixEntry;
+import de.tuberlin.pserver.runtime.partitioning.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.partitioning.partitioner.NoPartitioner;
+import de.tuberlin.pserver.runtime.partitioning.partitioner.RowPartitioner;
 import de.tuberlin.pserver.utils.MatrixBuilder;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.partitioning.mtxentries.ImmutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
@@ -36,13 +39,15 @@ public final class MatrixPartitionManager {
 
     public final class MatrixLoadTask {
 
-        final ProgramContext programContext;
-        final StateDescriptor decl;
-        final FileDataIterator fileIterator;
+        final ProgramContext        programContext;
+        final StateDescriptor       decl;
+        final FileDataIterator      fileIterator;
+        final IMatrixPartitioner    partitioner;
 
         public MatrixLoadTask(ProgramContext programContext, StateDescriptor decl) {
             this.programContext  = programContext;
             this.decl         = decl;
+
             IRecordIteratorProducer recordFormatConfig;
             try {
                 recordFormatConfig = decl.recordFormatConfigClass.newInstance();
@@ -50,9 +55,20 @@ public final class MatrixPartitionManager {
             catch(IllegalAccessException | InstantiationException e) {
                 throw new RuntimeException("Could not instantiate RecordFormatConfig", e);
             }
-            this.fileIterator = fileSystemManager.createFileIterator(decl.path, recordFormatConfig, IMatrixPartitioner.newInstance(decl.partitionerClass, decl.rows, decl.cols, programContext.runtimeContext.nodeID, decl.atNodes));
-        }
 
+            this.partitioner = IMatrixPartitioner.newInstance(
+                    decl.partitionerClass,
+                    decl.rows, decl.cols,
+                    programContext.runtimeContext.nodeID,
+                    decl.atNodes
+            );
+
+            this.fileIterator = fileSystemManager.createFileIterator(
+                    decl.path,
+                    recordFormatConfig,
+                    partitioner
+            );
+        }
     }
 
     // ---------------------------------------------------
@@ -122,7 +138,6 @@ public final class MatrixPartitionManager {
     }
 
     public void loadFilesIntoDHT() {
-
         // Skip, if no loading is required.
         if (matrixLoadTasks.size() == 0) {
             return;
@@ -173,7 +188,7 @@ public final class MatrixPartitionManager {
         // threshold that indicates how many entries are gathered before sending
         int foreignEntriesThreshold = 2048;
         final Matrix matrix = getLoadingMatrix(task);
-        final IMatrixPartitioner matrixPartitioner = new MatrixByRowPartitioner(task.decl.rows, task.decl.cols, nodeId, task.decl.atNodes);
+        final IMatrixPartitioner matrixPartitioner = task.partitioner; //new RowPartitioner(task.decl.rows, task.decl.cols, nodeId, task.decl.atNodes);
         final FileDataIterator<? extends IRecord> fileIterator = task.fileIterator;
         ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
 
@@ -190,14 +205,15 @@ public final class MatrixPartitionManager {
 
                 // get the partition this record belongs to
                 int targetPartition = matrixPartitioner.getPartitionOfEntry(entry);
+
                 // if record belongs to own node, set the value
-                if (targetPartition == nodeId) {
+                if (targetPartition == nodeId || targetPartition == -1) {
                     synchronized (matrix) {
                         matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
                     }
                 } else {
                     // otherwise append entry to foreign entries and send them depending on threshold
-                    List<MatrixEntry> foreignsOfTargetNode = getListOrCreateIfNotExists(foreignEntries, targetPartition, foreignEntriesThreshold);
+                    final List<MatrixEntry> foreignsOfTargetNode = getListOrCreateIfNotExists(foreignEntries, targetPartition, foreignEntriesThreshold);
                     foreignsOfTargetNode.add(new ImmutableMatrixEntry(entry));
                     if (foreignsOfTargetNode.size() >= foreignEntriesThreshold) {
                         sendPartition(targetPartition, foreignsOfTargetNode, task);

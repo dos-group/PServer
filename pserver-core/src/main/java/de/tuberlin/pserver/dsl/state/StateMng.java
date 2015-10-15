@@ -1,12 +1,7 @@
 package de.tuberlin.pserver.dsl.state;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.dsl.state.properties.Scope;
-import de.tuberlin.pserver.math.Format;
-import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.ProgramContext;
-import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
 
 public final class StateMng {
 
