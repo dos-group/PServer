@@ -17,7 +17,6 @@ import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.ml.optimization.GradientDescent.GDOptimizer;
-import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.runtime.mcruntime.Parallel;
 
 import java.io.Serializable;
@@ -111,7 +110,7 @@ public class LogisticRegression extends Program {
                     + accuracy.score(XTest, yTest, W));
 
         }).postProcess(() -> {
-            UnitMng.barrier(ProgramContext.GLOBAL_BARRIER);
+            UnitMng.barrier(UnitMng.GLOBAL_BARRIER);
 
             TransactionMng.commit(syncW);
 

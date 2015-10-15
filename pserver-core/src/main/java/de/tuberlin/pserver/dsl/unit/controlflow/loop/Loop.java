@@ -1,5 +1,6 @@
 package de.tuberlin.pserver.dsl.unit.controlflow.loop;
 
+import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.dsl.unit.controlflow.base.CFStatement;
 
@@ -103,7 +104,7 @@ public final class Loop extends CFStatement {
             case ASYNCHRONOUS:
                 return;
             case BULK_SYNCHRONOUS:
-                programContext.synchronizeUnit(ProgramContext.GLOBAL_BARRIER);
+                programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
         }
     }
 }
