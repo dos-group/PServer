@@ -7,7 +7,7 @@ import de.tuberlin.pserver.runtime.filesystem.FileSection;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordIterator;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.partitioning.partitioner.IMatrixPartitioner;
 
 import java.io.*;
 

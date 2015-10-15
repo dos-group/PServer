@@ -11,7 +11,7 @@ import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.filesystem.record.RowRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
+import de.tuberlin.pserver.runtime.partitioning.partitioner.RowPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
 import org.slf4j.Logger;
@@ -52,7 +52,7 @@ public class MatrixDenseLoadingRowTestJob extends Program {
             matrix = runtimeManager.getDHT("matrix");
             int nodeId = programContext.runtimeContext.nodeID;
             int numNodes = programContext.nodeDOP;
-            MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(ROWS, COLS, nodeId, numNodes);
+            RowPartitioner partitioner = new RowPartitioner(ROWS, COLS, nodeId, numNodes);
             ReusableMatrixEntry entry = new MutableMatrixEntry(-1, -1, Double.NaN);
             BufferedReader br = null;
 

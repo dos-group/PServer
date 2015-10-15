@@ -10,7 +10,7 @@ import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
 import de.tuberlin.pserver.math.matrix.sparse.Sparse64Matrix;
 import de.tuberlin.pserver.math.utils.Utils;
 import de.tuberlin.pserver.runtime.ProgramContext;
-import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.partitioning.partitioner.IMatrixPartitioner;
 import de.tuberlin.pserver.types.DistributedMatrix;
 
 public final class MatrixBuilder {
