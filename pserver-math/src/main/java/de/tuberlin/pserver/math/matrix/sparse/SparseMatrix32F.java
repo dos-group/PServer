@@ -380,12 +380,12 @@ public class SparseMatrix32F implements Matrix32F {
     // ---------------------------------------------------
 
     @Override
-    public RowIterator<Float, Matrix<Float>> rowIterator() {
+    public RowIterator rowIterator() {
         return null;
     }
 
     @Override
-    public RowIterator<Float, Matrix<Float>> rowIterator(long startRow, long endRow) {
+    public RowIterator rowIterator(long startRow, long endRow) {
         return null;
     }
 }

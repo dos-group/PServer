@@ -14,6 +14,7 @@ import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.math.matrix.Format;
+import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.math.matrix.dense.DenseMatrix64F;
 import de.tuberlin.pserver.runtime.filesystem.record.RowRecordIteratorProducer;
 import de.tuberlin.pserver.runtime.mcruntime.Parallel;
@@ -43,15 +44,15 @@ public class KMeans extends Program {
             format = Format.DENSE_FORMAT,
             recordFormat = RowRecordIteratorProducer.class
     )
-    public DenseMatrix64F matrix;
+    public Matrix64F data;
 
     @State(scope = Scope.REPLICATED,
             rows = K,
             cols = COLS + 1
     )
-    public DenseMatrix64F centroidsUpdate;
+    public Matrix64F centroidsUpdate;
 
-    public final DenseMatrix64F centroids = new DenseMatrix64F(K, COLS);
+    public final Matrix64F centroids = new DenseMatrix64F(K, COLS);
 
     // ---------------------------------------------------
     // Transactions.
@@ -60,8 +61,8 @@ public class KMeans extends Program {
     @Transaction(state = "centroidsUpdate", type = TransactionType.PULL)
     public final TransactionDefinition centroidsUpdateSync = new TransactionDefinition(
 
-            (Apply<DenseMatrix64F, Void>) (updates) -> {
-                for (final DenseMatrix64F update : updates) {
+            (Apply<Matrix64F, Void>) (updates) -> {
+                for (final Matrix64F update : updates) {
                     Parallel.For(update, (i, j, v) -> centroidsUpdate.set(i, j, centroidsUpdate.get(i, j) + update.get(i, j)));
                 }
                 return null;
@@ -94,11 +95,11 @@ public class KMeans extends Program {
                 int nodeId = programContext.runtimeContext.nodeID;
 
                 // BEGIN: STANDARD KMEANS ON LOCAL PARTITION+
-                atomic(state(matrix), () -> {
-                    DenseMatrix64F.RowIterator iter = matrix.rowIterator();
-                    while (iter.hasNext()) {
-                        DenseMatrix64F point = iter.get();
-                        iter.next();
+                atomic(state(data), () -> {
+                    Matrix64F.RowIterator it = data.rowIterator();
+                    while (it.hasNext()) {
+                        Matrix64F point = it.get();
+                        it.next();
                         double closestDistance = Double.MAX_VALUE;
                         long closestCentroidId = -1;
                         for (long centroidId = 0; centroidId < K; centroidId++) {
@@ -108,7 +109,7 @@ public class KMeans extends Program {
                                 closestCentroidId = centroidId;
                             }
                         }
-                        DenseMatrix64F updateDelta = (DenseMatrix64F)point.copy(1, COLS + 1);
+                        Matrix64F updateDelta = point.copy(1, COLS + 1);
                         updateDelta.set(0, COLS, 1.);
 
                         centroidsUpdate.assignRow(closestCentroidId, centroidsUpdate.getRow(closestCentroidId).add(updateDelta));
@@ -120,7 +121,7 @@ public class KMeans extends Program {
                 TransactionMng.commit(centroidsUpdateSync);
                 for (int i = 0; i < K; i++) {
                     if (centroidsUpdate.get(i, COLS) > 0) {
-                        DenseMatrix64F update = (DenseMatrix64F)centroidsUpdate.getRow(i, 0, COLS);
+                        Matrix64F update = centroidsUpdate.getRow(i, 0, COLS);
                         if (centroidsUpdate.get(i, COLS) > 0) {
                             centroids.assignRow(i, update.scale(1. / centroidsUpdate.get(i, COLS), update));
                         }

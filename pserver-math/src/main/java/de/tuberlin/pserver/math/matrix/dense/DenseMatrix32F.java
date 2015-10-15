@@ -632,7 +632,7 @@ public class DenseMatrix32F implements Matrix32F {
 
     // ---------------------------------------------------
 
-    private static final class RowIterator implements Matrix.RowIterator<Float, Matrix<Float>> {
+    private static final class RowIterator implements Matrix32F.RowIterator {
 
         private DenseMatrix32F self;
 
@@ -697,12 +697,12 @@ public class DenseMatrix32F implements Matrix32F {
         }
 
         @Override
-        public Matrix<Float> get() {
+        public Matrix32F get() {
             return get(0, (int) self.cols);
         }
 
         @Override
-        public Matrix<Float> get(final long from, final long size) {
+        public Matrix32F get(final long from, final long size) {
             final float v[] = new float[(int)size];
             if(self.layout == Layout.ROW_LAYOUT) {
                 try {

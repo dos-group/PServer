@@ -90,4 +90,29 @@ public interface Matrix32F extends Matrix<Float> {
     @Override public Matrix32F concat(Matrix<Float> B);
 
     @Override public Matrix32F concat(Matrix<Float> B, Matrix<Float> C);
+
+    @Override public RowIterator rowIterator();
+
+    @Override public RowIterator rowIterator(final long startRow, final long endRow);
+
+    interface RowIterator extends Matrix.RowIterator<Float, Matrix32F> {
+
+        boolean hasNext();
+
+        void next();
+
+        void nextRandom();
+
+        Float value(final long col);
+
+        Matrix32F get();
+
+        Matrix32F get(final long from, final long size);
+
+        void reset();
+
+        long size();
+
+        long rowNum();
+    }
 }

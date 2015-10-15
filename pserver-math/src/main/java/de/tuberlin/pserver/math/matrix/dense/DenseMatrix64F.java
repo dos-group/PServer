@@ -631,7 +631,7 @@ public class DenseMatrix64F implements Matrix64F {
 
     // ---------------------------------------------------
 
-    public static final class RowIterator implements Matrix.RowIterator<Double, DenseMatrix64F> {
+    public static final class RowIterator implements Matrix64F.RowIterator {
 
         private DenseMatrix64F self;
 

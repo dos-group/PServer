@@ -379,12 +379,12 @@ public class SparseMatrix64F implements Matrix64F {
     // ---------------------------------------------------
 
     @Override
-    public RowIterator<Double, Matrix<Double>> rowIterator() {
+    public RowIterator rowIterator() {
         return null;
     }
 
     @Override
-    public RowIterator<Double, Matrix<Double>> rowIterator(long startRow, long endRow) {
+    public RowIterator rowIterator(long startRow, long endRow) {
         return null;
     }
 }

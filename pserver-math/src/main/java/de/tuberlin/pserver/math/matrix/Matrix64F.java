@@ -91,4 +91,29 @@ public interface Matrix64F extends Matrix<Double> {
     @Override public Matrix64F concat(Matrix<Double> B);
 
     @Override public Matrix64F concat(Matrix<Double> B, Matrix<Double> C);
+
+    @Override public RowIterator rowIterator();
+
+    @Override public RowIterator rowIterator(final long startRow, final long endRow);
+
+    interface RowIterator extends Matrix.RowIterator<Double, Matrix64F> {
+
+        boolean hasNext();
+
+        void next();
+
+        void nextRandom();
+
+        Double value(final long col);
+
+        Matrix64F get();
+
+        Matrix64F get(final long from, final long size);
+
+        void reset();
+
+        long size();
+
+        long rowNum();
+    }
 }

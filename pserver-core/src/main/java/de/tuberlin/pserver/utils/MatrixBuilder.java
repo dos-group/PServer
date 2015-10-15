@@ -61,9 +61,9 @@ public final class MatrixBuilder {
     }
 
     public MatrixBuilder elementType(final Class<?> type) {
-        if (type == DenseMatrix32F.class || type == SparseMatrix32F.class)
+        if (type == Matrix32F.class || type == DenseMatrix32F.class || type == SparseMatrix32F.class)
             this.elementType = ElementType.FLOAT_MATRIX;
-        else if (type == DenseMatrix64F.class || type == SparseMatrix64F.class)
+        else if (type == Matrix64F.class || type == DenseMatrix64F.class || type == SparseMatrix64F.class)
             this.elementType = ElementType.DOUBLE_MATRIX;
         else
             throw new IllegalStateException();
@@ -77,6 +77,7 @@ public final class MatrixBuilder {
                         .dimension(decl.rows, decl.cols)
                         .format(decl.format)
                         .layout(decl.layout)
+                        .elementType(decl.stateType)
                         .build();
 
             case PARTITIONED:
