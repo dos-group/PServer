@@ -2,18 +2,17 @@ package de.tuberlin.pserver.crdt.sets;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.compiler.Program;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 
 // TODO: this needs testing and debugging
-public class PNSetTestJob extends MLProgram {
+public class PNSetTestJob extends Program {
 
     @Unit(at = "0")
-    public void test(Program program) {
-        program.process(() -> {
-            CF.parUnit(0).exe(() -> {
-                PNSet<Integer> pns = new PNSet<>("one", dataManager);
+    public void test(Lifecycle lifecycle) {
+        lifecycle.process(() -> {
+                PNSet<Integer> pns = new PNSet<>("one", runtimeManager);
 
                 for (int i = 0; i < 10; i++) {
                     pns.add(i);
@@ -21,19 +20,17 @@ public class PNSetTestJob extends MLProgram {
 
                 pns.finish();
 
-                System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + pns.getSet());
-                System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + pns.getBuffer());
-            });
+                System.out.println("[DEBUG] Set of node " + programContext.runtimeContext.nodeID + ": "
+                        + pns.getSet());
+                System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": "
+                        + pns.getBuffer());
         });
     }
 
     @Unit(at = "1")
-    public void test2(Program program) {
-        program.process(() -> {
-            CF.parUnit(0).exe(() -> {
-                PNSet<Integer> pns = new PNSet<>("one", dataManager);
+    public void test2(Lifecycle lifecycle) {
+        lifecycle.process(() -> {
+                PNSet<Integer> pns = new PNSet<>("one", runtimeManager);
 
                 for (int i = 10; i <= 15; i++) {
                     pns.add(i);
@@ -47,26 +44,25 @@ public class PNSetTestJob extends MLProgram {
 
                 pns.finish();
 
-                System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + pns.getSet());
-                System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + pns.getBuffer());
-            });
+                System.out.println("[DEBUG] Set of node " + programContext.runtimeContext.nodeID + ": "
+                        + pns.getSet());
+                System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": "
+                        + pns.getBuffer());
         });
     }
 
     public static void main(final String[] args) {
 
-        // ISet the number of simulated nodes, can also be
+        // Set the number of simulated nodes, can also be
         // configured via 'pserver/pserver-core/src/main/resources/reference.simulation.conf'
         System.setProperty("simulation.numNodes", "2");
-        // ISet the memory each simulated node gets.
+        // Set the memory each simulated node gets.
         System.setProperty("jvmOptions", "[\"-Xmx256m\"]");
 
         PServerExecutor.LOCAL
                 // Second param is number of slots (threads executing the job) per node,
                 // should be 1 at the beginning.
-                .run(PNSetTestJob.class, 1)
+                .run(PNSetTestJob.class)
                 .done();
     }
 }

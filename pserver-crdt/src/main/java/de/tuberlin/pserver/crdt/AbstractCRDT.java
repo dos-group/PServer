@@ -2,7 +2,8 @@ package de.tuberlin.pserver.crdt;
 
 import de.tuberlin.pserver.crdt.operations.EndOperation;
 import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.MsgEventHandler;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -55,7 +56,7 @@ public abstract class AbstractCRDT<T> implements CRDT {
 
     private final String id;
 
-    private final DataManager dataManager;
+    private final RuntimeManager runtimeManager;
 
     private boolean allNodesRunning;
 
@@ -68,47 +69,48 @@ public abstract class AbstractCRDT<T> implements CRDT {
     /** Sole constructor
      *
      * @param id the ID of the CRDT that this replica belongs to
-     * @param dataManager the {@code DataManager} belonging to this {@code MLProgram}
+     * @param runtimeManager the {@code RuntimeManager} belonging to this {@code MLProgram}
      * */
-    protected AbstractCRDT(String id, DataManager dataManager) {
+    protected AbstractCRDT(String id, RuntimeManager runtimeManager) {
         this.runningNodes = new HashSet<>();
         this.finishedNodes = new HashSet<>();
         this.buffer = new LinkedList<>();
 
-        this.dataManager = dataManager;
+        this.runtimeManager = runtimeManager;
         this.id = id;
 
         this.allNodesRunning = false;
         this.allNodesFinished = false;
 
-        dataManager.addDataEventListener("Running_"+id, new DataManager.DataEventHandler() {
+        runtimeManager.addMsgEventListener("Running_" + id, new MsgEventHandler() {
             @Override
-            public void handleDataEvent(int srcNodeID, Object value) {
+            public void handleMsg(int srcNodeID, Object value) {
                 runningNodes.add(srcNodeID);
                 //System.out.println(runningNodes.size());
 
-                if (runningNodes.size() == dataManager.remoteNodeIDs.length) {
+                if (runningNodes.size() == runtimeManager.getRemoteNodeIDs().length) {
                     allNodesRunning = true;
-                    dataManager.removeDataEventListener("Running_"+id, this);
+                    runtimeManager.removeMsgEventListener("Running_" + id, this);
 
                     // This is necessary to reach replicas that were not online when the first "Running" message was sent
-                    dataManager.pushTo("Running_"+id, 0, dataManager.remoteNodeIDs);
+                    runtimeManager.send("Running_" + id, 0, runtimeManager.getRemoteNodeIDs());
                 }
             }
         });
 
-        dataManager.addDataEventListener("Operation_" + id, new DataManager.DataEventHandler() {
+        runtimeManager.addMsgEventListener("Operation_" + id, new MsgEventHandler() {
             @Override
-            public void handleDataEvent(int srcNodeID, Object value) {
-                if(value instanceof Operation) {
+            public void handleMsg(int srcNodeID, Object value) {
+                if (value instanceof Operation) {
                     //Suppress the unchecked warning cause by generics cast from object to Operation<T>
                     @SuppressWarnings("unchecked")
                     Operation<?> op = (Operation<?>) value;
                     if (op.getType() == Operation.END) {
                         addFinishedNode(srcNodeID);
                     } else {
-                            update(srcNodeID, op);
-                    }}
+                        update(srcNodeID, op);
+                    }
+                }
             }
         });
 
@@ -175,7 +177,7 @@ public abstract class AbstractCRDT<T> implements CRDT {
         // send to all nodes
         if(isAllNodesRunning()) {
             broadcastBuffer();
-            dataManager.pushTo("Operation_"+id, op, dataManager.remoteNodeIDs);
+            runtimeManager.send("Operation_"+id, op, runtimeManager.getRemoteNodeIDs());
         } else {
             buffer(op);
         }
@@ -195,7 +197,7 @@ public abstract class AbstractCRDT<T> implements CRDT {
     // ---------------------------------------------------
 
     private void ready() {
-        dataManager.pushTo("Running_" + id, 0, dataManager.remoteNodeIDs);
+        runtimeManager.send("Running_" + id, 0, runtimeManager.getRemoteNodeIDs());
     }
 
     private boolean isAllNodesRunning() {
@@ -214,7 +216,7 @@ public abstract class AbstractCRDT<T> implements CRDT {
         if(buffer.size() > 0) {
             System.out.println("[DEBUG] Broadcasting buffer size " + buffer.size());
             while (buffer.size() > 0) {
-                dataManager.pushTo("Operation_" + id, buffer.poll(), dataManager.remoteNodeIDs);
+                runtimeManager.send("Operation_" + id, buffer.poll(), runtimeManager.getRemoteNodeIDs());
             }
             return true;
         }
@@ -224,7 +226,7 @@ public abstract class AbstractCRDT<T> implements CRDT {
     private void addFinishedNode(int nodeID) {
         finishedNodes.add(nodeID);
 
-        if(finishedNodes.size() == dataManager.remoteNodeIDs.length) {
+        if(finishedNodes.size() == runtimeManager.getRemoteNodeIDs().length) {
             allNodesFinished = true;
         }
     }

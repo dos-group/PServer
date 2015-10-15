@@ -4,7 +4,7 @@ import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.SimpleOperation;
-import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 
 import javax.naming.OperationNotSupportedException;
 import java.io.Serializable;
@@ -24,10 +24,10 @@ public class GCounter extends AbstractCounter implements CRDT, Serializable {
      * Sole Constructor.
      *
      * @param id the ID of this CRDT
-     * @param dataManager the {@code DataManager} belonging to this {@code MLProgram}
+     * @param runtimeManager the {@code RuntimeManager} belonging to this {@code MLProgram}
      */
-    public GCounter(String id, DataManager dataManager) {
-        super(id, dataManager);
+    public GCounter(String id, RuntimeManager runtimeManager) {
+        super(id, runtimeManager);
     }
 
     // ---------------------------------------------------

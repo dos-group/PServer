@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.crdt.graphs;
 
 import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -11,11 +11,12 @@ import java.util.Set;
  * This class uses 2P-Sets to store the vertices and edges = &gt; all the implications that come with that
  *  (I think: elements can only be added and removed once)
  */
+// TODO: This implementation is not functional yet... :( => saved for later
 public class AddOnlyDAG<T> extends AbstractGraph<T> {
 
 
-    public AddOnlyDAG(String id, DataManager dataManager) {
-        super(id, dataManager);
+    public AddOnlyDAG(String id, RuntimeManager runtimeManager) {
+        super(id, runtimeManager);
     }
 
     @Override

@@ -4,21 +4,21 @@ import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.SimpleOperation;
-import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * In a Two-Phase ISet an element may be added and removed but never added again thereafter.
+ * In a Two-Phase Set an element may be added and removed but never added again thereafter.
  */
 
 public class TwoPSet<T> extends AbstractSet<T> {
     private final Set<T> set;
     private final Set<T> tombstone;
 
-    public TwoPSet(String id, DataManager dataManager) {
-        super(id, dataManager);
+    public TwoPSet(String id, RuntimeManager runtimeManager) {
+        super(id, runtimeManager);
 
         this.set = new HashSet<>();
         this.tombstone = new HashSet<>();

@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.crdt.registers;
 
-import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 
 public interface Register<T> {
 

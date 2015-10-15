@@ -1,12 +1,12 @@
 package de.tuberlin.pserver.crdt.sets;
 
-import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.TaggedOperation;
-import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 
 import java.util.*;
+import java.util.Set;
 
 /**
  *
@@ -15,8 +15,8 @@ import java.util.*;
 public class ORSet<T> extends AbstractSet<T> {
     private Map<T,List<UUID>> map = new HashMap<>();
 
-    public ORSet(String id, DataManager dataManager) {
-        super(id, dataManager);
+    public ORSet(String id, RuntimeManager runtimeManager) {
+        super(id, runtimeManager);
     }
 
     @Override

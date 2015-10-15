@@ -3,21 +3,21 @@ package de.tuberlin.pserver.crdt.sets;
 import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.SimpleOperation;
-import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.crdt.exceptions.NotUniqueException;
 
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * The Unique ISet assumes each value inserted into the set is unique. Hence, there is no need for a tombstone set.
+ * The Unique Set assumes each value inserted into the set is unique. Hence, there is no need for a tombstone set.
  */
 
 public class USet<T> extends AbstractSet<T> {
     private final Set<T> set = new HashSet<>();
 
-    public USet(String id, DataManager dataManager) {
-        super(id, dataManager);
+    public USet(String id, RuntimeManager runtimeManager) {
+        super(id, runtimeManager);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class USet<T> extends AbstractSet<T> {
 
     private boolean addElement(T value) {
         if(!set.add(value)) {
-            throw new NotUniqueException("The value "+ value + " is already contained in the Unique ISet and cannot be " +
+            throw new NotUniqueException("The value "+ value + " is already contained in the Unique Set and cannot be " +
                     "added again.");
         }
         return true;

@@ -2,12 +2,12 @@ package de.tuberlin.pserver.crdt.sets;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.compiler.Program;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 
 /**
- * A Grow-Only ISet supports operations add and lookup. There is no remove operation!
+ * A Grow-Only Set supports operations add and lookup. There is no remove operation!
  */
 
 // TODO: this only works to a precision of milliseconds (Date class)!
@@ -17,13 +17,12 @@ import de.tuberlin.pserver.runtime.MLProgram;
  * TODO: At the moment remove takes precedent with concurrent operations. Perhaps allow a flag for the user to choose if
  *  add or remove should take precedent
  */
-public class LWWSetTestJob extends MLProgram {
+public class LWWSetTestJob extends Program {
 
     @Unit(at = "0")
-    public void test(Program program) {
-        program.process(() -> {
-            CF.parUnit(0).exe(() -> {
-                LWWSet<Integer> lwws = new LWWSet<>("one", dataManager);
+    public void test(Lifecycle lifecycle) {
+        lifecycle.process(() -> {
+                LWWSet<Integer> lwws = new LWWSet<>("one", runtimeManager);
 
                 for (int i = 0; i <= 10; i++) {
                     lwws.add(i);
@@ -31,19 +30,17 @@ public class LWWSetTestJob extends MLProgram {
 
                 lwws.finish();
 
-                System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + lwws.getSet());
-                System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + lwws.getBuffer());
-            });
+                System.out.println("[DEBUG] Set of node " + programContext.runtimeContext.nodeID + ": "
+                        + lwws.getSet());
+                System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": "
+                        + lwws.getBuffer());
         });
     }
 
     @Unit(at = "1")
-    public void test2(Program program) {
-        program.process(() -> {
-            CF.parUnit(0).exe(() -> {
-                LWWSet<Integer> lwws = new LWWSet<>("one", dataManager);
+    public void test2(Lifecycle lifecycle) {
+        lifecycle.process(() -> {
+                LWWSet<Integer> lwws = new LWWSet<>("one", runtimeManager);
 
                 for (int i = 4; i <= 15; i++) {
                     lwws.add(i);
@@ -57,26 +54,25 @@ public class LWWSetTestJob extends MLProgram {
 
                 lwws.finish();
 
-                System.out.println("[DEBUG] ISet of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + lwws.getSet());
-                System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + lwws.getBuffer());
-            });
+                System.out.println("[DEBUG] Set of node " + programContext.runtimeContext.nodeID + ": "
+                        + lwws.getSet());
+                System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": "
+                        + lwws.getBuffer());
         });
     }
 
     public static void main(final String[] args) {
 
-        // ISet the number of simulated nodes, can also be
+        // Set the number of simulated nodes, can also be
         // configured via 'pserver/pserver-core/src/main/resources/reference.simulation.conf'
         System.setProperty("simulation.numNodes", "2");
-        // ISet the memory each simulated node gets.
+        // Set the memory each simulated node gets.
         System.setProperty("jvmOptions", "[\"-Xmx256m\"]");
 
         PServerExecutor.LOCAL
                 // Second param is number of slots (threads executing the job) per node,
                 // should be 1 at the beginning.
-                .run(LWWSetTestJob.class, 1)
+                .run(LWWSetTestJob.class)
                 .done();
     }
 }

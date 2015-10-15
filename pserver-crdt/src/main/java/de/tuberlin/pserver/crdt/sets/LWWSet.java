@@ -3,20 +3,20 @@ package de.tuberlin.pserver.crdt.sets;
 import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.TaggedOperation;
-import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 
 import java.util.*;
 
 /**
- * An element is in the set if it is in the add-ISet and not in the remove-ISet with a higher timestamp.
+ * An element is in the set if it is in the add-Set and not in the remove-Set with a higher timestamp.
  */
 // TODO: what about if this grows infinitely until it is too large for memory? Manual Garbage collection somehow?
 public class LWWSet<T> extends AbstractSet<T> {
     private final Map<T, Long> addMap;
     private final Map<T, Long> removeMap;
 
-    public LWWSet(String id, DataManager dataManager) {
-        super(id, dataManager);
+    public LWWSet(String id, RuntimeManager runtimeManager) {
+        super(id, runtimeManager);
         
         addMap = new HashMap<>();
         removeMap = new HashMap<>();
@@ -58,8 +58,8 @@ public class LWWSet<T> extends AbstractSet<T> {
     }
 
     @Override
-    public Set<T> getSet() {
-        Set<T> set = new HashSet<T>();
+    public java.util.Set<T> getSet() {
+        java.util.Set<T> set = new HashSet<T>();
 
         for(T key : addMap.keySet()) {
             if(removeMap.get(key) != null){

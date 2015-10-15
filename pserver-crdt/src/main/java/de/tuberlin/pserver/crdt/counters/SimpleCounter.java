@@ -4,7 +4,7 @@ import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.SimpleOperation;
-import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 
 /**
  * An implementation of the {@code Counter} interface which fully supports calls to {@code increment()} and
@@ -20,10 +20,10 @@ public class SimpleCounter extends AbstractCounter implements CRDT {
      * Sole constructor.
      *
      * @param id the ID for this CRDT
-     * @param dataManager the {@code DataManager} belonging to this {@code MLProgram}
+     * @param runtimeManager the {@code RuntimeManager} belonging to this {@code MLProgram}
      */
-    public SimpleCounter(String id, DataManager dataManager) {
-        super(id, dataManager);
+    public SimpleCounter(String id, RuntimeManager runtimeManager) {
+        super(id, runtimeManager);
     }
 
     // ---------------------------------------------------

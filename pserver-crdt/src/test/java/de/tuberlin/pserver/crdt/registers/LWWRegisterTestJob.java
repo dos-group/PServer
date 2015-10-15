@@ -2,19 +2,18 @@ package de.tuberlin.pserver.crdt.registers;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.dsl.controlflow.annotations.Unit;
-import de.tuberlin.pserver.dsl.controlflow.program.Program;
-import de.tuberlin.pserver.runtime.MLProgram;
+import de.tuberlin.pserver.compiler.Program;
+import de.tuberlin.pserver.dsl.unit.annotations.Unit;
+import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 
 // TODO: this only works to a precision of milliseconds (Date class)!
 // Is it ok to use System.nanoTime in multicore systems? http://www.principiaprogramatica.com/?p=16
-public class LWWRegisterTestJob extends MLProgram {
+public class LWWRegisterTestJob extends Program {
 
     @Unit(at = "0")
-    public void test(Program program) {
-        program.process(() -> {
-            CF.parUnit(0).exe(() -> {
-                LWWRegister<Integer> lwwr = new LWWRegister<>("one", dataManager, (i1, i2) -> i1 > i2);
+    public void test(Lifecycle lifecycle) {
+        lifecycle.process(() -> {
+                LWWRegister<Integer> lwwr = new LWWRegister<>("one", runtimeManager, (i1, i2) -> i1 > i2);
 
                 for (int i = 0; i <= 10000; i++) {
                     lwwr.set(i);
@@ -22,19 +21,17 @@ public class LWWRegisterTestJob extends MLProgram {
 
                 lwwr.finish();
 
-                System.out.println("[DEBUG] Register of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + lwwr.getRegister());
-                System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + lwwr.getBuffer());
-            });
+                System.out.println("[DEBUG] Register of node " + programContext.runtimeContext.nodeID + ": "
+                        + lwwr.getRegister());
+                System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": "
+                        + lwwr.getBuffer());
         });
     }
 
     @Unit(at = "1")
-    public void test2(Program program) {
-        program.process(() -> {
-            CF.parUnit(0).exe(() -> {
-                LWWRegister<Integer> lwwr = new LWWRegister<>("one", dataManager, (i1, i2) -> i1 > i2);
+    public void test2(Lifecycle lifecycle) {
+        lifecycle.process(() -> {
+                LWWRegister<Integer> lwwr = new LWWRegister<>("one", runtimeManager, (i1, i2) -> i1 > i2);
 
                 for (int i = 0; i <= 10; i++) {
                     lwwr.set(i);
@@ -43,26 +40,25 @@ public class LWWRegisterTestJob extends MLProgram {
 
                 lwwr.finish();
 
-                System.out.println("[DEBUG] Register of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + lwwr.getRegister());
-                System.out.println("[DEBUG] Buffer of node " + slotContext.programContext.runtimeContext.nodeID +
-                        " slot " + slotContext.slotID + ": " + lwwr.getBuffer());
-            });
+                System.out.println("[DEBUG] Register of node " + programContext.runtimeContext.nodeID + ": "
+                        + lwwr.getRegister());
+                System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": "
+                        + lwwr.getBuffer());
         });
     }
 
     public static void main(final String[] args) {
 
-        // ISet the number of simulated nodes, can also be
+        // Set the number of simulated nodes, can also be
         // configured via 'pserver/pserver-core/src/main/resources/reference.simulation.conf'
         System.setProperty("simulation.numNodes", "2");
-        // ISet the memory each simulated node gets.
+        // Set the memory each simulated node gets.
         System.setProperty("jvmOptions", "[\"-Xmx256m\"]");
 
         PServerExecutor.LOCAL
                 // Second param is number of slots (threads executing the job) per node,
                 // should be 1 at the beginning.
-                .run(LWWRegisterTestJob.class, 1)
+                .run(LWWRegisterTestJob.class)
                 .done();
     }
 }
