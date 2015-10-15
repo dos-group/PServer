@@ -1,12 +1,12 @@
 package de.tuberlin.pserver.crdt.sets;
 
-import de.tuberlin.pserver.runtime.DataManager;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 
 import java.util.Set;
 
 // Todo: extend collections Set?
 // Todo: implement iterable?
-public interface ISet<T> {
+public interface Set<T> {
 
     boolean add(T value);
     boolean remove(T value);
