@@ -44,6 +44,8 @@ public final class ProgramContext implements Deactivatable {
 
     public final int nodeDOP;
 
+    public final String[] args;
+
     @GsonUtils.Exclude
     public final RuntimeContext runtimeContext;
 
@@ -74,7 +76,8 @@ public final class ProgramContext implements Deactivatable {
                           final String className,
                           final String simpleClassName,
                           final ProgramTable programTable,
-                          final int nodeDOP) {
+                          final int nodeDOP,
+                          final String[] args) {
 
         this.runtimeContext     = Preconditions.checkNotNull(runtimeContext);
         this.clientMachine      = Preconditions.checkNotNull(clientMachine);
@@ -83,6 +86,7 @@ public final class ProgramContext implements Deactivatable {
         this.simpleClassName    = Preconditions.checkNotNull(simpleClassName);
         this.programTable       = Preconditions.checkNotNull(programTable);
         this.nodeDOP            = nodeDOP;
+        this.args               = Preconditions.checkNotNull(args);
 
         this.programStore       = new NonBlockingHashMap<>();
         this.resultObjects      = new TreeMap<>();

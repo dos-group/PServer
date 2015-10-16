@@ -31,6 +31,8 @@ public final class ProgramSubmissionEvent extends NetEvents.NetEvent {
 
     public final UUID programID;
 
+    public final String[] args;
+
     @GsonUtils.Exclude
     public final List<Pair<String, byte[]>> byteCode;
 
@@ -40,13 +42,15 @@ public final class ProgramSubmissionEvent extends NetEvents.NetEvent {
 
     public ProgramSubmissionEvent(final MachineDescriptor clientMachine,
                                   final UUID programID,
-                                  final List<Pair<String, byte[]>> byteCode) {
+                                  final List<Pair<String, byte[]>> byteCode,
+                                  final String[] args) {
 
         super(PSERVER_JOB_SUBMISSION_EVENT);
 
         this.clientMachine      = Preconditions.checkNotNull(clientMachine);
         this.programID          = Preconditions.checkNotNull(programID);
         this.byteCode           = Collections.unmodifiableList(Preconditions.checkNotNull(byteCode));
+        this.args               = Preconditions.checkNotNull(args);
     }
 
     // ---------------------------------------------------

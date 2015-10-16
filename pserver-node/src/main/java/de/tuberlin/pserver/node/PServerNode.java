@@ -101,7 +101,8 @@ public final class PServerNode extends EventDispatcher {
                         clazz.getName(),
                         clazz.getSimpleName(),
                         programTable,
-                        nodeDOP
+                        nodeDOP,
+                        programSubmission.args
                 );
 
                 new Thread(() -> {
