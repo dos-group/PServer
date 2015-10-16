@@ -1,6 +1,5 @@
 package de.tuberlin.pserver.test.core;
 
-
 import de.tuberlin.pserver.client.PServerClient;
 import de.tuberlin.pserver.client.PServerClientFactory;
 import de.tuberlin.pserver.test.IntegrationTestSuite;
@@ -8,6 +7,13 @@ import de.tuberlin.pserver.test.core.programs.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.io.Serializable;
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.Assert.*;
+
 
 public class CoreTests {
 
@@ -65,6 +71,26 @@ public class CoreTests {
 
     @Test
     public void testMatrixSparseLoading() { assert client.execute(MatrixSparseLoadingTestJob.class) != null; }
+
+    @Test
+    public void testCmdLineArgs() {
+        final String[] testArgs = {"this", "is", "a", "test"};
+
+        UUID id = client.execute(CmdLineArgsTestJob.class, testArgs);
+        assertNotNull(id);
+
+        List<Serializable> success = client.getResultsFromWorker(id, 0);
+        assertTrue((boolean) success.get(0));
+    }
+
+    @Test
+    public void testWithoutCmdLineArgs() {
+        UUID id = client.execute(CmdLineArgsTestJob.class);
+        assertNotNull(id);
+
+        List<Serializable> success = client.getResultsFromWorker(id, 0);
+        assertTrue((boolean) success.get(0));
+    }
 
     // --------------------------------------------------
 
