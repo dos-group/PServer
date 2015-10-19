@@ -5,7 +5,7 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.runtime.partitioning.partitioner.RowPartitioner;
 
 public class ReplicatedMatrixTestJob extends Program {
@@ -15,20 +15,19 @@ public class ReplicatedMatrixTestJob extends Program {
             path = "datasets/rowcolval_dataset.csv",
             partitioner = RowPartitioner.class)
 
-    public Matrix X;
+    public Matrix64F X;
 
     @Unit
     public void main(final Lifecycle lifecycle) {
 
         lifecycle.process(() -> {
 
-
             if (programContext.node(3)) {
 
-                final Matrix.RowIterator it = X.rowIterator();
+                final Matrix64F.RowIterator it = X.rowIterator();
                 while (it.hasNext()) {
                     it.next();
-                    System.out.println(it.value(0));
+                    //System.out.println(it.value(0));
                 }
             }
         });

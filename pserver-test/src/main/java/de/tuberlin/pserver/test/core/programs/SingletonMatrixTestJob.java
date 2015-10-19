@@ -7,7 +7,7 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.dense.DenseMatrix64F;
+import de.tuberlin.pserver.math.matrix.Matrix64F;
 
 public class SingletonMatrixTestJob extends Program {
 
@@ -16,7 +16,7 @@ public class SingletonMatrixTestJob extends Program {
     private static final int COLS = 100;
 
     @State(scope = Scope.SINGLETON, at = "0", rows = ROWS, cols = COLS)
-    public DenseMatrix64F W;
+    public Matrix64F W;
 
     @Unit(at = "1 - 3")
     public void main(final Lifecycle lifecycle) {

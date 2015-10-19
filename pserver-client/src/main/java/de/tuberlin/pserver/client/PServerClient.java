@@ -140,7 +140,7 @@ public final class PServerClient extends EventDispatcher {
 
             if (jobResults.get(Pair.of(jobUID, i)).get(0) instanceof ProgramFailureEvent) {
                 final ProgramFailureEvent pfe = (ProgramFailureEvent) jobResults.get(Pair.of(jobUID, i)).get(0);
-                LOG.error(pfe.toString());
+                LOG.info(pfe.toString());
                 programError = true;
             }
         }

@@ -118,6 +118,10 @@ public final class DHTManager extends EventDispatcher {
             event.setPayload(key);
             netManager.broadcastEvent(event);
         }
+
+        public void clearContext() {
+            keyDirectory.clear();
+        }
     }
 
     // ---------------------------------------------------
@@ -201,6 +205,11 @@ public final class DHTManager extends EventDispatcher {
     }
 
     public static DHTManager getInstance() { return Preconditions.checkNotNull(globalDHTInstance.get()); }
+
+    public void clearContext() {
+        globalKeyDirectory.clearContext();
+        store.clear();
+    }
 
     // ---------------------------------------------------
     // Event Handler.

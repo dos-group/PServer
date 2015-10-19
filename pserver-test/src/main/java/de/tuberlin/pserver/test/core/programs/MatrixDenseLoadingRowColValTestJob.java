@@ -9,12 +9,11 @@ import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Layout;
+import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.runtime.filesystem.record.RowColValRecordIteratorProducer;
 import de.tuberlin.pserver.runtime.partitioning.partitioner.RowPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -26,13 +25,11 @@ public class MatrixDenseLoadingRowColValTestJob extends Program {
     private static final long COLS = 250;
 
     // use this, if you want to run this test directly outside the IntegrationTestSuite
-//  private final String FILE = "pserver-test/src/main/resources/rowcolval_dataset_1000_250_shuffeled.csv";
+    // private final String FILE = "pserver-test/src/main/resources/rowcolval_dataset_1000_250_shuffeled.csv";
 
-    private final String FILE = "src/main/resources/rowcolval_dataset_1000_250_shuffeled.csv";
+    private final String FILE = "pserver-test/src/main/resources/rowcolval_dataset_1000_250_shuffeled.csv";
 
-    private static final Logger LOG = LoggerFactory.getLogger(MatrixDenseLoadingRowColValTestJob.class);
-
-    /*@State(
+    @State(
             path = FILE,
             rows = ROWS,
             cols = COLS,
@@ -41,18 +38,18 @@ public class MatrixDenseLoadingRowColValTestJob extends Program {
             format = Format.DENSE_FORMAT,
             layout = Layout.ROW_LAYOUT
     )
-    public Matrix matrix;*/
+    public Matrix64F matrix;
 
     @Unit
     public void main(final Lifecycle lifecycle) {
 
-        /*lifecycle.process(() -> {
+        lifecycle.process(() -> {
 
             matrix = runtimeManager.getDHT("matrix");
             int nodeId = programContext.runtimeContext.nodeID;
             int numNodes = programContext.nodeDOP;
             RowPartitioner partitioner = new RowPartitioner(ROWS, COLS, nodeId, numNodes);
-            ReusableMatrixEntry entry = new MutableMatrixEntry(-1, -1, Double.NaN);
+            ReusableMatrixEntry<Double> entry = new MutableMatrixEntry<>(-1, -1, Double.NaN);
             BufferedReader br = null;
 
             try {
@@ -85,7 +82,7 @@ public class MatrixDenseLoadingRowColValTestJob extends Program {
                     }
                 }
             }
-        });*/
+        });
     }
 
     public static void main(String[] args) {

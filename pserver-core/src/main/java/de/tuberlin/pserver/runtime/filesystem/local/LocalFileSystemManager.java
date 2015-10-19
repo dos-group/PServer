@@ -114,6 +114,6 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
         LOG.debug("["+infraManager.getNodeID()+"] All nodes finished computing local input splits");
 
-        //netManager.removeEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler); // TODO: This can lead to a deadlock!
+        netManager.removeEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler); // TODO: This can lead to a deadlock!
     }
 }

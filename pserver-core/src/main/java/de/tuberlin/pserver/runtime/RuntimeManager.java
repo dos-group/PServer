@@ -86,6 +86,7 @@ public final class RuntimeManager {
     }
 
     public void clearContext() {
+        dhtManager.clearContext();
         stateAllocator.clearContext();
         fileManager.clearContext();
     }
@@ -99,14 +100,21 @@ public final class RuntimeManager {
     // ---------------------------------------------------
 
     private void allocateState(final ProgramContext programContext) throws Exception {
-        for (final StateDescriptor decl : programContext.programTable.getState()) {
-            if (MatrixBase.class.isAssignableFrom(decl.stateType)) {
-                MatrixBase m = stateAllocator.alloc(programContext, decl);
+        for (final StateDescriptor state : programContext.programTable.getState()) {
+            if (MatrixBase.class.isAssignableFrom(state.stateType)) {
+                MatrixBase m = stateAllocator.alloc(programContext, state);
                 if (m != null)
-                    putDHT(decl.stateName, m);
+                    putDHT(state.stateName, m);
             } else
                 throw new IllegalStateException();
         }
+
+        try {
+            Thread.sleep(2000); // TODO: REMOVE !!!
+        } catch (InterruptedException ex) {
+            throw new IllegalStateException(ex);
+        }
+
         stateAllocator.loadData(programContext);
     }
 
@@ -114,16 +122,16 @@ public final class RuntimeManager {
         for (final StateDescriptor state : programTable.getState()) {
             final Field field = programTable.getProgramClass().getDeclaredField(state.stateName);
             final Object stateObj = getDHT(state.stateName);
-            Preconditions.checkState(stateObj != null);
+            Preconditions.checkState(stateObj != null, "State object '" + state.stateName + "' not found.");
             field.set(instance, stateObj);
         }
     }
 
     private void invokeProgram(final ProgramTable programTable, final Program instance) {
-        for (final UnitDescriptor decl : programTable.getUnits()) {
-            if (ArrayUtils.contains(decl.atNodes, infraManager.getNodeID())) {
+        for (final UnitDescriptor unit : programTable.getUnits()) {
+            if (ArrayUtils.contains(unit.atNodes, infraManager.getNodeID())) {
                 try {
-                    decl.method.invoke(instance, instance.getLifecycle());
+                    unit.method.invoke(instance, instance.getLifecycle());
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     throw new IllegalStateException(e);
                 }
