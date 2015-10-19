@@ -28,7 +28,9 @@ public class KMeans extends Program {
     // ---------------------------------------------------
 
     private static final long ROWS = 1000;
+
     private static final long COLS = 2;
+
     private static final int K = 2;
 
     private static final String FILE = "datasets/stripes2.csv";
@@ -52,8 +54,6 @@ public class KMeans extends Program {
     )
     public Matrix64F centroidsUpdate;
 
-    public final Matrix64F centroids = new DenseMatrix64F(K, COLS);
-
     // ---------------------------------------------------
     // Transactions.
     // ---------------------------------------------------
@@ -76,6 +76,8 @@ public class KMeans extends Program {
     @Unit
     public void main(final Lifecycle lifecycle) {
 
+        final Matrix64F centroids = new DenseMatrix64F(K, COLS);
+
         lifecycle.preProcess(() -> {
 
             Random rand = new Random(42);
@@ -86,19 +88,17 @@ public class KMeans extends Program {
 
             centroids.setArray(data);
 
-
         }).process(() -> {
 
             centroidsUpdate.assign(0.);
 
             UnitMng.loop(10, Loop.BULK_SYNCHRONOUS, (iteration) -> {
-                int nodeId = programContext.runtimeContext.nodeID;
 
                 // BEGIN: STANDARD KMEANS ON LOCAL PARTITION+
                 atomic(state(data), () -> {
                     Matrix64F.RowIterator it = data.rowIterator();
                     while (it.hasNext()) {
-                        Matrix64F point = it.get();
+                        final Matrix64F point = it.get();
                         it.next();
                         double closestDistance = Double.MAX_VALUE;
                         long closestCentroidId = -1;
@@ -119,9 +119,10 @@ public class KMeans extends Program {
 
                 // BEGIN: PULL MODEL FROM OTHER NODES AND MERGE
                 TransactionMng.commit(centroidsUpdateSync);
+
                 for (int i = 0; i < K; i++) {
                     if (centroidsUpdate.get(i, COLS) > 0) {
-                        Matrix64F update = centroidsUpdate.getRow(i, 0, COLS);
+                        final Matrix64F update = centroidsUpdate.getRow(i, 0, COLS);
                         if (centroidsUpdate.get(i, COLS) > 0) {
                             centroids.assignRow(i, update.scale(1. / centroidsUpdate.get(i, COLS), update));
                         }
@@ -147,6 +148,8 @@ public class KMeans extends Program {
     public static void main(String[] args) {
         local();
     }
+
+    // ---------------------------------------------------
 
     public static void cluster() {
         System.setProperty("pserver.profile", "wally");

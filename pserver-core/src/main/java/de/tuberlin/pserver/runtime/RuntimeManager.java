@@ -3,26 +3,24 @@ package de.tuberlin.pserver.runtime;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.compiler.*;
+import de.tuberlin.pserver.core.common.Deactivatable;
 import de.tuberlin.pserver.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.math.SharedObject;
-import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.runtime.dht.DHTKey;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
 import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import org.apache.commons.lang3.ArrayUtils;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
-public final class RuntimeManager {
+public final class RuntimeManager implements Deactivatable {
 
     // ---------------------------------------------------
     // Constants.
@@ -46,8 +44,6 @@ public final class RuntimeManager {
 
     private final DHTManager dhtManager;
 
-    private final StateAllocator stateAllocator;
-
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
@@ -61,10 +57,16 @@ public final class RuntimeManager {
         this.netManager     = Preconditions.checkNotNull(netManager);
         this.fileManager    = Preconditions.checkNotNull(fileManager);
         this.dhtManager     = Preconditions.checkNotNull(dhtManager);
-        this.stateAllocator = new StateAllocator(netManager, fileManager);
 
         this.nodeIDs        = IntStream.iterate(0, x -> x + 1).limit(infraManager.getMachines().size()).toArray();
         this.remoteNodeIDs  = ArrayUtils.removeElements(nodeIDs, infraManager.getNodeID());
+    }
+
+    public void deactivate() {
+
+        dhtManager.clearContext();
+
+        fileManager.clearContext();
     }
 
     // ---------------------------------------------------
@@ -76,67 +78,11 @@ public final class RuntimeManager {
     public int[] getRemoteNodeIDs() { return remoteNodeIDs; }
 
     // ---------------------------------------------------
-    // Program Binding.
-    // ---------------------------------------------------
-
-    public void bind(final Program instance) throws Exception {
-        allocateState(instance.programContext);
-        bindState(instance.programContext.programTable, instance);
-        invokeProgram(instance.programContext.programTable, instance);
-    }
-
-    public void clearContext() {
-        dhtManager.clearContext();
-        stateAllocator.clearContext();
-        fileManager.clearContext();
-    }
 
     public TransactionDefinition createTransaction(final ProgramContext programContext, final TransactionDescriptor descriptor) {
         final TransactionController controller = new TransactionController(programContext.runtimeContext, descriptor);
         programContext.programTable.addTransactionController(controller);
         return descriptor.definition;
-    }
-
-    // ---------------------------------------------------
-
-    private void allocateState(final ProgramContext programContext) throws Exception {
-        for (final StateDescriptor state : programContext.programTable.getState()) {
-            if (MatrixBase.class.isAssignableFrom(state.stateType)) {
-                MatrixBase m = stateAllocator.alloc(programContext, state);
-                if (m != null)
-                    putDHT(state.stateName, m);
-            } else
-                throw new IllegalStateException();
-        }
-
-        try {
-            Thread.sleep(2000); // TODO: REMOVE !!!
-        } catch (InterruptedException ex) {
-            throw new IllegalStateException(ex);
-        }
-
-        stateAllocator.loadData(programContext);
-    }
-
-    private void bindState(final ProgramTable programTable, final Program instance) throws Exception {
-        for (final StateDescriptor state : programTable.getState()) {
-            final Field field = programTable.getProgramClass().getDeclaredField(state.stateName);
-            final Object stateObj = getDHT(state.stateName);
-            Preconditions.checkState(stateObj != null, "State object '" + state.stateName + "' not found.");
-            field.set(instance, stateObj);
-        }
-    }
-
-    private void invokeProgram(final ProgramTable programTable, final Program instance) {
-        for (final UnitDescriptor unit : programTable.getUnits()) {
-            if (ArrayUtils.contains(unit.atNodes, infraManager.getNodeID())) {
-                try {
-                    unit.method.invoke(instance, instance.getLifecycle());
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    throw new IllegalStateException(e);
-                }
-            }
-        }
     }
 
     // ---------------------------------------------------
