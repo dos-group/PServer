@@ -5,7 +5,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        final MCRuntime mcRuntime = MCRuntime.INSTANCE;
+        final ParallelRuntime parallelRuntime = ParallelRuntime.INSTANCE;
 
         //mcRuntime.create(4);
 
@@ -260,6 +260,6 @@ public class Main {
             System.out.println("FINISHED TEST (7)");
         }
 
-        mcRuntime.deactivate();
+        parallelRuntime.deactivate();
     }
 }

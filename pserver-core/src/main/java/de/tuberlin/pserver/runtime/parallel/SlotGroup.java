@@ -54,7 +54,7 @@ public final class SlotGroup {
         try {
             barrier.await(40000, TimeUnit.MILLISECONDS);
         } catch (TimeoutException | BrokenBarrierException e) {
-            System.out.println(MCRuntime.INSTANCE.getSlotJavaStackTraces());
+            System.out.println(ParallelRuntime.INSTANCE.getSlotJavaStackTraces());
             throw e;
         }
     }

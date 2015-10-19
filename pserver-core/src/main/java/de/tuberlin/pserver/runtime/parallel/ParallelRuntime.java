@@ -6,7 +6,7 @@ import de.tuberlin.pserver.runtime.core.common.Deactivatable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public enum MCRuntime implements Deactivatable {
+public enum ParallelRuntime implements Deactivatable {
     INSTANCE(Runtime.getRuntime().availableProcessors());
 
     // ---------------------------------------------------
@@ -25,7 +25,7 @@ public enum MCRuntime implements Deactivatable {
     // Constructor.
     // ---------------------------------------------------
 
-    private MCRuntime(final int numSlots) {
+    private ParallelRuntime(final int numSlots) {
 
         this.threadToWorkerSlotMap = new ConcurrentHashMap<>();
 
@@ -151,7 +151,7 @@ public enum MCRuntime implements Deactivatable {
     // Private Methods.
     // ---------------------------------------------------
 
-    public MCRuntime create(final int numSlots) {
+    public ParallelRuntime create(final int numSlots) {
 
         for (int i = 0; i < numSlots; ++i) {
 

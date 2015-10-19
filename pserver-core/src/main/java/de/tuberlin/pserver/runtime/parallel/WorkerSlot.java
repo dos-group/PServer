@@ -38,7 +38,7 @@ public final class WorkerSlot {
     // Fields.
     // ---------------------------------------------------
 
-    private static MCRuntime mcRuntime;
+    private static ParallelRuntime parallelRuntime;
 
     // ---------------------------------------------------
 
@@ -99,12 +99,12 @@ public final class WorkerSlot {
                 boolean finished;
                 do {
                     finished = true;
-                    for (final WorkerSlot ws : mcRuntime.getWorkerSlots()) {
+                    for (final WorkerSlot ws : parallelRuntime.getWorkerSlots()) {
                         finished &= ws.empty();
                     }
                 } while(!finished);
 
-                mcRuntime.clearAllocations();
+                parallelRuntime.clearAllocations();
             }
 
         } else {
@@ -129,7 +129,7 @@ public final class WorkerSlot {
 
     @Override public String toString() { return "" + slotID; }
 
-    public static void setMCRuntime(final MCRuntime mcRuntime) { WorkerSlot.mcRuntime = mcRuntime; }
+    public static void setMCRuntime(final ParallelRuntime parallelRuntime) { WorkerSlot.parallelRuntime = parallelRuntime; }
 
     // ---------------------------------------------------
     // Private Methods.
@@ -139,7 +139,7 @@ public final class WorkerSlot {
 
         return () -> {
 
-            mcRuntime.registerWorkerSlot(this);
+            parallelRuntime.registerWorkerSlot(this);
 
             while (isRunning.get()) {
 
@@ -165,7 +165,7 @@ public final class WorkerSlot {
 
     private StackFrame _push(final int dop, final ParallelBody body) throws Exception {
 
-        final SlotGroup currentSlotGroup = mcRuntime.allocSlots(dop);
+        final SlotGroup currentSlotGroup = parallelRuntime.allocSlots(dop);
 
         final StackFrame frame = new StackFrame(callStack.peek(), currentSlotGroup, body);
 

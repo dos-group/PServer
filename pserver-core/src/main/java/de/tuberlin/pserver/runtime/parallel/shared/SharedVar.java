@@ -2,7 +2,7 @@ package de.tuberlin.pserver.runtime.parallel.shared;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-import de.tuberlin.pserver.runtime.parallel.MCRuntime;
+import de.tuberlin.pserver.runtime.parallel.ParallelRuntime;
 import de.tuberlin.pserver.runtime.parallel.SlotGroup;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.apache.commons.lang3.tuple.Pair;
@@ -48,7 +48,7 @@ public final class SharedVar<T> {
 
         this.pc = Preconditions.checkNotNull(pc);
 
-        final SlotGroup slotGroup = MCRuntime.INSTANCE.currentSlotGroup();
+        final SlotGroup slotGroup = ParallelRuntime.INSTANCE.currentSlotGroup();
 
         final int masterSlotID = slotGroup.minSlotID;
 

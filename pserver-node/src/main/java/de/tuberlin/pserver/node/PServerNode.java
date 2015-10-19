@@ -13,7 +13,7 @@ import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.events.ProgramFailureEvent;
 import de.tuberlin.pserver.runtime.events.ProgramResultEvent;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
-import de.tuberlin.pserver.runtime.parallel.MCRuntime;
+import de.tuberlin.pserver.runtime.parallel.ParallelRuntime;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.Serializable;
@@ -86,7 +86,7 @@ public final class PServerNode extends EventDispatcher {
 
                     try {
 
-                        MCRuntime.INSTANCE.create(runtimeContext.numOfCores);
+                        ParallelRuntime.INSTANCE.create(runtimeContext.numOfCores);
 
                         driver.run();
 
@@ -120,7 +120,7 @@ public final class PServerNode extends EventDispatcher {
 
                         runtimeManager.clearContext();
 
-                        MCRuntime.INSTANCE.deactivate();
+                        ParallelRuntime.INSTANCE.deactivate();
                     }
 
                 }).start();

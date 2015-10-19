@@ -15,30 +15,30 @@ public final class Parallel {
     // Fields.
     // ---------------------------------------------------
 
-    private static MCRuntime mcRuntime;
+    private static ParallelRuntime parallelRuntime;
 
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
-    public Parallel() { Preconditions.checkState(mcRuntime != null); }
+    public Parallel() { Preconditions.checkState(parallelRuntime != null); }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    public static void setMCRuntime(final MCRuntime mcRuntime) { Parallel.mcRuntime = mcRuntime; }
+    public static void setMCRuntime(final ParallelRuntime parallelRuntime) { Parallel.parallelRuntime = parallelRuntime; }
 
     // ---------------------------------------------------
     // MCRuntime Primitives.
     // ---------------------------------------------------
 
-    public static int id() { return mcRuntime.currentSlot().slotID; }
+    public static int id() { return parallelRuntime.currentSlot().slotID; }
 
     public static void Serial(final ParallelBody body)
             throws Exception {
 
-        final WorkerSlot ws = mcRuntime.currentSlot();
+        final WorkerSlot ws = parallelRuntime.currentSlot();
         if (ws.slotID == 0 && !ws.empty()) {
             ws.run(1, body);
         } else
@@ -48,13 +48,13 @@ public final class Parallel {
     public static void Do(final ParallelBody parallelBody)
             throws Exception {
 
-        Do(mcRuntime.getNumOfWorkerSlots(), parallelBody);
+        Do(parallelRuntime.getNumOfWorkerSlots(), parallelBody);
     }
 
     public static void Do(final int dop, final ParallelBody parallelBody)
             throws Exception {
 
-        final WorkerSlot ws = mcRuntime.currentSlot();
+        final WorkerSlot ws = parallelRuntime.currentSlot();
         if (ws.slotID == 0 && ws.empty() && dop > 1) {
             executeByWorkerSlots(dop, parallelBody);
         } else {
@@ -65,13 +65,13 @@ public final class Parallel {
     public static void For(final long numIterations, final ParallelForBody<Long> body)
             throws Exception {
 
-        For(mcRuntime.getNumOfWorkerSlots(), 0, numIterations, body);
+        For(parallelRuntime.getNumOfWorkerSlots(), 0, numIterations, body);
     }
 
     public static void For(final long start, final long end, final ParallelForBody<Long> body)
             throws Exception {
 
-        For(mcRuntime.getNumOfWorkerSlots(), start, end, body);
+        For(parallelRuntime.getNumOfWorkerSlots(), start, end, body);
     }
 
     public static void For(final int dop, final long start, final long end, final ParallelForBody<Long> body)
@@ -89,7 +89,7 @@ public final class Parallel {
     public static <T> void For(final Iterable<T> elements, final ParallelForBody<T> body)
             throws Exception {
 
-        For(mcRuntime.getNumOfWorkerSlots(), elements, body);
+        For(parallelRuntime.getNumOfWorkerSlots(), elements, body);
     }
 
     public static <T> void For(final int dop, final Iterable<T> elements, final ParallelForBody<T> body)
@@ -129,7 +129,7 @@ public final class Parallel {
 
     private static void executeByWorkerSlots(final int dop, final ParallelBody parallelBody) throws Exception {
         for (int i = dop - 1; i >= 0; --i) {
-            mcRuntime.getWorkerSlots()[i].run(dop, parallelBody);
+            parallelRuntime.getWorkerSlots()[i].run(dop, parallelBody);
         }
     }
 }
