@@ -54,6 +54,8 @@ public class KMeans extends Program {
     )
     public Matrix64F centroidsUpdate;
 
+    public final Matrix64F centroids = new DenseMatrix64F(K, COLS);
+
     // ---------------------------------------------------
     // Transactions.
     // ---------------------------------------------------
@@ -65,6 +67,17 @@ public class KMeans extends Program {
                 for (final Matrix64F update : updates) {
                     Parallel.For(update, (i, j, v) -> centroidsUpdate.set(i, j, centroidsUpdate.get(i, j) + update.get(i, j)));
                 }
+
+                for (int i = 0; i < K; i++) {
+                    if (centroidsUpdate.get(i, COLS) > 0) {
+                        final Matrix64F update = centroidsUpdate.getRow(i, 0, COLS);
+                        if (centroidsUpdate.get(i, COLS) > 0) {
+                            centroids.assignRow(i, update.scale(1. / centroidsUpdate.get(i, COLS), update));
+                        }
+                    }
+                }
+                centroidsUpdate.assign(0.);
+
                 return null;
             }
     );
@@ -75,8 +88,6 @@ public class KMeans extends Program {
 
     @Unit
     public void main(final Lifecycle lifecycle) {
-
-        final Matrix64F centroids = new DenseMatrix64F(K, COLS);
 
         lifecycle.preProcess(() -> {
 
@@ -118,20 +129,8 @@ public class KMeans extends Program {
                 });
                 // END: STANDARD KMEANS ON LOCAL PARTITION
 
-                // BEGIN: PULL MODEL FROM OTHER NODES AND MERGE
+                // Pull model from remote nodes and merge.
                 TransactionMng.commit(centroidsUpdateSync);
-
-                for (int i = 0; i < K; i++) { // TODO: MOVE TO APPLY PHASE OF TRANSACTION!
-                    if (centroidsUpdate.get(i, COLS) > 0) {
-                        final Matrix64F update = centroidsUpdate.getRow(i, 0, COLS);
-                        if (centroidsUpdate.get(i, COLS) > 0) {
-                            centroids.assignRow(i, update.scale(1. / centroidsUpdate.get(i, COLS), update));
-                        }
-                    }
-                }
-                centroidsUpdate.assign(0.);
-                // END: PULL MODEL FROM OTHER NODES AND MERGE
-
             });
 
         }).postProcess(() -> {
