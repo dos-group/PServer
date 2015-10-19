@@ -55,7 +55,7 @@ public final class MatrixBuilder {
         return this;
     }
 
-    public MatrixBuilder elementType(final Class<?> type) {
+    /*public MatrixBuilder elementType(final Class<?> type) {
         if (type == Matrix32F.class || type == DenseMatrix32F.class || type == SparseMatrix32F.class)
             this.elementType = ElementType.FLOAT_MATRIX;
         else if (type == Matrix64F.class || type == DenseMatrix64F.class || type == SparseMatrix64F.class)
@@ -63,7 +63,7 @@ public final class MatrixBuilder {
         else
             throw new IllegalStateException();
         return this;
-    }
+    }*/
 
     @SuppressWarnings("unchecked")
     public <MAT extends Matrix> MAT build() {

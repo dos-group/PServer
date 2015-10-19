@@ -13,7 +13,7 @@ import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
 import de.tuberlin.pserver.math.operations.UnaryOperator;
 import de.tuberlin.pserver.utils.MatrixBuilder;
 import de.tuberlin.pserver.runtime.ProgramContext;
-import de.tuberlin.pserver.runtime.partitioning.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.partitioning.partitioner.IMatrixPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.RemotePartition;
 
 import java.util.Collection;

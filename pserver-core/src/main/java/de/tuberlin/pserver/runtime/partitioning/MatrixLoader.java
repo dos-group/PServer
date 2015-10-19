@@ -1,5 +1,6 @@
 package de.tuberlin.pserver.runtime.partitioning;
 
+
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
@@ -16,6 +17,7 @@ import de.tuberlin.pserver.runtime.partitioning.mtxentries.ImmutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
+import de.tuberlin.pserver.runtime.partitioning.partitioner.IMatrixPartitioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +44,8 @@ public final class MatrixLoader {
 
         final StateDescriptor state;
 
+        final IMatrixPartitioner partitioner;
+
         final FileDataIterator fileIterator;
 
         public MatrixLoadTask(final ProgramContext programContext,
@@ -52,17 +56,19 @@ public final class MatrixLoader {
             this.state = Preconditions.checkNotNull(state);
             this.matrix = Preconditions.checkNotNull(matrix);
 
+            this.partitioner = IMatrixPartitioner.newInstance(
+                    state.partitioner,
+                    state.rows,
+                    state.cols,
+                    programContext.runtimeContext.nodeID,
+                    state.atNodes
+            );
+
             try {
                 this.fileIterator = fileManager.createFileIterator(
                         state.path,
                         state.recordFormat.newInstance(),
-                        IMatrixPartitioner.newInstance(
-                                state.partitioner,
-                                state.rows,
-                                state.cols,
-                                programContext.runtimeContext.nodeID,
-                                state.atNodes
-                        )
+                        partitioner
                 );
             } catch(IllegalAccessException | InstantiationException e) {
                 throw new RuntimeException("Could not instantiate RecordFormatConfig", e);
@@ -187,7 +193,7 @@ public final class MatrixLoader {
         int foreignEntriesThreshold = 2048;
 
         final Matrix matrix = (Matrix)loadingMatrices.get(task.state.stateName);
-        final IMatrixPartitioner matrixPartitioner = new MatrixByRowPartitioner(task.state.rows, task.state.cols, nodeId, task.state.atNodes);
+        final IMatrixPartitioner matrixPartitioner = task.partitioner;
         final FileDataIterator<? extends IRecord> fileIterator = task.fileIterator;
         ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
 

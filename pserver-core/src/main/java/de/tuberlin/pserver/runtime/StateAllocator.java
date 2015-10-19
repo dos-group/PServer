@@ -3,6 +3,7 @@ package de.tuberlin.pserver.runtime;
 
 import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.core.net.NetManager;
+import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.math.matrix.ElementType;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
@@ -120,7 +121,7 @@ public class StateAllocator {
     }
 
     public void loadData(final ProgramContext programContext) throws Exception {
-        programContext.synchronizeUnit(ProgramContext.GLOBAL_BARRIER);
+        programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
         matrixLoader.loadFilesIntoDHT();
     }
 

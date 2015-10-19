@@ -62,6 +62,12 @@ public final class Parallel {
         }
     }
 
+    public static void For(final long numIterations, final ParallelForBody<Long> body)
+            throws Exception {
+
+        For(mcRuntime.getNumOfWorkerSlots(), 0, numIterations, body);
+    }
+
     public static void For(final long start, final long end, final ParallelForBody<Long> body)
             throws Exception {
 

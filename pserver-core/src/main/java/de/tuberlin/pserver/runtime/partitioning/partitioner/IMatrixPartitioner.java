@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.runtime.partitioning;
+package de.tuberlin.pserver.runtime.partitioning.partitioner;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
@@ -26,6 +26,10 @@ public abstract class IMatrixPartitioner {
     // Constructors.
     // ---------------------------------------------------
 
+    public IMatrixPartitioner(long rows, long cols, int nodeId, int numNodes) {
+        this(rows, cols, nodeId, IntStream.iterate(0, x -> x + 1).limit(numNodes).toArray());
+    }
+
     public IMatrixPartitioner(long rows, long cols, int nodeId, int[] atNodes) {
         boolean contained = false;
         for(int node : atNodes) {
@@ -44,10 +48,6 @@ public abstract class IMatrixPartitioner {
         this.cols    = cols;
         this.nodeId  = nodeId;
         this.atNodes = atNodes;
-    }
-
-    public IMatrixPartitioner(long rows, long cols, int nodeId, int numNodes) {
-        this(rows, cols, nodeId, IntStream.iterate(0, x -> x + 1).limit(numNodes).toArray());
     }
 
     // ---------------------------------------------------
