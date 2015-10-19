@@ -1,18 +1,17 @@
 package de.tuberlin.pserver.runtime.partitioning;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.MatrixBase;
-import de.tuberlin.pserver.runtime.ProgramContext;
+import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.core.net.NetEvents;
 import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.compiler.StateDescriptor;
-import de.tuberlin.pserver.utils.MatrixBuilder;
-import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix32F;
+import de.tuberlin.pserver.math.matrix.Matrix64F;
+import de.tuberlin.pserver.math.matrix.MatrixBase;
+import de.tuberlin.pserver.runtime.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.ImmutableMatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
@@ -29,52 +28,63 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class MatrixPartitionManager {
+public final class MatrixLoader {
 
     // ---------------------------------------------------
     // Inner Classes.
     // ---------------------------------------------------
 
-    public final class MatrixLoadTask {
+    public final class MatrixLoadTask<MAT extends MatrixBase> {
 
         final ProgramContext programContext;
 
-        final StateDescriptor decl;
+        final MAT matrix;
+
+        final StateDescriptor state;
 
         final FileDataIterator fileIterator;
 
-        public MatrixLoadTask(ProgramContext programContext, StateDescriptor decl) {
-            this.programContext  = programContext;
-            this.decl         = decl;
-            IRecordIteratorProducer recordFormatConfig;
+        public MatrixLoadTask(final ProgramContext programContext,
+                              final StateDescriptor state,
+                              final MAT matrix) {
+
+            this.programContext = Preconditions.checkNotNull(programContext);
+            this.state = Preconditions.checkNotNull(state);
+            this.matrix = Preconditions.checkNotNull(matrix);
+
             try {
-                recordFormatConfig = decl.recordFormatConfigClass.newInstance();
-            }
-            catch(IllegalAccessException | InstantiationException e) {
+                this.fileIterator = fileManager.createFileIterator(
+                        state.path,
+                        state.recordFormat.newInstance(),
+                        IMatrixPartitioner.newInstance(
+                                state.partitioner,
+                                state.rows,
+                                state.cols,
+                                programContext.runtimeContext.nodeID,
+                                state.atNodes
+                        )
+                );
+            } catch(IllegalAccessException | InstantiationException e) {
                 throw new RuntimeException("Could not instantiate RecordFormatConfig", e);
             }
-            this.fileIterator = fileSystemManager.createFileIterator(decl.path, recordFormatConfig, IMatrixPartitioner.newInstance(decl.partitionerClass, decl.rows, decl.cols, programContext.runtimeContext.nodeID, decl.atNodes));
         }
-
     }
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    private static final Logger LOG = LoggerFactory.getLogger(MatrixPartitionManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MatrixLoader.class);
 
     private final NetManager netManager;
 
-    private final FileSystemManager fileSystemManager;
+    private final FileSystemManager fileManager;
 
-    private final RuntimeManager runtimeManager;
-
-    private final Map<String, MatrixLoadTask> matrixLoadTasks;
+    private final Map<String, MatrixLoadTask<?>> matrixLoadTasks;
 
     private final Map<String, AtomicInteger> fileLoadingBarrier;
 
-    private final Map<String, Matrix> loadingMatrices;
+    private final Map<String, MatrixBase> loadingMatrices;
 
     private CountDownLatch finishedLoadingLatch;
 
@@ -82,13 +92,10 @@ public final class MatrixPartitionManager {
     // Constructor.
     // ---------------------------------------------------
 
-    public MatrixPartitionManager(final NetManager netManager,
-                                  final FileSystemManager fileManager,
-                                  final RuntimeManager runtimeManager) {
+    public MatrixLoader(final NetManager netManager, final FileSystemManager fileManager) {
 
         this.netManager         = Preconditions.checkNotNull(netManager);
-        this.fileSystemManager  = fileManager;
-        this.runtimeManager     = Preconditions.checkNotNull(runtimeManager);
+        this.fileManager        = Preconditions.checkNotNull(fileManager);
         this.matrixLoadTasks    = new ConcurrentHashMap<>();
         this.fileLoadingBarrier = new ConcurrentHashMap<>();
         this.loadingMatrices    = new ConcurrentHashMap<>();
@@ -98,10 +105,21 @@ public final class MatrixPartitionManager {
                 (event) -> {
                     final MatrixEntryPartitionEvent e = (MatrixEntryPartitionEvent) event;
                     final MatrixLoadTask task = matrixLoadTasks.get(e.getName());
-                    final Matrix matrix = getLoadingMatrix(task);
-                    for (final MatrixEntry entry : e.getEntries()) {
-                        synchronized (matrix) {
-                            matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
+                    final Matrix matrix = (Matrix)loadingMatrices.get(task.state.stateName);
+
+                    if (Matrix32F.class.isAssignableFrom(matrix.getClass())) {
+                        for (final MatrixEntry entry : e.getEntries()) {
+                            synchronized (matrix) {
+                                matrix.set(entry.getRow(), entry.getCol(), entry.getValue().floatValue());
+                            }
+                        }
+                    }
+
+                    if (Matrix64F.class.isAssignableFrom(matrix.getClass())) {
+                        for (final MatrixEntry entry : e.getEntries()) {
+                            synchronized (matrix) {
+                                matrix.set(entry.getRow(), entry.getCol(), entry.getValue().doubleValue());
+                            }
                         }
                     }
                 }
@@ -117,22 +135,25 @@ public final class MatrixPartitionManager {
     // Public Methods.
     // ---------------------------------------------------
 
-    public MatrixBase addLoadTaskReturnFutureTarget(final ProgramContext programContext, final StateDescriptor stateDescriptor) {
-        final MatrixLoadTask mlt = new MatrixLoadTask(programContext, stateDescriptor);
+    public <MAT extends MatrixBase> void addLoadingTask(final ProgramContext programContext,
+                                                        final StateDescriptor stateDescriptor,
+                                                        final MAT matrix) {
+
+        final MatrixLoadTask<MAT> mlt = new MatrixLoadTask<MAT>(programContext, stateDescriptor, matrix);
+        loadingMatrices.put(stateDescriptor.stateName, matrix);
         matrixLoadTasks.put(stateDescriptor.stateName, mlt);
         fileLoadingBarrier.put(stateDescriptor.stateName, new AtomicInteger(programContext.nodeDOP));
-        return getLoadingMatrix(mlt);
     }
 
     public void loadFilesIntoDHT() {
-
         // Skip, if no loading is required.
-        if (matrixLoadTasks.size() == 0) {
+        if (matrixLoadTasks.size() == 0)
             return;
-        }
-        fileSystemManager.computeInputSplitsForRegisteredFiles();
+
+        fileManager.computeInputSplitsForRegisteredFiles();
         finishedLoadingLatch = new CountDownLatch(matrixLoadTasks.size());
         matrixLoadTasks.values().forEach(this::loadMatrix);
+
         while(finishedLoadingLatch.getCount() > 0) {
             LOG.debug("waiting for " + finishedLoadingLatch.getCount() + " loading tasks to finish:");
             for(String taskName : fileLoadingBarrier.keySet()) {
@@ -156,15 +177,6 @@ public final class MatrixPartitionManager {
     // Private Methods.
     // ---------------------------------------------------
 
-    private Matrix getLoadingMatrix(final MatrixLoadTask task) {
-        Matrix matrix = loadingMatrices.get(task.decl.stateName);
-        if (matrix == null) {
-            matrix = (Matrix)MatrixBuilder.fromMatrixLoadTask(task.decl, task.programContext);
-            loadingMatrices.put(task.decl.stateName, matrix);
-        }
-        return matrix;
-    }
-
     @SuppressWarnings("unchecked")
     private void loadMatrix(final MatrixLoadTask task) {
         int nodeId = task.programContext.runtimeContext.nodeID;
@@ -173,8 +185,9 @@ public final class MatrixPartitionManager {
         Map<Integer, List<MatrixEntry>> foreignEntries = new HashMap<>();
         // threshold that indicates how many entries are gathered before sending
         int foreignEntriesThreshold = 2048;
-        final Matrix matrix = getLoadingMatrix(task);
-        final IMatrixPartitioner matrixPartitioner = new MatrixByRowPartitioner(task.decl.rows, task.decl.cols, nodeId, task.decl.atNodes);
+
+        final Matrix matrix = (Matrix)loadingMatrices.get(task.state.stateName);
+        final IMatrixPartitioner matrixPartitioner = new MatrixByRowPartitioner(task.state.rows, task.state.cols, nodeId, task.state.atNodes);
         final FileDataIterator<? extends IRecord> fileIterator = task.fileIterator;
         ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
 
@@ -186,22 +199,32 @@ public final class MatrixPartitionManager {
             while (record.hasNext()) {
                 entry = record.next(reusable);
 
-                if(entry.getRow() >= task.decl.rows || entry.getCol() >= task.decl.cols)
+                if(entry.getRow() >= task.state.rows || entry.getCol() >= task.state.cols)
                     continue;
 
                 // get the partition this record belongs to
                 int targetPartition = matrixPartitioner.getPartitionOfEntry(entry);
                 // if record belongs to own node, set the value
                 if (targetPartition == nodeId) {
-                    synchronized (matrix) {
-                        matrix.set(entry.getRow(), entry.getCol(), entry.getValue());
+
+                    if (Matrix32F.class.isAssignableFrom(matrix.getClass())) {
+                        synchronized (matrix) {
+                            matrix.set(entry.getRow(), entry.getCol(), entry.getValue().floatValue());
+                        }
                     }
+
+                    if (Matrix64F.class.isAssignableFrom(matrix.getClass())) {
+                        synchronized (matrix) {
+                            matrix.set(entry.getRow(), entry.getCol(), entry.getValue().doubleValue());
+                        }
+                    }
+
                 } else {
                     // otherwise append entry to foreign entries and send them depending on threshold
-                    List<MatrixEntry> foreignsOfTargetNode = getListOrCreateIfNotExists(foreignEntries, targetPartition, foreignEntriesThreshold);
-                    foreignsOfTargetNode.add(new ImmutableMatrixEntry(entry));
-                    if (foreignsOfTargetNode.size() >= foreignEntriesThreshold) {
-                        sendPartition(targetPartition, foreignsOfTargetNode, task);
+                    List<MatrixEntry> valuesOfTargetNode = getListOrCreateIfNotExists(foreignEntries, targetPartition, foreignEntriesThreshold);
+                    valuesOfTargetNode.add(new ImmutableMatrixEntry(entry));
+                    if (valuesOfTargetNode.size() >= foreignEntriesThreshold) {
+                        sendPartition(targetPartition, valuesOfTargetNode, task);
                     }
                 }
             }
@@ -210,8 +233,8 @@ public final class MatrixPartitionManager {
         for (Map.Entry<Integer, List<MatrixEntry>> map : foreignEntries.entrySet()) {
             sendPartition(map.getKey(), map.getValue(), task);
         }
-        netManager.broadcastEvent(new MatrixPartitionManager.FinishedLoadingFileEvent(task.decl.stateName));
-        finishedTask(task.decl.stateName);
+        netManager.broadcastEvent(new MatrixLoader.FinishedLoadingFileEvent(task.state.stateName));
+        finishedTask(task.state.stateName);
     }
 
     /**
@@ -223,19 +246,17 @@ public final class MatrixPartitionManager {
         final int counter = fileLoadingBarrier.get(name).decrementAndGet();
         if (counter <= 0) {
             // is it possible that a FinishedLoading event overtakes a SendPartition event?
-            // this assumes it is not:
-            final MatrixBase matrix = loadingMatrices.get(name);
-            runtimeManager.putDHT(name, matrix);
+            // this assumes it is not:;
             finishedLoadingLatch.countDown();
         }
     }
 
-    private List<MatrixEntry> getListOrCreateIfNotExists(Map<Integer, List<MatrixEntry>> foreignEntries, int partitionId, int threshold) {
-        List<MatrixEntry> result = foreignEntries.get(partitionId);
+    private List<MatrixEntry> getListOrCreateIfNotExists(Map<Integer, List<MatrixEntry>> entries, int partitionId, int threshold) {
+        List<MatrixEntry> result = entries.get(partitionId);
         // if list does not exist yet, create and put it into map
         if (result == null) {
             result = new ArrayList<>(threshold);
-            foreignEntries.put(partitionId, result);
+            entries.put(partitionId, result);
         }
         return result;
     }
@@ -243,7 +264,7 @@ public final class MatrixPartitionManager {
     private void sendPartition(int targetNodeId, List<MatrixEntry> entries, MatrixLoadTask task) {
         if (entries != null && !entries.isEmpty()) {
             MatrixEntry[] entriesArray = entries.toArray(new MatrixEntry[entries.size()]);
-            netManager.sendEvent(targetNodeId, new MatrixPartitionManager.MatrixEntryPartitionEvent(entriesArray, task.decl.stateName));
+            netManager.sendEvent(targetNodeId, new MatrixLoader.MatrixEntryPartitionEvent(entriesArray, task.state.stateName));
             entries.clear();
         }
     }

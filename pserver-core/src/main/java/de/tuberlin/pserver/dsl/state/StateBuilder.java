@@ -90,7 +90,7 @@ public final class StateBuilder {
                 recordFormat,
                 path
         );
-        programContext.runtimeContext.runtimeManager.allocateState(programContext, descriptor);
+        //programContext.runtimeContext.runtimeManager.allocateState(programContext, descriptor);
         return programContext.runtimeContext.runtimeManager.getDHT(stateName);
     }
 

@@ -25,9 +25,11 @@ public final class GloVe extends Program {
     // Measurements.
     // ---------------------------------------------------
 
-    // 1496250 ms (Local: 4 Nodes with 8 Threads per Node)
+    // 1496250 ms (Local: 4 Nodes with 8 Threads per Node) - 64F
 
-    // 1541774 ms (Local: 4 Nodes with 8 Threads per Node)
+    // 1541774 ms (Local: 4 Nodes with 2 Threads per Node) - 64F
+
+    // 1597422 ms (Local: 4 Nodes with 8 Threads per Node) - 32F
 
     // ---------------------------------------------------
     // Constants.
@@ -146,12 +148,12 @@ public final class GloVe extends Program {
                     if (v == 0)
                         return;
 
-                    final Matrix32F w1   = W.getCol(wordVecIdx);
+                    final Matrix32F w1  = W.getCol(wordVecIdx);
                     final float b1      = B.get(wordVecIdx);
-                    final Matrix32F gs1  = GradSq.getCol(wordVecIdx);
-                    final Matrix32F w2   = W.getCol(ctxVecIdx);
+                    final Matrix32F gs1 = GradSq.getCol(wordVecIdx);
+                    final Matrix32F w2  = W.getCol(ctxVecIdx);
                     final float b2      = B.get(ctxVecIdx);
-                    final Matrix32F gs2  = GradSq.getCol(ctxVecIdx);
+                    final Matrix32F gs2 = GradSq.getCol(ctxVecIdx);
 
                     final float diff = w1.dot(w2) + b1 + b2 - (float)Math.log(v);
                     float fdiff = (v > X_MAX) ? diff : (float)Math.pow(v / X_MAX, ALPHA) * diff;

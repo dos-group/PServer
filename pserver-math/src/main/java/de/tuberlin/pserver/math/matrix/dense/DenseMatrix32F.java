@@ -46,6 +46,7 @@ public class DenseMatrix32F implements Matrix32F {
     }
 
     public DenseMatrix32F(final long rows, final long cols) { this(rows, cols, null, Layout.ROW_LAYOUT); }
+    public DenseMatrix32F(final long rows, final long cols, final Layout layout) { this(rows, cols, null, Layout.ROW_LAYOUT); }
     public DenseMatrix32F(final long rows, final long cols, final float[] data) { this(rows, cols, data, Layout.ROW_LAYOUT); }
     public DenseMatrix32F(final long rows, final long cols, final float[] data, final Layout layout) {
         this.rows = rows;

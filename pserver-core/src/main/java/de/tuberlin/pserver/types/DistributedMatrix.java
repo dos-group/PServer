@@ -95,7 +95,7 @@ public class DistributedMatrix<V extends Number> implements Matrix<V> {
         return partitioner.translateGlobalToLocalCol(col);
     }
 
-    /*public Matrix.RowIterator createLocalRowIterator(final Matrix.RowIterator iter) {
+        /*public Matrix.RowIterator createLocalRowIterator(final Matrix.RowIterator iter) {
         return new Matrix.RowIterator() {
             @Override public boolean hasNext() { return iter.hasNext(); }
             @Override public void next() { iter.next(); }
@@ -108,6 +108,7 @@ public class DistributedMatrix<V extends Number> implements Matrix<V> {
             @Override public long rowNum() { return (int) partitioner.translateLocalToGlobalRow(iter.rowNum()); }
         };
     }*/
+
 
     private DistributedMatrix constructIntersectingMatrix(DistributedMatrix sourceMatrix, DistributedMatrix targetMatrix, Map<RemotePartition,PartitionShape> partitionMapping) {
 

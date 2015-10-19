@@ -91,6 +91,7 @@ public enum PServerNodeFactory {
                 infraManager.getNodeID(),
                 netManager,
                 DHTManager.getInstance(),
+                fileManager,
                 runtimeManager
         );
 

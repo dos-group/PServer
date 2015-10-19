@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.core.net.NetManager;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
+import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 
 public final class RuntimeContext {
 
@@ -24,6 +25,8 @@ public final class RuntimeContext {
 
     public final DHTManager dhtManager;
 
+    public final FileSystemManager fileManager;
+
     public final RuntimeManager runtimeManager;
 
     // ---------------------------------------------------
@@ -36,14 +39,16 @@ public final class RuntimeContext {
                           final int nodeID,
                           final NetManager netManager,
                           final DHTManager dhtManager,
+                          final FileSystemManager fileManager,
                           final RuntimeManager runtimeManager) {
 
         this.machine            = Preconditions.checkNotNull(machine);
         this.numOfNodes         = numOfNodes;
         this.numOfCores         = numOfCores;
         this.nodeID             = nodeID;
-        this.dhtManager         = Preconditions.checkNotNull(dhtManager);
         this.netManager         = Preconditions.checkNotNull(netManager);
+        this.dhtManager         = Preconditions.checkNotNull(dhtManager);
+        this.fileManager        = Preconditions.checkNotNull(fileManager);
         this.runtimeManager     = Preconditions.checkNotNull(runtimeManager);
     }
 }

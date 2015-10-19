@@ -8,6 +8,7 @@ import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.NotImplementedException;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -52,38 +53,25 @@ public final class Compiler {
     // ---------------------------------------------------
 
     private void analyzeUnits(int nodeDOP) {
-
         final int[] nodeIDs = IntStream.iterate(0, x -> x + 1).limit(nodeDOP).toArray();
-
         UnitDescriptor globalUnit = null;
-
         for (final Method method : programClass.getDeclaredMethods()) {
-
             for (final Annotation an : method.getDeclaredAnnotations()) {
-
                 if (an instanceof Unit) {
-
                     final UnitDescriptor unit = UnitDescriptor.fromAnnotatedMethod(method, (Unit) an);
-
                     if (unit.atNodes.length > 0 ) {
-
                         ArrayUtils.removeElements(nodeIDs, unit.atNodes);
-
                     } else {
-
                         if (globalUnit != null)
                             throw new IllegalStateException();
-
                         globalUnit = unit;
                     }
-
                     programTable.addUnit(unit);
                 }
             }
         }
 
         if (globalUnit != null) {
-
             globalUnit.atNodes = nodeIDs;
         }
     }
@@ -98,6 +86,7 @@ public final class Compiler {
                             field,
                             IntStream.iterate(0, x -> x + 1).limit(runtimeContext.numOfNodes).toArray()
                     );
+                    semanticCheck(state);
                     programTable.addState(state);
                 }
             }
@@ -121,5 +110,9 @@ public final class Compiler {
                 }
             }
         }
+    }
+
+    private void semanticCheck(final StateDescriptor state) {
+        //throw new NotImplementedException("NOT IMPLEMENTED");
     }
 }

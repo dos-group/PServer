@@ -45,6 +45,7 @@ public class DenseMatrix64F implements Matrix64F {
     }
 
     public DenseMatrix64F(final long rows, final long cols) { this(rows, cols, null, Layout.ROW_LAYOUT); }
+    public DenseMatrix64F(final long rows, final long cols, final Layout layout) { this(rows, cols, null, Layout.ROW_LAYOUT); }
     public DenseMatrix64F(final long rows, final long cols, final double[] data) { this(rows, cols, data, Layout.ROW_LAYOUT); }
     public DenseMatrix64F(final long rows, final long cols, final double[] data, final Layout layout) {
         this.rows = rows;
