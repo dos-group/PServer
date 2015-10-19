@@ -80,11 +80,11 @@ public final class RuntimeManager {
         allocateState(instance.programContext);
         matrixPartitionManager.loadFilesIntoDHT();
 
-        try {
-            Thread.sleep(5000); // TODO: bullshit
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
+//        try {
+//            Thread.sleep(5000); // TODO: bullshit
+//        } catch(Exception e) {
+//            e.printStackTrace();
+//        }
 
         bindState(instance.programContext.programTable, instance);
         invokeProgram(instance.programContext.programTable, instance);
@@ -257,11 +257,11 @@ public final class RuntimeManager {
     public void registerPullHandler(final String name, final PullHandler handler) {
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(handler);
-        netManager.addEventListener(MsgEventHandler.MSG_EVENT_PREFIX + name, e -> {
+        netManager.addEventListener(MsgEventHandler.MSG_EVENT_PREFIX + MsgEventHandler.MSG_REQUEST_EVENT_PREFIX + name, e -> {
             final NetEvents.NetEvent event = (NetEvents.NetEvent) e;
             final int srcNodeID = infraManager.getNodeIDFromMachineUID(event.srcMachineID);
             final Object result = handler.handlePull(name, event.getPayload());
-            RuntimeManager.this.send(name, result, new int[]{srcNodeID});
+            RuntimeManager.this.send(MsgEventHandler.MSG_RESPONSE_EVENT_PREFIX + name, result, new int[]{srcNodeID});
         });
     }
 
@@ -281,8 +281,8 @@ public final class RuntimeManager {
         responseHandler.setInfraManager(infraManager);
         responseHandler.setRemoveAfterAwait(true);
         responseHandler.initLatch(nodeIDs.length);
-        netManager.addEventListener(MsgEventHandler.MSG_EVENT_PREFIX + name, responseHandler);
-        NetEvents.NetEvent event = new NetEvents.NetEvent(MsgEventHandler.MSG_EVENT_PREFIX + name, true);
+        netManager.addEventListener(MsgEventHandler.MSG_EVENT_PREFIX + MsgEventHandler.MSG_RESPONSE_EVENT_PREFIX + name, responseHandler);
+        NetEvents.NetEvent event = new NetEvents.NetEvent(MsgEventHandler.MSG_EVENT_PREFIX + MsgEventHandler.MSG_REQUEST_EVENT_PREFIX + name, true);
         event.setPayload(requestParam);
         netManager.sendEvent(nodeIDs, event);
         try {

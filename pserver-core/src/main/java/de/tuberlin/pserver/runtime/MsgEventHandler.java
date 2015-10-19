@@ -16,6 +16,10 @@ public abstract class MsgEventHandler implements IEventHandler {
 
     public static final String MSG_EVENT_PREFIX = "msg_event_prefix_";
 
+    public static final String MSG_REQUEST_EVENT_PREFIX = "request_";
+
+    public static final String MSG_RESPONSE_EVENT_PREFIX = "response_";
+
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------

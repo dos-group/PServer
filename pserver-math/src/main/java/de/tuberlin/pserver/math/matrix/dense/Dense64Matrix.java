@@ -55,7 +55,7 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
             return data[Utils.getPos(row, col, this)];
         }
         catch(ArrayIndexOutOfBoundsException e) {
-            throw new ArrayIndexOutOfBoundsException(String.format("get(%d,%d) -> data[%d] " + data.length, row, col, Utils.getPos(row, col, this), e));
+            throw new ArrayIndexOutOfBoundsException(String.format("get(%d,%d) -> data[%d]; data.length=%d; rows=%d, cols=%d", row, col, Utils.getPos(row, col, this), data.length, rows, cols));
         }
     }
 

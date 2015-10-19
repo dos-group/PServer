@@ -396,8 +396,8 @@ public abstract class AbstractMatrix implements Matrix {
 
     @Override
     public Matrix assign(long rowOffset, long colOffset, Matrix m) {
-        for (long row = rowOffset; row < rows; row++) {
-            for (long col = colOffset; col < cols; col++) {
+        for (long row = rowOffset; row < Math.min(m.rows(), rows); row++) {
+            for (long col = colOffset; col < Math.min(m.cols(), cols); col++) {
                 set(row, col, m.get(row - rowOffset, col - colOffset));
             }
         }

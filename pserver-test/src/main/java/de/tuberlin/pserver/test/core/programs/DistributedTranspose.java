@@ -10,6 +10,7 @@ import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.utils.Utils;
 import de.tuberlin.pserver.runtime.filesystem.record.RowColValRecordIteratorProducer;
 import de.tuberlin.pserver.runtime.partitioning.MatrixByRowPartitioner;
 import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
@@ -25,6 +26,9 @@ public class DistributedTranspose extends Program {
 
     private static final long ROWS = 4;
     private static final long COLS = 4;
+    private static final int NUM_NODES = 2;
+
+    private static final double[] VALUES = new double[] {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
 
     // use this, if you want to run this test directly outside the IntegrationTestSuite
   private final String FILE = "pserver-test/src/main/resources/distributed_transpose_matrix.csv";
@@ -46,13 +50,28 @@ public class DistributedTranspose extends Program {
 
         lifecycle.process(() -> {
 
-            matrix.transpose();
+            Matrix transposed = matrix.transpose();
+
+            Preconditions.checkState(transposed.rows() == ROWS);
+            Preconditions.checkState(transposed.cols() == COLS);
+
+            MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(ROWS, COLS, this.programContext.runtimeContext.nodeID, NUM_NODES);
+            Matrix.PartitionShape shape = partitioner.getPartitionShape();
+
+            for(long row = shape.rowOffset; row < shape.rowOffset + shape.rows; row++) {
+                for(long col = shape.colOffset; col < shape.colOffset + shape.cols; col++) {
+                    double expectedValue = VALUES[Utils.getPos(row, col, Layout.COLUMN_LAYOUT, ROWS, COLS)];
+                    double actualValue = transposed.get(row, col);
+                    Preconditions.checkState(expectedValue == actualValue, "("+row+","+col+"): exptected: " + expectedValue + " actual: " + actualValue);
+                    System.out.println("("+row+","+col+"): ok");
+                }
+            }
 
         });
     }
 
     public static void main(String[] args) {
-        System.setProperty("simulation.numNodes", "4");
+        System.setProperty("simulation.numNodes", String.valueOf(NUM_NODES));
         PServerExecutor.LOCAL
                 .run(DistributedTranspose.class)
                 .done();
