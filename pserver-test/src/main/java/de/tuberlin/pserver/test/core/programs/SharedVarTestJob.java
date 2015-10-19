@@ -5,7 +5,7 @@ import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.runtime.mcruntime.shared.SharedInt;
+import de.tuberlin.pserver.runtime.parallel.shared.SharedInt;
 
 
 public class SharedVarTestJob extends Program {

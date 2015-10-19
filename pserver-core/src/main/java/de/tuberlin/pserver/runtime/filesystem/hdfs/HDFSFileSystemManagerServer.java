@@ -1,17 +1,17 @@
 package de.tuberlin.pserver.runtime.filesystem.hdfs;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.core.config.IConfig;
-import de.tuberlin.pserver.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.core.net.NetEvents;
-import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.core.net.RPCManager;
+import de.tuberlin.pserver.runtime.core.config.IConfig;
+import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
+import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.net.NetEvents;
+import de.tuberlin.pserver.runtime.core.net.NetManager;
+import de.tuberlin.pserver.runtime.core.net.RPCManager;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.partitioning.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;

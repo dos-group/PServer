@@ -8,11 +8,11 @@ import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Layout;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
-import de.tuberlin.pserver.runtime.ProgramContext;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
 import de.tuberlin.pserver.runtime.filesystem.record.RowColValRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.partitioning.partitioner.IMatrixPartitioner;
-import de.tuberlin.pserver.runtime.partitioning.partitioner.RowPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.RowPartitioner;
 
 public final class StateBuilder {
 

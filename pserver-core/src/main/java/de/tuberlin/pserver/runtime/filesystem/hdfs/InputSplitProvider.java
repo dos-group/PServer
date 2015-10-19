@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.runtime.filesystem.hdfs;
 
-import de.tuberlin.pserver.core.infra.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
 
 public interface InputSplitProvider {
 

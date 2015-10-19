@@ -4,15 +4,15 @@ import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import de.tuberlin.pserver.commons.compression.Compressor;
 import de.tuberlin.pserver.commons.hashtable.NonBlockingHashMap;
-import de.tuberlin.pserver.core.common.Deactivatable;
-import de.tuberlin.pserver.core.config.IConfig;
-import de.tuberlin.pserver.core.events.Event;
-import de.tuberlin.pserver.core.events.EventDispatcher;
-import de.tuberlin.pserver.core.events.IEventHandler;
-import de.tuberlin.pserver.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.core.net.NetEvents;
-import de.tuberlin.pserver.core.net.NetManager;
+import de.tuberlin.pserver.runtime.core.common.Deactivatable;
+import de.tuberlin.pserver.runtime.core.config.IConfig;
+import de.tuberlin.pserver.runtime.core.events.Event;
+import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
+import de.tuberlin.pserver.runtime.core.events.IEventHandler;
+import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
+import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.net.NetEvents;
+import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.runtime.dht.types.AbstractBufferedDHTObject;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -25,7 +25,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 public final class DHTManager extends EventDispatcher implements Deactivatable {
 

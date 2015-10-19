@@ -18,7 +18,7 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.ml.optimization.GradientDescent.GDOptimizer;
-import de.tuberlin.pserver.runtime.mcruntime.Parallel;
+import de.tuberlin.pserver.runtime.parallel.Parallel;
 
 import java.io.Serializable;
 import java.util.List;

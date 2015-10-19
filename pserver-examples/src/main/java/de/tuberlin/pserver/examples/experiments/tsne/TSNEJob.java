@@ -18,9 +18,9 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
 import de.tuberlin.pserver.math.tuples.Tuple2;
-import de.tuberlin.pserver.runtime.mcruntime.Parallel;
-import de.tuberlin.pserver.types.DistributedMatrix64F;
-import de.tuberlin.pserver.utils.MatrixBuilder;
+import de.tuberlin.pserver.runtime.parallel.Parallel;
+import de.tuberlin.pserver.runtime.state.types.DistributedMatrix64F;
+import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.io.PrintWriter;

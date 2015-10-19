@@ -11,9 +11,9 @@ import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.runtime.filesystem.record.RowColValRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.partitioning.partitioner.RowPartitioner;
-import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
-import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
+import de.tuberlin.pserver.runtime.state.partitioner.RowPartitioner;
+import de.tuberlin.pserver.runtime.state.mtxentries.MutableMatrixEntry;
+import de.tuberlin.pserver.runtime.state.mtxentries.ReusableMatrixEntry;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

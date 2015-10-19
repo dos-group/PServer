@@ -1,19 +1,19 @@
 package de.tuberlin.pserver.node;
 
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.core.events.Event;
-import de.tuberlin.pserver.core.events.EventDispatcher;
-import de.tuberlin.pserver.core.events.IEventHandler;
-import de.tuberlin.pserver.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.runtime.ProgramDriver;
+import de.tuberlin.pserver.runtime.core.events.Event;
+import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
+import de.tuberlin.pserver.runtime.core.events.IEventHandler;
+import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
+import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.net.NetManager;
+import de.tuberlin.pserver.runtime.driver.ProgramDriver;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.events.ProgramFailureEvent;
 import de.tuberlin.pserver.runtime.events.ProgramResultEvent;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
-import de.tuberlin.pserver.runtime.mcruntime.MCRuntime;
+import de.tuberlin.pserver.runtime.parallel.MCRuntime;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.Serializable;

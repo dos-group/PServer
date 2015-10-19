@@ -5,7 +5,7 @@ import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.LoopTermination;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.ml.optimization.*;
-import de.tuberlin.pserver.utils.MatrixBuilder;
+import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

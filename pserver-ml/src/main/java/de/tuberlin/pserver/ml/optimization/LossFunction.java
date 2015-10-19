@@ -2,7 +2,7 @@ package de.tuberlin.pserver.ml.optimization;
 
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix.RowIterator;
-import de.tuberlin.pserver.utils.MatrixBuilder;
+import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -2,8 +2,8 @@ package de.tuberlin.pserver.runtime.filesystem.hdfs;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.core.config.IConfig;
-import de.tuberlin.pserver.core.net.NetManager;
+import de.tuberlin.pserver.runtime.core.config.IConfig;
+import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordIterator;

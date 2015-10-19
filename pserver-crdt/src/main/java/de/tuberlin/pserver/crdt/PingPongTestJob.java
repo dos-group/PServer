@@ -4,7 +4,7 @@ import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.runtime.MsgEventHandler;
+import de.tuberlin.pserver.runtime.events.MsgEventHandler;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 
 
