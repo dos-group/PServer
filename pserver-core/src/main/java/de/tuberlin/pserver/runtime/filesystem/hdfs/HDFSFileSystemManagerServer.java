@@ -60,6 +60,19 @@ public final class HDFSFileSystemManagerServer implements FileSystemManager, Inp
         rpcManager.registerRPCProtocol(this, InputSplitProvider.class);
     }
 
+    public void clearContext() {
+
+        inputSplitAssignerMap.clear();
+
+        registeredIteratorMap.clear();
+
+        inputFileMap.clear();
+    }
+
+    @Override
+    public void deactivate() {
+    }
+
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
@@ -103,13 +116,6 @@ public final class HDFSFileSystemManagerServer implements FileSystemManager, Inp
         final FileDataIterator<T> fileIterator = (FileDataIterator<T>)inputFile.iterator(this);
         registeredIteratorMap.get(filePath).add(fileIterator);
         return fileIterator;
-    }
-
-    @Override
-    public void clearContext() {
-        inputSplitAssignerMap.clear();
-        registeredIteratorMap.clear();
-        inputFileMap.clear();
     }
 
     @Override

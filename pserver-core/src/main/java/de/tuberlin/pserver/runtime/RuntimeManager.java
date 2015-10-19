@@ -62,11 +62,18 @@ public final class RuntimeManager implements Deactivatable {
         this.remoteNodeIDs  = ArrayUtils.removeElements(nodeIDs, infraManager.getNodeID());
     }
 
-    public void deactivate() {
+    public void clearContext() {
 
         dhtManager.clearContext();
 
         fileManager.clearContext();
+    }
+
+    public void deactivate() {
+
+        dhtManager.deactivate();
+
+        fileManager.deactivate();
     }
 
     // ---------------------------------------------------

@@ -299,7 +299,7 @@ public class TSNEJob extends Program {
 
     public static void cluster() {
         System.setProperty("pserver.profile", "wally");
-        PServerExecutor.DISTRIBUTED
+        PServerExecutor.REMOTE
                 .run(TSNEJob.class)
                 .done();
     }

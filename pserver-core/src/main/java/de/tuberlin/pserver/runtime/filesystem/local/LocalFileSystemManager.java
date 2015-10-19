@@ -42,10 +42,25 @@ public final class LocalFileSystemManager implements FileSystemManager {
     // ---------------------------------------------------
 
     public LocalFileSystemManager(final InfrastructureManager infraManager, final NetManager netManager) {
+
         this.infraManager = Preconditions.checkNotNull(infraManager);
+
         this.netManager = Preconditions.checkNotNull(netManager);
+
         this.inputFileMap = new HashMap<>();
+
         this.registeredIteratorMap = new HashMap<>();
+    }
+
+    public void clearContext() {
+
+        this.inputFileMap.clear();
+
+        this.registeredIteratorMap.clear();
+    }
+
+    @Override
+    public void deactivate() {
     }
 
     // ---------------------------------------------------
@@ -67,12 +82,6 @@ public final class LocalFileSystemManager implements FileSystemManager {
         final FileDataIterator<T> fileIterator = (FileDataIterator<T>)inputFile.iterator();
         registeredIteratorMap.get(filePath).add(fileIterator);
         return fileIterator;
-    }
-
-    @Override
-    public void clearContext() {
-        this.inputFileMap.clear();
-        this.registeredIteratorMap.clear();
     }
 
     @Override

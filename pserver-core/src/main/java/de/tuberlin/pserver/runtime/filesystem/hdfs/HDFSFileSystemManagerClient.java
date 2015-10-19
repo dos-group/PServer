@@ -65,6 +65,21 @@ public final class HDFSFileSystemManagerClient implements FileSystemManager, Inp
         this.inputSplitProvider = rpcManager.getRPCProtocolProxy(InputSplitProvider.class, hdfsMasterMachine);
     }
 
+    public void clearContext() {
+
+        this.inputFileMap.clear();
+
+        this.registeredIteratorMap.clear();
+    }
+
+    @Override
+    public void deactivate() {
+    }
+
+    // ---------------------------------------------------
+    // Public Method.
+    // ---------------------------------------------------
+
     @Override
     public void computeInputSplitsForRegisteredFiles() {
         final HDFSFileSystemManagerClient hfsmc = this;
@@ -112,12 +127,6 @@ public final class HDFSFileSystemManagerClient implements FileSystemManager, Inp
         final FileDataIterator<T> fileIterator = (FileDataIterator<T>)inputFile.iterator(this);
         registeredIteratorMap.get(filePath).add(fileIterator);
         return fileIterator;
-    }
-
-    @Override
-    public void clearContext() {
-        registeredIteratorMap.clear();
-        inputFileMap.clear();
     }
 
     @Override

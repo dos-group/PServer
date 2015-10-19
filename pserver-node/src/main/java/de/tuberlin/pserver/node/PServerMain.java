@@ -56,11 +56,9 @@ public final class PServerMain {
             // parse the arguments and store them as system properties
             parser.parseArgs(args).getAttrs().entrySet().stream()
                     .filter(e -> e.getValue() != null)
-                    .forEach(e -> {
-                            System.setProperty(e.getKey(), e.getValue().toString());
-                    });
+                    .forEach(e -> System.setProperty(e.getKey(), e.getValue().toString()));
 
-            PServerNodeFactory.createParameterServerNode();
+            PServerNodeFactory.createNode();
 
         } catch (HelpScreenException e) {
             parser.handleError(e);

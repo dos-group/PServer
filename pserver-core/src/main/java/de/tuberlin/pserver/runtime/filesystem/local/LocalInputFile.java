@@ -25,7 +25,6 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
     private final IMatrixPartitioner partitioner;
 
-
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
@@ -148,7 +147,6 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
         public LocalFileDataIterator(final FileSection fileSection) {
             try {
                 inputStream  = new FileInputStream(Preconditions.checkNotNull(filePath));
-
             } catch(Exception e) {
                 close();
                 throw new IllegalStateException(e);

@@ -25,13 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.util.UUID;
 
-public enum PServerNodeFactory {
-
-    // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    INSTANCE(IConfigFactory.load(IConfig.Type.PSERVER_NODE));
+public final class PServerNodeFactory {
 
     // ---------------------------------------------------
     // Fields.
@@ -65,7 +59,9 @@ public enum PServerNodeFactory {
     // Constructors.
     // ---------------------------------------------------
 
-    private PServerNodeFactory(final IConfig config) {
+    public PServerNodeFactory() { this(IConfigFactory.load(IConfig.Type.PSERVER_NODE)); }
+
+    public PServerNodeFactory(final IConfig config) {
 
         final long start = System.nanoTime();
 
@@ -90,7 +86,7 @@ public enum PServerNodeFactory {
                 Runtime.getRuntime().availableProcessors(),
                 infraManager.getNodeID(),
                 netManager,
-                DHTManager.getInstance(),
+                dhtManager,
                 fileManager,
                 runtimeManager
         );
@@ -107,7 +103,7 @@ public enum PServerNodeFactory {
     // Public Methods.
     // ---------------------------------------------------
 
-    public static PServerNode createParameterServerNode() { return new PServerNode(INSTANCE); }
+    public static PServerNode createNode() { return new PServerNode(new PServerNodeFactory()); }
 
     // ---------------------------------------------------
     // Private Methods.

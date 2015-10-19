@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.core.infra;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.core.common.Deactivatable;
 import de.tuberlin.pserver.core.config.IConfig;
 import org.apache.curator.CuratorZookeeperClient;
 import org.apache.curator.framework.CuratorFramework;
@@ -20,7 +21,7 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public final class ZookeeperClient {
+public final class ZookeeperClient implements Deactivatable{
 
     // ---------------------------------------------------
     // Constants.
@@ -74,6 +75,10 @@ public final class ZookeeperClient {
             System.exit(1);
         }
         LOG.info("Successfully connected to zookeeper at " + client.getCurrentConnectionString());
+    }
+
+    public void deactivate() {
+        curator.close();
     }
 
     // ---------------------------------------------------
@@ -216,10 +221,6 @@ public final class ZookeeperClient {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
-    }
-
-    public void close() {
-        curator.close();
     }
 
     public static void checkConnectionString(String zkServer) {

@@ -240,11 +240,6 @@ public class EventDispatcher implements IEventDispatcher {
             }
         }
 
-
-
-
-
-
         if (listeners != null) {
             List<IEventHandler> l = new ArrayList<>(listeners);
             for (final IEventHandler el : l) {

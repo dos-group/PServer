@@ -35,18 +35,20 @@ public final class ClusterSimulator implements Deactivatable {
     // ---------------------------------------------------
 
     public ClusterSimulator(final IConfig config,
+                            final boolean isDebug,
                             final Class<?> mainClass) {
 
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(mainClass);
 
-        final int tickTime          = 1;
-        final int numConnections    = 50;
-        final String zkServer       = ZookeeperClient.buildServersString(config.getObjectList("zookeeper.servers"));
-        final int zkPort            = config.getObjectList("zookeeper.servers").get(0).getInt("port");
-        final int numNodes          = config.getInt("simulation.numNodes");
-        final boolean useZookeeper  = config.getBoolean("simulation.useZookeeper");
-        final List<String> jvmOpts  = config.getStringList("simulation.jvmOptions");
+        final int numNodes = config.getInt("simulation.numNodes");
+
+        final int tickTime = 1;
+        final int numConnections = 50;
+        final String zkServer = ZookeeperClient.buildServersString(config.getObjectList("zookeeper.servers"));
+        final int zkPort = config.getObjectList("zookeeper.servers").get(0).getInt("port");
+        final boolean useZookeeper = config.getBoolean("simulation.useZookeeper");
+        final List<String> jvmOpts = config.getStringList("simulation.jvmOptions");
 
         // sanity check.
         ZookeeperClient.checkConnectionString(zkServer);
@@ -78,14 +80,14 @@ public final class ClusterSimulator implements Deactivatable {
                 throw new IllegalStateException(e);
             }
 
-            // Write number of at to zookeeper.
+            // Write number of nodes to zookeeper.
             ZookeeperClient zookeeperClient = new ZookeeperClient(zkServer);
             try {
                 zookeeperClient.writeNumNodes(numNodes);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            zookeeperClient.close();
+            zookeeperClient.deactivate();
 
         } else {
             zookeeperServer = null;
@@ -94,23 +96,20 @@ public final class ClusterSimulator implements Deactivatable {
 
         // ------- bootstrap cluster -------
 
-        for (int i = 0; i < numNodes; ++i) {
-            List<String> nodeJvmOpts = new ArrayList<>(jvmOpts);
-            // nodeJvmOpts.add(String.format("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=%d",8000+i));
-            peList.add(new ProcessExecutor(mainClass).execute(jvmOpts.toArray(new String[jvmOpts.size()])));
+        if (!isDebug) {
+            for (int i = 0; i < numNodes; ++i) {
+                //List<String> nodeJvmOpts = new ArrayList<>(jvmOpts);
+                // nodeJvmOpts.add(String.format("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=%d",8000+i));
+                peList.add(new ProcessExecutor(mainClass).execute(jvmOpts.toArray(new String[jvmOpts.size()])));
+            }
         }
-
     }
-
-    // ---------------------------------------------------
-    // Public Methods.
-    // ---------------------------------------------------
 
     @Override
     public void deactivate() {
         peList.forEach(ClusterSimulator.ProcessExecutor::destroy);
-        this.zookeeperCNXNFactory.closeAll();
         this.zookeeperServer.shutdown();
+        this.zookeeperCNXNFactory.closeAll();
     }
 
     // ---------------------------------------------------

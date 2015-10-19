@@ -116,7 +116,7 @@ public class ProgramDriver implements Deactivatable {
         try {
             Thread.sleep(2000); // TODO: REMOVE !!!
         } catch (InterruptedException ex) {
-            throw new IllegalStateException(ex);
+            //throw new IllegalStateException(ex);
         }
 
         stateAllocator.loadData(programContext);

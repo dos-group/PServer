@@ -151,7 +151,7 @@ public enum MCRuntime implements Deactivatable {
     // Private Methods.
     // ---------------------------------------------------
 
-    public void create(final int numSlots) {
+    public MCRuntime create(final int numSlots) {
 
         for (int i = 0; i < numSlots; ++i) {
 
@@ -159,6 +159,8 @@ public enum MCRuntime implements Deactivatable {
 
             if (i == 0) threadToWorkerSlotMap.put(Thread.currentThread().getId(), workerSlots[i]);
         }
+
+        return this;
     }
 
     // ---------------------------------------------------

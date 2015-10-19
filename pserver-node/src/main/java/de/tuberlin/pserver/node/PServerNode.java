@@ -58,10 +58,6 @@ public final class PServerNode extends EventDispatcher {
     @Override
     public void deactivate() {
 
-        driver.deactivate();
-
-        MCRuntime.INSTANCE.deactivate();
-
         runtimeManager.deactivate();
 
         netManager.deactivate();
@@ -120,7 +116,11 @@ public final class PServerNode extends EventDispatcher {
 
                     } finally {
 
-                        deactivate();
+                        driver.deactivate();
+
+                        runtimeManager.clearContext();
+
+                        MCRuntime.INSTANCE.deactivate();
                     }
 
                 }).start();

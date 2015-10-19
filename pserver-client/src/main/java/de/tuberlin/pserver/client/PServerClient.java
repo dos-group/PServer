@@ -63,6 +63,13 @@ public final class PServerClient extends EventDispatcher {
         this.netManager.addEventListener(ProgramResultEvent.PSERVER_JOB_RESULT_EVENT, new JobResultEvent());
     }
 
+    @Override
+    public void deactivate() {
+        netManager.deactivate();
+        infraManager.deactivate();
+        super.deactivate();
+    }
+
     // ---------------------------------------------------
     // Event Handler.
     // ---------------------------------------------------
@@ -155,11 +162,4 @@ public final class PServerClient extends EventDispatcher {
     public IConfig getConfig() { return config; }
 
     public int getNumberOfWorkers() { return infraManager.getMachines().size(); }
-
-    @Override
-    public void deactivate() {
-        netManager.deactivate();
-        infraManager.deactivate();
-        super.deactivate();
-    }
 }

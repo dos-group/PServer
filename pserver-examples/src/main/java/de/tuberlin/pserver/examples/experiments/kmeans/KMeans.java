@@ -98,6 +98,7 @@ public class KMeans extends Program {
                 atomic(state(data), () -> {
                     Matrix64F.RowIterator it = data.rowIterator();
                     while (it.hasNext()) {
+
                         final Matrix64F point = it.get();
                         it.next();
                         double closestDistance = Double.MAX_VALUE;
@@ -120,7 +121,7 @@ public class KMeans extends Program {
                 // BEGIN: PULL MODEL FROM OTHER NODES AND MERGE
                 TransactionMng.commit(centroidsUpdateSync);
 
-                for (int i = 0; i < K; i++) {
+                for (int i = 0; i < K; i++) { // TODO: MOVE TO APPLY PHASE OF TRANSACTION!
                     if (centroidsUpdate.get(i, COLS) > 0) {
                         final Matrix64F update = centroidsUpdate.getRow(i, 0, COLS);
                         if (centroidsUpdate.get(i, COLS) > 0) {
@@ -153,7 +154,7 @@ public class KMeans extends Program {
 
     public static void cluster() {
         System.setProperty("pserver.profile", "wally");
-        PServerExecutor.DISTRIBUTED
+        PServerExecutor.REMOTE
                 .run(KMeans.class)
                 .done();
     }

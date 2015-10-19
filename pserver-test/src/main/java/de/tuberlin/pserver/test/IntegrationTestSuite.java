@@ -48,7 +48,7 @@ public class IntegrationTestSuite {
     public static void setUpTestEnvironment() {
         System.setProperty("simulation.numNodes", String.valueOf(NUM_NODES));
         final IConfig simConfig = IConfigFactory.load(IConfig.Type.PSERVER_SIMULATION);
-        clusterSimulator = new ClusterSimulator(simConfig, PServerMain.class);
+        clusterSimulator = new ClusterSimulator(simConfig, false, PServerMain.class);
     }
 
     @AfterClass
