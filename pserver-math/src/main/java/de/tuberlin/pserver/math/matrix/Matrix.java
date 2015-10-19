@@ -8,6 +8,7 @@ import de.tuberlin.pserver.math.operations.ApplyOnDoubleElements;
 import de.tuberlin.pserver.math.utils.MatrixAggregation;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
+import java.io.Serializable;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
 
@@ -47,7 +48,7 @@ public interface Matrix extends SharedObject, ApplyOnDoubleElements<Matrix> {
 
     // ---------------------------------------------------
 
-    public static final class PartitionShape {
+    public static final class PartitionShape implements Serializable {
 
         public final long rows;
         public final long cols;

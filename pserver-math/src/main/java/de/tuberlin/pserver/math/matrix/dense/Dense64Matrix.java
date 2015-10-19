@@ -50,7 +50,14 @@ public class Dense64Matrix extends AbstractMatrix implements Serializable {
     public double get(final long index) { return data[(int)index]; }
 
     @Override
-    public double get(final long row, final long col) { return data[Utils.getPos(row, col, this)]; }
+    public double get(final long row, final long col) {
+        try {
+            return data[Utils.getPos(row, col, this)];
+        }
+        catch(ArrayIndexOutOfBoundsException e) {
+            throw new ArrayIndexOutOfBoundsException(String.format("get(%d,%d) -> data[%d] " + data.length, row, col, Utils.getPos(row, col, this), e));
+        }
+    }
 
     @Override
     public void set(long row, long col, double value) {
