@@ -5,14 +5,14 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.utils.ParseUtils;
 import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
-import de.tuberlin.pserver.math.Format;
-import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.ProgramContext;
+import de.tuberlin.pserver.math.matrix.Format;
+import de.tuberlin.pserver.math.matrix.Layout;
+import de.tuberlin.pserver.math.matrix.MatrixBase;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
 import de.tuberlin.pserver.runtime.filesystem.record.RowColValRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.partitioning.partitioner.IMatrixPartitioner;
-import de.tuberlin.pserver.runtime.partitioning.partitioner.RowPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.RowPartitioner;
 
 public final class StateBuilder {
 
@@ -77,10 +77,10 @@ public final class StateBuilder {
 
     // ---------------------------------------------------
 
-    public Matrix build(final String stateName) throws Exception {
+    public MatrixBase build(final String stateName) throws Exception {
         final StateDescriptor descriptor = new StateDescriptor(
                 stateName,
-                Matrix.class,
+                MatrixBase.class,
                 scope,
                 ParseUtils.parseNodeRanges(at),
                 partitioner,
@@ -90,7 +90,7 @@ public final class StateBuilder {
                 recordFormat,
                 path
         );
-        programContext.runtimeContext.runtimeManager.allocateState(programContext, descriptor);
+        //programContext.runtimeContext.runtimeManager.allocateState(programContext, descriptor);
         return programContext.runtimeContext.runtimeManager.getDHT(stateName);
     }
 

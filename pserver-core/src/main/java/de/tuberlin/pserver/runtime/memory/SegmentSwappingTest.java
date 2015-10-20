@@ -2,7 +2,7 @@ package de.tuberlin.pserver.runtime.memory;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.compression.Compressor;
-import de.tuberlin.pserver.core.common.Deactivatable;
+import de.tuberlin.pserver.runtime.core.common.Deactivatable;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.*;

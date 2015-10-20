@@ -4,9 +4,9 @@ package de.tuberlin.pserver.ml.optimization;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Matrix;
 
-public interface ScoreFunction {
+public interface ScoreFunction<V extends Number> {
 
-    public abstract double score(final Matrix yTrue, final Matrix yPred);
+    public abstract double score(final Matrix<V> yTrue, final Matrix<V> yPred);
 
 
     public class ZeroOneLoss implements ScoreFunction {

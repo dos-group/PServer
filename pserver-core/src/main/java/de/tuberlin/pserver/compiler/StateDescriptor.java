@@ -3,10 +3,11 @@ package de.tuberlin.pserver.compiler;
 import de.tuberlin.pserver.commons.utils.ParseUtils;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
-import de.tuberlin.pserver.math.Format;
-import de.tuberlin.pserver.math.Layout;
+import de.tuberlin.pserver.math.matrix.ElementType;
+import de.tuberlin.pserver.math.matrix.Format;
+import de.tuberlin.pserver.math.matrix.Layout;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.partitioning.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 
 import java.lang.reflect.Field;
 
@@ -20,11 +21,13 @@ public final class StateDescriptor {
 
     public final Class<?>  stateType;
 
+    public final ElementType elementType;
+
     public final Scope scope;
 
     public final int[] atNodes;
 
-    public final Class<? extends IMatrixPartitioner> partitionerClass;
+    public final Class<? extends IMatrixPartitioner> partitioner;
 
     public final long rows;
 
@@ -34,7 +37,7 @@ public final class StateDescriptor {
 
     public final Format format;
 
-    public final Class<? extends IRecordIteratorProducer> recordFormatConfigClass;
+    public final Class<? extends IRecordIteratorProducer> recordFormat;
 
     public final String path;
 
@@ -46,24 +49,25 @@ public final class StateDescriptor {
                            final Class<?> stateType,
                            final Scope scope,
                            final int[] atNodes,
-                           final Class<? extends IMatrixPartitioner> partitionerClass,
+                           final Class<? extends IMatrixPartitioner> partitioner,
                            final long rows,
                            final long cols,
                            final Layout layout,
                            final Format format,
-                           final Class<? extends IRecordIteratorProducer> recordFormatConfigClass,
+                           final Class<? extends IRecordIteratorProducer> recordFormat,
                            final String path) {
 
         this.stateName      = stateName;
         this.stateType      = stateType;
-        this.scope = scope;
+        this.elementType    = ElementType.getElementTypeFromClass(stateType);
+        this.scope          = scope;
         this.atNodes        = atNodes;
-        this.partitionerClass  = partitionerClass;
+        this.partitioner    = partitioner;
         this.rows           = rows;
         this.cols           = cols;
         this.layout         = layout;
         this.format         = format;
-        this.recordFormatConfigClass = recordFormatConfigClass;
+        this.recordFormat   = recordFormat;
         this.path           = path;
     }
 

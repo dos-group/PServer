@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.dsl.state;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.runtime.ProgramContext;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 public final class StateMng {
 

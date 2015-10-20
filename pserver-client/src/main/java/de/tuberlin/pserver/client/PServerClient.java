@@ -2,17 +2,17 @@ package de.tuberlin.pserver.client;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.core.config.IConfig;
-import de.tuberlin.pserver.core.events.Event;
-import de.tuberlin.pserver.core.events.EventDispatcher;
-import de.tuberlin.pserver.core.events.IEventHandler;
-import de.tuberlin.pserver.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.core.net.NetManager;
+import de.tuberlin.pserver.runtime.core.config.IConfig;
+import de.tuberlin.pserver.runtime.core.events.Event;
+import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
+import de.tuberlin.pserver.runtime.core.events.IEventHandler;
+import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
+import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.runtime.events.ProgramFailureEvent;
 import de.tuberlin.pserver.runtime.events.ProgramResultEvent;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
-import de.tuberlin.pserver.runtime.usercode.UserCodeManager;
+import de.tuberlin.pserver.runtime.core.usercode.UserCodeManager;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +61,13 @@ public final class PServerClient extends EventDispatcher {
 
         this.netManager.addEventListener(ProgramFailureEvent.PSERVER_FAILURE_JOB_EVENT, new JobFailureEvent());
         this.netManager.addEventListener(ProgramResultEvent.PSERVER_JOB_RESULT_EVENT, new JobResultEvent());
+    }
+
+    @Override
+    public void deactivate() {
+        netManager.deactivate();
+        infraManager.deactivate();
+        super.deactivate();
     }
 
     // ---------------------------------------------------
@@ -140,7 +147,7 @@ public final class PServerClient extends EventDispatcher {
 
             if (jobResults.get(Pair.of(jobUID, i)).get(0) instanceof ProgramFailureEvent) {
                 final ProgramFailureEvent pfe = (ProgramFailureEvent) jobResults.get(Pair.of(jobUID, i)).get(0);
-                LOG.error(pfe.toString());
+                LOG.info(pfe.toString());
                 programError = true;
             }
         }
@@ -155,11 +162,4 @@ public final class PServerClient extends EventDispatcher {
     public IConfig getConfig() { return config; }
 
     public int getNumberOfWorkers() { return infraManager.getMachines().size(); }
-
-    @Override
-    public void deactivate() {
-        netManager.deactivate();
-        infraManager.deactivate();
-        super.deactivate();
-    }
 }

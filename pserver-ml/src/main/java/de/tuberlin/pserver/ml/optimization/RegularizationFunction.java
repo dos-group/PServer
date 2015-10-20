@@ -17,15 +17,16 @@ public interface RegularizationFunction {
         @Override
         public double regularize(final Matrix W, final double lambda) {
             // do not include intercept
-            return 0.5 * lambda * (W.dot(W) - W.get(0) * W.get(0));
+            final double sq  = (Double)W.get(0);
+            final double dot = (Double)W.dot(W);
+            return 0.5 * lambda * (dot - sq * sq);
         }
 
         @Override
         public Matrix regularizeDerivative(final Matrix W, final double lambda) {
             Matrix regularization = W.scale(lambda);
             // do not regularize intercept
-            regularization.set(0, 0, 0.0);
-
+            regularization.set(0, 0, lambda);
             return regularization;
         }
 

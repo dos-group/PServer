@@ -7,7 +7,7 @@ import de.tuberlin.pserver.runtime.filesystem.FileSection;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordIterator;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.partitioning.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 
 import java.io.*;
 
@@ -24,7 +24,6 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
     private final FileSection fileSection;
 
     private final IMatrixPartitioner partitioner;
-
 
     // ---------------------------------------------------
     // Constructor.
@@ -47,8 +46,9 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
     @Override
     public void computeLocalFileSection(final int numNodes, final int nodeID) {
         final long totalLines = getNumberOfLines();
-        // we assume here, that number of row-partitions determine file splitting. This is not necessarily true i.e. if a line in a file contains row-values for one column.
-        // RecordFormatConfig should give a hint for that
+        // We assume here, that number of row-partitions determine file splitting. This is not necessarily
+        // true i.e. if a line in a file contains row-values for one column. RecordFormatConfig should give
+        // a hint for that.
         if(partitioner.getNumRowPartitions() == 1) {
             fileSection.set(totalLines, totalLines, 0, 0); // TODO: Here is the error....
         }
@@ -136,12 +136,6 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
     private class LocalFileDataIterator implements FileDataIterator<IRecord> {
 
-        // private final FileReader fileReader;
-
-        //private final CSVParser csvFileParser;
-
-        // private final Iterator<CSVRecord> csvIterator;
-
         private final InputStream inputStream;
 
         private IRecordIterator recordIterator;
@@ -152,8 +146,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
         public LocalFileDataIterator(final FileSection fileSection) {
             try {
-                inputStream         = new FileInputStream(Preconditions.checkNotNull(filePath));
-
+                inputStream  = new FileInputStream(Preconditions.checkNotNull(filePath));
             } catch(Exception e) {
                 close();
                 throw new IllegalStateException(e);

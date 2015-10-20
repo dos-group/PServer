@@ -1,16 +1,16 @@
 package de.tuberlin.pserver.runtime.filesystem.local;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.core.events.Event;
-import de.tuberlin.pserver.core.events.IEventHandler;
-import de.tuberlin.pserver.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.core.net.NetEvents;
-import de.tuberlin.pserver.core.net.NetManager;
+import de.tuberlin.pserver.runtime.core.events.Event;
+import de.tuberlin.pserver.runtime.core.events.IEventHandler;
+import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
+import de.tuberlin.pserver.runtime.core.net.NetEvents;
+import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.partitioning.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,10 +42,25 @@ public final class LocalFileSystemManager implements FileSystemManager {
     // ---------------------------------------------------
 
     public LocalFileSystemManager(final InfrastructureManager infraManager, final NetManager netManager) {
+
         this.infraManager = Preconditions.checkNotNull(infraManager);
+
         this.netManager = Preconditions.checkNotNull(netManager);
+
         this.inputFileMap = new HashMap<>();
+
         this.registeredIteratorMap = new HashMap<>();
+    }
+
+    public void clearContext() {
+
+        this.inputFileMap.clear();
+
+        this.registeredIteratorMap.clear();
+    }
+
+    @Override
+    public void deactivate() {
     }
 
     // ---------------------------------------------------
@@ -67,12 +82,6 @@ public final class LocalFileSystemManager implements FileSystemManager {
         final FileDataIterator<T> fileIterator = (FileDataIterator<T>)inputFile.iterator();
         registeredIteratorMap.get(filePath).add(fileIterator);
         return fileIterator;
-    }
-
-    @Override
-    public void clearContext() {
-        this.inputFileMap.clear();
-        this.registeredIteratorMap.clear();
     }
 
     @Override
@@ -114,6 +123,6 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
         LOG.debug("["+infraManager.getNodeID()+"] All nodes finished computing local input splits");
 
-        //netManager.removeEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler); // TODO: This can lead to a deadlock!
+        netManager.removeEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler); // TODO: This can lead to a deadlock!
     }
 }

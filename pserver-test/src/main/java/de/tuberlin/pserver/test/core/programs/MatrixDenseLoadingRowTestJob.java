@@ -7,15 +7,13 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.Format;
-import de.tuberlin.pserver.math.Layout;
-import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.Format;
+import de.tuberlin.pserver.math.matrix.Layout;
+import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.runtime.filesystem.record.RowRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.partitioning.partitioner.RowPartitioner;
-import de.tuberlin.pserver.runtime.partitioning.mtxentries.MutableMatrixEntry;
-import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import de.tuberlin.pserver.runtime.state.partitioner.RowPartitioner;
+import de.tuberlin.pserver.runtime.state.mtxentries.MutableMatrixEntry;
+import de.tuberlin.pserver.runtime.state.mtxentries.ReusableMatrixEntry;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -29,9 +27,7 @@ public class MatrixDenseLoadingRowTestJob extends Program {
     // use this, if you want to run this test directly outside the IntegrationTestSuite
     private final String FILE = "pserver-test/src/main/resources/stripes2.csv";
 
-//    private final String FILE = "src/main/resources/stripes2.csv";
-
-    private static final Logger LOG = LoggerFactory.getLogger(MatrixDenseLoadingRowTestJob.class);
+    //private final String FILE = "src/main/resources/stripes2.csv";
 
     @State(
             path = FILE,
@@ -42,7 +38,7 @@ public class MatrixDenseLoadingRowTestJob extends Program {
             format = Format.DENSE_FORMAT,
             layout = Layout.ROW_LAYOUT
     )
-    public Matrix matrix;
+    public Matrix64F matrix;
 
     @Unit
     public void main(final Lifecycle lifecycle) {
@@ -53,7 +49,7 @@ public class MatrixDenseLoadingRowTestJob extends Program {
             int nodeId = programContext.runtimeContext.nodeID;
             int numNodes = programContext.nodeDOP;
             RowPartitioner partitioner = new RowPartitioner(ROWS, COLS, nodeId, numNodes);
-            ReusableMatrixEntry entry = new MutableMatrixEntry(-1, -1, Double.NaN);
+            ReusableMatrixEntry<Double> entry = new MutableMatrixEntry<>(-1, -1, Double.NaN);
             BufferedReader br = null;
 
             try {

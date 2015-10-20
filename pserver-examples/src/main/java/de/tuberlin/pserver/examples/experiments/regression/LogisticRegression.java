@@ -15,9 +15,10 @@ import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.ml.optimization.GradientDescent.GDOptimizer;
-import de.tuberlin.pserver.runtime.mcruntime.Parallel;
+import de.tuberlin.pserver.runtime.parallel.Parallel;
 
 import java.io.Serializable;
 import java.util.List;
@@ -42,27 +43,27 @@ public class LogisticRegression extends Program {
 
 
     @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = D, path = X_TRAIN_PATH)
-    public Matrix XTrain;
+    public Matrix64F XTrain;
 
     @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = 1, path = Y_TRAIN_PATH)
-    public Matrix yTrain;
+    public Matrix64F yTrain;
 
     @State(scope = Scope.REPLICATED, rows = N_TEST, cols = D, path = X_TEST_PATH)
-    public Matrix XTest;
+    public Matrix64F XTest;
 
     @State(scope = Scope.REPLICATED, rows = N_TEST, cols = 1, path = Y_TEST_PATH)
-    public Matrix yTest;
+    public Matrix64F yTest;
 
     @State(scope = Scope.REPLICATED, rows = 1, cols = D)
-    public Matrix W;
+    public Matrix64F W;
 
 
     @Transaction(state = "W", type = TransactionType.PULL)
     public final TransactionDefinition syncW = new TransactionDefinition(
 
-            (Apply<Matrix, Void>) (updates) -> {
+            (Apply<Matrix64F, Void>) (updates) -> {
                 int count = 1;
-                for (final Matrix update : updates) {
+                for (final Matrix64F update : updates) {
                     Parallel.For(update, (i, j, v) -> W.set(i, j, W.get(i, j) + update.get(i, j)));
                     count++;
                 }

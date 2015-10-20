@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.ml.optimization;
 
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
 
 public interface PredictionFunction {
 
@@ -12,7 +11,7 @@ public interface PredictionFunction {
 
         @Override
         public double predict(final Matrix X, final Matrix W) {
-            return X.dot(W);
+            return (Double)X.dot(W);
         }
     }
 
@@ -20,7 +19,7 @@ public interface PredictionFunction {
 
         @Override
         public double predict(final Matrix X, final Matrix W) {
-            return Math.signum(X.dot(W));
+            return (Double)Math.signum(((Double)X.dot(W)));
         }
     }
 }

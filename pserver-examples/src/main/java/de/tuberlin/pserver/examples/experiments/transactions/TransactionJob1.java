@@ -15,7 +15,7 @@ import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
-import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix32F;
 
 import java.util.Random;
 
@@ -26,7 +26,7 @@ public class TransactionJob1 extends Program {
     // ---------------------------------------------------
 
     @State(scope = Scope.REPLICATED, cols = 100, rows = 100)
-    public Matrix model;
+    public Matrix32F model;
 
     // ---------------------------------------------------
     // Transactions.
@@ -35,14 +35,14 @@ public class TransactionJob1 extends Program {
     @Transaction(state = "model", type = TransactionType.PULL)
     public TransactionDefinition modelSync = new TransactionDefinition(
 
-        (Prepare<Matrix, Matrix>) model -> model,
+        (Prepare<Matrix32F, Matrix32F>) model -> model,
 
-        (Apply<Matrix, Void>) remoteModels -> {
+        (Apply<Matrix32F, Void>) remoteModels -> {
 
             for (int i = 0; i < 100; i++) {
                 for (int j = 0; j < 100; j++) {
-                    double val = 0.0;
-                    for (final Matrix remoteModel : remoteModels)
+                    float val = 0f;
+                    for (final Matrix32F remoteModel : remoteModels)
                         val += remoteModel.get(i, j);
                     val += model.get(i, j);
                     model.set(i, j, (model.get(i, j) + val) / 4);
@@ -68,7 +68,7 @@ public class TransactionJob1 extends Program {
                     final Random rand = new Random();
                     for (int i = 0; i < 100; i++) {
                         for (int j = 0; j < 100; j++) {
-                            model.set(i, j, rand.nextDouble());
+                            model.set(i, j, (float)rand.nextDouble());
                         }
                     }
 

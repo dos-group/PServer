@@ -13,11 +13,11 @@ import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
-import de.tuberlin.pserver.math.Format;
-import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
+import de.tuberlin.pserver.math.matrix.Format;
+import de.tuberlin.pserver.math.matrix.Matrix64F;
+import de.tuberlin.pserver.math.matrix.dense.DenseMatrix64F;
 import de.tuberlin.pserver.runtime.filesystem.record.RowRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.mcruntime.Parallel;
+import de.tuberlin.pserver.runtime.parallel.Parallel;
 
 import java.util.Random;
 
@@ -28,7 +28,9 @@ public class KMeans extends Program {
     // ---------------------------------------------------
 
     private static final long ROWS = 1000;
+
     private static final long COLS = 2;
+
     private static final int K = 2;
 
     private static final String FILE = "datasets/stripes2.csv";
@@ -44,15 +46,15 @@ public class KMeans extends Program {
             format = Format.DENSE_FORMAT,
             recordFormat = RowRecordIteratorProducer.class
     )
-    public Matrix matrix;
+    public Matrix64F data;
 
     @State(scope = Scope.REPLICATED,
             rows = K,
             cols = COLS + 1
     )
-    public Matrix centroidsUpdate;
+    public Matrix64F centroidsUpdate;
 
-    public final Matrix centroids = new Dense64Matrix(K, COLS);
+    public final Matrix64F centroids = new DenseMatrix64F(K, COLS);
 
     // ---------------------------------------------------
     // Transactions.
@@ -61,10 +63,21 @@ public class KMeans extends Program {
     @Transaction(state = "centroidsUpdate", type = TransactionType.PULL)
     public final TransactionDefinition centroidsUpdateSync = new TransactionDefinition(
 
-            (Apply<Matrix, Void>) (updates) -> {
-                for (final Matrix update : updates) {
+            (Apply<Matrix64F, Void>) (updates) -> {
+                for (final Matrix64F update : updates) {
                     Parallel.For(update, (i, j, v) -> centroidsUpdate.set(i, j, centroidsUpdate.get(i, j) + update.get(i, j)));
                 }
+
+                for (int i = 0; i < K; i++) {
+                    if (centroidsUpdate.get(i, COLS) > 0) {
+                        final Matrix64F update = centroidsUpdate.getRow(i, 0, COLS);
+                        if (centroidsUpdate.get(i, COLS) > 0) {
+                            centroids.assignRow(i, update.scale(1. / centroidsUpdate.get(i, COLS), update));
+                        }
+                    }
+                }
+                centroidsUpdate.assign(0.);
+
                 return null;
             }
     );
@@ -86,20 +99,19 @@ public class KMeans extends Program {
 
             centroids.setArray(data);
 
-
         }).process(() -> {
 
-            centroidsUpdate.assign(0);
+            centroidsUpdate.assign(0.);
 
             UnitMng.loop(10, Loop.BULK_SYNCHRONOUS, (iteration) -> {
-                int nodeId = programContext.runtimeContext.nodeID;
 
                 // BEGIN: STANDARD KMEANS ON LOCAL PARTITION+
-                atomic(state(matrix), () -> {
-                    Matrix.RowIterator iter = matrix.rowIterator();
-                    while (iter.hasNext()) {
-                        Matrix point = iter.get();
-                        iter.next();
+                atomic(state(data), () -> {
+                    Matrix64F.RowIterator it = data.rowIterator();
+                    while (it.hasNext()) {
+
+                        final Matrix64F point = it.get();
+                        it.next();
                         double closestDistance = Double.MAX_VALUE;
                         long closestCentroidId = -1;
                         for (long centroidId = 0; centroidId < K; centroidId++) {
@@ -109,27 +121,16 @@ public class KMeans extends Program {
                                 closestCentroidId = centroidId;
                             }
                         }
-                        Matrix updateDelta = point.copy(1, COLS + 1);
-                        updateDelta.set(0, COLS, 1);
+                        Matrix64F updateDelta = point.copy(1, COLS + 1);
+                        updateDelta.set(0, COLS, 1.);
 
                         centroidsUpdate.assignRow(closestCentroidId, centroidsUpdate.getRow(closestCentroidId).add(updateDelta));
                     }
                 });
                 // END: STANDARD KMEANS ON LOCAL PARTITION
 
-                // BEGIN: PULL MODEL FROM OTHER NODES AND MERGE
+                // Pull model from remote nodes and merge.
                 TransactionMng.commit(centroidsUpdateSync);
-                for (int i = 0; i < K; i++) {
-                    if (centroidsUpdate.get(i, COLS) > 0) {
-                        Matrix update = centroidsUpdate.getRow(i, 0, COLS);
-                        if (centroidsUpdate.get(i, COLS) > 0) {
-                            centroids.assignRow(i, update.scale(1. / centroidsUpdate.get(i, COLS), update));
-                        }
-                    }
-                }
-                centroidsUpdate.assign(0);
-                // END: PULL MODEL FROM OTHER NODES AND MERGE
-
             });
 
         }).postProcess(() -> {
@@ -148,9 +149,11 @@ public class KMeans extends Program {
         local();
     }
 
+    // ---------------------------------------------------
+
     public static void cluster() {
         System.setProperty("pserver.profile", "wally");
-        PServerExecutor.DISTRIBUTED
+        PServerExecutor.REMOTE
                 .run(KMeans.class)
                 .done();
     }

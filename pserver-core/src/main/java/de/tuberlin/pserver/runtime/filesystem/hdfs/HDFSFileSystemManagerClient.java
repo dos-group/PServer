@@ -1,17 +1,17 @@
 package de.tuberlin.pserver.runtime.filesystem.hdfs;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.core.config.IConfig;
-import de.tuberlin.pserver.core.events.IEventHandler;
-import de.tuberlin.pserver.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.core.net.RPCManager;
+import de.tuberlin.pserver.runtime.core.config.IConfig;
+import de.tuberlin.pserver.runtime.core.events.IEventHandler;
+import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
+import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.net.NetManager;
+import de.tuberlin.pserver.runtime.core.net.RPCManager;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.partitioning.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +65,21 @@ public final class HDFSFileSystemManagerClient implements FileSystemManager, Inp
         this.inputSplitProvider = rpcManager.getRPCProtocolProxy(InputSplitProvider.class, hdfsMasterMachine);
     }
 
+    public void clearContext() {
+
+        this.inputFileMap.clear();
+
+        this.registeredIteratorMap.clear();
+    }
+
+    @Override
+    public void deactivate() {
+    }
+
+    // ---------------------------------------------------
+    // Public Method.
+    // ---------------------------------------------------
+
     @Override
     public void computeInputSplitsForRegisteredFiles() {
         final HDFSFileSystemManagerClient hfsmc = this;
@@ -112,12 +127,6 @@ public final class HDFSFileSystemManagerClient implements FileSystemManager, Inp
         final FileDataIterator<T> fileIterator = (FileDataIterator<T>)inputFile.iterator(this);
         registeredIteratorMap.get(filePath).add(fileIterator);
         return fileIterator;
-    }
-
-    @Override
-    public void clearContext() {
-        registeredIteratorMap.clear();
-        inputFileMap.clear();
     }
 
     @Override

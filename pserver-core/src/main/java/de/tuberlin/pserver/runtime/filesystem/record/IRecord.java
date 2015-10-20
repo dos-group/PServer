@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.runtime.filesystem.record;
 
 import de.tuberlin.pserver.runtime.RuntimeManager;
-import de.tuberlin.pserver.runtime.partitioning.mtxentries.MatrixEntry;
-import de.tuberlin.pserver.runtime.partitioning.mtxentries.ReusableMatrixEntry;
+import de.tuberlin.pserver.runtime.state.mtxentries.MatrixEntry;
+import de.tuberlin.pserver.runtime.state.mtxentries.ReusableMatrixEntry;
 import org.apache.commons.csv.CSVRecord;
 
 import java.util.Iterator;

@@ -2,17 +2,17 @@ package de.tuberlin.pserver.client;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.core.config.IConfig;
-import de.tuberlin.pserver.core.config.IConfigFactory;
-import de.tuberlin.pserver.core.events.Event;
-import de.tuberlin.pserver.core.events.IEventHandler;
-import de.tuberlin.pserver.core.infra.InetHelper;
-import de.tuberlin.pserver.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.core.infra.ZookeeperClient;
-import de.tuberlin.pserver.core.net.NetEvents;
-import de.tuberlin.pserver.core.net.NetManager;
-import de.tuberlin.pserver.runtime.usercode.UserCodeManager;
+import de.tuberlin.pserver.runtime.core.config.IConfig;
+import de.tuberlin.pserver.runtime.core.config.IConfigFactory;
+import de.tuberlin.pserver.runtime.core.events.Event;
+import de.tuberlin.pserver.runtime.core.events.IEventHandler;
+import de.tuberlin.pserver.runtime.core.infra.InetHelper;
+import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
+import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.infra.ZookeeperClient;
+import de.tuberlin.pserver.runtime.core.net.NetEvents;
+import de.tuberlin.pserver.runtime.core.net.NetManager;
+import de.tuberlin.pserver.runtime.core.usercode.UserCodeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -15,10 +15,12 @@ import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.mcruntime.Parallel;
-import de.tuberlin.pserver.utils.MatrixBuilder;
+import de.tuberlin.pserver.math.matrix.Matrix64F;
+import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
 import de.tuberlin.pserver.math.tuples.Tuple2;
-import de.tuberlin.pserver.types.DistributedMatrix;
+import de.tuberlin.pserver.runtime.parallel.Parallel;
+import de.tuberlin.pserver.runtime.state.types.DistributedMatrix64F;
+import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.io.PrintWriter;
@@ -51,18 +53,18 @@ public class TSNEJob extends Program {
 
     // input. i.e. activation vectors of a neuronal network
     @State(scope = Scope.REPLICATED, rows = ROWS, cols = INPUT_COLS, path = "datasets/mnist_10_X.csv")
-    public Matrix X;
+    public Matrix64F X;
 
     // high dimensional affinity function (for two vectors of input space)
     @State(scope = Scope.PARTITIONED, rows = ROWS, cols = ROWS)
-    public DistributedMatrix P;
+    public Matrix64F P;
 
     // model. linear embedding.
     @State(scope = Scope.REPLICATED,
            rows = ROWS, cols = EMBEDDING_DIMENSION,
            path = "datasets/mnist_10_initY.csv")
 
-    public Matrix Y;
+    public Matrix64F Y;
 
     // ---------------------------------------------------
     // Transactions.
@@ -87,10 +89,10 @@ public class TSNEJob extends Program {
             // calc affinity. P is affinity for input X
             P.assign(binarySearch(X, TOL, PERPLEXITY));
             // symmetrize
-            Matrix PT = P.transpose();
+            Matrix64F PT = P.transpose();
             P.add(PT, P);
             // keep pdf properties
-            double sumP = P.aggregateRows(Matrix::sum).sum();
+            double sumP = P.aggregateRows(Matrix<Double>::sum).sum();
             P.scale(1 / sumP, P);
             // early exaggeration
             P.scale(EARLY_EXAGGERATION, P);
@@ -99,17 +101,17 @@ public class TSNEJob extends Program {
             final long d = Y.cols();
 
             // Q is affinity for model Y
-            final Matrix Q = new MatrixBuilder().dimension(n, n).build();
+            final Matrix64F Q = new MatrixBuilder().dimension(n, n).build();
             // for calc of Q
-            final Matrix Y_squared = new MatrixBuilder().dimension(n, d).build();
+            final Matrix64F Y_squared = new MatrixBuilder().dimension(n, d).build();
             // strengthen good direction, weaken bad ones (in gradient descent)
-            final Matrix gains = new MatrixBuilder().dimension(n, d).build();
+            final Matrix64F gains = new MatrixBuilder().dimension(n, d).build();
             // previous gradient. moment of direction "movement"
-            final Matrix iY = new MatrixBuilder().dimension(n, d).build();
+            final Matrix64F iY = new MatrixBuilder().dimension(n, d).build();
             // current gradient
-            final Matrix dY = new MatrixBuilder().dimension(n, d).build();
+            final Matrix64F dY = new MatrixBuilder().dimension(n, d).build();
             // need to center Y in each iteration. define reusable matrix here
-            final Matrix mean = new MatrixBuilder().dimension(1, d).build();
+            final Matrix64F mean = new MatrixBuilder().dimension(1, d).build();
 
             gains.assign(1.0);
 
@@ -120,9 +122,9 @@ public class TSNEJob extends Program {
 
                 // calc distance matrix of Y
                 Y.applyOnElements(e -> Math.pow(e, 2), Y_squared);
-                final Matrix sum_Y = Y_squared.aggregateRows(Matrix::sum);
-                final Matrix num = Y.mul(Y.transpose())
-                        .scale(-2)
+                final Matrix64F sum_Y = Y_squared.aggregateRows(Matrix<Double>::sum);
+                final Matrix64F num = Y.mul(Y.transpose())
+                        .scale(-2.)
                         .addVectorToRows(sum_Y)
                         .transpose()
                         .addVectorToRows(sum_Y)
@@ -135,17 +137,17 @@ public class TSNEJob extends Program {
                 // ---------------------------------------------------
                 // (2) SINGLETON OPERATION!!!
                 // ---------------------------------------------------
-                final double sumNum = num.aggregateRows(Matrix::sum).sum();
+                final double sumNum = num.aggregateRows(Matrix<Double>::sum).sum();
 
-                num.scale(1.0 / sumNum, Q);
+                num.scale(1. / sumNum, Q);
                 Q.applyOnElements(e -> Math.max(e, 1e-12), Q);
 
                 //final Matrix PQ = P.sub(Q);
 
-                Matrix.PartitionShape shape = P.getPartitionShape();
+                PartitionShape shape = ((DistributedMatrix64F)P).getPartitionShape();
                 Parallel.For(shape.rows, (i) -> {
                     // TODO: get target vector of dY instead. possible? or resuable?
-                    final Matrix sumVec = new MatrixBuilder().dimension(1, d).build();
+                    final Matrix64F sumVec = new MatrixBuilder().dimension(1, d).build();
                     UnitMng.loop(P.cols(), (j) -> {
                         final Double pq = P.get(shape.rowOffset + i, j) - Q.get(i, j);//PQ.get(i, j);
                         final Double num_j = num.get(i, j);
@@ -211,35 +213,35 @@ public class TSNEJob extends Program {
     // Helper Methods.
     // ---------------------------------------------------
 
-    private Matrix binarySearch(Matrix X, Double tol, Double perplexity) {
+    private Matrix64F binarySearch(Matrix64F X, Double tol, Double perplexity) {
 
-        Matrix.PartitionShape shape = P.getPartitionShape();
+        PartitionShape shape = ((DistributedMatrix64F)P).getPartitionShape();
 
         long n = shape.rows;
 
-        final Matrix P_tmp      = new MatrixBuilder().dimension(shape.rows, shape.cols).build();
+        final Matrix64F P_tmp      = new MatrixBuilder().dimension(shape.rows, shape.cols).build();
         // beta = 1/(2*sigma^2). sigma is depended on a point. so we have n sigmas
-        final Matrix beta       = new MatrixBuilder().dimension(1, n).build();
+        final Matrix64F beta       = new MatrixBuilder().dimension(1, n).build();
 
-        beta.assign(1.0);
+        beta.assign(1.);
 
-        final Matrix sumX = X.applyOnElements(e -> Math.pow(e, 2)).aggregateRows(Matrix::sum);
+        final Matrix64F sumX = X.applyOnElements(e -> Math.pow(e, 2)).aggregateRows(Matrix<Double>::sum);
         // X * X^. Then we have N x N. scale with -2. Add sumX row-wise and col-wise.
         // distance matrix of X
-        final Matrix D = X.mul(X.transpose()).scale(-2).addVectorToRows(sumX).transpose().addVectorToRows(sumX);
+        final Matrix64F D = X.mul(X.transpose()).scale(-2.).addVectorToRows(sumX).transpose().addVectorToRows(sumX);
 
-        final double logU = Math.log(perplexity);
+        final double logU = (float)Math.log(perplexity);
 
         for (long i=0; i < n; ++i) {
 
             double betaMin = Double.NEGATIVE_INFINITY;
             double betaMax = Double.POSITIVE_INFINITY;
 
-            final Matrix Di = D.getRow(shape.rowOffset + i);
-            Tuple2<Double, Matrix> hBeta = computeHBeta(Di, beta.get(i), i);
+            final Matrix64F Di = D.getRow(shape.rowOffset + i);
+            Tuple2<Double, Matrix64F> hBeta = computeHBeta(Di, beta.get(i), i);
 
             double H = hBeta._1;
-            Matrix Pi = hBeta._2;
+            Matrix64F Pi = hBeta._2;
             // Evaluate whether the perplexity is within tolerance
 
             double HDiff = H - logU;
@@ -272,9 +274,9 @@ public class TSNEJob extends Program {
         return P_tmp;
     }
 
-    private Tuple2<Double, Matrix> computeHBeta(Matrix d, Double beta, Long index){
-        final Matrix P = new MatrixBuilder().dimension(1, d.cols()).build();
-        P.set(0, index, 0.0);
+    private Tuple2<Double, Matrix64F> computeHBeta(final Matrix64F d, final double beta, final long index){
+        final Matrix64F P = new MatrixBuilder().dimension(1, d.cols()).build();
+        P.set(0, index, 0.);
 
         // parExe over all elements i != j
         for (long i=0; i < P.cols(); ++i) {
@@ -283,12 +285,11 @@ public class TSNEJob extends Program {
             }
         }
 
-        final Matrix PD = P.applyOnElements(d, (e1, e2) -> e1 * e2);
+        final Matrix64F PD = P.applyOnElements(d, (e1, e2) -> e1 * e2);
         final double sumP = P.sum();
-        final double H = Math.log(sumP) + beta * PD.sum() / sumP;
+        final double H = (float)Math.log(sumP) + beta * PD.sum() / sumP;
 
         P.applyOnElements(e -> e / sumP, P);
-
         return new Tuple2<>(H, P);
     }
 
@@ -298,7 +299,7 @@ public class TSNEJob extends Program {
 
     public static void cluster() {
         System.setProperty("pserver.profile", "wally");
-        PServerExecutor.DISTRIBUTED
+        PServerExecutor.REMOTE
                 .run(TSNEJob.class)
                 .done();
     }
@@ -315,7 +316,7 @@ public class TSNEJob extends Program {
 
         try (PrintWriter writer = new PrintWriter("datasets/pserver_mnist.csv", "UTF-8")) {
 
-            Matrix R = (Matrix) res.get(0).get(0);
+            Matrix64F R = (Matrix64F) res.get(0).get(0);
             for (int i = 0; i < R.rows(); ++i) {
                 for (int j = 0; j < R.cols(); ++j) {
                     writer.println(i + "," + j + "," + R.get(i, j));

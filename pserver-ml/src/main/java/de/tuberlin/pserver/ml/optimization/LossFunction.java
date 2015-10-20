@@ -2,7 +2,7 @@ package de.tuberlin.pserver.ml.optimization;
 
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix.RowIterator;
-import de.tuberlin.pserver.utils.MatrixBuilder;
+import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +55,7 @@ public interface LossFunction {
                 XIterator.next();
                 yIterator.next();
 
-                sumLoss += partialLossFunction.loss(XIterator.get(), yIterator.get().get(0),
+                sumLoss += partialLossFunction.loss(XIterator.get(), (Double)yIterator.get().get(0),
                         predictionFunction.predict(XIterator.get(), W));
             }
 
@@ -74,7 +74,7 @@ public interface LossFunction {
             while (XIterator.hasNext()) {
 
                 Matrix derivative = partialLossFunction.derivative(XIterator.get(),
-                        yIterator.get().get(0), predictionFunction.predict(X, W));
+                        (Double)yIterator.get().get(0), predictionFunction.predict(X, W));
 
                 gradient.add(derivative, gradient);
 
