@@ -100,6 +100,9 @@ public abstract class AbstractCRDT<T> implements CRDT {
                     // TODO: this is so ugly! (toPrimitive())
                     runtimeManager.send("Running_" + id, 0, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[0])));
 
+                    // TODO: Start the scheduler that periodically broadcasts operations
+                    // TODO: is this really a good idea? Will it not influence calculation results?
+                    // ScheduledThreadPoolExecutor
                 }
             }
         });
