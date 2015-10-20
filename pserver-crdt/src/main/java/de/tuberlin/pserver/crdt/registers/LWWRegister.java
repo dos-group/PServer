@@ -18,8 +18,8 @@ public class LWWRegister<T extends Comparable> extends AbstractRegister<T> imple
     private long time = Calendar.getInstance().getTimeInMillis();
     private final ConcurrentResolver<T> resolver;
 
-    public LWWRegister(String id, RuntimeManager runtimeManager, ConcurrentResolver<T> resolver) {
-        super(id, runtimeManager);
+    public LWWRegister(String id, int noOfReplicas, RuntimeManager runtimeManager, ConcurrentResolver<T> resolver) {
+        super(id, noOfReplicas, runtimeManager);
         this.resolver = resolver;
     }
 

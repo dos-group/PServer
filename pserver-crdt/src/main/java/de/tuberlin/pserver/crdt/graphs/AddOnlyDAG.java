@@ -15,8 +15,8 @@ import java.util.Set;
 public class AddOnlyDAG<T> extends AbstractGraph<T> {
 
 
-    public AddOnlyDAG(String id, RuntimeManager runtimeManager) {
-        super(id, runtimeManager);
+    public AddOnlyDAG(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+        super(id, noOfReplicas, runtimeManager);
     }
 
     @Override

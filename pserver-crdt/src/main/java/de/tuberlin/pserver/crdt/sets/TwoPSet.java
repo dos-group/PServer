@@ -17,8 +17,8 @@ public class TwoPSet<T> extends AbstractSet<T> {
     private final Set<T> set;
     private final Set<T> tombstone;
 
-    public TwoPSet(String id, RuntimeManager runtimeManager) {
-        super(id, runtimeManager);
+    public TwoPSet(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+        super(id, noOfReplicas, runtimeManager);
 
         this.set = new HashSet<>();
         this.tombstone = new HashSet<>();

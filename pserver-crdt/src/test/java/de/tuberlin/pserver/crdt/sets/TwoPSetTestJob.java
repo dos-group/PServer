@@ -19,7 +19,7 @@ public class TwoPSetTestJob extends Program {
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            TwoPSet<Integer> tps = new TwoPSet<>("one", runtimeManager);
+            TwoPSet<Integer> tps = new TwoPSet<>("one", 2, runtimeManager);
 
             for (int i = 0; i <= 10; i++) {
                 tps.add(i);
@@ -35,7 +35,7 @@ public class TwoPSetTestJob extends Program {
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            TwoPSet<Integer> tps = new TwoPSet<>("one", runtimeManager);
+            TwoPSet<Integer> tps = new TwoPSet<>("one", 2, runtimeManager);
 
             for (int i = 4; i <= 15; i++) {
                 tps.add(i);

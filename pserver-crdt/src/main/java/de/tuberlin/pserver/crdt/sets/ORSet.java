@@ -15,8 +15,8 @@ import java.util.Set;
 public class ORSet<T> extends AbstractSet<T> {
     private Map<T,List<UUID>> map = new HashMap<>();
 
-    public ORSet(String id, RuntimeManager runtimeManager) {
-        super(id, runtimeManager);
+    public ORSet(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+        super(id, noOfReplicas, runtimeManager);
     }
 
     @Override

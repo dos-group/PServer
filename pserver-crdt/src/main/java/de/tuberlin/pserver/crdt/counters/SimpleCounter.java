@@ -22,8 +22,8 @@ public class SimpleCounter extends AbstractCounter implements CRDT {
      * @param id the ID for this CRDT
      * @param runtimeManager the {@code RuntimeManager} belonging to this {@code MLProgram}
      */
-    public SimpleCounter(String id, RuntimeManager runtimeManager) {
-        super(id, runtimeManager);
+    public SimpleCounter(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+        super(id, noOfReplicas, runtimeManager);
     }
 
     // ---------------------------------------------------
@@ -58,7 +58,7 @@ public class SimpleCounter extends AbstractCounter implements CRDT {
     @Override
     public boolean increment(int i) {
         if(incrementCount(i)) {
-            broadcast(new SimpleOperation<>(SimpleOperation.INCREMENT, i));
+            broadcast(new SimpleOperation<>(Operation.INCREMENT, i));
             return true;
         }
         return false;

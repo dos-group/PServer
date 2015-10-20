@@ -4,6 +4,8 @@ import de.tuberlin.pserver.crdt.operations.EndOperation;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.runtime.MsgEventHandler;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.log4j.TTCCLayout;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -58,6 +60,8 @@ public abstract class AbstractCRDT<T> implements CRDT {
 
     private final RuntimeManager runtimeManager;
 
+    private final int noOfReplicas;
+
     private boolean allNodesRunning;
 
     private boolean allNodesFinished;
@@ -71,10 +75,11 @@ public abstract class AbstractCRDT<T> implements CRDT {
      * @param id the ID of the CRDT that this replica belongs to
      * @param runtimeManager the {@code RuntimeManager} belonging to this {@code MLProgram}
      * */
-    protected AbstractCRDT(String id, RuntimeManager runtimeManager) {
+    protected AbstractCRDT(String id, int noOfReplicas, RuntimeManager runtimeManager) {
         this.runningNodes = new HashSet<>();
         this.finishedNodes = new HashSet<>();
         this.buffer = new LinkedList<>();
+        this.noOfReplicas = noOfReplicas;
 
         this.runtimeManager = runtimeManager;
         this.id = id;
@@ -88,12 +93,14 @@ public abstract class AbstractCRDT<T> implements CRDT {
                 runningNodes.add(srcNodeID);
                 //System.out.println(runningNodes.size());
 
-                if (runningNodes.size() == runtimeManager.getRemoteNodeIDs().length) {
+                if (runningNodes.size() == noOfReplicas - 1) {
                     allNodesRunning = true;
                     runtimeManager.removeMsgEventListener("Running_" + id, this);
 
                     // This is necessary to reach replicas that were not online when the first "Running" message was sent
-                    runtimeManager.send("Running_" + id, 0, runtimeManager.getRemoteNodeIDs());
+                    // TODO: this is so ugly! (toPrimitive())
+                    runtimeManager.send("Running_" + id, 0, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[0])));
+
                 }
             }
         });
@@ -174,10 +181,13 @@ public abstract class AbstractCRDT<T> implements CRDT {
      * @param op the operation that should be broadcast
      */
     protected final void broadcast(Operation op) {
+        // TODO: batch processing
         // send to all nodes
         if(isAllNodesRunning()) {
             broadcastBuffer();
-            runtimeManager.send("Operation_"+id, op, runtimeManager.getRemoteNodeIDs());
+
+            // TODO: Not necessarily all nodes have replicas of this CRDT
+            runtimeManager.send("Operation_" + id, op, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[0])));
         } else {
             buffer(op);
         }
@@ -197,6 +207,7 @@ public abstract class AbstractCRDT<T> implements CRDT {
     // ---------------------------------------------------
 
     private void ready() {
+        // This needs to be sent to all nodes, as we do not know yet which ones will have replicas of the CRDT
         runtimeManager.send("Running_" + id, 0, runtimeManager.getRemoteNodeIDs());
     }
 
@@ -216,7 +227,7 @@ public abstract class AbstractCRDT<T> implements CRDT {
         if(buffer.size() > 0) {
             System.out.println("[DEBUG] Broadcasting buffer size " + buffer.size());
             while (buffer.size() > 0) {
-                runtimeManager.send("Operation_" + id, buffer.poll(), runtimeManager.getRemoteNodeIDs());
+                runtimeManager.send("Operation_" + id, buffer.poll(), ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[0])));
             }
             return true;
         }
@@ -226,7 +237,7 @@ public abstract class AbstractCRDT<T> implements CRDT {
     private void addFinishedNode(int nodeID) {
         finishedNodes.add(nodeID);
 
-        if(finishedNodes.size() == runtimeManager.getRemoteNodeIDs().length) {
+        if(finishedNodes.size() == noOfReplicas - 1) {
             allNodesFinished = true;
         }
     }

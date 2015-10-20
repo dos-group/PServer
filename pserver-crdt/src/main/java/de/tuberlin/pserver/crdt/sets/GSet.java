@@ -12,8 +12,8 @@ import java.util.Set;
 public class GSet<T> extends AbstractSet<T> {
     private final Set<T> set;
 
-    public GSet(String id, RuntimeManager runtimeManager) {
-        super(id, runtimeManager);
+    public GSet(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+        super(id, noOfReplicas, runtimeManager);
         this.set = new HashSet<>();
     }
 

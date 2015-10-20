@@ -7,8 +7,8 @@ import de.tuberlin.pserver.runtime.RuntimeManager;
 // TODO: should this implement Set<E> from collections library?
 public abstract class AbstractSet<T> extends AbstractCRDT<T> implements Set<T> {
 
-    public AbstractSet(String id, RuntimeManager runtimeManager) {
-        super(id, runtimeManager);
+    public AbstractSet(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+        super(id, noOfReplicas, runtimeManager);
     }
 
     public boolean contains(T element) {

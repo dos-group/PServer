@@ -15,8 +15,8 @@ public class LWWSet<T> extends AbstractSet<T> {
     private final Map<T, Long> addMap;
     private final Map<T, Long> removeMap;
 
-    public LWWSet(String id, RuntimeManager runtimeManager) {
-        super(id, runtimeManager);
+    public LWWSet(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+        super(id, noOfReplicas, runtimeManager);
         
         addMap = new HashMap<>();
         removeMap = new HashMap<>();

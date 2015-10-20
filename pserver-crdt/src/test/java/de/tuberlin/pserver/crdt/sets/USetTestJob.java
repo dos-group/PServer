@@ -12,7 +12,7 @@ public class USetTestJob extends Program {
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-                USet<Integer> us = new USet<>("one", runtimeManager);
+                USet<Integer> us = new USet<>("one", 2, runtimeManager);
 
                 for (int i = 0; i <= 10; i++) {
                     us.add(i);
@@ -28,7 +28,7 @@ public class USetTestJob extends Program {
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-                USet<Integer> us = new USet<>("one", runtimeManager);
+                USet<Integer> us = new USet<>("one", 2, runtimeManager);
 
                 for (int i = 16; i <= 20; i++) {
                     us.add(i);

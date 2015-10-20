@@ -19,8 +19,8 @@ import java.util.stream.Collectors;
 public class PNSet<T> extends AbstractSet<T> {
     private final Map<T, Integer> counter;
 
-    public PNSet(String id, RuntimeManager runtimeManager) {
-        super(id, runtimeManager);
+    public PNSet(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+        super(id, noOfReplicas, runtimeManager);
         counter = new HashMap<>();
     }
 

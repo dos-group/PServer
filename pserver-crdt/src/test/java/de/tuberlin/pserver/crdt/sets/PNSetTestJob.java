@@ -12,7 +12,7 @@ public class PNSetTestJob extends Program {
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-                PNSet<Integer> pns = new PNSet<>("one", runtimeManager);
+                PNSet<Integer> pns = new PNSet<>("one", 2, runtimeManager);
 
                 for (int i = 0; i < 10; i++) {
                     pns.add(i);
@@ -30,7 +30,7 @@ public class PNSetTestJob extends Program {
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-                PNSet<Integer> pns = new PNSet<>("one", runtimeManager);
+                PNSet<Integer> pns = new PNSet<>("one", 2, runtimeManager);
 
                 for (int i = 10; i <= 15; i++) {
                     pns.add(i);

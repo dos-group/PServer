@@ -12,7 +12,7 @@ public class AddOnlyDAGTestJob extends Program {
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            AddOnlyDAG<Integer> addOnlyDAG = new AddOnlyDAG<>("one", runtimeManager);
+            AddOnlyDAG<Integer> addOnlyDAG = new AddOnlyDAG<>("one", 2, runtimeManager);
 
             Vertex<Integer> v1 = new Vertex<>(1, 1);
             Vertex<Integer> v2 = new Vertex<>(2, 2);
@@ -41,7 +41,7 @@ public class AddOnlyDAGTestJob extends Program {
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            AddOnlyDAG<Integer> addOnlyDAG = new AddOnlyDAG<>("one", runtimeManager);
+            AddOnlyDAG<Integer> addOnlyDAG = new AddOnlyDAG<>("one", 2, runtimeManager);
 
             Vertex<Integer> v1 = new Vertex<>(1, 1);
             Vertex<Integer> v2 = new Vertex<>(2, 2);

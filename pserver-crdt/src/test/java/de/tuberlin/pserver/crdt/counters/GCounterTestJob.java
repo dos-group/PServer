@@ -12,8 +12,8 @@ public class GCounterTestJob extends Program {
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            GCounter gc = new GCounter("one", runtimeManager);
-            GCounter gc2 = new GCounter("two", runtimeManager);
+            GCounter gc = new GCounter("one", 2, runtimeManager);
+            GCounter gc2 = new GCounter("two", 2, runtimeManager);
 
             for (int i = 0; i < 10000; i++) {
                 gc.increment(1);
@@ -39,8 +39,8 @@ public class GCounterTestJob extends Program {
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            GCounter gc = new GCounter("one", runtimeManager);
-            GCounter gc2 = new GCounter("two", runtimeManager);
+            GCounter gc = new GCounter("one", 2, runtimeManager);
+            GCounter gc2 = new GCounter("two", 2, runtimeManager);
 
             for (int i = 0; i < 100000; i++) {
                 gc.increment(1);

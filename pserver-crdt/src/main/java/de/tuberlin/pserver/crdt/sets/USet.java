@@ -16,8 +16,8 @@ import java.util.Set;
 public class USet<T> extends AbstractSet<T> {
     private final Set<T> set = new HashSet<>();
 
-    public USet(String id, RuntimeManager runtimeManager) {
-        super(id, runtimeManager);
+    public USet(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+        super(id, noOfReplicas, runtimeManager);
     }
 
     @Override

@@ -11,10 +11,10 @@ public abstract class AbstractGraph<T> extends AbstractCRDT implements Graph<T> 
     protected final TwoPSet<Vertex<T>> vertices;
     protected final TwoPSet<Edge> edges;
 
-    public AbstractGraph(String id, RuntimeManager runtimeManager) {
-        super(id, runtimeManager);
-        this.vertices = new TwoPSet<>("vertices", runtimeManager);
-        this.edges = new TwoPSet<>("edges", runtimeManager);
+    public AbstractGraph(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+        super(id, noOfReplicas, runtimeManager);
+        this.vertices = new TwoPSet<>("vertices", noOfReplicas, runtimeManager);
+        this.edges = new TwoPSet<>("edges", noOfReplicas, runtimeManager);
     }
 
     public Set<Vertex<T>> getVertices() {

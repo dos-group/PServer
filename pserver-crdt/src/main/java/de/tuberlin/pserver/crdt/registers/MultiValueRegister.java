@@ -19,8 +19,8 @@ import java.util.Set;
         private long time = Calendar.getInstance().getTimeInMillis();
         private Set<T> register = new HashSet<T>();
 
-        public MultiValueRegister(String id, RuntimeManager runtimeManager) {
-            super(id, runtimeManager);
+        public MultiValueRegister(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+            super(id, noOfReplicas, runtimeManager);
         }
 
         @Override

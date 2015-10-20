@@ -26,8 +26,8 @@ public class GCounter extends AbstractCounter implements CRDT, Serializable {
      * @param id the ID of this CRDT
      * @param runtimeManager the {@code RuntimeManager} belonging to this {@code MLProgram}
      */
-    public GCounter(String id, RuntimeManager runtimeManager) {
-        super(id, runtimeManager);
+    public GCounter(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+        super(id, noOfReplicas, runtimeManager);
     }
 
     // ---------------------------------------------------

@@ -30,8 +30,8 @@ public abstract class AbstractCounter extends AbstractCRDT implements Counter {
      * @param id the ID for this CRDT
      * @param runtimeManager the {@code RuntimeManager} belonging to this {@code MLProgram}
      */
-    public AbstractCounter(String id, RuntimeManager runtimeManager) {
-        super(id, runtimeManager);
+    public AbstractCounter(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+        super(id, noOfReplicas, runtimeManager);
     }
 
     // ---------------------------------------------------
