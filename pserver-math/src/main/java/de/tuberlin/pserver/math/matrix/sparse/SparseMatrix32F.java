@@ -12,6 +12,7 @@ import de.tuberlin.pserver.math.utils.*;
 import gnu.trove.map.hash.TLongFloatHashMap;
 import org.apache.commons.math3.random.RandomDataGenerator;
 
+import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -35,6 +36,8 @@ public class SparseMatrix32F implements Matrix32F {
     private Object owner;
 
     private boolean sorted;
+
+    private long[] sortedEntries;
 
     // ---------------------------------------------------
     // Constructors.
@@ -125,6 +128,12 @@ public class SparseMatrix32F implements Matrix32F {
         Preconditions.checkArgument(col < cols(), String.format("Column index %d is out of bounds for Matrix of size(%d, %d)", col, rows(), cols()));
 
         int pos = Utils.getPos(row, col, this);
+
+        /*
+        - in case an already existing index is set to zero, it will be removed
+        - inserting a new index requires resorting the entries when performing range queries (getRow)
+        - no resorting happens until a call to getRow()
+        */
         if (value == data.getNoEntryValue()) {
             if (data.containsKey(pos)) {
                 data.remove(pos);
@@ -174,10 +183,27 @@ public class SparseMatrix32F implements Matrix32F {
 
     @Override
     public Matrix32F getRow(long row, long from, long to) {
+        Preconditions.checkArgument(from < to, "Parameter 'from' must be less than 'to'");
+
+        if (!sorted) {
+            sortedEntries = Arrays.copyOf(data.keys(), data.keys().length);
+            Arrays.sort(sortedEntries);
+        }
+
+        int firstIdx = Arrays.binarySearch(sortedEntries, Utils.getPos(row, from, this));
+        int lastIdx = Arrays.binarySearch(sortedEntries, Utils.getPos(row, to, this));
+
+        if (firstIdx < 0) {
+            firstIdx = (Math.abs(firstIdx) - 1);
+        }
+        if (lastIdx < 0) {
+            lastIdx = (Math.abs(lastIdx) - 1);
+        }
+
         Matrix32F result = new SparseMatrix32F(1, to - from);
 
-        for (long i = from; i < to; ++i) {
-            result.set(0, i, get(row, i));
+        for (int src = firstIdx; src < lastIdx; ++src) {
+            result.set(0, sortedEntries[src] - (row * cols() + from), get(sortedEntries[src]));
         }
         return result;
     }

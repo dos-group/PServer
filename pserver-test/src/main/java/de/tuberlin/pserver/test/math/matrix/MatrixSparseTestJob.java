@@ -15,7 +15,7 @@ import static org.junit.Assert.*;
 
 public class MatrixSparseTestJob {
 
-    private static final double DELTA = 1e-6f;
+    private static final double DELTA = 1e-6;
 
     @Rule
     public final ExpectedException exception = ExpectedException.none();
@@ -94,8 +94,8 @@ public class MatrixSparseTestJob {
 
         final Matrix32F b = a.copy();
 
-        assertEquals(b.get(1, 2), 1.23f, DELTA);
-        assertEquals(b.get(2, 4), -1.0f, DELTA);
+        assertEquals(b.get(1, 2), 1.23, DELTA);
+        assertEquals(b.get(2, 4), -1.0, DELTA);
     }
 
     @Test
@@ -115,25 +115,25 @@ public class MatrixSparseTestJob {
         assertEquals(firstRow.rows(), 1);
         assertEquals(firstRow.cols(), 3);
 
-        assertEquals(firstRow.get(0), 2.0f, DELTA);
-        assertEquals(firstRow.get(1), 0.0f, DELTA);
-        assertEquals(firstRow.get(2), -4.0f, DELTA);
+        assertEquals(firstRow.get(0), 2.0, DELTA);
+        assertEquals(firstRow.get(1), 0.0, DELTA);
+        assertEquals(firstRow.get(2), -4.0, DELTA);
 
         assertTrue(iter.hasNext());
 
         iter.next();
         Matrix32F secondRow = iter.get();
-        assertEquals(secondRow.get(0), -8.0f, DELTA);
-        assertEquals(secondRow.get(1), 1.23f, DELTA);
-        assertEquals(secondRow.get(2), 0.0f, DELTA);
+        assertEquals(secondRow.get(0), -8.0, DELTA);
+        assertEquals(secondRow.get(1), 1.23, DELTA);
+        assertEquals(secondRow.get(2), 0.0, DELTA);
 
         assertTrue(iter.hasNext());
 
         iter.next();
         Matrix32F thirdRow = iter.get();
-        assertEquals(thirdRow.get(0), 0.0f, DELTA);
-        assertEquals(thirdRow.get(1), 0.0f, DELTA);
-        assertEquals(thirdRow.get(2), -1.0f, DELTA);
+        assertEquals(thirdRow.get(0), 0.0, DELTA);
+        assertEquals(thirdRow.get(1), 0.0, DELTA);
+        assertEquals(thirdRow.get(2), -1.0, DELTA);
 
         assertFalse(iter.hasNext());
     }
@@ -155,9 +155,9 @@ public class MatrixSparseTestJob {
         c.set(0, 4, -3.0f);
         c.set(0, 1, -10f);
 
-        assertEquals(a.dot(b), -13.0f, DELTA);
-        assertEquals(a.dot(c), -13.0f, DELTA);
-        assertEquals(b.dot(a), -13.0f, DELTA);
+        assertEquals(a.dot(b), -13.0, DELTA);
+        assertEquals(a.dot(c), -13.0, DELTA);
+        assertEquals(b.dot(a), -13.0, DELTA);
     }
 
     @Test
@@ -201,5 +201,36 @@ public class MatrixSparseTestJob {
 
         exception.expect(IncompatibleShapeException.class);
         a.dot(a);
+    }
+
+    @Test
+    public void testGetRow() {
+        final Matrix32F a = new SparseMatrix32F(3, 5);
+        a.set(0, 0, 2.0f);
+        a.set(1, 2, 11.0f);
+        a.set(2, 4, -1.0f);
+
+        assertEquals(a.get(0, 0), 2.0, DELTA);
+        assertEquals(a.get(1, 2), 11.0, DELTA);
+        assertEquals(a.get(2, 4), -1.0, DELTA);
+
+        a.set(1, 4, 42.0f);
+        a.set(1, 0, 24.0f);
+        a.set(1, 1, -9.0f);
+
+        Matrix32F rowA = a.getRow(1);
+
+        assertEquals(rowA.get(0), 24.0, DELTA);
+        assertEquals(rowA.get(1), -9.0, DELTA);
+        assertEquals(rowA.get(2), 11.0, DELTA);
+        assertEquals(rowA.get(3), 0.0, DELTA);
+        assertEquals(rowA.get(4), 42.0, DELTA);
+
+        Matrix32F rowB = a.getRow(1, 1, 2);
+
+        assertEquals(rowB.get(0), -9.0, DELTA);
+
+        exception.expect(IllegalArgumentException.class);
+        a.getRow(1, 1, 1);
     }
 }
