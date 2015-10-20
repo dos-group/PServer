@@ -1,7 +1,5 @@
 package de.tuberlin.pserver.math.matrix.sparse;
 
-import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.matrix.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.math.operations.BinaryOperator;
@@ -27,8 +25,6 @@ public class SparseMatrix64F implements Matrix64F {
 
     private final long cols;
 
-    private final Layout layout;
-
     private final Lock lock;
 
     private Object owner;
@@ -37,11 +33,9 @@ public class SparseMatrix64F implements Matrix64F {
     // Constructors.
     // ---------------------------------------------------
 
-    public SparseMatrix64F(final long rows, final long cols, final Layout layout) {
+    public SparseMatrix64F(final long rows, final long cols) {
         this.rows = rows;
         this.cols = cols;
-        this.layout = Preconditions.checkNotNull(layout);
-        Preconditions.checkArgument(java.util.Arrays.asList(Layout.values()).contains(layout), "Unknown MemoryLayout: " + layout.toString());
         this.lock = new ReentrantLock(true);
     }
 
@@ -62,11 +56,6 @@ public class SparseMatrix64F implements Matrix64F {
     @Override
     public long sizeOf() {
         return data.keys().length * Double.BYTES;
-    }
-
-    @Override
-    public Layout layout() {
-        return layout;
     }
 
     @Override

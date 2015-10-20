@@ -8,12 +8,11 @@ import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Format;
-import de.tuberlin.pserver.math.matrix.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.runtime.filesystem.record.RowRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.state.partitioner.RowPartitioner;
 import de.tuberlin.pserver.runtime.state.mtxentries.MutableMatrixEntry;
 import de.tuberlin.pserver.runtime.state.mtxentries.ReusableMatrixEntry;
+import de.tuberlin.pserver.runtime.state.partitioner.RowPartitioner;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -35,8 +34,7 @@ public class MatrixDenseLoadingRowTestJob extends Program {
             cols = COLS,
             scope = Scope.PARTITIONED,
             recordFormat = RowRecordIteratorProducer.class,
-            format = Format.DENSE_FORMAT,
-            layout = Layout.ROW_LAYOUT
+            format = Format.DENSE_FORMAT
     )
     public Matrix64F matrix;
 

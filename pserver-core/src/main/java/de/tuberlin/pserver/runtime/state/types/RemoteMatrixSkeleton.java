@@ -2,17 +2,16 @@ package de.tuberlin.pserver.runtime.state.types;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.operations.BinaryOperator;
 import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
 import de.tuberlin.pserver.math.operations.UnaryOperator;
-import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
 import de.tuberlin.pserver.runtime.core.net.NetManager;
-import de.tuberlin.pserver.math.matrix.Format;
-import de.tuberlin.pserver.math.matrix.Layout;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.util.concurrent.BrokenBarrierException;
@@ -34,8 +33,6 @@ public class RemoteMatrixSkeleton<V extends Number> implements Matrix<V> {
 
     private final long cols;
 
-    private final Layout layout;
-
     private final Format format;
 
     // ---------------------------------------------------
@@ -55,8 +52,7 @@ public class RemoteMatrixSkeleton<V extends Number> implements Matrix<V> {
                                 final int atNodeID,
                                 final long rows,
                                 final long cols,
-                                final Format format,
-                                final Layout layout) {
+                                final Format format) {
 
         //super(rows, cols, layout);
 
@@ -66,7 +62,6 @@ public class RemoteMatrixSkeleton<V extends Number> implements Matrix<V> {
         this.rows           = rows;
         this.cols           = cols;
         this.format         = format;
-        this.layout         = layout;
 
         this.netManager    = programContext.runtimeContext.netManager;
 
@@ -392,11 +387,6 @@ public class RemoteMatrixSkeleton<V extends Number> implements Matrix<V> {
     @Override
     public long sizeOf() {
         return 0;
-    }
-
-    @Override
-    public Layout layout() {
-        return null;
     }
 
     @Override

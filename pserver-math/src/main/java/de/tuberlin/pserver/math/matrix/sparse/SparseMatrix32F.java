@@ -1,14 +1,12 @@
 package de.tuberlin.pserver.math.matrix.sparse;
 
-import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.matrix.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.math.operations.BinaryOperator;
-import de.tuberlin.pserver.math.operations.UnaryOperator;
 import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
-import de.tuberlin.pserver.math.utils.*;
+import de.tuberlin.pserver.math.operations.UnaryOperator;
+import de.tuberlin.pserver.math.utils.Utils;
 import gnu.trove.map.hash.TLongFloatHashMap;
 
 import java.util.concurrent.locks.Lock;
@@ -27,8 +25,6 @@ public class SparseMatrix32F implements Matrix32F {
 
     private final long cols;
 
-    private final Layout layout;
-
     private final Lock lock;
 
     private Object owner;
@@ -37,11 +33,9 @@ public class SparseMatrix32F implements Matrix32F {
     // Constructors.
     // ---------------------------------------------------
 
-    public SparseMatrix32F(final long rows, final long cols, final Layout layout) {
+    public SparseMatrix32F(final long rows, final long cols) {
         this.rows = rows;
         this.cols = cols;
-        this.layout = Preconditions.checkNotNull(layout);
-        Preconditions.checkArgument(java.util.Arrays.asList(Layout.values()).contains(layout), "Unknown MemoryLayout: " + layout.toString());
         this.lock = new ReentrantLock(true);
     }
 
@@ -63,11 +57,6 @@ public class SparseMatrix32F implements Matrix32F {
     @Override
     public long sizeOf() {
         return data.keys().length * Float.BYTES;
-    }
-
-    @Override
-    public Layout layout() {
-        return layout;
     }
 
     @Override

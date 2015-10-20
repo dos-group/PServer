@@ -3,12 +3,12 @@ package de.tuberlin.pserver.runtime.state;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.compiler.StateDescriptor;
-import de.tuberlin.pserver.runtime.core.net.NetEvents;
-import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
+import de.tuberlin.pserver.runtime.core.net.NetEvents;
+import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;

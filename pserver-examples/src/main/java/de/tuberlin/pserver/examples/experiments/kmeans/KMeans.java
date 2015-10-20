@@ -33,8 +33,6 @@ public class KMeans extends Program {
 
     private static final int K = 2;
 
-    private static final String FILE = "datasets/stripes2.csv";
-
     // ---------------------------------------------------
     // State.
     // ---------------------------------------------------
@@ -42,7 +40,7 @@ public class KMeans extends Program {
     @State(scope = Scope.PARTITIONED,
             rows = ROWS,
             cols = COLS,
-            path = FILE,
+            path = "datasets/stripes2.csv",
             format = Format.DENSE_FORMAT,
             recordFormat = RowRecordIteratorProducer.class
     )

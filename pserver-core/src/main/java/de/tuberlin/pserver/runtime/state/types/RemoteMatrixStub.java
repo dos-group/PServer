@@ -2,9 +2,9 @@ package de.tuberlin.pserver.runtime.state.types;
 
 
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.core.net.NetEvents;
 import de.tuberlin.pserver.runtime.core.net.NetManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 

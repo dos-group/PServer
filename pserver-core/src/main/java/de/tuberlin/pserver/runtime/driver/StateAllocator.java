@@ -2,15 +2,15 @@ package de.tuberlin.pserver.runtime.driver;
 
 
 import de.tuberlin.pserver.compiler.StateDescriptor;
-import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.math.matrix.ElementType;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
+import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
+import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import de.tuberlin.pserver.runtime.state.MatrixLoader;
 import de.tuberlin.pserver.runtime.state.types.DistributedMatrix32F;
 import de.tuberlin.pserver.runtime.state.types.DistributedMatrix64F;
-import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import org.apache.commons.lang3.ArrayUtils;
 
 public class StateAllocator {
@@ -41,7 +41,6 @@ public class StateAllocator {
                     m = new MatrixBuilder()
                             .dimension(state.rows, state.cols)
                             .format(state.format)
-                            .layout(state.layout)
                             .elementType(ElementType.getElementTypeFromClass(state.stateType))
                             .build();
                     break;
@@ -49,7 +48,6 @@ public class StateAllocator {
                     m = new MatrixBuilder()
                             .dimension(state.rows, state.cols)
                             .format(state.format)
-                            .layout(state.layout)
                             .elementType(ElementType.getElementTypeFromClass(state.stateType))
                             .build();
                     break;
@@ -62,7 +60,6 @@ public class StateAllocator {
                                     programContext,
                                     state.rows,
                                     state.cols,
-                                    state.layout,
                                     state.format,
                                     state.atNodes,
                                     state.partitioner
@@ -73,7 +70,6 @@ public class StateAllocator {
                                     programContext,
                                     state.rows,
                                     state.cols,
-                                    state.layout,
                                     state.format,
                                     state.atNodes,
                                     state.partitioner
@@ -88,7 +84,6 @@ public class StateAllocator {
                                     programContext,
                                     state.rows,
                                     state.cols,
-                                    state.layout,
                                     state.format,
                                     state.atNodes,
                                     state.partitioner // TODO: CHANGE!
@@ -99,7 +94,6 @@ public class StateAllocator {
                                     programContext,
                                     state.rows,
                                     state.cols,
-                                    state.layout,
                                     state.format,
                                     state.atNodes,
                                     state.partitioner // TODO: CHANGE!

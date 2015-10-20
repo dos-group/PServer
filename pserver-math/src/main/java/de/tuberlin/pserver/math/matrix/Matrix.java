@@ -1,9 +1,9 @@
 package de.tuberlin.pserver.math.matrix;
 
 import de.tuberlin.pserver.math.operations.BinaryOperator;
-import de.tuberlin.pserver.math.operations.UnaryOperator;
 import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
+import de.tuberlin.pserver.math.operations.UnaryOperator;
 
 
 public interface Matrix<V extends Number> extends MatrixBase {
@@ -111,6 +111,8 @@ public interface Matrix<V extends Number> extends MatrixBase {
     // ----------------------------------------
 
     public V dot(final Matrix<V> B);
+
+    //public Matrix<V> innerProduct(final Matrix<V> B); // TODO!
 
     // ---------------------------------------------------
     // SLICING.

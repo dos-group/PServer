@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.math.matrix.dense;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.matrix.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.math.operations.BinaryOperator;
@@ -28,7 +27,7 @@ public class DenseMatrix64F implements Matrix64F {
 
     private final long cols;
 
-    private final Layout layout;
+    //private final Layout layout;
 
     private final Lock lock;
 
@@ -40,18 +39,16 @@ public class DenseMatrix64F implements Matrix64F {
 
     // Copy Constructor.
     public DenseMatrix64F(final DenseMatrix64F m) {
-        this(m.rows(), m.cols(), null, m.layout());
+        this(m.rows(), m.cols(), null);
         System.arraycopy(m.data, 0, this.data, 0, m.data.length);
     }
 
-    public DenseMatrix64F(final long rows, final long cols) { this(rows, cols, null, Layout.ROW_LAYOUT); }
-    public DenseMatrix64F(final long rows, final long cols, final Layout layout) { this(rows, cols, null, Layout.ROW_LAYOUT); }
-    public DenseMatrix64F(final long rows, final long cols, final double[] data) { this(rows, cols, data, Layout.ROW_LAYOUT); }
-    public DenseMatrix64F(final long rows, final long cols, final double[] data, final Layout layout) {
+    public DenseMatrix64F(final long rows, final long cols) { this(rows, cols, null); }
+    public DenseMatrix64F(final long rows, final long cols, final double[] data) {
         this.rows = rows;
         this.cols = cols;
-        this.layout = Preconditions.checkNotNull(layout);
-        Preconditions.checkArgument(java.util.Arrays.asList(Layout.values()).contains(layout), "Unknown MemoryLayout: " + layout.toString());
+        //this.layout = Preconditions.checkNotNull(layout);
+        //Preconditions.checkArgument(java.util.Arrays.asList(Layout.values()).contains(layout), "Unknown MemoryLayout: " + layout.toString());
         this.lock = new ReentrantLock(true);
         this.data = (data == null) ? new double[(int)(rows * cols)] : Preconditions.checkNotNull(data);
     }
@@ -75,10 +72,10 @@ public class DenseMatrix64F implements Matrix64F {
         return rows * cols * Double.BYTES;
     }
 
-    @Override
-    public Layout layout() {
-        return layout;
-    }
+    //@Override
+    //public Layout layout() {
+    //    return layout;
+    //}
 
     @Override
     public void lock() {
@@ -211,16 +208,16 @@ public class DenseMatrix64F implements Matrix64F {
     @Override
     public Matrix64F getCol(final long col, final long from, final long to) {
         double[] result = new double[(int)(to - from)];
-        if(layout == Layout.COLUMN_LAYOUT) {
-            System.arraycopy(data, (int)(col * rows + from), result, 0, result.length);
-        }
-        else {
+        //if(layout == Layout.COLUMN_LAYOUT) {
+        //    System.arraycopy(data, (int)(col * rows + from), result, 0, result.length);
+        //}
+        //else {
             for (int i = 0; i < result.length; i++) {
                 int row = (int)from + i;
                 result[i] = data[(int)(row * cols + col)];
             }
-        }
-        return new DenseMatrix64F(result.length, 1, result, Layout.COLUMN_LAYOUT);
+        //}
+        return new DenseMatrix64F(result.length, 1, result);
     }
 
     @Override
@@ -332,25 +329,25 @@ public class DenseMatrix64F implements Matrix64F {
     public Matrix64F assignColumn(final long col, final Matrix<Double> v) {
         double[] vData = (double[])v.toArray();
         Preconditions.checkArgument(rows == vData.length);
-        if(layout == Layout.COLUMN_LAYOUT) {
-            System.arraycopy(v.toArray(), 0, data, (int)(col * rows), vData.length);
-        }
-        else {
+        //if(layout == Layout.COLUMN_LAYOUT) {
+        //    System.arraycopy(v.toArray(), 0, data, (int)(col * rows), vData.length);
+        //}
+        //else {
             for (int row = 0; row < rows; row++) {
                 data[(int)(row * cols + col)] = vData[row];
             }
-        }
+        //}
         return this;
     }
 
     @Override
     public Matrix64F assign(final long rowOffset, final long colOffset, final Matrix<Double> m) {
-        if (layout == Layout.ROW_LAYOUT && m.layout() == layout && cols == m.cols()) {
+        //if (layout == Layout.ROW_LAYOUT && m.layout() == layout && cols == m.cols()) {
             System.arraycopy(m.toArray(), 0, data, (int) (rowOffset * cols + colOffset), ((double[])m.toArray()).length);
-        }
-        else if(layout == Layout.COLUMN_LAYOUT && m.layout() == layout && rows == m.rows()) {
-            System.arraycopy(m.toArray(), 0, data, (int) (colOffset * rows + rowOffset), ((double[])m.toArray()).length);
-        }
+        //}
+        //else if(layout == Layout.COLUMN_LAYOUT && m.layout() == layout && rows == m.rows()) {
+        //    System.arraycopy(m.toArray(), 0, data, (int) (colOffset * rows + rowOffset), ((double[])m.toArray()).length);
+        //}
         return null; //assign(rowOffset, colOffset, m);
     }
 
@@ -529,27 +526,27 @@ public class DenseMatrix64F implements Matrix64F {
     @Override
     public Double dot(final Matrix<Double> B) {
         double result = 0;
-        if(this.layout == Layout.ROW_LAYOUT) {
+        //if(this.layout == Layout.ROW_LAYOUT) {
             Preconditions.checkArgument(rows == 1);
-            Preconditions.checkArgument(B.layout() == Layout.ROW_LAYOUT);
+            //Preconditions.checkArgument(B.layout() == Layout.ROW_LAYOUT);
             Preconditions.checkArgument(B.rows() == 1);
             Preconditions.checkArgument(cols == B.cols());
             for (int col = 0; col < cols; col++) {
                 result += this.get(col) * B.get(col);
             }
-        }
-        else if(this.layout == Layout.COLUMN_LAYOUT) {
-            Preconditions.checkArgument(cols == 1);
-            Preconditions.checkArgument(B.layout() == Layout.COLUMN_LAYOUT);
-            Preconditions.checkArgument(B.cols() == 1);
-            Preconditions.checkArgument(rows == B.rows());
-            for (int row = 0; row < rows; row++) {
-                result += this.get(row) * B.get(row);
-            }
-        }
-        else {
-            throw new IllegalStateException("Unknown layout: " + layout.name());
-        }
+        //}
+        //else if(this.layout == Layout.COLUMN_LAYOUT) {
+        //    Preconditions.checkArgument(cols == 1);
+        //    Preconditions.checkArgument(B.layout() == Layout.COLUMN_LAYOUT);
+        //    Preconditions.checkArgument(B.cols() == 1);
+        //    Preconditions.checkArgument(rows == B.rows());
+        //    for (int row = 0; row < rows; row++) {
+        //        result += this.get(row) * B.get(row);
+        //    }
+        //}
+        //else {
+        //    throw new IllegalStateException("Unknown layout: " + layout.name());
+        //}
         return result;
     }
 
@@ -559,7 +556,7 @@ public class DenseMatrix64F implements Matrix64F {
 
     @Override
     public Matrix64F subMatrix(final long rowOffset, final long colOffset, final long rows, final long cols) {
-        if (layout == Layout.ROW_LAYOUT) {
+        //if (layout == Layout.ROW_LAYOUT) {
             final int length = (int)(rows * cols);
             final double[] subData = new double[length];
             try {
@@ -568,29 +565,29 @@ public class DenseMatrix64F implements Matrix64F {
             catch(ArrayIndexOutOfBoundsException e) {
                 throw new RuntimeException(String.format("subMatrix(%d, %d, %d, %d) caused ArrayIndexOfBoundsException", rowOffset, colOffset, rows, cols), e);
             }
-            return new DenseMatrix64F(rows, cols, subData, layout);
-        } else
-            throw new UnsupportedOperationException();
+            return new DenseMatrix64F(rows, cols, subData);
+        //} else
+        //    throw new UnsupportedOperationException();
     }
 
     @Override
     public Matrix64F concat(final Matrix<Double> B) {
-        if(this.layout == Layout.ROW_LAYOUT) {
+        //if(this.layout == Layout.ROW_LAYOUT) {
             Preconditions.checkArgument(cols == B.cols());
             return concat(B, newInstance(rows + B.rows(), cols));
-        }
-        else if(this.layout == Layout.COLUMN_LAYOUT) {
-            Preconditions.checkArgument(rows == B.rows());
-            return concat(B, newInstance(rows, B.cols() + cols));
-        }
-        else {
-            throw new IllegalStateException("Unknown layout: " + layout.name());
-        }
+        //}
+        //else if(this.layout == Layout.COLUMN_LAYOUT) {
+        //    Preconditions.checkArgument(rows == B.rows());
+        //    return concat(B, newInstance(rows, B.cols() + cols));
+        //}
+        //else {
+        //    throw new IllegalStateException("Unknown layout: " + layout.name());
+        //}
     }
 
     @Override
     public Matrix64F concat(final Matrix<Double> B, final Matrix<Double> C) {
-        if(this.layout == Layout.ROW_LAYOUT) {
+        //if(this.layout == Layout.ROW_LAYOUT) {
             Preconditions.checkArgument(cols == B.cols());
             Preconditions.checkArgument(C.rows() == rows + B.rows() && C.cols() == cols);
             for (int row = 0; row < C.rows(); row++) {
@@ -599,8 +596,8 @@ public class DenseMatrix64F implements Matrix64F {
                     C.set(row, col, val);
                 }
             }
-        }
-        else if(this.layout == Layout.COLUMN_LAYOUT) {
+        //}
+        /*else if(this.layout == Layout.COLUMN_LAYOUT) {
             Preconditions.checkArgument(rows == B.rows());
             Preconditions.checkArgument(C.rows() == rows && C.cols() == cols + B.cols());
             for (int row = 0; row < C.rows(); row++) {
@@ -612,7 +609,7 @@ public class DenseMatrix64F implements Matrix64F {
         }
         else {
             throw new IllegalStateException("Unknown layout: " + layout.name());
-        }
+        }*/
         return (Matrix64F)C;
     }
 
@@ -704,7 +701,7 @@ public class DenseMatrix64F implements Matrix64F {
         @Override
         public DenseMatrix64F get(final long from, final long size) {
             final double v[] = new double[(int)size];
-            if(self.layout == Layout.ROW_LAYOUT) {
+            //if(self.layout == Layout.ROW_LAYOUT) {
                 try {
                     System.arraycopy(self.data, Utils.getPos(currentRow, from, self), v, 0, (int)size);
                 }
@@ -713,12 +710,12 @@ public class DenseMatrix64F implements Matrix64F {
                     throw e;
                 }
 
-            }
-            else {
-                for (long i = from; i < size; i++) {
-                    v[(int)(i - from)] = self.data[Utils.getPos(currentRow, i, self)];
-                }
-            }
+            //}
+            //else {
+            //    for (long i = from; i < size; i++) {
+            //        v[(int)(i - from)] = self.data[Utils.getPos(currentRow, i, self)];
+            //    }
+            //}
             return new DenseMatrix64F(1, size, v);
         }
 

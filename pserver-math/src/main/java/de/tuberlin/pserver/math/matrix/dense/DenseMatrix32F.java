@@ -1,14 +1,13 @@
 package de.tuberlin.pserver.math.matrix.dense;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.matrix.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.math.operations.BinaryOperator;
-import de.tuberlin.pserver.math.operations.UnaryOperator;
 import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
-import de.tuberlin.pserver.math.utils.*;
+import de.tuberlin.pserver.math.operations.UnaryOperator;
+import de.tuberlin.pserver.math.utils.Utils;
 
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
@@ -29,8 +28,6 @@ public class DenseMatrix32F implements Matrix32F {
 
     private final long cols;
 
-    private final Layout layout;
-
     private final Lock lock;
 
     private Object owner;
@@ -41,18 +38,14 @@ public class DenseMatrix32F implements Matrix32F {
 
     // Copy Constructor.
     public DenseMatrix32F(final DenseMatrix32F m) {
-        this(m.rows(), m.cols(), null, m.layout());
+        this(m.rows(), m.cols(), null);
         System.arraycopy(m.data, 0, this.data, 0, m.data.length);
     }
 
-    public DenseMatrix32F(final long rows, final long cols) { this(rows, cols, null, Layout.ROW_LAYOUT); }
-    public DenseMatrix32F(final long rows, final long cols, final Layout layout) { this(rows, cols, null, Layout.ROW_LAYOUT); }
-    public DenseMatrix32F(final long rows, final long cols, final float[] data) { this(rows, cols, data, Layout.ROW_LAYOUT); }
-    public DenseMatrix32F(final long rows, final long cols, final float[] data, final Layout layout) {
+    public DenseMatrix32F(final long rows, final long cols) { this(rows, cols, null); }
+    public DenseMatrix32F(final long rows, final long cols, final float[] data) {
         this.rows = rows;
         this.cols = cols;
-        this.layout = Preconditions.checkNotNull(layout);
-        Preconditions.checkArgument(java.util.Arrays.asList(Layout.values()).contains(layout), "Unknown MemoryLayout: " + layout.toString());
         this.lock = new ReentrantLock(true);
         this.data = (data == null) ? new float[(int)(rows * cols)] : Preconditions.checkNotNull(data);
     }
@@ -74,11 +67,6 @@ public class DenseMatrix32F implements Matrix32F {
     @Override
     public long sizeOf() {
         return rows * cols * Float.BYTES;
-    }
-
-    @Override
-    public Layout layout() {
-        return layout;
     }
 
     @Override
@@ -212,16 +200,16 @@ public class DenseMatrix32F implements Matrix32F {
     @Override
     public Matrix32F getCol(final long col, final long from, final long to) {
         float[] result = new float[(int)(to - from)];
-        if(layout == Layout.COLUMN_LAYOUT) {
-            System.arraycopy(data, (int)(col * rows + from), result, 0, result.length);
-        }
-        else {
+        //if(layout == Layout.COLUMN_LAYOUT) {
+        //    System.arraycopy(data, (int)(col * rows + from), result, 0, result.length);
+        //}
+        //else {
             for (int i = 0; i < result.length; i++) {
                 int row = (int)from + i;
                 result[i] = data[(int)(row * cols + col)];
             }
-        }
-        return new DenseMatrix32F(result.length, 1, result, Layout.COLUMN_LAYOUT);
+        //}
+        return new DenseMatrix32F(result.length, 1, result);
     }
 
     @Override
@@ -333,25 +321,25 @@ public class DenseMatrix32F implements Matrix32F {
     public Matrix32F assignColumn(final long col, final Matrix<Float> v) {
         float[] vData = (float[])v.toArray();
         Preconditions.checkArgument(rows == vData.length);
-        if(layout == Layout.COLUMN_LAYOUT) {
-            System.arraycopy(v.toArray(), 0, data, (int)(col * rows), vData.length);
-        }
-        else {
+        //if(layout == Layout.COLUMN_LAYOUT) {
+        //    System.arraycopy(v.toArray(), 0, data, (int)(col * rows), vData.length);
+        //}
+        //else {
             for (int row = 0; row < rows; row++) {
                 data[(int)(row * cols + col)] = vData[row];
             }
-        }
+        //}
         return this;
     }
 
     @Override
     public Matrix32F assign(final long rowOffset, final long colOffset, final Matrix<Float> m) {
-        if (layout == Layout.ROW_LAYOUT && m.layout() == layout && cols == m.cols()) {
+        //if (layout == Layout.ROW_LAYOUT && m.layout() == layout && cols == m.cols()) {
             System.arraycopy(m.toArray(), 0, data, (int) (rowOffset * cols + colOffset), ((float[])m.toArray()).length);
-        }
-        else if(layout == Layout.COLUMN_LAYOUT && m.layout() == layout && rows == m.rows()) {
-            System.arraycopy(m.toArray(), 0, data, (int) (colOffset * rows + rowOffset), ((float[])m.toArray()).length);
-        }
+        //}
+        //else if(layout == Layout.COLUMN_LAYOUT && m.layout() == layout && rows == m.rows()) {
+        //    System.arraycopy(m.toArray(), 0, data, (int) (colOffset * rows + rowOffset), ((float[])m.toArray()).length);
+        //}
         return null; //assign(rowOffset, colOffset, m);
     }
 
@@ -530,16 +518,16 @@ public class DenseMatrix32F implements Matrix32F {
     @Override
     public Float dot(final Matrix<Float> B) {
         float result = 0;
-        if(this.layout == Layout.ROW_LAYOUT) {
+        //if(this.layout == Layout.ROW_LAYOUT) {
             Preconditions.checkArgument(rows == 1);
-            Preconditions.checkArgument(B.layout() == Layout.ROW_LAYOUT);
+            //Preconditions.checkArgument(B.layout() == Layout.ROW_LAYOUT);
             Preconditions.checkArgument(B.rows() == 1);
             Preconditions.checkArgument(cols == B.cols());
             for (int col = 0; col < cols; col++) {
                 result += this.get(col) * B.get(col);
             }
-        }
-        else if(this.layout == Layout.COLUMN_LAYOUT) {
+        //}
+        /*else if(this.layout == Layout.COLUMN_LAYOUT) {
             Preconditions.checkArgument(cols == 1);
             Preconditions.checkArgument(B.layout() == Layout.COLUMN_LAYOUT);
             Preconditions.checkArgument(B.cols() == 1);
@@ -550,7 +538,7 @@ public class DenseMatrix32F implements Matrix32F {
         }
         else {
             throw new IllegalStateException("Unknown layout: " + layout.name());
-        }
+        }*/
         return result;
     }
 
@@ -560,7 +548,7 @@ public class DenseMatrix32F implements Matrix32F {
 
     @Override
     public Matrix32F subMatrix(final long rowOffset, final long colOffset, final long rows, final long cols) {
-        if (layout == Layout.ROW_LAYOUT) {
+        //if (layout == Layout.ROW_LAYOUT) {
             final int length = (int)(rows * cols);
             final float[] subData = new float[length];
             try {
@@ -569,29 +557,29 @@ public class DenseMatrix32F implements Matrix32F {
             catch(ArrayIndexOutOfBoundsException e) {
                 throw new RuntimeException(String.format("subMatrix(%d, %d, %d, %d) caused ArrayIndexOfBoundsException", rowOffset, colOffset, rows, cols), e);
             }
-            return new DenseMatrix32F(rows, cols, subData, layout);
-        } else
-            throw new UnsupportedOperationException();
+            return new DenseMatrix32F(rows, cols, subData);
+        //} else
+        //    throw new UnsupportedOperationException();
     }
 
     @Override
     public Matrix32F concat(final Matrix<Float> B) {
-        if(this.layout == Layout.ROW_LAYOUT) {
+        //if(this.layout == Layout.ROW_LAYOUT) {
             Preconditions.checkArgument(cols == B.cols());
             return concat(B, newInstance(rows + B.rows(), cols));
-        }
-        else if(this.layout == Layout.COLUMN_LAYOUT) {
-            Preconditions.checkArgument(rows == B.rows());
-            return concat(B, newInstance(rows, B.cols() + cols));
-        }
-        else {
-            throw new IllegalStateException("Unknown layout: " + layout.name());
-        }
+        //}
+        //else if(this.layout == Layout.COLUMN_LAYOUT) {
+        //    Preconditions.checkArgument(rows == B.rows());
+        //    return concat(B, newInstance(rows, B.cols() + cols));
+        //}
+        //else {
+        //    throw new IllegalStateException("Unknown layout: " + layout.name());
+        //}
     }
 
     @Override
     public Matrix32F concat(final Matrix<Float> B, final Matrix<Float> C) {
-        if(this.layout == Layout.ROW_LAYOUT) {
+        //if(this.layout == Layout.ROW_LAYOUT) {
             Preconditions.checkArgument(cols == B.cols());
             Preconditions.checkArgument(C.rows() == rows + B.rows() && C.cols() == cols);
             for (int row = 0; row < C.rows(); row++) {
@@ -600,7 +588,7 @@ public class DenseMatrix32F implements Matrix32F {
                     C.set(row, col, val);
                 }
             }
-        }
+        /*}
         else if(this.layout == Layout.COLUMN_LAYOUT) {
             Preconditions.checkArgument(rows == B.rows());
             Preconditions.checkArgument(C.rows() == rows && C.cols() == cols + B.cols());
@@ -613,7 +601,7 @@ public class DenseMatrix32F implements Matrix32F {
         }
         else {
             throw new IllegalStateException("Unknown layout: " + layout.name());
-        }
+        }*/
         return (Matrix32F)C;
     }
 
@@ -705,7 +693,7 @@ public class DenseMatrix32F implements Matrix32F {
         @Override
         public Matrix32F get(final long from, final long size) {
             final float v[] = new float[(int)size];
-            if(self.layout == Layout.ROW_LAYOUT) {
+            //if(self.layout == Layout.ROW_LAYOUT) {
                 try {
                     System.arraycopy(self.data, Utils.getPos(currentRow, from, self), v, 0, (int)size);
                 }
@@ -714,12 +702,12 @@ public class DenseMatrix32F implements Matrix32F {
                     throw e;
                 }
 
-            }
+            /*}
             else {
                 for (long i = from; i < size; i++) {
                     v[(int)(i - from)] = self.data[Utils.getPos(currentRow, i, self)];
                 }
-            }
+            }*/
             return new DenseMatrix32F(1, size, v);
         }
 

@@ -12,7 +12,6 @@ import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
 import org.apache.commons.lang3.mutable.MutableDouble;
@@ -61,10 +60,10 @@ public final class GloVe extends Program {
     @State(scope = Scope.REPLICATED, rows = ROWS, cols = COLS * 2)
     public Matrix32F GradSq;
 
-    @State(scope = Scope.REPLICATED, rows = 1, cols = COLS * 2, layout = Layout.COLUMN_LAYOUT)
+    @State(scope = Scope.REPLICATED, rows = 1, cols = COLS * 2)
     public Matrix32F B;
 
-    @State(scope = Scope.REPLICATED, rows = 1, cols = COLS * 2, layout = Layout.COLUMN_LAYOUT)
+    @State(scope = Scope.REPLICATED, rows = 1, cols = COLS * 2)
     public Matrix32F GradSqB;
 
     // ---------------------------------------------------

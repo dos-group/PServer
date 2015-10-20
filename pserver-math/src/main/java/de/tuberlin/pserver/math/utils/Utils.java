@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.math.utils;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.matrix.Layout;
 import de.tuberlin.pserver.math.exceptions.IncompatibleShapeException;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
 
@@ -10,15 +9,11 @@ public class Utils {
     public static final double DEFAULT_EPSILON = 0.001;
 
     public static int getPos(final long row, final long col, MatrixBase mat) {
-        return getPos(row, col, mat.layout(), mat.rows(), mat.cols());
+        return getPos(row, col, mat.rows(), mat.cols());
     }
 
-    public static int getPos(final long row, final long col, Layout layout, long numRows, long numCols) {
-        switch (layout) {
-            case ROW_LAYOUT: return toInt(row * numCols + col);
-            case COLUMN_LAYOUT: return toInt(col * numRows + row);
-        }
-        throw new IllegalStateException();
+    public static int getPos(final long row, final long col, long numRows, long numCols) {
+        return toInt(row * numCols + col);
     }
 
     public static int toInt(long value) {

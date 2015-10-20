@@ -6,7 +6,6 @@ import de.tuberlin.pserver.commons.utils.ParseUtils;
 import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.math.matrix.Format;
-import de.tuberlin.pserver.math.matrix.Layout;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
@@ -31,8 +30,6 @@ public final class StateBuilder {
     private long rows;
 
     private long cols;
-
-    private Layout layout;
 
     private Format format;
 
@@ -67,8 +64,6 @@ public final class StateBuilder {
 
     public StateBuilder cols(long cols) { this.cols = cols; return this; }
 
-    public StateBuilder layout(Layout layout) { this.layout = layout; return this; }
-
     public StateBuilder format(Format format) { this.format = format; return this; }
 
     public StateBuilder recordFormat(Class<? extends IRecordIteratorProducer> recordFormat) { this.recordFormat = recordFormat; return this; }
@@ -85,7 +80,6 @@ public final class StateBuilder {
                 ParseUtils.parseNodeRanges(at),
                 partitioner,
                 rows, cols,
-                layout,
                 format,
                 recordFormat,
                 path
@@ -102,7 +96,6 @@ public final class StateBuilder {
         this.partitioner = RowPartitioner.class;
         this.rows = 0;
         this.cols = 0;
-        this.layout = Layout.ROW_LAYOUT;
         this.format = Format.DENSE_FORMAT;
         this.recordFormat = RowColValRecordIteratorProducer.class;
         this.path = "";

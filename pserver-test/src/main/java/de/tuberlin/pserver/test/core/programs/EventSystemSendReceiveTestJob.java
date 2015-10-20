@@ -2,10 +2,10 @@ package de.tuberlin.pserver.test.core.programs;
 
 
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.runtime.core.net.NetEvents;
-import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
+import de.tuberlin.pserver.runtime.core.net.NetEvents;
+import de.tuberlin.pserver.runtime.core.net.NetManager;
 
 import java.util.concurrent.CyclicBarrier;
 

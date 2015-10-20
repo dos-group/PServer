@@ -14,13 +14,14 @@ import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
+import de.tuberlin.pserver.math.matrix.ElementType;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
 import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
-import de.tuberlin.pserver.runtime.state.types.DistributedMatrix64F;
 import de.tuberlin.pserver.runtime.state.MatrixBuilder;
+import de.tuberlin.pserver.runtime.state.types.DistributedMatrix64F;
 import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.io.PrintWriter;
@@ -101,17 +102,17 @@ public class TSNEJob extends Program {
             final long d = Y.cols();
 
             // Q is affinity for model Y
-            final Matrix64F Q = new MatrixBuilder().dimension(n, n).build();
+            final Matrix64F Q = new MatrixBuilder().dimension(n, n).elementType(ElementType.DOUBLE_MATRIX).build();
             // for calc of Q
-            final Matrix64F Y_squared = new MatrixBuilder().dimension(n, d).build();
+            final Matrix64F Y_squared = new MatrixBuilder().dimension(n, d).elementType(ElementType.DOUBLE_MATRIX).build();
             // strengthen good direction, weaken bad ones (in gradient descent)
-            final Matrix64F gains = new MatrixBuilder().dimension(n, d).build();
+            final Matrix64F gains = new MatrixBuilder().dimension(n, d).elementType(ElementType.DOUBLE_MATRIX).build();
             // previous gradient. moment of direction "movement"
-            final Matrix64F iY = new MatrixBuilder().dimension(n, d).build();
+            final Matrix64F iY = new MatrixBuilder().dimension(n, d).elementType(ElementType.DOUBLE_MATRIX).build();
             // current gradient
-            final Matrix64F dY = new MatrixBuilder().dimension(n, d).build();
+            final Matrix64F dY = new MatrixBuilder().dimension(n, d).elementType(ElementType.DOUBLE_MATRIX).build();
             // need to center Y in each iteration. define reusable matrix here
-            final Matrix64F mean = new MatrixBuilder().dimension(1, d).build();
+            final Matrix64F mean = new MatrixBuilder().dimension(1, d).elementType(ElementType.DOUBLE_MATRIX).build();
 
             gains.assign(1.0);
 
@@ -147,7 +148,7 @@ public class TSNEJob extends Program {
                 PartitionShape shape = ((DistributedMatrix64F)P).getPartitionShape();
                 Parallel.For(shape.rows, (i) -> {
                     // TODO: get target vector of dY instead. possible? or resuable?
-                    final Matrix64F sumVec = new MatrixBuilder().dimension(1, d).build();
+                    final Matrix64F sumVec = new MatrixBuilder().dimension(1, d).elementType(ElementType.DOUBLE_MATRIX).build();
                     UnitMng.loop(P.cols(), (j) -> {
                         final Double pq = P.get(shape.rowOffset + i, j) - Q.get(i, j);//PQ.get(i, j);
                         final Double num_j = num.get(i, j);
@@ -163,9 +164,9 @@ public class TSNEJob extends Program {
 
                 // set gain
                 Parallel.For(gains, (i, j, v) -> {
-                    final Double dY_j = dY.get(i, j);
-                    final Double iY_j = iY.get(i, j);
-                    final Double gain_j = gains.get(i, j);
+                    final double dY_j = dY.get(i, j);
+                    final double iY_j = iY.get(i, j);
+                    final double gain_j = gains.get(i, j);
                     // same as in reference. but why?
                     gains.set(i, j, (dY_j > 0) == (iY_j > 0) ? gain_j * 0.8 : gain_j + 0.2);
                 });
@@ -219,9 +220,9 @@ public class TSNEJob extends Program {
 
         long n = shape.rows;
 
-        final Matrix64F P_tmp      = new MatrixBuilder().dimension(shape.rows, shape.cols).build();
+        final Matrix64F P_tmp      = new MatrixBuilder().dimension(shape.rows, shape.cols).elementType(ElementType.DOUBLE_MATRIX).build();
         // beta = 1/(2*sigma^2). sigma is depended on a point. so we have n sigmas
-        final Matrix64F beta       = new MatrixBuilder().dimension(1, n).build();
+        final Matrix64F beta       = new MatrixBuilder().dimension(1, n).elementType(ElementType.DOUBLE_MATRIX).build();
 
         beta.assign(1.);
 
@@ -275,7 +276,7 @@ public class TSNEJob extends Program {
     }
 
     private Tuple2<Double, Matrix64F> computeHBeta(final Matrix64F d, final double beta, final long index){
-        final Matrix64F P = new MatrixBuilder().dimension(1, d.cols()).build();
+        final Matrix64F P = new MatrixBuilder().dimension(1, d.cols()).elementType(ElementType.DOUBLE_MATRIX).build();
         P.set(0, index, 0.);
 
         // parExe over all elements i != j
@@ -305,7 +306,7 @@ public class TSNEJob extends Program {
     }
 
     public static void local() {
-        System.setProperty("simulation.numNodes", "2");
+        System.setProperty("simulation.numNodes", "1");
 
         final List<List<Serializable>> res = Lists.newArrayList();
 
