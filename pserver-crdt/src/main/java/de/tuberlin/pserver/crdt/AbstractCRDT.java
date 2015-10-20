@@ -2,10 +2,9 @@ package de.tuberlin.pserver.crdt;
 
 import de.tuberlin.pserver.crdt.operations.EndOperation;
 import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.runtime.MsgEventHandler;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.events.MsgEventHandler;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.log4j.TTCCLayout;
 
 import java.util.HashSet;
 import java.util.LinkedList;
