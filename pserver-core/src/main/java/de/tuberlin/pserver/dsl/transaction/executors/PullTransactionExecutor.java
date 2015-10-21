@@ -7,7 +7,6 @@ import de.tuberlin.pserver.dsl.transaction.events.TransactionResponseEvent;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.RuntimeContext;
-import org.apache.commons.lang3.mutable.MutableInt;
 
 import java.util.ArrayList;
 import java.util.HashMap;

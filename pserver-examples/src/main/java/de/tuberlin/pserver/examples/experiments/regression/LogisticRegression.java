@@ -8,7 +8,7 @@ import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
-import de.tuberlin.pserver.dsl.transaction.phases.Apply;
+import de.tuberlin.pserver.dsl.transaction.phases.Update;
 import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
@@ -67,14 +67,13 @@ public class LogisticRegression extends Program {
     @Transaction(state = "W", type = TransactionType.PULL)
     public final TransactionDefinition syncW = new TransactionDefinition(
 
-            (Apply<Matrix64F, Void>) (updates, state) -> {
+            (Update<Matrix64F>) (remoteUpdates, localState) -> {
                 int count = 1;
-                for (final Matrix64F update : updates) {
+                for (final Matrix64F update : remoteUpdates) {
                     Parallel.For(update, (i, j, v) -> W.set(i, j, W.get(i, j) + update.get(i, j)));
                     count++;
                 }
                 W.scale(1. / count, W);
-                return null;
             }
     );
 

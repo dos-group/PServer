@@ -7,7 +7,7 @@ import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
-import de.tuberlin.pserver.dsl.transaction.phases.Apply;
+import de.tuberlin.pserver.dsl.transaction.phases.Update;
 import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
@@ -61,8 +61,9 @@ public class KMeans extends Program {
     @Transaction(state = "centroidsUpdate", type = TransactionType.PULL)
     public final TransactionDefinition centroidsUpdateSync = new TransactionDefinition(
 
-            (Apply<Matrix64F, Void>) (updates, state) -> {
-                for (final Matrix64F update : updates) {
+            (Update<Matrix64F>) (remoteUpdates, localState) -> {
+
+                for (final Matrix64F update : remoteUpdates) {
                     Parallel.For(update, (i, j, v) -> centroidsUpdate.set(i, j, centroidsUpdate.get(i, j) + update.get(i, j)));
                 }
 
@@ -74,9 +75,8 @@ public class KMeans extends Program {
                         }
                     }
                 }
-                centroidsUpdate.assign(0.);
 
-                return null;
+                centroidsUpdate.assign(0.);
             }
     );
 
