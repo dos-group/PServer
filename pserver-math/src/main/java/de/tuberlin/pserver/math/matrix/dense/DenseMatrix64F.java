@@ -27,8 +27,6 @@ public class DenseMatrix64F implements Matrix64F {
 
     private final long cols;
 
-    //private final Layout layout;
-
     private final Lock lock;
 
     private Object owner;
@@ -47,8 +45,6 @@ public class DenseMatrix64F implements Matrix64F {
     public DenseMatrix64F(final long rows, final long cols, final double[] data) {
         this.rows = rows;
         this.cols = cols;
-        //this.layout = Preconditions.checkNotNull(layout);
-        //Preconditions.checkArgument(java.util.Arrays.asList(Layout.values()).contains(layout), "Unknown MemoryLayout: " + layout.toString());
         this.lock = new ReentrantLock(true);
         this.data = (data == null) ? new double[(int)(rows * cols)] : Preconditions.checkNotNull(data);
     }
@@ -71,11 +67,6 @@ public class DenseMatrix64F implements Matrix64F {
     public long sizeOf() {
         return rows * cols * Double.BYTES;
     }
-
-    //@Override
-    //public Layout layout() {
-    //    return layout;
-    //}
 
     @Override
     public void lock() {
@@ -137,16 +128,16 @@ public class DenseMatrix64F implements Matrix64F {
     @Override
     public void set(final long row, final long col, final Double value) {
         try {
-            data[Utils.getPos(row, col, this)] = value;
+            data[(int)(row * cols + col)] = value;
         } catch(ArrayIndexOutOfBoundsException e) {
             if(row < rows && col < cols) {
                 throw new IllegalStateException(String.format("Attempt to set a valid position (%d, %d) " +
                         "in matrix of shape (%d, %d) yielded ArrayIndexOutOfBounds: %d",
-                        row, col, rows, cols, Utils.getPos(row, col, this)), e);
+                        row, col, rows, cols, (int)(row * cols + col)), e);
             }
             throw new IllegalStateException(String.format("Attempt to set a invalid position (%d, %d) " +
                     "in matrix of shape (%d, %d) yielded ArrayIndexOutOfBounds: %d",
-                    row, col, rows, cols, Utils.getPos(row, col, this)), e);
+                    row, col, rows, cols, (int)(row * cols + col)), e);
         }
     }
 
@@ -183,7 +174,7 @@ public class DenseMatrix64F implements Matrix64F {
 
     @Override
     public Double get(final long row, final long col) {
-        return data[Utils.getPos(row, col, this)];
+        return data[(int)(row * cols + col)];
     }
 
     @Override
@@ -195,8 +186,8 @@ public class DenseMatrix64F implements Matrix64F {
     public Matrix64F getRow(final long row, final long from, final long to) {
         // TODO: Optimize with respect to the layout with array copy.
         Matrix64F r = new DenseMatrix64F(1, to - from);
-        for (long i = from; i < to; ++i)
-            r.set(0, i, data[Utils.getPos(row, i, this)]);
+        for (long col = from; col < to; ++col)
+            r.set(0, col, data[(int)(row * cols + col)]);
         return r;
     }
 
@@ -320,8 +311,8 @@ public class DenseMatrix64F implements Matrix64F {
     @Override
     public Matrix64F assignRow(final long row, final Matrix<Double> v) {
         Preconditions.checkNotNull(cols == v.cols());
-        for (int i = 0; i < cols; ++i)
-            data[Utils.getPos(row, i, this)] = v.get(i);
+        for (int col = 0; col < cols; ++col)
+            data[(int)(row * cols + col)] = v.get(col);
         return this;
     }
 
@@ -342,12 +333,7 @@ public class DenseMatrix64F implements Matrix64F {
 
     @Override
     public Matrix64F assign(final long rowOffset, final long colOffset, final Matrix<Double> m) {
-        //if (layout == Layout.ROW_LAYOUT && m.layout() == layout && cols == m.cols()) {
-            System.arraycopy(m.toArray(), 0, data, (int) (rowOffset * cols + colOffset), ((double[])m.toArray()).length);
-        //}
-        //else if(layout == Layout.COLUMN_LAYOUT && m.layout() == layout && rows == m.rows()) {
-        //    System.arraycopy(m.toArray(), 0, data, (int) (colOffset * rows + rowOffset), ((double[])m.toArray()).length);
-        //}
+        System.arraycopy(m.toArray(), 0, data, (int) (rowOffset * cols + colOffset), ((double[])m.toArray()).length);
         return null; //assign(rowOffset, colOffset, m);
     }
 
@@ -526,27 +512,9 @@ public class DenseMatrix64F implements Matrix64F {
     @Override
     public Double dot(final Matrix<Double> B) {
         double result = 0;
-        //if(this.layout == Layout.ROW_LAYOUT) {
-            //Preconditions.checkArgument(rows == 1);
-            //Preconditions.checkArgument(B.layout() == Layout.ROW_LAYOUT);
-            //Preconditions.checkArgument(cols == B.cols());
-            //Preconditions.checkArgument(B.rows() == cols());
-            for (int i = 0; i < rows * cols; i++) {
-                result += this.get(i) * B.get(i);
-            }
-        //}
-        //else if(this.layout == Layout.COLUMN_LAYOUT) {
-        //    Preconditions.checkArgument(cols == 1);
-        //    Preconditions.checkArgument(B.layout() == Layout.COLUMN_LAYOUT);
-        //    Preconditions.checkArgument(B.cols() == 1);
-        //    Preconditions.checkArgument(rows == B.rows());
-        //    for (int row = 0; row < rows; row++) {
-        //        result += this.get(row) * B.get(row);
-        //    }
-        //}
-        //else {
-        //    throw new IllegalStateException("Unknown layout: " + layout.name());
-        //}
+        for (int i = 0; i < rows * cols; i++) {
+            result += this.get(i) * B.get(i);
+        }
         return result;
     }
 
@@ -556,60 +524,33 @@ public class DenseMatrix64F implements Matrix64F {
 
     @Override
     public Matrix64F subMatrix(final long rowOffset, final long colOffset, final long rows, final long cols) {
-        //if (layout == Layout.ROW_LAYOUT) {
-            final int length = (int)(rows * cols);
-            final double[] subData = new double[length];
-            try {
-                System.arraycopy(data, (int) (rowOffset * cols + colOffset), subData, 0, length);
-            }
-            catch(ArrayIndexOutOfBoundsException e) {
-                throw new RuntimeException(String.format("subMatrix(%d, %d, %d, %d) caused ArrayIndexOfBoundsException", rowOffset, colOffset, rows, cols), e);
-            }
-            return new DenseMatrix64F(rows, cols, subData);
-        //} else
-        //    throw new UnsupportedOperationException();
+        final int length = (int)(rows * cols);
+        final double[] subData = new double[length];
+        try {
+            System.arraycopy(data, (int) (rowOffset * cols + colOffset), subData, 0, length);
+        }
+        catch(ArrayIndexOutOfBoundsException e) {
+            throw new RuntimeException(String.format("subMatrix(%d, %d, %d, %d) caused ArrayIndexOfBoundsException", rowOffset, colOffset, rows, cols), e);
+        }
+        return new DenseMatrix64F(rows, cols, subData);
     }
 
     @Override
     public Matrix64F concat(final Matrix<Double> B) {
-        //if(this.layout == Layout.ROW_LAYOUT) {
-            Preconditions.checkArgument(cols == B.cols());
-            return concat(B, newInstance(rows + B.rows(), cols));
-        //}
-        //else if(this.layout == Layout.COLUMN_LAYOUT) {
-        //    Preconditions.checkArgument(rows == B.rows());
-        //    return concat(B, newInstance(rows, B.cols() + cols));
-        //}
-        //else {
-        //    throw new IllegalStateException("Unknown layout: " + layout.name());
-        //}
+        Preconditions.checkArgument(cols == B.cols());
+        return concat(B, newInstance(rows + B.rows(), cols));
     }
 
     @Override
     public Matrix64F concat(final Matrix<Double> B, final Matrix<Double> C) {
-        //if(this.layout == Layout.ROW_LAYOUT) {
-            Preconditions.checkArgument(cols == B.cols());
-            Preconditions.checkArgument(C.rows() == rows + B.rows() && C.cols() == cols);
-            for (int row = 0; row < C.rows(); row++) {
-                for (int col = 0; col < cols; col++) {
-                    double val = row < rows ? this.get(row, col) : B.get(row, col);
-                    C.set(row, col, val);
-                }
-            }
-        //}
-        /*else if(this.layout == Layout.COLUMN_LAYOUT) {
-            Preconditions.checkArgument(rows == B.rows());
-            Preconditions.checkArgument(C.rows() == rows && C.cols() == cols + B.cols());
-            for (int row = 0; row < C.rows(); row++) {
-                for (int col = 0; col < cols; col++) {
-                    double val = col < cols ? this.get(row, col) : B.get(row, col);
-                    C.set(row, col, val);
-                }
+        Preconditions.checkArgument(cols == B.cols());
+        Preconditions.checkArgument(C.rows() == rows + B.rows() && C.cols() == cols);
+        for (int row = 0; row < C.rows(); row++) {
+            for (int col = 0; col < cols; col++) {
+                double val = row < rows ? this.get(row, col) : B.get(row, col);
+                C.set(row, col, val);
             }
         }
-        else {
-            throw new IllegalStateException("Unknown layout: " + layout.name());
-        }*/
         return (Matrix64F)C;
     }
 
@@ -690,7 +631,7 @@ public class DenseMatrix64F implements Matrix64F {
 
         @Override
         public Double value(final long col) {
-            return self.data[Utils.getPos(currentRow, col, self)];
+            return self.data[(int)(currentRow * self.cols + col)];
         }
 
         @Override
@@ -701,21 +642,13 @@ public class DenseMatrix64F implements Matrix64F {
         @Override
         public DenseMatrix64F get(final long from, final long size) {
             final double v[] = new double[(int)size];
-            //if(self.layout == Layout.ROW_LAYOUT) {
-                try {
-                    System.arraycopy(self.data, Utils.getPos(currentRow, from, self), v, 0, (int)size);
-                }
-                catch(ArrayIndexOutOfBoundsException e) {
-                    System.out.println("failed copy from: " + Utils.getPos(currentRow, from, self) + "; currentRow: " + currentRow + "; from: " + from + ";  length: " + size + "; array.length: " + self.data.length);
-                    throw e;
-                }
-
-            //}
-            //else {
-            //    for (long i = from; i < size; i++) {
-            //        v[(int)(i - from)] = self.data[Utils.getPos(currentRow, i, self)];
-            //    }
-            //}
+            try {
+                System.arraycopy(self.data, (int)(currentRow * self.cols + from), v, 0, (int)size);
+            }
+            catch(ArrayIndexOutOfBoundsException e) {
+                System.out.println("failed copy from: " + (int)(currentRow * self.cols + from) + "; currentRow: " + currentRow + "; from: " + from + ";  length: " + size + "; array.length: " + self.data.length);
+                throw e;
+            }
             return new DenseMatrix64F(1, size, v);
         }
 
