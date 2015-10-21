@@ -113,7 +113,7 @@ public class DenseMatrix32F implements Matrix32F {
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("AbstractMatrix["+rows+"|"+cols+"]: ");
+        stringBuilder.append("DenseMatrix32F["+rows+"|"+cols+"]: ");
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
                 stringBuilder.append("("+row+","+col+","+get(row,col)+") ");
@@ -519,12 +519,12 @@ public class DenseMatrix32F implements Matrix32F {
     public Float dot(final Matrix<Float> B) {
         float result = 0;
         //if(this.layout == Layout.ROW_LAYOUT) {
-            Preconditions.checkArgument(rows == 1);
+            //Preconditions.checkArgument(rows == 1);
             //Preconditions.checkArgument(B.layout() == Layout.ROW_LAYOUT);
-            Preconditions.checkArgument(B.rows() == 1);
-            Preconditions.checkArgument(cols == B.cols());
-            for (int col = 0; col < cols; col++) {
-                result += this.get(col) * B.get(col);
+            //Preconditions.checkArgument(B.rows() == 1);
+            //Preconditions.checkArgument(cols == B.cols());
+            for (int i = 0; i < cols * rows; i++) {
+                result += this.get(i) * B.get(i);
             }
         //}
         /*else if(this.layout == Layout.COLUMN_LAYOUT) {

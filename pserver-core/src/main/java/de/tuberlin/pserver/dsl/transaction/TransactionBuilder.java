@@ -2,6 +2,7 @@ package de.tuberlin.pserver.dsl.transaction;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.commons.utils.ParseUtils;
 import de.tuberlin.pserver.compiler.TransactionDescriptor;
 import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
@@ -16,7 +17,7 @@ public final class TransactionBuilder {
 
     // ---------------------------------------------------
 
-    public String stateName;
+    public String stateObjectNames;
 
     public TransactionType type;
 
@@ -39,7 +40,7 @@ public final class TransactionBuilder {
     // Public Methods.
     // ---------------------------------------------------
 
-    public TransactionBuilder state(final String stateName) { this.stateName = stateName; return this; }
+    public TransactionBuilder state(final String stateObjectNames) { this.stateObjectNames = stateObjectNames; return this; }
 
     public TransactionBuilder type(final TransactionType type) { this.type = type; return this; }
 
@@ -52,12 +53,12 @@ public final class TransactionBuilder {
     public TransactionDefinition build(final String transactionName, final TransactionDefinition definition) {
         final TransactionDescriptor descriptor = new TransactionDescriptor(
                 transactionName,
-                stateName,
+                ParseUtils.parseStateList(stateObjectNames),
                 definition,
                 type,
                 cache,
-                programContext.runtimeContext.nodeID,
-                programContext.programTable.getState(stateName).atNodes
+                programContext.nodeID,
+                programContext.programTable
         );
         return programContext.runtimeContext.runtimeManager.createTransaction(programContext, descriptor);
     }
@@ -65,7 +66,7 @@ public final class TransactionBuilder {
     // ---------------------------------------------------
 
     public void clear() {
-        this.stateName = "";
+        this.stateObjectNames = "";
         this.type = TransactionType.PUSH;
         this.at = "";
         this.cache = false;

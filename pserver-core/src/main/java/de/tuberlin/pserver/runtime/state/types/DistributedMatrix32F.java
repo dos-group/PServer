@@ -47,7 +47,7 @@ public class DistributedMatrix32F implements Matrix32F {
         this.partitioner = IMatrixPartitioner.newInstance(
                 partitionerType,
                 rows, cols,
-                programContext.runtimeContext.nodeID,
+                programContext.nodeID,
                 atNodes
         );
 

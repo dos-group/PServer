@@ -30,6 +30,8 @@ public final class GloVe extends Program {
 
     // 1597422 ms (Local: 4 Nodes with 8 Threads per Node) - 32F
 
+    // 1245857 ms (Local: 4 Nodes with 8 Threads per Node) - 32F - 20.76min => Optimized Transactions!
+
     // ---------------------------------------------------
     // Constants.
     // ---------------------------------------------------
@@ -70,42 +72,12 @@ public final class GloVe extends Program {
     // Transactions.
     // ---------------------------------------------------
 
-    @Transaction(state = "W", type = TransactionType.PULL)
-    public final TransactionDefinition syncW = new TransactionDefinition(
+    @Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PULL)
+    public final TransactionDefinition sync = new TransactionDefinition(
 
-            (Apply<Matrix32F, Void>) (updates) -> {
-                for (final Matrix32F update : updates)
-                    Parallel.For(update, (i, j, v) -> W.set(i, j, (W.get(i, j) + update.get(i, j)) / 2));
-                return null;
-            }
-    );
-
-    @Transaction(state = "GradSq", type = TransactionType.PULL)
-    public final TransactionDefinition syncGradSq = new TransactionDefinition(
-
-            (Apply<Matrix32F, Void>) (updates) -> {
-                for (final Matrix32F update : updates)
-                    Parallel.For(update, (i, j, v) -> GradSq.set(i, j, (GradSq.get(i, j) + update.get(i, j)) / 2));
-                return null;
-            }
-    );
-
-    @Transaction(state = "B", type = TransactionType.PULL)
-    public final TransactionDefinition syncB = new TransactionDefinition(
-
-            (Apply<Matrix32F, Void>) (updates) -> {
-                for (final Matrix32F update : updates)
-                    Parallel.For(update, (i, j, v) -> B.set(i, j, (B.get(i, j) + update.get(i, j)) / 2));
-                return null;
-            }
-    );
-
-    @Transaction(state = "GradSqB", type = TransactionType.PULL)
-    public final TransactionDefinition syncGradSqB = new TransactionDefinition(
-
-            (Apply<Matrix32F, Void>) (updates) -> {
-                for (final Matrix32F update : updates)
-                    Parallel.For(update, (i, j, v) -> GradSqB.set(i, j, (GradSqB.get(i, j) + update.get(i, j)) / 2));
+            (Apply<Matrix32F, Void>) (remoteUpdates, state) -> {
+                for (final Matrix32F update : remoteUpdates)
+                    Parallel.For(update, (i, j, v) -> state.set(i, j, (state.get(i, j) + update.get(i, j)) / 2));
                 return null;
             }
     );
@@ -138,7 +110,7 @@ public final class GloVe extends Program {
 
                 final MutableDouble costI = new MutableDouble(0.0);
 
-                LOG.info("Epoch = " + e0);
+                LOG.info("Epoch = " + e0 + " at Node " + programContext.nodeID);
 
                 Parallel.For(X, (wordVecIdx, j, v) -> {
 
@@ -180,10 +152,7 @@ public final class GloVe extends Program {
                     GradSqB.set(0, ctxVecIdx, GradSqB.get(0, ctxVecIdx) + fdiff * fdiff);
                 });
 
-                TransactionMng.commit(syncW);
-                TransactionMng.commit(syncGradSq);
-                TransactionMng.commit(syncB);
-                TransactionMng.commit(syncGradSqB);
+                TransactionMng.commit(sync);
             });
         });
     }

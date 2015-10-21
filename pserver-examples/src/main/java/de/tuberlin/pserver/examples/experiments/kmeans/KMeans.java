@@ -61,7 +61,7 @@ public class KMeans extends Program {
     @Transaction(state = "centroidsUpdate", type = TransactionType.PULL)
     public final TransactionDefinition centroidsUpdateSync = new TransactionDefinition(
 
-            (Apply<Matrix64F, Void>) (updates) -> {
+            (Apply<Matrix64F, Void>) (updates, state) -> {
                 for (final Matrix64F update : updates) {
                     Parallel.For(update, (i, j, v) -> centroidsUpdate.set(i, j, centroidsUpdate.get(i, j) + update.get(i, j)));
                 }
@@ -82,7 +82,7 @@ public class KMeans extends Program {
 
     // ---------------------------------------------------
     // Units.
-    // --------------------------------------------------
+    // ---------------------------------------------------
 
     @Unit
     public void main(final Lifecycle lifecycle) {
@@ -127,13 +127,13 @@ public class KMeans extends Program {
                 });
                 // END: STANDARD KMEANS ON LOCAL PARTITION
 
-                // Pull model from remote nodes and merge.
+                // Pull model from remote stateObjectNodes and merge.
                 TransactionMng.commit(centroidsUpdateSync);
             });
 
         }).postProcess(() -> {
             for (int i = 0; i < K; i++) {
-                int nodeId = programContext.runtimeContext.nodeID;
+                int nodeId = programContext.nodeID;
                 System.out.println("centroid[node:" + nodeId + ",row:" + i + "]=" + centroids.getRow(i));
             }
         });
@@ -143,20 +143,18 @@ public class KMeans extends Program {
     // Entry Point.
     // ---------------------------------------------------
 
-    public static void main(String[] args) {
-        local();
-    }
+    public static void main(String[] args) { local(); }
 
     // ---------------------------------------------------
 
-    public static void cluster() {
+    private static void cluster() {
         System.setProperty("pserver.profile", "wally");
         PServerExecutor.REMOTE
                 .run(KMeans.class)
                 .done();
     }
 
-    public static void local() {
+    private static void local() {
         System.setProperty("simulation.numNodes", "2");
         PServerExecutor.LOCAL
                 .run(KMeans.class)

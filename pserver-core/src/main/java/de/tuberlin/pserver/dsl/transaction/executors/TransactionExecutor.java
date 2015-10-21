@@ -5,6 +5,8 @@ import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 
+import java.util.List;
+
 
 public abstract class TransactionExecutor {
 
@@ -36,7 +38,9 @@ public abstract class TransactionExecutor {
     // Public Methods.
     // ---------------------------------------------------
 
-    public abstract Object execute(final Object requestObject) throws Exception;
+    public abstract void bind() throws Exception;
+
+    public abstract List<Object> execute(final Object requestObject) throws Exception;
 
     // ---------------------------------------------------
     // Factory.

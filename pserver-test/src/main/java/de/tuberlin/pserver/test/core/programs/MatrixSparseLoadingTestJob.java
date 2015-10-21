@@ -43,7 +43,7 @@ public class MatrixSparseLoadingTestJob extends Program {
 
         lifecycle.process(() -> {
 
-            int nodeId = programContext.runtimeContext.nodeID;
+            int nodeId = programContext.nodeID;
             int numNodes = programContext.nodeDOP;
             RowPartitioner partitioner = new RowPartitioner(ROWS, COLS, nodeId, numNodes);
 

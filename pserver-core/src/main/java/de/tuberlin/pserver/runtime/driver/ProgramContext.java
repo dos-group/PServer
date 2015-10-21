@@ -48,6 +48,8 @@ public final class ProgramContext implements Deactivatable {
 
     public final int nodeDOP;
 
+    public final int nodeID;
+
     @GsonUtils.Exclude
     public final RuntimeContext runtimeContext;
 
@@ -87,6 +89,7 @@ public final class ProgramContext implements Deactivatable {
         this.simpleClassName    = Preconditions.checkNotNull(simpleClassName);
         this.programTable       = Preconditions.checkNotNull(programTable);
         this.nodeDOP            = nodeDOP;
+        this.nodeID             = runtimeContext.nodeID;
 
         this.programStore       = new NonBlockingHashMap<>();
         this.resultObjects      = new TreeMap<>();

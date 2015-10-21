@@ -14,7 +14,7 @@ public class ASymAggregatorTestJob extends Program {
 
         lifecycle.process(() -> {
 
-            final int partialAgg = programContext.runtimeContext.nodeID * 1000;
+            final int partialAgg = programContext.nodeID * 1000;
 
             final int globalAgg = new Aggregator<>(programContext, partialAgg, false)
                     .apply(pa -> pa.stream().mapToInt(Integer::intValue).sum());

@@ -44,7 +44,7 @@ public class MatrixDenseLoadingRowTestJob extends Program {
         lifecycle.process(() -> {
 
             matrix = runtimeManager.getDHT("matrix");
-            int nodeId = programContext.runtimeContext.nodeID;
+            int nodeId = programContext.nodeID;
             int numNodes = programContext.nodeDOP;
             RowPartitioner partitioner = new RowPartitioner(ROWS, COLS, nodeId, numNodes);
             ReusableMatrixEntry<Double> entry = new MutableMatrixEntry<>(-1, -1, Double.NaN);

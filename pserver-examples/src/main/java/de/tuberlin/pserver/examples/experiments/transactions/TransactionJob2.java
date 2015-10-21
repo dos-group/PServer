@@ -41,7 +41,7 @@ public class TransactionJob2 extends Program {
             return params;
         },
 
-        (Apply<double[], double[]>) (params) -> params.get(0)
+        (Apply<double[], double[]>) (params, state) -> params.get(0)
     );
 
     // ---------------------------------------------------

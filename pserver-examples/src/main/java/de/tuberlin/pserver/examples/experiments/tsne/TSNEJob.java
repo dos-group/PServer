@@ -76,7 +76,7 @@ public class TSNEJob extends Program {
 
             (Prepare<Matrix, Matrix>) object -> null,
 
-            (Apply<Matrix, Void>) object -> null
+            (Apply<Matrix, Void>) (remote, local) -> null
     );
 
     // ---------------------------------------------------
@@ -298,14 +298,18 @@ public class TSNEJob extends Program {
     // Entry Point.
     // ---------------------------------------------------
 
-    public static void cluster() {
+    public static void main(final String[] args) { local(); }
+
+    // ---------------------------------------------------
+
+    private static void cluster() {
         System.setProperty("pserver.profile", "wally");
         PServerExecutor.REMOTE
                 .run(TSNEJob.class)
                 .done();
     }
 
-    public static void local() {
+    private static void local() {
         System.setProperty("simulation.numNodes", "1");
 
         final List<List<Serializable>> res = Lists.newArrayList();
@@ -327,9 +331,5 @@ public class TSNEJob extends Program {
         } catch (Exception e) {
             LOG.error(e.getMessage());
         }
-    }
-
-    public static void main(final String[] args) {
-        local();
     }
 }

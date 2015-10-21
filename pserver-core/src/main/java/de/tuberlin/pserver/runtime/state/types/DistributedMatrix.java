@@ -51,7 +51,7 @@ public class DistributedMatrix<V extends Number> implements Matrix<V> {
 
         this.programContext = Preconditions.checkNotNull(programContext);
         this.nodeDOP        = programContext.nodeDOP;
-        this.nodeID         = programContext.runtimeContext.nodeID;
+        this.nodeID         = programContext.nodeID;
         this.partitioner    = Preconditions.checkNotNull(partitioner);
         this.shape          = partitioner.getPartitionShape();
         this.format         = format;
@@ -154,7 +154,7 @@ public class DistributedMatrix<V extends Number> implements Matrix<V> {
      */
     private static Map<Integer,RemotePartition> getIntersectingRemotePartitions(DistributedMatrix sourceMatrix, PartitionShape targetShape) {
         Map<Integer,RemotePartition> remotePartitions = new HashMap<>(sourceMatrix.nodeDOP);
-        // iterate over all nodes, the source matrix is partitioned across
+        // iterate over all stateObjectNodes, the source matrix is partitioned across
         for(int i : sourceMatrix.partitioner.getNodes()) {
             // get partition shape of (possibly) remote node
             PartitionShape remoteShape = sourceMatrix.partitioner.ofNode(i).getPartitionShape();

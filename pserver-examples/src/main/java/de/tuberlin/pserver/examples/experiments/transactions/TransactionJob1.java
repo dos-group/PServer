@@ -37,7 +37,7 @@ public class TransactionJob1 extends Program {
 
         (Prepare<Matrix32F, Matrix32F>) model -> model,
 
-        (Apply<Matrix32F, Void>) remoteModels -> {
+        (Apply<Matrix32F, Void>) (remoteModels, localModel) -> {
 
             for (int i = 0; i < 100; i++) {
                 for (int j = 0; j < 100; j++) {

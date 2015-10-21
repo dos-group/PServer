@@ -24,14 +24,14 @@ public class SingletonMatrixTestJob extends Program {
 
             final int rows = (ROWS / (programContext.runtimeContext.numOfNodes));
 
-            for (int i = programContext.runtimeContext.nodeID * rows; i < programContext.runtimeContext.nodeID * rows + rows; ++i) {
+            for (int i = programContext.nodeID * rows; i < programContext.nodeID * rows + rows; ++i) {
                 for (int j = 0; j < COLS; ++j) {
 
-                    W.set(i, j, (double)programContext.runtimeContext.nodeID);
+                    W.set(i, j, (double)programContext.nodeID);
                     final double value = W.get(i, j);
 
-                    Preconditions.checkState(value == programContext.runtimeContext.nodeID,
-                            value + " != " + programContext.runtimeContext.nodeID + " - " + programContext);
+                    Preconditions.checkState(value == programContext.nodeID,
+                            value + " != " + programContext.nodeID + " - " + programContext);
                 }
             }
         });

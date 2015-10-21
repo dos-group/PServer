@@ -121,7 +121,7 @@ public class DenseMatrix64F implements Matrix64F {
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("AbstractMatrix["+rows+"|"+cols+"]: ");
+        stringBuilder.append("DenseMatrix64F["+rows+"|"+cols+"]: ");
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
                 stringBuilder.append("("+row+","+col+","+get(row,col)+") ");
@@ -527,12 +527,12 @@ public class DenseMatrix64F implements Matrix64F {
     public Double dot(final Matrix<Double> B) {
         double result = 0;
         //if(this.layout == Layout.ROW_LAYOUT) {
-            Preconditions.checkArgument(rows == 1);
+            //Preconditions.checkArgument(rows == 1);
             //Preconditions.checkArgument(B.layout() == Layout.ROW_LAYOUT);
-            Preconditions.checkArgument(B.rows() == 1);
-            Preconditions.checkArgument(cols == B.cols());
-            for (int col = 0; col < cols; col++) {
-                result += this.get(col) * B.get(col);
+            //Preconditions.checkArgument(cols == B.cols());
+            //Preconditions.checkArgument(B.rows() == cols());
+            for (int i = 0; i < rows * cols; i++) {
+                result += this.get(i) * B.get(i);
             }
         //}
         //else if(this.layout == Layout.COLUMN_LAYOUT) {

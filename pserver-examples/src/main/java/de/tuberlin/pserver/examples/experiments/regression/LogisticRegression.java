@@ -41,6 +41,9 @@ public class LogisticRegression extends Program {
     private static int NUM_EPOCHS = 1;
     private static double LAMBDA = 1.0;
 
+    // ---------------------------------------------------
+    // State.
+    // ---------------------------------------------------
 
     @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = D, path = X_TRAIN_PATH)
     public Matrix64F XTrain;
@@ -57,11 +60,14 @@ public class LogisticRegression extends Program {
     @State(scope = Scope.REPLICATED, rows = 1, cols = D)
     public Matrix64F W;
 
+    // ---------------------------------------------------
+    // Transactions.
+    // ---------------------------------------------------
 
     @Transaction(state = "W", type = TransactionType.PULL)
     public final TransactionDefinition syncW = new TransactionDefinition(
 
-            (Apply<Matrix64F, Void>) (updates) -> {
+            (Apply<Matrix64F, Void>) (updates, state) -> {
                 int count = 1;
                 for (final Matrix64F update : updates) {
                     Parallel.For(update, (i, j, v) -> W.set(i, j, W.get(i, j) + update.get(i, j)));
@@ -72,28 +78,29 @@ public class LogisticRegression extends Program {
             }
     );
 
+    // ---------------------------------------------------
+    // Units.
+    // ---------------------------------------------------
 
     @Unit
     public void unit(Lifecycle lifecycle) {
 
-        lifecycle.preProcess(() -> {
+        lifecycle.process(() -> {
 
-        }).process(() -> {
-
-            Scorer zeroOneLoss = new Scorer(
+            final Scorer zeroOneLoss = new Scorer(
                     new ScoreFunction.ZeroOneLoss(),
                     new PredictionFunction.LinearBinaryPrediction());
 
-            Scorer accuracy = new Scorer(
+            final Scorer accuracy = new Scorer(
                     new ScoreFunction.Accuracy(),
                     new PredictionFunction.LinearBinaryPrediction());
 
-            LossFunction lossFct = new LossFunction.GenericLossFunction(
+            final LossFunction lossFct = new LossFunction.GenericLossFunction(
                     new PredictionFunction.LinearPrediction(),
                     new PartialLossFunction.LogLoss(),
                     new RegularizationFunction.L2Regularization());
 
-            GDOptimizer optimizer = new GDOptimizer()
+            final GDOptimizer optimizer = new GDOptimizer()
                     .setMaxIterations(NUM_EPOCHS)
                     .setBatchSize(1)
                     .setInitialLearningRate(STEP_SIZE)
@@ -105,35 +112,43 @@ public class LogisticRegression extends Program {
 
             optimizer.optimize(XTrain, yTrain, W);
 
-            System.out.println("Loss[" + programContext.runtimeContext.nodeID +"]: "
+            System.out.println("Loss[" + programContext.nodeID +"]: "
                     + zeroOneLoss.score(XTest, yTest, W));
-            System.out.println("Accuracy[" + programContext.runtimeContext.nodeID +"]: "
+            System.out.println("Accuracy[" + programContext.nodeID +"]: "
                     + accuracy.score(XTest, yTest, W));
 
         }).postProcess(() -> {
+
             UnitMng.barrier(UnitMng.GLOBAL_BARRIER);
 
             TransactionMng.commit(syncW);
 
-            Scorer zeroOneLoss = new Scorer(
+            final Scorer zeroOneLoss = new Scorer(
                     new ScoreFunction.ZeroOneLoss(),
                     new PredictionFunction.LinearBinaryPrediction());
 
-            Scorer accuracy = new Scorer(
+            final Scorer accuracy = new Scorer(
                     new ScoreFunction.Accuracy(),
                     new PredictionFunction.LinearBinaryPrediction());
 
-            System.out.println("Loss merged[" + programContext.runtimeContext.nodeID +"]: "
+            System.out.println("Loss merged[" + programContext.nodeID +"]: "
                     + zeroOneLoss.score(XTest, yTest, W));
-            System.out.println("Accuracy merged[" + programContext.runtimeContext.nodeID +"]: "
+            System.out.println("Accuracy merged[" + programContext.nodeID +"]: "
                     + accuracy.score(XTest, yTest, W));
 
             result(W);
         });
     }
 
+    // ---------------------------------------------------
+    // Entry Point.
+    // ---------------------------------------------------
 
-    public static void local() {
+    public static void main(final String[] args) { local(); }
+
+    // ---------------------------------------------------
+
+    private static void local() {
         System.setProperty("simulation.numNodes", NUM_NODES);
 
         final List<List<Serializable>> result = Lists.newArrayList();
@@ -145,9 +160,5 @@ public class LogisticRegression extends Program {
 
         Matrix model = (Matrix) result.get(0).get(0);
         System.out.println(model);
-    }
-
-    public static void main(final String[] args) {
-        local();
     }
 }

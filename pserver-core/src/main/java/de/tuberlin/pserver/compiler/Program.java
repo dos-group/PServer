@@ -54,7 +54,7 @@ public abstract class Program extends EventDispatcher {
 
     public void run() throws Exception {
 
-        final String slotIDStr = "[" + programContext.runtimeContext.nodeID + "]";
+        final String slotIDStr = "[" + programContext.nodeID + "]";
 
         {
             LOG.info(slotIDStr + "Enter " + lifecycle.programContext.simpleClassName + " pre-process phase.");

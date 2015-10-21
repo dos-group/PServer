@@ -91,5 +91,7 @@ public class ProgramTable {
 
     public Collection<TransactionDescriptor> getTransactions() { return transactionDescriptors.values(); }
 
+    public Collection<TransactionController> getTransactionControllers() { return transactionControllers.values(); }
+
     public Collection<UnitDescriptor> getUnits() { return unitDescriptors.values(); }
 }

@@ -35,7 +35,7 @@ public class StateAllocator {
 
     public MatrixBase alloc(final ProgramContext programContext, final StateDescriptor state) {
         MatrixBase m = null;
-        if (ArrayUtils.contains(state.atNodes, programContext.runtimeContext.nodeID)) {
+        if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
             switch (state.scope) {
                 case SINGLETON:
                     m = new MatrixBuilder()

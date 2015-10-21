@@ -12,6 +12,8 @@ import org.apache.commons.lang3.ArrayUtils;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.IntStream;
 
 public final class Compiler {
@@ -48,7 +50,7 @@ public final class Compiler {
     }
 
     // ---------------------------------------------------
-    // Private Methods.
+    // Analyze Annotations.
     // ---------------------------------------------------
 
     private void analyzeUnits(int nodeDOP) {
@@ -102,7 +104,7 @@ public final class Compiler {
                             transactionProperties,
                             field,
                             runtimeContext.nodeID,
-                            programTable.getState(transactionProperties.state()).atNodes
+                            programTable
                     );
                     final TransactionController controller = new TransactionController(runtimeContext, descriptor);
                     programTable.addTransactionController(controller);
@@ -110,6 +112,10 @@ public final class Compiler {
             }
         }
     }
+
+    // ---------------------------------------------------
+    // Semantic Check of Annotations.
+    // ---------------------------------------------------
 
     private void semanticCheck(final StateDescriptor state) {
         //throw new NotImplementedException("NOT IMPLEMENTED");

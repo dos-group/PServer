@@ -5,5 +5,5 @@ import java.util.List;
 
 public interface Apply<I, O> extends TransactionPhase {
 
-    public O apply(final List<I> object) throws Exception;
+    public O apply(final List<I> remoteObjects, final I localObject) throws Exception;
 }

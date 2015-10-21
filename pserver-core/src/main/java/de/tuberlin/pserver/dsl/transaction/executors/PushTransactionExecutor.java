@@ -37,15 +37,20 @@ public class PushTransactionExecutor extends TransactionExecutor {
     // ---------------------------------------------------
 
     @Override
-    public synchronized Object execute(final Object requestObject) throws Exception {
-        final SharedObject stateObject = runtimeContext.runtimeManager.getDHT(controller.getTransactionDescriptor().stateName);
+    public void bind() throws Exception {
+
+    }
+
+    @Override
+    public synchronized List<Object> execute(final Object requestObject) throws Exception {
+        /*final SharedObject stateObject = runtimeContext.runtimeManager.getDHT(controller.getTransactionDescriptor().stateObjectNames.get(0));
         stateObject.lock();
         final boolean cacheRequest = controller.getTransactionDescriptor().cacheRequestObject;
         final Prepare preparePhase = transactionDefinition.preparePhase;
         final Object preparedStateObject = (preparePhase != null) ? preparePhase.prepare(stateObject) : stateObject;
         final TransactionRequestEvent request = new TransactionRequestEvent(transactionName, preparedStateObject, cacheRequest);
-        runtimeContext.netManager.sendEvent(controller.getTransactionDescriptor().nodes, request);
-        stateObject.unlock();
+        runtimeContext.netManager.sendEvent(controller.getTransactionDescriptor().stateObjectNodes, request);
+        stateObject.unlock();*/
         return null;
     }
 
@@ -58,11 +63,11 @@ public class PushTransactionExecutor extends TransactionExecutor {
             try {
                 final TransactionRequestEvent request = (TransactionRequestEvent) event;
                 final SharedObject object = (SharedObject) request.getPayload();
-                final SharedObject stateObject = runtimeContext.runtimeManager.getDHT(controller.getTransactionDescriptor().stateName);
+                final SharedObject stateObject = runtimeContext.runtimeManager.getDHT(controller.getTransactionDescriptor().stateObjectNames.get(0));
                 final List<SharedObject> remoteObjects = new ArrayList<>();
                 remoteObjects.add(object);
                 stateObject.lock();
-                transactionDefinition.applyPhase.apply(remoteObjects);
+                transactionDefinition.applyPhase.apply(remoteObjects, null);
                 stateObject.unlock();
             } catch (Exception ex) {
                 throw new IllegalStateException(ex);

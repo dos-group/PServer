@@ -6,7 +6,7 @@ import de.tuberlin.pserver.compiler.TransactionDescriptor;
 import de.tuberlin.pserver.dsl.transaction.executors.TransactionExecutor;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 
-public class TransactionController {
+public final class TransactionController {
 
     // ---------------------------------------------------
     // Fields.
@@ -33,6 +33,12 @@ public class TransactionController {
     // ---------------------------------------------------
 
     public TransactionDescriptor getTransactionDescriptor() { return transactionDescriptor; }
+
+    // ---------------------------------------------------
+
+    public void bindTransaction() throws Exception {
+        transactionExecutor.bind();
+    }
 
     public Object executeTransaction(final Object requestObject) throws Exception {
         return transactionExecutor.execute(requestObject);
