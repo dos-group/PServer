@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.radt.arrays;
+package de.tuberlin.pserver.crdt.radt.arrays;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;

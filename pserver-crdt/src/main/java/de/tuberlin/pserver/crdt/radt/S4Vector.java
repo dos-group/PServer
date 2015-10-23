@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.radt;
+package de.tuberlin.pserver.crdt.radt;
 
 import java.io.Serializable;
 
