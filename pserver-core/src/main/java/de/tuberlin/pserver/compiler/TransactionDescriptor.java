@@ -10,6 +10,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public final class TransactionDescriptor {
@@ -28,9 +29,7 @@ public final class TransactionDescriptor {
 
     public final boolean cacheRequestObject;
 
-    public final List<int[]> stateObjectNodes;
-
-    public final int latchCount;
+    public final int[] stateObjectNodes;
 
     // ---------------------------------------------------
     // Constructors.
@@ -54,16 +53,19 @@ public final class TransactionDescriptor {
 
         this.cacheRequestObject = cacheRequestObject;
 
-        this.stateObjectNodes = new ArrayList<>();
+        for (int i = 0; i < stateObjectNames.size() - 1; ++i) {
+            //final int[] stateNodes = ArrayUtils.removeElements(programTable.getState(stateObjectName).atNodes, nodeID);
 
-        int latchCount = 0;
-        for (final String stateObjectName : stateObjectNames) {
-            final int[] stateNodes = ArrayUtils.removeElements(programTable.getState(stateObjectName).atNodes, nodeID);
-            stateObjectNodes.add(stateNodes);
-            latchCount += stateNodes.length;
+            if (!Arrays.equals(
+                    programTable.getState(stateObjectNames.get(i)).atNodes,
+                    programTable.getState(stateObjectNames.get(i + 1)).atNodes))
+                throw new IllegalStateException();
         }
 
-        this.latchCount = latchCount;
+        this.stateObjectNodes = ArrayUtils.removeElements(
+                programTable.getState(stateObjectNames.get(stateObjectNames.size() - 1)).atNodes,
+                nodeID
+        );
 
         definition.setTransactionName(transactionName);
     }

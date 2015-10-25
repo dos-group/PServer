@@ -1,6 +1,10 @@
 package de.tuberlin.pserver.dsl.transaction.events;
 
 
+import com.google.common.base.Preconditions;
+
+import java.util.List;
+
 public class TransactionRequestEvent extends TransactionEvent {
 
     // ---------------------------------------------------
@@ -17,13 +21,20 @@ public class TransactionRequestEvent extends TransactionEvent {
 
     public final boolean cacheRequest;
 
+    public final List<String> stateObjectNames;
+
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    public TransactionRequestEvent(final String transactionName, final Object requestObject, final boolean cacheRequest) {
+    public TransactionRequestEvent(final String transactionName,
+                                   final List<String> stateObjectNames,
+                                   final Object requestObject,
+                                   final boolean cacheRequest) {
 
         super(TRANSACTION_REQUEST + transactionName);
+
+        this.stateObjectNames = Preconditions.checkNotNull(stateObjectNames);
 
         this.requestObject = requestObject;
 

@@ -8,12 +8,11 @@ import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
+// EXECUTOR ASSUMES NO CONCURRENT TRANSACTIONS OF SAME TYPE.
+// MUST BE ENFORCED BY TRANSACTION MANAGER!
 
 public class PullTransactionExecutor extends TransactionExecutor {
 
@@ -33,8 +32,6 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
     private final SharedObject[] localStateObjects;
 
-    private final int numStateObjects;
-
     private CountDownLatch responseLatch;
 
     // ---------------------------------------------------
@@ -48,13 +45,13 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
         this.transactionDefinition = controller.getTransactionDescriptor().definition;
 
-        this.numStateObjects = controller.getTransactionDescriptor().stateObjectNames.size();
+        final int numStateObjects = controller.getTransactionDescriptor().stateObjectNames.size();
 
         this.remoteStateObjects = new SharedObject[numStateObjects];
 
         this.localStateObjects = new SharedObject[numStateObjects];
 
-        this.responseLatch = new CountDownLatch(controller.getTransactionDescriptor().latchCount);
+        this.responseLatch = new CountDownLatch(controller.getTransactionDescriptor().stateObjectNodes.length);
 
         registerTransactionHandlers();
     }
@@ -82,23 +79,16 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
         { // Request...
 
-            int index = 0;
-            for (final String stateObjectName : controller.getTransactionDescriptor().stateObjectNames) {
+            final boolean cacheRequest = controller.getTransactionDescriptor().cacheRequestObject;
 
-                final String trEventName = transactionName + "_" + stateObjectName;
+            final TransactionRequestEvent request = new TransactionRequestEvent(
+                    transactionName,
+                    controller.getTransactionDescriptor().stateObjectNames,
+                    requestObject,
+                    cacheRequest
+            );
 
-                final boolean cacheRequest = controller.getTransactionDescriptor().cacheRequestObject;
-
-                final TransactionRequestEvent request = new TransactionRequestEvent(
-                        trEventName,
-                        requestObject,
-                        cacheRequest
-                );
-
-                runtimeContext.netManager.sendEvent(controller.getTransactionDescriptor().stateObjectNodes.get(index), request);
-
-                ++index;
-            }
+            runtimeContext.netManager.sendEvent(controller.getTransactionDescriptor().stateObjectNodes, request);
         }
 
         { // Await Response...
@@ -106,21 +96,19 @@ public class PullTransactionExecutor extends TransactionExecutor {
             responseLatch.await();
 
             synchronized (monitor) {
-                responseLatch = new CountDownLatch(controller.getTransactionDescriptor().latchCount);
+                responseLatch = new CountDownLatch(controller.getTransactionDescriptor().stateObjectNodes.length);
             }
         }
 
         { // Response Handling...
 
-            int index = 0;
-            for (final String stateObjectName : controller.getTransactionDescriptor().stateObjectNames) {
+            for (int i = 0; i < controller.getTransactionDescriptor().stateObjectNames.size(); ++i) {
                 resultObjects.add(
                         transactionDefinition.applyPhase.apply(
-                                responseObjects.get(stateObjectName),
-                                localStateObjects[index]
+                                responseObjects.get(controller.getTransactionDescriptor().stateObjectNames.get(i)),
+                                localStateObjects[i]
                         )
                 );
-                ++index;
             }
         }
 
@@ -133,46 +121,46 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
     private void registerTransactionHandlers() {
 
-        int i = 0;
-        for (final String stateObjectName : controller.getTransactionDescriptor().stateObjectNames) {
+        runtimeContext.netManager.addEventListener(TransactionRequestEvent.TRANSACTION_REQUEST + transactionName, event -> {
+            final TransactionRequestEvent request = (TransactionRequestEvent) event;
 
-            final String trEventName = transactionName + "_" + stateObjectName;
+            try {
 
-            // ---------------------------------------------------
+                final List<Object> preparedOutputs = new ArrayList<>();
+                for (int i = 0; i < request.stateObjectNames.size(); ++i) {
 
-            final int index = i;
-
-            runtimeContext.netManager.addEventListener(TransactionRequestEvent.TRANSACTION_REQUEST + trEventName, event -> {
-                final TransactionRequestEvent request = (TransactionRequestEvent) event;
-
-                try {
-
-                    if (remoteStateObjects[index] == null) {
-                        remoteStateObjects[index] = runtimeContext.runtimeManager.getDHT(stateObjectName);
+                    if (remoteStateObjects[i] == null) {
+                        remoteStateObjects[i] = runtimeContext.runtimeManager.getDHT(request.stateObjectNames.get(i));
                     }
 
-                    remoteStateObjects[index].lock();
+                    remoteStateObjects[i].lock();
                     final Prepare preparePhase = transactionDefinition.preparePhase;
-                    final Object prepareInput = request.getPayload() == null ? remoteStateObjects[index] : request.requestObject;
-                    final Object prepareOutput = (preparePhase != null) ? preparePhase.prepare(prepareInput) : prepareInput;
-
-                    runtimeContext.netManager.sendEvent(
-                            request.srcMachineID,
-                            new TransactionResponseEvent(trEventName, prepareOutput)
-                    );
-
-                    remoteStateObjects[index].unlock();
-
-                } catch (Exception ex) {
-                    throw new IllegalStateException(ex);
+                    final Object prepareInput = request.getPayload() == null ? remoteStateObjects[i] : request.requestObject;
+                    preparedOutputs.add((preparePhase != null) ? preparePhase.prepare(prepareInput) : prepareInput);
+                    remoteStateObjects[i].unlock();
                 }
-            });
 
-            // ---------------------------------------------------
+                runtimeContext.netManager.sendEvent(
+                        request.srcMachineID,
+                        new TransactionResponseEvent(transactionName, preparedOutputs)
+                );
 
-            runtimeContext.netManager.addEventListener(TransactionResponseEvent.TRANSACTION_RESPONSE + trEventName, event -> {
+            } catch (Exception ex) {
+                throw new IllegalStateException(ex);
+            }
+        });
 
-                final TransactionResponseEvent response = (TransactionResponseEvent) event;
+        // ---------------------------------------------------
+
+        // NO GUARANTEE ABOUT RESPONSE ORDER IS EQUAL TO REQUEST ORDER!
+
+        runtimeContext.netManager.addEventListener(TransactionResponseEvent.TRANSACTION_RESPONSE + transactionName, event -> {
+
+            final TransactionResponseEvent response = (TransactionResponseEvent) event;
+            for (int i = 0; i < controller.getTransactionDescriptor().stateObjectNames.size(); ++i) {
+
+                final String stateObjectName = controller.getTransactionDescriptor().stateObjectNames.get(i);
+
                 List<Object> responseList = responseObjects.get(stateObjectName);
 
                 if (responseList == null) {
@@ -180,15 +168,14 @@ public class PullTransactionExecutor extends TransactionExecutor {
                     responseObjects.put(stateObjectName, responseList);
                 }
 
-                responseList.add(response.responseObject);
-                synchronized (monitor) {
-                    responseLatch.countDown();
-                }
-            });
+                responseList.add(response.responseObjects.get(i));
+            }
 
-            // ---------------------------------------------------
+            synchronized (monitor) {
+                responseLatch.countDown();
+            }
+        });
 
-            ++i;
-        }
+        // ---------------------------------------------------
     }
 }
