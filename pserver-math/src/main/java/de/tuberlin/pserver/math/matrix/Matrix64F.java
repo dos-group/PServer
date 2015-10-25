@@ -8,6 +8,14 @@ import de.tuberlin.pserver.math.operations.UnaryOperator;
 
 public interface Matrix64F extends Matrix<Double> {
 
+    // ---------------------------------------------------
+
+    default long toLong(final Double value) { return Double.doubleToLongBits(value); }
+
+    default Double fromLong(final long value) { return Double.longBitsToDouble(value); }
+
+    // ---------------------------------------------------
+
     @Override public Matrix64F copy();
 
     @Override public Matrix64F copy(long rows, long cols);

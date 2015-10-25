@@ -9,7 +9,14 @@ import de.tuberlin.pserver.math.operations.UnaryOperator;
 public interface Matrix<V extends Number> extends MatrixBase {
 
     // ---------------------------------------------------
-    // Public Methods.
+    // TYPE CONVERSION.
+    // ---------------------------------------------------
+
+    public long toLong(final V value);
+    public V fromLong(final long value);
+
+    // ---------------------------------------------------
+    // COPY.
     // ---------------------------------------------------
 
     public Matrix<V> copy();

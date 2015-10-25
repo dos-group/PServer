@@ -7,6 +7,14 @@ import de.tuberlin.pserver.math.operations.UnaryOperator;
 
 public interface Matrix32F extends Matrix<Float> {
 
+    // ---------------------------------------------------
+
+    default long toLong(final Float value) { return Float.floatToIntBits(value); }
+
+    default Float fromLong(final long value) { return Float.intBitsToFloat((int)value); }
+
+    // ---------------------------------------------------
+
     @Override public Matrix32F copy();
 
     @Override public Matrix32F copy(long rows, long cols);
