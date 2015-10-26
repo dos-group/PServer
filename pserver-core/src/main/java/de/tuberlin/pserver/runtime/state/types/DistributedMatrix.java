@@ -482,4 +482,13 @@ public class DistributedMatrix<V extends Number> implements Matrix<V> {
 
     // ------------------------------------------
 
+    @Override
+    public long toLong(V value) {
+        return 0;
+    }
+
+    @Override
+    public V fromLong(long value) {
+        return null;
+    }
 }

@@ -6,6 +6,8 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 
+import java.util.concurrent.CountDownLatch;
+
 public final class MatrixCache<V extends Number, T extends Matrix<V>> {
 
     // ---------------------------------------------------
@@ -14,7 +16,6 @@ public final class MatrixCache<V extends Number, T extends Matrix<V>> {
 
     public static final class CacheEntry {
 
-        // TODO
     }
 
     // ---------------------------------------------------
@@ -30,6 +31,8 @@ public final class MatrixCache<V extends Number, T extends Matrix<V>> {
     private final Matrix<V> matrix;
 
     private final LRUCache<Long, CacheEntry> lruCache;
+
+    private CountDownLatch pullRequestLatch;
 
     // ---------------------------------------------------
     // Constructors.
@@ -51,6 +54,8 @@ public final class MatrixCache<V extends Number, T extends Matrix<V>> {
 
         this.lruCache = new LRUCache<>(cacheSize);
 
+        this.pullRequestLatch = new CountDownLatch(1);
+
         registerHandlers();
     }
 
@@ -58,14 +63,25 @@ public final class MatrixCache<V extends Number, T extends Matrix<V>> {
     // Public Methods.
     // ---------------------------------------------------
 
-    public V getValue(final long row, final long col) {
+    public V getValue(final long row, final long col) throws Exception {
 
         final long index = row * matrix.cols() + col;
 
-        if (lruCache.containsKey(index))
-            return matrix.get(index);
-        else
-            throw new IllegalStateException();
+        if (!lruCache.containsKey(index)) {
+
+            runtimeContext.netManager.sendEvent(
+                    cacheProviderNodes,
+                    new CacheEvent(
+                            CacheEvent.CACHE_PULL_REQUEST_EVENT,
+                            new long[] { index },
+                            null
+                    )
+            );
+
+            pullRequestLatch.await();
+        }
+
+        return matrix.get(index);
     }
 
     public void putValue(final long row, final long col, final V value) {
@@ -75,6 +91,26 @@ public final class MatrixCache<V extends Number, T extends Matrix<V>> {
         matrix.set(row, col, value);
 
         lruCache.putIfAbsent(index, new CacheEntry());
+    }
+
+    // ---------------------------------------------------
+
+    public void writeDirtyCacheEntries() {
+
+        final long[] elementIndices = new long[lruCache.getDirtyEntryKeys().size()];
+
+        final long[] elementValues = new long[lruCache.getDirtyEntryKeys().size()];
+
+        for (int i = 0; i < lruCache.getDirtyEntryKeys().size(); ++i) {
+
+            elementIndices[i] = lruCache.getDirtyEntryKeys().get(i);
+
+            elementValues[i] = matrix.toLong(matrix.get(elementIndices[i]));
+        }
+
+        push(elementIndices, elementValues);
+
+        lruCache.clearDirtyEntries();
     }
 
     // ---------------------------------------------------
@@ -124,6 +160,8 @@ public final class MatrixCache<V extends Number, T extends Matrix<V>> {
 
                 lruCache.putIfAbsent(event.elementIndices[i], new CacheEntry());
             }
+
+            pullRequestLatch.countDown();
         });
 
         runtimeContext.netManager.addEventListener(CacheEvent.CACHE_PUSH_RESPONSE_EVENT, e -> {
