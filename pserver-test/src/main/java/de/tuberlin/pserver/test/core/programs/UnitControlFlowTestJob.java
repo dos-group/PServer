@@ -8,13 +8,19 @@ import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 public class UnitControlFlowTestJob extends Program {
 
     @Unit(at = "1")
-    public void main0(final Lifecycle lifecycle) {
+    public void unit0(final Lifecycle lifecycle) {
 
         lifecycle.process( () -> System.out.println("Hello Unit 1.") );
     }
 
+    @Unit(at = "2 - 5")
+    public void unit1(final Lifecycle lifecycle) {
+
+        lifecycle.process( () -> System.out.println("Hello Unit 2 - 5.") );
+    }
+
     @Unit
-    public void main1(final Lifecycle lifecycle) {
+    public void unit2(final Lifecycle lifecycle) {
 
         lifecycle.process( () -> System.out.println("Hello global Unit.") );
     }

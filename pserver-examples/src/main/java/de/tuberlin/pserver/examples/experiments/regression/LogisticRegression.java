@@ -26,6 +26,10 @@ import java.util.List;
 
 public class LogisticRegression extends Program {
 
+    // ---------------------------------------------------
+    // Constants.
+    // ---------------------------------------------------
+
     private static final String NUM_NODES = "2";
 
     private static final String X_TRAIN_PATH = "/Users/Chris/Downloads/X_train.csv";
