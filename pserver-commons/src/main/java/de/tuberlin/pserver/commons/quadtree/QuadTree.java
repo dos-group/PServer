@@ -315,7 +315,7 @@ public class QuadTree {
             case POINTER:
                 double distance = squaredDistance(point, node.getCenterOfMass());
 
-                if (distance / node.getW() < theta) {
+                if (node.getW() / distance < theta) {
                     result = computeForce(point, node, theta);
                 } else {
                     Tuple2<Point, Double> r1 = this.computeRepulsiveForce(node.getNe(), point, theta);

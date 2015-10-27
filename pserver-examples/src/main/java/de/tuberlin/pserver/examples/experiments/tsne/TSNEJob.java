@@ -31,6 +31,8 @@ import org.apache.commons.lang3.mutable.MutableDouble;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Random;
+
 
 public class TSNEJob extends Program {
 
@@ -40,21 +42,22 @@ public class TSNEJob extends Program {
 
     private static final String NUM_NODES = "1";
 
-    private static final int ROWS = 10;
-    private static final int INPUT_COLS = 28 * 28;
+    private static final int ROWS = 2000;
+    private static final int INPUT_COLS = 1024;
     private static final int EMBEDDING_DIMENSION = 2;
 
-    private static final int NUM_EPOCHS = 1;
-    private static final double PERPLEXITY = 2.0;
+    private static final int NUM_EPOCHS = 200;
+    private static final double PERPLEXITY = 50.0;
     private static final double LEARNING_RATE = 350.0;
-    private static final double EARLY_EXAGGERATION = 1.0;
+    private static final double EARLY_EXAGGERATION = 8.0;
 
     private static final double INITIAL_MOMENTUM = 0.5;
     private static final double FINAL_MOMENTUM = 0.8;
     private static final double MIN_GAIN = 0.01;
     private static final double TOL = 1e-5;
+    private static final double VARIANCE = 1e-4;
 
-    private static final double THETA = 0.0;
+    private static final double THETA = 0.2;
     private static final int N_NEIGHBORS = 3 * (int)PERPLEXITY;
 
     private static double DELTA = 1e-9;
@@ -66,7 +69,7 @@ public class TSNEJob extends Program {
     // input. i.e. activation vectors of a neuronal network
     @State(scope = Scope.REPLICATED,
             rows = ROWS, cols = INPUT_COLS,
-            path = "datasets/mnist_10_X.csv")
+            path = "/Users/Chris/Downloads/test_act_2000.csv")
     public Matrix64F X;
 
     // high dimensional affinity function (for two vectors of input space)
@@ -76,8 +79,7 @@ public class TSNEJob extends Program {
 
     // model. linear embedding.
     @State(scope = Scope.REPLICATED,
-           rows = ROWS, cols = EMBEDDING_DIMENSION,
-           path = "datasets/mnist_10_initY.csv")
+           rows = ROWS, cols = EMBEDDING_DIMENSION)
 
     public Matrix64F Y;
 
@@ -100,7 +102,10 @@ public class TSNEJob extends Program {
     @Unit
     public void main(final Lifecycle lifecycle) {
 
-        lifecycle.process(() -> {
+        lifecycle.preProcess(() -> {
+            Random rand = new Random();
+            Y.applyOnElements((e) -> rand.nextGaussian() * VARIANCE, Y);
+        }).process(() -> {
             // calc affinity. P is affinity for input X
             // TODO: use KD-tree to get k nearest neighbors for each Xi, compute Pij only in case Xj is one of the k neighbors
             // TODO: make P a distributed matrix and compute Pi only for rows i stored on this node
@@ -235,7 +240,7 @@ public class TSNEJob extends Program {
     // Helper Methods.
     // ---------------------------------------------------
 
-    private Matrix64F binarySearch(Matrix64F X, Double tol, Double perplexity) {
+    private Matrix64F binarySearch(Matrix64F X, Double tol, Double perplexity) throws Exception{
 
         PartitionShape shape = ((DistributedMatrix64F)P).getPartitionShape();
 
@@ -254,7 +259,7 @@ public class TSNEJob extends Program {
 
         final double logU = (float)Math.log(perplexity);
 
-        for (long i=0; i < n; ++i) {
+        Parallel.For(shape.rows, (i) -> {
 
             double betaMin = Double.NEGATIVE_INFINITY;
             double betaMax = Double.POSITIVE_INFINITY;
@@ -291,7 +296,7 @@ public class TSNEJob extends Program {
                 HDiff = H - logU;
             }
             P_tmp.assignRow(i, Pi);
-        }
+        });
 
         return P_tmp;
     }
@@ -340,13 +345,11 @@ public class TSNEJob extends Program {
                 .results(res)
                 .done();
 
-        try (PrintWriter writer = new PrintWriter("datasets/pserver_mnist.csv", "UTF-8")) {
+        try (PrintWriter writer = new PrintWriter("/Users/Chris/Downloads/result_act_2000.csv", "UTF-8")) {
 
             Matrix64F R = (Matrix64F) res.get(0).get(0);
             for (int i = 0; i < R.rows(); ++i) {
-                for (int j = 0; j < R.cols(); ++j) {
-                    writer.println(i + "," + j + "," + R.get(i, j));
-                }
+                writer.println(i + "," + R.get(i, 0) + "," + R.get(i, 1));
             }
 
         } catch (Exception e) {
