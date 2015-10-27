@@ -175,21 +175,20 @@ public class TSNEJob extends Program {
 
                 repForces.scale(1 / sumQ.get(), repForces);
 
-                PartitionShape shape = ((DistributedMatrix64F)P).getPartitionShape();
+                PartitionShape shape = ((DistributedMatrix64F) P).getPartitionShape();
                 Parallel.For(shape.rows, (i) -> {
                     // TODO: use dY instead, primitive addVectorToRow is missing
                     final Matrix64F sumVec = new MatrixBuilder().dimension(1, d).elementType(ElementType.DOUBLE_MATRIX).build();
                     // TODO: iterate over non-zero entries of P
-                    UnitMng.loop(P.cols(), (j) -> {
-                        final double sqDistance = Y.getRow(i).sub(Y.getRow(j)).dot(Y.getRow(i).sub(Y.getRow(j)));
-                        final double qij = 1 / (1 + sqDistance);
-                        final double pij = P.get(shape.rowOffset + i, j);
-                        final double pq = pij * qij;
+                    for (int j = 0; j < P.cols(); j++) {
                         if (i != j) {
-                            loss.addAndGet(pij * Math.log(pij / qij));
+                            final double sqDistance = Y.getRow(i).sub(Y.getRow(j)).dot(Y.getRow(i).sub(Y.getRow(j)));
+                            final double qij = 1 / (1 + sqDistance);
+                            final double pij = P.get(shape.rowOffset + i, j);
+                            loss.addAndGet(pij * Math.log(pij / (qij / sumQ.get())));
+                            sumVec.add(Y.getRow(i).sub(Y.getRow(j)).scale(pij * qij), sumVec);
                         }
-                        sumVec.add(Y.getRow(i).sub(Y.getRow(j)).scale(pq), sumVec);
-                    });
+                    }
                     sumVec.sub(repForces.getRow(i), sumVec);
                     dY.assignRow(shape.rowOffset + i, sumVec);
                 });
