@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.math.tuples;
+package de.tuberlin.pserver.commons.tuples;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.unsafe.UnsafeOp;

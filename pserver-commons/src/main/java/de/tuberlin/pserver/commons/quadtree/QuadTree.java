@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.commons.quadtree;
 
-import de.tuberlin.pserver.math.tuples.Tuple2;
+import de.tuberlin.pserver.commons.tuples.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +57,10 @@ public class QuadTree {
         if (this.insert(root, new Point(x, y, value))) {
             this.count_++;
         }
+    }
+
+    public void set(double x, double y) {
+        this.set(x, y, null);
     }
 
     /**
@@ -303,7 +307,7 @@ public class QuadTree {
 
         switch (node.getNodeType()) {
             case LEAF:
-                if (! node.getPoint().equals(point)) {
+                if (node.getPoint().compareTo(point) != 0) {
                     result = computeForce(point, node, theta);
                 }
                 break;
@@ -349,7 +353,7 @@ public class QuadTree {
     }
 
     private double squaredDistance(Point a, Point b) {
-        return Math.pow(a.getX() - b.getX(), 2) + Math.pow(a.getY() - b.getY(), 2);
+        return (Math.pow(a.getX() - b.getX(), 2) + Math.pow(a.getY() - b.getY(), 2));
     }
 
     /**

@@ -1,7 +1,11 @@
 package de.tuberlin.pserver.examples.experiments.tsne;
 
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.AtomicDouble;
 import de.tuberlin.pserver.client.PServerExecutor;
+
+import de.tuberlin.pserver.commons.quadtree.Point;
+import de.tuberlin.pserver.commons.quadtree.QuadTree;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
@@ -18,7 +22,7 @@ import de.tuberlin.pserver.math.matrix.ElementType;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
-import de.tuberlin.pserver.math.tuples.Tuple2;
+import de.tuberlin.pserver.commons.tuples.Tuple2;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
 import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import de.tuberlin.pserver.runtime.state.types.DistributedMatrix64F;
@@ -34,6 +38,8 @@ public class TSNEJob extends Program {
     // Constants.
     // ---------------------------------------------------
 
+    private static final String NUM_NODES = "1";
+
     private static final int ROWS = 10;
     private static final int INPUT_COLS = 28 * 28;
     private static final int EMBEDDING_DIMENSION = 2;
@@ -48,19 +54,24 @@ public class TSNEJob extends Program {
     private static final double MIN_GAIN = 0.01;
     private static final double TOL = 1e-5;
 
-    private static final double THETA = 0.2;
+    private static final double THETA = 0.0;
     private static final int N_NEIGHBORS = 3 * (int)PERPLEXITY;
+
+    private static double DELTA = 1e-9;
 
     // ---------------------------------------------------
     // State.
     // ---------------------------------------------------
 
     // input. i.e. activation vectors of a neuronal network
-    @State(scope = Scope.REPLICATED, rows = ROWS, cols = INPUT_COLS, path = "datasets/mnist_10_X.csv")
+    @State(scope = Scope.REPLICATED,
+            rows = ROWS, cols = INPUT_COLS,
+            path = "datasets/mnist_10_X.csv")
     public Matrix64F X;
 
     // high dimensional affinity function (for two vectors of input space)
-    @State(scope = Scope.PARTITIONED, rows = ROWS, cols = ROWS)
+    @State(scope = Scope.PARTITIONED,
+            rows = ROWS, cols = ROWS)
     public Matrix64F P;
 
     // model. linear embedding.
@@ -91,23 +102,26 @@ public class TSNEJob extends Program {
 
         lifecycle.process(() -> {
             // calc affinity. P is affinity for input X
+            // TODO: use KD-tree to get k nearest neighbors for each Xi, compute Pij only in case Xj is one of the k neighbors
+            // TODO: make P a distributed matrix and compute Pi only for rows i stored on this node
+            // TODO: P must be a sparse matrix
             P.assign(binarySearch(X, TOL, PERPLEXITY));
             // symmetrize
+            // TODO: this is a global operation but P is extremely sparse, so this might help
             Matrix64F PT = P.transpose();
+            // TODO: this has to work for sparse matrices as well
             P.add(PT, P);
             // keep pdf properties
+            // TODO: this has to work for sparse matrices as well (sum only over non zero elements)
             double sumP = P.aggregateRows(Matrix<Double>::sum).sum();
             P.scale(1 / sumP, P);
             // early exaggeration
+            // TODO: this has to work for sparse matrices as well
             P.scale(EARLY_EXAGGERATION, P);
 
             final long n = Y.rows();
             final long d = Y.cols();
 
-            // Q is affinity for model Y
-            final Matrix64F Q = new MatrixBuilder().dimension(n, n).elementType(ElementType.DOUBLE_MATRIX).build();
-            // for calc of Q
-            final Matrix64F Y_squared = new MatrixBuilder().dimension(n, d).elementType(ElementType.DOUBLE_MATRIX).build();
             // strengthen good direction, weaken bad ones (in gradient descent)
             final Matrix64F gains = new MatrixBuilder().dimension(n, d).elementType(ElementType.DOUBLE_MATRIX).build();
             // previous gradient. moment of direction "movement"
@@ -117,49 +131,66 @@ public class TSNEJob extends Program {
             // need to center Y in each iteration. define reusable matrix here
             final Matrix64F mean = new MatrixBuilder().dimension(1, d).elementType(ElementType.DOUBLE_MATRIX).build();
 
+            // TODO: remove
+            final Matrix64F repForces = new MatrixBuilder().dimension(n, d).elementType(ElementType.DOUBLE_MATRIX).build();
+
             gains.assign(1.0);
 
             // annealing factor
             final MutableDouble momentum = new MutableDouble(0.0);
 
             UnitMng.loop(NUM_EPOCHS, (epoch) -> {
-
-                // calc distance matrix of Y
-                Y.applyOnElements(e -> Math.pow(e, 2), Y_squared);
-                final Matrix64F sum_Y = Y_squared.aggregateRows(Matrix<Double>::sum);
-                final Matrix64F num = Y.mul(Y.transpose())
-                        .scale(-2.)
-                        .addVectorToRows(sum_Y)
-                        .transpose()
-                        .addVectorToRows(sum_Y)
-                        .applyOnElements(e -> 1.0 / (e + 1.0));
-                // should be that way. but who knows...
-                num.setDiagonalsToZero(num);
-                // num for Y is the same D for X
-                // its the distance matrix for Y...
-
-                // ---------------------------------------------------
-                // (2) SINGLETON OPERATION!!!
-                // ---------------------------------------------------
-                final double sumNum = num.aggregateRows(Matrix<Double>::sum).sum();
-
-                num.scale(1. / sumNum, Q);
-                Q.applyOnElements(e -> Math.max(e, 1e-12), Q);
-
                 //final Matrix PQ = P.sub(Q);
+
+                // find minX, maxX, minY and maxY for Y
+                double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE;
+                double maxX = Double.MIN_VALUE, maxY = Double.MIN_VALUE;
+
+                for (int i = 0; i < n; i++) {
+                    minX = Math.min(minX, Y.get(i, 0));
+                    minY = Math.min(minY, Y.get(i, 1));
+                    maxX = Math.max(maxX, Y.get(i, 0));
+                    maxY = Math.max(maxY, Y.get(i, 1));
+                }
+
+                QuadTree quadTree = new QuadTree(minX - DELTA, minY - DELTA, maxX + DELTA, maxY + DELTA);
+
+                // TODO: thread safe? parallel for?
+                for (int i = 0; i < n; i++) {
+                    quadTree.set(Y.get(i, 0), Y.get(i, 1));
+                }
+
+                AtomicDouble sumQ = new AtomicDouble(0.0);
+                AtomicDouble loss = new AtomicDouble(0.0);
+
+                // TODO: parallel for
+                for (int i = 0; i < n; i++) {
+                    Tuple2<Point, Double> result = quadTree.computeRepulsiveForce(
+                            quadTree.getRootNode(), new Point(Y.get(i, 0), Y.get(i, 1)), THETA);
+                    // TODO: substitute by dY as soon as addVectorToRow is implemented
+                    repForces.set(i, 0, result._1.getX());
+                    repForces.set(i, 1, result._1.getY());
+                    sumQ.addAndGet(result._2);
+                }
+
+                repForces.scale(1 / sumQ.get(), repForces);
 
                 PartitionShape shape = ((DistributedMatrix64F)P).getPartitionShape();
                 Parallel.For(shape.rows, (i) -> {
-                    // TODO: get target vector of dY instead. possible? or resuable?
+                    // TODO: use dY instead, primitive addVectorToRow is missing
                     final Matrix64F sumVec = new MatrixBuilder().dimension(1, d).elementType(ElementType.DOUBLE_MATRIX).build();
+                    // TODO: iterate over non-zero entries of P
                     UnitMng.loop(P.cols(), (j) -> {
-                        final Double pq = P.get(shape.rowOffset + i, j) - Q.get(i, j);//PQ.get(i, j);
-                        final Double num_j = num.get(i, j);
-                        sumVec.add(
-                                Y.getRow(i).sub(Y.getRow(j)) // yi - yj
-                                        .scale(pq * num_j),
-                                sumVec);
+                        final double sqDistance = Y.getRow(i).sub(Y.getRow(j)).dot(Y.getRow(i).sub(Y.getRow(j)));
+                        final double qij = 1 / (1 + sqDistance);
+                        final double pij = P.get(shape.rowOffset + i, j);
+                        final double pq = pij * qij;
+                        if (i != j) {
+                            loss.addAndGet(pij * Math.log(pij / qij));
+                        }
+                        sumVec.add(Y.getRow(i).sub(Y.getRow(j)).scale(pq), sumVec);
                     });
+                    sumVec.sub(repForces.getRow(i), sumVec);
                     dY.assignRow(shape.rowOffset + i, sumVec);
                 });
 
@@ -191,23 +222,12 @@ public class TSNEJob extends Program {
                 Y.addVectorToRows(mean, Y);
 
                 if ((epoch + 1) % 10 == 0) {
-                    double C = 0.0;
-                    for (int i = 0; i < P.rows(); ++i) {
-                        for (int j = 0; j < P.cols(); ++j) {
-                            if (i != j) {
-                                C += P.get(i, j) * Math.log(P.get(i, j) / Q.get(i, j));
-                            }
-                        }
-                    }
-                    LOG.info("Iteration " + (epoch + 1) + ", Error: " + C);
+                    LOG.info("Iteration " + (epoch + 1) + ", Error: " + loss);
                 }
 
                 if (epoch == 100) {
                     P.scale(1.0 / EARLY_EXAGGERATION, P);
                 }
-
-                LOG.debug("Y: " + Y.getRow(0).toString());
-
             });
 
         }).postProcess(() -> result(Y));
@@ -313,7 +333,7 @@ public class TSNEJob extends Program {
     }
 
     private static void local() {
-        System.setProperty("simulation.numNodes", "1");
+        System.setProperty("simulation.numNodes", NUM_NODES);
 
         final List<List<Serializable>> res = Lists.newArrayList();
 
