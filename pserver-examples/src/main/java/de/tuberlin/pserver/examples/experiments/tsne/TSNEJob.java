@@ -163,15 +163,14 @@ public class TSNEJob extends Program {
                 AtomicDouble sumQ = new AtomicDouble(0.0);
                 AtomicDouble loss = new AtomicDouble(0.0);
 
-                // TODO: parallel for
-                for (int i = 0; i < n; i++) {
+                Parallel.For(Y, (i) -> {
                     Tuple2<Point, Double> result = quadTree.computeRepulsiveForce(
                             quadTree.getRootNode(), new Point(Y.get(i, 0), Y.get(i, 1)), THETA);
                     // TODO: substitute by dY as soon as addVectorToRow is implemented
                     repForces.set(i, 0, result._1.getX());
                     repForces.set(i, 1, result._1.getY());
                     sumQ.addAndGet(result._2);
-                }
+                });
 
                 repForces.scale(1 / sumQ.get(), repForces);
 
