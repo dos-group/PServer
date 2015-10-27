@@ -21,6 +21,10 @@ public class Point implements Comparable {
         this.opt_value = opt_value;
     }
 
+    public Point(double x, double y) {
+        this(x, y, null);
+    }
+
     public double getX() {
         return x;
     }

@@ -1,7 +1,10 @@
 package de.tuberlin.pserver.commons.quadtree;
 
+import de.tuberlin.pserver.math.tuples.Tuple2;
+
 import java.util.ArrayList;
 import java.util.List;
+
 
 /**
  * Datastructure: A point Quad Tree for representing 2D data. Each
@@ -295,6 +298,60 @@ public class QuadTree {
         return resposne;
     }
 
+    public Tuple2<Point, Double> computeRepulsiveForce(Node node, Point point, double theta) {
+        Tuple2<Point, Double> result = new Tuple2<>(new Point(0, 0), 0.0);
+
+        switch (node.getNodeType()) {
+            case LEAF:
+                if (! node.getPoint().equals(point)) {
+                    result = computeForce(point, node, theta);
+                }
+                break;
+
+            case POINTER:
+                double distance = squaredDistance(point, node.getCenterOfMass());
+
+                if (distance / node.getW() < theta) {
+                    result = computeForce(point, node, theta);
+                } else {
+                    Tuple2<Point, Double> r1 = this.computeRepulsiveForce(node.getNe(), point, theta);
+                    Tuple2<Point, Double> r2 = this.computeRepulsiveForce(node.getSe(), point, theta);
+                    Tuple2<Point, Double> r3 = this.computeRepulsiveForce(node.getSw(), point, theta);
+                    Tuple2<Point, Double> r4 = this.computeRepulsiveForce(node.getNw(), point, theta);
+
+                    Point combinedForce = new Point(
+                            r1._1.getX() + r2._1.getX() + r3._1.getX() + r4._1.getX(),
+                            r1._1.getY() + r2._1.getY() + r3._1.getY() + r4._1.getY());
+
+                    double sumQ = r1._2 + r2._2 + r3._2 + r4._2;
+
+                    result = new Tuple2<>(combinedForce, sumQ);
+                }
+                break;
+        }
+
+        return result;
+    }
+
+    private Tuple2<Point, Double> computeForce(Point point, Node node, double theta) {
+        double distance = squaredDistance(point, node.getCenterOfMass());
+        double q = 1.0 / (1.0 + distance);
+        double sumQ = 0.0;
+
+        Point distanceVector = new Point(point.getX() - node.getCenterOfMass().getX(),
+                point.getY() - node.getCenterOfMass().getY());
+
+        double mult = node.getNumPoints() * q;
+        sumQ += mult;
+
+        Point repForce = new Point(mult * q * distanceVector.getX(), mult * q * distanceVector.getY());
+        return new Tuple2<>(repForce, sumQ);
+    }
+
+    private double squaredDistance(Point a, Point b) {
+        return Math.pow(a.getX() - b.getX(), 2) + Math.pow(a.getY() - b.getY(), 2);
+    }
+
     /**
      * Inserts a point into the tree, updating the tree's structure if necessary.
      * @param parent The parent to insert the point into.
@@ -309,6 +366,7 @@ public class QuadTree {
             case EMPTY:
                 this.setPointForNode(parent, point);
                 result = true;
+                parent.addPoint(point);
                 break;
             case LEAF:
                 if (parent.getPoint().getX() == point.getX() && parent.getPoint().getY() == point.getY()) {
@@ -317,11 +375,17 @@ public class QuadTree {
                 } else {
                     this.split(parent);
                     result = this.insert(parent, point);
+                    if (result) {
+                        parent.addPoint(point);
+                    }
                 }
                 break;
             case POINTER:
                 result = this.insert(
                         this.getQuadrantForPoint(parent, point.getX(), point.getY()), point);
+                if (result) {
+                    parent.addPoint(point);
+                }
                 break;
 
             default:

@@ -6,8 +6,11 @@ public class Node {
     private double y;
     private double w;
     private double h;
+    private int numPoints;
     private Node opt_parent;
     private Point point;
+    private Point centerOfMass;
+    private Point sum;
     private NodeType nodetype = NodeType.EMPTY;
     private Node nw;
     private Node ne;
@@ -29,6 +32,9 @@ public class Node {
         this.w = w;
         this.h = h;
         this.opt_parent = opt_parent;
+        this.numPoints = 0;
+        this.centerOfMass = new Point(0, 0);
+        this.sum = new Point(0, 0);
     }
 
     public double getX() {
@@ -117,5 +123,20 @@ public class Node {
 
     public Node getSe() {
         return se;
+    }
+
+    public void addPoint(Point point) {
+        this.numPoints += 1;
+        this.sum = new Point(this.sum.getX() + point.getX(), this.sum.getY() + point.getY());
+        this.centerOfMass = new Point(this.sum.getX() / this.numPoints,
+                this.sum.getY() / this.numPoints);
+    }
+
+    public Point getCenterOfMass() {
+        return this.centerOfMass;
+    }
+
+    public int getNumPoints() {
+        return this.numPoints;
     }
 }

@@ -48,6 +48,9 @@ public class TSNEJob extends Program {
     private static final double MIN_GAIN = 0.01;
     private static final double TOL = 1e-5;
 
+    private static final double THETA = 0.2;
+    private static final int N_NEIGHBORS = 3 * (int)PERPLEXITY;
+
     // ---------------------------------------------------
     // State.
     // ---------------------------------------------------
