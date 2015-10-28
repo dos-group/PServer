@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.crdt.radt.hashtable;
+package de.tuberlin.pserver.radt.list;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;
@@ -13,64 +13,49 @@ import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 // TODO: this only works to a precision of milliseconds (Date class)!
 // Is it ok to use System.nanoTime in multicore systems? http://www.principiaprogramatica.com/?p=16
 // TODO: this needs more testing and debugging + cleanup
-public class HashTableTestJob extends Program {
+public class LinkedListTestJob extends Program {
 
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            HashTable<Integer, Integer> hashTable = new HashTable<>(5, "one", 2, runtimeManager);
+            LinkedList<Integer> list = new LinkedList<>(11, "one", 2, runtimeManager);
 
             for (int i = 0; i <= 10; i++) {
-                hashTable.put(i, i);
+                list.insert(i, i);
             }
 
             Thread.sleep(10);
 
-            hashTable.put(1, 11);
-            hashTable.put(6, 22);
-            hashTable.put(13, 33);
-            hashTable.put(7, 44);
-            hashTable.put(5, 55);
-            hashTable.put(12, 66);
+            list.insert(0, 99); // TODO: insert at head gives error if head is not already null!
+            list.insert(1, 11);
+            list.insert(6, 22);
+            //list.insert(13, 33);
+            list.insert(7, 44);
+            list.insert(5, 55);
+            //list.insert(12, 66);
 
             Thread.sleep(500);
 
-            hashTable.remove(1);
-            hashTable.remove(6);
+            list.finish();
 
-            hashTable.put(1, 99);
-
-            hashTable.finish();
-
-            System.out.println("[DEBUG] HashTable of node " + programContext.runtimeContext.nodeID + ": "
-                    + hashTable.toString());
+            System.out.println("[DEBUG] LinkedList of node " + programContext.runtimeContext.nodeID + ": "
+                    + list.toString());
             System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": "
-                    + hashTable.getBuffer());
+                    + list.getBuffer());
         });
     }
 
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            HashTable<Integer, Integer> hashTable = new HashTable<>(5, "one", 2, runtimeManager);
+            LinkedList<Integer> list = new LinkedList<>(11, "one", 2, runtimeManager);
 
-            for (int i = 20; i <= 30; i++) {
+            list.finish();
 
-               hashTable.put(1, i);
-            }
-
-            hashTable.put(0, 111);
-            hashTable.put(1, 222);
-            hashTable.put(2, 333);
-            hashTable.put(3, 444);
-            hashTable.put(4, 555);
-
-            hashTable.finish();
-
-            System.out.println("[DEBUG] HashTable of node " + programContext.runtimeContext.nodeID + ": "
-                    + hashTable.toString());
+            System.out.println("[DEBUG] LinkedList of node " + programContext.runtimeContext.nodeID + ": "
+                    + list.toString());
             System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": "
-                    + hashTable.getBuffer());
+                    + list.getBuffer());
         });
     }
 
@@ -85,7 +70,7 @@ public class HashTableTestJob extends Program {
         PServerExecutor.LOCAL
                 // Second param is number of slots (threads executing the job) per node,
                 // should be 1 at the beginning.
-                .run(HashTableTestJob.class)
+                .run(LinkedListTestJob.class)
                 .done();
     }
 }

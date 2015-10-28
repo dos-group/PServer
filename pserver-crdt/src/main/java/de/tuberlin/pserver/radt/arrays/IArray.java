@@ -1,6 +1,6 @@
-package de.tuberlin.pserver.crdt.radt.arrays;
+package de.tuberlin.pserver.radt.arrays;
 
-import de.tuberlin.pserver.crdt.radt.RADT;
+import de.tuberlin.pserver.radt.RADT;
 
 public interface IArray<T> extends RADT<T> {
 

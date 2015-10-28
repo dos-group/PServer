@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.crdt.radt;
+package de.tuberlin.pserver.radt;
 
 import de.tuberlin.pserver.crdt.CRDT;
 

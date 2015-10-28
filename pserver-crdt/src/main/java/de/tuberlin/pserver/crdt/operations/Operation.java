@@ -29,6 +29,9 @@ public interface Operation<T> extends Serializable {
     /** Put token for CRDT operation. (i.e. "put to hashtable") */
     int PUT = 6;
 
+    /** Insert token for CRDT operation **/
+    int INSERT = 7;
+
     default String getOperationType() {
         switch(getType()) {
             case END:       return "END";

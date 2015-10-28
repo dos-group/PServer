@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.crdt.radt.hashtable;
+package de.tuberlin.pserver.radt.hashtable;
 
 public class NoSlotException extends RuntimeException {
 

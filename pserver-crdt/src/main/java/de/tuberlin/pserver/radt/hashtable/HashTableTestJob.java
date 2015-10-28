@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.crdt.radt.arrays;
+package de.tuberlin.pserver.radt.hashtable;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;
@@ -13,62 +13,64 @@ import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 // TODO: this only works to a precision of milliseconds (Date class)!
 // Is it ok to use System.nanoTime in multicore systems? http://www.principiaprogramatica.com/?p=16
 // TODO: this needs more testing and debugging + cleanup
-public class ArrayTestJob extends Program {
+public class HashTableTestJob extends Program {
 
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            Array<Integer> array = new Array<>(5, "one", 2, runtimeManager);
+            HashTable<Integer, Integer> hashTable = new HashTable<>(5, "one", 2, runtimeManager);
 
             for (int i = 0; i <= 10; i++) {
-                array.write(1, i);
+                hashTable.put(i, i);
             }
 
             Thread.sleep(10);
 
-            array.write(0, 11);
-            array.write(1, 22);
-            array.write(2, 33);
-            array.write(3, 44);
-            array.write(4, 55);
+            hashTable.put(1, 11);
+            hashTable.put(6, 22);
+            hashTable.put(13, 33);
+            hashTable.put(7, 44);
+            hashTable.put(5, 55);
+            hashTable.put(12, 66);
 
-            array.finish();
+            Thread.sleep(500);
 
-            Object[] result = array.getArray();
-            System.out.println("[DEBUG] Array of node " + programContext.runtimeContext.nodeID + ": ");
-            for(Object i : result) {
-                System.out.println("   " + i);
-            }
+            hashTable.remove(1);
+            hashTable.remove(6);
+
+            hashTable.put(1, 99);
+
+            hashTable.finish();
+
+            System.out.println("[DEBUG] HashTable of node " + programContext.runtimeContext.nodeID + ": "
+                    + hashTable.toString());
             System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": "
-                    + array.getBuffer());
+                    + hashTable.getBuffer());
         });
     }
 
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            Array<Integer> array = new Array<>(5, "one", 2, runtimeManager);
+            HashTable<Integer, Integer> hashTable = new HashTable<>(5, "one", 2, runtimeManager);
 
             for (int i = 20; i <= 30; i++) {
 
-                array.write(1, i);
+               hashTable.put(1, i);
             }
 
-            array.write(0, 111);
-            array.write(1, 222);
-            array.write(2, 333);
-            array.write(3, 444);
-            array.write(4, 555);
+            hashTable.put(0, 111);
+            hashTable.put(1, 222);
+            hashTable.put(2, 333);
+            hashTable.put(3, 444);
+            hashTable.put(4, 555);
 
-            array.finish();
+            hashTable.finish();
 
-            Object[] result = array.getArray();
-            System.out.println("[DEBUG] Array of node " + programContext.runtimeContext.nodeID + ": ");
-            for(Object i : result) {
-                System.out.println("   " + i);
-            }
+            System.out.println("[DEBUG] HashTable of node " + programContext.runtimeContext.nodeID + ": "
+                    + hashTable.toString());
             System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": "
-                    + array.getBuffer());
+                    + hashTable.getBuffer());
         });
     }
 
@@ -83,7 +85,7 @@ public class ArrayTestJob extends Program {
         PServerExecutor.LOCAL
                 // Second param is number of slots (threads executing the job) per node,
                 // should be 1 at the beginning.
-                .run(ArrayTestJob.class)
+                .run(HashTableTestJob.class)
                 .done();
     }
 }

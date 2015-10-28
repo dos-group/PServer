@@ -1,7 +1,7 @@
-package de.tuberlin.pserver.crdt.radt.hashtable;
+package de.tuberlin.pserver.radt.hashtable;
 
-import de.tuberlin.pserver.crdt.radt.RADTOperation;
-import de.tuberlin.pserver.crdt.radt.S4Vector;
+import de.tuberlin.pserver.radt.RADTOperation;
+import de.tuberlin.pserver.radt.S4Vector;
 
 public class HashTableOperation<K,V> extends RADTOperation<V> {
     private final K key;

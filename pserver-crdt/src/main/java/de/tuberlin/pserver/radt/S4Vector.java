@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.crdt.radt;
+package de.tuberlin.pserver.radt;
 
 import java.io.Serializable;
 
@@ -46,5 +46,38 @@ public class S4Vector implements Serializable {
                 (this.sessionNumber == other.getSessionNumber()
                         && this.vectorClockSum == other.getVectorClockSum()
                         && this.siteId < other.siteId);
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("<");
+        sb.append(sessionNumber).append(", ").append(siteId).append(", ").append(vectorClockSum).append(", ")
+        .append(seq);
+        sb.append(">");
+        return sb.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        S4Vector s4Vector = (S4Vector) o;
+
+        if (sessionNumber != s4Vector.sessionNumber) return false;
+        if (siteId != s4Vector.siteId) return false;
+        if (vectorClockSum != s4Vector.vectorClockSum) return false;
+        return seq == s4Vector.seq;
+
+    }
+
+    // TODO: is this the best hashcode?
+    @Override
+    public int hashCode() {
+        int result = sessionNumber;
+        result = 31 * result + siteId;
+        result = 31 * result + vectorClockSum;
+        result = 31 * result + seq;
+        return result;
     }
 }

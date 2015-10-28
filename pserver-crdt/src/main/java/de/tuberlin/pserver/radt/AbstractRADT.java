@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.crdt.radt;
+package de.tuberlin.pserver.radt;
 
 import de.tuberlin.pserver.crdt.AbstractCRDT;
 import de.tuberlin.pserver.runtime.RuntimeManager;
@@ -12,7 +12,7 @@ public abstract class AbstractRADT<T> extends AbstractCRDT<T> implements RADT<T>
     protected final int[] vectorClock;
     protected final int siteID;
     // priority queue
-    protected final Queue<CObject<T>> queue;
+    protected final Queue<Item<T>> queue;
     // TODO: Not sure what this does...
     protected int sessionID;
     protected final int size;
@@ -20,6 +20,8 @@ public abstract class AbstractRADT<T> extends AbstractCRDT<T> implements RADT<T>
 
     protected AbstractRADT(int size, String id, int noOfReplicas, RuntimeManager runtimeManager) {
         super(id, noOfReplicas, runtimeManager);
+
+        // Remove the
 
         // Initialize size
         this.size = size;
@@ -79,8 +81,8 @@ public abstract class AbstractRADT<T> extends AbstractCRDT<T> implements RADT<T>
         return vectorClock[cOb.getS4Vector().getSiteId()] == (cOb.getVectorClock()[cOb.getS4Vector().getSiteId()] - 1);
     }
 
-    protected int[] increaseVectorClock(int id) {
-        vectorClock[id]++;
+    protected int[] increaseVectorClock() {
+        vectorClock[siteID]++;
         return vectorClock.clone();
     }
 }

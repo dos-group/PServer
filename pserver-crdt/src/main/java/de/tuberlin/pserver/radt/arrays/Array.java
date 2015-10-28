@@ -1,9 +1,9 @@
-package de.tuberlin.pserver.crdt.radt.arrays;
+package de.tuberlin.pserver.radt.arrays;
 
 import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.crdt.radt.CObject;
-import de.tuberlin.pserver.crdt.radt.RADTOperation;
-import de.tuberlin.pserver.crdt.radt.S4Vector;
+import de.tuberlin.pserver.radt.Item;
+import de.tuberlin.pserver.radt.RADTOperation;
+import de.tuberlin.pserver.radt.S4Vector;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 
 import java.util.*;
@@ -36,8 +36,8 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
 
     private boolean localWrite(int index, T value) {
 
-        int[] clock = increaseVectorClock(siteID);
-        array[index] = new CObject<>(index, clock, new S4Vector(sessionID, siteID, clock, 0), value);
+        int[] clock = increaseVectorClock();
+        array[index] = new Item<>(index, clock, new S4Vector(sessionID, siteID, clock, 0), value);
 
         broadcast(new RADTOperation<>(Operation.WRITE, value, index, clock, new S4Vector(sessionID, siteID, clock, 0)));
 
@@ -45,13 +45,13 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
     }
 
     private boolean remoteWrite(int index, int[] remoteVectorClock, T value, S4Vector s4) {
-        queue.add(new CObject<>(index, remoteVectorClock, s4, value));
+        queue.add(new Item<>(index, remoteVectorClock, s4, value));
 
         boolean wrote = false;
 
         while(queue.peek() != null && isCausallyReadyFor(queue.peek())) {
-            CObject newObj = queue.poll();
-            CObject old = array[newObj.getIndex()];
+            Item newObj = queue.poll();
+            Item old = array[newObj.getIndex()];
             updateVectorClock(newObj.getVectorClock());
 
             if(old.getS4Vector().takesPrecedenceOver(newObj.getS4Vector())) {
@@ -84,7 +84,7 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
     public T[] getArray() {
         List<T> result = new LinkedList<>();
 
-        for (CObject<T> anArray : array) {
+        for (Item<T> anArray : array) {
             result.add(anArray.getValue());
         }
 

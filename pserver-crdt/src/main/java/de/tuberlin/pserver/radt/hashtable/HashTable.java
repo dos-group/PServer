@@ -1,7 +1,8 @@
-package de.tuberlin.pserver.crdt.radt.hashtable;
+package de.tuberlin.pserver.radt.hashtable;
 
 import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.crdt.radt.S4Vector;
+import de.tuberlin.pserver.radt.S4Vector;
+import de.tuberlin.pserver.radt.Slot;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 
 public class HashTable<K,V> extends AbstractHashTable<K,V> {
@@ -30,7 +31,7 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
     }
 
     public void put(K key, V value) {
-        int[] clock = increaseVectorClock(siteID);
+        int[] clock = increaseVectorClock();
 
         S4Vector s4 = new S4Vector(sessionID, siteID, clock, 0);
 
@@ -43,6 +44,8 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
     }
 
     public V read(K key) {
+        if(key == null) return null;
+
         Slot<K,V> slot = hashTable.get(key);
 
         if(slot == null || slot.isTombstone()) {
@@ -54,7 +57,7 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
 
     public boolean remove(K key) {
         if(localRemove(key)) {
-            int[] clock = increaseVectorClock(siteID);
+            int[] clock = increaseVectorClock();
             S4Vector s4 = new S4Vector(sessionID, siteID, clock, 0);
 
             broadcast(new HashTableOperation<>(Operation.REMOVE, key, null, 0, clock, s4));
@@ -71,9 +74,9 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
 
         if(slot != null) {
             slot.setValue(value);
-            slot.setS4Vector(s4);
+            //slot.setS4Vector(s4);
         } else {
-            hashTable.put(key, new Slot<>(key, value, s4, null));
+            hashTable.put(key, new Slot<>(key, value, s4, null, null));
         }
 
         return true;
@@ -110,7 +113,7 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
             cemetery.withdraw(slot);
         }
         else if(slot == null) {
-            slot = new Slot<>(key, value, s4, null);
+            slot = new Slot<>(key, value, s4, null, null);
             if(previous != null) {
                 previous.setNextSlot(slot);
             }
@@ -140,11 +143,11 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
             throw new NoSlotException("blub");
         }
 
-        // TODO: this doesn't really make sense as the s4vector is the key, so they will be the same
         if(s4.takesPrecedenceOver(slot.getS4Vector()))  return false;
 
         if(!slot.isTombstone()) {
-            cemetery.enroll(slot);
+            cemetery.enrol(slot);
+            slot.makeTombstone();
         }
 
         slot.setS4Vector(s4);
