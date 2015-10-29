@@ -118,6 +118,7 @@ public class TSNEJob extends Program {
             P.add(PT, P);
             // keep pdf properties
             // TODO: this has to work for sparse matrices as well (sum only over non zero elements)
+            // TODO: caution! this is a global operation and must be synchronized properly
             double sumP = P.aggregateRows(Matrix<Double>::sum).sum();
             P.scale(1 / sumP, P);
             // early exaggeration
