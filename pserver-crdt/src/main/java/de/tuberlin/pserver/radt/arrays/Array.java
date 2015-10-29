@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.radt.arrays;
 
 import de.tuberlin.pserver.crdt.operations.Operation;
+import de.tuberlin.pserver.radt.CObject;
 import de.tuberlin.pserver.radt.Item;
 import de.tuberlin.pserver.radt.RADTOperation;
 import de.tuberlin.pserver.radt.S4Vector;
@@ -37,43 +38,34 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
     private boolean localWrite(int index, T value) {
 
         int[] clock = increaseVectorClock();
-        array[index] = new Item<>(index, clock, new S4Vector(sessionID, siteID, clock, 0), value);
+        Item<T> item = new Item<>(index, clock, new S4Vector(sessionID, siteID, clock, 0), value);
+        array[index] = item;
 
-        broadcast(new RADTOperation<>(Operation.WRITE, value, index, clock, new S4Vector(sessionID, siteID, clock, 0)));
+        RADTOperation<CObject<T>> blub = new RADTOperation<CObject<T>>(Operation.WRITE, item, index, clock, new S4Vector(sessionID, siteID, clock, 0));
+        Operation<CObject<T>> blah = (Operation<CObject<T>>) blub;
+        broadcast(blub);
 
         return true;
     }
 
-    private boolean remoteWrite(int index, int[] remoteVectorClock, T value, S4Vector s4) {
-        queue.add(new Item<>(index, remoteVectorClock, s4, value));
-
-        boolean wrote = false;
-
-        while(queue.peek() != null && isCausallyReadyFor(queue.peek())) {
-            Item newObj = queue.poll();
-            Item old = array[newObj.getIndex()];
-            updateVectorClock(newObj.getVectorClock());
-
-            if(old.getS4Vector().takesPrecedenceOver(newObj.getS4Vector())) {
-                array[newObj.getIndex()] = newObj;
-                wrote = true;
-            }
+    private boolean remoteWrite(Item<T> item) {
+        //updateVectorClock(item.getVectorClock());
+        Item old = array[item.getIndex()];
+        if(old.getS4Vector().takesPrecedenceOver(item.getS4Vector())) {
+            array[item.getIndex()] = item;
+            return true;
         }
-        return wrote;
-    }
 
-    private void updateVectorClock(int[] remoteVectorClock) {
-        for(int i = 0; i < remoteVectorClock.length; i++) {
-            vectorClock[i] = Math.max(vectorClock[i], remoteVectorClock[i]);
-        }
+        return false;
+
     }
 
     @Override
     protected boolean update(int srcNodeId, Operation op) {
-        RADTOperation<T> radtOp = (RADTOperation<T>) op;
+        RADTOperation<Item<T>> radtOp = (RADTOperation<Item<T>>) op;
 
         if(radtOp.getType() == Operation.WRITE) {
-            return remoteWrite(radtOp.getIndex(), radtOp.getVectorClock(), radtOp.getValue(), radtOp.getS4Vector());
+            return remoteWrite(radtOp.getValue());
         }
         else {
             // TODO: exception text
@@ -89,5 +81,9 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
         }
 
         return (T[])result.toArray();
+    }
+
+    public Queue getQueue() {
+        return this.queue;
     }
 }

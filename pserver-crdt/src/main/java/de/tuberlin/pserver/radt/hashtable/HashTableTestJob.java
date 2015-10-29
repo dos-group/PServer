@@ -21,12 +21,12 @@ public class HashTableTestJob extends Program {
             HashTable<Integer, Integer> hashTable = new HashTable<>(5, "one", 2, runtimeManager);
 
             for (int i = 0; i <= 10; i++) {
-                hashTable.put(i, i);
+               hashTable.put(i, i);
             }
 
             Thread.sleep(10);
 
-            hashTable.put(1, 11);
+            hashTable.put(0, 11);
             hashTable.put(6, 22);
             hashTable.put(13, 33);
             hashTable.put(7, 44);
@@ -39,8 +39,10 @@ public class HashTableTestJob extends Program {
             hashTable.remove(6);
 
             hashTable.put(1, 99);
+            System.out.println("Blub");
 
             hashTable.finish();
+            System.out.println("Blah");
 
             System.out.println("[DEBUG] HashTable of node " + programContext.runtimeContext.nodeID + ": "
                     + hashTable.toString());

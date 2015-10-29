@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.radt.hashtable;
 
 import de.tuberlin.pserver.crdt.operations.Operation;
+import de.tuberlin.pserver.radt.CObject;
 import de.tuberlin.pserver.radt.S4Vector;
 import de.tuberlin.pserver.radt.Slot;
 import de.tuberlin.pserver.runtime.RuntimeManager;
@@ -15,11 +16,11 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
 
     @Override
     protected boolean update(int srcNodeId, Operation<?> op) {
-        HashTableOperation<K,V> radtOp = (HashTableOperation<K,V>) op;
+        HashTableOperation<K,Slot<K,V>> radtOp = (HashTableOperation<K,Slot<K,V>>) op;
 
         if(radtOp.getType() == Operation.PUT) {
            // System.out.println("Received PUT: " + radtOp.getValue());
-            return remotePut(radtOp.getKey(), radtOp.getValue(), radtOp.getS4Vector());
+            return remotePut(radtOp.getKey(), radtOp.getValue().getValue(), radtOp.getS4Vector());
         }
         else if(radtOp.getType() == Operation.REMOVE) {
             return remoteRemove(radtOp.getKey(), radtOp.getS4Vector());
@@ -35,9 +36,16 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
 
         S4Vector s4 = new S4Vector(sessionID, siteID, clock, 0);
 
-        localPut(key, value, s4);
+        Slot<K,V> slot = localPut(key, value, s4, clock);
+
         // TODO: index is not needed here?
-        broadcast(new HashTableOperation<>(Operation.PUT, key, value, 0, clock, s4));
+        if(slot != null) {
+            broadcast(new HashTableOperation<>(Operation.PUT, key, slot, 0, clock, s4));
+        }
+        else {
+            // Todo: throw exception?
+            System.out.println("FAIL");
+        }
         /*System.out.println("Local put " + value + " at " + siteID + " with Vectorclock: <" + s4.getSessionNumber() +
                 ", "+ s4.getSiteId() + ", " + s4.getVectorClockSum() + ", " + s4.getSeq() +">");
         System.out.println(this);*/
@@ -56,11 +64,14 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
     }
 
     public boolean remove(K key) {
-        if(localRemove(key)) {
+        Slot<K,V> slot = localRemove(key);
+
+        if(slot != null) {
             int[] clock = increaseVectorClock();
             S4Vector s4 = new S4Vector(sessionID, siteID, clock, 0);
+            //Slot<K,V> slot = new Slot<>(key, null, s4, null, clock);
 
-            broadcast(new HashTableOperation<>(Operation.REMOVE, key, null, 0, clock, s4));
+            broadcast(new HashTableOperation<>(Operation.REMOVE, key, slot, 0, clock, s4));
             return true;
         }
         else {
@@ -68,29 +79,30 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
         }
     }
 
-    private boolean localPut(K key, V value, S4Vector s4) {
+    private Slot<K,V> localPut(K key, V value, S4Vector s4, int[] clock) {
         // TODO: what about collisions?
         Slot<K,V> slot = hashTable.get(key);
 
         if(slot != null) {
-            slot.setValue(value);
-            //slot.setS4Vector(s4);
+            slot = new Slot(key, value, s4, slot.getNextSlot(), clock);
+            hashTable.put(key, slot);
+            return slot;
         } else {
-            hashTable.put(key, new Slot<>(key, value, s4, null, null));
+            slot = new Slot(key, value, s4, null, clock);
+            hashTable.put(key, slot);
+            return slot;
         }
-
-        return true;
     }
 
-    private boolean localRemove(K key) {
+    private Slot<K,V> localRemove(K key) {
         Slot<K,V> slot = hashTable.get(key);
 
         if(slot == null){
-            return false;
+            return slot;
         }
         else {
             slot.setValue(null);
-            return true;
+            return slot;
         }
     }
 
