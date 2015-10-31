@@ -40,7 +40,7 @@ public class LDA extends Program{
 
     // Hyperparameter
     private static final int N_TOPICS = 20;
-    private static final int N_ITER = 500;
+    private static final int N_ITER = 1000;
     private static final double ALPHA = 0.1;
     private static final double BETA = 0.1;
 
@@ -72,7 +72,7 @@ public class LDA extends Program{
     // N_dk keeps track of how many words in document d belong to topic k
     public Matrix64F N_dk;
 
-    // Z is the topic assignment of each word w, stored in the local partition of the corpus D
+    // Z is the topic assignment of each word w belonging to the local partition of the corpus D
     public Matrix32F Z;
 
 
@@ -115,13 +115,16 @@ public class LDA extends Program{
             Random rand = new Random();
 
             // randomly initialize the topic z of each word w
-            Z.applyOnElements((e) -> (float)rand.nextInt(N_TOPICS), Z);
+            //Z.applyOnElements((e) -> (float)rand.nextInt(N_TOPICS), Z);
+            Parallel.For(Z, (i) -> {
+                Z.set(i, 0, (float)rand.nextInt(N_TOPICS));
+            });
 
             // initialize N_dk, N_wk and N_k based on the initialization of Z
             long zIndex = 0;
 
             for (int d = 0; d < D.rows(); d++) {
-                for (int w = 0; w < N_VOCABULARY; w++) {
+                for (int w = 0; w < D.cols(); w++) {
                     int wCount = D.get(d, w).intValue();
                     if (wCount != 0) {
                         for (int i = 0; i < wCount; i++) {
