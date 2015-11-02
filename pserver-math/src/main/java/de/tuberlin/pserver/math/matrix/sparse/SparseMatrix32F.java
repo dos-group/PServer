@@ -47,14 +47,14 @@ public class SparseMatrix32F implements Matrix32F {
     // Constructors.
     // ---------------------------------------------------
 
-    public SparseMatrix32F(final long rows, final long cols) {
+    public SparseMatrix32F(long rows, long cols) {
         this.rows = rows;
         this.cols = cols;
         this.lock = new ReentrantLock(true);
     }
 
     // Copy Constructor
-    private SparseMatrix32F(final SparseMatrix32F m) {
+    private SparseMatrix32F(SparseMatrix32F m) {
         this(m.rows(), m.cols());
         m.data.forEachEntry((k, v) -> {
             this.data.put(k, v);
@@ -63,13 +63,12 @@ public class SparseMatrix32F implements Matrix32F {
     }
 
     // Copy Constructor
-    private SparseMatrix32F(final SparseMatrix32F m, final long rows, final long cols) {
+    private SparseMatrix32F(SparseMatrix32F m, long rows, long cols) {
         this(rows, cols);
-        for (int row = 0; row < Math.min(this.rows, rows); row++) {
-            for (int col = 0; col < Math.min(this.cols, cols); col++) {
-                this.set(row, col, m.get(row, col));
-            }
-        }
+        m.data.forEachEntry((k, v) -> {
+            this.data.put(k, v);
+            return true;
+        });
     }
 
     // ---------------------------------------------------
@@ -157,12 +156,12 @@ public class SparseMatrix32F implements Matrix32F {
                 String.format("Row index %d is out of bounds for Matrix of size(%d, %d)", row, this.rows(), this.cols()));
         checkArgument(col < this.cols(),
                 String.format("Column index %d is out of bounds for Matrix of size(%d, %d)", col, this.rows(), this.cols()));
-        int pos = Utils.getPos(row, col, this);
+        int key = Utils.getPos(row, col, this);
         if (value == this.data.getNoEntryValue()) {
-            if (this.data.containsKey(pos))
-                this.data.remove(pos);
+            if (this.data.containsKey(key))
+                this.data.remove(key);
         } else {
-            this.data.put(pos, value);
+            this.data.put(key, value);
             this.sorted = false;
         }
     }
@@ -172,6 +171,7 @@ public class SparseMatrix32F implements Matrix32F {
         return this.setDiagonalsToZero(this.copy());
     }
 
+    // TODO: Discuss casting here, what about Dense Matraces
     @Override
     public Matrix32F setDiagonalsToZero(Matrix m) {
         SparseMatrix32F sm32f = (SparseMatrix32F) m;
@@ -201,19 +201,20 @@ public class SparseMatrix32F implements Matrix32F {
     // ---------------------------------------------------
 
     @Override
-     public Float get(final long index) {
+     public Float get(long index) {
         checkArgument(index < rows() * cols());
-        final Float value = data.get(Utils.toInt(index));
+        Float value = data.get(Utils.toInt(index));
         return (value == null) ? 0f : value;
     }
 
+    // TODO: cannot implement checkArgument otherwise assignRow does not work
     @Override
-    public Float get(final long row, final long col) {
-        checkArgument(row < rows(),
+    public Float get(long row, long col) {
+        /*checkArgument(row < rows(),
                 String.format("Row index %d is out of bounds for Matrix of size(%d, %d)", row, rows(), cols()));
         checkArgument(col < cols(),
-                String.format("Column index %d is out of bounds for Matrix of size(%d, %d)", col, rows(), cols()));
-        final Float value = data.get(Utils.getPos(row, col, this));
+                String.format("Column index %d is out of bounds for Matrix of size(%d, %d)", col, rows(), cols()));*/
+        Float value = data.get(Utils.getPos(row, col, this));
         return (value == null) ? 0f : value;
     }
 
@@ -225,9 +226,9 @@ public class SparseMatrix32F implements Matrix32F {
     @Override
     public Matrix32F getRow(long row, long from, long to) {
         Matrix32F result = new SparseMatrix32F(1, to - from);
-        for (long i = from; i < to; i++)
-            if (this.data.containsKey(i))
-                result.set(0, i, this.get(row, i));
+        for (long col = from; col < to; col++)
+            if (this.data.containsKey(Utils.getPos(row, col, this)))
+                result.set(0, col, this.get(row, col));
         return result;
     }
 
@@ -239,12 +240,14 @@ public class SparseMatrix32F implements Matrix32F {
     @Override
     public Matrix32F getCol(long col, long from, long to) {
         Matrix32F result = new SparseMatrix32F(to - from, 1);
-        for (long i = from; i < to; i++)
-            if (this.data.containsKey(i))
-                result.set(i, 0, this.get(i, col));
+        for (long row = from; row < to; row++)
+            if (this.data.containsKey(Utils.getPos(row, col, this)))
+                result.set(row, 0, this.get(row, col));
         return result;
     }
 
+    // TODO: Determine if this is a valid method for sparse matrices
+    // TODO: Keys will not be preserved
     @Override
     public Object toArray() {
         return this.data.values();
@@ -341,22 +344,36 @@ public class SparseMatrix32F implements Matrix32F {
         return this;
     }
 
+    // TODO: Confirm functionality
+    // TODO: m could be a Dense Matrix, therefore cant use key/value pairs
     @Override
     public Matrix32F assign(Matrix<Float> m) {
         checkState(m.rows() * m.cols() == this.rows * this.cols);
-        return this.assign(0, 0, m);
+        logger.info("Warning! 'assign(Float)' is potentially a very expensive operation.");
+        for (int row = 0; row < m.rows(); row++)
+            for (int col = 0; col < m.cols(); col++)
+                this.set(row, col, m.get(row, col));
+        return this;
     }
 
+    // TODO: Confirm functionality
+    // TODO: m could be a Dense Matrix, therefore cant use key/value pairs
     @Override
     public Matrix32F assignRow(long row, Matrix<Float> m) {
         checkState(m.rows() == 1 && row < this.rows && m.cols() == this.cols);
-        return this.assign(row, 0, m);
+        for (long col = 0; col < this.cols; col++)
+            this.set(row, col, m.get(0, col));
+        return this;
     }
 
+    // TODO: Confirm functionality
+    // TODO: m could be a Dense Matrix, therefore cant use key/value pairs
     @Override
     public Matrix32F assignColumn(long col, Matrix<Float> m) {
         checkState(m.cols() == 1 && col < this.cols && m.rows() == this.rows);
-        return this.assign(0, col, m);
+        for (long row = 0; row < this.rows; row++)
+            this.set(row, col, m.get(row, 0));
+        return this;
     }
 
     /* TODO: Ask Tobias about functionality, assign only the values in m to this
@@ -407,11 +424,12 @@ public class SparseMatrix32F implements Matrix32F {
     // ---------------------------------------------------
 
     @Override
-    public Matrix32F add(Matrix<Float> B) {
-        return this.add(B, new SparseMatrix32F(this.rows, this.cols));
+    public Matrix32F add(Matrix<Float> m) {
+        return this.add(m, new SparseMatrix32F(this.rows, this.cols));
     }
 
     // TODO: Need to look at the efficiency of this, can it be done better
+    // TODO: what about Dense Matrices
     @Override
     public Matrix32F add(Matrix<Float> m, Matrix<Float> r) {
         Utils.checkShapeEqual(this, m, r);
@@ -559,12 +577,11 @@ public class SparseMatrix32F implements Matrix32F {
         checkArgument(rowOffset < this.rows && this.rows >= rows + rowOffset);
         checkArgument(colOffset < this.cols && this.cols >= cols + colOffset);
         SparseMatrix32F sm32f = new SparseMatrix32F(rows, cols);
-        this.data.forEachEntry((k, v) -> {
-            long row = this.findRowFromIndex(k), col = this.findColFromIndex(k);
-            if (rowOffset <= row && row < rows && colOffset <= col && col < cols)
-                sm32f.data.put(k, v);
-            return true;
-        });
+        for (long key : this.data.keys()) {
+            long row = this.findRowFromIndex(key), col = this.findColFromIndex(key);
+            if (rowOffset <= row && row <= rows && colOffset <= col && col <= cols)
+                sm32f.set(row - rowOffset, col - colOffset, this.data.get(key));
+        }
         return sm32f;
     }
 
@@ -577,14 +594,23 @@ public class SparseMatrix32F implements Matrix32F {
     // TODO: confirm functionality, ie. just copy over key-value pairs
     // TODO: or ensure every element is the same
     @Override
-    public Matrix32F concat(Matrix<Float> m, Matrix<Float> r) {
+    public Matrix32F concat(Matrix<Float> m, Matrix<Float> result) {
         checkArgument(this.cols == m.cols());
-        checkArgument(r.rows() >= this.rows + m.rows() && r.cols() == this.cols);
-        SparseMatrix32F sm32f = (SparseMatrix32F) m;
+        checkArgument(result.rows() >= this.rows + m.rows() && result.cols() == this.cols);
+        long bRow = 0;
+        for (long row = 0; row < result.rows(); row++) {
+            if (row < this.rows)
+                result.assignRow(row, this.getRow(row));
+            else {
+                result.assignRow(row, m.getRow(bRow));
+                bRow++;
+            }
+        }
+        /*SparseMatrix32F sm32f = (SparseMatrix32F) m;
         SparseMatrix32F result = (SparseMatrix32F) r;
         result.data.putAll(this.data);
-        result.data.putAll(sm32f.data);
-        return result;
+        result.data.putAll(sm32f.data);*/
+        return (Matrix32F) result;
     }
 
     // ---------------------------------------------------

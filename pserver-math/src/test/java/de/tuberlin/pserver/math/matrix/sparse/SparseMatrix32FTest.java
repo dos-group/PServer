@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.math.matrix.sparse;
 
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
 import de.tuberlin.pserver.math.operations.UnaryOperator;
 import de.tuberlin.pserver.math.operations.BinaryOperator;
@@ -82,36 +83,32 @@ public class SparseMatrix32FTest {
 
   }
 
-  /*@Test
+  @Test
   public void testGetRow() {
 
     int row = 1;
-    SparseMatrix32F mRow = (SparseMatrix32F) this.m.getRow(row);
+    SparseMatrix32F mRow = (SparseMatrix32F) this.sm32f.getRow(row);
 
-    assertEquals("should be equal", m.get(row, 0), mRow.get(0, 0));
-    assertEquals("should be equal", m.get(row, 1), mRow.get(0, 1));
-    assertEquals("should be equal", m.get(row, 2), mRow.get(0, 2));
+    assertEquals("should be equal", sm32f.get(row, 1), mRow.get(0, 1));
+    assertEquals("should be equal", sm32f.get(row, 4), mRow.get(0, 4));
 
   }
 
   @Test
   public void testGetCol() {
 
-    int col = 1;
-    SparseMatrix32F mCol = (SparseMatrix32F) this.m.getCol(col);
+    int col = 2;
+    SparseMatrix32F mCol = (SparseMatrix32F) this.sm32f.getCol(col);
 
-    assertEquals("should be equal", m.get(0, col), mCol.get(0, 0));
-    assertEquals("should be equal", m.get(1, col), mCol.get(0, 1));
-    assertEquals("should be equal", m.get(2, col), mCol.get(0, 2));
+    assertEquals("should be equal", sm32f.get(2, col), mCol.get(2, 0));
 
   }
 
-  // Still to finish some of these
   @Test
   public void testApplyOnElements() {
 
     // Just creates a copy of a global matrix to test for individual test
-    SparseMatrix32F mCopy = (SparseMatrix32F) this.m.copy();
+    SparseMatrix32F mCopy = (SparseMatrix32F) this.sm32f.copy();
     SparseMatrix32F mUnaryOperator, mMatrixElementUnaryOperator, mApplyOnNonZeroElements;
 
     //------------------------------------------------------------
@@ -163,14 +160,14 @@ public class SparseMatrix32FTest {
     mApplyOnNonZeroElements = (SparseMatrix32F) mCopy.applyOnNonZeroElements((row, col, val) -> val + 1);
 
     assertEquals("should be equal", mApplyOnNonZeroElements.get(0, 0), new Float(0));
-    assertEquals("should be equal", mApplyOnNonZeroElements.get(2, 0), new Float(mCopy.get(2, 0).floatValue() + 1F));
+    assertEquals("should be equal", mApplyOnNonZeroElements.get(3, 0), new Float(mCopy.get(3, 0).floatValue() + 1F));
 
   }
 
   @Test
   public void testAssign() {
 
-    SparseMatrix32F mCopy = (SparseMatrix32F) this.m.copy();
+    SparseMatrix32F mCopy = (SparseMatrix32F) this.sm32f.copy();
 
     mCopy.assign(7F);
 
@@ -178,15 +175,21 @@ public class SparseMatrix32FTest {
 
     //------------------------------------------------------------
 
-    SparseMatrix32F mRow = (SparseMatrix32F) this.m.getRow(0);
+    mCopy.assign(sm32f);
 
-    mCopy.assignRow(1, mRow);
-
-    assertEquals("should be equal", mCopy.get(1, 0), mRow.get(0, 0));
+    assertEquals("should be equal", mCopy.get(1, 0), mCopy.get(0, 0));
 
     //------------------------------------------------------------
 
-    SparseMatrix32F mCol = (SparseMatrix32F) this.m.getCol(1);
+    SparseMatrix32F mRow = (SparseMatrix32F) this.sm32f.getRow(1);
+
+    mCopy.assignRow(2, mRow);
+
+    assertEquals("should be equal", mCopy.get(2, 2), mRow.get(0, 2));
+
+    //------------------------------------------------------------
+
+    SparseMatrix32F mCol = (SparseMatrix32F) this.sm32f.getCol(1);
 
     mCopy.assignColumn(2, mCol);
 
@@ -194,67 +197,67 @@ public class SparseMatrix32FTest {
 
     //------------------------------------------------------------
 
-    SparseMatrix32F mOffset = (SparseMatrix32F) this.m.copy();
+    SparseMatrix32F mOffset = (SparseMatrix32F) this.sm32f.copy();
 
     SparseMatrix32F mSmall = new SparseMatrix32F(2, 2);
-    m.set(0L, 0L, 0F);
-    m.set(0L, 1L, 0F);
-    m.set(1L, 0L, 0F);
-    m.set(1L, 1L, 0F);
+    sm32f.set(0L, 0L, 0F);
+    sm32f.set(0L, 1L, 0F);
+    sm32f.set(1L, 0L, 0F);
+    sm32f.set(1L, 1L, 0F);
 
     mOffset.assign(1, 0, mSmall);
 
     assertEquals("should be equal", mOffset.get(2, 0), new Float(0));
-    assertEquals("should be equal", mOffset.get(2, 1), this.m.get(2, 1));
+    assertEquals("should be equal", mOffset.get(2, 1), this.sm32f.get(2, 1));
 
   }
 
   @Test
   public void testAggregate() {
 
-    SparseMatrix32F mCopy = (SparseMatrix32F) this.m.copy();
+    SparseMatrix32F mCopy = (SparseMatrix32F) this.sm32f.copy();
 
     mCopy.assign(1F);
+
+    assertEquals("should be equal", mCopy.get(2, 2), new Float(1));
 
     //------------------------------------------------------------
 
     SparseMatrix32F mAggregate = (SparseMatrix32F) mCopy.aggregateRows((row) -> (float) row.sum());
 
-    assertEquals("should be equal", mAggregate.get(0, 0), new Float(3));
+    assertEquals("should be equal", mAggregate.get(0, 0), new Float(5));
 
     //------------------------------------------------------------
 
-    assertEquals("should be equal", mCopy.sum(), new Float(9));
-
+    assertEquals("should be equal", mCopy.sum(), new Float(25));
 
   }
 
-  @Test
+  /*@Test
   public void testArithmetic() {
 
     // TODO: create Unit Test
 
-  }
+  }*/
 
   @Test
   public void testSplicing() {
 
-    SparseMatrix32F subMatrix = (SparseMatrix32F) this.m.subMatrix(1, 0, 2, 3);
+    SparseMatrix32F subMatrix = (SparseMatrix32F) this.sm32f.subMatrix(1, 0, 2, 3);
 
     assertEquals("should be equal", subMatrix.rows() * subMatrix.cols(), 6);
-    assertEquals("should be equal", subMatrix.get(subMatrix.rows() - 1, subMatrix.cols() - 1), m.get(8));
+    assertEquals("should be equal", subMatrix.get(2), sm32f.get(8));
 
     //------------------------------------------------------------
 
-    SparseMatrix32F concat = (SparseMatrix32F) this.m.copy().concat(subMatrix.assign(9F));
+    SparseMatrix32F concat = (SparseMatrix32F) this.sm32f.copy().concat(sm32f.getRow(0));
 
-    assertEquals("should be equal", concat.rows(), 5);
-    assertEquals("should be equal", concat.get(2, 2), m.get(2, 2));
-    assertEquals("should be equal", concat.get(4, 2), new Float(9));
+    assertEquals("should be equal", concat.rows(), 6);
+    assertEquals("should be equal", concat.get(2, 2), sm32f.get(2, 2));
 
   }
 
-  @Test
+  /*@Test
   public void testIterator() {
 
     Matrix.RowIterator rowIterator = this.m.copy().rowIterator();
