@@ -61,7 +61,6 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
                     Operation op = (Operation) value;
 
                     if(op.getType() == Operation.END) {
-                        System.out.println("AAA");
                         addFinishedNode(srcNodeID);
                     } else {
                         RADTOperation<CObject<T>> radtOp = (RADTOperation < CObject < T >>) value;

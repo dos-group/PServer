@@ -33,8 +33,17 @@ public class LinkedListTestJob extends Program {
             list.insert(7, 44);
             list.insert(5, 55);
             //list.insert(12, 66);
+            list.insert(2, 1000);
 
             Thread.sleep(500);
+
+            list.update(5, 12345);
+
+            System.out.println(list);
+
+            list.delete(6);
+
+            System.out.println(list);
 
             list.finish();
 
@@ -49,7 +58,6 @@ public class LinkedListTestJob extends Program {
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
             LinkedList<Integer> list = new LinkedList<>(11, "one", 2, runtimeManager);
-
             list.finish();
 
             System.out.println("[DEBUG] LinkedList of node " + programContext.runtimeContext.nodeID + ": "
