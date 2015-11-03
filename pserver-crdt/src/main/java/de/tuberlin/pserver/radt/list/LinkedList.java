@@ -7,8 +7,8 @@ import de.tuberlin.pserver.runtime.RuntimeManager;
 public class LinkedList<T> extends AbstractLinkedList<T>{
 
     // TODO: do I need size?
-    public LinkedList(int size, String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(size, id, noOfReplicas, runtimeManager);
+    public LinkedList(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+        super(id, noOfReplicas, runtimeManager);
     }
 
     public boolean insert(int index, T value) {

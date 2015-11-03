@@ -10,7 +10,7 @@ public abstract class AbstractArray<T> extends AbstractRADT<T> implements IArray
     protected final Item<T>[] array;
 
     public AbstractArray(int size, String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(size, id, noOfReplicas, runtimeManager);
+        super(id, noOfReplicas, runtimeManager);
 
         // Initialize array
         array = new Item[size];

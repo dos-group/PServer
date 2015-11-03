@@ -8,7 +8,7 @@ public class ListOperation<T> extends RADTOperation<T> {
     private final S4Vector refS4;
 
     public ListOperation(int type, T value, S4Vector referenceS4, int[] vectorClock, S4Vector s4) {
-        super(type, value, 0, vectorClock, s4);
+        super(type, value, vectorClock, s4);
         this.refS4 = referenceS4;
     }
 

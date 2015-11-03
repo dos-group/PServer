@@ -10,8 +10,8 @@ public abstract class AbstractHashTable<K,V> extends AbstractRADT<V> implements 
     protected final Hashtable<K, Slot<K,V>> hashTable;
     protected final Cemetery<Slot<K,V>> cemetery;
 
-    protected AbstractHashTable(int size, String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(size, id, noOfReplicas, runtimeManager);
+    protected AbstractHashTable(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+        super(id, noOfReplicas, runtimeManager);
 
         // Initialize HashTable
         this.hashTable = new Hashtable<>();

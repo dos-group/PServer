@@ -34,7 +34,7 @@ public class ArrayTestJob extends Program {
 
             array.finish();
 
-            Object[] result = array.getArray();
+            Object[] result = array.getLocalCopy();
             System.out.println("[DEBUG] Array of node " + programContext.runtimeContext.nodeID + ": ");
             for(Object i : result) {
                 System.out.println("   " + i);
@@ -62,7 +62,7 @@ public class ArrayTestJob extends Program {
 
             array.finish();
 
-            Object[] result = array.getArray();
+            Object[] result = array.getLocalCopy();
             System.out.println("[DEBUG] Array of node " + programContext.runtimeContext.nodeID + ": ");
             for(Object i : result) {
                 System.out.println("   " + i);

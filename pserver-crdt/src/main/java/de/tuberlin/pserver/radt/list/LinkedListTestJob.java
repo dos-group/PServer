@@ -16,7 +16,7 @@ public class LinkedListTestJob extends Program {
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            LinkedList<Integer> list = new LinkedList<>(11, "one", 2, runtimeManager);
+            LinkedList<Integer> list = new LinkedList<>("one", 2, runtimeManager);
 
             for (int i = 0; i <= 10; i++) {
                 list.insert(i, i);
@@ -55,7 +55,7 @@ public class LinkedListTestJob extends Program {
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            LinkedList<Integer> list = new LinkedList<>(11, "one", 2, runtimeManager);
+            LinkedList<Integer> list = new LinkedList<>("one", 2, runtimeManager);
             list.finish();
 
             System.out.println("[DEBUG] LinkedList of node " + programContext.runtimeContext.nodeID + ": "

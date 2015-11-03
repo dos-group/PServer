@@ -13,10 +13,10 @@ public abstract class AbstractLinkedList<T> extends AbstractRADT<T> implements I
     protected final Cemetery<Node<T>> cemetery;
 
 
-    protected AbstractLinkedList(int size, String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(size, id, noOfReplicas, runtimeManager);
+    protected AbstractLinkedList(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+        super(id, noOfReplicas, runtimeManager);
 
-        this.svi = new HashTable<>(11, id+"_svi", noOfReplicas, runtimeManager);
+        this.svi = new HashTable<>(id+"_svi", noOfReplicas, runtimeManager);
         this.head = null;
         this.cemetery = new Cemetery<>();
     }

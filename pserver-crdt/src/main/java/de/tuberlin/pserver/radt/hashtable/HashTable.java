@@ -8,8 +8,8 @@ import de.tuberlin.pserver.runtime.RuntimeManager;
 public class HashTable<K,V> extends AbstractHashTable<K,V> {
     private Cemetery<Slot<K,V>> cemetery;
 
-    public HashTable(int size, String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(size, id, noOfReplicas, runtimeManager);
+    public HashTable(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+        super(id, noOfReplicas, runtimeManager);
         cemetery = new Cemetery<>();
     }
 
@@ -39,7 +39,7 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
 
         // TODO: index is not needed here?
         if(slot != null) {
-            broadcast(new HashTableOperation<>(Operation.PUT, key, slot, 0, clock, s4));
+            broadcast(new HashTableOperation<>(Operation.PUT, key, slot, clock, s4));
         }
         else {
             // Todo: throw exception?
@@ -70,7 +70,7 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
             S4Vector s4 = new S4Vector(sessionID, siteID, clock, 0);
             //Slot<K,V> slot = new Slot<>(key, null, s4, null, clock);
 
-            broadcast(new HashTableOperation<>(Operation.REMOVE, key, slot, 0, clock, s4));
+            broadcast(new HashTableOperation<>(Operation.REMOVE, key, slot, clock, s4));
             return true;
         }
         else {
