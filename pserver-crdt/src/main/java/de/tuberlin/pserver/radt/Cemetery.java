@@ -5,11 +5,24 @@ import java.util.List;
 
 // TODO: Cemetery<T extends CObject>
 public class Cemetery<T> {
+
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
     public final List<T> cemetery;
+
+    // ---------------------------------------------------
+    // Constructor.
+    // ---------------------------------------------------
 
     public Cemetery() {
         this.cemetery = new ArrayList<>();
     }
+
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
 
     public boolean enrol(T cObj) {
         return cemetery.add(cObj);

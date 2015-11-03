@@ -1,19 +1,30 @@
 package de.tuberlin.pserver.radt;
 
-import de.tuberlin.pserver.radt.S4Vector;
-
 import java.io.Serializable;
 
 public abstract class CObject<T> implements Serializable {
+
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
     private final int[] vectorClock;
     private S4Vector s4Vector;
     private T value;
+
+    // ---------------------------------------------------
+    // Constructor.
+    // ---------------------------------------------------
 
     public CObject(int[] vectorClock, S4Vector s4Vector, T value) {
         this.vectorClock = vectorClock;
         this.s4Vector = s4Vector;
         this.value = value;
     }
+
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
 
     public int[] getVectorClock() {
         return vectorClock;
@@ -34,7 +45,5 @@ public abstract class CObject<T> implements Serializable {
     public void setValue(T value) {
         this.value = value;
     }
-
-
 }
 

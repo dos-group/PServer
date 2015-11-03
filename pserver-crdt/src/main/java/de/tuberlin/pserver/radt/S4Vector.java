@@ -3,12 +3,21 @@ package de.tuberlin.pserver.radt;
 import java.io.Serializable;
 
 public class S4Vector implements Serializable {
+
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
     private final int sessionNumber;
     private final int siteId;
     private final int vectorClockSum;
     // TODO: find a better name for this but right now I don't really know what it does...
     // this is somehow for purging tombstones
     private final int seq;
+
+    // ---------------------------------------------------
+    // Constructor.
+    // ---------------------------------------------------
 
     public S4Vector(int sessionNumber, int siteId, int[] vectorClock, int seq) {
         this.sessionNumber = sessionNumber;
@@ -23,6 +32,10 @@ public class S4Vector implements Serializable {
         this.seq = seq;
     }
 
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
+
     public int getSessionNumber() {
         return sessionNumber;
     }
@@ -35,12 +48,13 @@ public class S4Vector implements Serializable {
         return vectorClockSum;
     }
 
+    // TODO: what's up with seq?
     public int getSeq() {
         return seq;
     }
 
     public boolean takesPrecedenceOver(S4Vector other) {
-        return (this.sessionNumber < other.getSessionNumber()) ||
+        return  (this.sessionNumber < other.getSessionNumber()) ||
                 (this.sessionNumber == other.sessionNumber
                         && this.vectorClockSum < other.getVectorClockSum()) ||
                 (this.sessionNumber == other.getSessionNumber()

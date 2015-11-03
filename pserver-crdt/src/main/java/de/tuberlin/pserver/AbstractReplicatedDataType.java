@@ -188,6 +188,14 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
      */
     protected abstract boolean update(int srcNodeId, Operation<?> op);
 
+    protected void addFinishedNode(int nodeID) {
+        finishedNodes.add(nodeID);
+
+        if(finishedNodes.size() == noOfReplicas - 1) {
+            allNodesFinished = true;
+        }
+    }
+
     // ---------------------------------------------------
     // Private Methods.
     // ---------------------------------------------------
@@ -218,13 +226,5 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
             return true;
         }
         return false;
-    }
-
-    protected void addFinishedNode(int nodeID) {
-        finishedNodes.add(nodeID);
-
-        if(finishedNodes.size() == noOfReplicas - 1) {
-            allNodesFinished = true;
-        }
     }
 }

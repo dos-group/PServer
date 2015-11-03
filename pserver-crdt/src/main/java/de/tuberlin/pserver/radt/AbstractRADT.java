@@ -9,24 +9,25 @@ import java.util.Arrays;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
-public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> implements RADT<T> {
+public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> implements RADT {
+
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
     protected final int[] vectorClock;
     protected final int siteID;
     // priority queue
     private final Queue<RADTOperation<CObject<T>>> queue;
     // TODO: Not sure what this does...
     protected int sessionID;
-    protected final int size;
 
+    // ---------------------------------------------------
+    // Constructor.
+    // ---------------------------------------------------
 
-    protected AbstractRADT(int size, String id, int noOfReplicas, RuntimeManager runtimeManager) {
+    protected AbstractRADT(String id, int noOfReplicas, RuntimeManager runtimeManager) {
         super(id, noOfReplicas, runtimeManager);
-
-        // Remove the
-
-        // Initialize size
-        // TODO: do we need size?
-        this.size = size;
 
         // Initialize vector clock
         this.vectorClock = new int[runtimeManager.getNodeIDs().length];
@@ -37,14 +38,10 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
         this.siteID = getNodeID(runtimeManager);
 
         // Initialize queue
-        this.queue = new PriorityQueue<>((Operation<CObject<T>> o1, Operation<CObject<T>> o2) -> {
-            if (o1.getValue().getS4Vector().takesPrecedenceOver(o2.getValue().getS4Vector())) {
-                return -1;
-            } else if (o2.getValue().getS4Vector().takesPrecedenceOver(o1.getValue().getS4Vector())) {
-                return 1;
-            } else {
-                return 0;
-            }
+        this.queue = new PriorityQueue<>((o1, o2) -> {
+            if (o1.getValue().getS4Vector().takesPrecedenceOver(o2.getValue().getS4Vector())) return -1;
+            else if (o2.getValue().getS4Vector().takesPrecedenceOver(o1.getValue().getS4Vector())) return 1;
+            else return 0;
         });
 
         // Initialize session ID
@@ -55,13 +52,15 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
             @Override
             public void handleMsg(int srcNodeID, Object value) {
                 if (value instanceof Operation) {
+                    //Suppress the unchecked warning cause by generics cast from object to Operation<T>
                     @SuppressWarnings("unchecked")
                     Operation op = (Operation) value;
 
                     if(op.getType() == Operation.END) {
                         addFinishedNode(srcNodeID);
                     } else {
-                        RADTOperation<CObject<T>> radtOp = (RADTOperation < CObject < T >>) value;
+                        @SuppressWarnings("unchecked")
+                        RADTOperation<CObject<T>> radtOp = (RADTOperation<CObject<T>>) value;
                         queue.add(radtOp);
 
                         while(queue.peek() != null && isCausallyReadyFor(queue.peek())) {
@@ -70,34 +69,17 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
                             update(srcNodeID, radtOp);
                         }
                     }
-                    //Suppress the unchecked warning cause by generics cast from object to Operation<T>
                 }
             }
         });
-
 
         // Start the RADT
         ready();
     }
 
-    // TODO: this method is stupid, there should be a public getNodeID in runtimeManager
-    private int getNodeID(RuntimeManager runtimeManager) {
-        int[] a = runtimeManager.getNodeIDs();
-        int[] b = runtimeManager.getRemoteNodeIDs();
-
-        for (int anA : a) {
-            boolean found = false;
-            for (int aB : b) {
-                if (anA == aB) {
-                    found = true;
-                }
-                if (!found) {
-                    return anA;
-                }
-            }
-        }
-        return -1;
-    }
+    // ---------------------------------------------------
+    // Protected Methods.
+    // ---------------------------------------------------
 
     protected boolean isCausallyReadyFor(RADTOperation<CObject<T>> op) {
         // TODO: what about if sum > vectorClockSum => must the operation be purged from queue?
@@ -117,5 +99,28 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
         for(int i = 0; i < remoteVectorClock.length; i++) {
             vectorClock[i] = Math.max(vectorClock[i], remoteVectorClock[i]);
         }
+    }
+
+    // ---------------------------------------------------
+    // Private Methods.
+    // ---------------------------------------------------
+
+    // TODO: this method is stupid, there should be a public getNodeID in runtimeManager
+    private int getNodeID(RuntimeManager runtimeManager) {
+        int[] a = runtimeManager.getNodeIDs();
+        int[] b = runtimeManager.getRemoteNodeIDs();
+
+        for (int anA : a) {
+            boolean found = false;
+            for (int aB : b) {
+                if (anA == aB) {
+                    found = true;
+                }
+                if (!found) {
+                    return anA;
+                }
+            }
+        }
+        return -1;
     }
 }
