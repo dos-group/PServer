@@ -1,5 +1,7 @@
 package de.tuberlin.pserver.radt;
 
+import de.tuberlin.pserver.radt.S4Vector;
+
 import java.io.Serializable;
 
 public abstract class CObject<T> implements Serializable {

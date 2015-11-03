@@ -6,4 +6,5 @@ public interface IArray<T> extends RADT<T> {
 
     T read(int index);
     boolean write(int index, T value);
+    T[] getLocalCopy();
 }

@@ -1,9 +1,8 @@
 package de.tuberlin.pserver.radt.hashtable;
 
 import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.radt.CObject;
+import de.tuberlin.pserver.radt.Cemetery;
 import de.tuberlin.pserver.radt.S4Vector;
-import de.tuberlin.pserver.radt.Slot;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 
 public class HashTable<K,V> extends AbstractHashTable<K,V> {

@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.radt.list;
 
 import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.radt.Node;
 import de.tuberlin.pserver.radt.S4Vector;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 

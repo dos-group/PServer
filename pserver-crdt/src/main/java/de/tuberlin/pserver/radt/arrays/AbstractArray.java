@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.radt.arrays;
 
 import de.tuberlin.pserver.radt.AbstractRADT;
-import de.tuberlin.pserver.radt.Item;
 import de.tuberlin.pserver.radt.S4Vector;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 
@@ -16,6 +15,5 @@ public abstract class AbstractArray<T> extends AbstractRADT<T> implements IArray
         // Initialize array
         array = new Item[size];
         Arrays.fill(array, new Item<>(-1, vectorClock, new S4Vector(0, 0, new int[0], 0), null));
-
     }
 }

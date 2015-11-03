@@ -41,8 +41,6 @@ public class ArrayTestJob extends Program {
             }
             System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": "
                     + array.getBuffer());
-            System.out.println("[DEBUG] Queue of node " + programContext.runtimeContext.nodeID + ": "
-                    + array.getQueue());
         });
     }
 
@@ -71,8 +69,6 @@ public class ArrayTestJob extends Program {
             }
             System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": "
                     + array.getBuffer());
-            System.out.println("[DEBUG] Queue of node " + programContext.runtimeContext.nodeID + ": "
-                    + array.getQueue().size());
         });
     }
 

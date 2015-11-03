@@ -34,25 +34,6 @@ public class GCounter extends AbstractCounter implements CRDT, Serializable {
     // Public Methods.
     // ---------------------------------------------------
 
-    /**
-     * Applies an {@code Operation} received from another replica to the local replica of a CRDT. {@code GCounter}
-     * CRDTs only allow the INCREMENT operation. Any other operation causes an {@code IllegalArgumentException}.
-     *
-     * @param srcNodeID the ID of the node that broadcast the operation
-     * @param op the operation to be applied locally
-     * @return true if the update changed the value of the count
-     */
-    @Override
-    protected boolean update(int srcNodeID, Operation op) {
-        SimpleOperation<Integer> cop = (SimpleOperation<Integer>) op;
-
-        if (cop.getType() == Operation.INCREMENT) {
-            return incrementCount(cop.getValue());
-        } else {
-            throw new IllegalArgumentException("GCounter CRDTs do not allow the " + op.getOperationType() + " operation.");
-        }
-    }
-
     @Override
     public boolean increment(int i) {
         if(incrementCount(i)) {
@@ -73,5 +54,28 @@ public class GCounter extends AbstractCounter implements CRDT, Serializable {
     @Override
     public boolean decrement(int i) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
+    }
+
+    // ---------------------------------------------------
+    // Protected Methods.
+    // ---------------------------------------------------
+
+    /**
+     * Applies an {@code Operation} received from another replica to the local replica of a CRDT. {@code GCounter}
+     * CRDTs only allow the INCREMENT operation. Any other operation causes an {@code IllegalArgumentException}.
+     *
+     * @param srcNodeID the ID of the node that broadcast the operation
+     * @param op the operation to be applied locally
+     * @return true if the update changed the value of the count
+     */
+    @Override
+    protected boolean update(int srcNodeID, Operation op) {
+        SimpleOperation<Integer> cop = (SimpleOperation<Integer>) op;
+
+        if (cop.getType() == Operation.INCREMENT) {
+            return incrementCount(cop.getValue());
+        } else {
+            throw new IllegalArgumentException("GCounter CRDTs do not allow the " + op.getOperationType() + " operation.");
+        }
     }
 }

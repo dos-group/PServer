@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.radt.hashtable;
 
 import de.tuberlin.pserver.radt.AbstractRADT;
-import de.tuberlin.pserver.radt.Slot;
+import de.tuberlin.pserver.radt.Cemetery;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 
 import java.util.Hashtable;

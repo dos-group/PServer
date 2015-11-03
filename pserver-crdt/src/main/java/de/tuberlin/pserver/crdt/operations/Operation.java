@@ -48,6 +48,10 @@ public interface Operation<T> extends Serializable {
             case ADD:       return "ADD";
             case REMOVE:    return "REMOVE";
             case WRITE:     return "WRITE";
+            case PUT:       return "PUT";
+            case INSERT:    return "INSERT";
+            case UPDATE:    return "UPDATE";
+            case DELETE:    return "DELETE";
             default:        return "UNKNOWN";
         }
     }

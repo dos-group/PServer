@@ -1,4 +1,7 @@
-package de.tuberlin.pserver.radt;
+package de.tuberlin.pserver.radt.list;
+
+import de.tuberlin.pserver.radt.S4Vector;
+import de.tuberlin.pserver.radt.CObject;
 
 import java.io.Serializable;
 

@@ -1,9 +1,8 @@
 package de.tuberlin.pserver.radt.list;
 
 import de.tuberlin.pserver.radt.AbstractRADT;
-import de.tuberlin.pserver.radt.Node;
 import de.tuberlin.pserver.radt.S4Vector;
-import de.tuberlin.pserver.radt.hashtable.Cemetery;
+import de.tuberlin.pserver.radt.Cemetery;
 import de.tuberlin.pserver.radt.hashtable.HashTable;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 

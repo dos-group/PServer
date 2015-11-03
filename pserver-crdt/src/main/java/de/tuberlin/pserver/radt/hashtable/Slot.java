@@ -1,4 +1,7 @@
-package de.tuberlin.pserver.radt;
+package de.tuberlin.pserver.radt.hashtable;
+
+import de.tuberlin.pserver.radt.S4Vector;
+import de.tuberlin.pserver.radt.CObject;
 
 public class Slot<K,V> extends CObject<V> {
     private Slot next;

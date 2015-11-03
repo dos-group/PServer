@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.radt.hashtable;
+package de.tuberlin.pserver.radt;
 
 import java.util.ArrayList;
 import java.util.List;

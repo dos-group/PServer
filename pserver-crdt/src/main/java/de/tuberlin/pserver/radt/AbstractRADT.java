@@ -1,13 +1,11 @@
 package de.tuberlin.pserver.radt;
 
 import de.tuberlin.pserver.AbstractReplicatedDataType;
-import de.tuberlin.pserver.crdt.AbstractCRDT;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.events.MsgEventHandler;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
@@ -15,7 +13,7 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
     protected final int[] vectorClock;
     protected final int siteID;
     // priority queue
-    protected final Queue<RADTOperation<CObject<T>>> queue;
+    private final Queue<RADTOperation<CObject<T>>> queue;
     // TODO: Not sure what this does...
     protected int sessionID;
     protected final int size;

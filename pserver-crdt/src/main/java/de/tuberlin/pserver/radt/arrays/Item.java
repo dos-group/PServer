@@ -1,4 +1,7 @@
-package de.tuberlin.pserver.radt;
+package de.tuberlin.pserver.radt.arrays;
+
+import de.tuberlin.pserver.radt.S4Vector;
+import de.tuberlin.pserver.radt.CObject;
 
 public class Item<T> extends CObject<T> {
     private final int index;
