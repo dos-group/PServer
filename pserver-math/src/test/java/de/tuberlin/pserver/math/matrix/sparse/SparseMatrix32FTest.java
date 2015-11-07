@@ -233,12 +233,32 @@ public class SparseMatrix32FTest {
 
   }
 
-  /*@Test
+  @Test
   public void testArithmetic() {
 
-    // TODO: create Unit Test
+    SparseMatrix32F mCopy = (SparseMatrix32F) this.sm32f.copy();
+    SparseMatrix32F mCopyOther = (SparseMatrix32F) this.sm32f.copy().assign(5F);
+    SparseMatrix32F mAdd = (SparseMatrix32F) mCopy.add(mCopyOther);
 
-  }*/
+    assertEquals("Should be equals", mAdd.get(0, 0), new Float(5));
+    assertEquals("should be equal", mAdd.get(1, 1), new Float(mCopy.get(1, 1) + 5F));
+
+    //------------------------------------------------------------
+
+    SparseMatrix32F mRowVector = 
+      (SparseMatrix32F) (new SparseMatrix32F(1, 5)).applyOnElements((v) -> v + r.nextFloat());
+
+    SparseMatrix32F output = (SparseMatrix32F) mCopy.addVectorToRows(mRowVector);
+
+    assertEquals("Should be equals", output.get(0, 0), new Float(mRowVector.get(0, 0) + mCopy.get(0, 0)));
+    assertEquals("Should be equals", output.get(1, 1), new Float(mRowVector.get(0, 1) + mCopy.get(1, 1)));
+
+
+    //------------------------------------------------------------
+
+    // TODO: finish unit test for rest of Arithmetic
+
+  }
 
   @Test
   public void testSplicing() {
