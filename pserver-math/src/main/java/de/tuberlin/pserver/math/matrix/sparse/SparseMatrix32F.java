@@ -174,7 +174,18 @@ public class SparseMatrix32F implements Matrix32F {
     // TODO: Discuss casting here, what about Dense Matraces
     @Override
     public Matrix32F setDiagonalsToZero(Matrix m) {
-        SparseMatrix32F sm32f = (SparseMatrix32F) m;
+        if (m instanceof SparseMatrix32F)
+            return this.setDiagonalsToZero(m);
+
+        long diag = 0;
+        while(diag < rows && diag < cols) {
+            m.set(diag, diag, 0F);
+            diag++;
+        }
+        return (Matrix32F) m;
+    }
+
+    public Matrix32F setDiagonalsToZero(SparseMatrix32F sm32f) {
         sm32f.data.forEachEntry((k, v) -> {
             if (sm32f.findRowFromIndex(k) == sm32f.findColFromIndex(k))
                 sm32f.data.remove(k);
