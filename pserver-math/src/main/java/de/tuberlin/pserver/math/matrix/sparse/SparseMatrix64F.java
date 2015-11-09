@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.math.matrix.sparse;
 
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.math.operations.BinaryOperator;
 import de.tuberlin.pserver.math.operations.MatrixAggregation;
@@ -8,9 +9,11 @@ import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
 import de.tuberlin.pserver.math.operations.UnaryOperator;
 import de.tuberlin.pserver.math.utils.Utils;
 import gnu.trove.map.hash.TLongDoubleHashMap;
+import org.apache.commons.math3.random.RandomDataGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -30,15 +33,10 @@ public class SparseMatrix64F implements Matrix64F {
     // ---------------------------------------------------
 
     private TLongDoubleHashMap data = new TLongDoubleHashMap();
-
     private final long rows;
-
     private final long cols;
-
     private final Lock lock;
-
     private Object owner;
-
     private boolean sorted;
 
     // ---------------------------------------------------
@@ -79,6 +77,17 @@ public class SparseMatrix64F implements Matrix64F {
 
     private long findColFromIndex(long index) {
         return index % this.cols;
+    }
+
+    private void sort() {
+        long[] keys = new long[this.data.size()];
+        Arrays.sort(keys);
+        TLongDoubleHashMap sortedData = new TLongDoubleHashMap();
+        for (int i = 0; i < keys.length; i++) {
+            sortedData.put(keys[i], this.data.get(keys[i]));
+            this.data.remove(keys[i]);
+        }
+        this.data = sortedData;
     }
 
     // ---------------------------------------------------
@@ -157,19 +166,19 @@ public class SparseMatrix64F implements Matrix64F {
     // TODO: Discuss casting here, what about Dense Matraces
     @Override
     public Matrix64F setDiagonalsToZero(Matrix m) {
-        SparseMatrix64F sm32f = (SparseMatrix64F) m;
-        sm32f.data.forEachEntry((k, v) -> {
-            if (sm32f.findRowFromIndex(k) == sm32f.findColFromIndex(k))
-                sm32f.data.remove(k);
+        SparseMatrix64F sm64f = (SparseMatrix64F) m;
+        sm64f.data.forEachEntry((k, v) -> {
+            if (sm64f.findRowFromIndex(k) == sm64f.findColFromIndex(k))
+                sm64f.data.remove(k);
             return true;
         });
-        return sm32f;
+        return sm64f;
     }
 
     // TODO: Confirm that this is correct
     @Override
     public void setArray(Object data) {
-        float[] mData = (float[]) data;
+        double[] mData = (double[]) data;
         checkState(mData.length == this.rows * this.cols);
         logger.info("Warning! 'setArray' is potentially a very expensive operation.");
         this.data = new TLongDoubleHashMap();
@@ -299,16 +308,16 @@ public class SparseMatrix64F implements Matrix64F {
     @Override
     public Matrix64F applyOnNonZeroElements(MatrixElementUnaryOperator<Double> f, Matrix<Double> m) {
         Utils.checkShapeEqual(this, m);
-        SparseMatrix64F sm32f = (SparseMatrix64F) m;
+        SparseMatrix64F sm64f = (SparseMatrix64F) m;
         this.data.forEachEntry((k, v) -> {
             if (v != 0.0) {
                 long row = this.findRowFromIndex(k);
                 long col = this.findColFromIndex(k);
-                sm32f.set(row, col, f.apply(row, col, v));
+                sm64f.set(row, col, f.apply(row, col, v));
             }
             return true;
         });
-        return sm32f;
+        return sm64f;
     }
 
     // ---------------------------------------------------
@@ -319,7 +328,7 @@ public class SparseMatrix64F implements Matrix64F {
     // TODO: Apply to all elements or only to existing elements?
     @Override
     public Matrix64F assign(Double d) {
-        logger.info("Warning! 'assign(Float)' is potentially a very expensive operation.");
+        logger.info("Warning! 'assign(double)' is potentially a very expensive operation.");
         /*for (long key : this.data.keys())
             this.data.put(key, f);*/
         for (int i = 0; i < rows * cols; i++)
@@ -332,7 +341,7 @@ public class SparseMatrix64F implements Matrix64F {
     @Override
     public Matrix64F assign(Matrix<Double> m) {
         checkState(m.rows() * m.cols() == this.rows * this.cols);
-        logger.info("Warning! 'assign(Float)' is potentially a very expensive operation.");
+        logger.info("Warning! 'assign(double)' is potentially a very expensive operation.");
         for (int row = 0; row < m.rows(); row++)
             for (int col = 0; col < m.cols(); col++)
                 this.set(row, col, m.get(row, col));
@@ -364,7 +373,7 @@ public class SparseMatrix64F implements Matrix64F {
     @Override
     public Matrix64F assign(long rowOffset, long colOffset, Matrix<Double> m) {
         checkState(this.rows > rowOffset + m.rows() && this.cols > colOffset + m.cols());
-        logger.info("Warning! 'assign(Float)' is potentially a very expensive operation.");
+        logger.info("Warning! 'assign(double)' is potentially a very expensive operation.");
         for (long col = colOffset; col < m.cols(); col++)
             this.set(rowOffset, col, m.get(rowOffset, col));
         return this;
@@ -407,93 +416,147 @@ public class SparseMatrix64F implements Matrix64F {
     // ---------------------------------------------------
 
     @Override
-    public Matrix64F add(Matrix<Double> B) {
-        return null;
+    public Matrix64F add(Matrix<Double> m) {
+        return this.add(m, new SparseMatrix64F(this.rows, this.cols));
     }
 
+    // TODO: Need to look at the efficiency of this, can it be done better
+    // TODO: what about Dense Matrices
     @Override
-    public Matrix64F add(Matrix<Double> B, Matrix<Double> C) {
-        return null;
+    public Matrix64F add(Matrix<Double> m, Matrix<Double> r) {
+        Utils.checkShapeEqual(this, m, r);
+        return this.applyOnElements(m, (v1, v2) -> v1 + v2, r);
     }
 
     @Override
     public Matrix64F addVectorToRows(Matrix<Double> v) {
-        return null;
+        return this.addVectorToRows(v, new SparseMatrix64F(this.rows, this.cols));
     }
 
+    // TODO: Need to look at the efficiency of this, can it be done better
     @Override
-    public Matrix64F addVectorToRows(Matrix<Double> v, Matrix<Double> B) {
-        return null;
+    public Matrix64F addVectorToRows(Matrix<Double> v, Matrix<Double> result) {
+        Utils.checkApplyVectorToRows(this, v, result);
+        for (int row = 0; row < this.rows; row++) {
+            for (int col = 0; col < this.cols; col++) {
+                result.set(row, col, this.get(row, col) + v.get(0, col));
+            }
+        }
+        return (Matrix64F) result;
+        /*this.data.forEachEntry((k, v) -> {
+            long row = this.findRowFromIndex(k), col = this.findColFromIndex(k);
+            result.set(row, col, v + m.get(0, col));
+            return true;
+        });
+        return (Matrix64F) result;*/
     }
 
     @Override
     public Matrix64F addVectorToCols(Matrix<Double> v) {
-        return null;
+        return this.addVectorToCols(v, new SparseMatrix64F(this.rows, this.cols));
     }
 
+    // TODO: Need to look at the efficiency of this, can it be done better
     @Override
-    public Matrix64F addVectorToCols(Matrix<Double> v, Matrix<Double> B) {
-        return null;
+    public Matrix64F addVectorToCols(Matrix<Double> v, Matrix<Double> result) {
+        Utils.checkApplyVectorToCols(this, v, result);
+        for (int col = 0; col < this.cols; col++) {
+            for (int row = 0; row < this.rows; row++) {
+                result.set(row, col, this.get(row, col) + v.get(row, 0));
+            }
+        }
+        return (Matrix64F) result;
     }
 
     @Override
     public Matrix64F sub(Matrix<Double> B) {
-        return null;
+        return this.sub(B, new SparseMatrix64F(this.rows, this.cols));
     }
 
+    // TODO: Need to look at the efficiency of this, can it be done better
     @Override
-    public Matrix64F sub(Matrix<Double> B, Matrix<Double> C) {
-        return null;
+    public Matrix64F sub(Matrix<Double> m, Matrix<Double> result) {
+        Utils.checkShapeEqual(this, m, result);
+        return this.applyOnElements(m, (v1, v2) -> v1 - v2, result);
     }
 
     @Override
     public Matrix64F mul(Matrix<Double> B) {
-        return null;
+        return this.mul(B, new SparseMatrix64F(this.rows, this.cols));
     }
 
     @Override
-    public Matrix64F mul(Matrix<Double> B, Matrix<Double> C) {
-        return null;
+    public Matrix64F mul(Matrix<Double> m, Matrix<Double> result) {
+        Utils.checkShapeEqual(this, m, result);
+        SparseMatrix64F sm64f = (SparseMatrix64F) m;
+        sm64f.data.forEachEntry((k, v) -> {
+            long row = this.findRowFromIndex(k), col = this.findColFromIndex(k);
+            result.set(row, col, this.get(k) * v);
+            return true;
+        });
+        return (Matrix64F) result;
     }
 
     @Override
     public Matrix64F scale(Double a) {
-        return null;
+        return this.scale(a, new SparseMatrix64F(this.rows, this.cols));
     }
 
     @Override
-    public Matrix64F scale(Double a, Matrix<Double> B) {
-        return null;
+    public Matrix64F scale(Double a, Matrix<Double> result) {
+        this.data.forEachEntry((k, v) -> {
+            long row = this.findRowFromIndex(k), col = this.findColFromIndex(k);
+            result.set(row, col, v * a);
+            return true;
+        });
+        return (Matrix64F) result;
     }
 
     @Override
     public Matrix64F transpose() {
-        return null;
+        return this.transpose(new SparseMatrix64F(this.rows, this.cols));
     }
 
     @Override
-    public Matrix64F transpose(Matrix<Double> B) {
-        return null;
+    public Matrix64F transpose(Matrix<Double> result) {
+        Utils.checkShapeTranspose(this, result);
+        for (int row = 0; row < this.rows; row++)
+            for (int col = 0; col < this.cols; col++)
+                result.set(row, col, this.get(col, row));
+        return (Matrix64F) result;
     }
 
     @Override
     public Matrix64F invert() {
-        return null;
+        return this.invert(new SparseMatrix64F(this.rows, this.cols));
     }
 
+    // TODO: This needs to be implemented
     @Override
     public Matrix64F invert(Matrix<Double> B) {
         return null;
     }
 
+    // TODO: This needs to be looked at
     @Override
     public Double norm(int p) {
-        return 0.0;
+        double norm = 0;
+        for (int row = 0; row < this.rows; row++) {
+            for (int col = 0; col < this.cols; col++) {
+                norm += Math.pow(this.get(row, col), p);
+            }
+        }
+        return (Double) Math.pow(norm, 1./p);
     }
 
     @Override
-    public Double dot(Matrix<Double> B) {
-        return 0.0;
+    public Double dot(Matrix<Double> m) {
+        Utils.checkDotProduct(this, m);
+        Double result = 0.0;
+        for (long key : data.keys()) {
+            result += this.get(key) * m.get(key);
+        }
+        return result;
     }
 
     // ---------------------------------------------------
@@ -534,10 +597,10 @@ public class SparseMatrix64F implements Matrix64F {
                 bRow++;
             }
         }
-        /*SparseMatrix32F sm32f = (SparseMatrix32F) m;
-        SparseMatrix32F result = (SparseMatrix32F) r;
+        /*SparseMatrix64F sm64f = (SparseMatrix64F) m;
+        SparseMatrix64F result = (SparseMatrix64F) r;
         result.data.putAll(this.data);
-        result.data.putAll(sm32f.data);*/
+        result.data.putAll(sm64f.data);*/
         return (Matrix64F) result;
     }
 
@@ -547,11 +610,93 @@ public class SparseMatrix64F implements Matrix64F {
 
     @Override
     public RowIterator rowIterator() {
-        return null;
+        return new RowIterator(this);
     }
 
     @Override
     public RowIterator rowIterator(long startRow, long endRow) {
-        return null;
+        return new RowIterator(this, startRow, endRow);
+    }
+
+    // ---------------------------------------------------
+    // INNER CLASSES.
+    // ---------------------------------------------------
+
+    public static class RowIterator implements Matrix64F.RowIterator {
+
+        protected SparseMatrix64F self;
+        protected final long end;
+        protected final long start;
+        protected long currentRow;
+        protected final long rowsToFetch;
+        protected long rowsFetched;
+        protected RandomDataGenerator rand;
+
+        public RowIterator(final SparseMatrix64F v) {
+            this(v, 0, (int) checkNotNull(v).rows());
+        }
+
+        public RowIterator(final SparseMatrix64F v, final long startRow, final long endRow) {
+            this.self = v;
+            checkArgument(startRow >= 0 && startRow < self.rows());
+            checkArgument(endRow >= startRow && endRow <= self.rows());
+            this.start = startRow;
+            this.end = endRow;
+            this.rowsToFetch = endRow - startRow;
+            this.rand = new RandomDataGenerator();
+            this.reset();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return this.rowsFetched < this.rowsToFetch;
+        }
+
+        @Override
+        public void next() {
+            // the generic case is just currentRow++, but the reset method only sets rowsFetched = 0
+            if (this.rowsFetched == 0) this.currentRow = 0;
+            else this.currentRow++;
+
+            this.rowsFetched++;
+            // can overflow if nextRandom and next is called alternatingly
+            if (this.currentRow >= this.end) this.currentRow = this.start;
+        }
+
+        @Override
+        public void nextRandom() {
+            this.rowsFetched++;
+            this.currentRow = this.rand.nextLong(this.start, this.end - 1);
+        }
+
+        @Override
+        public Double value(final long col) {
+            return this.self.get(this.currentRow, col);
+        }
+
+        @Override
+        public Matrix64F get() {
+            return this.self.getRow(rowNum());
+        }
+
+        @Override
+        public Matrix64F get(final long from, final long size) {
+            return this.self.getRow(rowNum(), from, from + size);
+        }
+
+        @Override
+        public void reset() {
+            this.rowsFetched = 0;
+        }
+
+        @Override
+        public long size() {
+            return this.rowsToFetch;
+        }
+
+        @Override
+        public long rowNum() {
+            return this.currentRow;
+        }
     }
 }

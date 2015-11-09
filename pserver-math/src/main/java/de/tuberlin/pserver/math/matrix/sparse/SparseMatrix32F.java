@@ -14,6 +14,9 @@ import org.apache.commons.math3.random.RandomDataGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -81,6 +84,17 @@ public class SparseMatrix32F implements Matrix32F {
 
     private long findColFromIndex(long index) {
         return index % this.cols;
+    }
+
+    private void sort() {
+        long[] keys = new long[this.data.size()];
+        Arrays.sort(keys);
+        TLongFloatHashMap sorted = new TLongFloatHashMap();
+        for (int i = 0; i < keys.length; i++) {
+            sorted.put(keys[i], this.data.get(keys[i]));
+            this.data.remove(keys[i]);
+        }
+        this.data = sorted;
     }
 
     // ---------------------------------------------------
@@ -175,7 +189,7 @@ public class SparseMatrix32F implements Matrix32F {
     @Override
     public Matrix32F setDiagonalsToZero(Matrix m) {
         if (m instanceof SparseMatrix32F)
-            return this.setDiagonalsToZero(m);
+            return this.setDiagonalsToZero((SparseMatrix32F) m);
 
         long diag = 0;
         while(diag < rows && diag < cols) {
@@ -541,7 +555,7 @@ public class SparseMatrix32F implements Matrix32F {
         Utils.checkShapeTranspose(this, result);
         for (int row = 0; row < this.rows; row++)
             for (int col = 0; col < this.cols; col++)
-                result.set(col, row, this.get(row, col));
+                result.set(row, col, this.get(col, row));
         return (Matrix32F) result;
     }
 
@@ -568,7 +582,6 @@ public class SparseMatrix32F implements Matrix32F {
         return (float) Math.pow(norm, 1./p);
     }
 
-    // TODO: checkDotProduct still needs to be implemented
     @Override
     public Float dot(Matrix<Float> m) {
         Utils.checkDotProduct(this, m);
@@ -638,21 +651,18 @@ public class SparseMatrix32F implements Matrix32F {
         return new RowIterator(this, startRow, endRow);
     }
 
+    // ---------------------------------------------------
+    // INNER CLASSES.
+    // ---------------------------------------------------
 
     public static class RowIterator implements Matrix32F.RowIterator {
 
         protected SparseMatrix32F self;
-
         protected final long end;
-
         protected final long start;
-
         protected long currentRow;
-
         protected final long rowsToFetch;
-
         protected long rowsFetched;
-
         protected RandomDataGenerator rand;
 
         public RowIterator(final SparseMatrix32F v) {
@@ -667,64 +677,59 @@ public class SparseMatrix32F implements Matrix32F {
             this.end = endRow;
             this.rowsToFetch = endRow - startRow;
             this.rand = new RandomDataGenerator();
-            reset();
+            this.reset();
         }
 
         @Override
         public boolean hasNext() {
-            return rowsFetched < rowsToFetch;
+            return this.rowsFetched < this.rowsToFetch;
         }
 
         @Override
         public void next() {
             // the generic case is just currentRow++, but the reset method only sets rowsFetched = 0
-            if(rowsFetched == 0) {
-                currentRow = 0;
-            }
-            else {
-                currentRow++;
-            }
-            rowsFetched++;
+            if (this.rowsFetched == 0) this.currentRow = 0;
+            else this.currentRow++;
+
+            this.rowsFetched++;
             // can overflow if nextRandom and next is called alternatingly
-            if(currentRow >= end) {
-                currentRow = start;
-            }
+            if (this.currentRow >= this.end) this.currentRow = this.start;
         }
 
         @Override
         public void nextRandom() {
-            rowsFetched++;
-            currentRow = rand.nextLong(start, end-1);
+            this.rowsFetched++;
+            this.currentRow = this.rand.nextLong(this.start, this.end - 1);
         }
 
         @Override
         public Float value(final long col) {
-            return self.get(currentRow, col);
+            return this.self.get(this.currentRow, col);
         }
 
         @Override
         public Matrix32F get() {
-            return self.getRow(rowNum());
+            return this.self.getRow(rowNum());
         }
 
         @Override
         public Matrix32F get(final long from, final long size) {
-            return self.getRow(rowNum(), from, from + size);
+            return this.self.getRow(rowNum(), from, from + size);
         }
 
         @Override
         public void reset() {
-            rowsFetched = 0;
+            this.rowsFetched = 0;
         }
 
         @Override
         public long size() {
-            return rowsToFetch;
+            return this.rowsToFetch;
         }
 
         @Override
         public long rowNum() {
-            return currentRow;
+            return this.currentRow;
         }
     }
 }

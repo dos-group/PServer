@@ -23,12 +23,12 @@ public class SparseMatrix32FTest {
   private SparseMatrix32F sm32f;
   private DenseMatrix32F dm32f;
 
+  Random r = new Random();
+
   @Before
   public void setup() {
 
     BasicConfigurator.configure();
-
-    Random r = new Random();
 
     this.sm32f = new SparseMatrix32F(5L, 5L);
 
@@ -253,10 +253,51 @@ public class SparseMatrix32FTest {
     assertEquals("Should be equals", output.get(0, 0), new Float(mRowVector.get(0, 0) + mCopy.get(0, 0)));
     assertEquals("Should be equals", output.get(1, 1), new Float(mRowVector.get(0, 1) + mCopy.get(1, 1)));
 
+    //------------------------------------------------------------
+
+    SparseMatrix32F mColVector =
+      (SparseMatrix32F) (new SparseMatrix32F(5, 1)).applyOnElements((v) -> v + r.nextFloat());
+
+    output = (SparseMatrix32F) mCopy.addVectorToCols(mColVector);
+
+    assertEquals("Should be equals", output.get(0, 0), new Float(mColVector.get(0, 0) + mCopy.get(0, 0)));
+    assertEquals("Should be equals", output.get(1, 1), new Float(mColVector.get(0, 1) + mCopy.get(1, 1)));
 
     //------------------------------------------------------------
 
-    // TODO: finish unit test for rest of Arithmetic
+    mCopy = (SparseMatrix32F) this.sm32f.copy().assign(5F);
+    mCopyOther = (SparseMatrix32F) this.sm32f.copy();
+    SparseMatrix32F mSub = (SparseMatrix32F) mCopy.sub(mCopyOther);
+
+    assertEquals("Should be equals", mSub.get(0, 0), new Float(5));
+    assertEquals("should be equal", mSub.get(1, 1), new Float(mCopy.get(1, 1) - mCopyOther.get(1, 1)));
+
+    //------------------------------------------------------------
+
+    mCopy = (SparseMatrix32F) this.sm32f.copy().assign(2F);
+    mCopyOther = (SparseMatrix32F) this.sm32f.copy();
+    SparseMatrix32F mMul = (SparseMatrix32F) mCopy.mul(mCopyOther);
+
+    assertEquals("Should be equals", mMul.get(0, 0), new Float(0));
+    assertEquals("should be equal", mMul.get(1, 1), new Float(mCopy.get(1, 1) * mCopyOther.get(1, 1)));
+
+    //------------------------------------------------------------
+
+    SparseMatrix32F mScaled = (SparseMatrix32F) this.sm32f.copy().scale(3F);
+
+    assertEquals("Should be equals", mScaled.get(0, 0), new Float(0));
+    assertEquals("should be equal", mScaled.get(1, 1), new Float(this.sm32f.copy().get(1, 1) * 3F));
+
+    //------------------------------------------------------------
+
+    SparseMatrix32F mTranspose = (SparseMatrix32F) this.sm32f.copy().transpose();
+
+
+
+    assertEquals("Should be equals", mTranspose.get(1, 1), this.sm32f.copy().get(1, 1));
+    assertEquals("should be equal", mTranspose.get(0, 3), this.sm32f.copy().get(3, 0));
+
+    //------------------------------------------------------------
 
   }
 
@@ -277,17 +318,12 @@ public class SparseMatrix32FTest {
 
   }
 
-  /*@Test
+  @Test
   public void testIterator() {
 
-    Matrix.RowIterator rowIterator = this.m.copy().rowIterator();
+    Matrix.RowIterator rowIterator = this.sm32f.copy().rowIterator();
 
-    System.out.println(this.m);
-
-    System.out.println(rowIterator.get());
-    System.out.println(rowIterator.hasNext());
-
-    rowIterator.next();
+    System.out.println(this.sm32f);
 
     System.out.println(rowIterator.get());
     System.out.println(rowIterator.hasNext());
@@ -302,7 +338,12 @@ public class SparseMatrix32FTest {
     System.out.println(rowIterator.get());
     System.out.println(rowIterator.hasNext());
 
+    rowIterator.next();
 
-  }*/
+    System.out.println(rowIterator.get());
+    System.out.println(rowIterator.hasNext());
+
+
+  }
 
 }
