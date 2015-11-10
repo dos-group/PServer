@@ -77,6 +77,24 @@ public final class GloVe extends Program {
     // Transactions.
     // ---------------------------------------------------
 
+    /*private ObjectSerializer serializer = ObjectSerializer.Factory.create(ObjectSerializer.SerializerType.KRYO_SERIALIZER);
+
+    private Compressor compressor = Compressor.Factory.create(Compressor.CompressionType.LZ4_COMPRESSION);
+
+    @Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PULL)
+    public final TransactionDefinition sync = new TransactionDefinition(
+
+            (Prepare<Matrix64F, byte[]>) (remoteMatrix) -> compressor.compress(serializer.serialize(remoteMatrix))
+            ,
+
+            (Apply2<byte[],Matrix64F, Matrix64F>) (remoteUpdates, localState) -> {
+                for (final byte[] update : remoteUpdates) {
+                    final Matrix64F updateMtx = serializer.deserialize(compressor.decompress(update));
+                    Parallel.For(updateMtx, (i, j, v) -> localState.set(i, j, (localState.get(i, j) + updateMtx.get(i, j)) / 2));
+                }
+            }
+    );*/
+
     @Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PULL)
     public final TransactionDefinition sync = new TransactionDefinition(
 
