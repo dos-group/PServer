@@ -88,6 +88,8 @@ public final class Loop extends CFStatement {
 
         setProfilingData(new LoopProfilingData(duration, epoch > 0 ? passDuration / epoch : passDuration, epoch > 0 ? syncDuration / epoch : syncDuration));
 
+        sync();
+
         return this;
     }
 
