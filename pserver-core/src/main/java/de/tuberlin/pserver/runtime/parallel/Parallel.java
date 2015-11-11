@@ -55,7 +55,7 @@ public final class Parallel {
             throws Exception {
 
         final WorkerSlot ws = parallelRuntime.currentSlot();
-        if (ws.slotID == 0 && ws.empty() && dop > 1) {
+        if (ws == null || (ws.slotID == 0 && ws.empty() && dop > 1)) {
             executeByWorkerSlots(dop, parallelBody);
         } else {
             ws.run(dop, parallelBody);
@@ -110,6 +110,16 @@ public final class Parallel {
 
     public static <V extends Number> void For(final Matrix<V> m, final ParallelForMatrixBody<V> body) throws Exception {
         Matrix.RowIterator<V, Matrix<V>> iter = m.rowIterator();
+
+        /*if (m.rows() / parallelRuntime.getNumOfWorkerSlots() < 1) {
+            while (iter.hasNext()) {
+                final Matrix<V> row = iter.get();
+                iter.next();
+                for (int j = 0; j < m.cols(); ++j)
+                    body.perform(i.intValue(), j, row.get(0, j));
+            }
+        }*/
+
         For(0, iter.size(), (i) -> {
             Preconditions.checkState(iter.hasNext(), "iter.size = " + iter.size() + ", fetched = " + i);
             final Matrix<V> row = iter.get();

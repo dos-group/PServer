@@ -78,8 +78,19 @@ public enum ParallelRuntime implements Deactivatable {
 
         WorkerSlot ws = threadToWorkerSlotMap.get(Thread.currentThread().getId());
 
-        while (ws == null) {
+        int numOfRetries = 5;
+
+        while (ws == null && numOfRetries > 0) {
+
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException ie) {
+                // .. do nothing ..
+            }
+
             ws = threadToWorkerSlotMap.get(Thread.currentThread().getId());
+
+            numOfRetries--;
         }
 
         return ws;
@@ -161,6 +172,11 @@ public enum ParallelRuntime implements Deactivatable {
         }
 
         return this;
+    }
+
+    public void addPrimaryThread(final long threadID) {
+
+        threadToWorkerSlotMap.put(threadID, workerSlots[0]);
     }
 
     // ---------------------------------------------------
