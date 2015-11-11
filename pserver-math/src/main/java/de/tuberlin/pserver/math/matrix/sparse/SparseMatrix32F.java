@@ -10,6 +10,7 @@ import de.tuberlin.pserver.math.utils.Utils;
 
 import gnu.trove.map.hash.TLongFloatHashMap;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.math3.random.RandomDataGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,12 +88,11 @@ public class SparseMatrix32F implements Matrix32F {
     }
 
     private void sort() {
-        long[] keys = new long[this.data.size()];
+        long[] keys = this.data.keys();
         Arrays.sort(keys);
         TLongFloatHashMap sorted = new TLongFloatHashMap();
         for (int i = 0; i < keys.length; i++) {
             sorted.put(keys[i], this.data.get(keys[i]));
-            this.data.remove(keys[i]);
         }
         this.data = sorted;
     }
@@ -185,7 +185,6 @@ public class SparseMatrix32F implements Matrix32F {
         return this.setDiagonalsToZero(this.copy());
     }
 
-    // TODO: Discuss casting here, what about Dense Matraces
     @Override
     public Matrix32F setDiagonalsToZero(Matrix m) {
         if (m instanceof SparseMatrix32F)
@@ -208,7 +207,6 @@ public class SparseMatrix32F implements Matrix32F {
         return sm32f;
     }
 
-    // TODO: Confirm that this is correct
     @Override
     public void setArray(Object data) {
         float[] mData = (float[]) data;
@@ -232,13 +230,8 @@ public class SparseMatrix32F implements Matrix32F {
         return (value == null) ? 0f : value;
     }
 
-    // TODO: cannot implement checkArgument otherwise assignRow does not work
     @Override
     public Float get(long row, long col) {
-        /*checkArgument(row < rows(),
-                String.format("Row index %d is out of bounds for Matrix of size(%d, %d)", row, rows(), cols()));
-        checkArgument(col < cols(),
-                String.format("Column index %d is out of bounds for Matrix of size(%d, %d)", col, rows(), cols()));*/
         Float value = data.get(Utils.getPos(row, col, this));
         return (value == null) ? 0f : value;
     }
@@ -271,11 +264,9 @@ public class SparseMatrix32F implements Matrix32F {
         return result;
     }
 
-    // TODO: Determine if this is a valid method for sparse matrices
-    // TODO: Keys will not be preserved
     @Override
     public Object toArray() {
-        return this.data.values();
+        throw new UnsupportedOperationException("Invalid operation for Sparse Matrices.");
     }
 
     // ---------------------------------------------------
@@ -416,10 +407,9 @@ public class SparseMatrix32F implements Matrix32F {
     // AGGREGATION.
     // ---------------------------------------------------
 
-    // TODO: Still needs to be implemented
     @Override
     public Float aggregate(BinaryOperator<Float> combiner, UnaryOperator<Float> mapper, Matrix<Float> result) {
-        return 0f;
+        throw new NotImplementedException("TODO");
     }
 
     @Override
@@ -564,13 +554,11 @@ public class SparseMatrix32F implements Matrix32F {
         return this.invert(new SparseMatrix32F(this.rows, this.cols));
     }
 
-    // TODO: This needs to be implemented
     @Override
     public Matrix32F invert(Matrix<Float> B) {
-        return null;
+        throw new NotImplementedException("TODO");
     }
 
-    // TODO: This needs to be looked at
     @Override
     public Float norm(int p) {
         double norm = 0;
@@ -643,7 +631,7 @@ public class SparseMatrix32F implements Matrix32F {
 
     @Override
     public RowIterator rowIterator() {
-        return new RowIterator(this);
+        return this.rowIterator(0, this.rows);
     }
 
     @Override
@@ -655,7 +643,8 @@ public class SparseMatrix32F implements Matrix32F {
     // INNER CLASSES.
     // ---------------------------------------------------
 
-    public static class RowIterator implements Matrix32F.RowIterator {
+    // Morgan Implementation
+    /*public static class RowIterator implements Matrix32F.RowIterator {
 
         protected SparseMatrix32F self;
         protected final long end;
@@ -665,12 +654,9 @@ public class SparseMatrix32F implements Matrix32F {
         protected long rowsFetched;
         protected RandomDataGenerator rand;
 
-        public RowIterator(final SparseMatrix32F v) {
-            this(v, 0, (int) checkNotNull(v).rows());
-        }
-
-        public RowIterator(final SparseMatrix32F v, final long startRow, final long endRow) {
+        private RowIterator(SparseMatrix32F v, final long startRow, final long endRow) {
             this.self = v;
+            this.self.sort();
             checkArgument(startRow >= 0 && startRow < self.rows());
             checkArgument(endRow >= startRow && endRow <= self.rows());
             this.start = startRow;
@@ -687,13 +673,12 @@ public class SparseMatrix32F implements Matrix32F {
 
         @Override
         public void next() {
-            // the generic case is just currentRow++, but the reset method only sets rowsFetched = 0
-            if (this.rowsFetched == 0) this.currentRow = 0;
-            else this.currentRow++;
-
+            this.currentRow++;
             this.rowsFetched++;
             // can overflow if nextRandom and next is called alternatingly
-            if (this.currentRow >= this.end) this.currentRow = this.start;
+            if (this.currentRow >= this.end)
+                this.reset();
+                //this.currentRow = this.start;
         }
 
         @Override
@@ -704,12 +689,13 @@ public class SparseMatrix32F implements Matrix32F {
 
         @Override
         public Float value(final long col) {
+            checkArgument(col >= 0 && col < self.cols);
             return this.self.get(this.currentRow, col);
         }
 
         @Override
         public Matrix32F get() {
-            return this.self.getRow(rowNum());
+            return this.self.getRow(this.currentRow);
         }
 
         @Override
@@ -719,7 +705,8 @@ public class SparseMatrix32F implements Matrix32F {
 
         @Override
         public void reset() {
-            this.rowsFetched = 0;
+            this.currentRow = this.start;
+            this.rowsFetched = 1;
         }
 
         @Override
@@ -730,6 +717,87 @@ public class SparseMatrix32F implements Matrix32F {
         @Override
         public long rowNum() {
             return this.currentRow;
+        }
+    }*/
+
+    // Chris Implementation
+    public static class RowIterator implements Matrix32F.RowIterator {
+
+        protected SparseMatrix32F self;
+        protected final long end;
+        protected final long start;
+        protected long currentRow;
+        protected final long rowsToFetch;
+        protected long rowsFetched;
+        protected RandomDataGenerator rand;
+
+        private RowIterator(final SparseMatrix32F v, final long startRow, final long endRow) {
+            this.self = v;
+            this.self.sort();
+            checkArgument(startRow >= 0 && startRow < self.rows());
+            checkArgument(endRow >= startRow && endRow <= self.rows());
+            this.start = startRow;
+            this.end = endRow;
+            this.rowsToFetch = endRow - startRow;
+            this.rand = new RandomDataGenerator();
+            reset();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return rowsFetched < rowsToFetch;
+        }
+
+        @Override
+        public void next() {
+            // the generic case is just currentRow++, but the reset method only sets rowsFetched = 0
+            if(rowsFetched == 0) {
+                currentRow = 0;
+            }
+            else {
+                currentRow++;
+            }
+            rowsFetched++;
+            // can overflow if nextRandom and next is called alternatingly
+            if(currentRow >= end) {
+                currentRow = start;
+            }
+        }
+
+        @Override
+        public void nextRandom() {
+            rowsFetched++;
+            currentRow = rand.nextLong(start, end-1);
+        }
+
+        @Override
+        public Float value(final long col) {
+            return self.get(currentRow, col);
+        }
+
+        @Override
+        public Matrix32F get() {
+            return self.getRow(rowNum());
+        }
+
+        @Override
+        public Matrix32F get(final long from, final long size) {
+            return self.getRow(rowNum(), from, from + size);
+        }
+
+        @Override
+        public void reset() {
+            rowsFetched = 0;
+        }
+
+        @Override
+        public long size() {
+            return rowsToFetch;
+        }
+
+        @Override
+        public long rowNum() {
+            return currentRow;
         }
     }
 }

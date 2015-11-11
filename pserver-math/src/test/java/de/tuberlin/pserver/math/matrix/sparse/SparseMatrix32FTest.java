@@ -323,26 +323,33 @@ public class SparseMatrix32FTest {
 
     Matrix.RowIterator rowIterator = this.sm32f.copy().rowIterator();
 
-    System.out.println(this.sm32f);
+    SparseMatrix32F testRow = (SparseMatrix32F) rowIterator.get();
+    boolean hasNext = rowIterator.hasNext();
 
-    System.out.println(rowIterator.get());
-    System.out.println(rowIterator.hasNext());
+    rowIterator.nextRandom();
 
-    rowIterator.next();
+    testRow = (SparseMatrix32F) rowIterator.get();
+    hasNext = rowIterator.hasNext();
 
-    System.out.println(rowIterator.get());
-    System.out.println(rowIterator.hasNext());
+    rowIterator.nextRandom();
 
-    rowIterator.next();
+    testRow = (SparseMatrix32F) rowIterator.get();
+    hasNext = rowIterator.hasNext();
 
-    System.out.println(rowIterator.get());
-    System.out.println(rowIterator.hasNext());
+    rowIterator.nextRandom();
 
-    rowIterator.next();
+    testRow = (SparseMatrix32F) rowIterator.get();
+    hasNext = rowIterator.hasNext();
 
-    System.out.println(rowIterator.get());
-    System.out.println(rowIterator.hasNext());
+    rowIterator.nextRandom();
 
+    testRow = (SparseMatrix32F) rowIterator.get();
+    hasNext = rowIterator.hasNext();
+
+    rowIterator.nextRandom();
+
+    testRow = (SparseMatrix32F) rowIterator.get();
+    hasNext = rowIterator.hasNext();
 
   }
 
