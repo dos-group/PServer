@@ -3,7 +3,7 @@ package de.tuberlin.pserver.dsl.transaction.events;
 
 import java.util.List;
 
-public class TransactionResponseEvent extends TransactionEvent {
+public class TransactionPullResponseEvent extends TransactionEvent {
 
     // ---------------------------------------------------
     // Constants.
@@ -21,7 +21,7 @@ public class TransactionResponseEvent extends TransactionEvent {
     // Constructors.
     // ---------------------------------------------------
 
-    public TransactionResponseEvent(final String transactionName, final List<Object> responseObjects) {
+    public TransactionPullResponseEvent(final String transactionName, final List<Object> responseObjects) {
 
         super(TRANSACTION_RESPONSE + transactionName);
 

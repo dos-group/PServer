@@ -2,12 +2,13 @@ package de.tuberlin.pserver.dsl.transaction.executors;
 
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
-import de.tuberlin.pserver.dsl.transaction.events.TransactionRequestEvent;
+import de.tuberlin.pserver.dsl.transaction.events.TransactionPushRequestEvent;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class PushTransactionExecutor extends TransactionExecutor {
@@ -17,6 +18,8 @@ public class PushTransactionExecutor extends TransactionExecutor {
     // ---------------------------------------------------
 
     public final TransactionDefinition transactionDefinition;
+
+    private final SharedObject[] localStateObjects;
 
     // ---------------------------------------------------
     // Constructors.
@@ -29,6 +32,10 @@ public class PushTransactionExecutor extends TransactionExecutor {
 
         this.transactionDefinition = controller.getTransactionDescriptor().definition;
 
+        final int numStateObjects = controller.getTransactionDescriptor().stateObjectNames.size();
+
+        this.localStateObjects = new SharedObject[numStateObjects];
+
         register();
     }
 
@@ -39,18 +46,36 @@ public class PushTransactionExecutor extends TransactionExecutor {
     @Override
     public void bind() throws Exception {
 
+        int i = 0;
+
+        for (final String stateObjectName : controller.getTransactionDescriptor().stateObjectNames) {
+            localStateObjects[i++] = runtimeContext.runtimeManager.getDHT(stateObjectName);
+        }
     }
 
     @Override
     public synchronized List<Object> execute(final Object requestObject) throws Exception {
-        /*final SharedObject stateObject = runtimeContext.runtimeManager.getDHT(controller.getTransactionDescriptor().stateObjectNames.get(0));
-        stateObject.lock();
-        final boolean cacheRequest = controller.getTransactionDescriptor().cacheRequestObject;
-        final Prepare preparePhase = transactionDefinition.preparePhase;
-        final Object preparedStateObject = (preparePhase != null) ? preparePhase.prepare(stateObject) : stateObject;
-        final TransactionRequestEvent request = new TransactionRequestEvent(transactionName, preparedStateObject, cacheRequest);
+
+        final List<Object> preparedStateObjects = new ArrayList<>();
+
+        for (int i = 0; i < controller.getTransactionDescriptor().stateObjectNames.size(); ++i) {
+
+            localStateObjects[i].lock();
+            final Prepare preparePhase = transactionDefinition.preparePhase;
+            preparedStateObjects.add((preparePhase != null) ? preparePhase.prepare(localStateObjects[i]) : localStateObjects[i]);
+            localStateObjects[i].unlock();
+        }
+
+        final TransactionPushRequestEvent request = new TransactionPushRequestEvent(
+                transactionName,
+                controller.getTransactionDescriptor().stateObjectNames,
+                preparedStateObjects,
+                requestObject,
+                controller.getTransactionDescriptor().cacheRequestObject
+        );
+
         runtimeContext.netManager.sendEvent(controller.getTransactionDescriptor().stateObjectNodes, request);
-        stateObject.unlock();*/
+
         return null;
     }
 
@@ -59,17 +84,25 @@ public class PushTransactionExecutor extends TransactionExecutor {
     // ---------------------------------------------------
 
     private void register() {
-        runtimeContext.netManager.addEventListener(TransactionRequestEvent.TRANSACTION_REQUEST + transactionName, event -> {
+        runtimeContext.netManager.addEventListener(TransactionPushRequestEvent.TRANSACTION_REQUEST + transactionName, event -> {
+
             try {
-                final TransactionRequestEvent request = (TransactionRequestEvent) event;
-                final SharedObject object = (SharedObject) request.getPayload();
-                final SharedObject stateObject = runtimeContext.runtimeManager.getDHT(controller.getTransactionDescriptor().stateObjectNames.get(0));
-                final List<SharedObject> remoteObjects = new ArrayList<>();
-                remoteObjects.add(object);
-                stateObject.lock();
-                transactionDefinition.applyPhase.apply(remoteObjects, null);
-                stateObject.unlock();
+
+                final TransactionPushRequestEvent request = (TransactionPushRequestEvent) event;
+
+                final List<Object> preparedStateObjects = request.stateObjectsValues;
+
+                for (int i = 0; i < controller.getTransactionDescriptor().stateObjectNames.size(); ++i) {
+
+                    localStateObjects[i].lock();
+
+                    transactionDefinition.applyPhase.apply(Arrays.asList(preparedStateObjects.get(i)), localStateObjects[i]);
+
+                    localStateObjects[i].unlock();
+                }
+
             } catch (Exception ex) {
+
                 throw new IllegalStateException(ex);
             }
         });

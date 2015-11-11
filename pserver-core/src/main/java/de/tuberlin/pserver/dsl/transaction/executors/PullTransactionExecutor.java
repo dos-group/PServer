@@ -2,8 +2,8 @@ package de.tuberlin.pserver.dsl.transaction.executors;
 
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
-import de.tuberlin.pserver.dsl.transaction.events.TransactionRequestEvent;
-import de.tuberlin.pserver.dsl.transaction.events.TransactionResponseEvent;
+import de.tuberlin.pserver.dsl.transaction.events.TransactionPullRequestEvent;
+import de.tuberlin.pserver.dsl.transaction.events.TransactionPullResponseEvent;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.RuntimeContext;
@@ -81,7 +81,7 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
             final boolean cacheRequest = controller.getTransactionDescriptor().cacheRequestObject;
 
-            final TransactionRequestEvent request = new TransactionRequestEvent(
+            final TransactionPullRequestEvent request = new TransactionPullRequestEvent(
                     transactionName,
                     controller.getTransactionDescriptor().stateObjectNames,
                     requestObject,
@@ -121,8 +121,8 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
     private void registerTransactionHandlers() {
 
-        runtimeContext.netManager.addEventListener(TransactionRequestEvent.TRANSACTION_REQUEST + transactionName, event -> {
-            final TransactionRequestEvent request = (TransactionRequestEvent) event;
+        runtimeContext.netManager.addEventListener(TransactionPullRequestEvent.TRANSACTION_REQUEST + transactionName, event -> {
+            final TransactionPullRequestEvent request = (TransactionPullRequestEvent) event;
 
             try {
 
@@ -142,7 +142,7 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
                 runtimeContext.netManager.sendEvent(
                         request.srcMachineID,
-                        new TransactionResponseEvent(transactionName, preparedOutputs)
+                        new TransactionPullResponseEvent(transactionName, preparedOutputs)
                 );
 
             } catch (Exception ex) {
@@ -154,9 +154,9 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
         // NO GUARANTEE ABOUT RESPONSE ORDER IS EQUAL TO REQUEST ORDER!
 
-        runtimeContext.netManager.addEventListener(TransactionResponseEvent.TRANSACTION_RESPONSE + transactionName, event -> {
+        runtimeContext.netManager.addEventListener(TransactionPullResponseEvent.TRANSACTION_RESPONSE + transactionName, event -> {
 
-            final TransactionResponseEvent response = (TransactionResponseEvent) event;
+            final TransactionPullResponseEvent response = (TransactionPullResponseEvent) event;
             for (int i = 0; i < controller.getTransactionDescriptor().stateObjectNames.size(); ++i) {
 
                 final String stateObjectName = controller.getTransactionDescriptor().stateObjectNames.get(i);
