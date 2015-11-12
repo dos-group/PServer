@@ -139,4 +139,23 @@ public class Utils {
             throw new IncompatibleShapeException("Required: A: m x n, V: m x 1, B: m x n. Given: A: %d x %d, V: %d x %d, B: %d x %d", A.rows(), A.cols(), V.rows(), V.cols(), B.rows(), B.cols());
         }
     }
+
+    /**
+     * Checks if dot product is possible between vector A and B. Right now only dot products between
+     * vectors with same layout is possible
+     * @param A of shape m x 1 or 1 x m
+     * @param B of shape m x 1 or 1 x m
+     * @throws IncompatibleShapeException if not A.dot(B)
+     */
+    public static void checkDotProduct(MatrixBase A, MatrixBase B) {
+        if( ! (A.rows() == B.rows() && A.cols() == B.cols())) {
+            throw new IncompatibleShapeException("Required: A: 1 x m, B: 1 x m. " +
+                    "Given: A: %d x %d, B: %d x %d", A.rows(), A.cols(), B.rows(), B.cols());
+        } else {
+            if (A.rows() != 1 || A.cols() != 1) {
+                throw new IncompatibleShapeException("A and B must be vectors. " +
+                        "Given: A: %d x %d, B: %d x %d", A.rows(), A.cols(), B.rows(), B.cols());
+            }
+        }
+    }
 }
