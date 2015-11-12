@@ -24,8 +24,8 @@ import java.io.IOException;
 
 public class DistributedTranspose extends Program {
 
-    private static final long ROWS = 4;
-    private static final long COLS = 4;
+    private static final long ROWS = 2;
+    private static final long COLS = 8;
     private static final int NUM_NODES = 2;
 
     private static final double[] VALUES = new double[] {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
@@ -52,20 +52,22 @@ public class DistributedTranspose extends Program {
 
             Matrix transposed = matrix.transpose();
 
-            Preconditions.checkState(transposed.rows() == ROWS);
-            Preconditions.checkState(transposed.cols() == COLS);
+            Preconditions.checkState(transposed.rows() == COLS);
+            Preconditions.checkState(transposed.cols() == ROWS);
 
-            MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(ROWS, COLS, this.programContext.runtimeContext.nodeID, NUM_NODES);
-            Matrix.PartitionShape shape = partitioner.getPartitionShape();
+            System.out.println(transposed.toString());
 
-            for(long row = shape.rowOffset; row < shape.rowOffset + shape.rows; row++) {
-                for(long col = shape.colOffset; col < shape.colOffset + shape.cols; col++) {
-                    double expectedValue = VALUES[Utils.getPos(row, col, Layout.COLUMN_LAYOUT, ROWS, COLS)];
-                    double actualValue = transposed.get(row, col);
-                    Preconditions.checkState(expectedValue == actualValue, "("+row+","+col+"): exptected: " + expectedValue + " actual: " + actualValue);
-                    System.out.println("("+row+","+col+"): ok");
-                }
-            }
+            //MatrixByRowPartitioner partitioner = new MatrixByRowPartitioner(COLS, ROWS, this.programContext.runtimeContext.nodeID, NUM_NODES);
+            //Matrix.PartitionShape shape = partitioner.getPartitionShape();
+
+//            for(long row = shape.rowOffset; row < shape.rowOffset + shape.rows; row++) {
+//                for(long col = shape.colOffset; col < shape.colOffset + shape.cols; col++) {
+//                    double expectedValue = VALUES[Utils.getPos(row, col, Layout.COLUMN_LAYOUT, ROWS, COLS)];
+//                    double actualValue = transposed.get(row, col);
+//                    Preconditions.checkState(expectedValue == actualValue, "("+row+","+col+"): exptected: " + expectedValue + " actual: " + actualValue);
+//                    System.out.println("("+row+","+col+"): ok");
+//                }
+//            }
 
         });
     }

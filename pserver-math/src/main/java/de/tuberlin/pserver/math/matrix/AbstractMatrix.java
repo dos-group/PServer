@@ -407,7 +407,7 @@ public abstract class AbstractMatrix implements Matrix {
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("AbstractMatrix["+rows+"|"+cols+"]: ");
+        stringBuilder.append("Dense64Matrix["+rows+"|"+cols+"]: ");
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
                 stringBuilder.append("("+row+","+col+","+get(row,col)+") ");

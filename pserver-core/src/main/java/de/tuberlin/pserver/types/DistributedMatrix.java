@@ -6,6 +6,7 @@ import de.tuberlin.pserver.math.Format;
 import de.tuberlin.pserver.math.Layout;
 import de.tuberlin.pserver.math.matrix.AbstractMatrix;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.dense.Dense64Matrix;
 import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.utils.MatrixBuilder;
@@ -41,7 +42,7 @@ public class DistributedMatrix extends AbstractMatrix {
     // ---------------------------------------------------
 
     public DistributedMatrix(final DistributedMatrix m) {
-        this(m.programContext, m.rows, m.cols, m.partitioner, m.layout, m.format);
+        this(m.programContext, m.rows, m.cols, m.partitioner, m.layout, m.format, true);
     }
 
     public DistributedMatrix(final ProgramContext programContext,
@@ -49,6 +50,15 @@ public class DistributedMatrix extends AbstractMatrix {
                              final IMatrixPartitioner partitioner,
                              final Layout layout,
                              final Format format) {
+        this(programContext, rows, cols, partitioner, layout, format, true);
+    }
+
+    public DistributedMatrix(final ProgramContext programContext,
+                             final long rows,final long cols,
+                             final IMatrixPartitioner partitioner,
+                             final Layout layout,
+                             final Format format,
+                             final boolean registerEventHandler) {
 
         super(rows, cols, layout);
 
@@ -68,31 +78,33 @@ public class DistributedMatrix extends AbstractMatrix {
                 .format(format)
                 .build();
 
-        programContext.runtimeContext.runtimeManager.registerPullHandler(GET_BLOCK, new RuntimeManager.PullHandler() {
-            @Override
-            public Object handlePull(String name, Object requestParam) {
-                Preconditions.checkArgument(name.equals(GET_BLOCK));
-                Preconditions.checkArgument(requestParam instanceof Set, requestParam.getClass());
-                Set<Tuple2<RemotePartition,PartitionShape>> requests = (Set) requestParam;
-                Set<Tuple2<PartitionShape,Matrix>> result = new HashSet<>();
-                for(Object requestObj : requests) {
-                    Preconditions.checkState(requestObj instanceof Tuple2, requestObj.getClass());
-                    Tuple2 requestTuple = (Tuple2) requestObj;
-                    Object key = requestTuple._1;
-                    System.out.println("1: " + requestTuple._1.getClass() + "; " + "2: " + requestTuple._2.getClass());
-                    Preconditions.checkState(key instanceof RemotePartition, key.getClass());
-                    RemotePartition remotePartition = (RemotePartition) key;
-                    Object value = requestTuple._2;
-                    Preconditions.checkState(value instanceof PartitionShape, value.getClass());
-                    PartitionShape partitionShape = (PartitionShape) value;
-                    PartitionShape requestPartition = remotePartition.shape;
-                    Matrix subMatrix = matrix.subMatrix(requestPartition.rows, requestPartition.cols, requestPartition.rowOffset - shape.rowOffset, requestPartition.colOffset - shape.colOffset);
-                    System.out.println("cut shape " + requestPartition + " from " + matrix.toString() + " = " + subMatrix.toString());
-                    result.add(new Tuple2<>(partitionShape, subMatrix));
+        if(registerEventHandler) {
+            programContext.runtimeContext.runtimeManager.registerPullHandler(GET_BLOCK, new RuntimeManager.PullHandler() {
+                @Override
+                public Object handlePull(String name, Object requestParam) {
+                    Preconditions.checkArgument(name.equals(GET_BLOCK));
+                    Preconditions.checkArgument(requestParam instanceof Set, requestParam.getClass());
+                    Set<Tuple2<RemotePartition, PartitionShape>> requests = (Set) requestParam;
+                    Set<Tuple2<PartitionShape, Matrix>> result = new HashSet<>();
+                    for (Object requestObj : requests) {
+                        Preconditions.checkState(requestObj instanceof Tuple2, requestObj.getClass());
+                        Tuple2 requestTuple = (Tuple2) requestObj;
+                        Object key = requestTuple._1;
+                        System.out.println("1: " + requestTuple._1.getClass() + "; " + "2: " + requestTuple._2.getClass());
+                        Preconditions.checkState(key instanceof RemotePartition, key.getClass());
+                        RemotePartition remotePartition = (RemotePartition) key;
+                        Object value = requestTuple._2;
+                        Preconditions.checkState(value instanceof PartitionShape, value.getClass());
+                        PartitionShape partitionShape = (PartitionShape) value;
+                        PartitionShape requestPartition = remotePartition.shape;
+                        Matrix subMatrix = matrix.subMatrix(requestPartition.rowOffset - shape.rowOffset, requestPartition.colOffset - shape.colOffset, requestPartition.rows, requestPartition.cols);
+                        System.out.println("[" + nodeID + "] cut shape " + requestPartition + " from " + matrix.toString() + " = " + subMatrix.toString());
+                        result.add(new Tuple2<>(partitionShape, subMatrix));
+                    }
+                    return result;
                 }
-                return result;
-            }
-        });
+            });
+        }
 
     }
 
@@ -273,7 +285,7 @@ public class DistributedMatrix extends AbstractMatrix {
             result = new HashSet<>();
             for(Tuple2<RemotePartition,PartitionShape> remoteShape : remotePartitions) {
                 PartitionShape partitionToCut = remoteShape._1.shape;
-                System.out.println("["+nodeID+"] want to cut " + partitionToCut + " from " + shape + " -> ("+matrix.rows()+","+matrix.cols()+")");
+                System.out.println("["+nodeID+"] want to cut " + partitionToCut + " from " + shape + " with actual dimensions: ("+matrix.rows()+","+matrix.cols()+")");
                 System.out.println(String.format("matrix.subMatrix(%d, %d, %d, %d)", partitionToCut.rows, partitionToCut.cols, partitionToCut.rowOffset - shape.rowOffset, partitionToCut.colOffset - shape.colOffset));
                 Matrix subMatrix = matrix.subMatrix(partitionToCut.rowOffset - shape.rowOffset, partitionToCut.colOffset - shape.colOffset, partitionToCut.rows, partitionToCut.cols);
                 Preconditions.checkState(subMatrix.rows() == partitionToCut.rows);
@@ -283,6 +295,10 @@ public class DistributedMatrix extends AbstractMatrix {
         }
         // if remotePartitions are from remote node, fetch them
         else {
+            for(Tuple2<RemotePartition,PartitionShape> remoteShape : remotePartitions) {
+                PartitionShape partitionToCut = remoteShape._1.shape;
+                System.out.println("[" + nodeID + "] want to fetch " + partitionToCut + " from node id " + remoteShape._1.nodeId);
+            }
             Object[] response = programContext.runtimeContext.runtimeManager.pull(GET_BLOCK, remotePartitions, new int[] {remoteNodeId});
             Preconditions.checkNotNull(response);
             Preconditions.checkState(response.length == 1);
@@ -310,7 +326,8 @@ public class DistributedMatrix extends AbstractMatrix {
                 System.out.println("put matrix: " + subMatrix.toString() + " to position: " + targetPartitionShape);
                 System.out.println(String.format("targetMatrix.matrix.assign(%d, %d, matrix)", targetPartitionShape.rowOffset - targetMatrix.shape.rowOffset, targetPartitionShape.colOffset - targetMatrix.shape.colOffset));
                 System.out.println("targetShape: " + targetPartitionShape + "; subMatrix.rows=" + subMatrix.rows() +"; subMatrix.cols=" + subMatrix.cols());
-                targetMatrix.matrix.assign(targetPartitionShape.rowOffset - targetMatrix.shape.rowOffset, targetPartitionShape.colOffset - targetMatrix.shape.colOffset, subMatrix);
+                System.out.println("transposed subMatrix: " + subMatrix.transpose());
+                targetMatrix.matrix.assign(targetPartitionShape.rowOffset - targetMatrix.shape.rowOffset, targetPartitionShape.colOffset - targetMatrix.shape.colOffset, subMatrix.transpose());
             }
         }
         return targetMatrix;
@@ -351,20 +368,36 @@ public class DistributedMatrix extends AbstractMatrix {
     public Matrix transpose() {
         // create transposed local shape
         PartitionShape transposedShape = new PartitionShape(shape.cols, shape.rows, shape.colOffset, shape.rowOffset);
+        // System.out.println("partitioned shape of node " + nodeID + ": " + transposedShape); // OK!
         // get all remote partitions that intersect transposed local shape
         Collection<RemotePartition> remotePartitions = getIntersectingRemotePartitions(this, transposedShape).values();
+        for(RemotePartition remotePartition : remotePartitions) {
+            // System.out.println("node " + nodeID + " has to fetch shape " + remotePartition.shape + " from nodeId " + remotePartition.nodeId); // OK!
+        }
         // calculate for each remote partition the position where it is to be stored in the resulting matrix
         Map<RemotePartition,PartitionShape> remoteToLocalPartitionMapping = new HashMap<>();
         for(RemotePartition remotePartition : remotePartitions) {
             PartitionShape transposedOffsets = new PartitionShape(remotePartition.shape.rows, remotePartition.shape.cols, remotePartition.shape.colOffset, remotePartition.shape.rowOffset);
             remoteToLocalPartitionMapping.put(remotePartition, transposedOffsets);
-            //System.out.println(nodeID + " has to fetch " + remotePartition.shape + " from node " + remotePartition.nodeId + " and put it to " + transposedOffsets);
+            // System.out.println(nodeID + " has to fetch " + remotePartition.shape + " from node " + remotePartition.nodeId + " and put it to " + transposedOffsets); // OK!
         }
 
         // fetch remote partitions and construct resulting matrix according to position-mapping
-        DistributedMatrix result = new DistributedMatrix(programContext, cols, rows, partitioner, layout, format);
-        System.out.println(result.matrix.rows() + " - " + result.matrix.cols());
+        DistributedMatrix result = new DistributedMatrix(programContext, cols, rows, partitioner, layout, format, false);
+        // System.out.println(result.matrix.rows() + " - " + result.matrix.cols()); // OK!
         DistributedMatrix remoteView = constructMatrixFromRemotePartitions(remoteToLocalPartitionMapping, result);
         return remoteView;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("DistributedMatrix["+rows+"|"+cols+"]: ");
+        stringBuilder.append("\n");
+        stringBuilder.append("Shape: ");
+        stringBuilder.append(shape);
+        stringBuilder.append("\n");
+        stringBuilder.append(matrix);
+        return stringBuilder.toString();
     }
 }
