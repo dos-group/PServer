@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.dsl.unit.controlflow.loop;
 
 import de.tuberlin.pserver.dsl.unit.UnitMng;
-import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.dsl.unit.controlflow.base.CFStatement;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 public final class Loop extends CFStatement {
 
@@ -87,6 +87,8 @@ public final class Loop extends CFStatement {
         duration = System.currentTimeMillis() - duration;
 
         setProfilingData(new LoopProfilingData(duration, epoch > 0 ? passDuration / epoch : passDuration, epoch > 0 ? syncDuration / epoch : syncDuration));
+
+        sync();
 
         return this;
     }

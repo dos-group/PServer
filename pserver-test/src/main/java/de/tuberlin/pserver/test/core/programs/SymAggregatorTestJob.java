@@ -14,7 +14,7 @@ public class SymAggregatorTestJob extends Program {
 
         lifecycle.process(() -> {
 
-            final int partialAgg = programContext.runtimeContext.nodeID * 1000;
+            final int partialAgg = programContext.nodeID * 1000;
 
             final int globalAgg = new Aggregator<>(programContext, partialAgg)
                     .apply(pa -> pa.stream().mapToInt(Integer::intValue).sum());

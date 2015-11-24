@@ -2,14 +2,15 @@ package de.tuberlin.pserver.runtime.driver;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.compiler.*;
 import de.tuberlin.pserver.compiler.Compiler;
-import de.tuberlin.pserver.runtime.core.common.Deactivatable;
-import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
+import de.tuberlin.pserver.compiler.*;
+import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.runtime.RuntimeContext;
-import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
+import de.tuberlin.pserver.runtime.core.common.Deactivatable;
+import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.runtime.core.usercode.UserCodeManager;
+import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.reflect.Field;
@@ -95,6 +96,8 @@ public class ProgramDriver implements Deactivatable {
 
         bindState(instance);
 
+        bindTransactions();
+
         defineProgram(instance);
 
         instance.run();
@@ -129,6 +132,12 @@ public class ProgramDriver implements Deactivatable {
             final Object stateObj = runtimeContext.runtimeManager.getDHT(state.stateName);
             Preconditions.checkState(stateObj != null, "State object '" + state.stateName + "' not found.");
             field.set(instance, stateObj);
+        }
+    }
+
+    private void bindTransactions() throws Exception {
+        for (final TransactionController transactionController : programTable.getTransactionControllers()) {
+            transactionController.bindTransaction();
         }
     }
 

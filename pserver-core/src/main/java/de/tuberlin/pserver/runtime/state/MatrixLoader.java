@@ -3,12 +3,12 @@ package de.tuberlin.pserver.runtime.state;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.compiler.StateDescriptor;
-import de.tuberlin.pserver.runtime.core.net.NetEvents;
-import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
+import de.tuberlin.pserver.runtime.core.net.NetEvents;
+import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
@@ -60,7 +60,7 @@ public final class MatrixLoader {
                     state.partitioner,
                     state.rows,
                     state.cols,
-                    programContext.runtimeContext.nodeID,
+                    programContext.nodeID,
                     state.atNodes
             );
 
@@ -163,7 +163,7 @@ public final class MatrixLoader {
         while(finishedLoadingLatch.getCount() > 0) {
             LOG.debug("waiting for " + finishedLoadingLatch.getCount() + " loading tasks to finish:");
             for(String taskName : fileLoadingBarrier.keySet()) {
-                LOG.debug("task '"+taskName+"' has " + fileLoadingBarrier.get(taskName) + " nodes to finish");
+                LOG.debug("task '"+taskName+"' has " + fileLoadingBarrier.get(taskName) + " stateObjectNodes to finish");
             }
             try {
                 finishedLoadingLatch.await(10, TimeUnit.SECONDS);
@@ -185,7 +185,7 @@ public final class MatrixLoader {
 
     @SuppressWarnings("unchecked")
     private void loadMatrix(final MatrixLoadTask task) {
-        int nodeId = task.programContext.runtimeContext.nodeID;
+        int nodeId = task.programContext.nodeID;
 
         // prepare to read entries that belong to foreign matrix partitions
         Map<Integer, List<MatrixEntry>> foreignEntries = new HashMap<>();

@@ -14,7 +14,7 @@ public interface IEventDispatcher extends Deactivatable {
 
     public abstract void addEventListener(final String[] types, final IEventHandler listener);
 
-    public List<IEventHandler> getEventListener(final String type);
+    public abstract List<IEventHandler> getEventListener(final String type);
 
     public abstract boolean removeEventListener(String type, IEventHandler listener);
 
@@ -25,4 +25,6 @@ public interface IEventDispatcher extends Deactivatable {
     public abstract boolean hasEventListener(String type);
 
     public abstract void joinDispatcherThread();
+
+    public abstract Thread getDispatcherThread();
 }

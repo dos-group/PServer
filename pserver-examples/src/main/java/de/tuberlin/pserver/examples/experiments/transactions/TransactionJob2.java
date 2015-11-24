@@ -6,10 +6,10 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
-import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
 import de.tuberlin.pserver.dsl.transaction.phases.Apply;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
+import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
@@ -41,7 +41,7 @@ public class TransactionJob2 extends Program {
             return params;
         },
 
-        (Apply<double[], double[]>) (params) -> params.get(0)
+        (Apply<double[], double[]>) (params, state) -> params.get(0)
     );
 
     // ---------------------------------------------------

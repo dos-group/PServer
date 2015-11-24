@@ -2,12 +2,16 @@ package de.tuberlin.pserver.compiler;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.commons.utils.ParseUtils;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
 import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public final class TransactionDescriptor {
 
@@ -17,7 +21,7 @@ public final class TransactionDescriptor {
 
     public final String transactionName;
 
-    public final String stateName;
+    public final List<String> stateObjectNames;
 
     public final TransactionDefinition definition;
 
@@ -25,23 +29,23 @@ public final class TransactionDescriptor {
 
     public final boolean cacheRequestObject;
 
-    public final int[] nodes;
+    public final int[] stateObjectNodes;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
     public TransactionDescriptor(final String transactionName,
-                                 final String stateName,
+                                 final List<String> stateObjectNames,
                                  final TransactionDefinition definition,
                                  final TransactionType type,
                                  final boolean cacheRequestObject,
                                  final int nodeID,
-                                 final int[] nodes) {
+                                 final ProgramTable programTable) {
 
         this.transactionName = Preconditions.checkNotNull(transactionName);
 
-        this.stateName = Preconditions.checkNotNull(stateName);
+        this.stateObjectNames = Preconditions.checkNotNull(stateObjectNames);
 
         this.definition = Preconditions.checkNotNull(definition);
 
@@ -49,7 +53,19 @@ public final class TransactionDescriptor {
 
         this.cacheRequestObject = cacheRequestObject;
 
-        this.nodes = ArrayUtils.removeElements(nodes, nodeID);
+        for (int i = 0; i < stateObjectNames.size() - 1; ++i) {
+            //final int[] stateNodes = ArrayUtils.removeElements(programTable.getState(stateObjectName).atNodes, nodeID);
+
+            if (!Arrays.equals(
+                    programTable.getState(stateObjectNames.get(i)).atNodes,
+                    programTable.getState(stateObjectNames.get(i + 1)).atNodes))
+                throw new IllegalStateException();
+        }
+
+        this.stateObjectNodes = ArrayUtils.removeElements(
+                programTable.getState(stateObjectNames.get(stateObjectNames.size() - 1)).atNodes,
+                nodeID
+        );
 
         definition.setTransactionName(transactionName);
     }
@@ -62,15 +78,17 @@ public final class TransactionDescriptor {
                                                            final Transaction transaction,
                                                            final Field field,
                                                            final int nodeID,
-                                                           final int[] atNodes) throws Exception {
+                                                           final ProgramTable programTable) throws Exception {
+
+        final List<String> stateObjects = ParseUtils.parseStateList(transaction.state());
         return new TransactionDescriptor(
                 field.getName(),
-                transaction.state(),
+                stateObjects,
                 (TransactionDefinition)field.get(instance),
                 transaction.type(),
                 transaction.cache(),
                 nodeID,
-                atNodes
+                programTable
         );
     }
 }

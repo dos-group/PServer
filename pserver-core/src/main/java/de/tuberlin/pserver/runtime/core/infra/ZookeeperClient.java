@@ -39,7 +39,7 @@ public final class ZookeeperClient implements Deactivatable{
 
     public static final String ZOOKEEPER_ROOT = "/pserver";
 
-    public static final String ZOOKEEPER_NODES = ZOOKEEPER_ROOT + "/nodes";
+    public static final String ZOOKEEPER_NODES = ZOOKEEPER_ROOT + "/stateObjectNodes";
 
     public static int CONNECTION_TIMEOUT = 1000;
 

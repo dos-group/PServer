@@ -1,15 +1,18 @@
 package de.tuberlin.pserver.runtime.state.types;
 
 
-import de.tuberlin.pserver.math.matrix.*;
+import de.tuberlin.pserver.math.matrix.ElementType;
+import de.tuberlin.pserver.math.matrix.Format;
+import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
 import de.tuberlin.pserver.math.operations.BinaryOperator;
 import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
 import de.tuberlin.pserver.math.operations.UnaryOperator;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 import de.tuberlin.pserver.runtime.state.MatrixBuilder;
+import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 
 public class DistributedMatrix32F implements Matrix32F {
 
@@ -33,7 +36,6 @@ public class DistributedMatrix32F implements Matrix32F {
 
     public DistributedMatrix32F(final ProgramContext programContext,
                                 final long rows, final long cols,
-                                final Layout layout,
                                 final Format format,
                                 final int[] atNodes,
                                 final Class<? extends IMatrixPartitioner> partitionerType) {
@@ -45,7 +47,7 @@ public class DistributedMatrix32F implements Matrix32F {
         this.partitioner = IMatrixPartitioner.newInstance(
                 partitionerType,
                 rows, cols,
-                programContext.runtimeContext.nodeID,
+                programContext.nodeID,
                 atNodes
         );
 
@@ -54,7 +56,6 @@ public class DistributedMatrix32F implements Matrix32F {
         this.matrixSection = new MatrixBuilder()
                 .dimension(shape.rows, shape.cols)
                 .format(format)
-                .layout(layout)
                 .elementType(ElementType.FLOAT_MATRIX)
                 .build();
     }
@@ -80,8 +81,6 @@ public class DistributedMatrix32F implements Matrix32F {
     @Override public long cols() { return cols; }
 
     @Override public long sizeOf() { return rows * cols * Float.BYTES; }
-
-    @Override public Layout layout() { return matrixSection.layout(); }
 
     @Override public void lock() { matrixSection.lock(); }
 

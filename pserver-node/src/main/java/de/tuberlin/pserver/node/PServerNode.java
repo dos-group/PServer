@@ -1,6 +1,8 @@
 package de.tuberlin.pserver.node;
 
 import de.tuberlin.pserver.compiler.Program;
+import de.tuberlin.pserver.runtime.RuntimeContext;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
@@ -8,8 +10,6 @@ import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.runtime.driver.ProgramDriver;
-import de.tuberlin.pserver.runtime.RuntimeContext;
-import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.events.ProgramFailureEvent;
 import de.tuberlin.pserver.runtime.events.ProgramResultEvent;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
@@ -87,6 +87,8 @@ public final class PServerNode extends EventDispatcher {
                     try {
 
                         ParallelRuntime.INSTANCE.create(runtimeContext.numOfCores);
+
+                        ParallelRuntime.INSTANCE.addPrimaryThread(netManager.getDispatcherThread().getId());
 
                         driver.run();
 

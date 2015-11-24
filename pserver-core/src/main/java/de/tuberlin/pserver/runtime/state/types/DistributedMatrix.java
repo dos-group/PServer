@@ -3,17 +3,16 @@ package de.tuberlin.pserver.runtime.state.types;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Format;
-import de.tuberlin.pserver.math.matrix.Layout;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
 import de.tuberlin.pserver.math.operations.BinaryOperator;
 import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
 import de.tuberlin.pserver.math.operations.UnaryOperator;
-import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import de.tuberlin.pserver.runtime.state.RemotePartition;
+import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -42,18 +41,17 @@ public class DistributedMatrix<V extends Number> implements Matrix<V> {
     // ---------------------------------------------------
 
     public DistributedMatrix(final DistributedMatrix m) {
-        this(m.programContext, m.matrixDelegate.rows(), m.matrixDelegate.cols(), m.partitioner, m.matrixDelegate.layout(), m.format);
+        this(m.programContext, m.matrixDelegate.rows(), m.matrixDelegate.cols(), m.partitioner, m.format);
     }
 
     public DistributedMatrix(final ProgramContext programContext,
                              final long rows,final long cols,
                              final IMatrixPartitioner partitioner,
-                             final Layout layout,
                              final Format format) {
 
         this.programContext = Preconditions.checkNotNull(programContext);
         this.nodeDOP        = programContext.nodeDOP;
-        this.nodeID         = programContext.runtimeContext.nodeID;
+        this.nodeID         = programContext.nodeID;
         this.partitioner    = Preconditions.checkNotNull(partitioner);
         this.shape          = partitioner.getPartitionShape();
         this.format         = format;
@@ -63,7 +61,6 @@ public class DistributedMatrix<V extends Number> implements Matrix<V> {
 
         this.matrixDelegate  = new MatrixBuilder()
                 .dimension(_rows, _cols)
-                .layout(layout)
                 .format(format)
                 .build();
     }
@@ -157,7 +154,7 @@ public class DistributedMatrix<V extends Number> implements Matrix<V> {
      */
     private static Map<Integer,RemotePartition> getIntersectingRemotePartitions(DistributedMatrix sourceMatrix, PartitionShape targetShape) {
         Map<Integer,RemotePartition> remotePartitions = new HashMap<>(sourceMatrix.nodeDOP);
-        // iterate over all nodes, the source matrix is partitioned across
+        // iterate over all stateObjectNodes, the source matrix is partitioned across
         for(int i : sourceMatrix.partitioner.getNodes()) {
             // get partition shape of (possibly) remote node
             PartitionShape remoteShape = sourceMatrix.partitioner.ofNode(i).getPartitionShape();
@@ -393,7 +390,7 @@ public class DistributedMatrix<V extends Number> implements Matrix<V> {
             remoteToLocalPartitionMapping.put(remotePartition, transposedOffsets);
         }
         // fetch remote partitions and construct resulting matrix according to position-mapping
-        DistributedMatrix result = new DistributedMatrix(programContext, matrixDelegate.cols(), matrixDelegate.cols(), partitioner, matrixDelegate.layout(), format);
+        DistributedMatrix result = new DistributedMatrix(programContext, matrixDelegate.cols(), matrixDelegate.cols(), partitioner, format);
         DistributedMatrix remoteView = constructIntersectingMatrix(this, result, remoteToLocalPartitionMapping);
         return remoteView;
     }
@@ -464,11 +461,6 @@ public class DistributedMatrix<V extends Number> implements Matrix<V> {
     }
 
     @Override
-    public Layout layout() {
-        return null;
-    }
-
-    @Override
     public void lock() {
 
     }
@@ -490,4 +482,13 @@ public class DistributedMatrix<V extends Number> implements Matrix<V> {
 
     // ------------------------------------------
 
+    @Override
+    public long toLong(V value) {
+        return 0;
+    }
+
+    @Override
+    public V fromLong(long value) {
+        return null;
+    }
 }

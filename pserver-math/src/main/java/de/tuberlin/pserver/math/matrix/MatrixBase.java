@@ -11,8 +11,6 @@ public interface MatrixBase extends SharedObject{
 
     public long sizeOf();
 
-    public Layout layout();
-
     public void lock();
 
     public void unlock();

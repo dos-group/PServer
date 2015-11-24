@@ -220,6 +220,11 @@ public class EventDispatcher implements IEventDispatcher {
         }
     }
 
+    @Override
+    public Thread getDispatcherThread() {
+        return dispatcherThread;
+    }
+
     // ---------------------------------------------------
     // Private Methods.
     // ---------------------------------------------------

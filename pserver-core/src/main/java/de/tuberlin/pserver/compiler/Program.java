@@ -1,12 +1,12 @@
 package de.tuberlin.pserver.compiler;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
 import de.tuberlin.pserver.dsl.unit.controlflow.base.Body;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.SharedObject;
-import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +54,7 @@ public abstract class Program extends EventDispatcher {
 
     public void run() throws Exception {
 
-        final String slotIDStr = "[" + programContext.runtimeContext.nodeID + "]";
+        final String slotIDStr = "[" + programContext.nodeID + "]";
 
         {
             LOG.info(slotIDStr + "Enter " + lifecycle.programContext.simpleClassName + " pre-process phase.");

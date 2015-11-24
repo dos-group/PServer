@@ -1,9 +1,6 @@
 package de.tuberlin.pserver.runtime.filesystem.record;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIterator;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;

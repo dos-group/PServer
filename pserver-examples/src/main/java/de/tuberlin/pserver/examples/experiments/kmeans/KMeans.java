@@ -7,7 +7,7 @@ import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
-import de.tuberlin.pserver.dsl.transaction.phases.Apply;
+import de.tuberlin.pserver.dsl.transaction.phases.Update;
 import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
@@ -33,8 +33,6 @@ public class KMeans extends Program {
 
     private static final int K = 2;
 
-    private static final String FILE = "datasets/stripes2.csv";
-
     // ---------------------------------------------------
     // State.
     // ---------------------------------------------------
@@ -42,7 +40,7 @@ public class KMeans extends Program {
     @State(scope = Scope.PARTITIONED,
             rows = ROWS,
             cols = COLS,
-            path = FILE,
+            path = "datasets/stripes2.csv",
             format = Format.DENSE_FORMAT,
             recordFormat = RowRecordIteratorProducer.class
     )
@@ -60,12 +58,23 @@ public class KMeans extends Program {
     // Transactions.
     // ---------------------------------------------------
 
-    @Transaction(state = "centroidsUpdate", type = TransactionType.PULL)
+    @Transaction(state = "centroidsUpdate", type = TransactionType.PUSH)
     public final TransactionDefinition centroidsUpdateSync = new TransactionDefinition(
 
-            (Apply<Matrix64F, Void>) (updates) -> {
-                for (final Matrix64F update : updates) {
+            (Update<Matrix64F>) (remoteUpdates, localState) -> {
+
+                for (final Matrix64F update : remoteUpdates) {
+
                     Parallel.For(update, (i, j, v) -> centroidsUpdate.set(i, j, centroidsUpdate.get(i, j) + update.get(i, j)));
+
+                    /*final Matrix64F.RowIterator it = update.rowIterator();
+                    while (it.hasNext()) {
+                        it.next();
+                        int i = (int)it.rowNum();
+                        for (int j = 0; j < update.cols(); ++j) {
+                            centroidsUpdate.set(i, j, centroidsUpdate.get(i, j) + update.get(i, j));
+                        }
+                    }*/
                 }
 
                 for (int i = 0; i < K; i++) {
@@ -76,15 +85,14 @@ public class KMeans extends Program {
                         }
                     }
                 }
-                centroidsUpdate.assign(0.);
 
-                return null;
+                centroidsUpdate.assign(0.);
             }
     );
 
     // ---------------------------------------------------
     // Units.
-    // --------------------------------------------------
+    // ---------------------------------------------------
 
     @Unit
     public void main(final Lifecycle lifecycle) {
@@ -129,13 +137,13 @@ public class KMeans extends Program {
                 });
                 // END: STANDARD KMEANS ON LOCAL PARTITION
 
-                // Pull model from remote nodes and merge.
+                // Pull model from remote stateObjectNodes and merge.
                 TransactionMng.commit(centroidsUpdateSync);
             });
 
         }).postProcess(() -> {
             for (int i = 0; i < K; i++) {
-                int nodeId = programContext.runtimeContext.nodeID;
+                int nodeId = programContext.nodeID;
                 System.out.println("centroid[node:" + nodeId + ",row:" + i + "]=" + centroids.getRow(i));
             }
         });
@@ -145,20 +153,18 @@ public class KMeans extends Program {
     // Entry Point.
     // ---------------------------------------------------
 
-    public static void main(String[] args) {
-        local();
-    }
+    public static void main(String[] args) { local(); }
 
     // ---------------------------------------------------
 
-    public static void cluster() {
+    private static void cluster() {
         System.setProperty("pserver.profile", "wally");
         PServerExecutor.REMOTE
                 .run(KMeans.class)
                 .done();
     }
 
-    public static void local() {
+    private static void local() {
         System.setProperty("simulation.numNodes", "2");
         PServerExecutor.LOCAL
                 .run(KMeans.class)

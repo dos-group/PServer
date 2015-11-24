@@ -36,4 +36,12 @@ public class ParseUtils {
             return Ints.toArray(vals);
         }
     }
+
+    public static List<String> parseStateList(final String stateNames) {
+        final List<String> stateList = new ArrayList<>();
+        final StringTokenizer tokenizer = new StringTokenizer(Preconditions.checkNotNull(stateNames), ",");
+        while (tokenizer.hasMoreTokens())
+            stateList.add(tokenizer.nextToken().replaceAll("\\s+", ""));
+        return stateList;
+    }
 }

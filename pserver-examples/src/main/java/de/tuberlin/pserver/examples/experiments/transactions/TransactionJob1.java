@@ -7,10 +7,11 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
-import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
 import de.tuberlin.pserver.dsl.transaction.phases.Apply;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
+import de.tuberlin.pserver.dsl.transaction.phases.Update;
+import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
@@ -37,18 +38,17 @@ public class TransactionJob1 extends Program {
 
         (Prepare<Matrix32F, Matrix32F>) model -> model,
 
-        (Apply<Matrix32F, Void>) remoteModels -> {
+        (Update<Matrix32F>) (remoteUpdates, localState) -> {
 
             for (int i = 0; i < 100; i++) {
                 for (int j = 0; j < 100; j++) {
                     float val = 0f;
-                    for (final Matrix32F remoteModel : remoteModels)
-                        val += remoteModel.get(i, j);
+                    for (final Matrix32F update : remoteUpdates)
+                        val += update.get(i, j);
                     val += model.get(i, j);
                     model.set(i, j, (model.get(i, j) + val) / 4);
                 }
             }
-            return null;
         }
     );
 
