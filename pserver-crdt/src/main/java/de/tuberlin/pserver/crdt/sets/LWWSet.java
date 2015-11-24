@@ -4,6 +4,7 @@ import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.TaggedOperation;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.*;
 
@@ -15,8 +16,8 @@ public class LWWSet<T> extends AbstractSet<T> {
     private final Map<T, Long> addMap;
     private final Map<T, Long> removeMap;
 
-    public LWWSet(String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(id, noOfReplicas, runtimeManager);
+    public LWWSet(String id, int noOfReplicas, ProgramContext programContext) {
+        super(id, noOfReplicas, programContext);
         
         addMap = new HashMap<>();
         removeMap = new HashMap<>();

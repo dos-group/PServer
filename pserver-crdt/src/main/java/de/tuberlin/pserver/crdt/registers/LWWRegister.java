@@ -5,6 +5,7 @@ import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.TaggedOperation;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -18,8 +19,8 @@ public class LWWRegister<T extends Comparable> extends AbstractRegister<T> imple
     private long time = Calendar.getInstance().getTimeInMillis();
     private final ConcurrentResolver<T> resolver;
 
-    public LWWRegister(String id, int noOfReplicas, RuntimeManager runtimeManager, ConcurrentResolver<T> resolver) {
-        super(id, noOfReplicas, runtimeManager);
+    public LWWRegister(String id, int noOfReplicas, ProgramContext programContext, ConcurrentResolver<T> resolver) {
+        super(id, noOfReplicas, programContext);
         this.resolver = resolver;
     }
 

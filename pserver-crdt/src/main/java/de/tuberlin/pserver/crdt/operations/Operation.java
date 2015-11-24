@@ -38,6 +38,9 @@ public interface Operation<T> extends Serializable {
     /** Insert token for RADT operation **/
     int DELETE = 9;
 
+    /** Insert token for RADT operation **/
+    int SET = 10;
+
 
 
     default String getOperationType() {

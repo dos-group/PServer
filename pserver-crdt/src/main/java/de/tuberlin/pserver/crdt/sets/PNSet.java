@@ -5,6 +5,7 @@ import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.SimpleOperation;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,8 +20,8 @@ import java.util.stream.Collectors;
 public class PNSet<T> extends AbstractSet<T> {
     private final Map<T, Integer> counter;
 
-    public PNSet(String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(id, noOfReplicas, runtimeManager);
+    public PNSet(String id, int noOfReplicas, ProgramContext programContext) {
+        super(id, noOfReplicas, programContext);
         counter = new HashMap<>();
     }
 

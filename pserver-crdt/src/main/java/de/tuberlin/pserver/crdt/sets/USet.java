@@ -5,6 +5,7 @@ import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.SimpleOperation;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.crdt.exceptions.NotUniqueException;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -16,8 +17,8 @@ import java.util.Set;
 public class USet<T> extends AbstractSet<T> {
     private final Set<T> set = new HashSet<>();
 
-    public USet(String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(id, noOfReplicas, runtimeManager);
+    public USet(String id, int noOfReplicas, ProgramContext programContext) {
+        super(id, noOfReplicas, programContext);
     }
 
     @Override

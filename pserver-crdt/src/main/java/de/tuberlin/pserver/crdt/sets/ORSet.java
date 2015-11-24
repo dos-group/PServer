@@ -4,6 +4,7 @@ import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.TaggedOperation;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.*;
 import java.util.Set;
@@ -15,8 +16,8 @@ import java.util.Set;
 public class ORSet<T> extends AbstractSet<T> {
     private Map<T,List<UUID>> map = new HashMap<>();
 
-    public ORSet(String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(id, noOfReplicas, runtimeManager);
+    public ORSet(String id, int noOfReplicas, ProgramContext programContext) {
+        super(id, noOfReplicas, programContext);
     }
 
     @Override

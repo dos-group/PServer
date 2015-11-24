@@ -2,6 +2,7 @@ package de.tuberlin.pserver.crdt.counters;
 
 import de.tuberlin.pserver.crdt.AbstractCRDT;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 /**
  * <p>
@@ -28,10 +29,10 @@ public abstract class AbstractCounter extends AbstractCRDT implements Counter {
      * Sole constructor.
      *
      * @param id the ID for this CRDT
-     * @param runtimeManager the {@code RuntimeManager} belonging to this {@code MLProgram}
+     * @param programContext the {@code RuntimeManager} belonging to this {@code MLProgram}
      */
-    public AbstractCounter(String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(id, noOfReplicas, runtimeManager);
+    public AbstractCounter(String id, int noOfReplicas, ProgramContext programContext) {
+        super(id, noOfReplicas, programContext);
     }
 
     // ---------------------------------------------------

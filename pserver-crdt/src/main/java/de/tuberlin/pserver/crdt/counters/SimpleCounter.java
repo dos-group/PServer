@@ -5,6 +5,7 @@ import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.SimpleOperation;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 /**
  * An implementation of the {@code Counter} interface which fully supports calls to {@code increment()} and
@@ -20,10 +21,10 @@ public class SimpleCounter extends AbstractCounter implements CRDT {
      * Sole constructor.
      *
      * @param id the ID for this CRDT
-     * @param runtimeManager the {@code RuntimeManager} belonging to this {@code MLProgram}
+     * @param programContext the {@code ProgramContext} belonging to this {@code MLProgram}
      */
-    public SimpleCounter(String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(id, noOfReplicas, runtimeManager);
+    public SimpleCounter(String id, int noOfReplicas, ProgramContext programContext) {
+        super(id, noOfReplicas, programContext);
     }
 
     // ---------------------------------------------------

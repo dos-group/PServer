@@ -2,6 +2,7 @@ package de.tuberlin.pserver.crdt.graphs;
 
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -15,8 +16,8 @@ import java.util.Set;
 public class AddOnlyDAG<T> extends AbstractGraph<T> {
 
 
-    public AddOnlyDAG(String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(id, noOfReplicas, runtimeManager);
+    public AddOnlyDAG(String id, int noOfReplicas, ProgramContext programContext) {
+        super(id, noOfReplicas, programContext);
     }
 
     @Override

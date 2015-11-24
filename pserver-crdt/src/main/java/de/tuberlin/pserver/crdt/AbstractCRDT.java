@@ -4,6 +4,7 @@ import de.tuberlin.pserver.AbstractReplicatedDataType;
 import de.tuberlin.pserver.crdt.operations.EndOperation;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.events.MsgEventHandler;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -53,10 +54,10 @@ public abstract class AbstractCRDT<T> extends AbstractReplicatedDataType<T> impl
     /** Sole constructor
      *
      * @param id the ID of the CRDT that this replica belongs to
-     * @param runtimeManager the {@code RuntimeManager} belonging to this {@code MLProgram}
+     * @param programContext the {@code RuntimeManager} belonging to this {@code MLProgram}
      * */
-    protected AbstractCRDT(String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(id, noOfReplicas, runtimeManager);
+    protected AbstractCRDT(String id, int noOfReplicas, ProgramContext programContext) {
+        super(id, noOfReplicas, programContext);
 
         runtimeManager.addMsgEventListener("Operation_" + id, new MsgEventHandler() {
             @Override

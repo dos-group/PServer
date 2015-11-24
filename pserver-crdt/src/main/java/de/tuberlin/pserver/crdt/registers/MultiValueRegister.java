@@ -5,6 +5,7 @@ import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.TaggedOperation;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -19,8 +20,8 @@ import java.util.Set;
         private long time = Calendar.getInstance().getTimeInMillis();
         private Set<T> register = new HashSet<T>();
 
-        public MultiValueRegister(String id, int noOfReplicas, RuntimeManager runtimeManager) {
-            super(id, noOfReplicas, runtimeManager);
+        public MultiValueRegister(String id, int noOfReplicas, ProgramContext programContext) {
+            super(id, noOfReplicas, programContext);
         }
 
         @Override

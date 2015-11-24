@@ -1,10 +1,14 @@
 package de.tuberlin.pserver.crdt.counters;
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.SimpleOperation;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.naming.OperationNotSupportedException;
 import java.io.Serializable;
@@ -24,10 +28,10 @@ public class GCounter extends AbstractCounter implements CRDT, Serializable {
      * Sole Constructor.
      *
      * @param id the ID of this CRDT
-     * @param runtimeManager the {@code RuntimeManager} belonging to this {@code MLProgram}
+     * @param programContext the {@code RuntimeManager} belonging to this {@code MLProgram}
      */
-    public GCounter(String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(id, noOfReplicas, runtimeManager);
+    public GCounter(String id, int noOfReplicas, ProgramContext programContext) {
+        super(id, noOfReplicas, programContext);
     }
 
     // ---------------------------------------------------
@@ -36,6 +40,8 @@ public class GCounter extends AbstractCounter implements CRDT, Serializable {
 
     @Override
     public boolean increment(int i) {
+        Preconditions.checkArgument(i >= 0, "Increment does not accept negative values: " + i);
+
         if(incrementCount(i)) {
             broadcast(new SimpleOperation<>(Operation.INCREMENT, i));
             return true;

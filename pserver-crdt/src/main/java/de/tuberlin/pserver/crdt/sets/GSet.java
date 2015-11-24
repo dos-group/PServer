@@ -5,6 +5,7 @@ import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.SimpleOperation;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -12,8 +13,8 @@ import java.util.Set;
 public class GSet<T> extends AbstractSet<T> {
     private final Set<T> set;
 
-    public GSet(String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(id, noOfReplicas, runtimeManager);
+    public GSet(String id, int noOfReplicas, ProgramContext programContext) {
+        super(id, noOfReplicas, programContext);
         this.set = new HashSet<>();
     }
 
