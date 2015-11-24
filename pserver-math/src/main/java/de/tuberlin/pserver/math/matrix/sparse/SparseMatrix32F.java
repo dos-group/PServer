@@ -6,7 +6,6 @@ import de.tuberlin.pserver.math.operations.BinaryOperator;
 import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
 import de.tuberlin.pserver.math.operations.UnaryOperator;
-import de.tuberlin.pserver.math.utils.Utils;
 import gnu.trove.map.hash.TLongFloatHashMap;
 
 import java.util.concurrent.locks.Lock;
@@ -95,7 +94,7 @@ public class SparseMatrix32F implements Matrix32F {
 
     @Override
     public void set(final long row, final long col, final Float value) {
-        data.put(Utils.getPos(row, col, this), value);
+        data.put((row * cols + col), value);
     }
 
     @Override
@@ -119,13 +118,13 @@ public class SparseMatrix32F implements Matrix32F {
 
     @Override
      public Float get(final long index) {
-        final Float value = data.get(Utils.toInt(index));
+        final Float value = data.get(index);
         return (value == null) ? 0f : value;
     }
 
     @Override
     public Float get(final long row, final long col) {
-        final Float value = data.get(Utils.getPos(row, col, this));
+        final Float value = data.get((row * cols + col));
         return (value == null) ? 0f : value;
     }
 

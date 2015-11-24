@@ -163,8 +163,8 @@ public final class RuntimeManager implements Deactivatable {
 
     // ----------------- PULL PRIMITIVE ------------------
 
-    public static interface PullHandler {
-        public abstract Object handlePull(final String name);
+    /*public static interface PullHandler {
+        public abstract Object handlePull(final String name, Object requestParam);
     }
 
     public void registerPullHandler(final String name, final PullHandler handler) {
@@ -196,6 +196,50 @@ public final class RuntimeManager implements Deactivatable {
         responseHandler.initLatch(nodeIDs.length);
         netManager.addEventListener(MsgEventHandler.MSG_EVENT_PREFIX + name, responseHandler);
         NetEvents.NetEvent event = new NetEvents.NetEvent(MsgEventHandler.MSG_EVENT_PREFIX + name, true);
+        netManager.sendEvent(nodeIDs, event);
+        try {
+            responseHandler.getLatch().await();
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
+        return pullResponses;
+    }*/
+
+
+    public static interface PullHandler {
+        public abstract Object handlePull(final String name, final Object requestParam);
+    }
+
+    public void registerPullHandler(final String name, final PullHandler handler) {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(handler);
+        netManager.addEventListener(MsgEventHandler.MSG_EVENT_PREFIX + MsgEventHandler.MSG_REQUEST_EVENT_PREFIX + name, e -> {
+            final NetEvents.NetEvent event = (NetEvents.NetEvent) e;
+            final int srcNodeID = infraManager.getNodeIDFromMachineUID(event.srcMachineID);
+            final Object result = handler.handlePull(name, event.getPayload());
+            RuntimeManager.this.send(MsgEventHandler.MSG_RESPONSE_EVENT_PREFIX + name, result, new int[]{srcNodeID});
+        });
+    }
+
+    public Object[] pull(final String name, Object requestParam) { return pull(name, requestParam, remoteNodeIDs); }
+    public Object[] pull(final String name, Object requestParam, final int[] nodeIDs) {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(nodeIDs);
+        final Object[] pullResponses = new Object[nodeIDs.length];
+        final AtomicInteger responseCounter = new AtomicInteger(0);
+        final MsgEventHandler responseHandler = new MsgEventHandler() {
+            @Override
+            public void handleMsg(int srcNodeID, final Object value) {
+                pullResponses[responseCounter.getAndIncrement()] = value;
+            }
+        };
+        responseHandler.setDispatcher(netManager);
+        responseHandler.setInfraManager(infraManager);
+        responseHandler.setRemoveAfterAwait(true);
+        responseHandler.initLatch(nodeIDs.length);
+        netManager.addEventListener(MsgEventHandler.MSG_EVENT_PREFIX + MsgEventHandler.MSG_RESPONSE_EVENT_PREFIX + name, responseHandler);
+        NetEvents.NetEvent event = new NetEvents.NetEvent(MsgEventHandler.MSG_EVENT_PREFIX + MsgEventHandler.MSG_REQUEST_EVENT_PREFIX + name, true);
+        event.setPayload(requestParam);
         netManager.sendEvent(nodeIDs, event);
         try {
             responseHandler.getLatch().await();

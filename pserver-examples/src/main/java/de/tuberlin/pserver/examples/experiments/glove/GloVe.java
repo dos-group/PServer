@@ -12,7 +12,8 @@ import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.Matrix64F;
+import de.tuberlin.pserver.math.matrix.Format;
+import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
 import org.apache.commons.lang3.mutable.MutableDouble;
 
@@ -40,7 +41,7 @@ public final class GloVe extends Program {
     // Constants.
     // ---------------------------------------------------
 
-    private static final int        ROWS = 50;
+    /*private static final int        ROWS = 50;
 
     private static final int        COLS = 36073;
 
@@ -52,26 +53,41 @@ public final class GloVe extends Program {
 
     private static final int        NUM_EPOCHS = 15;
 
-    private static final String     INPUT_DATA = "datasets/text8_coocc.csv";
+    private static final String     INPUT_DATA = "/input/reddit";*/
+
+
+    private static final long       ROWS = 20;
+
+    private static final long       COLS = 3717689;
+
+    private static final float      ALPHA = 0.75f;
+
+    private static final int        X_MAX = 10;
+
+    private static final float      LEARNING_RATE = 0.05f;
+
+    private static final int        NUM_EPOCHS = 10;
+
+    private static final String     INPUT_DATA = "/input/reddit/cooccmat_mincount_15_windowsize_15";
 
     // ---------------------------------------------------
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.PARTITIONED, rows = COLS, cols = COLS, path = INPUT_DATA)
-    public Matrix64F X;
+    @State(scope = Scope.PARTITIONED, rows = COLS, cols = COLS, path = INPUT_DATA, format = Format.SPARSE_FORMAT)
+    public Matrix32F X;
 
     @State(scope = Scope.REPLICATED, rows = ROWS, cols = COLS * 2)
-    public Matrix64F W;
+    public Matrix32F W;
 
     @State(scope = Scope.REPLICATED, rows = ROWS, cols = COLS * 2)
-    public Matrix64F GradSq;
+    public Matrix32F GradSq;
 
     @State(scope = Scope.REPLICATED, rows = 1, cols = COLS * 2)
-    public Matrix64F B;
+    public Matrix32F B;
 
     @State(scope = Scope.REPLICATED, rows = 1, cols = COLS * 2)
-    public Matrix64F GradSqB;
+    public Matrix32F GradSqB;
 
     // ---------------------------------------------------
     // Transactions.
@@ -98,8 +114,8 @@ public final class GloVe extends Program {
     @Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PULL)
     public final TransactionDefinition sync = new TransactionDefinition(
 
-            (Update<Matrix64F>) (remoteUpdates, localState) -> {
-                for (final Matrix64F update : remoteUpdates)
+            (Update<Matrix32F>) (remoteUpdates, localState) -> {
+                for (final Matrix32F update : remoteUpdates)
                     Parallel.For(update, (i, j, v) -> localState.set(i, j, (localState.get(i, j) + update.get(i, j)) / 2));
             }
     );
@@ -114,10 +130,10 @@ public final class GloVe extends Program {
         lifecycle.preProcess(() -> {
 
             final Random rand = new Random();
-            W.applyOnElements(v -> (double)(rand.nextDouble() - 0.5) / ROWS);
-            B.applyOnElements(v -> (double)(rand.nextDouble() - 0.5) / ROWS);
-            GradSq.assign(1.0);
-            GradSqB.assign(1.0);
+            W.applyOnElements(v -> (float)(rand.nextDouble() - 0.5) / ROWS);
+            B.applyOnElements(v -> (float)(rand.nextDouble() - 0.5) / ROWS);
+            GradSq.assign(1.0f);
+            GradSqB.assign(1.0f);
 
         }).process(() ->
 
@@ -132,28 +148,28 @@ public final class GloVe extends Program {
                         if (v == 0) return;
 
                         final long ctxVecIdx = j + COLS;
-                        final Matrix64F w1 = W.getCol(wordVecIdx);
-                        final double b1 = B.get(wordVecIdx);
-                        final Matrix64F gs1 = GradSq.getCol(wordVecIdx);
-                        final Matrix64F w2 = W.getCol(ctxVecIdx);
-                        final double b2 = B.get(ctxVecIdx);
-                        final Matrix64F gs2 = GradSq.getCol(ctxVecIdx);
+                        final Matrix32F w1  = W.getCol(wordVecIdx);
+                        final float     b1  = B.get(wordVecIdx);
+                        final Matrix32F gs1 = GradSq.getCol(wordVecIdx);
+                        final Matrix32F w2  = W.getCol(ctxVecIdx);
+                        final float     b2  = B.get(ctxVecIdx);
+                        final Matrix32F gs2 = GradSq.getCol(ctxVecIdx);
 
-                        final double diff = w1.dot(w2) + b1 + b2 - (double) Math.log(v);
-                        double fdiff = (v > X_MAX) ? diff : (double) Math.pow(v / X_MAX, ALPHA) * diff;
+                        final float diff = w1.dot(w2) + b1 + b2 - (float) Math.log(v);
+                        float fdiff = (v > X_MAX) ? diff : (float) Math.pow(v / X_MAX, ALPHA) * diff;
 
                         costI.add(0.5 * diff * fdiff);
 
                         fdiff *= LEARNING_RATE;
 
-                        final Matrix64F grad1 = w2.scale(fdiff);
-                        final Matrix64F grad2 = w1.scale(fdiff);
+                        final Matrix32F grad1 = w2.scale(fdiff);
+                        final Matrix32F grad2 = w1.scale(fdiff);
 
-                        W.assignColumn(wordVecIdx, w1.sub(grad1.applyOnElements(gs1, (el1, el2) -> (el1 / (double) Math.sqrt(el2)))));
-                        W.assignColumn(ctxVecIdx, w2.sub(grad2.applyOnElements(gs2, (el1, el2) -> (el1 / (double) Math.sqrt(el2)))));
+                        W.assignColumn(wordVecIdx, w1.sub(grad1.applyOnElements(gs1, (el1, el2) -> (el1 / (float) Math.sqrt(el2)))));
+                        W.assignColumn(ctxVecIdx, w2.sub(grad2.applyOnElements(gs2, (el1, el2) -> (el1 / (float) Math.sqrt(el2)))));
 
-                        B.set(0, wordVecIdx, (double) (b1 - fdiff / Math.sqrt(GradSqB.get(0, wordVecIdx))));
-                        B.set(0, ctxVecIdx, (double) (b2 - fdiff / Math.sqrt(GradSqB.get(0, ctxVecIdx))));
+                        B.set(0, wordVecIdx, (float) (b1 - fdiff / Math.sqrt(GradSqB.get(0, wordVecIdx))));
+                        B.set(0, ctxVecIdx, (float) (b2 - fdiff / Math.sqrt(GradSqB.get(0, ctxVecIdx))));
 
                         gs1.assign(gs1.applyOnElements(grad1, (el1, el2) -> el1 + el2 * el2));
                         gs2.assign(gs2.applyOnElements(grad2, (el1, el2) -> el1 + el2 * el2));
@@ -176,8 +192,15 @@ public final class GloVe extends Program {
     // ---------------------------------------------------
 
     public static void main(final String[] args) {
-        PServerExecutor.LOCAL
+
+        //PServerExecutor.LOCAL
+        //        .run(GloVe.class)
+        //       .done();
+
+        System.setProperty("pserver.profile", "wally");
+        PServerExecutor.REMOTE
                 .run(GloVe.class)
                 .done();
+
     }
 }

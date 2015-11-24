@@ -5,20 +5,17 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
-import de.tuberlin.pserver.math.operations.BinaryOperator;
 import de.tuberlin.pserver.math.operations.MatrixAggregation;
-import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
-import de.tuberlin.pserver.math.operations.UnaryOperator;
+import de.tuberlin.pserver.math.tuples.Tuple2;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import de.tuberlin.pserver.runtime.state.RemotePartition;
 import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-public class DistributedMatrix<V extends Number> implements Matrix<V> {
+public class DistributedMatrix {
 
     // ---------------------------------------------------
     // Fields.
@@ -34,50 +31,133 @@ public class DistributedMatrix<V extends Number> implements Matrix<V> {
 
     private final Format format;
 
-    private final Matrix matrixDelegate;
-    
+    private final Matrix matrix;
+
+    private static final String GET_BLOCK = "get_block";
+
+    private long rows, cols;
+
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
-
-    public DistributedMatrix(final DistributedMatrix m) {
-        this(m.programContext, m.matrixDelegate.rows(), m.matrixDelegate.cols(), m.partitioner, m.format);
-    }
 
     public DistributedMatrix(final ProgramContext programContext,
                              final long rows,final long cols,
                              final IMatrixPartitioner partitioner,
                              final Format format) {
 
-        this.programContext = Preconditions.checkNotNull(programContext);
+        this.programContext    = Preconditions.checkNotNull(programContext);
         this.nodeDOP        = programContext.nodeDOP;
-        this.nodeID         = programContext.nodeID;
+        this.nodeID         = programContext.runtimeContext.nodeID;
         this.partitioner    = Preconditions.checkNotNull(partitioner);
         this.shape          = partitioner.getPartitionShape();
         this.format         = format;
 
         final long _rows = shape.rows;
         final long _cols = shape.cols;
-
-        this.matrixDelegate  = new MatrixBuilder()
+        this.matrix  = new MatrixBuilder()
                 .dimension(_rows, _cols)
                 .format(format)
                 .build();
+
+        programContext.runtimeContext.runtimeManager.registerPullHandler(GET_BLOCK, new RuntimeManager.PullHandler() {
+            @Override
+            public Object handlePull(String name, Object requestParam) {
+                Preconditions.checkArgument(name.equals(GET_BLOCK));
+                Preconditions.checkArgument(requestParam instanceof Set, requestParam.getClass());
+                Set<Tuple2<RemotePartition,PartitionShape>> requests = (Set) requestParam;
+                Set<Tuple2<PartitionShape,Matrix>> result = new HashSet<>();
+                for(Object requestObj : requests) {
+                    Preconditions.checkState(requestObj instanceof Tuple2, requestObj.getClass());
+                    Tuple2 requestTuple = (Tuple2) requestObj;
+                    Object key = requestTuple._1;
+                    System.out.println("1: " + requestTuple._1.getClass() + "; " + "2: " + requestTuple._2.getClass());
+                    Preconditions.checkState(key instanceof RemotePartition, key.getClass());
+                    RemotePartition remotePartition = (RemotePartition) key;
+                    Object value = requestTuple._2;
+                    Preconditions.checkState(value instanceof PartitionShape, value.getClass());
+                    PartitionShape partitionShape = (PartitionShape) value;
+                    PartitionShape requestPartition = remotePartition.shape;
+                    Matrix subMatrix = matrix.subMatrix(requestPartition.rows, requestPartition.cols, requestPartition.rowOffset - shape.rowOffset, requestPartition.colOffset - shape.colOffset);
+                    System.out.println("cut shape " + requestPartition + " from " + matrix.toString() + " = " + subMatrix.toString());
+                    result.add(new Tuple2<>(partitionShape, subMatrix));
+                }
+                return result;
+            }
+        });
+
     }
 
     // ---------------------------------------------------
-    // Public Methods.
+    // Public Methods..
     // ---------------------------------------------------
 
-    public long partitionBaseRowOffset() { return shape.rowOffset; }
+    // ---------------------------------------------------
+    // Distributed Operations - Synchronous!
+    // ---------------------------------------------------
 
-    public long partitionBaseColOffset() { return shape.colOffset; }
+    public Matrix aggregateRows(final MatrixAggregation f) {
+//        switch (partitionType) {
+//            case ROW_PARTITIONED: {
+//
+//                final Matrix partialAgg = new MatrixBuilder().dimension(1, shape.rows).layout(layout).format(format).build();
+//                final Matrix totalAgg = new MatrixBuilder().dimension(1, rows).layout(layout).format(format).build();
+//                final RowIterator iter = rowIterator();
+//                while(iter.hasNext()) {
+//                    iter.next();
+//                    final int row = iter.rowNum();
+//                    final double value = f.apply(getRow(row));
+//                    partialAgg.set(0, row - shape.rowOffset, value);
+//                    totalAgg.set(0, row, value);
+//                }
+//
+//                programContext.runtimeContext.dataManager.pushTo("rowAgg", partialAgg);
+//                final int n = programContext.programContext.nodeDOP - 1;
+//                programContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "rowAgg",
+//                        new DataManager.DataEventHandler() {
+//                            @Override
+//                            public void handleDataEvent(int srcNodeID, Object value) {
+//                                final Matrix remotePartialAgg = (Matrix)value;
+//                                final long offset = rows / programContext.programContext.nodeDOP * srcNodeID;
+//                                for (int i = 0; i < remotePartialAgg.rows(); ++i)
+//                                   totalAgg.set(0, offset + i, remotePartialAgg.get(0, i));
+//                            }
+//                        }
+//                );
+//                return totalAgg;
+//            }
+//            case COLUMN_PARTITIONED: throw new IllegalStateException();
+//            case BLOCK_PARTITIONED: throw new IllegalStateException();
+//            default: throw new IllegalStateException();
+//        }
+        return null;
+    }
 
-    public long partitionNumRows() { return shape.rows; }
-
-    public long partitionNumCols() { return shape.cols; }
-
-    public PartitionShape getPartitionShape() { return shape; }
+    public DistributedMatrix collectRemotePartitions() {
+//        if (!completeMatrix)
+//            throw new IllegalStateException();
+//        switch (partitionType) {
+//            case ROW_PARTITIONED: {
+//                Matrix partialMatrix = matrix.subMatrix(shape.rowOffset, shape.colOffset, shape.rows, shape.cols);
+//                programContext.runtimeContext.dataManager.pushTo("partialMatrix", partialMatrix);
+//                final int n = programContext.programContext.nodeDOP - 1;
+//                programContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "partialMatrix",
+//                        new DataManager.DataEventHandler() {
+//                            @Override
+//                            public void handleDataEvent(int srcNodeID, Object value) {
+//                                final Matrix remotePartialMatrix = (Matrix)value;
+//                                matrix.assign(srcNodeID * shape.rows, 0, remotePartialMatrix);
+//                            }
+//                        }
+//                );
+//            } break;
+//            case COLUMN_PARTITIONED: throw new IllegalStateException();
+//            case BLOCK_PARTITIONED: throw new IllegalStateException();
+//            default: throw new IllegalStateException();
+//        }
+//        return this;
+        return null;
+    }
 
     // ---------------------------------------------------
     // Private Methods.
@@ -91,54 +171,68 @@ public class DistributedMatrix<V extends Number> implements Matrix<V> {
         return partitioner.translateGlobalToLocalCol(col);
     }
 
-        /*public Matrix.RowIterator createLocalRowIterator(final Matrix.RowIterator iter) {
-        return new Matrix.RowIterator() {
-            @Override public boolean hasNext() { return iter.hasNext(); }
-            @Override public void next() { iter.next(); }
-            @Override public void nextRandom() { iter.nextRandom(); }
-            @Override public double value(long col) { return iter.value(col); }
-            @Override public Matrix get() { return iter.get(); }
-            @Override public Matrix get(long from, long size) { return iter.get(from, size); }
-            @Override public void reset() { iter.reset(); }
-            @Override public long size() { return iter.size(); }
-            @Override public long rowNum() { return (int) partitioner.translateLocalToGlobalRow(iter.rowNum()); }
-        };
-    }*/
+    private Set<Tuple2<PartitionShape,Matrix>> fetchRemotePartitions(Set<Tuple2<RemotePartition,PartitionShape>> remotePartitions) {
 
-
-    private DistributedMatrix constructIntersectingMatrix(DistributedMatrix sourceMatrix, DistributedMatrix targetMatrix, Map<RemotePartition,PartitionShape> partitionMapping) {
-
-        for(Map.Entry<RemotePartition,PartitionShape> entry : partitionMapping.entrySet()) {
-            if(entry.getKey().nodeId != nodeID) {
-                Matrix subMatrix = null; // TODO: = fetch remote
-                targetMatrix.matrixDelegate.assign(entry.getValue().rowOffset, entry.getValue().colOffset, subMatrix);
+        // require that all remotePartitions are to be fetched from the same node
+        Preconditions.checkNotNull(remotePartitions);
+        Preconditions.checkArgument(remotePartitions.size() > 0);
+        int remoteNodeId = -1;
+        for(Tuple2<RemotePartition,PartitionShape> entry : remotePartitions) {
+            if(remoteNodeId == -1) {
+                remoteNodeId = entry._1.nodeId;
+            }
+            else {
+                Preconditions.checkState(remoteNodeId == entry._1.nodeId);
             }
         }
-        /*
-        // offer own partition, if any
-        RemotePartition ownPartition = remotePartitions.get(nodeID);
-        if(ownPartition != null) {
-            System.out.println(nodeID + ": " + ownPartition.shape);
-            long innerRowOffset = ownPartition.shape.rowOffset - sourceMatrix.shape.rowOffset;
-            long innerColOffset = ownPartition.shape.colOffset - sourceMatrix.shape.colOffset;
-            Matrix subMatrix = matrix.subMatrix(innerRowOffset, innerColOffset, ownPartition.shape.rows, ownPartition.shape.cols);
-            result.matrix.assign(ownPartition.shape.rowOffset, ownPartition.shape.colOffset, subMatrix);
-            programContext.runtimeContext.dataManager.pushTo("partialMatrix", subMatrix);
-            remotePartitions.remove(ownPartition);
+
+        // result buffer
+        Set<Tuple2<PartitionShape,Matrix>> result;
+        // if remotePartitions are from own node, just cut them out and return
+        if(remoteNodeId == nodeID) {
+            result = new HashSet<>();
+            for(Tuple2<RemotePartition,PartitionShape> remoteShape : remotePartitions) {
+                PartitionShape partitionToCut = remoteShape._1.shape;
+                System.out.println("["+nodeID+"] want to cut " + partitionToCut + " from " + shape + " -> ("+matrix.rows()+","+matrix.cols()+")");
+                System.out.println(String.format("matrix.subMatrix(%d, %d, %d, %d)", partitionToCut.rows, partitionToCut.cols, partitionToCut.rowOffset - shape.rowOffset, partitionToCut.colOffset - shape.colOffset));
+                Matrix subMatrix = matrix.subMatrix(partitionToCut.rowOffset - shape.rowOffset, partitionToCut.colOffset - shape.colOffset, partitionToCut.rows, partitionToCut.cols);
+                Preconditions.checkState(subMatrix.rows() == partitionToCut.rows);
+                Preconditions.checkState(subMatrix.cols() == partitionToCut.cols);
+                result.add(new Tuple2<>(remoteShape._2, subMatrix));
+            }
         }
-        int n = remotePartitions.size() - (ownPartition != null ? 1 : 0);
-        programContext.runtimeContext.dataManager.awaitEvent(ExecutionManager.CallType.SYNC, n, "partialMatrix",
-                new DataManager.DataEventHandler() {
-                    @Override
-                    public void handleDataEvent(int srcNodeID, Object value) {
-                        final Matrix remotePartialMatrix = (Matrix) value;
-                        RemotePartition remotePartition = remotePartitions.get(srcNodeID);
-                        Preconditions.checkNotNull(remotePartition, "Received remote partition from node {} but couldn't find a shape for it.", srcNodeID);
-                        result.matrix.assign(remotePartition.shape.rowOffset, remotePartition.shape.colOffset, remotePartialMatrix);
-                    }
-                }
-        );
-        */
+        // if remotePartitions are from remote node, fetch them
+        else {
+            Object[] response = programContext.runtimeContext.runtimeManager.pull(GET_BLOCK, remotePartitions, new int[] {remoteNodeId});
+            Preconditions.checkNotNull(response);
+            Preconditions.checkState(response.length == 1);
+            result = (Set<Tuple2<PartitionShape,Matrix>>) response[0];
+        }
+        return result;
+
+    }
+
+    private DistributedMatrix constructMatrixFromRemotePartitions(Map<RemotePartition, PartitionShape> partitionMapping, DistributedMatrix targetMatrix) {
+        Map<Integer,Set<Tuple2<RemotePartition,PartitionShape>>> remotePartitionsPerNode = new HashMap<>();
+        for(Map.Entry<RemotePartition,PartitionShape> entry : partitionMapping.entrySet()) {
+            Set<Tuple2<RemotePartition,PartitionShape>> partitions = remotePartitionsPerNode.get(entry.getKey().nodeId);
+            if (partitions == null) {
+                partitions = new HashSet<>();
+                remotePartitionsPerNode.put(entry.getKey().nodeId, partitions);
+            }
+            partitions.add(new Tuple2<>(entry.getKey(), entry.getValue()));
+        }
+        for(Set<Tuple2<RemotePartition,PartitionShape>> entry : remotePartitionsPerNode.values()) {
+            Set<Tuple2<PartitionShape,Matrix>> remotePartitions = fetchRemotePartitions(entry);
+            for(Tuple2<PartitionShape,Matrix> remotePartition : remotePartitions) {
+                PartitionShape targetPartitionShape = remotePartition._1;
+                Matrix subMatrix = remotePartition._2;
+                System.out.println("put matrix: " + subMatrix.toString() + " to position: " + targetPartitionShape);
+                System.out.println(String.format("targetMatrix.matrix.assign(%d, %d, matrix)", targetPartitionShape.rowOffset - targetMatrix.shape.rowOffset, targetPartitionShape.colOffset - targetMatrix.shape.colOffset));
+                System.out.println("targetShape: " + targetPartitionShape + "; subMatrix.rows=" + subMatrix.rows() +"; subMatrix.cols=" + subMatrix.cols());
+                targetMatrix.matrix.assign(targetPartitionShape.rowOffset - targetMatrix.shape.rowOffset, targetPartitionShape.colOffset - targetMatrix.shape.colOffset, subMatrix);
+            }
+        }
         return targetMatrix;
     }
 
@@ -154,7 +248,7 @@ public class DistributedMatrix<V extends Number> implements Matrix<V> {
      */
     private static Map<Integer,RemotePartition> getIntersectingRemotePartitions(DistributedMatrix sourceMatrix, PartitionShape targetShape) {
         Map<Integer,RemotePartition> remotePartitions = new HashMap<>(sourceMatrix.nodeDOP);
-        // iterate over all stateObjectNodes, the source matrix is partitioned across
+        // iterate over all nodes, the source matrix is partitioned across
         for(int i : sourceMatrix.partitioner.getNodes()) {
             // get partition shape of (possibly) remote node
             PartitionShape remoteShape = sourceMatrix.partitioner.ofNode(i).getPartitionShape();
@@ -163,221 +257,16 @@ public class DistributedMatrix<V extends Number> implements Matrix<V> {
             if(intersection != null) { // null if no intersection
                 remotePartitions.put(i, new RemotePartition(intersection, i));
             }
-            System.out.println(i + ": " + remoteShape + " intersect " + targetShape + " = " + intersection);
+            //System.out.println(i + ": " + remoteShape + " intersect " + targetShape + " = " + intersection);
         }
         return remotePartitions;
     }
 
-    @Override
-    public Matrix<V> copy() {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> copy(long rows, long cols) {
-        return null;
-    }
-
-    @Override
-    public void set(long row, long col, V value) {
-
-    }
-
-    @Override
-    public Matrix<V> setDiagonalsToZero() {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> setDiagonalsToZero(Matrix<V> B) {
-        return null;
-    }
-
-    @Override
-    public void setArray(Object data) {
-
-    }
-
-    @Override
-    public V get(long index) {
-        return null;
-    }
-
-    @Override
-    public V get(long row, long col) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> getRow(long row) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> getRow(long row, long from, long to) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> getCol(long col) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> getCol(long col, long from, long to) {
-        return null;
-    }
-
-    @Override
-    public Object toArray() {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> applyOnElements(UnaryOperator<V> f) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> applyOnElements(UnaryOperator<V> f, Matrix<V> B) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> applyOnElements(Matrix<V> B, BinaryOperator<V> f) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> applyOnElements(Matrix<V> B, BinaryOperator<V> f, Matrix<V> C) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> applyOnElements(MatrixElementUnaryOperator<V> f) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> applyOnElements(MatrixElementUnaryOperator<V> f, Matrix<V> B) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> applyOnNonZeroElements(MatrixElementUnaryOperator<V> f) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> applyOnNonZeroElements(MatrixElementUnaryOperator<V> f, Matrix<V> B) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> assign(Matrix<V> v) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> assign(V v) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> assignRow(long row, Matrix<V> v) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> assignColumn(long col, Matrix<V> v) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> assign(long rowOffset, long colOffset, Matrix<V> m) {
-        return null;
-    }
-
-    @Override
-    public V aggregate(BinaryOperator<V> combiner, UnaryOperator<V> mapper, Matrix<V> result) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> aggregateRows(MatrixAggregation<V> f) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> aggregateRows(MatrixAggregation<V> f, Matrix<V> result) {
-        return null;
-    }
-
-    @Override
-    public V sum() {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> add(Matrix<V> B) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> add(Matrix<V> B, Matrix<V> C) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> addVectorToRows(Matrix<V> v) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> addVectorToRows(Matrix<V> v, Matrix<V> B) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> addVectorToCols(Matrix<V> v) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> addVectorToCols(Matrix<V> v, Matrix<V> B) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> sub(Matrix<V> B) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> sub(Matrix<V> B, Matrix<V> C) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> mul(Matrix<V> B) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> mul(Matrix<V> B, Matrix<V> C) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> scale(V a) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> scale(V a, Matrix<V> B) {
-        return null;
-    }
-
+    /**
+     * This is currently only supported for quadratic matrices!<br>
+     * Non-quadratic matrices would require column-based partitioning.
+     * @return
+     */
     public DistributedMatrix transpose() {
         // create transposed local shape
         PartitionShape transposedShape = new PartitionShape(shape.cols, shape.rows, shape.colOffset, shape.rowOffset);
@@ -388,107 +277,13 @@ public class DistributedMatrix<V extends Number> implements Matrix<V> {
         for(RemotePartition remotePartition : remotePartitions) {
             PartitionShape transposedOffsets = new PartitionShape(remotePartition.shape.rows, remotePartition.shape.cols, remotePartition.shape.colOffset, remotePartition.shape.rowOffset);
             remoteToLocalPartitionMapping.put(remotePartition, transposedOffsets);
+            //System.out.println(nodeID + " has to fetch " + remotePartition.shape + " from node " + remotePartition.nodeId + " and put it to " + transposedOffsets);
         }
+
         // fetch remote partitions and construct resulting matrix according to position-mapping
-        DistributedMatrix result = new DistributedMatrix(programContext, matrixDelegate.cols(), matrixDelegate.cols(), partitioner, format);
-        DistributedMatrix remoteView = constructIntersectingMatrix(this, result, remoteToLocalPartitionMapping);
+        DistributedMatrix result = new DistributedMatrix(programContext, cols, rows, partitioner, format);
+        System.out.println(result.matrix.rows() + " - " + result.matrix.cols());
+        DistributedMatrix remoteView = constructMatrixFromRemotePartitions(remoteToLocalPartitionMapping, result);
         return remoteView;
-    }
-
-    @Override
-    public Matrix<V> transpose(Matrix<V> B) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> invert() {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> invert(Matrix<V> B) {
-        return null;
-    }
-
-    @Override
-    public V norm(int p) {
-        return null;
-    }
-
-    @Override
-    public V dot(Matrix<V> B) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> subMatrix(long rowOffset, long colOffset, long rows, long cols) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> concat(Matrix<V> B) {
-        return null;
-    }
-
-    @Override
-    public Matrix<V> concat(Matrix<V> B, Matrix<V> C) {
-        return null;
-    }
-
-    @Override
-    public RowIterator rowIterator() {
-        return null;
-    }
-
-    @Override
-    public RowIterator rowIterator(long startRow, long endRow) {
-        return null;
-    }
-
-    @Override
-    public long rows() {
-        return 0;
-    }
-
-    @Override
-    public long cols() {
-        return 0;
-    }
-
-    @Override
-    public long sizeOf() {
-        return 0;
-    }
-
-    @Override
-    public void lock() {
-
-    }
-
-    @Override
-    public void unlock() {
-
-    }
-
-    @Override
-    public void setOwner(Object owner) {
-
-    }
-
-    @Override
-    public Object getOwner() {
-        return null;
-    }
-
-    // ------------------------------------------
-
-    @Override
-    public long toLong(V value) {
-        return 0;
-    }
-
-    @Override
-    public V fromLong(long value) {
-        return null;
     }
 }

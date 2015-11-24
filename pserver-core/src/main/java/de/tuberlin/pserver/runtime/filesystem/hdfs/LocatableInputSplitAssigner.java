@@ -58,7 +58,7 @@ public final class LocatableInputSplitAssigner implements InputSplitAssigner {
                     return next;
                 } else {
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("No more input splits remaining.");
+                        LOG.debug("No more input splits remaining. ===> Set<FileInputSplit> unassigned = " + unassigned.size());
                     }
                     return null;
                 }
