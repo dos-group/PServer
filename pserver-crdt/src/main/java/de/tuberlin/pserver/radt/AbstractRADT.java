@@ -3,6 +3,7 @@ package de.tuberlin.pserver.radt;
 import de.tuberlin.pserver.AbstractReplicatedDataType;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.events.MsgEventHandler;
 
 import java.util.Arrays;
@@ -16,7 +17,6 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
     // ---------------------------------------------------
 
     protected final int[] vectorClock;
-    protected final int siteID;
     // priority queue
     private final Queue<RADTOperation<CObject<T>>> queue;
     // TODO: Not sure what this does...
@@ -26,16 +26,12 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
     // Constructor.
     // ---------------------------------------------------
 
-    protected AbstractRADT(String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(id, noOfReplicas, runtimeManager);
+    protected AbstractRADT(String id, int noOfReplicas, ProgramContext programContext) {
+        super(id, noOfReplicas, programContext);
 
         // Initialize vector clock
         this.vectorClock = new int[runtimeManager.getNodeIDs().length];
         Arrays.fill(vectorClock, 0);
-
-        // Initialize site ID
-        // TODO: we need a getNodeID() function in runtimeManager
-        this.siteID = getNodeID(runtimeManager);
 
         // Initialize queue
         this.queue = new PriorityQueue<>((o1, o2) -> {
@@ -91,7 +87,7 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
     }
 
     protected int[] increaseVectorClock() {
-        vectorClock[siteID]++;
+        vectorClock[nodeId]++;
         return vectorClock.clone();
     }
 
@@ -104,23 +100,4 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
     // ---------------------------------------------------
     // Private Methods.
     // ---------------------------------------------------
-
-    // TODO: this method is stupid, there should be a public getNodeID in runtimeManager
-    private int getNodeID(RuntimeManager runtimeManager) {
-        int[] a = runtimeManager.getNodeIDs();
-        int[] b = runtimeManager.getRemoteNodeIDs();
-
-        for (int anA : a) {
-            boolean found = false;
-            for (int aB : b) {
-                if (anA == aB) {
-                    found = true;
-                }
-                if (!found) {
-                    return anA;
-                }
-            }
-        }
-        return -1;
-    }
 }

@@ -22,7 +22,7 @@ public class LWWSetTestJob extends Program {
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-                LWWSet<Integer> lwws = new LWWSet<>("one", 2, runtimeManager);
+                LWWSet<Integer> lwws = new LWWSet<>("one", 2, programContext);
 
                 for (int i = 0; i <= 10; i++) {
                     lwws.add(i);
@@ -40,7 +40,7 @@ public class LWWSetTestJob extends Program {
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-                LWWSet<Integer> lwws = new LWWSet<>("one", 2, runtimeManager);
+                LWWSet<Integer> lwws = new LWWSet<>("one", 2, programContext);
 
                 for (int i = 4; i <= 15; i++) {
                     lwws.add(i);

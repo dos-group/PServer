@@ -3,8 +3,11 @@ package de.tuberlin.pserver;
 import de.tuberlin.pserver.crdt.operations.EndOperation;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.events.MsgEventHandler;
 import org.apache.commons.lang3.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -49,15 +52,21 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
     // Fields.
     // ---------------------------------------------------
 
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractReplicatedDataType.class);
+
     private final Set<Integer> runningNodes;
 
     private final Set<Integer> finishedNodes;
 
     private final Queue<Operation> buffer;
 
-    private final String id;
+    private final String crdtId;
 
-    private final RuntimeManager runtimeManager;
+    protected final int nodeId;
+
+    private final ProgramContext programContext;
+
+    protected final RuntimeManager runtimeManager;
 
     private final int noOfReplicas;
 
@@ -71,34 +80,39 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
 
     /** Sole constructor
      *
-     * @param id the ID of the CRDT that this replica belongs to
-     * @param runtimeManager the {@code RuntimeManager} belonging to this {@code MLProgram}
+     * @param crdtId the ID of the CRDT that this replica belongs to
+     * @param programContext the {@code ProgramContext} belonging to this {@code MLProgram}
      * */
-    protected AbstractReplicatedDataType(String id, int noOfReplicas, RuntimeManager runtimeManager) {
+    protected AbstractReplicatedDataType(String crdtId, int noOfReplicas, ProgramContext programContext) {
         this.runningNodes = new HashSet<>();
         this.finishedNodes = new HashSet<>();
         this.buffer = new LinkedList<>();
         this.noOfReplicas = noOfReplicas;
 
-        this.runtimeManager = runtimeManager;
-        this.id = id;
+        this.runtimeManager = programContext.runtimeContext.runtimeManager;
+        this.programContext = programContext;
+        this.crdtId = crdtId;
+        this.nodeId = programContext.runtimeContext.nodeID;
 
         this.allNodesRunning = false;
         this.allNodesFinished = false;
 
-        runtimeManager.addMsgEventListener("Running_" + id, new MsgEventHandler() {
+        runtimeManager.addMsgEventListener("Running_" + crdtId, new MsgEventHandler() {
             @Override
             public void handleMsg(int srcNodeID, Object value) {
                 runningNodes.add(srcNodeID);
-                //System.out.println(runningNodes.size());
+                LOG.info("[" + nodeId + "|crdt '" + crdtId + "'] Number of running remote replicas: " + runningNodes.size() + "//"
+                        + (noOfReplicas - 1));
+
+               // System.out.println(noOfReplicas + "***");
 
                 if (runningNodes.size() == noOfReplicas - 1) {
                     allNodesRunning = true;
-                    runtimeManager.removeMsgEventListener("Running_" + id, this);
+                    runtimeManager.removeMsgEventListener("Running_" + crdtId, this);
 
                     // This is necessary to reach replicas that were not online when the first "Running" message was sent
                     // TODO: this is so ugly! (toPrimitive())
-                    runtimeManager.send("Running_" + id, 0, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[0])));
+                    runtimeManager.send("Running_" + crdtId, 0, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[0])));
 
                     // TODO: Start the scheduler that periodically broadcasts operations
                     // TODO: is this really a good idea? Will it not influence calculation results?
@@ -122,8 +136,8 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
     // TODO: this is blocking if not all nodes start/finish...
     @Override
     public final void finish() {
-        System.out.println("[DEBUG] All nodes: " + isAllNodesRunning());
 
+        if(!isAllNodesRunning()) LOG.info("[" + nodeId + "|crdt '" + crdtId + "']" + " Waiting for all CRDTs to start");
         while(!isAllNodesRunning()) {
             try {
                 Thread.sleep(50);
@@ -132,11 +146,11 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
             }
         }
 
-        System.out.println("[DEBUG] All nodes: " + isAllNodesRunning());
         System.out.println("[DEBUG] BufferB: " + buffer.size());
 
         broadcast(new EndOperation());
 
+        if(!isAllNodesFinished()) LOG.info("[" + nodeId + "|crdt '" + crdtId + "']" + " Waiting for all CRDTs to finish");
         while(!isAllNodesFinished()) {
             try {
                 Thread.sleep(50);
@@ -161,7 +175,7 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
     // ---------------------------------------------------
 
     /**
-     * Broadcasts an {@code Operation} to all replicas belonging to this CRDT (same {@code id}) or buffers the
+     * Broadcasts an {@code Operation} to all replicas belonging to this CRDT (same {@code crdtId}) or buffers the
      * {@code Operation} for later broadcasting if not all replicas are online yet.
      *
      * @param op the operation that should be broadcast
@@ -173,7 +187,7 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
             broadcastBuffer();
 
             // TODO: Not necessarily all nodes have replicas of this CRDT
-            runtimeManager.send("Operation_" + id, op, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[0])));
+            runtimeManager.send("Operation_" + crdtId, op, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[0])));
         } else {
             buffer(op);
         }
@@ -202,7 +216,8 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
 
     protected void ready() {
         // This needs to be sent to all nodes, as we do not know yet which ones will have replicas of the CRDT
-        runtimeManager.send("Running_" + id, 0, runtimeManager.getRemoteNodeIDs());
+        runtimeManager.send("Running_" + crdtId, 0, runtimeManager.getRemoteNodeIDs());
+        //runningNodes.add(nodeId);
     }
 
     private boolean isAllNodesRunning() {
@@ -221,7 +236,7 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
         if(buffer.size() > 0) {
             System.out.println("[DEBUG] Broadcasting buffer size " + buffer.size());
             while (buffer.size() > 0) {
-                runtimeManager.send("Operation_" + id, buffer.poll(), ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[0])));
+                runtimeManager.send("Operation_" + crdtId, buffer.poll(), ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[0])));
             }
             return true;
         }

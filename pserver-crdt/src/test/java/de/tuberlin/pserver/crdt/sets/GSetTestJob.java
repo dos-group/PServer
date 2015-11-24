@@ -18,7 +18,7 @@ public class GSetTestJob extends Program {
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-                GSet<Integer> gSet = new GSet<>("one", 2, runtimeManager);
+                GSet<Integer> gSet = new GSet<>("one", 2, programContext);
 
                 for (int i = 0; i <= 10; i++) {
                     //gSet.applyOperation(new SetOperation<>(Operation.ADD, i), runtimeManager);
@@ -37,7 +37,7 @@ public class GSetTestJob extends Program {
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-                GSet<Integer> gSet = new GSet<>("one", 2, runtimeManager);
+                GSet<Integer> gSet = new GSet<>("one", 2, programContext);
 
                 for (int i = 20; i <= 30; i++) {
 

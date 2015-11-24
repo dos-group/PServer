@@ -3,19 +3,20 @@ package de.tuberlin.pserver.radt.list;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.radt.S4Vector;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 public class LinkedList<T> extends AbstractLinkedList<T>{
 
     // TODO: do I need size?
-    public LinkedList(String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(id, noOfReplicas, runtimeManager);
+    public LinkedList(String id, int noOfReplicas, ProgramContext programContext) {
+        super(id, noOfReplicas, programContext);
     }
 
     public boolean insert(int index, T value) {
         Node<T> node;
         int[] clock = increaseVectorClock();
 
-        S4Vector s4 = new S4Vector(sessionID, siteID, clock, 0);
+        S4Vector s4 = new S4Vector(sessionID, nodeId, clock, 0);
 
         node = localInsert(index, value, s4, clock);
 
@@ -34,7 +35,7 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
         Node<T> node;
         int[] clock = increaseVectorClock();
 
-        S4Vector s4 = new S4Vector(sessionID, siteID, clock, 0);
+        S4Vector s4 = new S4Vector(sessionID, nodeId, clock, 0);
 
         node = localUpdate(index, value);
 
@@ -49,7 +50,7 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
     public boolean delete(int index) {
         int[] clock = increaseVectorClock();
 
-        S4Vector s4 = new S4Vector(sessionID, siteID, clock, 0);
+        S4Vector s4 = new S4Vector(sessionID, nodeId, clock, 0);
 
         Node<T> node = localDelete(index);
 

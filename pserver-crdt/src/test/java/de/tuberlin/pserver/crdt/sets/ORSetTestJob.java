@@ -12,7 +12,7 @@ public class ORSetTestJob extends Program {
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-                ORSet<Integer> ors = new ORSet<>("one", 2, runtimeManager);
+                ORSet<Integer> ors = new ORSet<>("one", 2, programContext);
 
                 for (int i = 0; i < 10; i++) {
                     ors.add(i);
@@ -32,7 +32,7 @@ public class ORSetTestJob extends Program {
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-                ORSet<Integer> ors = new ORSet<>("one", 2, runtimeManager);
+                ORSet<Integer> ors = new ORSet<>("one", 2, programContext);
 
                 for (int i = 10; i <= 15; i++) {
 

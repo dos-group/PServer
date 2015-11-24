@@ -11,8 +11,8 @@ public class SimpleCounterTestJob extends Program {
     @Unit(at = "0")
     public void test(final Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            SimpleCounter gc = new SimpleCounter("one", 2, runtimeManager);
-            SimpleCounter gc2 = new SimpleCounter("two", 2, runtimeManager);
+            SimpleCounter gc = new SimpleCounter("one", 2, programContext);
+            SimpleCounter gc2 = new SimpleCounter("two", 2, programContext);
 
             for (int i = 0; i < 10000; i++) {
                 gc.decrement(1);
@@ -36,8 +36,8 @@ public class SimpleCounterTestJob extends Program {
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-                SimpleCounter gc = new SimpleCounter("one", 2, runtimeManager);
-                SimpleCounter gc2 = new SimpleCounter("two", 2, runtimeManager);
+                SimpleCounter gc = new SimpleCounter("one", 2, programContext);
+                SimpleCounter gc2 = new SimpleCounter("two", 2, programContext);
 
                 for (int i = 0; i < 50000; i++) {
                     gc.increment(1);

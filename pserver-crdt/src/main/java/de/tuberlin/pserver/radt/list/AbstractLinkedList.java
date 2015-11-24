@@ -5,6 +5,7 @@ import de.tuberlin.pserver.radt.S4Vector;
 import de.tuberlin.pserver.radt.Cemetery;
 import de.tuberlin.pserver.radt.hashtable.HashTable;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 public abstract class AbstractLinkedList<T> extends AbstractRADT<T> implements ILinkedList<T> {
     // TODO: change to private
@@ -13,10 +14,10 @@ public abstract class AbstractLinkedList<T> extends AbstractRADT<T> implements I
     protected final Cemetery<Node<T>> cemetery;
 
 
-    protected AbstractLinkedList(String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(id, noOfReplicas, runtimeManager);
+    protected AbstractLinkedList(String id, int noOfReplicas, ProgramContext programContext) {
+        super(id, noOfReplicas, programContext);
 
-        this.svi = new HashTable<>(id+"_svi", noOfReplicas, runtimeManager);
+        this.svi = new HashTable<>(id+"_svi", noOfReplicas, programContext);
         this.head = null;
         this.cemetery = new Cemetery<>();
     }

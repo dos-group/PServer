@@ -16,7 +16,7 @@ public class MultiValueRegisterTestJob extends Program {
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            MultiValueRegister<Integer> mvr = new MultiValueRegister<>("one", 2, runtimeManager);
+            MultiValueRegister<Integer> mvr = new MultiValueRegister<>("one", 2, programContext);
 
             for (int i = 0; i <= 10000; i++) {
                 mvr.set(i);
@@ -34,7 +34,7 @@ public class MultiValueRegisterTestJob extends Program {
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            MultiValueRegister<Integer> mvr = new MultiValueRegister<>("one", 2, runtimeManager);
+            MultiValueRegister<Integer> mvr = new MultiValueRegister<>("one", 2, programContext);
 
             for (int i = 0; i <= 1000; i++) {
                 mvr.set(i);

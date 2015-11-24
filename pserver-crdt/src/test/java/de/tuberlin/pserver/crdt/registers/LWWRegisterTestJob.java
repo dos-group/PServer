@@ -13,7 +13,7 @@ public class LWWRegisterTestJob extends Program {
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-                LWWRegister<Integer> lwwr = new LWWRegister<>("one", 2, runtimeManager, (i1, i2) -> i1 > i2);
+                LWWRegister<Integer> lwwr = new LWWRegister<>("one", 2, programContext, (i1, i2) -> i1 > i2);
 
                 for (int i = 0; i <= 10000; i++) {
                     lwwr.set(i);
@@ -31,7 +31,7 @@ public class LWWRegisterTestJob extends Program {
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-                LWWRegister<Integer> lwwr = new LWWRegister<>("one", 2, runtimeManager, (i1, i2) -> i1 > i2);
+                LWWRegister<Integer> lwwr = new LWWRegister<>("one", 2, programContext, (i1, i2) -> i1 > i2);
 
                 for (int i = 0; i <= 10; i++) {
                     lwwr.set(i);

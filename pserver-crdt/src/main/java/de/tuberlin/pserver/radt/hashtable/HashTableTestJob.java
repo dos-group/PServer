@@ -18,7 +18,7 @@ public class HashTableTestJob extends Program {
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            HashTable<Integer, Integer> hashTable = new HashTable<>("one", 2, runtimeManager);
+            HashTable<Integer, Integer> hashTable = new HashTable<>("one", 2, programContext);
 
             for (int i = 0; i <= 10; i++) {
                hashTable.put(i, i);
@@ -54,7 +54,7 @@ public class HashTableTestJob extends Program {
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            HashTable<Integer, Integer> hashTable = new HashTable<>("one", 2, runtimeManager);
+            HashTable<Integer, Integer> hashTable = new HashTable<>("one", 2, programContext);
 
             for (int i = 20; i <= 30; i++) {
 

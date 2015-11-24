@@ -18,7 +18,7 @@ public class ArrayTestJob extends Program {
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            Array<Integer> array = new Array<>(5, "one", 2, runtimeManager);
+            Array<Integer> array = new Array<>(5, "one", 2, programContext);
 
             for (int i = 0; i <= 10; i++) {
                 array.write(1, i);
@@ -47,7 +47,7 @@ public class ArrayTestJob extends Program {
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            Array<Integer> array = new Array<>(5, "one", 2, runtimeManager);
+            Array<Integer> array = new Array<>(5, "one", 2, programContext);
 
             for (int i = 20; i <= 30; i++) {
 

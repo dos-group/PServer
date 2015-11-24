@@ -3,6 +3,7 @@ package de.tuberlin.pserver.radt.arrays;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.radt.S4Vector;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.*;
 
@@ -16,10 +17,10 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
      * Sole constructor
      *
      * @param id             the ID of the CRDT that this replica belongs to
-     * @param runtimeManager the {@code RuntimeManager} belonging to this {@code MLProgram}
+     * @param programContext the {@code RuntimeManager} belonging to this {@code MLProgram}
      */
-    public Array(int size, String id, int noOfReplicas, RuntimeManager runtimeManager) {
-        super(size, id, noOfReplicas, runtimeManager);
+    public Array(int size, String id, int noOfReplicas, ProgramContext programContext) {
+        super(size, id, noOfReplicas, programContext);
     }
 
     // ---------------------------------------------------
@@ -73,8 +74,8 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
 
     private boolean localWrite(int index, T value) {
         int[] clock = increaseVectorClock();
-        S4Vector s4 = new S4Vector(sessionID, siteID, clock, 0);
-        Item<T> item = new Item<>(index, clock, new S4Vector(sessionID, siteID, clock, 0), value);
+        S4Vector s4 = new S4Vector(sessionID, nodeId, clock, 0);
+        Item<T> item = new Item<>(index, clock, new S4Vector(sessionID, nodeId, clock, 0), value);
         array[index] = item;
 
         broadcast(new ArrayOperation<>(Operation.WRITE, item, index, clock, s4));
