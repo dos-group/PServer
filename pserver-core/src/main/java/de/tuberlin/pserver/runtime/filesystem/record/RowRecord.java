@@ -3,7 +3,6 @@ package de.tuberlin.pserver.runtime.filesystem.record;
 import de.tuberlin.pserver.runtime.state.mtxentries.ImmutableMatrixEntry;
 import de.tuberlin.pserver.runtime.state.mtxentries.MatrixEntry;
 import de.tuberlin.pserver.runtime.state.mtxentries.ReusableMatrixEntry;
-import org.apache.commons.csv.CSVRecord;
 
 /**
  * Wraps a {@link org.apache.commons.csv.CSVRecord} instance for compatibility with the generic {@link IRecord} interface.
@@ -20,14 +19,16 @@ public class RowRecord implements IRecord {
 
     private long row;
 
-    private org.apache.commons.csv.CSVRecord delegate;
+    //private org.apache.commons.csv.CSVRecord delegate;
+
+    private String[] record;
 
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
-    public RowRecord(CSVRecord delegate, int[] projection, long row) {
-        this.delegate = delegate;
+    public RowRecord(String[] record, int[] projection, long row) {
+        this.record = record;
         this.projection = projection;
         this.row = row;
     }
@@ -38,7 +39,7 @@ public class RowRecord implements IRecord {
 
     @Override
     public int size() {
-        return projection != null ? projection.length : delegate.size();
+        return projection != null ? projection.length : record.length;
     }
 
     private double getValue(int i) {
@@ -46,9 +47,8 @@ public class RowRecord implements IRecord {
             i = projection[currentIndex];
         }
         double result = Double.NaN;
-        String value = delegate.get(i);
         try {
-            result = Double.parseDouble(value);
+            result = Double.parseDouble(record[i]);
         }
         catch(NumberFormatException e) {}
         currentIndex++;
@@ -65,8 +65,8 @@ public class RowRecord implements IRecord {
     }
 
     @Override
-    public RowRecord set(org.apache.commons.csv.CSVRecord delegate, int[] projection, long row) {
-        this.delegate = delegate;
+    public RowRecord set(String[] record, int[] projection, long row) {
+        this.record = record;
         this.projection = projection;
         this.row = row;
         currentIndex = 0;

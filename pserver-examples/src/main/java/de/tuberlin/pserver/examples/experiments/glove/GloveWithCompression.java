@@ -1,61 +1,31 @@
 package de.tuberlin.pserver.examples.experiments.glove;
 
 import de.tuberlin.pserver.client.PServerExecutor;
+import de.tuberlin.pserver.commons.compression.Compressor;
+import de.tuberlin.pserver.commons.serialization.ObjectSerializer;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
-import de.tuberlin.pserver.dsl.transaction.phases.Update;
+import de.tuberlin.pserver.dsl.transaction.phases.GenericApply;
+import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
+import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
 import org.apache.commons.lang3.mutable.MutableDouble;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Random;
 
-public final class GloVe extends Program {
 
-    // ---------------------------------------------------
-    // Measurements.
-    // ---------------------------------------------------
-
-    // 1496250 ms (Local: 4 Nodes with 8 Threads per Node) - 64F
-
-    // 1541774 ms (Local: 4 Nodes with 2 Threads per Node) - 64F
-
-    // 1597422 ms (Local: 4 Nodes with 8 Threads per Node) - 32F
-
-    // 1245857 ms (Local: 4 Nodes with 8 Threads per Node) - 32F - 20.76min => Optimized Math!
-
-    // 1072146 ms (Local: 4 Nodes with 8 Threads per Node) - 32F - 17.86min => Optimized Math!
-
-    // 1318430
-    
-    // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    /*private static final int        ROWS = 50;
-
-    private static final int        COLS = 36073;
-
-    private static final double     ALPHA = 0.75;
-
-    private static final int        X_MAX = 10;
-
-    private static final double     LEARNING_RATE = 0.05;
-
-    private static final int        NUM_EPOCHS = 15;
-
-    private static final String     INPUT_DATA = "/input/reddit/cooccmat_mincount_15_windowsize_15";*/
-
-    // ---------------------------------------------------
+public final class GloveWithCompression extends Program {
 
     private static final long       ROWS = 20;
 
@@ -94,12 +64,25 @@ public final class GloVe extends Program {
     // Transactions.
     // ---------------------------------------------------
 
+    private ObjectSerializer serializer = ObjectSerializer.Factory.create(ObjectSerializer.SerializerType.KRYO_SERIALIZER);
+
+    private Compressor compressor = Compressor.Factory.create(Compressor.CompressionType.LZ4_COMPRESSION);
+
     @Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PULL)
     public final TransactionDefinition sync = new TransactionDefinition(
 
-            (Update<Matrix32F>) (remoteUpdates, localState) -> {
-                for (final Matrix32F update : remoteUpdates)
-                    Parallel.For(update, (i, j, v) -> localState.set(i, j, (localState.get(i, j) + update.get(i, j)) / 2));
+            (Prepare<Matrix32F, Pair<Integer, byte[]>>) (remoteMatrix) -> {
+                final byte[] serializedObj = serializer.serialize(remoteMatrix);
+                return Pair.of(serializedObj.length, compressor.compress(serializedObj));
+            }
+            ,
+
+            (GenericApply<Pair<Integer, byte[]>,Matrix32F,Matrix32F>) (remoteUpdates, localState) -> {
+                for (final Pair<Integer, byte[]> update : remoteUpdates) {
+                    final Matrix32F updateMtx = serializer.deserialize(compressor.decompress(update.getRight(), update.getLeft()), DenseMatrix32F.class);
+                    Parallel.For(updateMtx, (i, j, v) -> localState.set(i, j, (localState.get(i, j) + updateMtx.get(i, j)) / 2));
+                }
+                return null;
             }
     );
 
@@ -131,11 +114,11 @@ public final class GloVe extends Program {
                         if (v == 0) return;
 
                         final long ctxVecIdx = j + COLS;
-                        final Matrix32F w1  = W.getCol(wordVecIdx);
-                        final float     b1  = B.get(wordVecIdx);
+                        final Matrix32F w1 = W.getCol(wordVecIdx);
+                        final float b1 = B.get(wordVecIdx);
                         final Matrix32F gs1 = GradSq.getCol(wordVecIdx);
-                        final Matrix32F w2  = W.getCol(ctxVecIdx);
-                        final float     b2  = B.get(ctxVecIdx);
+                        final Matrix32F w2 = W.getCol(ctxVecIdx);
+                        final float b2 = B.get(ctxVecIdx);
                         final Matrix32F gs2 = GradSq.getCol(ctxVecIdx);
 
                         final float diff = w1.dot(w2) + b1 + b2 - (float) Math.log(v);
@@ -177,8 +160,8 @@ public final class GloVe extends Program {
     public static void main(final String[] args) {
 
         PServerExecutor.LOCAL
-                .run(GloVe.class)
-               .done();
+                .run(GloveWithCompression.class)
+                .done();
 
         //System.setProperty("pserver.profile", "wally");
         //PServerExecutor.REMOTE
