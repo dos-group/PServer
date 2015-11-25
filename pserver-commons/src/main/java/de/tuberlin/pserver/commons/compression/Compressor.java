@@ -102,7 +102,7 @@ public interface Compressor extends Serializable {
 
         @Override
         public byte[] decompress(final byte[] data, final int decompressedLength) {
-            Preconditions.checkNotNull(null);
+            Preconditions.checkNotNull(data);
             final byte[] restored = new byte[decompressedLength];
             decompressor.decompress(data, 0, restored, 0, decompressedLength);
             return restored;

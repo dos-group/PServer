@@ -24,17 +24,19 @@ public class DenseMatrix32F implements Matrix32F {
 
     private float[] data;
 
-    private final long rows;
+    private long rows;
 
-    private final long cols;
+    private long cols;
 
-    private final Lock lock;
+    transient private Lock lock;
 
-    private Object owner;
+    transient private Object owner;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
+
+    public DenseMatrix32F() { this.lock = new ReentrantLock(true); }
 
     // Copy Constructor.
     public DenseMatrix32F(final DenseMatrix32F m) {

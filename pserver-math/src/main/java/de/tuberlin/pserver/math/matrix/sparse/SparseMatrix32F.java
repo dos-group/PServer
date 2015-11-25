@@ -148,7 +148,7 @@ public class SparseMatrix32F implements Matrix32F {
             String.format("Row index %d is out of bounds for Matrix of size(%d, %d)", row, this.rows(), this.cols()));
         checkArgument(col < this.cols(),
             String.format("Column index %d is out of bounds for Matrix of size(%d, %d)", col, this.rows(), this.cols()));
-        int key = Utils.getPos(row, col, this);
+        long key = Utils.getPos(row, col, this);
         if (value == this.data.getNoEntryValue()) {
             if (this.data.containsKey(key))
                 this.data.remove(key);

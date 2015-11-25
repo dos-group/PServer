@@ -82,11 +82,17 @@
             <artifactId>hadoop-client</artifactId>
         </dependency>
 
-
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.univocity</groupId>
+            <artifactId>univocity-parsers</artifactId>
+            <version>1.5.6</version>
+            <type>jar</type>
         </dependency>
 
     </dependencies>

@@ -2,8 +2,8 @@ package de.tuberlin.pserver.dsl.transaction;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.dsl.transaction.phases.Apply;
 import de.tuberlin.pserver.dsl.transaction.phases.Fuse;
+import de.tuberlin.pserver.dsl.transaction.phases.GenericApply;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 
 
@@ -17,7 +17,7 @@ public class TransactionDefinition {
 
     public final Fuse fusionPhase;
 
-    public final Apply applyPhase;
+    public final GenericApply applyPhase;
 
     private String transactionName;
 
@@ -25,19 +25,19 @@ public class TransactionDefinition {
     // Constructors.
     // ---------------------------------------------------
 
-    public TransactionDefinition(final Apply applyPhase) {
+    public TransactionDefinition(final GenericApply applyPhase) {
 
         this(null, null, applyPhase);
     }
 
     public TransactionDefinition(final Fuse fusionPhase,
-                                 final Apply applyPhase) {
+                                 final GenericApply applyPhase) {
 
         this(null, fusionPhase, applyPhase);
     }
 
     public TransactionDefinition(final Prepare preparePhase,
-                                 final Apply applyPhase) {
+                                 final GenericApply applyPhase) {
 
         this(preparePhase, null, applyPhase);
     }
@@ -45,7 +45,7 @@ public class TransactionDefinition {
 
     public TransactionDefinition(final Prepare preparePhase,
                                  final Fuse fusionPhase,
-                                 final Apply applyPhase) {
+                                 final GenericApply applyPhase) {
 
         this.preparePhase = preparePhase;
 
