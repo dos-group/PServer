@@ -9,10 +9,9 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 
 // TODO: what about exceptions in general
@@ -64,19 +63,22 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
 
     protected final int nodeId;
 
+    // TODO: is programContext really necessary here?
     private final ProgramContext programContext;
 
     protected final RuntimeManager runtimeManager;
 
     private final int noOfReplicas;
 
-    private boolean allNodesRunning;
+    private volatile boolean allNodesRunning;
 
-    private boolean allNodesFinished;
+    private volatile boolean allNodesFinished;
 
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
+
+    // TODO: do I need the whole programContext if I only use the nodeId
 
     /** Sole constructor
      *
@@ -84,9 +86,12 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
      * @param programContext the {@code ProgramContext} belonging to this {@code MLProgram}
      * */
     protected AbstractReplicatedDataType(String crdtId, int noOfReplicas, ProgramContext programContext) {
-        this.runningNodes = new HashSet<>();
-        this.finishedNodes = new HashSet<>();
-        this.buffer = new LinkedList<>();
+        // Threadsafe Sets
+        // TODO: performance depends on a good hash function and good size estimate (resizing is slow)
+        this.runningNodes = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        this.finishedNodes = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+        this.buffer = new ConcurrentLinkedQueue<>();
         this.noOfReplicas = noOfReplicas;
 
         this.runtimeManager = programContext.runtimeContext.runtimeManager;
@@ -133,12 +138,13 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
      * to wait for all replicas of this CRDT to finish and will apply any updates received to reach the replica's final
      * state. (This is a blocking call)
      */
+    // This shouldn't be called from a thread in parallel execution! Only by main thread.
     // TODO: this is blocking if not all nodes start/finish...
     @Override
     public final void finish() {
 
-        if(!isAllNodesRunning()) LOG.info("[" + nodeId + "|crdt '" + crdtId + "']" + " Waiting for all CRDTs to start");
-        while(!isAllNodesRunning()) {
+        if(!allNodesRunning) LOG.info("[" + nodeId + "|crdt '" + crdtId + "']" + " Waiting for all CRDTs to start");
+        while(!allNodesRunning) {
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
@@ -150,8 +156,8 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
 
         broadcast(new EndOperation());
 
-        if(!isAllNodesFinished()) LOG.info("[" + nodeId + "|crdt '" + crdtId + "']" + " Waiting for all CRDTs to finish");
-        while(!isAllNodesFinished()) {
+        if(!allNodesFinished) LOG.info("[" + nodeId + "|crdt '" + crdtId + "']" + " Waiting for all CRDTs to finish");
+        while(!allNodesFinished) {
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
@@ -183,7 +189,7 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
     protected final void broadcast(Operation op) {
         // TODO: batch processing
         // send to all nodes
-        if(isAllNodesRunning()) {
+        if(allNodesRunning) {
             broadcastBuffer();
 
             // TODO: Not necessarily all nodes have replicas of this CRDT
@@ -220,26 +226,20 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
         //runningNodes.add(nodeId);
     }
 
-    private boolean isAllNodesRunning() {
-        return allNodesRunning;
-    }
-
-    private boolean isAllNodesFinished() {
-        return allNodesFinished;
-    }
-
     private void buffer(Operation op) {
         buffer.add(op);
     }
 
     private boolean broadcastBuffer() {
-        if(buffer.size() > 0) {
-            System.out.println("[DEBUG] Broadcasting buffer size " + buffer.size());
-            while (buffer.size() > 0) {
-                runtimeManager.send("Operation_" + crdtId, buffer.poll(), ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[0])));
-            }
-            return true;
+        boolean sent = false;
+        Operation op = buffer.poll();
+
+        while(op != null) {
+            runtimeManager.send("Operation_" + crdtId, op, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[0])));
+            sent = true;
+            op = buffer.poll();
         }
-        return false;
+
+        return sent;
     }
 }
