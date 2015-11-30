@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.crdt.matrix;
+package de.tuberlin.pserver.crdt.matrix.own;
 
 import de.tuberlin.pserver.crdt.CRDT;
 

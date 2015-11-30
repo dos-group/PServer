@@ -1,14 +1,9 @@
-package de.tuberlin.pserver.crdt.matrix;
+package de.tuberlin.pserver.crdt.matrix.own;
 
 import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.crdt.operations.SimpleOperation;
 import de.tuberlin.pserver.crdt.operations.TaggedOperation;
-import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import org.apache.commons.lang3.ArrayUtils;
-
-import java.io.Serializable;
-import java.util.Arrays;
 
 // TODO: implement!
 

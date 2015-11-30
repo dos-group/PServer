@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.crdt.matrix;
+package de.tuberlin.pserver.crdt.matrix.own;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;
@@ -6,12 +6,14 @@ import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 
-public class SparseMatrixTestJob extends Program {
+import static org.junit.Assert.assertEquals;
+
+public class DenseMatrixTestJob extends Program {
 
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            SparseMatrix m = new SparseMatrix(100L, 100L, "matrix", 2, programContext);
+            DenseMatrix m = new DenseMatrix(100, 100, "matrix", 2, programContext);
             m.set(10, 10, 33L);
 
             System.out.println("*** " + m.get(10,10));
@@ -23,7 +25,7 @@ public class SparseMatrixTestJob extends Program {
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            SparseMatrix m = new SparseMatrix(100L, 100L, "matrix", 2, programContext);
+            DenseMatrix m = new DenseMatrix(100, 100, "matrix", 2, programContext);
             m.finish();
             System.out.println("** " + m.get(10,10));
         });
@@ -41,7 +43,7 @@ public class SparseMatrixTestJob extends Program {
         PServerExecutor.LOCAL
                 // Second param is number of slots (threads executing the job) per node,
                 // should be 1 at the beginning.
-                .run(SparseMatrixTestJob.class)
+                .run(DenseMatrixTestJob.class)
                 .done();
     }
 }
