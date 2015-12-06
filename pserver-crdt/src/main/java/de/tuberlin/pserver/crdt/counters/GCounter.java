@@ -34,6 +34,10 @@ public class GCounter extends AbstractCounter implements CRDT, Serializable {
         super(id, noOfReplicas, programContext);
     }
 
+    /*public static GCounter newReplica(String id, int noOfReplicas, ProgramContext programContext) {
+        return new GCounter(id, noOfReplicas, programContext);
+    }*/
+
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------

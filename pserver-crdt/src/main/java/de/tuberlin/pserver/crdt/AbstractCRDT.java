@@ -21,12 +21,12 @@ import java.util.Set;
 // TODO: maybe use blocking queues for buffers
 // TODO: comments and documentation
 // TODO: improve the P2P discovery and termination
-// TODO: what if there is not one replica on every node? => pass number of replicas into constructor!?
 // TODO: change constructor to CRDT.newReplica(...) to reflect that it is replicas being dealt with?
 // TODO: Javadoc package descriptions
+// TODO: have a crdt manager class per node? (for example to prevent two crdts with the same id)
 
 /**
- * <p>
+ *<p>
  * This class provides a skeletal implementation of the {@code CRDT} interface, to minimize the effort required to
  * implement this interface in subclasses.
  *</p>
@@ -51,7 +51,8 @@ public abstract class AbstractCRDT<T> extends AbstractReplicatedDataType<T> impl
     // Constructor.
     // ---------------------------------------------------
 
-    /** Sole constructor
+    /**
+     * Sole constructor
      *
      * @param id the ID of the CRDT that this replica belongs to
      * @param programContext the {@code RuntimeManager} belonging to this {@code MLProgram}

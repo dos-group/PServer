@@ -22,6 +22,9 @@ import static org.junit.Assert.*;
 
 public class GCounterTest {
     private static final int NUM_NODES = 3;
+    private static final int NUM_REPLICAS = 2;
+    private static final String CRDT_ID = "counter";
+
     private static ClusterSimulator clusterSimulator;
     private static PServerClient client;
 
@@ -63,7 +66,7 @@ public class GCounterTest {
         @Unit(at = "0")
         public void test(Lifecycle lifecycle) {
             lifecycle.process(() -> {
-                GCounter gc = new GCounter("counter", 2, programContext);
+                GCounter gc = new GCounter(CRDT_ID, NUM_REPLICAS, programContext);
                 assertEquals("An initialized GCounter should have count 0", 0L, gc.getCount());
                 gc.finish();
             });
@@ -72,7 +75,7 @@ public class GCounterTest {
         @Unit(at = "1")
         public void test2(Lifecycle lifecycle) {
             lifecycle.process(() -> {
-                GCounter gc = new GCounter("counter", 2, programContext);
+                GCounter gc = new GCounter(CRDT_ID, NUM_REPLICAS, programContext);
                 assertEquals("An initialized GCounter should have count 0", 0L, gc.getCount());
                 gc.finish();
             });
@@ -90,7 +93,7 @@ public class GCounterTest {
         @Unit(at = "0")
         public void test(Lifecycle lifecycle) {
             lifecycle.process(() -> {
-                GCounter gc = new GCounter("counter", 2, programContext);
+                GCounter gc = new GCounter(CRDT_ID, NUM_REPLICAS, programContext);
                 System.out.println("*");
                 gc.increment(10);
                 System.out.println("**");
@@ -104,7 +107,7 @@ public class GCounterTest {
         @Unit(at = "1")
         public void test2(Lifecycle lifecycle) {
             lifecycle.process(() -> {
-                GCounter gc = new GCounter("counter", 2, programContext);
+                GCounter gc = new GCounter(CRDT_ID, NUM_REPLICAS, programContext);
                 System.out.println("O");
                 gc.increment(10);
                 System.out.println("OO");
@@ -127,7 +130,7 @@ public class GCounterTest {
         public void test(Lifecycle lifecycle) {
             lifecycle.process(() -> {
                 boolean failed = false;
-                GCounter gc = new GCounter("counter", 2, programContext);
+                GCounter gc = new GCounter(CRDT_ID, NUM_REPLICAS, programContext);
                 try {
                     gc.increment(-10);
                 }
@@ -143,7 +146,7 @@ public class GCounterTest {
         public void test2(Lifecycle lifecycle) {
             lifecycle.process(() -> {
                 boolean failed = false;
-                GCounter gc = new GCounter("counter", 2, programContext);
+                GCounter gc = new GCounter(CRDT_ID, NUM_REPLICAS, programContext);
                 try {
                     gc.increment(-10);
                 } catch (IllegalArgumentException ex) {
@@ -167,7 +170,7 @@ public class GCounterTest {
             lifecycle.process(() -> {
                 boolean failed = false;
                 System.out.println("*");
-                GCounter gc = new GCounter("counter", 2, programContext);
+                GCounter gc = new GCounter(CRDT_ID, NUM_REPLICAS, programContext);
                 System.out.println("**");
 
                 try {
@@ -193,7 +196,7 @@ public class GCounterTest {
         public void test2(Lifecycle lifecycle) {
             lifecycle.process(() -> {
                 boolean failed = false;
-                GCounter gc = new GCounter("counter", 2, programContext);
+                GCounter gc = new GCounter(CRDT_ID, NUM_REPLICAS, programContext);
                 try {
                     gc.decrement(10);
                 }
@@ -216,7 +219,7 @@ public class GCounterTest {
         @Unit(at = "0")
         public void test(Lifecycle lifecycle) {
             lifecycle.process(() -> {
-                GCounter gc = new GCounter("counter", 2, programContext);
+                GCounter gc = new GCounter(CRDT_ID, NUM_REPLICAS, programContext);
                 gc.increment(10);
                 gc.finish();
                 assertEquals("Increment should increase the counter", 10, gc.getCount());
@@ -226,7 +229,7 @@ public class GCounterTest {
         @Unit(at = "1")
         public void test2(Lifecycle lifecycle) {
             lifecycle.process(() -> {
-                GCounter gc = new GCounter("counter", 2, programContext);
+                GCounter gc = new GCounter(CRDT_ID, NUM_REPLICAS, programContext);
                 gc.finish();
                 assertEquals("Counter should have received broadcast increment", 10, gc.getCount());
             });

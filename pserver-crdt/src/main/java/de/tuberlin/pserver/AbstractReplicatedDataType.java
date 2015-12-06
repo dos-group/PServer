@@ -109,8 +109,6 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
                 LOG.info("[" + nodeId + "|crdt '" + crdtId + "'] Number of running remote replicas: " + runningNodes.size() + "//"
                         + (noOfReplicas - 1));
 
-               // System.out.println(noOfReplicas + "***");
-
                 if (runningNodes.size() == noOfReplicas - 1) {
                     allNodesRunning = true;
                     runtimeManager.removeMsgEventListener("Running_" + crdtId, this);

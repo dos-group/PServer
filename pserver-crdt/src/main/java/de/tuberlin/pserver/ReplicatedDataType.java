@@ -10,4 +10,5 @@ public interface ReplicatedDataType {
      * token from all other existing replicas and applies all outstanding operations to reach the final state of this CRDT.
      */
     void finish();
+    //ReplicatedDataType newReplica();
 }
