@@ -1,11 +1,14 @@
 package de.tuberlin.pserver.runtime.filesystem.record;
 
 import com.google.common.base.Preconditions;
+import com.univocity.parsers.common.input.CharInputReader;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +21,9 @@ public abstract class AbstractCSVRecordIteratorProducer implements IRecordIterat
     // ---------------------------------------------------
     // Constants.
     // ---------------------------------------------------
+
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractCSVRecordIteratorProducer.class);
+
 
     public static final char DEFAULT_RECORD_SEPARATOR  = '\n';
     public static final char DEFAULT_DELIMITER         = ',';
@@ -55,8 +61,6 @@ public abstract class AbstractCSVRecordIteratorProducer implements IRecordIterat
         this(DEFAULT_PROJECTION, DEFAULT_DELIMITER, DEFAULT_RECORD_SEPARATOR);
     }
 
-    //protected abstract IRecord csvRecordToIRecord(CSVRecord csvRecord, long row);
-
     protected abstract IRecord csvRecordToIRecord(final String[] rowRecord, final long row);
 
     @Override
@@ -66,16 +70,14 @@ public abstract class AbstractCSVRecordIteratorProducer implements IRecordIterat
 
     private class CSVRecordIterator implements IRecordIterator {
 
-        //protected final Iterator<CSVRecord> csvIterator;
-
         protected final CsvParser parser;
 
-        private String[] parsedRow;
+        protected final InputStream inputStream;
 
         public CSVRecordIterator(InputStream inputStream) {
-            Preconditions.checkNotNull(inputStream);
             try {
-                //csvIterator = new CSVParser(new InputStreamReader(inputStream), csvFormat).iterator();
+
+                this.inputStream = Preconditions.checkNotNull(inputStream);
 
                 this.parser = new CsvParser(settings);
 
@@ -88,13 +90,16 @@ public abstract class AbstractCSVRecordIteratorProducer implements IRecordIterat
 
         @Override
         public boolean hasNext() {
-            parsedRow = parser.parseNext();
-            return parsedRow != null;
+            try {
+                return inputStream.available() != 0; // TODO: THIS SHOULD BE CHANGES! NOT A SAFE WAY!
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
         }
 
         @Override
         public IRecord next(long lineNumber) {
-            return csvRecordToIRecord(parsedRow, lineNumber);
+            return csvRecordToIRecord(parser.parseNext(), lineNumber);
         }
     }
 }

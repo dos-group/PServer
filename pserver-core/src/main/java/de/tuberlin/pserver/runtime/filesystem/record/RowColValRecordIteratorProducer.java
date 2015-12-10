@@ -7,6 +7,10 @@ public class RowColValRecordIteratorProducer extends AbstractCSVRecordIteratorPr
 
     @Override
     protected IRecord csvRecordToIRecord(String[] record, long row) {
+
+        if (record == null)
+            throw new IllegalStateException("record == null");
+
         return reusable.set(record, projection, row);
     }
 }

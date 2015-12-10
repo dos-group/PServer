@@ -319,7 +319,7 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Opening input split " + fileSplit.getPath() + " [" + this.splitStart + "," + this.splitLength + "]");
         }
-        final InputSplitOpenThread isot = new InputSplitOpenThread(conf, fileSplit, 20000);
+        final InputSplitOpenThread isot = new InputSplitOpenThread(conf, fileSplit, 150000); // TODO: Change Timeout!!!
         isot.start();
         try {
             this.stream = isot.waitForCompletion();

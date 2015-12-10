@@ -70,9 +70,9 @@ public interface Compressor extends Serializable {
 
     static final class Lz4Compressor implements Compressor {
 
-        private static final LZ4Compressor compressor = LZ4Factory.fastestInstance().fastCompressor();
+        private static final LZ4Compressor compressor = LZ4Factory.safeInstance().fastCompressor(); //LZ4Factory.fastestInstance().fastCompressor();
 
-        private static final LZ4FastDecompressor decompressor = LZ4Factory.fastestInstance().fastDecompressor();
+        private static final LZ4FastDecompressor decompressor = LZ4Factory.safeInstance().fastDecompressor(); //LZ4Factory.fastestInstance().fastDecompressor();
 
         // ---------------------------------------------------
 

@@ -92,6 +92,12 @@ public class ProgramDriver implements Deactivatable {
 
     public void run() throws Exception {
 
+        try {
+            Thread.sleep(7000); // TODO: REMOVE !!! FEHLER!!!!!
+        } catch (InterruptedException ex) {
+            //throw new IllegalStateException(ex);
+        }
+
         allocateState();
 
         bindState(instance);
@@ -118,10 +124,12 @@ public class ProgramDriver implements Deactivatable {
         }
 
         try {
-            Thread.sleep(2000); // TODO: REMOVE !!!
+            Thread.sleep(5000); // TODO: REMOVE !!! FEHLER!!!!!
         } catch (InterruptedException ex) {
             //throw new IllegalStateException(ex);
         }
+
+        programContext.synchronizeUnit("global_barrier");
 
         stateAllocator.loadData(programContext);
     }

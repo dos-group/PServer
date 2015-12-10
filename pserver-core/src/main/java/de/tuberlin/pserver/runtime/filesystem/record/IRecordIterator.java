@@ -5,5 +5,4 @@ public interface IRecordIterator {
     boolean hasNext();
 
     IRecord next(long lineNumber);
-
 }
