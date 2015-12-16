@@ -14,8 +14,7 @@ import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
-import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.Matrix64F;
+import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.ml.optimization.GradientDescent.GDOptimizer;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
@@ -32,37 +31,37 @@ public class LogisticRegression extends Program {
 
     private static final String NUM_NODES = "2";
 
-    private static final String X_TRAIN_PATH = "/Users/Chris/Downloads/X_train.csv";
-    private static final String Y_TRAIN_PATH = "/Users/Chris/Downloads/Y_train.csv";
-    private static final String X_TEST_PATH = "/Users/Chris/Downloads/X_test.csv";
-    private static final String Y_TEST_PATH = "/Users/Chris/Downloads/Y_test.csv";
+    private static final String X_TRAIN_PATH = "datasets/X_train.csv";
+    private static final String Y_TRAIN_PATH = "datasets/Y_train.csv";
+    private static final String X_TEST_PATH  = "datasets/X_test.csv";
+    private static final String Y_TEST_PATH  = "datasets/Y_test.csv";
 
-    private static final int N_TRAIN = 16;
-    private static final int N_TEST = 4;
+    private static final int N_TRAIN = 16000;
+    private static final int N_TEST = 4000;
     private static final int D = 3;
 
-    private static double STEP_SIZE = 1e-3;
+    private static float STEP_SIZE = 1e-3f;
     private static int NUM_EPOCHS = 1;
-    private static double LAMBDA = 1.0;
+    private static float LAMBDA = 1.0f;
 
     // ---------------------------------------------------
     // State.
     // ---------------------------------------------------
 
     @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = D, path = X_TRAIN_PATH)
-    public Matrix64F XTrain;
+    public Matrix32F XTrain;
 
     @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = 1, path = Y_TRAIN_PATH)
-    public Matrix64F yTrain;
+    public Matrix32F yTrain;
 
     @State(scope = Scope.REPLICATED, rows = N_TEST, cols = D, path = X_TEST_PATH)
-    public Matrix64F XTest;
+    public Matrix32F XTest;
 
     @State(scope = Scope.REPLICATED, rows = N_TEST, cols = 1, path = Y_TEST_PATH)
-    public Matrix64F yTest;
+    public Matrix32F yTest;
 
     @State(scope = Scope.REPLICATED, rows = 1, cols = D)
-    public Matrix64F W;
+    public Matrix32F W;
 
     // ---------------------------------------------------
     // Transactions.
@@ -71,13 +70,15 @@ public class LogisticRegression extends Program {
     @Transaction(state = "W", type = TransactionType.PULL)
     public final TransactionDefinition syncW = new TransactionDefinition(
 
-            (Update<Matrix64F>) (remoteUpdates, localState) -> {
+            (Update<Matrix32F>) (remoteUpdates, localState) -> {
                 int count = 1;
-                for (final Matrix64F update : remoteUpdates) {
-                    Parallel.For(update, (i, j, v) -> W.set(i, j, W.get(i, j) + update.get(i, j)));
-                    count++;
+                if (remoteUpdates != null) {
+                    for (final Matrix32F update : remoteUpdates) {
+                        Parallel.For(update, (i, j, v) -> W.set(i, j, W.get(i, j) + update.get(i, j)));
+                        count++;
+                    }
+                    W.scale(1.0f / count, W);
                 }
-                W.scale(1. / count, W);
             }
     );
 
@@ -161,7 +162,7 @@ public class LogisticRegression extends Program {
                 .results(result)
                 .done();
 
-        Matrix model = (Matrix) result.get(0).get(0);
-        System.out.println(model);
+        //Matrix model = (Matrix) result.get(0).get(0);
+        //System.out.println(model);
     }
 }

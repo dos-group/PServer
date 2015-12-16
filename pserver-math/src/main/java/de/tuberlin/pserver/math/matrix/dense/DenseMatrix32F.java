@@ -642,9 +642,9 @@ public class DenseMatrix32F implements Matrix32F {
             Preconditions.checkArgument(startRow >= 0 && startRow < self.rows());
             Preconditions.checkArgument(endRow >= startRow && endRow <= self.rows());
             this.start = startRow;
-            this.end = endRow;
+            this.end   = endRow;
             this.rowsToFetch = endRow - startRow;
-            this.rand = new Random();
+            this.rand  = new Random();
             reset();
         }
 
@@ -691,10 +691,14 @@ public class DenseMatrix32F implements Matrix32F {
         public Matrix32F get(final long from, final long size) {
             final float v[] = new float[(int)size];
             try {
-                System.arraycopy(self.data, (int)(currentRow * self.rows() + from), v, 0, (int)size);
-            }
-            catch(ArrayIndexOutOfBoundsException e) {
-                System.out.println("failed copy from: " + (int)(currentRow * self.rows() + from) + "; currentRow: " + currentRow + "; from: " + from + ";  length: " + size + "; array.length: " + self.data.length);
+                System.arraycopy(self.data, (int)(currentRow * self.cols() + from), v, 0, (int)size);
+            } catch(ArrayIndexOutOfBoundsException e) {
+                System.out.println("failed copy " +
+                        "from: " + (int)(currentRow * self.rows() + from) + "; " +
+                        "currentRow: " + currentRow + "; " +
+                        "from: " + from + ";  " +
+                        "length: " + size + "; " +
+                        "array.length: " + self.data.length);
                 throw e;
             }
             return new DenseMatrix32F(1, size, v);

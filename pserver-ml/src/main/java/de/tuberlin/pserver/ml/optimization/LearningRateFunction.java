@@ -3,13 +3,13 @@ package de.tuberlin.pserver.ml.optimization;
 
 public interface LearningRateFunction {
 
-    public abstract double decayLearningRate(final long epoch, final double initialAlpha);
+    public abstract float decayLearningRate(final long epoch, final float initialAlpha);
 
 
     class ConstantLearningRate implements LearningRateFunction {
 
         @Override
-        public double decayLearningRate(final long epoch, final double initialAlpha) {
+        public float decayLearningRate(final long epoch, final float initialAlpha) {
             return initialAlpha;
         }
     }
@@ -17,8 +17,8 @@ public interface LearningRateFunction {
     class ConstantDecayLearningRate implements LearningRateFunction {
 
         @Override
-        public double decayLearningRate(final long epoch, final double initialAlpha) {
-            return initialAlpha / Math.sqrt(epoch);
+        public float decayLearningRate(final long epoch, final float initialAlpha) {
+            return initialAlpha / (float)Math.sqrt(epoch);
         }
     }
 
@@ -31,8 +31,8 @@ public interface LearningRateFunction {
         }
 
         @Override
-        public double decayLearningRate(final long epoch, final double initialAlpha) {
-            return initialAlpha / (1d + epoch / decayEpoch);
+        public float decayLearningRate(final long epoch, final float initialAlpha) {
+            return initialAlpha / (float)(1d + epoch / decayEpoch);
         }
     }
 }

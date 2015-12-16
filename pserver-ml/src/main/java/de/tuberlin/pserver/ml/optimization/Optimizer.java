@@ -1,9 +1,9 @@
 package de.tuberlin.pserver.ml.optimization;
 
-import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix32F;
 
 
 public interface Optimizer {
 
-    public abstract Matrix optimize(final Matrix X, final Matrix y, Matrix W) throws Exception;
+    public abstract Matrix32F optimize(final Matrix32F X, final Matrix32F y, Matrix32F W) throws Exception;
 }

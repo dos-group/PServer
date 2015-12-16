@@ -12,11 +12,18 @@ import de.tuberlin.pserver.math.matrix.Matrix32F;
 public class ExampleJob extends Program {
 
     // ---------------------------------------------------
+    // Constants.
+    // ---------------------------------------------------
+
+    private static final int NUM_SIMULATION_NODES = 3;
+
+    // ---------------------------------------------------
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.REPLICATED, rows = 100, cols = 100, format = Format.SPARSE_FORMAT)
-    public Matrix32F W;
+    // Matrix will be partitioned by row over the nodes.
+    @State(scope = Scope.PARTITIONED, rows = 16000, cols = 3, path = "datasets/X_train.csv")
+    public Matrix32F XTrain;
 
     // ---------------------------------------------------
     // Units.
@@ -26,11 +33,11 @@ public class ExampleJob extends Program {
     public void unit(final Lifecycle lifecycle) {
 
         lifecycle.process(() -> {
-
-
-
-
-            //mtxWriter.write("model.csv", DenseMatrixFormat.class, W);
+            Matrix32F.RowIterator it = XTrain.rowIterator();
+            while (it.hasNext()) {
+                it.next();
+                System.out.println("at node [" + programContext.nodeID + "] data - " + it.get());
+            }
         });
     }
 
@@ -40,7 +47,8 @@ public class ExampleJob extends Program {
 
     public static void main(final String[] args) {
 
-        System.setProperty("simulation.numNodes", "1");
+        // Configure the number of simulation nodes.
+        System.setProperty("simulation.numNodes", String.valueOf(NUM_SIMULATION_NODES));
 
         PServerExecutor.LOCAL
                 .run(ExampleJob.class)

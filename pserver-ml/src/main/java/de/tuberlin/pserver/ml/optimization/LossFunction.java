@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.ml.optimization;
 
-import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.Matrix.RowIterator;
+import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -10,13 +9,13 @@ import org.slf4j.LoggerFactory;
 
 public interface LossFunction {
 
-    public abstract double loss(final Matrix X, final Matrix y, final Matrix W, final double lambda);
+    public abstract float loss(final Matrix32F X, final Matrix32F y, final Matrix32F W, final float lambda);
 
-    public abstract Matrix gradient(final Matrix X, final Matrix y, final Matrix W,
-                                    final double lambda, final boolean newtonMethod);
+    public abstract Matrix32F gradient(final Matrix32F X, final Matrix32F y, final Matrix32F W,
+                                    final float lambda, final boolean newtonMethod);
 
-    public abstract Pair<Double, Matrix> lossAndGradient(final Matrix X, final Matrix y,
-                                                         final Matrix W, final double lambda,
+    public abstract Pair<Float, Matrix32F> lossAndGradient(final Matrix32F X, final Matrix32F y,
+                                                         final Matrix32F W, final float lambda,
                                                          final boolean newtonMethod);
 
     // ---------------------------------------------------
@@ -44,18 +43,18 @@ public interface LossFunction {
         }
 
         @Override
-        public double loss(final Matrix X, final Matrix y, final Matrix W, final double lambda) {
+        public float loss(final Matrix32F X, final Matrix32F y, final Matrix32F W, final float lambda) {
 
-            RowIterator XIterator = X.rowIterator();
-            RowIterator yIterator = y.rowIterator();
+            Matrix32F.RowIterator XIterator = X.rowIterator();
+            Matrix32F.RowIterator yIterator = y.rowIterator();
 
-            double sumLoss = 0.0;
+            float sumLoss = 0.0f;
 
             while (XIterator.hasNext()) {
                 XIterator.next();
                 yIterator.next();
 
-                sumLoss += partialLossFunction.loss(XIterator.get(), (Double)yIterator.get().get(0),
+                sumLoss += partialLossFunction.loss(XIterator.get(), (Float)yIterator.get().get(0),
                         predictionFunction.predict(XIterator.get(), W));
             }
 
@@ -63,18 +62,18 @@ public interface LossFunction {
         }
 
         @Override
-        public Matrix gradient(final Matrix X, final Matrix y, final Matrix W,
-                               final double lambda, final boolean newtonMethod) {
+        public Matrix32F gradient(final Matrix32F X, final Matrix32F y, final Matrix32F W,
+                               final float lambda, final boolean newtonMethod) {
 
-            RowIterator XIterator = X.rowIterator();
-            RowIterator yIterator = y.rowIterator();
+            Matrix32F.RowIterator XIterator = X.rowIterator();
+            Matrix32F.RowIterator yIterator = y.rowIterator();
 
-            Matrix gradient = new MatrixBuilder().dimension(1, X.cols()).build();
+            Matrix32F gradient = new MatrixBuilder().dimension(1, X.cols()).build();
 
             while (XIterator.hasNext()) {
 
-                Matrix derivative = partialLossFunction.derivative(XIterator.get(),
-                        (Double)yIterator.get().get(0), predictionFunction.predict(X, W));
+                Matrix32F derivative = partialLossFunction.derivative(XIterator.get(),
+                        (float)yIterator.get().get(0), predictionFunction.predict(X, W));
 
                 gradient.add(derivative, gradient);
 
@@ -89,7 +88,7 @@ public interface LossFunction {
 
                 /*
                 if (newtonMethod) {
-                    Matrix hessian = partialLossFunction.hessian(X, y, predictionFunction.predict(X, W));
+                    Matrix32F hessian = partialLossFunction.hessian(X, y, predictionFunction.predict(X, W));
                     double hessianRegularization = regularizationFunction.regularizeHessian(W, lambda);
 
                     return (hessian.applyOnElements(e -> e + hessianRegularizer)).invert().dot(derivative.add(regularizer));
@@ -105,12 +104,12 @@ public interface LossFunction {
         }
 
         @Override
-        public Pair<Double, Matrix> lossAndGradient(final Matrix X, final Matrix y, final Matrix W,
-                                                    final double lambda, final boolean newtonMethod) {
+        public Pair<Float, Matrix32F> lossAndGradient(final Matrix32F X, final Matrix32F y, final Matrix32F W,
+                                                    final float lambda, final boolean newtonMethod) {
 
-            double loss = loss(X, y, W, lambda);
+            float loss = loss(X, y, W, lambda);
 
-            Matrix gradient = gradient(X, y, W, lambda, newtonMethod);
+            Matrix32F gradient = gradient(X, y, W, lambda, newtonMethod);
 
             return Pair.of(loss, gradient);
         }
