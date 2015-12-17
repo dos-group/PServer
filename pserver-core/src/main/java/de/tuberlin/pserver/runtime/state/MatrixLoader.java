@@ -106,27 +106,34 @@ public final class MatrixLoader {
         this.fileLoadingBarrier = new ConcurrentHashMap<>();
         this.loadingMatrices    = new ConcurrentHashMap<>();
 
+        final AtomicInteger partitionEventCounter = new AtomicInteger(0);
+
         this.netManager.addEventListener(
                 MatrixEntryPartitionEvent.MATRIX_ENTRY_PARTITION_EVENT,
                 (event) -> {
                     final MatrixEntryPartitionEvent e = (MatrixEntryPartitionEvent) event;
                     final MatrixLoadTask task = matrixLoadTasks.get(e.getName());
                     final Matrix matrix = (Matrix)loadingMatrices.get(task.state.stateName);
-
-                    if (Matrix32F.class.isAssignableFrom(matrix.getClass())) {
-                        for (final MatrixEntry entry : e.getEntries()) {
+                    synchronized (matrix) {
+                        if (Matrix32F.class.isAssignableFrom(matrix.getClass())) {
                             synchronized (matrix) {
-                                matrix.set(entry.getRow(), entry.getCol(), entry.getValue().floatValue());
+                                for (final MatrixEntry entry : e.getEntries()) {
+                                    matrix.set(entry.getRow(), entry.getCol(), entry.getValue().floatValue());
+                                }
+                            }
+                        }
+
+                        if (Matrix64F.class.isAssignableFrom(matrix.getClass())) {
+                            synchronized (matrix) {
+                                for (final MatrixEntry entry : e.getEntries()) {
+                                    matrix.set(entry.getRow(), entry.getCol(), entry.getValue().doubleValue());
+                                }
                             }
                         }
                     }
 
-                    if (Matrix64F.class.isAssignableFrom(matrix.getClass())) {
-                        for (final MatrixEntry entry : e.getEntries()) {
-                            synchronized (matrix) {
-                                matrix.set(entry.getRow(), entry.getCol(), entry.getValue().doubleValue());
-                            }
-                        }
+                    if (partitionEventCounter.get() % 50000 == 0) {
+                        LOG.info("Received " + partitionEventCounter.get() + " from " + e.srcMachineID.toString());
                     }
                 }
         );
@@ -186,12 +193,10 @@ public final class MatrixLoader {
     @SuppressWarnings("unchecked")
     private void loadMatrix(final MatrixLoadTask task) {
         int nodeId = task.programContext.nodeID;
-
         // prepare to read entries that belong to foreign matrix partitions
         Map<Integer, List<MatrixEntry>> foreignEntries = new HashMap<>();
         // threshold that indicates how many entries are gathered before sending
-        int foreignEntriesThreshold = 2048;
-
+        int foreignEntriesThreshold = 4096 * 2;
         final Matrix matrix = (Matrix)loadingMatrices.get(task.state.stateName);
         final IMatrixPartitioner matrixPartitioner = task.partitioner;
         final FileDataIterator<? extends IRecord> fileIterator = task.fileIterator;
@@ -199,46 +204,41 @@ public final class MatrixLoader {
 
         MatrixEntry entry;
         while (fileIterator.hasNext()) {
+
             final IRecord record = fileIterator.next();
 
-            // iterate through entries in record
-            while (record.hasNext()) {
-                entry = record.next(reusable);
+            synchronized (matrix) {
+                // iterate through entries in record
+                while (record.hasNext()) {
+                    entry = record.next(reusable);
+                    if (entry.getRow() >= task.state.rows || entry.getCol() >= task.state.cols)
+                        continue;
+                    // get the partition this record belongs to
+                    int targetPartition = matrixPartitioner.getPartitionOfEntry(entry);
+                    // if record belongs to own node, set the value
+                    if (targetPartition == nodeId) {
 
-                if(entry.getRow() >= task.state.rows || entry.getCol() >= task.state.cols)
-                    continue;
-
-                // get the partition this record belongs to
-                int targetPartition = matrixPartitioner.getPartitionOfEntry(entry);
-                // if record belongs to own node, set the value
-                if (targetPartition == nodeId) {
-
-                    if (Matrix32F.class.isAssignableFrom(matrix.getClass())) {
-                        synchronized (matrix) {
+                        if (Matrix32F.class.isAssignableFrom(matrix.getClass())) {
                             matrix.set(entry.getRow(), entry.getCol(), entry.getValue().floatValue());
                         }
-                    }
-
-                    if (Matrix64F.class.isAssignableFrom(matrix.getClass())) {
-                        synchronized (matrix) {
+                        if (Matrix64F.class.isAssignableFrom(matrix.getClass())) {
                             matrix.set(entry.getRow(), entry.getCol(), entry.getValue().doubleValue());
                         }
-                    }
-
-                } else {
-                    // otherwise append entry to foreign entries and send them depending on threshold
-                    List<MatrixEntry> valuesOfTargetNode = getListOrCreateIfNotExists(foreignEntries, targetPartition, foreignEntriesThreshold);
-                    valuesOfTargetNode.add(new ImmutableMatrixEntry(entry));
-                    if (valuesOfTargetNode.size() >= foreignEntriesThreshold) {
-                        sendPartition(targetPartition, valuesOfTargetNode, task);
+                    } else {
+                        // otherwise append entry to foreign entries and send them depending on threshold
+                        List<MatrixEntry> valuesOfTargetNode = getListOrCreateIfNotExists(foreignEntries, targetPartition, foreignEntriesThreshold);
+                        valuesOfTargetNode.add(new ImmutableMatrixEntry(entry));
+                        if (valuesOfTargetNode.size() >= foreignEntriesThreshold) {
+                            sendPartition(targetPartition, valuesOfTargetNode, task);
+                        }
                     }
                 }
             }
         }
         // send all remaining foreign entries
-        for (Map.Entry<Integer, List<MatrixEntry>> map : foreignEntries.entrySet()) {
-            sendPartition(map.getKey(), map.getValue(), task);
-        }
+        //for (Map.Entry<Integer, List<MatrixEntry>> map : foreignEntries.entrySet()) {
+        //    sendPartition(map.getKey(), map.getValue(), task);
+        //}
         netManager.broadcastEvent(new MatrixLoader.FinishedLoadingFileEvent(task.state.stateName));
         finishedTask(task.state.stateName);
     }

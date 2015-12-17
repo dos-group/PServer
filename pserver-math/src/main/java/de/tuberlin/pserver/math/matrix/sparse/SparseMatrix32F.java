@@ -7,6 +7,8 @@ import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
 import de.tuberlin.pserver.math.operations.UnaryOperator;
 import de.tuberlin.pserver.math.utils.Utils;
+import gnu.trove.TCollections;
+import gnu.trove.map.TLongFloatMap;
 import gnu.trove.map.hash.TLongFloatHashMap;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.math3.random.RandomDataGenerator;
@@ -31,7 +33,7 @@ public class SparseMatrix32F implements Matrix32F {
     // Fields.
     // ---------------------------------------------------
 
-    private TLongFloatHashMap data = new TLongFloatHashMap();
+    private TLongFloatMap data;
     private final long rows;
     private final long cols;
     private final Lock lock;
@@ -46,6 +48,7 @@ public class SparseMatrix32F implements Matrix32F {
         this.rows = rows;
         this.cols = cols;
         this.lock = new ReentrantLock(true);
+        this.data = new TLongFloatHashMap((int)(rows * cols * 0.1));
     }
 
     // Copy Constructor
@@ -148,7 +151,7 @@ public class SparseMatrix32F implements Matrix32F {
             String.format("Row index %d is out of bounds for Matrix of size(%d, %d)", row, this.rows(), this.cols()));
         checkArgument(col < this.cols(),
             String.format("Column index %d is out of bounds for Matrix of size(%d, %d)", col, this.rows(), this.cols()));
-        int key = Utils.getPos(row, col, this);
+        long key = Utils.getPos(row, col, this);
         if (value == this.data.getNoEntryValue()) {
             if (this.data.containsKey(key))
                 this.data.remove(key);
@@ -210,7 +213,7 @@ public class SparseMatrix32F implements Matrix32F {
 
     @Override
     public Float get(final long row, final long col) {
-        final Float value = data.get(Utils.getPos(row, col, this));
+        final Float value = data.get((row * cols + col));
         return (value == null) ? 0f : value;
     }
 

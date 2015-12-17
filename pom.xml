@@ -358,6 +358,7 @@
         <module>pserver-examples</module>
         <module>pserver-test</module>
         <module>pserver-dist</module>
+        <module>pserver-dist-peel</module>
     </modules>
 
 </project>

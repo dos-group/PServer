@@ -73,6 +73,7 @@ public final class MatrixBuilder {
                         m = (MAT)new SparseMatrix64F(rows, cols);
                         break;
                 }
+                break;
             case DENSE_FORMAT:
                 switch (elementType) {
                     case FLOAT_MATRIX:
@@ -82,6 +83,7 @@ public final class MatrixBuilder {
                         m = (MAT)new DenseMatrix64F(rows, cols);
                         break;
                 }
+                break;
         }
         return m;
     }

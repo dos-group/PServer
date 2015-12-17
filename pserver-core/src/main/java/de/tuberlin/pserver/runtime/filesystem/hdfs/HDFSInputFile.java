@@ -48,7 +48,7 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
     //  The configuration parameters. Configured on the instance and serialized to be shipped.
     // --------------------------------------------------------------------------------------------
 
-    protected  String path;
+    protected String path;
 
     protected Path filePath;
 
@@ -70,6 +70,12 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
         this.filePath   = new Path(filePath);
         this.netManager = Preconditions.checkNotNull(netManager);
         this.format     = Preconditions.checkNotNull(format);
+
+        System.setProperty("HADOOP_HOME", "/home/peel/peel/systems/hadoop-2.4.1");
+        System.setProperty("hadoop.home.dir", "/home/peel/peel/systems/hadoop-2.4.1");
+
+        this.conf.set("HADOOP_HOME", "/home/peel/peel/systems/hadoop-2.4.1");
+        this.conf.set("hadoop.home.dir", "/home/peel/peel/systems/hadoop-2.4.1");
     }
 
     // --------------------------------------------------------------------------------------------
@@ -178,6 +184,8 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
             totalLength += pathFile.getLen();
         }
 
+        LOG.info("=+=> Total length of input file " + filePath + ": " + totalLength);
+
         // returns if unsplittable
         if(unsplittable) {
             int splitNum = 0;
@@ -267,7 +275,12 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
             }
         }
 
-        return inputSplits.toArray(new FileInputSplit[inputSplits.size()]);
+
+        FileInputSplit[] fileInputSplits = inputSplits.toArray(new FileInputSplit[inputSplits.size()]);
+
+        LOG.info("=+=> Computed " + fileInputSplits.length + " for input file " + filePath + ".");
+
+        return fileInputSplits;
     }
 
     protected boolean acceptFile(FileStatus fileStatus) {
@@ -306,7 +319,7 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Opening input split " + fileSplit.getPath() + " [" + this.splitStart + "," + this.splitLength + "]");
         }
-        final InputSplitOpenThread isot = new InputSplitOpenThread(conf, fileSplit, 20000);
+        final InputSplitOpenThread isot = new InputSplitOpenThread(conf, fileSplit, 150000); // TODO: Change Timeout!!!
         isot.start();
         try {
             this.stream = isot.waitForCompletion();

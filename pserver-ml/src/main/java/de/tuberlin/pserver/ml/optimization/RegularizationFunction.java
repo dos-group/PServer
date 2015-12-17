@@ -1,37 +1,36 @@
 package de.tuberlin.pserver.ml.optimization;
 
 
-import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix32F;
 
 public interface RegularizationFunction {
 
-    public abstract double regularize(final Matrix W, final double lambda);
+    public abstract float regularize(final Matrix32F W, final float lambda);
 
-    public abstract Matrix regularizeDerivative(final Matrix W, final double lambda);
+    public abstract Matrix32F regularizeDerivative(final Matrix32F W, final float lambda);
 
-    public abstract double regularizeHessian(final Matrix W, final double lambda);
-
+    public abstract float regularizeHessian(final Matrix32F W, final float lambda);
 
     class L2Regularization implements RegularizationFunction {
 
         @Override
-        public double regularize(final Matrix W, final double lambda) {
+        public float regularize(final Matrix32F W, final float lambda) {
             // do not include intercept
-            final double sq  = (Double)W.get(0);
-            final double dot = (Double)W.dot(W);
-            return 0.5 * lambda * (dot - sq * sq);
+            final float sq  = (float)W.get(0);
+            final float dot = (float)W.dot(W);
+            return 0.5f * lambda * (dot - sq * sq);
         }
 
         @Override
-        public Matrix regularizeDerivative(final Matrix W, final double lambda) {
-            Matrix regularization = W.scale(lambda);
+        public Matrix32F regularizeDerivative(final Matrix32F W, final float lambda) {
+            Matrix32F regularization = W.scale(lambda);
             // do not regularize intercept
             regularization.set(0, 0, lambda);
             return regularization;
         }
 
         @Override
-        public double regularizeHessian(final Matrix W, final double lambda) {
+        public float regularizeHessian(final Matrix32F W, final float lambda) {
             return lambda;
         }
     }

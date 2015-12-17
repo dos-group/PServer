@@ -71,7 +71,7 @@ public final class RPCManager {
         final Pair<Class<?>, UUID> proxyKey =  (Pair)Pair.of(protocolInterface, dstMachine.machineID);
         T proxy = (T) cachedProxies.get(proxyKey);
         if (proxy == null) {
-            proxy = ProtocolCallerProxy.createProtocolProxy(5000, dstMachine.machineID, protocolInterface, netManager);
+            proxy = ProtocolCallerProxy.createProtocolProxy(150000, dstMachine.machineID, protocolInterface, netManager);
             cachedProxies.put(proxyKey, proxy);
         }
         return proxy;

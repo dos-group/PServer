@@ -8,12 +8,12 @@ public class Utils {
 
     public static final double DEFAULT_EPSILON = 0.001;
 
-    public static int getPos(final long row, final long col, MatrixBase mat) {
+    public static long getPos(final long row, final long col, MatrixBase mat) {
         return getPos(row, col, mat.rows(), mat.cols());
     }
 
-    public static int getPos(final long row, final long col, long numRows, long numCols) {
-        return toInt(row * numCols + col);
+    public static long getPos(final long row, final long col, long numRows, long numCols) {
+        return row * numCols + col;
     }
 
     public static int toInt(long value) {

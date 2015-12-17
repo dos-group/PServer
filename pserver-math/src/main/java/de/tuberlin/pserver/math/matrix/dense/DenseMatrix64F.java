@@ -644,8 +644,7 @@ public class DenseMatrix64F implements Matrix64F {
             final double v[] = new double[(int)size];
             try {
                 System.arraycopy(self.data, (int)(currentRow * self.cols + from), v, 0, (int)size);
-            }
-            catch(ArrayIndexOutOfBoundsException e) {
+            } catch(ArrayIndexOutOfBoundsException e) {
                 System.out.println("failed copy from: " + (int)(currentRow * self.cols + from) + "; currentRow: " + currentRow + "; from: " + from + ";  length: " + size + "; array.length: " + self.data.length);
                 throw e;
             }

@@ -45,114 +45,129 @@ public class StateAllocator {
 
     @SuppressWarnings("unchecked")
     public MatrixBase alloc(final ProgramContext programContext, final StateDescriptor state) {
-        MatrixBase m = null;
 
-        switch (state.scope) {
+        //try {
 
-            case SINGLETON: {
-                if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
+            MatrixBase m = null;
 
-                    m = new MatrixBuilder()
-                            .dimension(state.rows, state.cols)
-                            .format(state.format)
-                            .elementType(ElementType.getElementTypeFromClass(state.stateType))
-                            .build();
+            switch (state.scope) {
 
-                    new MatrixCacheProvider<>(
-                            programContext.runtimeContext,
-                            (Matrix)m
-                    );
+                case SINGLETON: {
+                    if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
 
-                } else {
+                        m = new MatrixBuilder()
+                                .dimension(state.rows, state.cols)
+                                .format(state.format)
+                                .elementType(ElementType.getElementTypeFromClass(state.stateType))
+                                .build();
 
-                    final MatrixBase cache = new MatrixBuilder()
-                            .dimension(state.rows, state.cols)
-                            .format(Format.SPARSE_FORMAT)
-                            .elementType(ElementType.getElementTypeFromClass(state.stateType))
-                            .build();
+                        new MatrixCacheProvider<>(
+                                programContext.runtimeContext,
+                                (Matrix) m
+                        );
 
-                    new MatrixCache(
-                            programContext.runtimeContext,
-                            state.atNodes,
-                            null,
-                            (Matrix)cache,
-                            DEFAULT_CACHE_SIZE
-                    );
+                    } else {
+
+                        final MatrixBase cache = new MatrixBuilder()
+                                .dimension(state.rows, state.cols)
+                                .format(Format.SPARSE_FORMAT)
+                                .elementType(ElementType.getElementTypeFromClass(state.stateType))
+                                .build();
+
+                        new MatrixCache(
+                                programContext.runtimeContext,
+                                state.atNodes,
+                                null,
+                                (Matrix) cache,
+                                DEFAULT_CACHE_SIZE
+                        );
+                    }
                 }
-            } break;
+                break;
 
-            case REPLICATED: {
-                if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
-                    m = new MatrixBuilder()
-                            .dimension(state.rows, state.cols)
-                            .format(state.format)
-                            .elementType(ElementType.getElementTypeFromClass(state.stateType))
-                            .build();
+                case REPLICATED: {
+                    if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
+                        m = new MatrixBuilder()
+                                .dimension(state.rows, state.cols)
+                                .format(state.format)
+                                .elementType(ElementType.getElementTypeFromClass(state.stateType))
+                                .build();
+                    }
                 }
-            } break;
+                break;
 
-            case PARTITIONED: {
-                switch (ElementType.getElementTypeFromClass(state.stateType)) {
-                    case FLOAT_MATRIX: {
-                        if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
+                case PARTITIONED: {
+                    switch (ElementType.getElementTypeFromClass(state.stateType)) {
+                        case FLOAT_MATRIX: {
+                            if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
+                                m = new DistributedMatrix32F(
+                                        programContext,
+                                        state.rows,
+                                        state.cols,
+                                        state.format,
+                                        state.atNodes,
+                                        state.partitioner
+                                );
+                            }
+                        }
+                        break;
+                        case DOUBLE_MATRIX: {
+                            if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
+                                m = new DistributedMatrix64F(
+                                        programContext,
+                                        state.rows,
+                                        state.cols,
+                                        state.format,
+                                        state.atNodes,
+                                        state.partitioner
+                                );
+                            }
+                        }
+                        break;
+                    }
+                }
+                break;
+
+                case LOGICALLY_PARTITIONED:
+                    switch (ElementType.getElementTypeFromClass(state.stateType)) {
+                        case FLOAT_MATRIX: {
                             m = new DistributedMatrix32F(
                                     programContext,
                                     state.rows,
                                     state.cols,
                                     state.format,
                                     state.atNodes,
-                                    state.partitioner
+                                    state.partitioner // TODO: CHANGE!
                             );
                         }
-                    } break;
-                    case DOUBLE_MATRIX: {
-                        if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
+                        break;
+                        case DOUBLE_MATRIX: {
                             m = new DistributedMatrix64F(
                                     programContext,
                                     state.rows,
                                     state.cols,
                                     state.format,
                                     state.atNodes,
-                                    state.partitioner
+                                    state.partitioner // TODO: CHANGE!
                             );
                         }
-                    } break;
-                }
-            } break;
-
-            case LOGICALLY_PARTITIONED:
-                switch (ElementType.getElementTypeFromClass(state.stateType)) {
-                    case FLOAT_MATRIX: {
-                        m = new DistributedMatrix32F(
-                                programContext,
-                                state.rows,
-                                state.cols,
-                                state.format,
-                                state.atNodes,
-                                state.partitioner // TODO: CHANGE!
-                        );
-                    } break;
-                    case DOUBLE_MATRIX: {
-                        m = new DistributedMatrix64F(
-                                programContext,
-                                state.rows,
-                                state.cols,
-                                state.format,
-                                state.atNodes,
-                                state.partitioner // TODO: CHANGE!
-                        );
-                    } break;
-                } break;
-        }
-
-        if (m != null) {
-            if (!("".equals(state.path))) {
-                matrixLoader.addLoadingTask(programContext, state, m);
+                        break;
+                    }
+                    break;
             }
-        } else
-            throw new IllegalStateException();
 
-        return m;
+            if (m != null) {
+                if (!("".equals(state.path))) {
+                    matrixLoader.addLoadingTask(programContext, state, m);
+                }
+            } else
+                throw new IllegalStateException();
+
+            return m;
+
+        //} catch(Exception e) {
+        //    throw new IllegalStateException("Name: " + state.stateName + " > " + e.getCause());
+        //}
     }
 
     public void loadData(final ProgramContext programContext) throws Exception {

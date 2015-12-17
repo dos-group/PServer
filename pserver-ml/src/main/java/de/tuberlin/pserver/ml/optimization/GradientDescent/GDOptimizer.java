@@ -3,7 +3,7 @@ package de.tuberlin.pserver.ml.optimization.GradientDescent;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.LoopTermination;
-import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import org.slf4j.Logger;
@@ -18,7 +18,7 @@ public class GDOptimizer implements Optimizer, LoopTermination {
 
     private int batchSize;
 
-    private double initialLearningRate;
+    private float initialLearningRate;
 
     private boolean shuffle;
 
@@ -34,13 +34,13 @@ public class GDOptimizer implements Optimizer, LoopTermination {
 
     private boolean converged;
 
-    private double regularization;
+    private float regularization;
 
 
     public GDOptimizer() {
         this.maxIterations = 100;
         this.batchSize = 1;
-        this.initialLearningRate = 1.0;
+        this.initialLearningRate = 1.0f;
         this.shuffle = true;
         this.optimizeIntercept = true;
         this.newtonMethod = false;
@@ -50,7 +50,7 @@ public class GDOptimizer implements Optimizer, LoopTermination {
                 new RegularizationFunction.L2Regularization());
         this.learningRateFunction = new LearningRateFunction.ConstantLearningRate();
         this.syncMode = Loop.ASYNCHRONOUS;
-        this.regularization = 1e-4;
+        this.regularization = 1e-4f;
     }
 
     public GDOptimizer setMaxIterations(int maxIterations) {
@@ -63,7 +63,7 @@ public class GDOptimizer implements Optimizer, LoopTermination {
         return this;
     }
 
-    public GDOptimizer setInitialLearningRate(double initialLearningRate) {
+    public GDOptimizer setInitialLearningRate(float initialLearningRate) {
         this.initialLearningRate = initialLearningRate;
         return this;
     }
@@ -78,7 +78,7 @@ public class GDOptimizer implements Optimizer, LoopTermination {
         return this;
     }
 
-    public GDOptimizer setRegularization(double regularization) {
+    public GDOptimizer setRegularization(float regularization) {
         this.regularization = regularization;
         return this;
     }
@@ -94,21 +94,21 @@ public class GDOptimizer implements Optimizer, LoopTermination {
     }
 
     @Override
-    public Matrix optimize(Matrix X, Matrix y, Matrix W) throws Exception {
+    public Matrix32F optimize(Matrix32F X, Matrix32F y, Matrix32F W) throws Exception {
 
-        Matrix.RowIterator XIterator = X.rowIterator();
+        Matrix32F.RowIterator XIterator = X.rowIterator();
 
         converged = false;
 
         UnitMng.loop(this, syncMode, (epoch) -> {
 
-            Matrix gradient = new MatrixBuilder().dimension(1, X.cols()).build();
+            Matrix32F gradient = new MatrixBuilder().dimension(1, X.cols()).build();
 
-            Matrix batchX = new MatrixBuilder().dimension(batchSize, X.cols()).build();
+            Matrix32F batchX = new MatrixBuilder().dimension(batchSize, X.cols()).build();
 
-            Matrix batchY = new MatrixBuilder().dimension(batchSize, y.cols()).build();
+            Matrix32F batchY = new MatrixBuilder().dimension(batchSize, y.cols()).build();
 
-            final double learningRate =
+            final float learningRate =
                     learningRateFunction.decayLearningRate(epoch, initialLearningRate);
 
             while (XIterator.hasNext()) {

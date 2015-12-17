@@ -1,31 +1,31 @@
 package de.tuberlin.pserver.ml.optimization;
 
-import de.tuberlin.pserver.math.matrix.Matrix;
 
+import de.tuberlin.pserver.math.matrix.Matrix32F;
 
 public interface PartialLossFunction {
 
-    public abstract double loss(final Matrix X, final double y, final double yPredict);
+    public abstract float loss(final Matrix32F X, final float y, final float yPredict);
 
-    public abstract Matrix derivative(final Matrix X, final double y, final double yPredict);
+    public abstract Matrix32F derivative(final Matrix32F X, final float y, final float yPredict);
 
-    public abstract Matrix hessian(final Matrix X, final double y, final double yPredict);
+    public abstract Matrix32F hessian(final Matrix32F X, final float y, final float yPredict);
 
 
     class SquareLoss implements PartialLossFunction {
 
         @Override
-        public double loss(final Matrix X, final double y, final double yPredict) {
-            return .5 * (y - yPredict) * (y - yPredict);
+        public float loss(final Matrix32F X, final float y, final float yPredict) {
+            return .5f * (y - yPredict) * (y - yPredict);
         }
 
         @Override
-        public Matrix derivative(final Matrix X, final double y, final double yPredict) {
+        public Matrix32F derivative(final Matrix32F X, final float y, final float yPredict) {
             return X.scale(y - yPredict);
         }
 
         @Override
-        public Matrix hessian(final Matrix X, final double y, final double yPredict) {
+        public Matrix32F hessian(final Matrix32F X, final float y, final float yPredict) {
             return X.mul(X).scale(y - yPredict);
         }
     }
@@ -34,22 +34,22 @@ public interface PartialLossFunction {
     class LogLoss implements PartialLossFunction {
 
         @Override
-        public double loss(final Matrix X, final double y, final double yPredict) {
-            return (-1. * Math.log(sigmoid(y * yPredict)));
+        public float loss(final Matrix32F X, final float y, final float yPredict) {
+            return (float)(-1. * Math.log(sigmoid(y * yPredict)));
         }
 
         @Override
-        public Matrix derivative(final Matrix X, final double y, final double yPredict) {
+        public Matrix32F derivative(final Matrix32F X, final float y, final float yPredict) {
             return X.scale(-y * sigmoid(-y * yPredict));
         }
 
         @Override
-        public Matrix hessian(final Matrix X, final double y, final double yPredict) {
+        public Matrix32F hessian(final Matrix32F X, final float y, final float yPredict) {
             return X.mul(X).scale(-y * yPredict);
         }
 
-        private static double sigmoid(double z) {
-            return 1. / (1. + Math.exp(-z));
+        private static float sigmoid(float z) {
+            return (float)(1. / (1. + Math.exp(-z)));
         }
     }
 }

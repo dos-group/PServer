@@ -66,15 +66,6 @@ public class KMeans extends Program {
                 for (final Matrix64F update : remoteUpdates) {
 
                     Parallel.For(update, (i, j, v) -> centroidsUpdate.set(i, j, centroidsUpdate.get(i, j) + update.get(i, j)));
-
-                    /*final Matrix64F.RowIterator it = update.rowIterator();
-                    while (it.hasNext()) {
-                        it.next();
-                        int i = (int)it.rowNum();
-                        for (int j = 0; j < update.cols(); ++j) {
-                            centroidsUpdate.set(i, j, centroidsUpdate.get(i, j) + update.get(i, j));
-                        }
-                    }*/
                 }
 
                 for (int i = 0; i < K; i++) {

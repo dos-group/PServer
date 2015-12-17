@@ -22,9 +22,17 @@ public class RowRecord implements IRecord {
 
     private org.apache.commons.csv.CSVRecord delegate;
 
+    private String[] record;
+
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
+
+    /*public RowRecord(String[] record, int[] projection, long row) {
+        this.record = record;
+        this.projection = projection;
+        this.row = row;
+    }*/
 
     public RowRecord(CSVRecord delegate, int[] projection, long row) {
         this.delegate = delegate;
@@ -38,7 +46,7 @@ public class RowRecord implements IRecord {
 
     @Override
     public int size() {
-        return projection != null ? projection.length : delegate.size();
+        return projection != null ? projection.length : record.length;
     }
 
     private double getValue(int i) {
@@ -46,9 +54,8 @@ public class RowRecord implements IRecord {
             i = projection[currentIndex];
         }
         double result = Double.NaN;
-        String value = delegate.get(i);
         try {
-            result = Double.parseDouble(value);
+            result = Double.parseDouble(record[i]);
         }
         catch(NumberFormatException e) {}
         currentIndex++;
@@ -64,6 +71,15 @@ public class RowRecord implements IRecord {
         return resuable.set(row, currentIndex, getValue(i));
     }
 
+    /*@Override
+    public RowRecord set(String[] record, int[] projection, long row) {
+        this.record = record;
+        this.projection = projection;
+        this.row = row;
+        currentIndex = 0;
+        return this;
+    }*/
+
     @Override
     public RowRecord set(org.apache.commons.csv.CSVRecord delegate, int[] projection, long row) {
         this.delegate = delegate;
@@ -72,6 +88,7 @@ public class RowRecord implements IRecord {
         currentIndex = 0;
         return this;
     }
+
 
     @Override
     public boolean hasNext() {
