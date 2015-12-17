@@ -16,7 +16,7 @@ import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.math.matrix.dense.DenseMatrix64F;
-import de.tuberlin.pserver.runtime.filesystem.record.RowRecordIteratorProducer;
+import de.tuberlin.pserver.runtime.filesystem.recordold.RowRecordIteratorProducer;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
 
 import java.util.Random;

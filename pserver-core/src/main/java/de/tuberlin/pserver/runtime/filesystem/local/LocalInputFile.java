@@ -4,9 +4,9 @@ package de.tuberlin.pserver.runtime.filesystem.local;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSection;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIterator;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
+import de.tuberlin.pserver.runtime.filesystem.recordold.IRecord;
+import de.tuberlin.pserver.runtime.filesystem.recordold.IRecordIterator;
+import de.tuberlin.pserver.runtime.filesystem.recordold.IRecordIteratorProducer;
 import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 
 import java.io.*;

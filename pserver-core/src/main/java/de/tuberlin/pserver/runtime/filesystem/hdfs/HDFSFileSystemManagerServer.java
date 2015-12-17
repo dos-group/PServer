@@ -9,8 +9,8 @@ import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.runtime.core.net.RPCManager;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
+import de.tuberlin.pserver.runtime.filesystem.recordold.IRecord;
+import de.tuberlin.pserver.runtime.filesystem.recordold.IRecordIteratorProducer;
 import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 import org.apache.hadoop.conf.Configuration;
 

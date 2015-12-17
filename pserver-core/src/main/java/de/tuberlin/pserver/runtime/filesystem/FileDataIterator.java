@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.runtime.filesystem;
 
-import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
+import de.tuberlin.pserver.runtime.filesystem.recordold.IRecord;
 
 import java.util.Iterator;
 

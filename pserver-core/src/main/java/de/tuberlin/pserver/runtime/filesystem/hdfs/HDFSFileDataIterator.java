@@ -6,7 +6,7 @@ import de.tuberlin.pserver.runtime.core.config.IConfig;
 import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSection;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
+import de.tuberlin.pserver.runtime.filesystem.recordold.IRecord;
 
 import java.io.IOException;
 
