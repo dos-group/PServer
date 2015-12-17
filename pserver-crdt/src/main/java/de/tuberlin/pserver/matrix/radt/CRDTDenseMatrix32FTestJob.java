@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.matrix;
+package de.tuberlin.pserver.matrix.radt;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;
@@ -17,7 +17,7 @@ public class CRDTDenseMatrix32FTestJob extends Program {
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            CRDTDenseMatrix32F m = new CRDTDenseMatrix32F(ROWS, COLS, "one", 2, programContext);
+            RADTDenseMatrix32F m = new RADTDenseMatrix32F(ROWS, COLS, "one", 2, programContext);
 
             for (int i = 0; i < ROWS; i++) {
                 for(int k = 0; k < COLS; k++) {
@@ -46,7 +46,7 @@ public class CRDTDenseMatrix32FTestJob extends Program {
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            CRDTDenseMatrix32F m = new CRDTDenseMatrix32F(ROWS, COLS, "one", 2, programContext);
+            RADTDenseMatrix32F m = new RADTDenseMatrix32F(ROWS, COLS, "one", 2, programContext);
 
             for(int i = 0; i < ROWS; i++) {
                 for(int k = 0; k < COLS; k++) {

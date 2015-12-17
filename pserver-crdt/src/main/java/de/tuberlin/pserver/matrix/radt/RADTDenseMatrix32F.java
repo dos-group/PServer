@@ -1,17 +1,17 @@
-package de.tuberlin.pserver.matrix;
+package de.tuberlin.pserver.matrix.radt;
 
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
-import de.tuberlin.pserver.math.matrix.dense.DenseMatrix64F;
 import de.tuberlin.pserver.math.operations.BinaryOperator;
 import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
 import de.tuberlin.pserver.math.operations.UnaryOperator;
+import de.tuberlin.pserver.matrix.MatrixOperation;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
-public class CRDTDenseMatrix32F<T> extends AbstractCRDTMatrix<T> implements Matrix32F {
+public class RADTDenseMatrix32F<T> extends AbstractRADTMatrix<T> implements Matrix32F {
     private DenseMatrix32F matrix;
 
     // S3 Vector divided into seperate matrices
@@ -21,7 +21,7 @@ public class CRDTDenseMatrix32F<T> extends AbstractCRDTMatrix<T> implements Matr
     //private final S3Vector[] matrixInfo;
 
     // Copy constructor
-    protected CRDTDenseMatrix32F(DenseMatrix32F m, String id, int noOfReplicas, ProgramContext programContext) {
+    protected RADTDenseMatrix32F(DenseMatrix32F m, String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
         this.matrix = new DenseMatrix32F(m);
         this.vectorClockSums = new DenseMatrix32F(m.rows(), m.cols());
@@ -30,7 +30,7 @@ public class CRDTDenseMatrix32F<T> extends AbstractCRDTMatrix<T> implements Matr
         //this.matrixInfo = new S3Vector[Math.toIntExact(matrix.rows() * matrix.cols())];
     }
 
-    protected CRDTDenseMatrix32F(final long rows, final long cols, String id, int noOfReplicas, ProgramContext programContext) {
+    public RADTDenseMatrix32F(final long rows, final long cols, String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
         this.matrix = new DenseMatrix32F(rows, cols);
         this.vectorClockSums = new DenseMatrix32F(rows, cols);
@@ -39,7 +39,7 @@ public class CRDTDenseMatrix32F<T> extends AbstractCRDTMatrix<T> implements Matr
         //this.matrixInfo = new S3Vector[Math.toIntExact(matrix.rows() * matrix.cols())];
     }
 
-    protected CRDTDenseMatrix32F(final long rows, final long cols, float[] data, String id, int noOfReplicas, ProgramContext programContext) {
+    protected RADTDenseMatrix32F(final long rows, final long cols, float[] data, String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
         this.matrix = new DenseMatrix32F(rows, cols, data);
         this.vectorClockSums = new DenseMatrix32F(rows, cols);

@@ -5,6 +5,7 @@ import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
+import de.tuberlin.pserver.matrix.radt.RADTDenseMatrix32F;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -17,7 +18,7 @@ public class SGDLikeTestJob extends Program {
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            CRDTDenseMatrix32F m = new CRDTDenseMatrix32F(ROWS, COLS, "one", 2, programContext);
+            RADTDenseMatrix32F m = new RADTDenseMatrix32F(ROWS, COLS, "one", 2, programContext);
 
             for (int i = 0; i < 10; i++) {
                 for(long row = 0; row < m.rows(); row++) {
@@ -49,7 +50,7 @@ public class SGDLikeTestJob extends Program {
     @Unit(at = "1")
     public void test2(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            CRDTDenseMatrix32F m = new CRDTDenseMatrix32F(ROWS, COLS, "one", 2, programContext);
+            RADTDenseMatrix32F m = new RADTDenseMatrix32F(ROWS, COLS, "one", 2, programContext);
 
             for (int i = 0; i < 10; i++) {
                 for(long row = 0; row < m.rows(); row++) {
