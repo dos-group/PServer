@@ -6,7 +6,6 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
 
 public class ExampleJob extends Program {
@@ -15,7 +14,7 @@ public class ExampleJob extends Program {
     // Constants.
     // ---------------------------------------------------
 
-    private static final int NUM_SIMULATION_NODES = 3;
+    private static final int NUM_SIMULATION_NODES = 1;
 
     // ---------------------------------------------------
     // State.

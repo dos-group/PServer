@@ -1,17 +1,16 @@
 package de.tuberlin.pserver.runtime.filesystem.local;
 
-
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSection;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIterator;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
+import de.tuberlin.pserver.runtime.filesystem.Format;
+import de.tuberlin.pserver.runtime.filesystem.record.Record;
+import de.tuberlin.pserver.runtime.filesystem.record.RecordIterator;
 import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 
 import java.io.*;
 
-public class LocalInputFile implements ILocalInputFile<IRecord> {
+public class LocalInputFile implements ILocalInputFile<Record> {
 
     // ---------------------------------------------------
     // Fields.
@@ -19,7 +18,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
     private final String filePath;
 
-    private final IRecordIteratorProducer format;
+    private final Format format;
 
     private final FileSection fileSection;
 
@@ -30,7 +29,8 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
     // ---------------------------------------------------
 
     public LocalInputFile(final String filePath,
-                          final IRecordIteratorProducer format,
+                          /*final IRecordIteratorProducer format,*/
+                          final Format format,
                           final IMatrixPartitioner partitioner) {
 
         this.filePath       = Preconditions.checkNotNull(filePath);
@@ -77,8 +77,13 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
         }
     }
 
+    /*@Override
+    public FileDataIterator<IRecord> iterator() { return new LocalFileDataIterator(fileSection); }*/
+
     @Override
-    public FileDataIterator<IRecord> iterator() { return new LocalFileDataIterator(fileSection); }
+    public FileDataIterator<Record> iterator() {
+        return new LocalFileDataIterator(fileSection);
+    }
 
     // ---------------------------------------------------
     // Private Methods.
@@ -134,11 +139,12 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
     // ---------------------------------------------------
 
-    private class LocalFileDataIterator implements FileDataIterator<IRecord> {
+    //private class LocalFileDataIterator implements FileDataIterator<IRecord> {
+    private class LocalFileDataIterator implements FileDataIterator<Record> {
 
         private final InputStream inputStream;
 
-        private IRecordIterator recordIterator;
+        private RecordIterator recordIterator;
 
         private long currentLine = 0;
 
@@ -159,7 +165,8 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
         public void initialize() {
             try {
                 inputStream.skip(fileSection.startOffset);
-                recordIterator = format.getRecordIterator(inputStream);
+                //recordIterator = format.getRecordIterator(inputStream);
+                recordIterator = RecordIterator.create(format, inputStream);
             } catch(Exception e) {
                 throw new IllegalStateException(e);
             }
@@ -185,7 +192,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
         }
 
         @Override
-        public IRecord next() {
+        public Record next() {
             return recordIterator.next(fileSection.blockLineOffset + currentLine++);
         }
 

@@ -5,11 +5,9 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.utils.ParseUtils;
 import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
-import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.filesystem.record.RowColValRecordIteratorProducer;
+import de.tuberlin.pserver.runtime.filesystem.Format;
 import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 import de.tuberlin.pserver.runtime.state.partitioner.RowPartitioner;
 
@@ -34,8 +32,6 @@ public final class StateBuilder {
     private Format format;
 
     private String path;
-
-    private Class<? extends IRecordIteratorProducer> recordFormat;
 
     private Class<? extends IMatrixPartitioner> partitioner;
 
@@ -66,8 +62,6 @@ public final class StateBuilder {
 
     public StateBuilder format(Format format) { this.format = format; return this; }
 
-    public StateBuilder recordFormat(Class<? extends IRecordIteratorProducer> recordFormat) { this.recordFormat = recordFormat; return this; }
-
     public StateBuilder path(String path) { this.path = path; return this; }
 
     // ---------------------------------------------------
@@ -81,7 +75,6 @@ public final class StateBuilder {
                 partitioner,
                 rows, cols,
                 format,
-                recordFormat,
                 path
         );
         //programContext.runtimeContext.runtimeManager.allocateState(programContext, descriptor);
@@ -97,7 +90,7 @@ public final class StateBuilder {
         this.rows = 0;
         this.cols = 0;
         this.format = Format.DENSE_FORMAT;
-        this.recordFormat = RowColValRecordIteratorProducer.class;
+        //this.recordFormat = RowColValRecordIteratorProducer.class;
         this.path = "";
     }
 }

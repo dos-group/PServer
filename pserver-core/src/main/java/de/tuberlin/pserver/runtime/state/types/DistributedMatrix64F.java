@@ -2,7 +2,6 @@ package de.tuberlin.pserver.runtime.state.types;
 
 
 import de.tuberlin.pserver.math.matrix.ElementType;
-import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
@@ -11,6 +10,7 @@ import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
 import de.tuberlin.pserver.math.operations.UnaryOperator;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
+import de.tuberlin.pserver.runtime.filesystem.Format;
 import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 

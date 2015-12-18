@@ -3,12 +3,12 @@ package de.tuberlin.pserver.runtime.state;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.ElementType;
-import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
 import de.tuberlin.pserver.math.matrix.dense.DenseMatrix64F;
 import de.tuberlin.pserver.math.matrix.sparse.SparseMatrix32F;
 import de.tuberlin.pserver.math.matrix.sparse.SparseMatrix64F;
+import de.tuberlin.pserver.runtime.filesystem.Format;
 
 public final class MatrixBuilder {
 

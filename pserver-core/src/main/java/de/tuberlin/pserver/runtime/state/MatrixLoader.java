@@ -12,7 +12,8 @@ import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
+import de.tuberlin.pserver.runtime.filesystem.record.MatrixRecord;
+import de.tuberlin.pserver.runtime.filesystem.record.Record;
 import de.tuberlin.pserver.runtime.state.mtxentries.ImmutableMatrixEntry;
 import de.tuberlin.pserver.runtime.state.mtxentries.MatrixEntry;
 import de.tuberlin.pserver.runtime.state.mtxentries.MutableMatrixEntry;
@@ -64,15 +65,16 @@ public final class MatrixLoader {
                     state.atNodes
             );
 
-            try {
+            //try {
                 this.fileIterator = fileManager.createFileIterator(
                         state.path,
-                        state.recordFormat.newInstance(),
+                        state.format,
+                        //state.recordFormat.newInstance(),
                         partitioner
                 );
-            } catch(IllegalAccessException | InstantiationException e) {
+            /*} catch(IllegalAccessException | InstantiationException e) {
                 throw new RuntimeException("Could not instantiate RecordFormatConfig", e);
-            }
+            }*/
         }
     }
 
@@ -199,18 +201,19 @@ public final class MatrixLoader {
         int foreignEntriesThreshold = 4096 * 2;
         final Matrix matrix = (Matrix)loadingMatrices.get(task.state.stateName);
         final IMatrixPartitioner matrixPartitioner = task.partitioner;
-        final FileDataIterator<? extends IRecord> fileIterator = task.fileIterator;
+        final FileDataIterator<? extends Record> fileIterator = task.fileIterator;
         ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
 
         MatrixEntry entry;
         while (fileIterator.hasNext()) {
 
-            final IRecord record = fileIterator.next();
+            final Record record = fileIterator.next();
 
             synchronized (matrix) {
                 // iterate through entries in record
                 while (record.hasNext()) {
-                    entry = record.next(reusable);
+                    // TODO: cast here, only will work with MatrixRecords
+                    entry = (MatrixEntry) record.next(reusable);
                     if (entry.getRow() >= task.state.rows || entry.getCol() >= task.state.cols)
                         continue;
                     // get the partition this record belongs to

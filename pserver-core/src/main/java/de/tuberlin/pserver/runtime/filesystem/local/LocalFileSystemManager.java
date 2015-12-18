@@ -8,8 +8,8 @@ import de.tuberlin.pserver.runtime.core.net.NetEvents;
 import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
+import de.tuberlin.pserver.runtime.filesystem.Format;
+import de.tuberlin.pserver.runtime.filesystem.record.Record;
 import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +35,7 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
     private final Map<String,ILocalInputFile<?>> inputFileMap;
 
-    private final Map<String,List<FileDataIterator<? extends IRecord>>> registeredIteratorMap;
+    private final Map<String,List<FileDataIterator<? extends Record>>> registeredIteratorMap;
 
     // ---------------------------------------------------
     // Constructors.
@@ -69,13 +69,14 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath,
+    /*public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath,
                                                                       final IRecordIteratorProducer recordFormat,
-                                                                      final IMatrixPartitioner partitioner) {
+                                                                      final IMatrixPartitioner partitioner) {*/
+    public <T extends Record> FileDataIterator<T> createFileIterator(final String filePath, /*final IRecordIteratorProducer recordFormat*/ final Format format, final IMatrixPartitioner partitioner) {
 
         ILocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
         if (inputFile == null) {
-            inputFile = new LocalInputFile(filePath, recordFormat, partitioner);
+            inputFile = new LocalInputFile(filePath, format, partitioner);
             inputFileMap.put(filePath, inputFile);
             registeredIteratorMap.put(filePath, new ArrayList<>());
         }

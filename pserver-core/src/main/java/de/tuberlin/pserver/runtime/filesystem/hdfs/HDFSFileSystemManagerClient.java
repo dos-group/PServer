@@ -9,8 +9,8 @@ import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.runtime.core.net.RPCManager;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
+import de.tuberlin.pserver.runtime.filesystem.Format;
+import de.tuberlin.pserver.runtime.filesystem.record.Record;
 import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
@@ -37,7 +37,7 @@ public final class HDFSFileSystemManagerClient implements FileSystemManager, Inp
 
     private final InputSplitProvider inputSplitProvider;
 
-    private final Map<String,List<FileDataIterator<? extends IRecord>>> registeredIteratorMap;
+    private final Map<String,List<FileDataIterator<? extends Record>>> registeredIteratorMap;
 
     private final Map<String,HDFSInputFile> inputFileMap;
 
@@ -112,12 +112,12 @@ public final class HDFSFileSystemManagerClient implements FileSystemManager, Inp
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath,
-                                                                      final IRecordIteratorProducer recordFormat,
+    public <T extends Record> FileDataIterator<T> createFileIterator(final String filePath,
+                                                                      final Format format,
                                                                       final IMatrixPartitioner partitioner) {
         HDFSInputFile inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
         if (inputFile == null) {
-            inputFile = new HDFSInputFile(config, netManager, filePath, recordFormat);
+            inputFile = new HDFSInputFile(config, netManager, filePath, format);
             final Configuration conf = new Configuration();
             conf.set("fs.defaultFS", config.getString("filesystem.hdfs.url"));
             inputFile.configure(conf);

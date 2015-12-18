@@ -2,13 +2,13 @@ package de.tuberlin.pserver.runtime.state.types;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
 import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
+import de.tuberlin.pserver.runtime.filesystem.Format;
 import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import de.tuberlin.pserver.runtime.state.RemotePartition;
 import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
