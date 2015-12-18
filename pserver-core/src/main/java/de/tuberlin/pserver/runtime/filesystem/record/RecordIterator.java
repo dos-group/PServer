@@ -33,7 +33,6 @@ public interface RecordIterator<T extends Record> {
         switch(format) {
             case SPARSE_FORMAT: return new SparseMatrixRecordIterator(inputStream, separator, delimiter, projection);
             case DENSE_FORMAT: return new DenseMatrixRecordIterator(inputStream, separator, delimiter, projection);
-            //case SVM_FORMAT: return new SVMRecordIterator();
             default: throw new IllegalArgumentException();
         }
     }

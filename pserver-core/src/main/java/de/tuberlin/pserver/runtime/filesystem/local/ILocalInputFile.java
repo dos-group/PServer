@@ -2,7 +2,6 @@ package de.tuberlin.pserver.runtime.filesystem.local;
 
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.record.Record;
-import de.tuberlin.pserver.runtime.filesystem.recordold.IRecord;
 
 //public interface ILocalInputFile<T extends IRecord> {
 

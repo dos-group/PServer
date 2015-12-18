@@ -167,7 +167,8 @@ public class LocalInputFile implements ILocalInputFile<Record> {
                 inputStream.skip(fileSection.startOffset);
                 //recordIterator = format.getRecordIterator(inputStream);
                 recordIterator = RecordIterator.create(format, inputStream);
-            } catch(Exception e) {
+            }
+            catch(Exception e) {
                 throw new IllegalStateException(e);
             }
         }
