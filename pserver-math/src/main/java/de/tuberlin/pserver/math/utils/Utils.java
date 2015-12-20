@@ -151,11 +151,6 @@ public class Utils {
         if( ! (A.rows() == B.rows() && A.cols() == B.cols())) {
             throw new IncompatibleShapeException("Required: A: 1 x m, B: 1 x m. " +
                     "Given: A: %d x %d, B: %d x %d", A.rows(), A.cols(), B.rows(), B.cols());
-        } else {
-            if (A.rows() != 1 || A.cols() != 1) {
-                throw new IncompatibleShapeException("A and B must be vectors. " +
-                        "Given: A: %d x %d, B: %d x %d", A.rows(), A.cols(), B.rows(), B.cols());
-            }
         }
     }
 }
