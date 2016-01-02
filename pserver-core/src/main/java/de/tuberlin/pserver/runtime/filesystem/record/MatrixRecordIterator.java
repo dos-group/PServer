@@ -22,23 +22,29 @@ public abstract class MatrixRecordIterator implements RecordIterator<MatrixRecor
     // Fields.
     // ---------------------------------------------------
 
-    protected MatrixRecord reusable;
     protected InputStream inputStream;
-    protected Iterator<CSVRecord> csvIterator;
+    private long currentLine;
+    protected char separator;
+    protected char delimiter;
     protected int[] projection;
+    protected Iterator<CSVRecord> csvIterator;
+    protected MatrixRecord reusable;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
     protected MatrixRecordIterator(InputStream inputStream, char separator, char delimiter, int[] projection) {
+        this.inputStream = Preconditions.checkNotNull(inputStream);
+        this.currentLine = 1;
+        this.separator = separator;
+        this.delimiter = delimiter;
+        this.projection = projection;
 
         CSVFormat csvFormat =
             CSVFormat.DEFAULT
-                .withRecordSeparator(separator)
-                .withDelimiter(delimiter);
-        this.projection = projection;
-        this.inputStream = Preconditions.checkNotNull(inputStream);
+                .withRecordSeparator(this.separator)
+                .withDelimiter(this.delimiter);
 
         try {
             this.csvIterator = new CSVParser(new InputStreamReader(inputStream), csvFormat).iterator();
@@ -52,7 +58,7 @@ public abstract class MatrixRecordIterator implements RecordIterator<MatrixRecor
     // Abstract Methods.
     // ---------------------------------------------------
 
-    abstract protected MatrixRecord csvRecordToIRecord(CSVRecord csvRecord, long row);
+    abstract protected MatrixRecord csvRecordToRecord(CSVRecord csvRecord, long row);
 
     // ---------------------------------------------------
     // Public Methods.
@@ -64,8 +70,14 @@ public abstract class MatrixRecordIterator implements RecordIterator<MatrixRecor
     }
 
     @Override
+    public MatrixRecord next() {
+        return this.csvRecordToRecord(this.csvIterator.next(), this.currentLine++);
+    }
+
+    @Override
     public MatrixRecord next(long lineNumber) {
-        return csvRecordToIRecord(this.csvIterator.next(), lineNumber);
+        this.currentLine = lineNumber;
+        return this.csvRecordToRecord(this.csvIterator.next(), lineNumber);
     }
 
 }

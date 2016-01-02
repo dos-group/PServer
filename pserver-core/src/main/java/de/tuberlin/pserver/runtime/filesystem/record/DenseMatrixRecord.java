@@ -1,14 +1,15 @@
 package de.tuberlin.pserver.runtime.filesystem.record;
 
-import de.tuberlin.pserver.runtime.state.mtxentries.ImmutableMatrixEntry;
-import de.tuberlin.pserver.runtime.state.mtxentries.MatrixEntry;
-import de.tuberlin.pserver.runtime.state.mtxentries.ReusableMatrixEntry;
+import de.tuberlin.pserver.runtime.state.entries.ImmutableMatrixEntry;
+import de.tuberlin.pserver.runtime.state.entries.MatrixEntry;
+import de.tuberlin.pserver.runtime.state.entries.ReusableMatrixEntry;
+
 import org.apache.commons.csv.CSVRecord;
 
 /**
  * Created by Morgan K. Geldenhuys on 15.12.15.
  */
-public class DenseMatrixRecord extends MatrixRecord {
+public class DenseMatrixRecord extends MatrixRecord<MatrixEntry, ReusableMatrixEntry> {
 
     // ---------------------------------------------------
     // Fields.
@@ -63,12 +64,12 @@ public class DenseMatrixRecord extends MatrixRecord {
 
     @Override
     public MatrixEntry get(int i, ReusableMatrixEntry reusable) {
-        return reusable.set(this.row, this.currentIndex, this.getValue(i));
+        return (MatrixEntry) reusable.set(this.row, this.currentIndex, this.getValue(i));
     }
 
     @Override
     public MatrixEntry next() {
-        return get(this.currentIndex);
+        return this.get(this.currentIndex);
     }
 
     @Override
@@ -94,4 +95,5 @@ public class DenseMatrixRecord extends MatrixRecord {
         this.currentIndex = 0;
         return this;
     }
+
 }

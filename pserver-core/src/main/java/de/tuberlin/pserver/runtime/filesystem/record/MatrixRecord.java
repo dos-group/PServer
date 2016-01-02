@@ -1,13 +1,13 @@
 package de.tuberlin.pserver.runtime.filesystem.record;
 
-import de.tuberlin.pserver.runtime.state.mtxentries.MatrixEntry;
-import de.tuberlin.pserver.runtime.state.mtxentries.ReusableMatrixEntry;
+import de.tuberlin.pserver.runtime.state.entries.MatrixEntry;
+import de.tuberlin.pserver.runtime.state.entries.ReusableMatrixEntry;
 import org.apache.commons.csv.CSVRecord;
 
 /**
  * Created by Morgan K. Geldenhuys on 15.12.15.
  */
-public abstract class MatrixRecord implements Record<MatrixEntry, ReusableMatrixEntry> {
+public abstract class MatrixRecord<E extends MatrixEntry, R extends ReusableMatrixEntry> implements Record<E, R> {
 
     // ---------------------------------------------------
     // Fields.

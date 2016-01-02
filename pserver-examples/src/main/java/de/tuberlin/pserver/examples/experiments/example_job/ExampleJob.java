@@ -15,14 +15,14 @@ public class ExampleJob extends Program {
     // Constants.
     // ---------------------------------------------------
 
-    private static final int NUM_SIMULATION_NODES = 1;
+    private static final int NUM_SIMULATION_NODES = 3;
 
     // ---------------------------------------------------
     // State.
     // ---------------------------------------------------
 
     // Matrix will be partitioned by row over the nodes.
-    @State(scope = Scope.PARTITIONED, rows = 16000, cols = 3, format = Format.DENSE_FORMAT, path = "datasets/X_train.csv")
+    @State(scope = Scope.PARTITIONED, rows = 4, cols = 3, format = Format.DENSE_FORMAT, path = "datasets/X_train.csv")
     public Matrix32F XTrain;
 
     // ---------------------------------------------------

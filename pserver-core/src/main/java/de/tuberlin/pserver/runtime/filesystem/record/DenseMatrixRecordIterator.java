@@ -15,7 +15,7 @@ public class DenseMatrixRecordIterator extends MatrixRecordIterator {
     }
 
     @Override
-    protected MatrixRecord csvRecordToIRecord(CSVRecord csvRecord, long row) {
+    protected MatrixRecord csvRecordToRecord(CSVRecord csvRecord, long row) {
         return this.reusable.set(csvRecord, this.projection, row);
     }
 

@@ -15,7 +15,7 @@ public class SparseMatrixRecordIterator extends MatrixRecordIterator {
     }
 
     @Override
-    protected MatrixRecord csvRecordToIRecord(CSVRecord csvRecord, long row) {
+    protected MatrixRecord csvRecordToRecord(CSVRecord csvRecord, long row) {
         return reusable.set(csvRecord, this.projection, row);
     }
 

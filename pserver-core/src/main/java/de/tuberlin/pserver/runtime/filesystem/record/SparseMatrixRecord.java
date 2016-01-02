@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.runtime.filesystem.record;
 
-import de.tuberlin.pserver.runtime.state.mtxentries.ImmutableMatrixEntry;
-import de.tuberlin.pserver.runtime.state.mtxentries.MatrixEntry;
-import de.tuberlin.pserver.runtime.state.mtxentries.ReusableMatrixEntry;
+import de.tuberlin.pserver.runtime.state.entries.ImmutableMatrixEntry;
+import de.tuberlin.pserver.runtime.state.entries.MatrixEntry;
+import de.tuberlin.pserver.runtime.state.entries.ReusableMatrixEntry;
 import org.apache.commons.csv.CSVRecord;
 
 import java.util.NoSuchElementException;
@@ -10,7 +10,7 @@ import java.util.NoSuchElementException;
 /**
  * Created by Morgan K. Geldenhuys on 15.12.15.
  */
-public class SparseMatrixRecord extends MatrixRecord {
+public class SparseMatrixRecord extends MatrixRecord<MatrixEntry, ReusableMatrixEntry> {
 
     // ---------------------------------------------------
     // Fields.
@@ -62,7 +62,7 @@ public class SparseMatrixRecord extends MatrixRecord {
             if (reusable == null)
                 return new ImmutableMatrixEntry(row, col, val);
 
-            return reusable.set(row, col, val);
+            return (MatrixEntry) reusable.set(row, col, val);
         }
         catch(NullPointerException | NumberFormatException | IndexOutOfBoundsException e) {
             throw new RuntimeException("Record not parsable: " + this.delegate.toString(), e);
