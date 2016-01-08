@@ -1,5 +1,6 @@
 package de.tuberlin.cit.pserver
 
+import java.io.{File, PrintWriter}
 import java.nio.charset.Charset
 import java.nio.file.Paths
 
@@ -12,6 +13,7 @@ import org.apache.flink.core.fs.FileSystem.WriteMode
 import org.apache.flink.util.Collector
 
 import scala.collection.JavaConverters._
+import scala.io.Source
 import scala.util.hashing.MurmurHash3
 
 /**
@@ -31,10 +33,17 @@ import scala.util.hashing.MurmurHash3
   * 2. One-hot-encode categorial features C1-C26 (supplied by parameter {numFeatures})
   *
   * Commandline Parameters:
-  * --input the input path
-  * --output the output path
-  * --numFeatures the dimension of the feature vector for one-hot-encoding (defaults to 1048576)
+  * --input <input path>
+  * --output <output path>
+  * --numFeatures <dimension of the feature vector for one-hot-encoding (defaults to 1048576)>
+  * --mean <path to file the mean of the training data will be written>
+  * --stdDeviation <path to file the std. deviation of the training data will be written>
   *
+  * --testData
+  *   if testData is set, additionally these parameters are required to read mean and std deviation
+  *   computed from the training data:
+  *   --mean <path to file containing the mean of the training data>
+  *   --stdDeviation <path to file containing the std. deviation of the training data>
   * Labels and data are stored in seperate directories ("/label" and "/data") in the output directory
 */
 
@@ -50,12 +59,21 @@ object CriteoPreprocessingJob {
 
   def main(args: Array[String]) {
     val env = ExecutionEnvironment.getExecutionEnvironment
+    env.setParallelism(1)
 
     val parameters = ParameterTool.fromArgs(args)
 
     val inputPath = parameters.getRequired("input")
     val outputPath = parameters.getRequired("output")
     val numFeatures = parameters.getInt("numFeatures", math.pow(2, 20).toInt)
+    val isTest = parameters.getBoolean("testData", false)
+
+    if (isTest) {
+      require(parameters.get("mean").nonEmpty, "mean vector must be provided if --test is set")
+      require(parameters.get("stdDeviation").nonEmpty, "std. dev. vector must be provided if --test is set")
+    }
+    val meanPath = parameters.get("mean")
+    val stdDeviationPath = parameters.get("stdDeviation")
 
 
     val input = readInput(env, inputPath).zipWithIndex
@@ -65,27 +83,43 @@ object CriteoPreprocessingJob {
 
     val nSamples = input.count()
 
-    // compute mean for integer features
-    val sum = input.map(input => input._2._2).reduce((integerLeft, integerRight) =>
-      (integerLeft, integerRight).zipped map (_ + _))
+    // compute mean for integer features or read from file (if test data)
+    val mean =
+      if (isTest) {
+        val meanFile = Source.fromFile(meanPath)
+        val mean = env.fromCollection(meanFile.getLines().map(_.split(",")).map(_.map(_.toDouble)).toSeq)
+        meanFile.close()
+        mean
+      } else {
+        val sum = input.map(input => input._2._2).reduce((integerLeft, integerRight) =>
+          (integerLeft, integerRight).zipped map (_ + _))
 
-    val mean = sum.map(_.map(_.toDouble / nSamples))
-
-    // compute standard deviation for integer features
-    val deviation = input.map(input => input._2._2).map(new RichMapFunction[Array[Int], Array[Double]]() {
-      var mean: Array[Double] = null
-
-      override def open(config: Configuration): Unit = {
-        mean = getRuntimeContext.getBroadcastVariable[Array[Double]]("mean").asScala.head
+        sum.map(_.map(_.toDouble / nSamples))
       }
 
-      def map(integerFeature: Array[Int]): Array[Double] = {
-        (integerFeature, mean).zipped map ((feature, mean) => math.pow(feature - mean, 2))
-      }
-    }).withBroadcastSet(mean, "mean")
-      .reduce((stdDevLeft, stdDevRight) => (stdDevLeft, stdDevRight).zipped map (_ + _))
+    // compute standard deviation for integer features or read from file (if test data)
+    val stdDeviation =
+      if (isTest) {
+        val stdDeviationFile = Source.fromFile(stdDeviationPath)
+        val stdDeviation = env.fromCollection(stdDeviationFile.getLines().map(_.split(",")).map(_.map(_.toDouble)).toSeq)
+        stdDeviationFile.close()
+        stdDeviation
+      } else {
+        val deviation = input.map(input => input._2._2).map(new RichMapFunction[Array[Int], Array[Double]]() {
+          var mean: Array[Double] = null
 
-    val stdDeviation = deviation.map(_.map(dev => math.sqrt(dev / nSamples)))
+          override def open(config: Configuration): Unit = {
+            mean = getRuntimeContext.getBroadcastVariable[Array[Double]]("mean").asScala.head
+          }
+
+          def map(integerFeature: Array[Int]): Array[Double] = {
+            (integerFeature, mean).zipped map ((feature, mean) => math.pow(feature - mean, 2))
+          }
+        }).withBroadcastSet(mean, "mean")
+          .reduce((stdDevLeft, stdDevRight) => (stdDevLeft, stdDevRight).zipped map (_ + _))
+
+        deviation.map(_.map(dev => math.sqrt(dev / nSamples)))
+      }
 
     /*
     remove mean and scale to unit variance (standard deviation), hash features onto numFeatures
@@ -99,7 +133,7 @@ object CriteoPreprocessingJob {
 
       override def open(config: Configuration): Unit = {
         mean = getRuntimeContext.getBroadcastVariable[Array[Double]]("mean").asScala.head
-        variance = getRuntimeContext.getBroadcastVariable[Array[Double]]("variance").asScala.head
+        variance = getRuntimeContext.getBroadcastVariable[Array[Double]]("stdDeviation").asScala.head
       }
 
       def flatMap(in: (Long, (Array[Int], Array[String])), collector: Collector[(Long, Long, Double)]) = {
@@ -123,16 +157,28 @@ object CriteoPreprocessingJob {
           collector.collect((row, feature._1, feature._2))
         }
       }
-    }).withBroadcastSet(mean, "mean").withBroadcastSet(stdDeviation, "variance")
+    }).withBroadcastSet(mean, "mean").withBroadcastSet(stdDeviation, "stdDeviation")
 
-    println("mean: " + mean.collect().head.mkString(","))
-    println("variance: " + stdDeviation.collect().head.mkString(","))
+    val (labelsName, dataName) = if (isTest) ("labels_test", "data_test") else ("labels_train", "data_train")
 
-    labels.writeAsCsv(Paths.get(outputPath, "labels").toString, writeMode = WriteMode.OVERWRITE)
-    transformedFeatures.writeAsCsv(Paths.get(outputPath, "data").toString, writeMode = WriteMode.OVERWRITE)
+    labels.map(l => (l._1, 0, l._2)).writeAsCsv(Paths.get(outputPath, labelsName).toString, writeMode = WriteMode.OVERWRITE)
+    transformedFeatures.writeAsCsv(Paths.get(outputPath, dataName).toString, writeMode = WriteMode.OVERWRITE)
 
     // execute program
     env.execute("Criteo Preprocessing")
+
+    println("mean: " + mean.collect().head.mkString(","))
+    println("stdDeviation: " + stdDeviation.collect().head.mkString(","))
+
+    if (! isTest) {
+      val meanWriter = new PrintWriter(new File(meanPath))
+      meanWriter.println(mean.collect().head.mkString(","))
+      meanWriter.close()
+
+      val stdDevWriter = new PrintWriter(new File(stdDeviationPath))
+      stdDevWriter.println(stdDeviation.collect().head.mkString(","))
+      stdDevWriter.close()
+    }
   }
 
   def readInput(env: ExecutionEnvironment, input: String, delimiter: String = "\t") = {
