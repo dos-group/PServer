@@ -11,7 +11,7 @@ import java.util.concurrent.CountDownLatch;
 public final class MatrixCache<V extends Number, T extends Matrix<V>> {
 
     // ---------------------------------------------------
-    // Cache Entry.
+    // Cache EntryImpl.
     // ---------------------------------------------------
 
     public static final class CacheEntry {

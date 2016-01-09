@@ -10,7 +10,7 @@ import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
 import de.tuberlin.pserver.math.operations.UnaryOperator;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-import de.tuberlin.pserver.runtime.filesystem.Format;
+import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 
@@ -36,7 +36,7 @@ public class DistributedMatrix64F implements Matrix64F {
 
     public DistributedMatrix64F(final ProgramContext programContext,
                                 final long rows, final long cols,
-                                final Format format,
+                                final FileFormat fileFormat,
                                 final int[] atNodes,
                                 final Class<? extends IMatrixPartitioner> partitionerType) {
 
@@ -55,7 +55,7 @@ public class DistributedMatrix64F implements Matrix64F {
         
         this.matrixSection = new MatrixBuilder()
                 .dimension(shape.rows, shape.cols)
-                .format(format)
+                .format(fileFormat)
                 .elementType(ElementType.DOUBLE_MATRIX)
                 .build();
     }

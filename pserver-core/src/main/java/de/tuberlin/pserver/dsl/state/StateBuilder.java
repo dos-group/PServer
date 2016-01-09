@@ -7,7 +7,7 @@ import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-import de.tuberlin.pserver.runtime.filesystem.Format;
+import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 import de.tuberlin.pserver.runtime.state.partitioner.RowPartitioner;
 
@@ -29,7 +29,7 @@ public final class StateBuilder {
 
     private long cols;
 
-    private Format format;
+    private FileFormat fileFormat;
 
     private String path;
 
@@ -60,7 +60,7 @@ public final class StateBuilder {
 
     public StateBuilder cols(long cols) { this.cols = cols; return this; }
 
-    public StateBuilder format(Format format) { this.format = format; return this; }
+    public StateBuilder format(FileFormat fileFormat) { this.fileFormat = fileFormat; return this; }
 
     public StateBuilder path(String path) { this.path = path; return this; }
 
@@ -74,7 +74,7 @@ public final class StateBuilder {
                 ParseUtils.parseNodeRanges(at),
                 partitioner,
                 rows, cols,
-                format,
+                fileFormat,
                 path
         );
         //programContext.runtimeContext.runtimeManager.allocateState(programContext, descriptor);
@@ -89,7 +89,7 @@ public final class StateBuilder {
         this.partitioner = RowPartitioner.class;
         this.rows = 0;
         this.cols = 0;
-        this.format = Format.DENSE_FORMAT;
+        this.fileFormat = FileFormat.DENSE_FORMAT;
         //this.recordFormat = RowColValRecordIteratorProducer.class;
         this.path = "";
     }

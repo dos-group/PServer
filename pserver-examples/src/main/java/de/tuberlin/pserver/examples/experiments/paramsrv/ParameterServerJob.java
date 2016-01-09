@@ -6,10 +6,10 @@ import de.tuberlin.pserver.compiler.Program;
 
 public class ParameterServerJob extends Program {
 
-    /*@State(scope = Scope.SINGLETON, format = Format.SPARSE_FORMAT, rows = 1, cols = 1000, at = "0")
+    /*@State(scope = Scope.SINGLETON, fileFormat = FileFormat.SPARSE_FORMAT, rows = 1, cols = 1000, at = "0")
     public Matrix parameters;
 
-    @State(scope = Scope.PARTITIONED, format = Format.SPARSE_FORMAT, rows = 100, cols = 100, at = "1 - 3")
+    @State(scope = Scope.PARTITIONED, fileFormat = FileFormat.SPARSE_FORMAT, rows = 100, cols = 100, at = "1 - 3")
     public Matrix input;
 
 

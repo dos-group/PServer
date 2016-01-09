@@ -5,9 +5,9 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.core.config.IConfig;
 import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
-import de.tuberlin.pserver.runtime.filesystem.Format;
-import de.tuberlin.pserver.runtime.filesystem.record.Record;
-import de.tuberlin.pserver.runtime.filesystem.record.RecordIterator;
+import de.tuberlin.pserver.runtime.filesystem.FileFormat;
+import de.tuberlin.pserver.runtime.filesystem.records.Record;
+import de.tuberlin.pserver.runtime.filesystem.records.RecordIterator;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.slf4j.Logger;
@@ -40,7 +40,7 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
 
     protected transient long splitLength;
 
-    protected transient Format format;
+    protected transient FileFormat fileFormat;
 
     protected transient RecordIterator recordIterator;
 
@@ -64,12 +64,12 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
     //  Constructors
     // --------------------------------------------------------------------------------------------
 
-    public HDFSInputFile(final IConfig config, final NetManager netManager, final String filePath, Format format) {
+    public HDFSInputFile(final IConfig config, final NetManager netManager, final String filePath, FileFormat fileFormat) {
         this.config     = Preconditions.checkNotNull(config);
         this.path       = Preconditions.checkNotNull(filePath);
         this.filePath   = new Path(filePath);
         this.netManager = Preconditions.checkNotNull(netManager);
-        this.format     = Preconditions.checkNotNull(format);
+        this.fileFormat = Preconditions.checkNotNull(fileFormat);
 
         System.setProperty("HADOOP_HOME", "/home/peel/peel/systems/hadoop-2.4.1");
         System.setProperty("hadoop.home.dir", "/home/peel/peel/systems/hadoop-2.4.1");
@@ -332,7 +332,7 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
             this.stream.readLine();
         }
 
-        this.recordIterator = RecordIterator.create(this.format, this.stream);
+        this.recordIterator = RecordIterator.create(this.fileFormat, this.stream, null);
     }
 
     @Override

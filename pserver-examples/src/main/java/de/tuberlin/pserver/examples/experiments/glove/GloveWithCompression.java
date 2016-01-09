@@ -17,7 +17,7 @@ import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
-import de.tuberlin.pserver.runtime.filesystem.Format;
+import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
 import org.apache.commons.lang3.mutable.MutableDouble;
 import org.apache.commons.lang3.tuple.Pair;
@@ -45,7 +45,7 @@ public final class GloveWithCompression extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.PARTITIONED, rows = COLS, cols = COLS, path = INPUT_DATA, format = Format.SPARSE_FORMAT)
+    @State(scope = Scope.PARTITIONED, rows = COLS, cols = COLS, path = INPUT_DATA, format = FileFormat.SPARSE_FORMAT)
     public Matrix32F X;
 
     @State(scope = Scope.REPLICATED, rows = ROWS, cols = COLS * 2)
@@ -154,7 +154,7 @@ public final class GloveWithCompression extends Program {
     }
 
     // ---------------------------------------------------
-    // Entry Point.
+    // EntryImpl Point.
     // ---------------------------------------------------
 
     public static void main(final String[] args) {

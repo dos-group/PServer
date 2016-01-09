@@ -46,7 +46,7 @@ Parameter Server and HDFS
 
 (3) Format NameNode & DataNode
 
-	(a) NameNode: .../hadoop-2.4.1 $ bin/hadoop namenode -format
+	(a) NameNode: .../hadoop-2.4.1 $ bin/hadoop namenode -fileFormat
 
 	(b) DataNode: .../hadoop-2.4.1 $ for h in $(cat etc/hadoop/slaves); do echo $h; ssh $h 'rm -Rf /data/tobias.herb/hdfs/data'; done
 

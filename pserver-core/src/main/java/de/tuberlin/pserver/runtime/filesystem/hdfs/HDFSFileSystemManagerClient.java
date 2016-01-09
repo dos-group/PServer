@@ -9,8 +9,8 @@ import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.runtime.core.net.RPCManager;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
-import de.tuberlin.pserver.runtime.filesystem.Format;
-import de.tuberlin.pserver.runtime.filesystem.record.Record;
+import de.tuberlin.pserver.runtime.filesystem.FileFormat;
+import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
@@ -113,11 +113,11 @@ public final class HDFSFileSystemManagerClient implements FileSystemManager, Inp
     @Override
     @SuppressWarnings("unchecked")
     public <T extends Record> FileDataIterator<T> createFileIterator(final String filePath,
-                                                                      final Format format,
+                                                                      final FileFormat fileFormat,
                                                                       final IMatrixPartitioner partitioner) {
         HDFSInputFile inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
         if (inputFile == null) {
-            inputFile = new HDFSInputFile(config, netManager, filePath, format);
+            inputFile = new HDFSInputFile(config, netManager, filePath, fileFormat);
             final Configuration conf = new Configuration();
             conf.set("fs.defaultFS", config.getString("filesystem.hdfs.url"));
             inputFile.configure(conf);

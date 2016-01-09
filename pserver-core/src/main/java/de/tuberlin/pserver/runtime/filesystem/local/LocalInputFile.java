@@ -2,10 +2,10 @@ package de.tuberlin.pserver.runtime.filesystem.local;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
+import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.filesystem.FileSection;
-import de.tuberlin.pserver.runtime.filesystem.Format;
-import de.tuberlin.pserver.runtime.filesystem.record.Record;
-import de.tuberlin.pserver.runtime.filesystem.record.RecordIterator;
+import de.tuberlin.pserver.runtime.filesystem.records.Record;
+import de.tuberlin.pserver.runtime.filesystem.records.RecordIterator;
 import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 
 import java.io.*;
@@ -18,7 +18,7 @@ public class LocalInputFile implements ILocalInputFile<Record> {
 
     private final String filePath;
 
-    private final Format format;
+    private final FileFormat fileFormat;
 
     private final FileSection fileSection;
 
@@ -29,12 +29,12 @@ public class LocalInputFile implements ILocalInputFile<Record> {
     // ---------------------------------------------------
 
     public LocalInputFile(final String filePath,
-                          /*final IRecordIteratorProducer format,*/
-                          final Format format,
+                          /*final IRecordIteratorProducer fileFormat,*/
+                          final FileFormat fileFormat,
                           final IMatrixPartitioner partitioner) {
 
         this.filePath       = Preconditions.checkNotNull(filePath);
-        this.format         = Preconditions.checkNotNull(format);
+        this.fileFormat = Preconditions.checkNotNull(fileFormat);
         this.partitioner    = partitioner;
         this.fileSection    = new FileSection();
     }
@@ -165,8 +165,8 @@ public class LocalInputFile implements ILocalInputFile<Record> {
         public void initialize() {
             try {
                 inputStream.skip(fileSection.startOffset);
-                //recordIterator = format.getRecordIterator(inputStream);
-                recordIterator = RecordIterator.create(format, inputStream);
+                //recordIterator = fileFormat.getRecordIterator(inputStream);
+                recordIterator = RecordIterator.create(fileFormat, inputStream, null);
             }
             catch(Exception e) {
                 throw new IllegalStateException(e);

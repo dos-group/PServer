@@ -12,12 +12,11 @@ import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
-import de.tuberlin.pserver.runtime.filesystem.record.MatrixRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.Record;
-import de.tuberlin.pserver.runtime.state.mtxentries.ImmutableMatrixEntry;
-import de.tuberlin.pserver.runtime.state.mtxentries.MatrixEntry;
-import de.tuberlin.pserver.runtime.state.mtxentries.MutableMatrixEntry;
-import de.tuberlin.pserver.runtime.state.mtxentries.ReusableMatrixEntry;
+import de.tuberlin.pserver.runtime.filesystem.records.Record;
+import de.tuberlin.pserver.runtime.state.entries.Entry;
+import de.tuberlin.pserver.runtime.state.entries.ImmutableEntryImpl;
+import de.tuberlin.pserver.runtime.state.entries.MutableEntryImpl;
+import de.tuberlin.pserver.runtime.state.entries.ReusableEntry;
 import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +67,7 @@ public final class MatrixLoader {
             //try {
                 this.fileIterator = fileManager.createFileIterator(
                         state.path,
-                        state.format,
+                        state.fileFormat,
                         //state.recordFormat.newInstance(),
                         partitioner
                 );
@@ -119,7 +118,7 @@ public final class MatrixLoader {
                     synchronized (matrix) {
                         if (Matrix32F.class.isAssignableFrom(matrix.getClass())) {
                             synchronized (matrix) {
-                                for (final MatrixEntry entry : e.getEntries()) {
+                                for (Entry entry : e.getEntries()) {
                                     matrix.set(entry.getRow(), entry.getCol(), entry.getValue().floatValue());
                                 }
                             }
@@ -127,7 +126,7 @@ public final class MatrixLoader {
 
                         if (Matrix64F.class.isAssignableFrom(matrix.getClass())) {
                             synchronized (matrix) {
-                                for (final MatrixEntry entry : e.getEntries()) {
+                                for (Entry entry : e.getEntries()) {
                                     matrix.set(entry.getRow(), entry.getCol(), entry.getValue().doubleValue());
                                 }
                             }
@@ -196,15 +195,15 @@ public final class MatrixLoader {
     private void loadMatrix(final MatrixLoadTask task) {
         int nodeId = task.programContext.nodeID;
         // prepare to read entries that belong to foreign matrix partitions
-        Map<Integer, List<MatrixEntry>> foreignEntries = new HashMap<>();
+        Map<Integer, List<Entry>> foreignEntries = new HashMap<>();
         // threshold that indicates how many entries are gathered before sending
         int foreignEntriesThreshold = 4096 * 2;
         final Matrix matrix = (Matrix)loadingMatrices.get(task.state.stateName);
         final IMatrixPartitioner matrixPartitioner = task.partitioner;
         final FileDataIterator<? extends Record> fileIterator = task.fileIterator;
-        ReusableMatrixEntry reusable = new MutableMatrixEntry(-1, -1, Double.NaN);
+        ReusableEntry reusable = new MutableEntryImpl(-1, -1, Double.NaN);
 
-        MatrixEntry entry;
+        Entry entry;
         while (fileIterator.hasNext()) {
 
             final Record record = fileIterator.next();
@@ -213,7 +212,7 @@ public final class MatrixLoader {
                 // iterate through entries in record
                 while (record.hasNext()) {
                     // TODO: cast here, only will work with MatrixRecords
-                    entry = (MatrixEntry) record.next(reusable);
+                    entry = (Entry) record.next(reusable);
                     if (entry.getRow() >= task.state.rows || entry.getCol() >= task.state.cols)
                         continue;
                     // get the partition this record belongs to
@@ -229,8 +228,8 @@ public final class MatrixLoader {
                         }
                     } else {
                         // otherwise append entry to foreign entries and send them depending on threshold
-                        List<MatrixEntry> valuesOfTargetNode = getListOrCreateIfNotExists(foreignEntries, targetPartition, foreignEntriesThreshold);
-                        valuesOfTargetNode.add(new ImmutableMatrixEntry(entry));
+                        List<Entry> valuesOfTargetNode = getListOrCreateIfNotExists(foreignEntries, targetPartition, foreignEntriesThreshold);
+                        valuesOfTargetNode.add(new ImmutableEntryImpl(entry));
                         if (valuesOfTargetNode.size() >= foreignEntriesThreshold) {
                             sendPartition(targetPartition, valuesOfTargetNode, task);
                         }
@@ -239,7 +238,7 @@ public final class MatrixLoader {
             }
         }
         // send all remaining foreign entries
-        //for (Map.Entry<Integer, List<MatrixEntry>> map : foreignEntries.entrySet()) {
+        //for (Map.EntryImpl<Integer, List<MatrixEntry>> map : foreignEntries.entrySet()) {
         //    sendPartition(map.getKey(), map.getValue(), task);
         //}
         netManager.broadcastEvent(new MatrixLoader.FinishedLoadingFileEvent(task.state.stateName));
@@ -260,8 +259,8 @@ public final class MatrixLoader {
         }
     }
 
-    private List<MatrixEntry> getListOrCreateIfNotExists(Map<Integer, List<MatrixEntry>> entries, int partitionId, int threshold) {
-        List<MatrixEntry> result = entries.get(partitionId);
+    private List<Entry> getListOrCreateIfNotExists(Map<Integer, List<Entry>> entries, int partitionId, int threshold) {
+        List<Entry> result = entries.get(partitionId);
         // if list does not exist yet, create and put it into map
         if (result == null) {
             result = new ArrayList<>(threshold);
@@ -270,9 +269,9 @@ public final class MatrixLoader {
         return result;
     }
 
-    private void sendPartition(int targetNodeId, List<MatrixEntry> entries, MatrixLoadTask task) {
+    private void sendPartition(int targetNodeId, List<Entry> entries, MatrixLoadTask task) {
         if (entries != null && !entries.isEmpty()) {
-            MatrixEntry[] entriesArray = entries.toArray(new MatrixEntry[entries.size()]);
+            Entry[] entriesArray = entries.toArray(new Entry[entries.size()]);
             netManager.sendEvent(targetNodeId, new MatrixLoader.MatrixEntryPartitionEvent(entriesArray, task.state.stateName));
             entries.clear();
         }
@@ -291,16 +290,16 @@ public final class MatrixLoader {
 
         public static final String MATRIX_ENTRY_PARTITION_EVENT = "MATRIX_ENTRY_PARTITION_EVENT";
         private static final long serialVersionUID = -1L;
-        private final MatrixEntry[] entries;
+        private final Entry[] entries;
         private final String name;
 
-        public MatrixEntryPartitionEvent(MatrixEntry[] entries, String name) {
+        public MatrixEntryPartitionEvent(Entry[] entries, String name) {
             super(MATRIX_ENTRY_PARTITION_EVENT);
             this.entries = Preconditions.checkNotNull(entries);
             this.name = Preconditions.checkNotNull(name);
         }
 
-        public MatrixEntry[] getEntries() { return entries; }
+        public Entry[] getEntries() { return entries; }
         public String getName() { return name; }
     }
 

@@ -7,8 +7,8 @@ import de.tuberlin.pserver.math.matrix.ElementType;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.runtime.core.net.NetManager;
+import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
-import de.tuberlin.pserver.runtime.filesystem.Format;
 import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import de.tuberlin.pserver.runtime.state.MatrixLoader;
 import de.tuberlin.pserver.runtime.state.cache.MatrixCache;
@@ -57,7 +57,7 @@ public class StateAllocator {
 
                         m = new MatrixBuilder()
                                 .dimension(state.rows, state.cols)
-                                .format(state.format)
+                                .format(state.fileFormat)
                                 .elementType(ElementType.getElementTypeFromClass(state.stateType))
                                 .build();
 
@@ -70,7 +70,7 @@ public class StateAllocator {
 
                         final MatrixBase cache = new MatrixBuilder()
                                 .dimension(state.rows, state.cols)
-                                .format(Format.SPARSE_FORMAT)
+                                .format(FileFormat.SPARSE_FORMAT)
                                 .elementType(ElementType.getElementTypeFromClass(state.stateType))
                                 .build();
 
@@ -89,7 +89,7 @@ public class StateAllocator {
                     if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
                         m = new MatrixBuilder()
                                 .dimension(state.rows, state.cols)
-                                .format(state.format)
+                                .format(state.fileFormat)
                                 .elementType(ElementType.getElementTypeFromClass(state.stateType))
                                 .build();
                     }
@@ -104,7 +104,7 @@ public class StateAllocator {
                                         programContext,
                                         state.rows,
                                         state.cols,
-                                        state.format,
+                                        state.fileFormat,
                                         state.atNodes,
                                         state.partitioner
                                 );
@@ -117,7 +117,7 @@ public class StateAllocator {
                                         programContext,
                                         state.rows,
                                         state.cols,
-                                        state.format,
+                                        state.fileFormat,
                                         state.atNodes,
                                         state.partitioner
                                 );
@@ -135,7 +135,7 @@ public class StateAllocator {
                                     programContext,
                                     state.rows,
                                     state.cols,
-                                    state.format,
+                                    state.fileFormat,
                                     state.atNodes,
                                     state.partitioner // TODO: CHANGE!
                             );
@@ -146,7 +146,7 @@ public class StateAllocator {
                                     programContext,
                                     state.rows,
                                     state.cols,
-                                    state.format,
+                                    state.fileFormat,
                                     state.atNodes,
                                     state.partitioner // TODO: CHANGE!
                             );

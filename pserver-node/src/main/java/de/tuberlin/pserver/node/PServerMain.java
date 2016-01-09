@@ -45,7 +45,7 @@ public final class PServerMain {
     }
 
     // ---------------------------------------------------
-    // Entry Point.
+    // EntryImpl Point.
     // ---------------------------------------------------
 
     public static void main(String[] args) {

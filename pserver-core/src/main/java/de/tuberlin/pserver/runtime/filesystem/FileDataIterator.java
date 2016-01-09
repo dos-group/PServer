@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.runtime.filesystem;
 
-import de.tuberlin.pserver.runtime.filesystem.record.Record;
+import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import java.util.Iterator;
 
 /*public interface FileDataIterator<T extends IRecord> extends Iterator<T> {

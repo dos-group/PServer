@@ -295,7 +295,7 @@ public class TSNEJob extends Program {
     }
 
     // ---------------------------------------------------
-    // Entry Point.
+    // EntryImpl Point.
     // ---------------------------------------------------
 
     public static void main(final String[] args) { local(); }

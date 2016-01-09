@@ -7,7 +7,7 @@ import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
-import de.tuberlin.pserver.runtime.filesystem.Format;
+import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 
 public class ExampleJob extends Program {
 
@@ -22,7 +22,7 @@ public class ExampleJob extends Program {
     // ---------------------------------------------------
 
     // Matrix will be partitioned by row over the nodes.
-    @State(scope = Scope.PARTITIONED, rows = 4, cols = 3, format = Format.DENSE_FORMAT, path = "datasets/X_train.csv")
+    @State(scope = Scope.PARTITIONED, rows = 4, cols = 3, format = FileFormat.DENSE_FORMAT, path = "datasets/X_train.csv")
     public Matrix32F XTrain;
 
     // ---------------------------------------------------
@@ -42,7 +42,7 @@ public class ExampleJob extends Program {
     }
 
     // ---------------------------------------------------
-    // Entry Point.
+    // EntryImpl Point.
     // ---------------------------------------------------
 
     public static void main(final String[] args) {

@@ -1,8 +1,7 @@
 package de.tuberlin.pserver.runtime.state.partitioner;
 
-
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
-import de.tuberlin.pserver.runtime.state.mtxentries.MatrixEntry;
+import de.tuberlin.pserver.runtime.state.entries.Entry;
 
 public class NoPartitioner extends IMatrixPartitioner {
 
@@ -14,7 +13,7 @@ public class NoPartitioner extends IMatrixPartitioner {
     }
 
     @Override
-    public int getPartitionOfEntry(MatrixEntry entry) {
+    public int getPartitionOfEntry(Entry entry) {
         return -1;
     }
 

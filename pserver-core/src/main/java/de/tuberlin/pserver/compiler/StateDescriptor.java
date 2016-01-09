@@ -4,7 +4,7 @@ import de.tuberlin.pserver.commons.utils.ParseUtils;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.math.matrix.ElementType;
-import de.tuberlin.pserver.runtime.filesystem.Format;
+import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 
 import java.lang.reflect.Field;
@@ -31,7 +31,7 @@ public final class StateDescriptor {
 
     public final long cols;
 
-    public final Format format;
+    public final FileFormat fileFormat;
 
     public final String path;
 
@@ -46,7 +46,7 @@ public final class StateDescriptor {
                            final Class<? extends IMatrixPartitioner> partitioner,
                            final long rows,
                            final long cols,
-                           final Format format,
+                           final FileFormat fileFormat,
                            final String path) {
 
         this.stateName      = stateName;
@@ -57,7 +57,7 @@ public final class StateDescriptor {
         this.partitioner    = partitioner;
         this.rows           = rows;
         this.cols           = cols;
-        this.format         = format;
+        this.fileFormat = fileFormat;
         this.path           = path;
     }
 
