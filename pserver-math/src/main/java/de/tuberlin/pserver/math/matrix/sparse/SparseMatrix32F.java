@@ -33,7 +33,7 @@ public class SparseMatrix32F implements Matrix32F {
     // Fields.
     // ---------------------------------------------------
 
-    private TLongFloatMap data;
+    public TLongFloatMap data;
     private final long rows;
     private final long cols;
     private final Lock lock;

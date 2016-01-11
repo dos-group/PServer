@@ -32,10 +32,10 @@ public class LogisticRegressionCriteo extends Program {
 
     private static final String NUM_NODES = "1";
 
-    private static final String X_TRAIN_PATH = "/tbd/data_train";
-    private static final String Y_TRAIN_PATH = "/tbd/labels_train";
-    private static final String X_TEST_PATH  = "/tbd/data_test";
-    private static final String Y_TEST_PATH  = "/tbd/labels_test";
+    private static final String X_TRAIN_PATH = "datasets/data_train";
+    private static final String Y_TRAIN_PATH = "datasets/labels_train";
+    private static final String X_TEST_PATH  = "datasets/data_test";
+    private static final String Y_TEST_PATH  = "datasets/labels_test";
 
     private static final int N_TRAIN = 80000;
     private static final int N_TEST = 20000;
@@ -92,6 +92,7 @@ public class LogisticRegressionCriteo extends Program {
 
         lifecycle.process(() -> {
 
+
             final Scorer zeroOneLoss = new Scorer(
                     new ScoreFunction.ZeroOneLoss(),
                     new PredictionFunction.LinearBinaryPrediction());
@@ -117,14 +118,14 @@ public class LogisticRegressionCriteo extends Program {
 
             optimizer.optimize(XTrain, yTrain, W);
 
-            System.out.println("Loss[" + programContext.nodeID +"]: "
+            /*System.out.println("Loss[" + programContext.nodeID +"]: "
                     + zeroOneLoss.score(XTest, yTest, W));
             System.out.println("Accuracy[" + programContext.nodeID +"]: "
-                    + accuracy.score(XTest, yTest, W));
+                    + accuracy.score(XTest, yTest, W));*/
 
         }).postProcess(() -> {
 
-            UnitMng.barrier(UnitMng.GLOBAL_BARRIER);
+            /*UnitMng.barrier(UnitMng.GLOBAL_BARRIER);
 
             TransactionMng.commit(syncW);
 
@@ -141,7 +142,7 @@ public class LogisticRegressionCriteo extends Program {
             System.out.println("Accuracy merged[" + programContext.nodeID +"]: "
                     + accuracy.score(XTest, yTest, W));
 
-            result(W);
+            result(W);*/
         });
     }
 

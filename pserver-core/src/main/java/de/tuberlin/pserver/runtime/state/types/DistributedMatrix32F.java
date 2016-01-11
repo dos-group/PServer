@@ -413,4 +413,9 @@ public class DistributedMatrix32F implements Matrix32F {
             @Override public long rowNum() { return (int) partitioner.translateLocalToGlobalRow(it.rowNum()); }
         };
     }
+
+
+    public String toString() {
+        return matrixSection.toString();
+    }
 }

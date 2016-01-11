@@ -143,17 +143,17 @@ public class GDOptimizer implements Optimizer, LoopTermination {
                 if (!newtonMethod) {
                     gradient.scale(learningRate, gradient);
                 }
-
-                W.sub(gradient, W);
             }
 
-            LOG.info("Objective[" + epoch + "]: " + lossFunction.loss(X, y, W, regularization));
+            //LOG.info("Objective[" + epoch + "]: " + lossFunction.loss(X, y, W, regularization));
 
             if (epoch >= maxIterations - 1) {
                 converged = true;
             }
 
             XIterator.reset();
+
+            System.out.println("EPOCH => " + epoch);
         });
 
         return W;

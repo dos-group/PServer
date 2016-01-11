@@ -61,6 +61,8 @@ public interface LossFunction {
             return sumLoss + regularizationFunction.regularize(W, lambda);
         }
 
+        Matrix32F gradient = null;
+
         @Override
         public Matrix32F gradient(final Matrix32F X, final Matrix32F y, final Matrix32F W,
                                final float lambda, final boolean newtonMethod) {
@@ -68,7 +70,14 @@ public interface LossFunction {
             Matrix32F.RowIterator XIterator = X.rowIterator();
             Matrix32F.RowIterator yIterator = y.rowIterator();
 
-            Matrix32F gradient = new MatrixBuilder().dimension(1, X.cols()).build();
+
+            if (gradient == null) {
+                gradient = new MatrixBuilder().dimension(1, X.cols()).build();
+            } else {
+                gradient.assign(0f);
+            }
+
+            //Matrix32F gradient = new MatrixBuilder().dimension(1, X.cols()).build();
 
             while (XIterator.hasNext()) {
 
