@@ -22,22 +22,32 @@ public class SVMRecordIterator<V extends Number> extends RecordIterator<Record> 
 
     @Override
     public boolean hasNext() {
-        return this.row < this.lines.size64();
+        try {
+            reader.mark(1);
+            if (reader.read() < 0) {
+                this.reader.close();
+                return false;
+            }
+            else {
+                reader.reset();
+                return true;
+            }
+        }
+        catch (IOException e) {
+            return false;
+        }
     }
 
     @Override
     public Record next() {
-        String line = this.lines.get(this.row);
+        String line;
+        try {
+            line = reader.readLine();
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         this.row++;
-        if (this.reusableRecord == null)
-            return this.reusableRecord = new SVMRecord(this.row, line, this.projection);
-        return this.reusableRecord.set(this.row, line, this.projection);
-    }
-
-    @Override
-    public Record next(long lineNumber) {
-        String line = this.lines.get(lineNumber);
-        this.row = lineNumber + 1;
         if (this.reusableRecord == null)
             return this.reusableRecord = new SVMRecord(this.row, line, this.projection);
         return this.reusableRecord.set(this.row, line, this.projection);

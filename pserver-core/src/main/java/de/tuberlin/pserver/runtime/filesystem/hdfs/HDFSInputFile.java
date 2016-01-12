@@ -340,9 +340,14 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
         return !recordIterator.hasNext();
     }
 
-    @Override
+    /*@Override
     public Record nextRecord(Record reuse) throws IOException {
         return recordIterator.next(0);
+    }*/
+
+    @Override
+    public Record nextRecord() throws IOException {
+        return recordIterator.next();
     }
 
     public void close() throws IOException {

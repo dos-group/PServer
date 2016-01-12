@@ -88,8 +88,10 @@ public class HDFSFileDataIterator implements FileDataIterator<Record> {
     @Override
     public Record next() {
         try {
-            return inputFile.nextRecord(null);
-        } catch(IOException e) {
+            //return inputFile.nextRecord(null);
+            return inputFile.nextRecord();
+        }
+        catch(IOException e) {
             throw new IllegalStateException(e);
         }
     }

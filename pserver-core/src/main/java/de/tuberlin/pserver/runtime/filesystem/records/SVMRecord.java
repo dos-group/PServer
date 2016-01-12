@@ -35,15 +35,15 @@ public class SVMRecord<V extends Number> implements Record {
             if (projection.isPresent())
                 projectionList = Arrays.asList(ArrayUtils.toObject(projection.get()));
 
-            Map<Long, Double> attributes = new TreeMap<>();
+            Map<Long, V> attributes = new TreeMap<>();
             while(tokenizer.hasMoreTokens()) {
                 String column = tokenizer.nextToken();
                 Long index = Long.parseLong(column.substring(0, column.indexOf(":")));
                 if (projectionList == null || projectionList.contains(index)) {
-                    /*if (fileFormat.getValueType() == FileFormat.ValueType.FLOAT)
-                        attributes.put(index, Float.parseFloat(column.substring(column.indexOf(":") + 1)));
-                    else*/
-                    attributes.put(index, Double.parseDouble(column.substring(column.indexOf(":") + 1)));
+                    if (fileFormat.getValueType() == FileFormat.ValueType.FLOAT)
+                        attributes.put(index, (V) (Float) Float.parseFloat(column.substring(column.indexOf(":") + 1)));
+                    else
+                        attributes.put(index, (V) (Double) Double.parseDouble(column.substring(column.indexOf(":") + 1)));
                 }
             }
 

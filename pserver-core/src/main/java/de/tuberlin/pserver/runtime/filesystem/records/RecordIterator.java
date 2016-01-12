@@ -2,19 +2,14 @@ package de.tuberlin.pserver.runtime.filesystem.records;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import it.unimi.dsi.fastutil.BigList;
-import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
-
 import java.util.Optional;
-import java.util.stream.Stream;
 
 /**
  * Created by Morgan K. Geldenhuys on 16.12.15.
@@ -31,7 +26,7 @@ public abstract class RecordIterator<T extends Record> implements Iterator<T> {
     // Fields.
     // ---------------------------------------------------
 
-    protected BigList<String> lines;
+    protected BufferedReader reader;
     protected Optional<long[]> projection;
     protected long row;
     protected Record reusableRecord;
@@ -41,12 +36,7 @@ public abstract class RecordIterator<T extends Record> implements Iterator<T> {
     // ---------------------------------------------------
 
     protected RecordIterator(InputStream inputStream, Optional<long[]> projection) {
-        this.lines = new ObjectBigArrayBigList<>();
-        Stream<String> linesStream =
-            new BufferedReader(new InputStreamReader(
-                Preconditions.checkNotNull(inputStream),
-                StandardCharsets.UTF_8)).lines();
-        linesStream.forEach(line -> this.lines.add(line));
+        this.reader = new BufferedReader(new InputStreamReader(Preconditions.checkNotNull(inputStream)));
         this.projection = projection;
         this.row = 0;
     }
@@ -69,7 +59,5 @@ public abstract class RecordIterator<T extends Record> implements Iterator<T> {
     // ---------------------------------------------------
 
     public abstract T next();
-
-    public abstract T next(long lineNumber);
 
 }
