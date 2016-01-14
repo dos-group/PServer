@@ -6,10 +6,10 @@ import de.tuberlin.pserver.compiler.TransactionDescriptor;
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.math.SharedObject;
+import de.tuberlin.pserver.new_core_runtime.io.network.NetManager;
 import de.tuberlin.pserver.runtime.core.common.Deactivatable;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.runtime.core.net.NetEvents;
-import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.runtime.dht.DHTKey;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
 import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
@@ -125,7 +125,7 @@ public final class RuntimeManager implements Deactivatable {
         Preconditions.checkNotNull(name);
         final NetEvents.NetEvent event = new NetEvents.NetEvent(MsgEventHandler.MSG_EVENT_PREFIX + name, true);
         event.setPayload(value);
-        netManager.sendEvent(remoteNodeIDs, event);
+        netManager.sendMsg(remoteNodeIDs, event);
     }
 
     @SuppressWarnings("unchecked")
@@ -151,7 +151,7 @@ public final class RuntimeManager implements Deactivatable {
         handler.setInfraManager(infraManager);
         handler.setRemoveAfterAwait(true);
         handler.initLatch(n);
-        netManager.addEventListener(MsgEventHandler.MSG_EVENT_PREFIX + name, handler);
+        netManager.addMsgHandler(MsgEventHandler.MSG_EVENT_PREFIX + name, handler);
         if (type == ReceiveType.SYNC) {
             try {
                 handler.getLatch().await();
