@@ -7,8 +7,8 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
-import de.tuberlin.pserver.runtime.core.net.NetEvents;
-import de.tuberlin.pserver.runtime.core.net.NetManager;
+import de.tuberlin.pserver.runtime.core.network.NetEvent;
+import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
@@ -270,7 +270,7 @@ public final class MatrixLoader {
     private void sendPartition(int targetNodeId, List<MatrixEntry> entries, MatrixLoadTask task) {
         if (entries != null && !entries.isEmpty()) {
             MatrixEntry[] entriesArray = entries.toArray(new MatrixEntry[entries.size()]);
-            netManager.sendEvent(targetNodeId, new MatrixLoader.MatrixEntryPartitionEvent(entriesArray, task.state.stateName));
+            netManager.dispatchEventAt(new int[] {targetNodeId}, new MatrixLoader.MatrixEntryPartitionEvent(entriesArray, task.state.stateName));
             entries.clear();
         }
     }
@@ -284,7 +284,7 @@ public final class MatrixLoader {
      * From the perspective of one node, foreign matrix entries are those belonging to another node.<br>
      * Received from an node, to that the containing entries belong to.
      */
-    public static final class MatrixEntryPartitionEvent extends NetEvents.NetEvent {
+    public static final class MatrixEntryPartitionEvent extends NetEvent {
 
         public static final String MATRIX_ENTRY_PARTITION_EVENT = "MATRIX_ENTRY_PARTITION_EVENT";
         private static final long serialVersionUID = -1L;
@@ -303,7 +303,7 @@ public final class MatrixLoader {
 
     // ---------------------------------------------------
 
-    public static final class FinishedLoadingFileEvent extends NetEvents.NetEvent {
+    public static final class FinishedLoadingFileEvent extends NetEvent {
 
         public static final String FINISHED_LOADING_FILE_EVENT = "FINISHED_LOADING_FILE_EVENT";
         private static final long serialVersionUID = -1L;

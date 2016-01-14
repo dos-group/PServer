@@ -1,9 +1,9 @@
 package de.tuberlin.pserver.runtime.state.cache;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.runtime.core.net.NetEvents;
+import de.tuberlin.pserver.runtime.core.network.NetEvent;
 
-public final class CacheEvent extends NetEvents.NetEvent {
+public final class CacheEvent extends NetEvent {
 
     // ---------------------------------------------------
     // Constants.

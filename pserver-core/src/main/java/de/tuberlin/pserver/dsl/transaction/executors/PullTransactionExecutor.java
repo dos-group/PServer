@@ -88,7 +88,7 @@ public class PullTransactionExecutor extends TransactionExecutor {
                     cacheRequest
             );
 
-            runtimeContext.netManager.sendEvent(controller.getTransactionDescriptor().stateObjectNodes, request);
+            runtimeContext.netManager.dispatchEventAt(controller.getTransactionDescriptor().stateObjectNodes, request);
         }
 
         { // Await Response...
@@ -140,7 +140,7 @@ public class PullTransactionExecutor extends TransactionExecutor {
                     remoteStateObjects[i].unlock();
                 }
 
-                runtimeContext.netManager.sendEvent(
+                runtimeContext.netManager.dispatchEventAt(
                         request.srcMachineID,
                         new TransactionPullResponseEvent(transactionName, preparedOutputs)
                 );

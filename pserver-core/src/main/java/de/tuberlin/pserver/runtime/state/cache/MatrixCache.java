@@ -69,7 +69,7 @@ public final class MatrixCache<V extends Number, T extends Matrix<V>> {
 
         if (!lruCache.containsKey(index)) {
 
-            runtimeContext.netManager.sendEvent(
+            runtimeContext.netManager.dispatchEventAt(
                     cacheProviderNodes,
                     new CacheEvent(
                             CacheEvent.CACHE_PULL_REQUEST_EVENT,
@@ -117,7 +117,7 @@ public final class MatrixCache<V extends Number, T extends Matrix<V>> {
 
     public void pull(final long[] elementIndices) {
 
-        runtimeContext.netManager.sendEvent(
+        runtimeContext.netManager.dispatchEventAt(
                 cacheProviderNodes,
                 new CacheEvent(
                         CacheEvent.CACHE_PULL_REQUEST_EVENT,
@@ -133,7 +133,7 @@ public final class MatrixCache<V extends Number, T extends Matrix<V>> {
 
         if (partitioner == null) {
 
-            runtimeContext.netManager.sendEvent(
+            runtimeContext.netManager.dispatchEventAt(
                     cacheProviderNodes,
                     new CacheEvent(
                             CacheEvent.CACHE_PULL_RESPONSE_EVENT,

@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.core.common.Deactivatable;
 import de.tuberlin.pserver.runtime.core.config.IConfig;
 import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
+import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,7 @@ public final class InfrastructureManager extends EventDispatcher implements Deac
 
     private final MachineDescriptor machine;
 
-    private final Map<UUID, MachineDescriptor> peers;
+    private final Map<UUID, MachineDescriptor> uidDescMap;
 
     private final List<MachineDescriptor> machines;
 
@@ -39,7 +40,7 @@ public final class InfrastructureManager extends EventDispatcher implements Deac
         super(true, "INFRASTRUCTURE-MANAGER-THREAD");
         this.config     = Preconditions.checkNotNull(config);
         this.machine    = Preconditions.checkNotNull(machine);
-        this.peers      = new ConcurrentHashMap<>();
+        this.uidDescMap = new ConcurrentHashMap<>();
         this.machines   = Collections.synchronizedList(new ArrayList<>());
         this.isClient   = isClient;
     }
@@ -72,7 +73,9 @@ public final class InfrastructureManager extends EventDispatcher implements Deac
         LOG.debug("Started InfrastructureManager at " + machine);
     }
 
-    public Map<UUID, MachineDescriptor> getActivePeers() { return Collections.unmodifiableMap(peers); }
+    // ---------------------------------------------------
+
+    public Map<UUID, MachineDescriptor> getActivePeers() { return Collections.unmodifiableMap(uidDescMap); }
 
     public MachineDescriptor getMachine() { return Preconditions.checkNotNull(machine); }
 
@@ -97,6 +100,10 @@ public final class InfrastructureManager extends EventDispatcher implements Deac
         return machines.get(machineIndex);
     }
 
+    public MachineDescriptor getMachine(UUID machineID) {
+        return uidDescMap.get(machineID);
+    }
+
     // ---------------------------------------------------
 
     private void loadMachines() {
@@ -116,9 +123,9 @@ public final class InfrastructureManager extends EventDispatcher implements Deac
         final List<String> machineList = zookeeper.getChildrenForPath(ZookeeperClient.ZOOKEEPER_NODES);
         for (final String machineIDStr : machineList) {
             final UUID machineID = UUID.fromString(machineIDStr);
-            if (!peers.containsKey(machineID) && !machine.machineID.equals(machineID)) {
+            if (!uidDescMap.containsKey(machineID) && !machine.machineID.equals(machineID)) {
                 MachineDescriptor md = (MachineDescriptor) zookeeper.readBlocking(ZookeeperClient.ZOOKEEPER_NODES + "/" + machineIDStr);
-                peers.put(machineID, md);
+                uidDescMap.put(machineID, md);
                 machines.add(md);
             }
         }

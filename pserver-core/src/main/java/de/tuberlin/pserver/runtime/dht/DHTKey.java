@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.runtime.dht;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
 import de.tuberlin.pserver.runtime.dht.types.ByteBufferedDHTObject;
 
 import java.io.Serializable;
