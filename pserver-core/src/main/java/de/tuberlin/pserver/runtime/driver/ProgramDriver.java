@@ -93,7 +93,7 @@ public class ProgramDriver implements Deactivatable {
     public void run() throws Exception {
 
         try {
-            Thread.sleep(7000); // TODO: REMOVE !!! FEHLER!!!!!
+            Thread.sleep(2000); // TODO: REMOVE !!! FEHLER!!!!!
         } catch (InterruptedException ex) {
             //throw new IllegalStateException(ex);
         }
