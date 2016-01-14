@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class NetManager extends EventDispatcher {
+/*public final class NetManager extends EventDispatcher {
 
     // ---------------------------------------------------
     // Inner Classes.
@@ -222,4 +222,4 @@ public final class NetManager extends EventDispatcher {
         }
         LOG.debug("NetManager of [" + machine.machineID + "] successfully bound to port: " + machine.port + ".");
     }
-}
+}*/

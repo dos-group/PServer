@@ -2,8 +2,8 @@ package de.tuberlin.pserver.runtime;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.new_core_runtime.io.network.NetManager;
 import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.runtime.core.net.NetManager;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 
