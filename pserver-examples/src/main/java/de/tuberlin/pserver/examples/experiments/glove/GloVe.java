@@ -1,16 +1,12 @@
 package de.tuberlin.pserver.examples.experiments.glove;
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.commons.compression.Compressor;
-import de.tuberlin.pserver.commons.serialization.ObjectSerializer;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
-import de.tuberlin.pserver.dsl.transaction.phases.GenericApply;
-import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 import de.tuberlin.pserver.dsl.transaction.phases.Update;
 import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
@@ -18,10 +14,8 @@ import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
-import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
 import org.apache.commons.lang3.mutable.MutableDouble;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Random;
 
@@ -42,28 +36,11 @@ public final class GloVe extends Program {
     // 1072146 ms (Local: 4 Nodes with 8 Threads per Node) - 32F - 17.86min => Optimized Math!
 
     // 1318430
-    
-    // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    /*private static final int        ROWS = 50;
-
-    private static final int        COLS = 36073;
-
-    private static final double     ALPHA = 0.75;
-
-    private static final int        X_MAX = 10;
-
-    private static final double     LEARNING_RATE = 0.05;
-
-    private static final int        NUM_EPOCHS = 15;
-
-    private static final String     INPUT_DATA = "/input/reddit/cooccmat_mincount_15_windowsize_15";*/
 
     // ---------------------------------------------------
+    // Large Experiment
 
-    private static final long       ROWS = 20;
+    /*private static final long       ROWS = 20;
 
     private static final long       COLS = 3717689;
 
@@ -75,13 +52,34 @@ public final class GloVe extends Program {
 
     private static final int        NUM_EPOCHS = 10;
 
-    private static final String     INPUT_DATA = "/input/reddit/cooccmat_mincount_15_windowsize_15";
+    private static final String     INPUT_DATA = "/input/reddit/cooccmat_mincount_15_windowsize_15"*/
+
+
+    // ---------------------------------------------------
+    // Constants.
+    // ---------------------------------------------------
+
+    private static final String NUM_NODES = "2";
+
+    private static final int        ROWS = 50;
+
+    private static final int        COLS = 36073;
+
+    private static final double     ALPHA = 0.75;
+
+    private static final int        X_MAX = 10;
+
+    private static final double     LEARNING_RATE = 0.05;
+
+    private static final int        NUM_EPOCHS = 15;
+
+    private static final String     INPUT_DATA = "datasets/text8_coocc.csv";
 
     // ---------------------------------------------------
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.PARTITIONED, rows = COLS, cols = COLS /*, path = INPUT_DATA*/, format = Format.SPARSE_FORMAT)
+    @State(scope = Scope.PARTITIONED, rows = COLS, cols = COLS ,path = INPUT_DATA, format = Format.SPARSE_FORMAT)
     public Matrix32F X;
 
     @State(scope = Scope.REPLICATED, rows = ROWS, cols = COLS * 2)
@@ -100,28 +98,23 @@ public final class GloVe extends Program {
     // Transactions.
     // ---------------------------------------------------
 
-    /*@Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PUSH)
+    @Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PUSH)
     public final TransactionDefinition sync = new TransactionDefinition(
 
             (Update<Matrix32F>) (remoteUpdates, localState) -> {
                 for (final Matrix32F update : remoteUpdates)
                     Parallel.For(update, (i, j, v) -> localState.set(i, j, (localState.get(i, j) + update.get(i, j)) / 2));
             }
-    );*/
+    );
 
-    private ObjectSerializer serializer = ObjectSerializer.Factory.create(ObjectSerializer.SerializerType.KRYO_SERIALIZER);
-
+    /*private ObjectSerializer serializer = ObjectSerializer.Factory.create(ObjectSerializer.SerializerType.KRYO_SERIALIZER);
     private Compressor compressor = Compressor.Factory.create(Compressor.CompressionType.LZ4_COMPRESSION);
-
     @Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PUSH)
     public final TransactionDefinition sync = new TransactionDefinition(
-
             (Prepare<Matrix32F, Pair<Integer, byte[]>>) (remoteMatrix) -> {
                 final byte[] serializedObj = serializer.serialize(remoteMatrix);
                 return Pair.of(serializedObj.length, compressor.compress(serializedObj));
-            }
-            ,
-
+            },
             (GenericApply<Pair<Integer, byte[]>,Matrix32F,Matrix32F>) (remoteUpdates, localState) -> {
                 for (final Pair<Integer, byte[]> update : remoteUpdates) {
                     final Matrix32F updateMtx = serializer.deserialize(compressor.decompress(update.getRight(), update.getLeft()), DenseMatrix32F.class);
@@ -129,7 +122,7 @@ public final class GloVe extends Program {
                 }
                 return null;
             }
-    );
+    );*/
 
     // ---------------------------------------------------
     // Units.
@@ -204,63 +197,15 @@ public final class GloVe extends Program {
 
     public static void main(final String[] args) {
 
-        //PServerExecutor.LOCAL
-        //        .run(GloVe.class)
-        //       .done();
+        System.setProperty("simulation.numNodes", NUM_NODES);
+
+        PServerExecutor.LOCAL
+                .run(GloVe.class)
+                .done();
 
         //System.setProperty("pserver.profile", "wally");
         //PServerExecutor.REMOTE
         //        .run(GloVe.class)
         //        .done();
-
-        final int size_mb = 1;
-
-        final int num_elements = (int)(1048576.0 * size_mb / Double.BYTES);
-
-        final double[] model = new double[num_elements];
-
-
-
-        final Random rand = new Random(42);
-
-        for (int i = 0; i < num_elements; ++i) {
-            model[i] = rand.nextGaussian() * Double.MAX_VALUE;
-        }
-
-
-
-        final ObjectSerializer serializer = ObjectSerializer.Factory.create(ObjectSerializer.SerializerType.KRYO_SERIALIZER);
-
-        final Compressor compressor = Compressor.Factory.create(Compressor.CompressionType.LZ4_COMPRESSION);
-
-
-
-        final int num_of_runs = 5;
-
-        for (int i = 0; i < num_of_runs; ++i) {
-
-            final long start = System.currentTimeMillis();
-
-            final byte[] serialized_model = serializer.serialize(model);
-
-            final byte[] compressed_model = compressor.compress(serialized_model);
-
-            final long stop = System.currentTimeMillis();
-
-            if (i == num_of_runs - 1) {
-
-                final long uncompressed_size = model.length * Double.BYTES;
-
-                final long compressed_size = compressed_model.length / Double.BYTES;
-
-                System.out.println("time: " + ((stop - start) / 1000));
-
-                System.out.println("uncompressed: " + uncompressed_size);
-
-                System.out.println("compressed:   " + compressed_size);
-
-                System.out.println("ratio:        " + ((uncompressed_size / compressed_size) * 100.0) + "%");
-            }
-        }
     }
 }

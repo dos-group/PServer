@@ -65,36 +65,50 @@ public final class PServerNodeFactory {
 
         final long start = System.nanoTime();
 
-        this.config             = Preconditions.checkNotNull(config);
-        this.machine            = configureMachine();
-        this.memoryManager      = null; //new MemoryManager(config);
-        this.infraManager       = new InfrastructureManager(machine, config, false);
-        this.netManager         = new NetManager(infraManager, machine, 16);
-        this.userCodeManager    = new UserCodeManager(this.getClass().getClassLoader());
-        this.rpcManager         = new RPCManager(netManager);
+        try {
 
-        infraManager.start(); // blocking until all at are registered at zookeeper
-        infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connect);
+            this.config = Preconditions.checkNotNull(config);
+            this.machine = configureMachine();
+            this.memoryManager = null; //new MemoryManager(config);
+            this.infraManager = new InfrastructureManager(machine, config, false);
+            this.netManager = new NetManager(infraManager, machine, 16);
+            this.netManager.start();
+            this.userCodeManager = new UserCodeManager(this.getClass().getClassLoader());
+            this.rpcManager = new RPCManager(netManager);
 
-        this.fileManager        = createFileSystem(infraManager.getNodeID());
-        this.dhtManager         = new DHTManager(this.config, infraManager, netManager);
-        this.runtimeManager     = new RuntimeManager(infraManager, netManager, fileManager, dhtManager);
+            infraManager.start(); // blocking until all at are registered at zookeeper
 
-        this.runtimeContext = new RuntimeContext(
-                machine,
-                infraManager.getMachines().size(),
-                Runtime.getRuntime().availableProcessors(),
-                infraManager.getNodeID(),
-                netManager,
-                dhtManager,
-                fileManager,
-                runtimeManager
-        );
+            Thread.sleep(3000);
 
-        netManager.addEventListener(NetEvent.NetEventTypes.ECHO_REQUEST, event -> {
-            UUID dst = ((NetEvent) event).srcMachineID;
-            netManager.dispatchEventAt(dst, new NetEvent(NetEvent.NetEventTypes.ECHO_RESPONSE));
-        });
+
+            infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connect);
+
+            this.fileManager = createFileSystem(infraManager.getNodeID());
+            this.dhtManager = new DHTManager(this.config, infraManager, netManager);
+            this.runtimeManager = new RuntimeManager(infraManager, netManager, fileManager, dhtManager);
+
+            this.runtimeContext = new RuntimeContext(
+                    machine,
+                    infraManager.getMachines().size(),
+                    Runtime.getRuntime().availableProcessors(),
+                    infraManager.getNodeID(),
+                    netManager,
+                    dhtManager,
+                    fileManager,
+                    runtimeManager
+            );
+
+            netManager.addEventListener(NetEvent.NetEventTypes.ECHO_REQUEST, event -> {
+
+                System.out.println("---------------------------------->   " + event);
+
+                UUID dst = ((NetEvent) event).srcMachineID;
+                netManager.dispatchEventAt(dst, new NetEvent(NetEvent.NetEventTypes.ECHO_RESPONSE));
+            });
+
+        } catch(Exception e) {
+            throw new IllegalStateException(e);
+        }
 
         LOG.info("PServer Node Startup: " + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms");
     }

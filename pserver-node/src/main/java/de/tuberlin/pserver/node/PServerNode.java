@@ -57,13 +57,9 @@ public final class PServerNode extends EventDispatcher {
 
     @Override
     public void deactivate() {
-
         runtimeManager.deactivate();
-
         netManager.deactivate();
-
         infraManager.deactivate();
-
         super.deactivate();
     }
 

@@ -14,6 +14,9 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.serialization.ClassResolvers;
+import io.netty.handler.codec.serialization.ObjectDecoder;
+import io.netty.handler.codec.serialization.ObjectEncoder;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.GlobalEventExecutor;
@@ -38,7 +41,7 @@ public final class NetManager extends EventDispatcher {
 
     private final InfrastructureManager infraManager;
 
-    private final MachineDescriptor thisMachineDescriptor;
+    private final MachineDescriptor machine;
 
     private final NetChannelConfig  channelConfig;
 
@@ -58,10 +61,10 @@ public final class NetManager extends EventDispatcher {
 
     // -------------------------------------------------------
 
-    public NetManager(InfrastructureManager infraManager, MachineDescriptor thisMachineDescriptor, int numThreads) {
+    public NetManager(InfrastructureManager infraManager, MachineDescriptor machine, int numThreads) {
         super(true);
         this.infraManager       = Preconditions.checkNotNull(infraManager);
-        this.thisMachineDescriptor  = Preconditions.checkNotNull(thisMachineDescriptor);
+        this.machine            = Preconditions.checkNotNull(machine);
         this.channelConfig      = new NetChannelConfig();
         this.bossGroup          = new NioEventLoopGroup(1);
         this.workerGroup        = new NioEventLoopGroup(numThreads);
@@ -78,10 +81,10 @@ public final class NetManager extends EventDispatcher {
         pipeline.addLast(
                 //new Lz4FrameEncoder(true),
                 //new Lz4FrameDecoder(true),
-                new NetKryoEncoder(),
-                new NetKryoDecoder(),
-                //new ObjectEncoder(),
-                //new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
+                //new NetKryoEncoder(),
+                //new NetKryoDecoder(),
+                new ObjectEncoder(),
+                new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
                 new NetHandshakeRequestHandler(),
                 new NetMessageHandler(NetManager.this)
         );
@@ -91,10 +94,10 @@ public final class NetManager extends EventDispatcher {
         pipeline.addLast(
                 //new Lz4FrameEncoder(true),
                 //new Lz4FrameDecoder(true),
-                new NetKryoEncoder(),
-                new NetKryoDecoder(),
-                //new ObjectEncoder(),
-                //new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
+                //new NetKryoEncoder(),
+                //new NetKryoDecoder(),
+                new ObjectEncoder(),
+                new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
                 new NetHandshakeResponseHandler(),
                 new NetMessageHandler(NetManager.this)
         );
@@ -118,7 +121,7 @@ public final class NetManager extends EventDispatcher {
         });
 
         // Bind and start to accept incoming connections.
-        srvBootstrap.bind(thisMachineDescriptor.port).sync().channel().closeFuture().sync();
+        srvBootstrap.bind(machine.port).sync();
     }
 
     public void stop() throws Exception {
@@ -158,6 +161,7 @@ public final class NetManager extends EventDispatcher {
             }
 
         } catch(Exception e) {
+            e.printStackTrace();
             throw new IllegalStateException(e);
         }
     }
@@ -193,7 +197,7 @@ public final class NetManager extends EventDispatcher {
     }
 
     public MachineDescriptor getMachineDescriptor() {
-        return thisMachineDescriptor;
+        return machine;
     }
 
     // -------------------------------------------------------
@@ -216,7 +220,7 @@ public final class NetManager extends EventDispatcher {
 
     public void broadcastEvent(final NetEvent event) {
         for (final MachineDescriptor md : infraManager.getMachines()) {
-            if (!thisMachineDescriptor.machineID.equals(md.machineID))
+            if (!machine.machineID.equals(md.machineID))
                 dispatchEventAt(md, event);
         }
     }
@@ -253,7 +257,7 @@ public final class NetManager extends EventDispatcher {
         msgReadHandler.setNetChannel(netChannel);
         // Send thisNetDescriptor as handshake object.
         if (type == NetChannel.NetChannelType.CHANNEL_OUT)
-            netChannel.channel.writeAndFlush(thisMachineDescriptor, netChannel.channel.voidPromise());
+            netChannel.channel.writeAndFlush(machine, netChannel.channel.voidPromise());
         else if (type == NetChannel.NetChannelType.CHANNEL_IN)
             netChannel.channel.writeAndFlush(descriptor, netChannel.channel.voidPromise());
 
@@ -281,7 +285,7 @@ public final class NetManager extends EventDispatcher {
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
-            if (msg instanceof MachineDescriptor && msg.equals(thisMachineDescriptor))
+            if (msg instanceof MachineDescriptor && msg.equals(machine))
                 ctx.pipeline().remove(this);
             else
                 throw new IllegalStateException("Wrong handshake protocol.");

@@ -38,7 +38,6 @@ public final class NetMessageHandler extends SimpleChannelInboundHandler<Object>
         }
     }
 
-
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
         writeIfPossible();

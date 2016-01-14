@@ -138,7 +138,6 @@ public final class PServerClient extends EventDispatcher {
                 + "' [" + jobSubmission.programID +"] finished in "
                 + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms.");
 
-
         boolean programError = false;
         for (int i = 0; i < infraManager.getMachines().size(); ++i) {
 

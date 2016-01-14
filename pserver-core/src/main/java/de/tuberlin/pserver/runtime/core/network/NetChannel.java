@@ -34,7 +34,8 @@ public class NetChannel {
         if (channel.isWritable()) {
             channel.eventLoop().execute(() -> {
                 if (!writeQueue.isEmpty() && channel.isWritable()) {
-                    channel.writeAndFlush(writeQueue.poll(), channel.voidPromise());
+                    Object data = writeQueue.poll();
+                    channel.writeAndFlush(data, channel.voidPromise());
                 }
             });
         }

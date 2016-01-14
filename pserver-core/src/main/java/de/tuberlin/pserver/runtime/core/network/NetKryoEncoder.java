@@ -26,24 +26,28 @@ public final class NetKryoEncoder extends MessageToByteEncoder<Object> {
 
     @Override
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out) throws Exception {
-        // Keep offset of output buffer.
-        int startIdx = out.writerIndex();
-        ByteBufOutputStream outStream = new ByteBufOutputStream(out);
-        // First, placeholder to output buffer.
-        outStream.write(LENGTH_PLACEHOLDER);
-        // Delegate the backing array to kryo output.
-        output.setBuffer(outStream.buffer().array());
-        output.setOutputStream(outStream);
-        // Set offset on backing array.
-        output.setPosition(out.arrayOffset());
-        // Serialize data.
-        kryo.writeClassAndObject(output, msg);
-        // Write serialized data on backing array.
-        output.flush();
-        output.close();
-        // Write size in placeholder position.
-        int endIdx = out.writerIndex();
-        out.setInt(startIdx, endIdx - startIdx - 4);
+        try {
+            // Keep offset of output buffer.
+            int startIdx = out.writerIndex();
+            ByteBufOutputStream outStream = new ByteBufOutputStream(out);
+            // First, placeholder to output buffer.
+            outStream.write(LENGTH_PLACEHOLDER);
+            // Delegate the backing array to kryo output.
+            output.setBuffer(outStream.buffer().array());
+            output.setOutputStream(outStream);
+            // Set offset on backing array.
+            output.setPosition(out.arrayOffset());
+            // Serialize data.
+            kryo.writeClassAndObject(output, msg);
+            // Write serialized data on backing array.
+            output.flush();
+            output.close();
+            // Write size in placeholder position.
+            int endIdx = out.writerIndex();
+            out.setInt(startIdx, endIdx - startIdx - 4);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 }
 
