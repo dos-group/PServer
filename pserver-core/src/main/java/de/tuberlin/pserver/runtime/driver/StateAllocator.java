@@ -7,7 +7,7 @@ import de.tuberlin.pserver.math.matrix.ElementType;
 import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
-import de.tuberlin.pserver.runtime.core.net.NetManager;
+import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import de.tuberlin.pserver.runtime.state.MatrixLoader;

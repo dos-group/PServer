@@ -46,7 +46,7 @@ public class MatrixCacheProvider<V extends Number, T extends Matrix<V>>{
                 elementValues[i] = matrix.toLong(matrix.get(event.elementIndices[i]));
             }
 
-            runtimeContext.netManager.sendEvent(
+            runtimeContext.netManager.dispatchEventAt(
                     event.srcMachineID,
                     new CacheEvent(CacheEvent.CACHE_PULL_RESPONSE_EVENT, null, elementValues)
             );

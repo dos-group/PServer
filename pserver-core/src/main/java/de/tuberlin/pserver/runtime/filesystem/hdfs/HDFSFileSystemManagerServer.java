@@ -3,10 +3,10 @@ package de.tuberlin.pserver.runtime.filesystem.hdfs;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.core.config.IConfig;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.runtime.core.net.NetEvents;
-import de.tuberlin.pserver.runtime.core.net.NetManager;
-import de.tuberlin.pserver.runtime.core.net.RPCManager;
+import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.network.NetEvent;
+import de.tuberlin.pserver.runtime.core.network.NetManager;
+import de.tuberlin.pserver.runtime.core.network.RPCManager;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
@@ -92,7 +92,7 @@ public final class HDFSFileSystemManagerServer implements FileSystemManager, Inp
             }
         });
 
-        netManager.broadcastEvent(new NetEvents.NetEvent(PSERVER_LFSM_COMPUTED_FILE_SPLITS, true));
+        netManager.broadcastEvent(new NetEvent(PSERVER_LFSM_COMPUTED_FILE_SPLITS, true));
 
         registeredIteratorMap.forEach(
                 (k, v) -> v.forEach(FileDataIterator::initialize)

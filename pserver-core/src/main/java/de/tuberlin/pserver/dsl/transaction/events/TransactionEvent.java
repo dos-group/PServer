@@ -1,9 +1,8 @@
 package de.tuberlin.pserver.dsl.transaction.events;
 
+import de.tuberlin.pserver.runtime.core.network.NetEvent;
 
-import de.tuberlin.pserver.runtime.core.net.NetEvents;
-
-public class TransactionEvent extends NetEvents.NetEvent {
+public class TransactionEvent extends NetEvent {
 
     // ---------------------------------------------------
     // Constructors.

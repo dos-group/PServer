@@ -8,10 +8,10 @@ import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
 import de.tuberlin.pserver.runtime.core.infra.InetHelper;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
 import de.tuberlin.pserver.runtime.core.infra.ZookeeperClient;
-import de.tuberlin.pserver.runtime.core.net.NetEvents;
-import de.tuberlin.pserver.runtime.core.net.NetManager;
+import de.tuberlin.pserver.runtime.core.network.NetEvent;
+import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.core.usercode.UserCodeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,24 +59,22 @@ public enum PServerClientFactory {
 
         this.config         = Preconditions.checkNotNull(config);
         this.machine        = configureMachine();
-
-
         this.infraManager   = new InfrastructureManager(machine, config, true);
-        this.netManager     = new NetManager(machine, infraManager, 16);
+        this.netManager     = new NetManager(infraManager, machine, 16);
 
         infraManager.start(); // blocking until all at are registered at zookeeper
-        infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connectTo);
+        infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connect);
 
         // block until all at are really ready for job submission
         final Set<UUID> responses = new HashSet<>();
         infraManager.getMachines().forEach(md -> responses.add(md.machineID));
         netManager.addEventListener(
-                NetEvents.NetEventTypes.ECHO_RESPONSE,
+                NetEvent.NetEventTypes.ECHO_RESPONSE,
                 new IEventHandler() {
                     @Override
                     public void handleEvent(Event event) {
                         synchronized (responses) {
-                            responses.remove(((NetEvents.NetEvent) event).srcMachineID);
+                            responses.remove(((NetEvent) event).srcMachineID);
                             responses.notifyAll();
                         }
                     }
@@ -98,9 +96,9 @@ public enum PServerClientFactory {
             while(!responses.isEmpty()) {
                 try {
                     for (UUID response : responses) {
-                        NetEvents.NetEvent event = new NetEvents.NetEvent(NetEvents.NetEventTypes.ECHO_REQUEST);
+                        NetEvent event = new NetEvent(NetEvent.NetEventTypes.ECHO_REQUEST);
                         event.setPayload(machine);
-                        netManager.sendEvent(response, event);
+                        netManager.dispatchEventAt(response, event);
                     }
                     responses.wait(1000);
                 } catch (InterruptedException e) {}

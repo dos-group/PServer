@@ -74,7 +74,7 @@ public class PushTransactionExecutor extends TransactionExecutor {
                 controller.getTransactionDescriptor().cacheRequestObject
         );
 
-        runtimeContext.netManager.sendEvent(controller.getTransactionDescriptor().stateObjectNodes, request);
+        runtimeContext.netManager.dispatchEventAt(controller.getTransactionDescriptor().stateObjectNodes, request);
 
         return null;
     }
