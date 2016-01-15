@@ -98,7 +98,7 @@ public final class GloVe extends Program {
     // Transactions.
     // ---------------------------------------------------
 
-    @Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PUSH)
+    @Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PULL)
     public final TransactionDefinition sync = new TransactionDefinition(
 
             (Update<Matrix32F>) (remoteUpdates, localState) -> {

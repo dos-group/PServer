@@ -77,10 +77,6 @@ public final class PServerNodeFactory {
             this.rpcManager = new RPCManager(netManager);
 
             infraManager.start(); // blocking until all at are registered at zookeeper
-
-            Thread.sleep(3000);
-
-
             infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connect);
 
             this.fileManager = createFileSystem(infraManager.getNodeID());
@@ -99,11 +95,8 @@ public final class PServerNodeFactory {
             );
 
             netManager.addEventListener(NetEvent.NetEventTypes.ECHO_REQUEST, event -> {
-
-                System.out.println("---------------------------------->   " + event);
-
-                UUID dst = ((NetEvent) event).srcMachineID;
-                netManager.dispatchEventAt(dst, new NetEvent(NetEvent.NetEventTypes.ECHO_RESPONSE));
+                MachineDescriptor clmd = (MachineDescriptor)((NetEvent) event).getPayload();
+                netManager.dispatchEventAt(clmd, new NetEvent(NetEvent.NetEventTypes.ECHO_RESPONSE));
             });
 
         } catch(Exception e) {

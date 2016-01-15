@@ -43,6 +43,7 @@ public final class InfrastructureManager extends EventDispatcher implements Deac
         this.uidDescMap = new ConcurrentHashMap<>();
         this.machines   = Collections.synchronizedList(new ArrayList<>());
         this.isClient   = isClient;
+        uidDescMap.put(machine.machineID, machine);
     }
 
     @Override

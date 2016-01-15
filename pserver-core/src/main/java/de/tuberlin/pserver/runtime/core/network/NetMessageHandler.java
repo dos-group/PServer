@@ -34,7 +34,7 @@ public final class NetMessageHandler extends SimpleChannelInboundHandler<Object>
         if (msg instanceof NetEvent) {
             NetEvent event = (NetEvent)msg;
             event.netChannel = netChannel;
-            netManager.dispatchEvent(new NetEvent(((NetEvent)msg).type, msg));
+            netManager.dispatchEvent(event);
         }
     }
 

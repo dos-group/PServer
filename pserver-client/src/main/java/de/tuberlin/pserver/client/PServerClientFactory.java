@@ -65,9 +65,6 @@ public enum PServerClientFactory {
             this.netManager.start();
 
             infraManager.start(); // blocking until all at are registered at zookeeper
-
-            Thread.sleep(3000);
-
             infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connect);
 
             // block until all at are really ready for job submission

@@ -3,6 +3,7 @@ package de.tuberlin.pserver.runtime.core.network;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.commons.json.GsonUtils;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 
@@ -25,13 +26,17 @@ public class NetEvent extends Event {
 
     public transient NetChannel netChannel;
 
-    @GsonUtils.Exclude
+    //@GsonUtils.Exclude
     public UUID srcMachineID;
 
-    @GsonUtils.Exclude
+    //@GsonUtils.Exclude
     public UUID dstMachineID;
 
     public NetEvent(final String type, final boolean isSticky) { super(type, isSticky); }
     public NetEvent(String type, Object payload) { super(type, payload); }
     public NetEvent(String type) { super(type, null); }
+
+    public String toString() {
+        return "event: " + type + " src: " + srcMachineID + " dst: " + dstMachineID;
+    }
 }

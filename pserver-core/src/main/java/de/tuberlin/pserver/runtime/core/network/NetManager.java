@@ -84,7 +84,7 @@ public final class NetManager extends EventDispatcher {
                 //new NetKryoEncoder(),
                 //new NetKryoDecoder(),
                 new ObjectEncoder(),
-                new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
+                new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(getClass().getClassLoader())),
                 new NetHandshakeRequestHandler(),
                 new NetMessageHandler(NetManager.this)
         );
@@ -97,7 +97,7 @@ public final class NetManager extends EventDispatcher {
                 //new NetKryoEncoder(),
                 //new NetKryoDecoder(),
                 new ObjectEncoder(),
-                new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
+                new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(getClass().getClassLoader())),
                 new NetHandshakeResponseHandler(),
                 new NetMessageHandler(NetManager.this)
         );
@@ -213,8 +213,11 @@ public final class NetManager extends EventDispatcher {
     public void dispatchEventAt(UUID machineID, NetEvent event) { dispatchEventAt(infraManager.getMachine(machineID), event, 0); }
     public void dispatchEventAt(MachineDescriptor netDescriptor, NetEvent event) { dispatchEventAt(netDescriptor, event, 0); }
     public void dispatchEventAt(MachineDescriptor netDescriptor, NetEvent event, int channelIdx) {
+        Preconditions.checkNotNull(netDescriptor);
         NetChannel netChannel = activeChannels.get(netDescriptor).get(channelIdx);
         event.netChannel = Preconditions.checkNotNull(netChannel);
+        event.dstMachineID = netDescriptor.machineID;
+        event.srcMachineID = machine.machineID;
         netChannel.sendMsg(event);
     }
 

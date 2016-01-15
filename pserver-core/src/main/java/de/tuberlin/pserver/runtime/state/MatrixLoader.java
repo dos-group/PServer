@@ -229,7 +229,7 @@ public final class MatrixLoader {
                         List<MatrixEntry> valuesOfTargetNode = getListOrCreateIfNotExists(foreignEntries, targetPartition, foreignEntriesThreshold);
                         valuesOfTargetNode.add(new ImmutableMatrixEntry(entry));
                         if (valuesOfTargetNode.size() >= foreignEntriesThreshold) {
-                            sendPartition(targetPartition, valuesOfTargetNode, task);
+                            //sendPartition(targetPartition, valuesOfTargetNode, task);
                         }
                     }
                 }
