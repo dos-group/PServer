@@ -2,6 +2,7 @@ package de.tuberlin.pserver.runtime;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
@@ -29,6 +30,8 @@ public final class RuntimeContext {
 
     public final RuntimeManager runtimeManager;
 
+    public final InfrastructureManager infraManager;
+
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
@@ -40,7 +43,8 @@ public final class RuntimeContext {
                           final NetManager netManager,
                           final DHTManager dhtManager,
                           final FileSystemManager fileManager,
-                          final RuntimeManager runtimeManager) {
+                          final RuntimeManager runtimeManager,
+                          final InfrastructureManager infraManager) {
 
         this.machine            = Preconditions.checkNotNull(machine);
         this.numOfNodes         = numOfNodes;
@@ -50,5 +54,6 @@ public final class RuntimeContext {
         this.dhtManager         = Preconditions.checkNotNull(dhtManager);
         this.fileManager        = Preconditions.checkNotNull(fileManager);
         this.runtimeManager     = Preconditions.checkNotNull(runtimeManager);
+        this.infraManager       = Preconditions.checkNotNull(infraManager);
     }
 }

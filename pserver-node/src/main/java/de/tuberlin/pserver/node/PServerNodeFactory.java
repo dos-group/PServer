@@ -91,7 +91,8 @@ public final class PServerNodeFactory {
                     netManager,
                     dhtManager,
                     fileManager,
-                    runtimeManager
+                    runtimeManager,
+                    infraManager
             );
 
             netManager.addEventListener(NetEvent.NetEventTypes.ECHO_REQUEST, event -> {

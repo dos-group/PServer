@@ -7,7 +7,10 @@ import de.tuberlin.pserver.math.matrix.ElementType;
 import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
+import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
+import de.tuberlin.pserver.runtime.core.remoteobj.GlobalObject;
+import de.tuberlin.pserver.runtime.core.remoteobj.GlobalObjectProxy;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import de.tuberlin.pserver.runtime.state.MatrixLoader;
@@ -92,6 +95,19 @@ public class StateAllocator {
                                 .format(state.format)
                                 .elementType(ElementType.getElementTypeFromClass(state.stateType))
                                 .build();
+
+                        new GlobalObject<>(programContext.runtimeContext.netManager, (Matrix)m);
+
+                    } else {
+
+                        try {
+
+                            MachineDescriptor md = programContext.runtimeContext.infraManager.getMachine(state.atNodes[0]);
+                            m = GlobalObjectProxy.create(programContext.runtimeContext.netManager, md, state.stateType);
+
+                        } catch(Throwable t) {
+                            throw new IllegalStateException(t);
+                        }
                     }
                 }
                 break;
