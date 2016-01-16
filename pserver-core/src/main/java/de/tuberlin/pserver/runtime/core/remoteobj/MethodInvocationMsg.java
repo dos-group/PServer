@@ -32,9 +32,9 @@ public final class MethodInvocationMsg extends NetEvent {
     // Constructors.
     // ---------------------------------------------------
 
-    public MethodInvocationMsg() { this(null, -1, -1, null, null); }
-    public MethodInvocationMsg(UUID callID, int classID, int methodID, Object[] arguments, Object result) {
-        super(METHOD_INVOCATION_EVENT);
+    public MethodInvocationMsg() { this(null, null, -1, -1, null, null); }
+    public MethodInvocationMsg(String globalObjectName, UUID callID, int classID, int methodID, Object[] arguments, Object result) {
+        super(METHOD_INVOCATION_EVENT + "_" + globalObjectName);
         this.callID = callID;
         this.classID = classID;
         this.methodID = methodID;

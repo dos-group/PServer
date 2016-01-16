@@ -96,14 +96,14 @@ public class StateAllocator {
                                 .elementType(ElementType.getElementTypeFromClass(state.stateType))
                                 .build();
 
-                        new GlobalObject<>(programContext.runtimeContext.netManager, (Matrix)m);
+                        new GlobalObject<>(programContext.runtimeContext.netManager, (Matrix)m, state.stateName);
 
                     } else {
 
                         try {
 
                             MachineDescriptor md = programContext.runtimeContext.infraManager.getMachine(state.atNodes[0]);
-                            m = GlobalObjectProxy.create(programContext.runtimeContext.netManager, md, state.stateType);
+                            m = GlobalObjectProxy.create(state.stateName, programContext.runtimeContext.netManager, md, state.stateType);
 
                         } catch(Throwable t) {
                             throw new IllegalStateException(t);

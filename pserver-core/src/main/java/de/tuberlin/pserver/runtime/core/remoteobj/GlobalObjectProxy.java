@@ -29,18 +29,25 @@ public final class GlobalObjectProxy implements InvocationHandler {
 
     private final Map<UUID, Object> resultObjects;
 
+    private final String globalObjectName;
+
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    private GlobalObjectProxy(NetManager netManager, MachineDescriptor remoteNetDescriptor, Class<?> classType) {
+    private GlobalObjectProxy(NetManager netManager,
+                              MachineDescriptor remoteNetDescriptor,
+                              Class<?> classType,
+                              String globalObjectName) {
+
         this.netManager = netManager;
         this.remoteNetDescriptor = remoteNetDescriptor;
         this.classType = classType;
         this.requestLatches = new ConcurrentHashMap<>();
         this.resultObjects = new ConcurrentHashMap<>();
+        this.globalObjectName = globalObjectName;
 
-        netManager.addEventListener(MethodInvocationMsg.METHOD_INVOCATION_EVENT, (event) -> {
+        netManager.addEventListener(MethodInvocationMsg.METHOD_INVOCATION_EVENT + "_" + globalObjectName, (event) -> {
             MethodInvocationMsg mim = (MethodInvocationMsg)event;
             if (mim.classID == classType.hashCode() && requestLatches.containsKey(mim.callID)) {
                 CountDownLatch cdl = requestLatches.remove(mim.callID);
@@ -58,6 +65,7 @@ public final class GlobalObjectProxy implements InvocationHandler {
         CountDownLatch cdl = new CountDownLatch(1);
         requestLatches.put(callID, cdl);
         MethodInvocationMsg invokeMsg = new MethodInvocationMsg(
+                globalObjectName,
                 callID,
                 classType.hashCode(),
                 MethodInvocationMsg.getMethodID(method),
@@ -88,11 +96,11 @@ public final class GlobalObjectProxy implements InvocationHandler {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T create(NetManager netManager, MachineDescriptor remoteNetDescriptor, Class<?> clazz) throws Throwable {
+    public static <T> T create(String globalObjectName, NetManager netManager, MachineDescriptor remoteNetDescriptor, Class<?> clazz) throws Throwable {
         return (T) Proxy.newProxyInstance(
                 clazz.getClassLoader(),
                 new Class<?>[]{clazz},
-                new GlobalObjectProxy(netManager, remoteNetDescriptor, clazz)
+                new GlobalObjectProxy(netManager, remoteNetDescriptor, clazz, globalObjectName)
         );
     }
 }

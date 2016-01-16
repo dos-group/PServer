@@ -15,6 +15,8 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ProgramDriver implements Deactivatable {
 
@@ -29,6 +31,10 @@ public class ProgramDriver implements Deactivatable {
     private final RuntimeContext runtimeContext;
 
     private final StateAllocator stateAllocator;
+
+    private final GlobalObjectAllocator globalObjectAllocator;
+
+    private final Map<String, Object> globalObjectRefs;
 
     // ---------------------------------------------------
 
@@ -53,6 +59,10 @@ public class ProgramDriver implements Deactivatable {
         this.runtimeContext = Preconditions.checkNotNull(runtimeContext);
 
         this.stateAllocator = new StateAllocator(runtimeContext.netManager, runtimeContext.fileManager);
+
+        this.globalObjectAllocator = new GlobalObjectAllocator();
+
+        this.globalObjectRefs = new HashMap<>();
     }
 
     public void deactivate() {
@@ -93,10 +103,14 @@ public class ProgramDriver implements Deactivatable {
     public void run() throws Exception {
 
         try {
-            Thread.sleep(7000); // TODO: REMOVE !!! FEHLER!!!!!
+            Thread.sleep(3000); // TODO: REMOVE !!! FEHLER!!!!!
         } catch (InterruptedException ex) {
             //throw new IllegalStateException(ex);
         }
+
+        allocateGlobalObjects();
+
+        bindGlobalObjects(instance);
 
         allocateState();
 
@@ -112,6 +126,19 @@ public class ProgramDriver implements Deactivatable {
     // ---------------------------------------------------
     // Private Methods.
     // ---------------------------------------------------
+
+    private void allocateGlobalObjects() throws Exception {
+        for (final GlobalObjectDescriptor globalObject : programContext.programTable.getGlobalObjects()) {
+            globalObjectRefs.put(globalObject.stateName, globalObjectAllocator.alloc(programContext, globalObject));
+        }
+    }
+
+    private void bindGlobalObjects(final Program instance) throws Exception {
+        for (final GlobalObjectDescriptor globalObject : programContext.programTable.getGlobalObjects()) {
+            final Field field = programTable.getProgramClass().getDeclaredField(globalObject.stateName);
+            field.set(instance, globalObjectRefs.get(globalObject.stateName));
+        }
+    }
 
     private void allocateState() throws Exception {
         for (final StateDescriptor state : programContext.programTable.getState()) {

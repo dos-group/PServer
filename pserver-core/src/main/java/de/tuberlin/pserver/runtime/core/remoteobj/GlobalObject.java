@@ -18,7 +18,7 @@ public class GlobalObject<T> extends EventDispatcher {
     // Constructors.
     // ---------------------------------------------------
 
-    public GlobalObject(NetManager netManager, T instance) {
+    public GlobalObject(NetManager netManager, T instance, String globalObjectName) {
         super(true);
 
         this.globalMethods = new HashMap<>();
@@ -30,7 +30,7 @@ public class GlobalObject<T> extends EventDispatcher {
             }
         }
 
-        netManager.addEventListener(MethodInvocationMsg.METHOD_INVOCATION_EVENT, (event) -> {
+        netManager.addEventListener(MethodInvocationMsg.METHOD_INVOCATION_EVENT + "_" + globalObjectName , (event) -> {
             MethodInvocationMsg mim = (MethodInvocationMsg) event;
             Method calledMethod = globalMethods.get(mim.methodID);
             Object res = null;
@@ -46,6 +46,7 @@ public class GlobalObject<T> extends EventDispatcher {
 
             mim.netChannel.sendMsg(
                     new MethodInvocationMsg(
+                            globalObjectName,
                             mim.callID,
                             mim.classID,
                             mim.methodID,
