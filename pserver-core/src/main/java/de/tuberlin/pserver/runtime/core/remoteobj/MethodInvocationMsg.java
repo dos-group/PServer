@@ -6,7 +6,7 @@ import java.lang.reflect.Method;
 import java.util.UUID;
 
 
-public final class MethodInvokeMsg extends NetEvent {
+public final class MethodInvocationMsg extends NetEvent {
 
     // ---------------------------------------------------
     // Constants.
@@ -32,8 +32,8 @@ public final class MethodInvokeMsg extends NetEvent {
     // Constructors.
     // ---------------------------------------------------
 
-    public MethodInvokeMsg() { this(null, -1, -1, null, null); }
-    public MethodInvokeMsg(UUID callID, int classID, int methodID, Object[] arguments, Object result) {
+    public MethodInvocationMsg() { this(null, -1, -1, null, null); }
+    public MethodInvocationMsg(UUID callID, int classID, int methodID, Object[] arguments, Object result) {
         super(METHOD_INVOCATION_EVENT);
         this.callID = callID;
         this.classID = classID;

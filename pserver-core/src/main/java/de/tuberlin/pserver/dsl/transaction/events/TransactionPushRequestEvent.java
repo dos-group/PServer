@@ -29,6 +29,7 @@ public class TransactionPushRequestEvent extends TransactionEvent {
     // Constructors.
     // ---------------------------------------------------
 
+    public TransactionPushRequestEvent() { this(null, null, null, null, false); }
     public TransactionPushRequestEvent(final String transactionName,
                                    final List<String> stateObjectNames,
                                    final List<Object> stateObjectsValues,
@@ -37,9 +38,9 @@ public class TransactionPushRequestEvent extends TransactionEvent {
 
         super(TRANSACTION_REQUEST + transactionName);
 
-        this.stateObjectNames = Preconditions.checkNotNull(stateObjectNames);
+        this.stateObjectNames = stateObjectNames;
 
-        this.stateObjectsValues = Preconditions.checkNotNull(stateObjectsValues);
+        this.stateObjectsValues = stateObjectsValues;
 
         this.requestObject = requestObject;
 

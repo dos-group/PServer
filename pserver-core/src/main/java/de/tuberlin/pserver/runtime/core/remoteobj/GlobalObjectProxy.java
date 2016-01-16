@@ -40,8 +40,8 @@ public final class GlobalObjectProxy implements InvocationHandler {
         this.requestLatches = new ConcurrentHashMap<>();
         this.resultObjects = new ConcurrentHashMap<>();
 
-        netManager.addEventListener(MethodInvokeMsg.METHOD_INVOCATION_EVENT, (event) -> {
-            MethodInvokeMsg mim = (MethodInvokeMsg)event;
+        netManager.addEventListener(MethodInvocationMsg.METHOD_INVOCATION_EVENT, (event) -> {
+            MethodInvocationMsg mim = (MethodInvocationMsg)event;
             if (mim.classID == classType.hashCode() && requestLatches.containsKey(mim.callID)) {
                 CountDownLatch cdl = requestLatches.remove(mim.callID);
                 if (mim.result != null)
@@ -57,10 +57,10 @@ public final class GlobalObjectProxy implements InvocationHandler {
 
         CountDownLatch cdl = new CountDownLatch(1);
         requestLatches.put(callID, cdl);
-        MethodInvokeMsg invokeMsg = new MethodInvokeMsg(
+        MethodInvocationMsg invokeMsg = new MethodInvocationMsg(
                 callID,
                 classType.hashCode(),
-                MethodInvokeMsg.getMethodID(method),
+                MethodInvocationMsg.getMethodID(method),
                 arguments,
                 null
         );

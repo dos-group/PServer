@@ -291,10 +291,11 @@ public final class MatrixLoader {
         private final MatrixEntry[] entries;
         private final String name;
 
+        public MatrixEntryPartitionEvent() { this(null, null); }
         public MatrixEntryPartitionEvent(MatrixEntry[] entries, String name) {
             super(MATRIX_ENTRY_PARTITION_EVENT);
-            this.entries = Preconditions.checkNotNull(entries);
-            this.name = Preconditions.checkNotNull(name);
+            this.entries = entries;
+            this.name = name;
         }
 
         public MatrixEntry[] getEntries() { return entries; }
@@ -309,9 +310,10 @@ public final class MatrixLoader {
         private static final long serialVersionUID = -1L;
         private final String name;
 
+        public FinishedLoadingFileEvent() { this(null); }
         public FinishedLoadingFileEvent(String name) {
             super(FINISHED_LOADING_FILE_EVENT);
-            this.name = Preconditions.checkNotNull(name);
+            this.name = name;
         }
 
         public String getName() { return name; }

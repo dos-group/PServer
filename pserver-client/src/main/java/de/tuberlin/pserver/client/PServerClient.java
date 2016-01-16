@@ -2,6 +2,7 @@ package de.tuberlin.pserver.client;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.compiler.Program;
+import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.runtime.core.config.IConfig;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
@@ -114,7 +115,7 @@ public final class PServerClient extends EventDispatcher {
 
         final long start = System.nanoTime();
         final UUID jobUID = UUID.randomUUID();
-        final List<Pair<String, byte[]>> byteCode = userCodeManager.extractClass(jobClass);
+        final List<Tuple2<String, byte[]>> byteCode = userCodeManager.extractClass(jobClass);
         final ProgramSubmissionEvent jobSubmission = new ProgramSubmissionEvent(
                 machine,
                 jobUID,

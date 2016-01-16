@@ -2,6 +2,7 @@ package de.tuberlin.pserver.runtime.core.usercode;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.compression.Compressor;
+import de.tuberlin.pserver.math.tuples.Tuple2;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
@@ -61,22 +62,22 @@ public final class UserCodeManager {
     // Public Methods.
     // ---------------------------------------------------
 
-    public List<Pair<String, byte[]>> extractClass(final Class<?> clazz) { return extractClass(clazz, new LinkedList<>()); }
-    public List<Pair<String, byte[]>> extractClass(final Class<?> clazz, final List<Pair<String, byte[]>> clazzesBC) {
+    public List<Tuple2<String, byte[]>> extractClass(final Class<?> clazz) { return extractClass(clazz, new LinkedList<>()); }
+    public List<Tuple2<String, byte[]>> extractClass(final Class<?> clazz, final List<Tuple2<String, byte[]>> clazzesBC) {
         Preconditions.checkNotNull(clazz);
         for (final Class<?> declaredClazz : clazz.getDeclaredClasses()) {
             extractClass(declaredClazz, clazzesBC);
         }
-        clazzesBC.add(Pair.of(clazz.getName(), compressor.compress(readByteCode(clazz))));
+        clazzesBC.add(new Tuple2(clazz.getName(), compressor.compress(readByteCode(clazz))));
         return clazzesBC;
     }
 
-    public Class<?> implantClass(final List<Pair<String, byte[]>> byteCode) {
+    public Class<?> implantClass(final List<Tuple2<String, byte[]>> byteCode) {
         Preconditions.checkNotNull(byteCode);
         Class<?> clazz = null;
-        for (final Pair<String, byte[]> c : byteCode) {
-            final String className = c.getLeft();
-            final byte[] compressedBinary = c.getRight();
+        for (final Tuple2<String, byte[]> c : byteCode) {
+            final String className = c._1;
+            final byte[] compressedBinary = c._2;
             try {
                 clazz = Class.forName(className);
             } catch (ClassNotFoundException e) {

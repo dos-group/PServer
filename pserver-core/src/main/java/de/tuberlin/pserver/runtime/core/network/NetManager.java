@@ -81,10 +81,10 @@ public final class NetManager extends EventDispatcher {
         pipeline.addLast(
                 //new Lz4FrameEncoder(true),
                 //new Lz4FrameDecoder(true),
-                //new NetKryoEncoder(),
-                //new NetKryoDecoder(),
-                new ObjectEncoder(),
-                new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(getClass().getClassLoader())),
+                new NetKryoEncoder(),
+                new NetKryoDecoder(),
+                //new ObjectEncoder(),
+                //new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(getClass().getClassLoader())),
                 new NetHandshakeRequestHandler(),
                 new NetMessageHandler(NetManager.this)
         );
@@ -94,10 +94,10 @@ public final class NetManager extends EventDispatcher {
         pipeline.addLast(
                 //new Lz4FrameEncoder(true),
                 //new Lz4FrameDecoder(true),
-                //new NetKryoEncoder(),
-                //new NetKryoDecoder(),
-                new ObjectEncoder(),
-                new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(getClass().getClassLoader())),
+                new NetKryoEncoder(),
+                new NetKryoDecoder(),
+                //new ObjectEncoder(),
+                //new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(getClass().getClassLoader())),
                 new NetHandshakeResponseHandler(),
                 new NetMessageHandler(NetManager.this)
         );

@@ -2,17 +2,70 @@ package de.tuberlin.pserver.runtime.core.network;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.io.UnsafeInput;
+import com.esotericsoftware.kryo.io.UnsafeOutput;
 import de.tuberlin.pserver.runtime.core.serializer.KryoFactory;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+
+import java.util.List;
 
 import static io.netty.buffer.Unpooled.buffer;
 
 
-public final class NetKryoDecoder extends LengthFieldBasedFrameDecoder {
+public class NetKryoDecoder extends ByteToMessageDecoder {
+
+    private final static int DECODING_BUFFER =  1024 * 1024 * 200; // 200MB
+
+    private ThreadLocal kryoThreadLocal = new ThreadLocal<Kryo>() {
+        @Override protected Kryo initialValue() {
+            return KryoFactory.INSTANCE.create();
+        }
+    };
+
+    private ThreadLocal inputThreadLocal = new ThreadLocal<Input>() {
+        @Override protected Input initialValue() {
+            return new UnsafeInput();
+        }
+    };
+
+    private ThreadLocal decodingBuffer = new ThreadLocal<byte[]>() {
+        @Override protected byte[] initialValue() {
+            return new byte[DECODING_BUFFER];
+        }
+    };
+
+    public NetKryoDecoder() {}
+
+    @Override
+    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+        if (in.readableBytes() < 4)
+            return;
+
+        in.markReaderIndex();
+        int len = in.readInt();
+        if (in.readableBytes() < len) {
+            in.resetReaderIndex();
+            return;
+        }
+
+        final Kryo kryo = (Kryo)kryoThreadLocal.get();
+        final Input input = (Input)inputThreadLocal.get();
+        final byte[] buf = (byte[])decodingBuffer.get();
+
+        in.readBytes(buf, 0, len);
+        input.setBuffer(buf);
+        Object object = kryo.readClassAndObject(input);
+        input.close();
+        out.add(object);
+    }
+}
+
+/*public final class NetKryoDecoder extends LengthFieldBasedFrameDecoder {
 
     private final Kryo kryo = KryoFactory.INSTANCE.create();
 
@@ -41,7 +94,6 @@ public final class NetKryoDecoder extends LengthFieldBasedFrameDecoder {
         final Object msg = kryo.readClassAndObject(input); // Creates object on "user" JVM heap.
         input.close();
         // Release deserialization buffer.
-        deserializationBuffer.clear();
         deserializationBuffer.release();
         return msg;
     }
@@ -50,4 +102,4 @@ public final class NetKryoDecoder extends LengthFieldBasedFrameDecoder {
     protected ByteBuf extractFrame(ChannelHandlerContext ctx, ByteBuf buffer, int index, int length) {
         return buffer.slice(index, length);
     }
-}
+}*/

@@ -43,6 +43,7 @@ public class DHTKey implements Serializable, Comparable<DHTKey> {
 
         public final MachineDescriptor machine;
 
+        public PartitionDescriptor() { this(0, 0, 0, 0, 0, 0, null); }
         public PartitionDescriptor(final int partitionIndex,
                                    final int partitionSize,
                                    final long globalOffset,
@@ -51,11 +52,11 @@ public class DHTKey implements Serializable, Comparable<DHTKey> {
                                    final int segmentSize,
                                    final MachineDescriptor machine) {
 
-            Preconditions.checkArgument(partitionIndex >= 0);
+            //Preconditions.checkArgument(partitionIndex >= 0);
             //Preconditions.checkArgument(partitionSize > 0);
-            Preconditions.checkArgument(globalOffset >= 0);
-            Preconditions.checkArgument(segmentBaseIndex >= 0);
-            Preconditions.checkArgument(segmentSize >= 0 && segmentSize % ByteBufferedDHTObject.DEFAULT_ALIGNMENT_SIZE == 0);
+            //Preconditions.checkArgument(globalOffset >= 0);
+            //Preconditions.checkArgument(segmentBaseIndex >= 0);
+            //Preconditions.checkArgument(segmentSize >= 0 && segmentSize % ByteBufferedDHTObject.DEFAULT_ALIGNMENT_SIZE == 0);
 
             this.partitionIndex     = partitionIndex;
             this.partitionSize      = partitionSize;
@@ -63,7 +64,7 @@ public class DHTKey implements Serializable, Comparable<DHTKey> {
             this.segmentBaseIndex   = segmentBaseIndex;
             this.numberOfSegments   = numberOfSegments;
             this.segmentSize        = segmentSize;
-            this.machine            = Preconditions.checkNotNull(machine);
+            this.machine            = machine;
         }
     }
 
@@ -86,17 +87,18 @@ public class DHTKey implements Serializable, Comparable<DHTKey> {
     // ---------------------------------------------------
 
     // Copy Constructor.
+    public DHTKey() { this(null, null, null); }
     protected DHTKey(final UUID uid, final String name, final DistributionMode distributionMode) { this(uid, name, null, distributionMode); }
     protected DHTKey(final UUID uid,
                      final String name,
                      final Map<Integer, PartitionDescriptor> partitionDirectory,
                      final DistributionMode distributionMode) {
-        this.internalUID            = Preconditions.checkNotNull(uid);
-        this.name                   = Preconditions.checkNotNull(name);
+        this.internalUID            = uid;
+        this.name                   = name;
         this.partitionDirectory     = partitionDirectory != null
-                ? new TreeMap<>(Preconditions.checkNotNull(partitionDirectory))
+                ? new TreeMap<>(partitionDirectory)
                 : new TreeMap<>();
-        this.distributionMode       = Preconditions.checkNotNull(distributionMode);
+        this.distributionMode       = distributionMode;
     }
 
     public static DHTKey newKey(final UUID uid, final String name) { return newKey(uid, name, DistributionMode.DISTRIBUTED); }

@@ -21,6 +21,7 @@ public class TransactionPullResponseEvent extends TransactionEvent {
     // Constructors.
     // ---------------------------------------------------
 
+    public TransactionPullResponseEvent() { this(null, null); }
     public TransactionPullResponseEvent(final String transactionName, final List<Object> responseObjects) {
 
         super(TRANSACTION_RESPONSE + transactionName);

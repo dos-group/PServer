@@ -33,15 +33,12 @@ public final class RPCManager {
 
         public final RPCManager.MethodSignature methodSignature;
 
+        public RPCCallerRequestEvent() { this(null, null); }
         public RPCCallerRequestEvent(final UUID callUID,
                                      final RPCManager.MethodSignature methodSignature) {
 
             super(RPC_REQUEST_EVENT);
-            Preconditions.checkNotNull(callUID);
-            Preconditions.checkNotNull(methodSignature);
-
             this.callUID = callUID;
-
             this.methodSignature = methodSignature;
         }
     }
@@ -56,14 +53,12 @@ public final class RPCManager {
 
         public final Object result;
 
+        public RPCCalleeResponseEvent() { this(null, null); }
         public RPCCalleeResponseEvent(final UUID callUID,
                                       final Object result) {
 
             super(RPC_RESPONSE_EVENT);
-            Preconditions.checkNotNull(callUID);
-
             this.callUID = callUID;
-
             this.result = result;
         }
     }
@@ -142,6 +137,7 @@ public final class RPCManager {
 
         public final Class<?> returnType;
 
+        public MethodSignature() { this(null, null, null, null, null); }
         public MethodSignature(String className, String methodName, Class<?>[] argumentTypes, Object[] arguments, Class<?> returnType) {
             Preconditions.checkNotNull(methodName);
             Preconditions.checkNotNull(argumentTypes);

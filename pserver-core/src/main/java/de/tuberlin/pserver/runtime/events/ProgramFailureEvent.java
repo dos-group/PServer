@@ -42,6 +42,7 @@ public final class ProgramFailureEvent extends NetEvent {
     // Constructors.
     // ---------------------------------------------------
 
+    public ProgramFailureEvent() { this(null, null, -1, -1, null, null); }
     public ProgramFailureEvent(final MachineDescriptor machine,
                                final UUID programID,
                                final int nodeID,
@@ -51,11 +52,11 @@ public final class ProgramFailureEvent extends NetEvent {
 
         super(PSERVER_FAILURE_JOB_EVENT);
 
-        this.machine        = Preconditions.checkNotNull(machine);
-        this.programID      = Preconditions.checkNotNull(programID);
+        this.machine        = machine;
+        this.programID      = programID;
         this.nodeID         = nodeID;
         this.slotID         = slotID;
-        this.programName    = Preconditions.checkNotNull(programName);
+        this.programName    = programName;
         this.stackTrace     = exceptionMessage;
     }
 

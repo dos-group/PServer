@@ -34,10 +34,7 @@ public final class MachineDescriptor implements Serializable, Comparable<Machine
     // Constructors.
     // ---------------------------------------------------
 
-    public MachineDescriptor() {
-        this(null, null, 0, null);
-    }
-
+    public MachineDescriptor() { this(null, null, 0, null); }
     public MachineDescriptor(final UUID machineID,
                              final InetAddress address,
                              final int port,

@@ -26,12 +26,12 @@ public class GlobalObject<T> extends EventDispatcher {
         //methods.addAll(Arrays.asList(EventDispatcher.class.getMethods()));
         for (Method method : instance.getClass().getMethods()) {
             if (!methods.contains(method) && !Modifier.isStatic(method.getModifiers())) {
-                globalMethods.put(MethodInvokeMsg.getMethodID(method), method);
+                globalMethods.put(MethodInvocationMsg.getMethodID(method), method);
             }
         }
 
-        netManager.addEventListener(MethodInvokeMsg.METHOD_INVOCATION_EVENT, (event) -> {
-            MethodInvokeMsg mim = (MethodInvokeMsg) event;
+        netManager.addEventListener(MethodInvocationMsg.METHOD_INVOCATION_EVENT, (event) -> {
+            MethodInvocationMsg mim = (MethodInvocationMsg) event;
             Method calledMethod = globalMethods.get(mim.methodID);
             Object res = null;
 
@@ -45,7 +45,7 @@ public class GlobalObject<T> extends EventDispatcher {
             }
 
             mim.netChannel.sendMsg(
-                    new MethodInvokeMsg(
+                    new MethodInvocationMsg(
                             mim.callID,
                             mim.classID,
                             mim.methodID,

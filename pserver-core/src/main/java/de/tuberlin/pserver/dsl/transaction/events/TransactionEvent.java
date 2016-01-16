@@ -8,5 +8,6 @@ public class TransactionEvent extends NetEvent {
     // Constructors.
     // ---------------------------------------------------
 
+    public TransactionEvent() { this(null); }
     public TransactionEvent(final String eventName) { super(eventName); }
 }

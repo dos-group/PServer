@@ -32,6 +32,7 @@ public class NetEvent extends Event {
     //@GsonUtils.Exclude
     public UUID dstMachineID;
 
+    public NetEvent() { super(null, null); }
     public NetEvent(final String type, final boolean isSticky) { super(type, isSticky); }
     public NetEvent(String type, Object payload) { super(type, payload); }
     public NetEvent(String type) { super(type, null); }

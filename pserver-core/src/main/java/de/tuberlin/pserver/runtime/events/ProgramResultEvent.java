@@ -39,6 +39,7 @@ public final class ProgramResultEvent extends NetEvent {
     // Constructors.
     // ---------------------------------------------------
 
+    public ProgramResultEvent() { this(null, -1, null, null); }
     public ProgramResultEvent(final MachineDescriptor workerMachine,
                               final int nodeID,
                               final UUID programID,
@@ -46,9 +47,9 @@ public final class ProgramResultEvent extends NetEvent {
 
         super(PSERVER_JOB_RESULT_EVENT);
 
-        this.workerMachine  = Preconditions.checkNotNull(workerMachine);
+        this.workerMachine  = workerMachine;
         this.nodeID         = nodeID;
-        this.programID      = Preconditions.checkNotNull(programID);
+        this.programID      = programID;
         this.resultObjects  = resultObjects != null ? Collections.unmodifiableList(resultObjects) : null;
     }
 
