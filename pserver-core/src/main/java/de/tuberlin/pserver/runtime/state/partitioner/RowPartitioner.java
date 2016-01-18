@@ -94,7 +94,7 @@ public class RowPartitioner extends IMatrixPartitioner {
 
     @Override
     public IMatrixPartitioner ofNode(int nodeId) {
-        Preconditions.checkArgument(Arrays.asList(atNodes).contains(nodeId), "Can not construct MatrixByRowPartitioner of node '%d' because it is part of this partitioning. Participating stateObjectNodes are: %s", nodeId, Arrays.toString(atNodes));
+        Preconditions.checkArgument(Arrays.asList(atNodes).contains(nodeId), "Can not construct MatrixByRowPartitioner of node '%d' because it is part of this partitioning. Participating srcStateObjectNodes are: %s", nodeId, Arrays.toString(atNodes));
         return new RowPartitioner(rows, cols, nodeId, atNodes);
     }
 

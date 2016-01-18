@@ -128,7 +128,7 @@ public class KMeans extends Program {
                 });
                 // END: STANDARD KMEANS ON LOCAL PARTITION
 
-                // Pull model from remote stateObjectNodes and merge.
+                // Pull model from remote srcStateObjectNodes and merge.
                 TransactionMng.commit(centroidsUpdateSync);
             });
 

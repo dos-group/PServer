@@ -1,7 +1,5 @@
 package de.tuberlin.pserver.dsl.transaction.events;
 
-import com.google.common.base.Preconditions;
-
 import java.util.List;
 
 
@@ -21,9 +19,9 @@ public class TransactionPushRequestEvent extends TransactionEvent {
 
     public final boolean cacheRequest;
 
-    public final List<String> stateObjectNames;
+    public final List<String> srcStateObjectNames;
 
-    public final List<Object> stateObjectsValues;
+    public final List<Object> srcStateObjectsValues;
 
     // ---------------------------------------------------
     // Constructors.
@@ -31,16 +29,16 @@ public class TransactionPushRequestEvent extends TransactionEvent {
 
     public TransactionPushRequestEvent() { this(null, null, null, null, false); }
     public TransactionPushRequestEvent(final String transactionName,
-                                   final List<String> stateObjectNames,
-                                   final List<Object> stateObjectsValues,
+                                   final List<String> srcStateObjectNames,
+                                   final List<Object> srcStateObjectsValues,
                                    final Object requestObject,
                                    final boolean cacheRequest) {
 
         super(TRANSACTION_REQUEST + transactionName);
 
-        this.stateObjectNames = stateObjectNames;
+        this.srcStateObjectNames = srcStateObjectNames;
 
-        this.stateObjectsValues = stateObjectsValues;
+        this.srcStateObjectsValues = srcStateObjectsValues;
 
         this.requestObject = requestObject;
 

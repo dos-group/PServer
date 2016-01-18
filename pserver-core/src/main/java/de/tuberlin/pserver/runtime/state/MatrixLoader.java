@@ -170,7 +170,7 @@ public final class MatrixLoader {
         while(finishedLoadingLatch.getCount() > 0) {
             LOG.debug("waiting for " + finishedLoadingLatch.getCount() + " loading tasks to finish:");
             for(String taskName : fileLoadingBarrier.keySet()) {
-                LOG.debug("task '"+taskName+"' has " + fileLoadingBarrier.get(taskName) + " stateObjectNodes to finish");
+                LOG.debug("task '"+taskName+"' has " + fileLoadingBarrier.get(taskName) + " srcStateObjectNodes to finish");
             }
             try {
                 finishedLoadingLatch.await(10, TimeUnit.SECONDS);

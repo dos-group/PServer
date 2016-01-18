@@ -2,24 +2,18 @@ package de.tuberlin.pserver.runtime.core.network;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.io.UnsafeInput;
-import com.esotericsoftware.kryo.io.UnsafeOutput;
 import de.tuberlin.pserver.runtime.core.serializer.KryoFactory;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufInputStream;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 
 import java.util.List;
-
-import static io.netty.buffer.Unpooled.buffer;
 
 
 public class NetKryoDecoder extends ByteToMessageDecoder {
 
-    private final static int DECODING_BUFFER =  1024 * 1024 * 200; // 200MB
+    private final static int DECODING_BUFFER =  1024 * 1024 * 20; // 20MB
 
     private ThreadLocal kryoThreadLocal = new ThreadLocal<Kryo>() {
         @Override protected Kryo initialValue() {

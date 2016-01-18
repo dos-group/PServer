@@ -1,11 +1,7 @@
 package de.tuberlin.pserver.math.matrix.sparse;
 
 import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
-import de.tuberlin.pserver.math.operations.UnaryOperator;
-import de.tuberlin.pserver.math.operations.BinaryOperator;
-
 import org.apache.log4j.BasicConfigurator;
 import org.junit.Before;
 import org.junit.Test;

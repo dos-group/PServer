@@ -1,6 +1,5 @@
 package de.tuberlin.pserver.runtime.events;
 
-import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import de.tuberlin.pserver.commons.json.GsonUtils;
 import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;

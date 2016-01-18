@@ -1,7 +1,5 @@
 package de.tuberlin.pserver.runtime.core.events;
 
-import com.google.common.base.Preconditions;
-
 import java.io.Serializable;
 
 public class Event implements Serializable {

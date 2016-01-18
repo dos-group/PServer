@@ -8,7 +8,6 @@ import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
-import de.tuberlin.pserver.dsl.transaction.phases.Apply;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 import de.tuberlin.pserver.dsl.transaction.phases.Update;
 import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;

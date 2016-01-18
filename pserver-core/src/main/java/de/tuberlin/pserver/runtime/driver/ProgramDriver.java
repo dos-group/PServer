@@ -12,6 +12,7 @@ import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.runtime.core.usercode.UserCodeManager;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -34,7 +35,7 @@ public class ProgramDriver implements Deactivatable {
 
     private final GlobalObjectAllocator globalObjectAllocator;
 
-    private final Map<String, Object> globalObjectRefs;
+    private final Map<String, Object> remoteObjectRefs;
 
     // ---------------------------------------------------
 
@@ -62,7 +63,7 @@ public class ProgramDriver implements Deactivatable {
 
         this.globalObjectAllocator = new GlobalObjectAllocator();
 
-        this.globalObjectRefs = new HashMap<>();
+        this.remoteObjectRefs = new HashMap<>();
     }
 
     public void deactivate() {
@@ -129,42 +130,48 @@ public class ProgramDriver implements Deactivatable {
 
     private void allocateGlobalObjects() throws Exception {
         for (final GlobalObjectDescriptor globalObject : programContext.programTable.getGlobalObjects()) {
-            globalObjectRefs.put(globalObject.stateName, globalObjectAllocator.alloc(programContext, globalObject));
+            remoteObjectRefs.put(globalObject.stateName, globalObjectAllocator.alloc(programContext, globalObject));
         }
     }
 
     private void bindGlobalObjects(final Program instance) throws Exception {
         for (final GlobalObjectDescriptor globalObject : programContext.programTable.getGlobalObjects()) {
             final Field field = programTable.getProgramClass().getDeclaredField(globalObject.stateName);
-            field.set(instance, globalObjectRefs.get(globalObject.stateName));
+            field.set(instance, remoteObjectRefs.get(globalObject.stateName));
         }
     }
 
     private void allocateState() throws Exception {
         for (final StateDescriptor state : programContext.programTable.getState()) {
             if (MatrixBase.class.isAssignableFrom(state.stateType)) {
-                final MatrixBase m = stateAllocator.alloc(programContext, state);
-                if (m != null)
-                    runtimeContext.runtimeManager.putDHT(state.stateName, m);
+                final Pair<MatrixBase, MatrixBase> stateObj = stateAllocator.alloc(programContext, state);
+                if (stateObj.getLeft() != null)
+                    runtimeContext.runtimeManager.putDHT(state.stateName, stateObj.getLeft());
+                if (stateObj.getRight() != null)
+                    remoteObjectRefs.put(state.stateName, stateObj.getRight());
             } else
                 throw new IllegalStateException();
         }
 
         try {
-            Thread.sleep(5000); // TODO: REMOVE !!! FEHLER!!!!!
+            Thread.sleep(5000); // TODO: REMOVE!!! FEHLER!!!
         } catch (InterruptedException ex) {
             //throw new IllegalStateException(ex);
         }
 
         programContext.synchronizeUnit("global_barrier");
-
         stateAllocator.loadData(programContext);
     }
 
     private void bindState(final Program instance) throws Exception {
         for (final StateDescriptor state : programTable.getState()) {
             final Field field = programTable.getProgramClass().getDeclaredField(state.stateName);
-            final Object stateObj = runtimeContext.runtimeManager.getDHT(state.stateName);
+            final Object stateObj;
+            if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
+                stateObj = runtimeContext.runtimeManager.getDHT(state.stateName);
+            } else {
+                stateObj = remoteObjectRefs.get(state.stateName);
+            }
             Preconditions.checkState(stateObj != null, "State object '" + state.stateName + "' not found.");
             field.set(instance, stateObj);
         }

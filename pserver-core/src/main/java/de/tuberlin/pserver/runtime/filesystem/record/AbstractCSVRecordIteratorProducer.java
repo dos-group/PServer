@@ -1,9 +1,6 @@
 package de.tuberlin.pserver.runtime.filesystem.record;
 
 import com.google.common.base.Preconditions;
-import com.univocity.parsers.common.input.CharInputReader;
-//import com.univocity.parsers.csv.CsvParser;
-//import com.univocity.parsers.csv.CsvParserSettings;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -14,7 +11,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Iterator;
-import java.util.LinkedList;
+
+//import com.univocity.parsers.csv.CsvParser;
+//import com.univocity.parsers.csv.CsvParserSettings;
 
 
 public abstract class AbstractCSVRecordIteratorProducer implements IRecordIteratorProducer {

@@ -1,9 +1,7 @@
 package de.tuberlin.pserver.runtime.core.network;
 
 import de.tuberlin.pserver.runtime.core.events.Event;
-import de.tuberlin.pserver.commons.json.GsonUtils;
 
-import java.io.Serializable;
 import java.util.UUID;
 
 

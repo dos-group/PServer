@@ -19,6 +19,7 @@ import de.tuberlin.pserver.runtime.state.cache.MatrixCacheProvider;
 import de.tuberlin.pserver.runtime.state.types.DistributedMatrix32F;
 import de.tuberlin.pserver.runtime.state.types.DistributedMatrix64F;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class StateAllocator {
 
@@ -47,31 +48,33 @@ public class StateAllocator {
     // ---------------------------------------------------
 
     @SuppressWarnings("unchecked")
-    public MatrixBase alloc(final ProgramContext programContext, final StateDescriptor state) {
+    public Pair<MatrixBase, MatrixBase> alloc(final ProgramContext programContext, final StateDescriptor state) {
 
         //try {
 
-            MatrixBase m = null;
+            MatrixBase stateObj = null;
+
+            MatrixBase proxyObj = null;
 
             switch (state.scope) {
 
                 case SINGLETON: {
                     if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
 
-                        m = new MatrixBuilder()
+                        stateObj = new MatrixBuilder()
                                 .dimension(state.rows, state.cols)
                                 .format(state.format)
                                 .elementType(ElementType.getElementTypeFromClass(state.stateType))
                                 .build();
 
-                        new MatrixCacheProvider<>(
-                                programContext.runtimeContext,
-                                (Matrix) m
-                        );
+                        //new MatrixCacheProvider<>(
+                        //        programContext.runtimeContext,
+                        //        (Matrix) stateObj
+                        //);
 
                     } else {
 
-                        final MatrixBase cache = new MatrixBuilder()
+                        /*final MatrixBase cache = new MatrixBuilder()
                                 .dimension(state.rows, state.cols)
                                 .format(Format.SPARSE_FORMAT)
                                 .elementType(ElementType.getElementTypeFromClass(state.stateType))
@@ -83,27 +86,27 @@ public class StateAllocator {
                                 null,
                                 (Matrix) cache,
                                 DEFAULT_CACHE_SIZE
-                        );
+                        );*/
                     }
                 }
                 break;
 
                 case REPLICATED: {
                     if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
-                        m = new MatrixBuilder()
+                        stateObj = new MatrixBuilder()
                                 .dimension(state.rows, state.cols)
                                 .format(state.format)
                                 .elementType(ElementType.getElementTypeFromClass(state.stateType))
                                 .build();
 
-                        new GlobalObject<>(programContext.runtimeContext.netManager, (Matrix)m, state.stateName);
+                        new GlobalObject<>(programContext.runtimeContext.netManager, (Matrix)stateObj, state.stateName);
 
                     } else {
 
                         try {
 
                             MachineDescriptor md = programContext.runtimeContext.infraManager.getMachine(state.atNodes[0]);
-                            m = GlobalObjectProxy.create(state.stateName, programContext.runtimeContext.netManager, md, state.stateType);
+                            proxyObj = GlobalObjectProxy.create(state.stateName, programContext.runtimeContext.netManager, md, state.stateType);
 
                         } catch(Throwable t) {
                             throw new IllegalStateException(t);
@@ -116,7 +119,7 @@ public class StateAllocator {
                     switch (ElementType.getElementTypeFromClass(state.stateType)) {
                         case FLOAT_MATRIX: {
                             if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
-                                m = new DistributedMatrix32F(
+                                stateObj = new DistributedMatrix32F(
                                         programContext,
                                         state.rows,
                                         state.cols,
@@ -129,7 +132,7 @@ public class StateAllocator {
                         break;
                         case DOUBLE_MATRIX: {
                             if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
-                                m = new DistributedMatrix64F(
+                                stateObj = new DistributedMatrix64F(
                                         programContext,
                                         state.rows,
                                         state.cols,
@@ -147,7 +150,7 @@ public class StateAllocator {
                 case LOGICALLY_PARTITIONED:
                     switch (ElementType.getElementTypeFromClass(state.stateType)) {
                         case FLOAT_MATRIX: {
-                            m = new DistributedMatrix32F(
+                            stateObj = new DistributedMatrix32F(
                                     programContext,
                                     state.rows,
                                     state.cols,
@@ -158,7 +161,7 @@ public class StateAllocator {
                         }
                         break;
                         case DOUBLE_MATRIX: {
-                            m = new DistributedMatrix64F(
+                            stateObj = new DistributedMatrix64F(
                                     programContext,
                                     state.rows,
                                     state.cols,
@@ -172,18 +175,15 @@ public class StateAllocator {
                     break;
             }
 
-            if (m != null) {
+            if (stateObj != null) {
                 if (!("".equals(state.path))) {
-                    matrixLoader.addLoadingTask(programContext, state, m);
+                    matrixLoader.addLoadingTask(programContext, state, stateObj);
                 }
             } else
-                throw new IllegalStateException();
+                if (proxyObj == null)
+                    throw new IllegalStateException();
 
-            return m;
-
-        //} catch(Exception e) {
-        //    throw new IllegalStateException("Name: " + state.stateName + " > " + e.getCause());
-        //}
+            return Pair.of(stateObj, proxyObj);
     }
 
     public void loadData(final ProgramContext programContext) throws Exception {

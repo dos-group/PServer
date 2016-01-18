@@ -1,14 +1,11 @@
 package de.tuberlin.pserver.runtime.events;
 
-import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import de.tuberlin.pserver.commons.json.GsonUtils;
 import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
 import de.tuberlin.pserver.runtime.core.network.NetEvent;
-import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 

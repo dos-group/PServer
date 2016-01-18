@@ -8,7 +8,10 @@ import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 // EXECUTOR ASSUMES NO CONCURRENT TRANSACTIONS OF SAME TYPE.
@@ -45,13 +48,13 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
         this.transactionDefinition = controller.getTransactionDescriptor().definition;
 
-        final int numStateObjects = controller.getTransactionDescriptor().stateObjectNames.size();
+        final int numStateObjects = controller.getTransactionDescriptor().stateSrcObjectNames.size();
 
         this.remoteStateObjects = new SharedObject[numStateObjects];
 
         this.localStateObjects = new SharedObject[numStateObjects];
 
-        this.responseLatch = new CountDownLatch(controller.getTransactionDescriptor().stateObjectNodes.length);
+        this.responseLatch = new CountDownLatch(controller.getTransactionDescriptor().srcStateObjectNodes.length);
 
         registerTransactionHandlers();
     }
@@ -65,7 +68,7 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
         int index = 0;
 
-        for (final String stateObjectName : controller.getTransactionDescriptor().stateObjectNames) {
+        for (final String stateObjectName : controller.getTransactionDescriptor().stateSrcObjectNames) {
 
             localStateObjects[index++] = runtimeContext.runtimeManager.getDHT(stateObjectName);
         }
@@ -83,12 +86,12 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
             final TransactionPullRequestEvent request = new TransactionPullRequestEvent(
                     transactionName,
-                    controller.getTransactionDescriptor().stateObjectNames,
+                    controller.getTransactionDescriptor().stateSrcObjectNames,
                     requestObject,
                     cacheRequest
             );
 
-            runtimeContext.netManager.dispatchEventAt(controller.getTransactionDescriptor().stateObjectNodes, request);
+            runtimeContext.netManager.dispatchEventAt(controller.getTransactionDescriptor().srcStateObjectNodes, request);
         }
 
         { // Await Response...
@@ -96,16 +99,16 @@ public class PullTransactionExecutor extends TransactionExecutor {
             responseLatch.await();
 
             synchronized (monitor) {
-                responseLatch = new CountDownLatch(controller.getTransactionDescriptor().stateObjectNodes.length);
+                responseLatch = new CountDownLatch(controller.getTransactionDescriptor().srcStateObjectNodes.length);
             }
         }
 
         { // Response Handling...
 
-            for (int i = 0; i < controller.getTransactionDescriptor().stateObjectNames.size(); ++i) {
+            for (int i = 0; i < controller.getTransactionDescriptor().stateSrcObjectNames.size(); ++i) {
                 resultObjects.add(
                         transactionDefinition.applyPhase.apply(
-                                responseObjects.get(controller.getTransactionDescriptor().stateObjectNames.get(i)),
+                                responseObjects.get(controller.getTransactionDescriptor().stateSrcObjectNames.get(i)),
                                 localStateObjects[i]
                         )
                 );
@@ -157,9 +160,9 @@ public class PullTransactionExecutor extends TransactionExecutor {
         runtimeContext.netManager.addEventListener(TransactionPullResponseEvent.TRANSACTION_RESPONSE + transactionName, event -> {
 
             final TransactionPullResponseEvent response = (TransactionPullResponseEvent) event;
-            for (int i = 0; i < controller.getTransactionDescriptor().stateObjectNames.size(); ++i) {
+            for (int i = 0; i < controller.getTransactionDescriptor().stateSrcObjectNames.size(); ++i) {
 
-                final String stateObjectName = controller.getTransactionDescriptor().stateObjectNames.get(i);
+                final String stateObjectName = controller.getTransactionDescriptor().stateSrcObjectNames.get(i);
 
                 List<Object> responseList = responseObjects.get(stateObjectName);
 

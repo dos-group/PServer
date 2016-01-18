@@ -3,8 +3,8 @@ package de.tuberlin.pserver.runtime;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 

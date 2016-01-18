@@ -3,7 +3,6 @@ package de.tuberlin.pserver.runtime.core.usercode;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.compression.Compressor;
 import de.tuberlin.pserver.math.tuples.Tuple2;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.io.FileInputStream;

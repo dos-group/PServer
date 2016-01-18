@@ -5,12 +5,8 @@ import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.io.UnsafeOutput;
 import de.tuberlin.pserver.runtime.core.serializer.KryoFactory;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
-
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
 
 
 public final class NetKryoEncoder extends MessageToByteEncoder<Object> {

@@ -3,51 +3,95 @@ package de.tuberlin.pserver.examples.experiments.paramsrv;
 
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.dsl.state.annotations.GlobalObject;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
+import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
+import de.tuberlin.pserver.dsl.transaction.TransactionMng;
+import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
+import de.tuberlin.pserver.dsl.transaction.phases.Combine;
+import de.tuberlin.pserver.dsl.transaction.phases.Update;
+import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class ParameterServerJob extends Program {
 
-    @State(at = "0", scope = Scope.REPLICATED, format = Format.DENSE_FORMAT, rows = 1, cols = 10000)
+    // ---------------------------------------------------
+    // State.
+    // ---------------------------------------------------
+
+    @State(at = "0", scope = Scope.REPLICATED, format = Format.DENSE_FORMAT, rows = 1, cols = 10)
     public Matrix32F parameters;
 
-    @GlobalObject(at = "0", impl = ArrayList.class)
-    public List<String> globalList;
+    @State(at = "1 - 3", scope = Scope.REPLICATED, format = Format.DENSE_FORMAT, rows = 1, cols = 10)
+    public Matrix32F gradients;
 
-    @Unit(at = "1")
+    //@State(scope = Scope.REPLICATED, format = Format.DENSE_FORMAT, rows = 1, cols = 10)
+    //public Matrix32F model;
+
+    // ---------------------------------------------------
+    // Transaction.
+    // ---------------------------------------------------
+
+    @Transaction(src = "gradients", dst = "parameters", type = TransactionType.PUSH)
+    public final TransactionDefinition updateParameters = new TransactionDefinition(
+
+            (Combine<Matrix32F>) (gradients) -> {
+                Matrix32F combinedGradient = gradients.get(0);
+                for (int i = 1; i < gradients.size(); ++i) {
+                    combinedGradient.add(gradients.get(i), combinedGradient);
+                }
+                return combinedGradient;
+            },
+
+            (Update<Matrix32F>) (gradients, parameters) -> {
+                for (Matrix32F gradient : gradients) {
+                    for (int i = 0; i < 10; ++i)
+                        System.out.println(gradient.get(i));
+                }
+            }
+    );
+
+    /*@Transaction(state = "model", type = TransactionType.PUSH)
+    public final TransactionDefinition syncModel = new TransactionDefinition(
+
+            (Update<Matrix32F>) (remoteModels, localModel) -> {
+                for (Matrix32F remoteModel : remoteModels) {
+                    for (int i = 0; i < 10; ++i)
+                        System.out.println(remoteModel.get(i));
+                }
+            }
+    );*/
+
+    // ---------------------------------------------------
+    // Unit.
+    // ---------------------------------------------------
+
+    @Unit(at = "1 - 3")
     public void worker(final Lifecycle lifecycle) {
 
         lifecycle.process(()-> {
 
-            float sum = 0;
-            for (int i = 0; i < 10000; ++i) {
-                parameters.set(0, i, 16.71985f + i);
-                sum += parameters.get(0, i);
-            }
+            for (int i = 0; i < 10; ++i)
+                gradients.set(0, i, (float) i * programContext.nodeID);
 
-            System.out.println("sum: " + sum);
+            TransactionMng.commit(updateParameters);
 
-            for (int i = 0; i < 10000; ++i) {
-                globalList.add("Test " + i);
-            }
+            /*for (int i = 0; i < 10; ++i)
+                model.set(0, i, (float) i * programContext.nodeID);
 
-            for (int i = 0; i < 10000; ++i) {
-                System.out.println(globalList.get(i));
-            }
+            TransactionMng.commit(syncModel);*/
         });
     }
 
-    public static void main(final String[] args) {
+    // ---------------------------------------------------
+    // Entry Point.
+    // ---------------------------------------------------
 
-        System.setProperty("simulation.numNodes", "2");
+    public static void main(final String[] args) {
+        System.setProperty("simulation.numNodes", "4");
         PServerExecutor.LOCAL
                 .run(ParameterServerJob.class)
                 .done();

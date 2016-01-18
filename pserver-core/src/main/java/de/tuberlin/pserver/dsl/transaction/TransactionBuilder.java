@@ -17,7 +17,9 @@ public final class TransactionBuilder {
 
     // ---------------------------------------------------
 
-    public String stateObjectNames;
+    public String srcStateObjectNames;
+
+    public String dstStateObjectNames;
 
     public TransactionType type;
 
@@ -30,9 +32,7 @@ public final class TransactionBuilder {
     // ---------------------------------------------------
 
     public TransactionBuilder(final ProgramContext programContext) {
-
         this.programContext = Preconditions.checkNotNull(programContext);
-
         clear();
     }
 
@@ -40,7 +40,7 @@ public final class TransactionBuilder {
     // Public Methods.
     // ---------------------------------------------------
 
-    public TransactionBuilder state(final String stateObjectNames) { this.stateObjectNames = stateObjectNames; return this; }
+    public TransactionBuilder state(final String stateObjectNames) { this.srcStateObjectNames = stateObjectNames; return this; }
 
     public TransactionBuilder type(final TransactionType type) { this.type = type; return this; }
 
@@ -53,7 +53,8 @@ public final class TransactionBuilder {
     public TransactionDefinition build(final String transactionName, final TransactionDefinition definition) {
         final TransactionDescriptor descriptor = new TransactionDescriptor(
                 transactionName,
-                ParseUtils.parseStateList(stateObjectNames),
+                ParseUtils.parseStateList(srcStateObjectNames),
+                ParseUtils.parseStateList(dstStateObjectNames),
                 definition,
                 type,
                 cache,
@@ -66,7 +67,8 @@ public final class TransactionBuilder {
     // ---------------------------------------------------
 
     public void clear() {
-        this.stateObjectNames = "";
+        this.srcStateObjectNames = "";
+        this.dstStateObjectNames = "";
         this.type = TransactionType.PUSH;
         this.at = "";
         this.cache = false;

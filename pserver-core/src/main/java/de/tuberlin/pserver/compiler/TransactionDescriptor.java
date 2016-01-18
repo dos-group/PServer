@@ -9,7 +9,6 @@ import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -21,7 +20,9 @@ public final class TransactionDescriptor {
 
     public final String transactionName;
 
-    public final List<String> stateObjectNames;
+    public final List<String> stateSrcObjectNames;
+
+    public final List<String> stateDstObjectNames;
 
     public final TransactionDefinition definition;
 
@@ -29,14 +30,17 @@ public final class TransactionDescriptor {
 
     public final boolean cacheRequestObject;
 
-    public final int[] stateObjectNodes;
+    public final int[] srcStateObjectNodes;
+
+    public final int[] dstStateObjectNodes;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
     public TransactionDescriptor(final String transactionName,
-                                 final List<String> stateObjectNames,
+                                 final List<String> stateSrcObjectNames,
+                                 final List<String> stateDstObjectNames,
                                  final TransactionDefinition definition,
                                  final TransactionType type,
                                  final boolean cacheRequestObject,
@@ -44,28 +48,41 @@ public final class TransactionDescriptor {
                                  final ProgramTable programTable) {
 
         this.transactionName = Preconditions.checkNotNull(transactionName);
-
-        this.stateObjectNames = Preconditions.checkNotNull(stateObjectNames);
-
+        this.stateSrcObjectNames = Preconditions.checkNotNull(stateSrcObjectNames);
+        this.stateDstObjectNames = Preconditions.checkNotNull(stateDstObjectNames);
         this.definition = Preconditions.checkNotNull(definition);
-
         this.type  = Preconditions.checkNotNull(type);
-
         this.cacheRequestObject = cacheRequestObject;
 
-        for (int i = 0; i < stateObjectNames.size() - 1; ++i) {
-            //final int[] stateNodes = ArrayUtils.removeElements(programTable.getState(stateObjectName).atNodes, nodeID);
-
+        // Sanity check of duplicates in src name definition.
+        for (int i = 0; i < stateSrcObjectNames.size() - 1; ++i) {
             if (!Arrays.equals(
-                    programTable.getState(stateObjectNames.get(i)).atNodes,
-                    programTable.getState(stateObjectNames.get(i + 1)).atNodes))
+                    programTable.getState(stateSrcObjectNames.get(i)).atNodes,
+                    programTable.getState(stateSrcObjectNames.get(i + 1)).atNodes))
                 throw new IllegalStateException();
         }
 
-        this.stateObjectNodes = ArrayUtils.removeElements(
-                programTable.getState(stateObjectNames.get(stateObjectNames.size() - 1)).atNodes,
-                nodeID
-        );
+        this.srcStateObjectNodes = programTable.getState(stateSrcObjectNames.get(stateSrcObjectNames.size() - 1)).atNodes;
+
+        //this.srcStateObjectNodes = ArrayUtils.removeElements(
+        //        programTable.getState(stateSrcObjectNames.get(stateSrcObjectNames.size() - 1)).atNodes,
+        //        nodeID
+        //);
+
+        // Sanity check of duplicates in dst name definition.
+        for (int i = 0; i < stateDstObjectNames.size() - 1; ++i) {
+            if (!Arrays.equals(
+                    programTable.getState(stateDstObjectNames.get(i)).atNodes,
+                    programTable.getState(stateDstObjectNames.get(i + 1)).atNodes))
+                throw new IllegalStateException();
+        }
+
+        this.dstStateObjectNodes = programTable.getState(stateDstObjectNames.get(stateDstObjectNames.size() - 1)).atNodes;
+
+                //this.dstStateObjectNodes = ArrayUtils.removeElements(
+        //        programTable.getState(stateDstObjectNames.get(stateDstObjectNames.size() - 1)).atNodes,
+        //        nodeID
+        //);
 
         definition.setTransactionName(transactionName);
     }
@@ -79,11 +96,31 @@ public final class TransactionDescriptor {
                                                            final Field field,
                                                            final int nodeID,
                                                            final ProgramTable programTable) throws Exception {
+        final List<String> srcObjectNames;
+        final List<String> dstObjectNames;
 
-        final List<String> stateObjects = ParseUtils.parseStateList(transaction.state());
+        if (!transaction.state().equals("") &&
+            transaction.src().equals("") &&
+            transaction.dst().equals("")) {
+
+            List<String> stateNames = ParseUtils.parseStateList(transaction.state());
+            srcObjectNames = stateNames;
+            dstObjectNames = stateNames;
+
+        } else if (transaction.state().equals("") &&
+                   !transaction.src().equals("") &&
+                   !transaction.dst().equals("")) {
+
+            srcObjectNames = ParseUtils.parseStateList(transaction.src());
+            dstObjectNames = ParseUtils.parseStateList(transaction.dst());
+
+        } else
+            throw new IllegalStateException();
+
         return new TransactionDescriptor(
                 field.getName(),
-                stateObjects,
+                srcObjectNames,
+                dstObjectNames,
                 (TransactionDefinition)field.get(instance),
                 transaction.type(),
                 transaction.cache(),
