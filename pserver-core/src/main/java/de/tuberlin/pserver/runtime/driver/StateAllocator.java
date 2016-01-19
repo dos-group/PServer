@@ -4,7 +4,6 @@ package de.tuberlin.pserver.runtime.driver;
 import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.math.matrix.ElementType;
-import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
@@ -14,8 +13,6 @@ import de.tuberlin.pserver.runtime.core.remoteobj.GlobalObjectProxy;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import de.tuberlin.pserver.runtime.state.MatrixLoader;
-import de.tuberlin.pserver.runtime.state.cache.MatrixCache;
-import de.tuberlin.pserver.runtime.state.cache.MatrixCacheProvider;
 import de.tuberlin.pserver.runtime.state.types.DistributedMatrix32F;
 import de.tuberlin.pserver.runtime.state.types.DistributedMatrix64F;
 import org.apache.commons.lang3.ArrayUtils;
@@ -63,7 +60,7 @@ public class StateAllocator {
 
                         stateObj = new MatrixBuilder()
                                 .dimension(state.rows, state.cols)
-                                .format(state.format)
+                                .matrixFormat(state.matrixFormat)
                                 .elementType(ElementType.getElementTypeFromClass(state.stateType))
                                 .build();
 
@@ -76,7 +73,7 @@ public class StateAllocator {
 
                         /*final MatrixBase cache = new MatrixBuilder()
                                 .dimension(state.rows, state.cols)
-                                .format(Format.SPARSE_FORMAT)
+                                .matrixFormat(MatrixFormat.SPARSE_FORMAT)
                                 .elementType(ElementType.getElementTypeFromClass(state.stateType))
                                 .build();
 
@@ -95,7 +92,7 @@ public class StateAllocator {
                     if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
                         stateObj = new MatrixBuilder()
                                 .dimension(state.rows, state.cols)
-                                .format(state.format)
+                                .matrixFormat(state.matrixFormat)
                                 .elementType(ElementType.getElementTypeFromClass(state.stateType))
                                 .build();
 
@@ -123,7 +120,7 @@ public class StateAllocator {
                                         programContext,
                                         state.rows,
                                         state.cols,
-                                        state.format,
+                                        state.matrixFormat,
                                         state.atNodes,
                                         state.partitioner
                                 );
@@ -136,7 +133,7 @@ public class StateAllocator {
                                         programContext,
                                         state.rows,
                                         state.cols,
-                                        state.format,
+                                        state.matrixFormat,
                                         state.atNodes,
                                         state.partitioner
                                 );
@@ -154,7 +151,7 @@ public class StateAllocator {
                                     programContext,
                                     state.rows,
                                     state.cols,
-                                    state.format,
+                                    state.matrixFormat,
                                     state.atNodes,
                                     state.partitioner // TODO: CHANGE!
                             );
@@ -165,7 +162,7 @@ public class StateAllocator {
                                     programContext,
                                     state.rows,
                                     state.cols,
-                                    state.format,
+                                    state.matrixFormat,
                                     state.atNodes,
                                     state.partitioner // TODO: CHANGE!
                             );

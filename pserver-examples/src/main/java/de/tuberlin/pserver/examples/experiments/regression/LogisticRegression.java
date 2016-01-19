@@ -17,6 +17,7 @@ import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.ml.optimization.GradientDescent.GDOptimizer;
 import de.tuberlin.pserver.ml.optimization.*;
+import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
 
 import java.io.Serializable;
@@ -48,7 +49,7 @@ public class LogisticRegression extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = D, path = X_TRAIN_PATH)
+    @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = D, path = X_TRAIN_PATH, fileFormat = FileFormat.SVM_FORMAT)
     public Matrix32F XTrain;
 
     @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = 1, path = Y_TRAIN_PATH)
@@ -145,7 +146,7 @@ public class LogisticRegression extends Program {
     }
 
     // ---------------------------------------------------
-    // Entry Point.
+    // EntryImpl Point.
     // ---------------------------------------------------
 
     public static void main(final String[] args) { local(); }

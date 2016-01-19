@@ -1,17 +1,16 @@
 package de.tuberlin.pserver.runtime.filesystem.local;
 
-
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
+import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.filesystem.FileSection;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIterator;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
+import de.tuberlin.pserver.runtime.filesystem.records.Record;
+import de.tuberlin.pserver.runtime.filesystem.records.RecordIterator;
 import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
 
 import java.io.*;
 
-public class LocalInputFile implements ILocalInputFile<IRecord> {
+public class LocalInputFile implements ILocalInputFile<Record> {
 
     // ---------------------------------------------------
     // Fields.
@@ -19,7 +18,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
     private final String filePath;
 
-    private final IRecordIteratorProducer format;
+    private final FileFormat fileFormat;
 
     private final FileSection fileSection;
 
@@ -30,11 +29,11 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
     // ---------------------------------------------------
 
     public LocalInputFile(final String filePath,
-                          final IRecordIteratorProducer format,
+                          final FileFormat fileFormat,
                           final IMatrixPartitioner partitioner) {
 
         this.filePath       = Preconditions.checkNotNull(filePath);
-        this.format         = Preconditions.checkNotNull(format);
+        this.fileFormat     = Preconditions.checkNotNull(fileFormat);
         this.partitioner    = partitioner;
         this.fileSection    = new FileSection();
     }
@@ -78,7 +77,9 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
     }
 
     @Override
-    public FileDataIterator<IRecord> iterator() { return new LocalFileDataIterator(fileSection); }
+    public FileDataIterator<Record> iterator() {
+        return new LocalFileDataIterator(fileSection);
+    }
 
     // ---------------------------------------------------
     // Private Methods.
@@ -90,7 +91,7 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
             lnr.skip(Long.MAX_VALUE);
             final int numLines = lnr.getLineNumber();
             lnr.close();
-            return  numLines;
+            return  numLines + 1;  // TODO: The first or the last line seems to be not counted...
         } catch(IOException ioe) {
             throw new IllegalStateException(ioe);
         }
@@ -134,11 +135,11 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
     // ---------------------------------------------------
 
-    private class LocalFileDataIterator implements FileDataIterator<IRecord> {
+    private class LocalFileDataIterator implements FileDataIterator<Record> {
 
         private final InputStream inputStream;
 
-        private IRecordIterator recordIterator;
+        private RecordIterator recordIterator;
 
         private long currentLine = 0;
 
@@ -159,14 +160,15 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
         public void initialize() {
             try {
                 inputStream.skip(fileSection.startOffset);
-                recordIterator = format.getRecordIterator(inputStream);
-            } catch(Exception e) {
+                recordIterator = RecordIterator.create(fileFormat, inputStream);
+            }
+            catch(Exception e) {
                 throw new IllegalStateException(e);
             }
         }
 
         @Override
-        public void reset() { /*iterator = null;*/ }
+        public void reset() {}
 
         @Override
         public String getFilePath() { return filePath; }
@@ -178,14 +180,14 @@ public class LocalInputFile implements ILocalInputFile<IRecord> {
 
         @Override
         public boolean hasNext() {
-            final boolean hasNext = currentLine < fileSection.linesToRead && recordIterator.hasNext();
+            final boolean hasNext = currentLine <= fileSection.linesToRead && recordIterator.hasNext();
             if (!hasNext)
                 close();
             return hasNext;
         }
 
         @Override
-        public IRecord next() {
+        public Record next() {
             return recordIterator.next(fileSection.blockLineOffset + currentLine++);
         }
 

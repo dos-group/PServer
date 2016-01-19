@@ -3,8 +3,8 @@ package de.tuberlin.pserver.runtime.state;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.ElementType;
-import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
 import de.tuberlin.pserver.math.matrix.dense.DenseMatrix64F;
 import de.tuberlin.pserver.math.matrix.sparse.SparseMatrix32F;
@@ -18,7 +18,7 @@ public final class MatrixBuilder {
 
     private long rows, cols;
 
-    private Format format;
+    private MatrixFormat matrixFormat;
 
     private ElementType elementType;
 
@@ -40,8 +40,8 @@ public final class MatrixBuilder {
         return this;
     }
 
-    public MatrixBuilder format(final Format format) {
-        this.format = Preconditions.checkNotNull(format);
+    public MatrixBuilder matrixFormat(final MatrixFormat matrixFormat) {
+        this.matrixFormat = Preconditions.checkNotNull(matrixFormat);
         return this;
     }
 
@@ -63,7 +63,7 @@ public final class MatrixBuilder {
     @SuppressWarnings("unchecked")
     public <MAT extends Matrix> MAT build() {
         MAT m = null;
-        switch (format) {
+        switch (matrixFormat) {
             case SPARSE_FORMAT:
                 switch (elementType) {
                     case FLOAT_MATRIX:
@@ -95,7 +95,7 @@ public final class MatrixBuilder {
     private void clear() {
         rows        = -1;
         cols        = -1;
-        format      = Format.DENSE_FORMAT;
+        matrixFormat = MatrixFormat.DENSE_FORMAT;
         elementType = ElementType.FLOAT_MATRIX;
     }
 }

@@ -8,15 +8,15 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
+import de.tuberlin.pserver.math.matrix.MatrixFormat;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class GlobalObjectJob extends Program {
 
-    @State(at = "0", scope = Scope.REPLICATED, format = Format.DENSE_FORMAT, rows = 1, cols = 10000)
+    @State(at = "0", scope = Scope.REPLICATED, matrixFormat = MatrixFormat.DENSE_FORMAT, rows = 1, cols = 10000)
     public Matrix32F parameters;
 
     @GlobalObject(at = "0", impl = ArrayList.class)

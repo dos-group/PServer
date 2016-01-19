@@ -2,7 +2,7 @@ package de.tuberlin.pserver.runtime.state.partitioner;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
-import de.tuberlin.pserver.runtime.state.mtxentries.MatrixEntry;
+import de.tuberlin.pserver.runtime.state.entries.Entry;
 
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
@@ -34,11 +34,11 @@ public class RowPartitioner extends IMatrixPartitioner {
     // ---------------------------------------------------
 
     @Override
-    public int getPartitionOfEntry(final MatrixEntry entry) {
+    public int getPartitionOfEntry(final Entry entry) {
         double numOfRowsPerInstance = (double) rows / atNodes.length;
         int partition = (int) (entry.getRow() / numOfRowsPerInstance);
         if(partition >= atNodes.length) {
-            throw new IllegalStateException("The calculated partition id (row = "+entry.getRow()+", rows = "+rows+", numNodes = "+atNodes.length+") -> " + partition + " must not exceed numNodes.");
+            throw new IllegalStateException("The calculated partition id (row = " + entry.getRow() + ", rows = "+rows+", numNodes = "+atNodes.length+") -> " + partition + " must not exceed numNodes.");
         }
         return atNodes[partition];
     }

@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.runtime.state.partitioner;
 
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
-import de.tuberlin.pserver.runtime.state.mtxentries.MatrixEntry;
+import de.tuberlin.pserver.runtime.state.entries.Entry;
 
 /**
  * Partitions a matrix into one partition of the same size as the matrix.
@@ -17,7 +17,7 @@ public class VirtualRowPartitioner extends IMatrixPartitioner {
     }
 
     @Override
-    public int getPartitionOfEntry(MatrixEntry entry) {
+    public int getPartitionOfEntry(Entry entry) {
         return nodeId;
     }
 

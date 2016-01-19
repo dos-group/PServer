@@ -13,8 +13,8 @@ import de.tuberlin.pserver.dsl.transaction.phases.Update;
 import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
+import de.tuberlin.pserver.math.matrix.MatrixFormat;
 
 public class ParameterServerJob extends Program {
 
@@ -22,13 +22,13 @@ public class ParameterServerJob extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(at = "0", scope = Scope.REPLICATED, format = Format.DENSE_FORMAT, rows = 1, cols = 10)
+    @State(at = "0", scope = Scope.REPLICATED, matrixFormat = MatrixFormat.DENSE_FORMAT, rows = 1, cols = 10)
     public Matrix32F parameters;
 
-    @State(at = "1 - 3", scope = Scope.REPLICATED, format = Format.DENSE_FORMAT, rows = 1, cols = 10)
+    @State(at = "1 - 3", scope = Scope.REPLICATED, matrixFormat = MatrixFormat.DENSE_FORMAT, rows = 1, cols = 10)
     public Matrix32F gradients;
 
-    //@State(scope = Scope.REPLICATED, format = Format.DENSE_FORMAT, rows = 1, cols = 10)
+    //@State(scope = Scope.REPLICATED, matrixFormat = Format.DENSE_FORMAT, rows = 1, cols = 10)
     //public Matrix32F model;
 
     // ---------------------------------------------------

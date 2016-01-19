@@ -2,7 +2,7 @@ package de.tuberlin.pserver.runtime.state.partitioner;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
-import de.tuberlin.pserver.runtime.state.mtxentries.MatrixEntry;
+import de.tuberlin.pserver.runtime.state.entries.Entry;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
@@ -54,7 +54,7 @@ public abstract class IMatrixPartitioner {
     // Abstract Methods.
     // ---------------------------------------------------
 
-    public abstract int getPartitionOfEntry(MatrixEntry entry);
+    public abstract int getPartitionOfEntry(Entry entry);
 
     public abstract PartitionShape getPartitionShape();
 

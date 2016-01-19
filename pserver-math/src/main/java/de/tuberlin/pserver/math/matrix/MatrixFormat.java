@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.math.matrix;
 
-public enum Format {
+public enum MatrixFormat {
 
     SPARSE_FORMAT,
 

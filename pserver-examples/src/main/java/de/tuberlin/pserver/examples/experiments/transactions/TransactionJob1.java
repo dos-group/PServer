@@ -79,7 +79,7 @@ public class TransactionJob1 extends Program {
     }
 
     // ---------------------------------------------------
-    // App Entry.
+    // App EntryImpl.
     // ---------------------------------------------------
 
     public static void main(final String[] args) {

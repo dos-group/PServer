@@ -2,9 +2,9 @@ package de.tuberlin.pserver.runtime.state.types;
 
 
 import de.tuberlin.pserver.math.matrix.ElementType;
-import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
+import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
 import de.tuberlin.pserver.math.operations.BinaryOperator;
 import de.tuberlin.pserver.math.operations.MatrixAggregation;
@@ -36,7 +36,7 @@ public class DistributedMatrix32F implements Matrix32F {
 
     public DistributedMatrix32F(final ProgramContext programContext,
                                 final long rows, final long cols,
-                                final Format format,
+                                final MatrixFormat matrixFormat,
                                 final int[] atNodes,
                                 final Class<? extends IMatrixPartitioner> partitionerType) {
 
@@ -55,7 +55,7 @@ public class DistributedMatrix32F implements Matrix32F {
 
         this.matrixSection = new MatrixBuilder()
                 .dimension(shape.rows, shape.cols)
-                .format(format)
+                .matrixFormat(matrixFormat)
                 .elementType(ElementType.FLOAT_MATRIX)
                 .build();
     }

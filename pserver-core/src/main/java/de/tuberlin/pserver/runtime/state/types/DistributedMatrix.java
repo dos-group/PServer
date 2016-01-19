@@ -2,8 +2,8 @@ package de.tuberlin.pserver.runtime.state.types;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix;
+import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
 import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.tuples.Tuple2;
@@ -29,7 +29,7 @@ public class DistributedMatrix {
 
     private final PartitionShape shape;
 
-    private final Format format;
+    private final MatrixFormat matrixFormat;
 
     private final Matrix matrix;
 
@@ -44,20 +44,20 @@ public class DistributedMatrix {
     public DistributedMatrix(final ProgramContext programContext,
                              final long rows,final long cols,
                              final IMatrixPartitioner partitioner,
-                             final Format format) {
+                             final MatrixFormat matrixFormat) {
 
         this.programContext    = Preconditions.checkNotNull(programContext);
         this.nodeDOP        = programContext.nodeDOP;
         this.nodeID         = programContext.runtimeContext.nodeID;
         this.partitioner    = Preconditions.checkNotNull(partitioner);
         this.shape          = partitioner.getPartitionShape();
-        this.format         = format;
+        this.matrixFormat   = matrixFormat;
 
         final long _rows = shape.rows;
         final long _cols = shape.cols;
         this.matrix  = new MatrixBuilder()
                 .dimension(_rows, _cols)
-                .format(format)
+                .matrixFormat(matrixFormat)
                 .build();
 
         programContext.runtimeContext.runtimeManager.registerPullHandler(GET_BLOCK, new RuntimeManager.PullHandler() {
@@ -100,8 +100,8 @@ public class DistributedMatrix {
 //        switch (partitionType) {
 //            case ROW_PARTITIONED: {
 //
-//                final Matrix partialAgg = new MatrixBuilder().dimension(1, shape.rows).layout(layout).format(format).build();
-//                final Matrix totalAgg = new MatrixBuilder().dimension(1, rows).layout(layout).format(format).build();
+//                final Matrix partialAgg = new MatrixBuilder().dimension(1, shape.rows).layout(layout).fileFormat(fileFormat).build();
+//                final Matrix totalAgg = new MatrixBuilder().dimension(1, rows).layout(layout).fileFormat(fileFormat).build();
 //                final RowIterator iter = rowIterator();
 //                while(iter.hasNext()) {
 //                    iter.next();
@@ -281,7 +281,7 @@ public class DistributedMatrix {
         }
 
         // fetch remote partitions and construct resulting matrix according to position-mapping
-        DistributedMatrix result = new DistributedMatrix(programContext, cols, rows, partitioner, format);
+        DistributedMatrix result = new DistributedMatrix(programContext, cols, rows, partitioner, matrixFormat);
         System.out.println(result.matrix.rows() + " - " + result.matrix.cols());
         DistributedMatrix remoteView = constructMatrixFromRemotePartitions(remoteToLocalPartitionMapping, result);
         return remoteView;
