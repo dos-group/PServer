@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.examples.experiments.example_job;
+package de.tuberlin.pserver.examples.experiments.libSVMreader;
 
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;

@@ -104,7 +104,7 @@ public class ProgramDriver implements Deactivatable {
     public void run() throws Exception {
 
         try {
-            Thread.sleep(3000); // TODO: REMOVE !!! FEHLER!!!!!
+            Thread.sleep(7000); // TODO: REMOVE !!! FEHLER!!!!!
         } catch (InterruptedException ex) {
             //throw new IllegalStateException(ex);
         }
@@ -172,7 +172,9 @@ public class ProgramDriver implements Deactivatable {
             } else {
                 stateObj = remoteObjectRefs.get(state.stateName);
             }
-            Preconditions.checkState(stateObj != null, "State object '" + state.stateName + "' not found.");
+            Preconditions.checkState(stateObj != null, "State object '" + state.stateName
+                    + "' not found at Node [" + runtimeContext.nodeID + "].");
+
             field.set(instance, stateObj);
         }
     }

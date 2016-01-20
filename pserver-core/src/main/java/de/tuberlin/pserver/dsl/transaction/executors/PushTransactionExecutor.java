@@ -34,13 +34,10 @@ public class PushTransactionExecutor extends TransactionExecutor {
 
         super(runtimeContext, controller);
         this.transactionDefinition = controller.getTransactionDescriptor().definition;
-
         final int numSrcStateObjects = controller.getTransactionDescriptor().stateSrcObjectNames.size();
         this.localSrcStateObjects = new SharedObject[numSrcStateObjects];
-
         final int numDstStateObjects = controller.getTransactionDescriptor().stateDstObjectNames.size();
         this.localDstStateObjects = new SharedObject[numDstStateObjects];
-
         registerPushTransactionRequest();
     }
 
@@ -53,7 +50,8 @@ public class PushTransactionExecutor extends TransactionExecutor {
         int i = 0;
         for (final String srcStateObjectName : controller.getTransactionDescriptor().stateSrcObjectNames) {
             if (ArrayUtils.contains(controller.getTransactionDescriptor().srcStateObjectNodes, runtimeContext.nodeID)) {
-                localSrcStateObjects[i++] = runtimeContext.runtimeManager.getDHT(srcStateObjectName);
+                SharedObject srcObj = runtimeContext.runtimeManager.getDHT(srcStateObjectName);
+                localSrcStateObjects[i++] = srcObj;
             }
         }
         i = 0;
@@ -67,6 +65,8 @@ public class PushTransactionExecutor extends TransactionExecutor {
     @Override
     public synchronized List<Object> execute(final Object requestObject) throws Exception {
 
+        // --------------------------------------------------
+
         int[] txnDstNodes = ArrayUtils.removeElements(
                 controller.getTransactionDescriptor().dstStateObjectNodes,
                 runtimeContext.nodeID
@@ -74,6 +74,8 @@ public class PushTransactionExecutor extends TransactionExecutor {
 
         if (txnDstNodes.length == 0)
             return null;
+
+        // --------------------------------------------------
 
         //
         // Apply prepare phase on src-state object.
@@ -108,16 +110,20 @@ public class PushTransactionExecutor extends TransactionExecutor {
         // Register push request listener only at the associated destination nodes.
         if (ArrayUtils.contains(controller.getTransactionDescriptor().dstStateObjectNodes, runtimeContext.nodeID)) {
 
-            if (transactionDefinition.combinePhase != null) { // USE COMBINER
+            if (transactionDefinition.combinePhase != null) { // USE COMBINER -> synchronous
 
                 AtomicInteger requestIndex = new AtomicInteger(0);
-                int numRequests = controller.getTransactionDescriptor().srcStateObjectNodes.length;
+                int numRequests = controller.getTransactionDescriptor().srcStateObjectNodes.length - 1;
                 List<Object> srcStateObjects = new ArrayList<>(numRequests);
 
                 runtimeContext.netManager.addEventListener(TransactionPushRequestEvent.TRANSACTION_REQUEST + transactionName, event -> {
                     final TransactionPushRequestEvent request = (TransactionPushRequestEvent) event;
                     srcStateObjects.addAll(request.srcStateObjectsValues);
-                    if (requestIndex.incrementAndGet() == numRequests) {
+                    int requestCounter = requestIndex.incrementAndGet();
+
+                    System.out.println("NODE [" + runtimeContext.nodeID + "] RECEIVED " + requestCounter + " PUSH REQUESTS.");
+
+                    if (requestCounter == numRequests) {
                         new Thread(() -> {
                             try {
                                 Object combinedSrcStateObject = transactionDefinition.combinePhase.combine(srcStateObjects);
@@ -154,7 +160,7 @@ public class PushTransactionExecutor extends TransactionExecutor {
                             } catch (Exception ex) {
                                 throw new IllegalStateException(ex);
                             }
-                        });
+                        }).start();
                 });
             }
         }

@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.examples.experiments.paramsrv;
+package de.tuberlin.pserver.examples.experiments.globalObjects;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;

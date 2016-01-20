@@ -72,6 +72,16 @@ public final class NetManager extends EventDispatcher {
         this.allChannels        = new DefaultChannelGroup(ALL_CHANNELS, GlobalEventExecutor.INSTANCE);
     }
 
+    @Override
+    public void deactivate() {
+        try {
+            stop();
+            super.deactivate();
+        } catch (Exception e) {
+            throw new IllegalStateException();
+        }
+    }
+
     // -------------------------------------------------------
 
     private void defineServerPipeline(ChannelPipeline pipeline) {
@@ -123,8 +133,8 @@ public final class NetManager extends EventDispatcher {
 
     public void stop() throws Exception {
         closeAllChannels();
-        bossGroup.shutdownGracefully();
-        workerGroup.shutdownGracefully();
+        bossGroup.shutdownGracefully().sync();
+        workerGroup.shutdownGracefully().sync();
     }
 
     public NetChannel connect(MachineDescriptor descriptor) {

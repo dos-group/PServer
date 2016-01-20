@@ -2,7 +2,7 @@ package de.tuberlin.pserver.dsl.transaction.executors;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
-import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
+import de.tuberlin.pserver.dsl.transaction.annotations.TransactionType;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 
 import java.util.List;

@@ -1,7 +1,5 @@
 package de.tuberlin.pserver.dsl.transaction.annotations;
 
-import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
