@@ -186,7 +186,6 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
                 }
             }
         } else {
-
             files.add(pathFile);
             totalLength += pathFile.getLen();
         }
@@ -269,7 +268,9 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
                             bytesUnassigned, blocks[blockIndex].getHosts());
                     inputSplits.add(fis);
                 }
+
             } else {
+
                 final BlockLocation[] blocks = fs.getFileBlockLocations(file, 0, 0);
                 String[] hosts;
                 if (blocks.length > 0)
@@ -281,7 +282,6 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
                 inputSplits.add(fis);
             }
         }
-
 
         FileInputSplit[] fileInputSplits = inputSplits.toArray(new FileInputSplit[inputSplits.size()]);
 

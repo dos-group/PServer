@@ -95,6 +95,7 @@ public final class HDFSFileSystemManagerServer implements FileSystemManager, Inp
     @SuppressWarnings("unchecked")
     public <T extends Record> FileDataIterator<T> createFileIterator(final ProgramContext programContext,
                                                                      final StateDescriptor stateDescriptor) {
+
         HDFSInputFile inputFile = inputFileMap.get(Preconditions.checkNotNull(stateDescriptor.path));
         if (inputFile == null) {
             inputFile = new HDFSInputFile(config, programContext, stateDescriptor);

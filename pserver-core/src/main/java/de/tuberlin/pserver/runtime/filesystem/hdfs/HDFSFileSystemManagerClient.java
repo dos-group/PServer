@@ -53,15 +53,13 @@ public final class HDFSFileSystemManagerClient implements FileSystemManager, Inp
         Preconditions.checkNotNull(infraManager);
         Preconditions.checkNotNull(rpcManager);
 
-        this.config     = Preconditions.checkNotNull(config);
-        this.netManager = Preconditions.checkNotNull(netManager);
-
         final int hdfsMasterIdx = config.getInt("filesystem.hdfs.masterNodeIndex");
         final MachineDescriptor hdfsMasterMachine = infraManager.getMachine(hdfsMasterIdx);
 
+        this.config     = Preconditions.checkNotNull(config);
+        this.netManager = Preconditions.checkNotNull(netManager);
         this.registeredIteratorMap = new HashMap<>();
         this.inputFileMap = new HashMap<>();
-
         this.inputSplitProvider = rpcManager.getRPCProtocolProxy(InputSplitProvider.class, hdfsMasterMachine);
     }
 
