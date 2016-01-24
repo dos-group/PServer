@@ -2,9 +2,9 @@ package de.tuberlin.pserver.runtime.filesystem.records;
 
 import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import de.tuberlin.pserver.runtime.state.entries.Entry;
-import de.tuberlin.pserver.runtime.state.entries.ImmutableEntryImpl;
-import de.tuberlin.pserver.runtime.state.entries.ReusableEntry;
+import de.tuberlin.pserver.runtime.state.matrix.entries.Entry;
+import de.tuberlin.pserver.runtime.state.matrix.entries.ImmutableEntryImpl;
+import de.tuberlin.pserver.runtime.state.matrix.entries.ReusableEntry;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.util.*;
@@ -24,9 +24,10 @@ public class SVMRecord<V extends Number> implements Record<V> {
             SVMParser.fileFormat = fileFormat;
         }
 
+        @SuppressWarnings("unchecked")
         protected static <V extends Number> Tuple2<V, Map<Long, V>> parse(String line, Optional<long[]> projection) {
 
-            StringTokenizer tokenizer = new StringTokenizer(line, fileFormat.SVM_FORMAT.getDelimiter());
+            StringTokenizer tokenizer = new StringTokenizer(line, FileFormat.SVM_FORMAT.getDelimiter());
 
             V label;
             if (fileFormat.getValueType() == FileFormat.ValueType.FLOAT)
@@ -111,6 +112,7 @@ public class SVMRecord<V extends Number> implements Record<V> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Entry<V> next(ReusableEntry reusableEntry) {
         Long index = this.attributeIterator.next();
         V value = this.data._2.get(index);

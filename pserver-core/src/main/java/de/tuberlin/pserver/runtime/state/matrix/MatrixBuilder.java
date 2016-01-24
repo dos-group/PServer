@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.runtime.state;
+package de.tuberlin.pserver.runtime.state.matrix;
 
 
 import com.google.common.base.Preconditions;

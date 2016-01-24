@@ -2,10 +2,10 @@ package de.tuberlin.pserver.runtime.filesystem;
 
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.runtime.filesystem.records.RecordIterator;
-import de.tuberlin.pserver.runtime.state.entries.Entry;
-import de.tuberlin.pserver.runtime.state.entries.ImmutableEntryImpl;
-import de.tuberlin.pserver.runtime.state.entries.MutableEntryImpl;
-import de.tuberlin.pserver.runtime.state.entries.ReusableEntry;
+import de.tuberlin.pserver.runtime.state.matrix.entries.Entry;
+import de.tuberlin.pserver.runtime.state.matrix.entries.ImmutableEntryImpl;
+import de.tuberlin.pserver.runtime.state.matrix.entries.MutableEntryImpl;
+import de.tuberlin.pserver.runtime.state.matrix.entries.ReusableEntry;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

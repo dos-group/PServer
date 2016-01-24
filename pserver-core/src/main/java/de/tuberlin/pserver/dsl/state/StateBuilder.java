@@ -9,8 +9,8 @@ import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import de.tuberlin.pserver.runtime.state.partitioner.MatrixPartitioner;
-import de.tuberlin.pserver.runtime.state.partitioner.RowPartitioner;
+import de.tuberlin.pserver.runtime.state.matrix.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.matrix.partitioner.RowPartitioner;
 
 public final class StateBuilder {
 

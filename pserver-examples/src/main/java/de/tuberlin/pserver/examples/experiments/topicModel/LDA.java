@@ -16,7 +16,7 @@ import de.tuberlin.pserver.math.matrix.ElementType;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
-import de.tuberlin.pserver.runtime.state.MatrixBuilder;
+import de.tuberlin.pserver.runtime.state.matrix.MatrixBuilder;
 
 import java.io.PrintWriter;
 import java.io.Serializable;

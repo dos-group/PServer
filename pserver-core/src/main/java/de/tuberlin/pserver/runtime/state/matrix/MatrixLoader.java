@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.runtime.state;
+package de.tuberlin.pserver.runtime.state.matrix;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.compiler.StateDescriptor;
@@ -13,11 +13,11 @@ import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
-import de.tuberlin.pserver.runtime.state.entries.Entry;
-import de.tuberlin.pserver.runtime.state.entries.ImmutableEntryImpl;
-import de.tuberlin.pserver.runtime.state.entries.MutableEntryImpl;
-import de.tuberlin.pserver.runtime.state.entries.ReusableEntry;
-import de.tuberlin.pserver.runtime.state.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.matrix.entries.Entry;
+import de.tuberlin.pserver.runtime.state.matrix.entries.ImmutableEntryImpl;
+import de.tuberlin.pserver.runtime.state.matrix.entries.MutableEntryImpl;
+import de.tuberlin.pserver.runtime.state.matrix.entries.ReusableEntry;
+import de.tuberlin.pserver.runtime.state.matrix.partitioner.MatrixPartitioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,6 +96,7 @@ public final class MatrixLoader {
     // Constructor.
     // ---------------------------------------------------
 
+    @SuppressWarnings("unchecked")
     public MatrixLoader(final NetManager netManager, final FileSystemManager fileManager, final RuntimeManager runtimeManager) {
 
         this.netManager         = Preconditions.checkNotNull(netManager);

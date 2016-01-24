@@ -62,6 +62,7 @@ public final class UserCodeManager {
     // ---------------------------------------------------
 
     public List<Tuple2<String, byte[]>> extractClass(final Class<?> clazz) { return extractClass(clazz, new LinkedList<>()); }
+    @SuppressWarnings("unchecked")
     public List<Tuple2<String, byte[]>> extractClass(final Class<?> clazz, final List<Tuple2<String, byte[]>> clazzesBC) {
         Preconditions.checkNotNull(clazz);
         for (final Class<?> declaredClazz : clazz.getDeclaredClasses()) {
@@ -90,6 +91,7 @@ public final class UserCodeManager {
     // Private Methods.
     // ---------------------------------------------------
 
+    @SuppressWarnings("unchecked")
     private byte[] readByteCode(final Class<?> clazz) {
         String topLevelClazzName = null;
         Class<?> enclosingClazz = clazz.getEnclosingClass();

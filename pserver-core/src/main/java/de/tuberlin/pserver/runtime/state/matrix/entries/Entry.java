@@ -1,10 +1,8 @@
-package de.tuberlin.pserver.runtime.state.entries;
+package de.tuberlin.pserver.runtime.state.matrix.entries;
 
 import java.io.Serializable;
 
-/**
- * Created by hegemon on 08.01.16.
- */
+
 public interface Entry<V extends Number> extends Serializable {
 
     long getRow();
@@ -12,5 +10,4 @@ public interface Entry<V extends Number> extends Serializable {
     long getCol();
 
     V getValue();
-
 }

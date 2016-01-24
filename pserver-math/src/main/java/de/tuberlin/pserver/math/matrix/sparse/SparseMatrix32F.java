@@ -38,7 +38,7 @@ public class SparseMatrix32F implements Matrix32F {
     private final long cols;
     private final Lock lock;
     private Object owner;
-    private boolean sorted;
+    //private boolean sorted;
 
     // ---------------------------------------------------
     // Constructors.
@@ -85,8 +85,8 @@ public class SparseMatrix32F implements Matrix32F {
         long[] keys = this.data.keys();
         Arrays.sort(keys);
         TLongFloatHashMap sorted = new TLongFloatHashMap();
-        for (int i = 0; i < keys.length; i++) {
-            sorted.put(keys[i], this.data.get(keys[i]));
+        for (long key : keys) {
+            sorted.put(key, this.data.get(key));
         }
         this.data = sorted;
     }
@@ -158,7 +158,7 @@ public class SparseMatrix32F implements Matrix32F {
         }
         else {
             this.data.put(key, value);
-            this.sorted = false;
+            //this.sorted = false;
         }
     }
 
@@ -168,6 +168,7 @@ public class SparseMatrix32F implements Matrix32F {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Matrix32F setDiagonalsToZero(Matrix m) {
         if (m instanceof SparseMatrix32F)
             return this.setDiagonalsToZero((SparseMatrix32F) m);

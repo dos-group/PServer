@@ -10,12 +10,12 @@ import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.core.remoteobj.GlobalObject;
-import de.tuberlin.pserver.runtime.state.rpc.GlobalStateMatrixProxy;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
-import de.tuberlin.pserver.runtime.state.MatrixBuilder;
-import de.tuberlin.pserver.runtime.state.MatrixLoader;
-import de.tuberlin.pserver.runtime.state.types.DistributedMatrix32F;
-import de.tuberlin.pserver.runtime.state.types.DistributedMatrix64F;
+import de.tuberlin.pserver.runtime.state.matrix.MatrixBuilder;
+import de.tuberlin.pserver.runtime.state.matrix.MatrixLoader;
+import de.tuberlin.pserver.runtime.state.matrix.disttypes.DistributedMatrix32F;
+import de.tuberlin.pserver.runtime.state.matrix.disttypes.DistributedMatrix64F;
+import de.tuberlin.pserver.runtime.state.matrix.rpc.GlobalStateMatrixProxy;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 

@@ -20,8 +20,8 @@ import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
 import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
-import de.tuberlin.pserver.runtime.state.MatrixBuilder;
-import de.tuberlin.pserver.runtime.state.types.DistributedMatrix64F;
+import de.tuberlin.pserver.runtime.state.matrix.MatrixBuilder;
+import de.tuberlin.pserver.runtime.state.matrix.disttypes.DistributedMatrix64F;
 import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.io.PrintWriter;

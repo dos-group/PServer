@@ -44,6 +44,7 @@ public class PullTransactionExecutor extends TransactionExecutor {
     // Constructors.
     // ---------------------------------------------------
 
+    @SuppressWarnings("unchecked")
     public PullTransactionExecutor(final RuntimeContext runtimeContext,
                                    final TransactionController controller) {
 
@@ -102,6 +103,7 @@ public class PullTransactionExecutor extends TransactionExecutor {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public synchronized List<Object> execute(final Object requestObject) throws Exception {
 
         if (txnSrcNodes.length == 0)
@@ -155,6 +157,7 @@ public class PullTransactionExecutor extends TransactionExecutor {
     // Private Methods.
     // ---------------------------------------------------
 
+    @SuppressWarnings("unchecked")
     private void registerPullTransactionRequest() {
 
         // Register push request listener only at the associated destination nodes.

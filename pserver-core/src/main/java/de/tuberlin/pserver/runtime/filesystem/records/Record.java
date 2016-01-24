@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.runtime.filesystem.records;
 
-import de.tuberlin.pserver.runtime.state.entries.Entry;
-import de.tuberlin.pserver.runtime.state.entries.ReusableEntry;
+import de.tuberlin.pserver.runtime.state.matrix.entries.Entry;
+import de.tuberlin.pserver.runtime.state.matrix.entries.ReusableEntry;
 
 import java.util.Iterator;
 import java.util.Optional;

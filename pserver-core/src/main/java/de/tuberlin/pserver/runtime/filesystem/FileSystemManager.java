@@ -2,7 +2,7 @@ package de.tuberlin.pserver.runtime.filesystem;
 
 import de.tuberlin.pserver.runtime.core.common.Deactivatable;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
-import de.tuberlin.pserver.runtime.state.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.matrix.partitioner.MatrixPartitioner;
 
 public interface FileSystemManager extends Deactivatable {
 

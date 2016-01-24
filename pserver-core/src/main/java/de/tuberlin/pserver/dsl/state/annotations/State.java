@@ -3,8 +3,8 @@ package de.tuberlin.pserver.dsl.state.annotations;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import de.tuberlin.pserver.runtime.state.partitioner.MatrixPartitioner;
-import de.tuberlin.pserver.runtime.state.partitioner.RowPartitioner;
+import de.tuberlin.pserver.runtime.state.matrix.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.matrix.partitioner.RowPartitioner;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

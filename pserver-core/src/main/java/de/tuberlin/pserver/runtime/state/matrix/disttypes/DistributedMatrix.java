@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.runtime.state.types;
+package de.tuberlin.pserver.runtime.state.matrix.disttypes;
 
 
 import com.google.common.base.Preconditions;
@@ -9,9 +9,8 @@ import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-import de.tuberlin.pserver.runtime.state.MatrixBuilder;
-import de.tuberlin.pserver.runtime.state.RemotePartition;
-import de.tuberlin.pserver.runtime.state.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.matrix.MatrixBuilder;
+import de.tuberlin.pserver.runtime.state.matrix.partitioner.MatrixPartitioner;
 
 import java.util.*;
 

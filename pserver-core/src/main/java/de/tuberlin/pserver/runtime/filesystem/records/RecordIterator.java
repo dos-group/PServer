@@ -2,8 +2,6 @@ package de.tuberlin.pserver.runtime.filesystem.records;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -13,12 +11,6 @@ import java.util.Optional;
 
 
 public abstract class RecordIterator<T extends Record> implements Iterator<T> {
-
-    // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    Logger LOG = LoggerFactory.getLogger(RecordIterator.class);
 
     // ---------------------------------------------------
     // Fields.

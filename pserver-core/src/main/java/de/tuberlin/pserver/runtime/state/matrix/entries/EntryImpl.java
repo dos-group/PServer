@@ -1,8 +1,6 @@
-package de.tuberlin.pserver.runtime.state.entries;
+package de.tuberlin.pserver.runtime.state.matrix.entries;
 
-/**
- * Created by hegemon on 01.01.16.
- */
+
 public abstract class EntryImpl<V extends Number> implements Entry<V> {
 
     protected long row;
@@ -34,5 +32,4 @@ public abstract class EntryImpl<V extends Number> implements Entry<V> {
     public String toString() {
         return this.col + ":" + this.value;
     }
-
 }

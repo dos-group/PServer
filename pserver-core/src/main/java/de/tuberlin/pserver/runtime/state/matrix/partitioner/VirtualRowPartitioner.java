@@ -1,25 +1,30 @@
-package de.tuberlin.pserver.runtime.state.partitioner;
+package de.tuberlin.pserver.runtime.state.matrix.partitioner;
 
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
-import de.tuberlin.pserver.runtime.state.entries.Entry;
+import de.tuberlin.pserver.runtime.state.matrix.entries.Entry;
 
-public class NoPartitioner extends MatrixPartitioner {
+/**
+ * Partitions a matrix into one partition of the same size as the matrix.
+ * Used if no partitioning is applied.
+ */
+public class VirtualRowPartitioner extends MatrixPartitioner {
 
     private final PartitionShape shape;
 
-    public NoPartitioner(long rows, long cols, int nodeId, int[] atNodes) {
+    public VirtualRowPartitioner() { this(-1, -1, -1, null); }
+    public VirtualRowPartitioner(long rows, long cols, int nodeId, int[] atNodes) {
         super(rows, cols, nodeId, atNodes);
         shape = new PartitionShape(rows, cols, 0, 0);
     }
 
     @Override
     public int getPartitionOfEntry(long row, long col) {
-        return -1;
+        return nodeId;
     }
 
     @Override
     public int getPartitionOfEntry(Entry entry) {
-        return -1;
+        return nodeId;
     }
 
     @Override

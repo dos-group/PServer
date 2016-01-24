@@ -6,7 +6,7 @@ import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
-import de.tuberlin.pserver.runtime.state.partitioner.RowPartitioner;
+import de.tuberlin.pserver.runtime.state.matrix.partitioner.RowPartitioner;
 
 public class ReplicatedMatrixTestJob extends Program {
 

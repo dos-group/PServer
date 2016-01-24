@@ -1,10 +1,10 @@
-package de.tuberlin.pserver.runtime.state.cache;
+package de.tuberlin.pserver.runtime.state.matrix.cache;
 
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.RuntimeContext;
-import de.tuberlin.pserver.runtime.state.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.matrix.partitioner.MatrixPartitioner;
 
 import java.util.concurrent.CountDownLatch;
 

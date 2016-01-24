@@ -1,8 +1,6 @@
-package de.tuberlin.pserver.runtime.state.entries;
+package de.tuberlin.pserver.runtime.state.matrix.entries;
 
-/**
- * Created by hegemon on 01.01.16.
- */
+
 public class ImmutableEntryImpl<V extends Number> extends EntryImpl<V> {
 
     public ImmutableEntryImpl(long row, long col, V value) {
@@ -12,5 +10,4 @@ public class ImmutableEntryImpl<V extends Number> extends EntryImpl<V> {
     public ImmutableEntryImpl(Entry entry) {
         super(entry.getRow(), entry.getCol(), (V) entry.getValue());
     }
-
 }

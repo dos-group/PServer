@@ -1,8 +1,6 @@
-package de.tuberlin.pserver.runtime.state.entries;
+package de.tuberlin.pserver.runtime.state.matrix.entries;
 
-/**
- * Created by hegemon on 01.01.16.
- */
+
 public class MutableEntryImpl<V extends Number> extends EntryImpl<V> implements ReusableEntry<V> {
 
     public MutableEntryImpl(long row, long col, V value) {
@@ -16,5 +14,4 @@ public class MutableEntryImpl<V extends Number> extends EntryImpl<V> implements 
         this.value = value;
         return this;
     }
-
 }

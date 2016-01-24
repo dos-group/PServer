@@ -2,7 +2,7 @@ package de.tuberlin.pserver.ml.optimization;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
-import de.tuberlin.pserver.runtime.state.MatrixBuilder;
+import de.tuberlin.pserver.runtime.state.matrix.MatrixBuilder;
 
 
 public class Scorer {
@@ -15,6 +15,7 @@ public class Scorer {
         this.predictionFunction = Preconditions.checkNotNull(predictionFunction);
     }
 
+    @SuppressWarnings("unchecked")
     public double score(Matrix32F X, Matrix32F y, Matrix32F W) throws Exception {
         Matrix32F yPred = new MatrixBuilder().dimension(y.rows(), y.cols()).build();
 
