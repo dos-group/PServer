@@ -9,8 +9,8 @@ import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
 import de.tuberlin.pserver.dsl.transaction.annotations.TransactionType;
-import de.tuberlin.pserver.dsl.transaction.phases.Combine;
 import de.tuberlin.pserver.dsl.transaction.phases.Update;
+import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
@@ -28,6 +28,9 @@ public class ModelParallelJob extends Program {
     @State(at = "1 - 3", scope = Scope.REPLICATED, matrixFormat = MatrixFormat.DENSE_FORMAT, rows = 1, cols = 10)
     public Matrix32F gradients;
 
+    @State(at = "1 - 3", scope = Scope.REPLICATED, matrixFormat = MatrixFormat.DENSE_FORMAT, rows = 1, cols = 10)
+    public Matrix32F cachedParameters;
+
     // ---------------------------------------------------
     // Transaction.
     // ---------------------------------------------------
@@ -35,21 +38,28 @@ public class ModelParallelJob extends Program {
     @Transaction(src = "gradients", dst = "parameters", type = TransactionType.PUSH)
     public final TransactionDefinition updateParameters = new TransactionDefinition(
 
-            (Combine<Matrix32F>) (gradients) -> {
+            /*(Combine<Matrix32F>) (gradients) -> {
                 Matrix32F combinedGradient = gradients.get(0);
                 for (int i = 1; i < gradients.size(); ++i) {
                     combinedGradient.add(gradients.get(i), combinedGradient);
                 }
                 return combinedGradient;
-            },
+            },*/
 
             (Update<Matrix32F>) (gradients, parameters) -> {
-                StringBuilder strBuilder = new StringBuilder();
-                for (Matrix32F gradient : gradients) {
-                    for (int i = 0; i < 10; ++i)
-                        strBuilder.append("[" + programContext.nodeID + "] -> " + gradient.get(i) + "\n");
-                }
-                System.out.println(strBuilder.toString());
+                for (Matrix32F gradient : gradients)
+                    parameters.add(gradient, parameters);
+
+                System.out.println("Parameters at [" + programContext.nodeID + "] => " + parameters);
+            }
+    );
+
+    @Transaction(src = "parameters", dst = "cachedParameters", type = TransactionType.PULL)
+    public final TransactionDefinition fetchParameters = new TransactionDefinition(
+
+            (Update<Matrix32F>) (parameterList, cachedParameters) -> {
+                for (Matrix32F parameter : parameterList)
+                    cachedParameters.assign(parameter);
             }
     );
 
@@ -62,10 +72,16 @@ public class ModelParallelJob extends Program {
 
         lifecycle.process(()-> {
 
-            for (int i = 0; i < 10; ++i)
-                gradients.set(0, i, (float) i * programContext.nodeID);
+            UnitMng.loop(5, (epoch) -> {
 
-            TransactionMng.commit(updateParameters);
+                TransactionMng.commit(fetchParameters);
+
+                int id = programContext.nodeID;
+
+                gradients.set(0, id, (float)id + cachedParameters.get(0, id));
+
+                TransactionMng.commit(updateParameters);
+            });
         });
     }
 

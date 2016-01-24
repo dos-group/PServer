@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.examples.experiments.paramsrv;
+package de.tuberlin.pserver.examples.experiments.transactions;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;
