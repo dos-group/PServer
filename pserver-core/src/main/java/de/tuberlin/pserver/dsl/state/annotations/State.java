@@ -1,10 +1,9 @@
 package de.tuberlin.pserver.dsl.state.annotations;
 
+import de.tuberlin.pserver.dsl.state.properties.PartitionerType;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import de.tuberlin.pserver.runtime.state.matrix.partitioner.MatrixPartitioner;
-import de.tuberlin.pserver.runtime.state.matrix.partitioner.RowPartitioner;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -19,15 +18,18 @@ public @interface State {;
 
     String at() default "";
 
-    Class<? extends MatrixPartitioner> partitioner() default RowPartitioner.class;
+    PartitionerType partitioner() default PartitionerType.ROW_PARTITIONER;
+
+    // --- Matrix Specific ---
 
     long rows() default 0;
 
     long cols() default 0;
 
-    FileFormat fileFormat() default FileFormat.UNDEFINED;
-
     MatrixFormat matrixFormat() default MatrixFormat.DENSE_FORMAT;
+
+
+    FileFormat fileFormat() default FileFormat.UNDEFINED;
 
     String path() default "";
 

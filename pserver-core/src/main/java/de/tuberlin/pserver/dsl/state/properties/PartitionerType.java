@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.dsl.state.properties;
 
-public enum Partitioner {
+public enum PartitionerType {
 
     NO_PARTITIONER,
 

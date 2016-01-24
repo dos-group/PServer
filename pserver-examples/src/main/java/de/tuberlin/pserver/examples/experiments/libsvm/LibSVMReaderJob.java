@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.examples.experiments.libSVMreader;
+package de.tuberlin.pserver.examples.experiments.libsvm;
 
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
@@ -10,7 +10,7 @@ import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 
-public class SVMReaderJob extends Program {
+public class LibSVMReaderJob extends Program {
 
     // ---------------------------------------------------
     // Constants.
@@ -41,7 +41,7 @@ public class SVMReaderJob extends Program {
             Thread.sleep(2000 * programContext.nodeID);
 
             int i = 0;
-            Matrix32F.RowIterator it = XTrainLabel.rowIterator();
+            Matrix32F.RowIterator it = XTrainFeatures.rowIterator();
             while (it.hasNext()) {
                 it.next();
                 System.out.println("entry " + (i++) + " at node [" + programContext.nodeID + "] data - " + it.get());
@@ -59,7 +59,7 @@ public class SVMReaderJob extends Program {
         System.setProperty("simulation.numNodes", String.valueOf(NUM_SIMULATION_NODES));
 
         PServerExecutor.LOCAL
-                .run(SVMReaderJob.class)
+                .run(LibSVMReaderJob.class)
                 .done();
     }
 }

@@ -5,12 +5,15 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.compiler.Compiler;
 import de.tuberlin.pserver.compiler.*;
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
+import de.tuberlin.pserver.dsl.unit.UnitMng;
+import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.runtime.core.common.Deactivatable;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.runtime.core.usercode.UserCodeManager;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
+import de.tuberlin.pserver.runtime.state.matrix.MatrixLoader;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -31,12 +34,6 @@ public class ProgramDriver implements Deactivatable {
 
     private final RuntimeContext runtimeContext;
 
-    private final StateAllocator stateAllocator;
-
-    private final GlobalObjectAllocator globalObjectAllocator;
-
-    private final Map<String, Object> remoteObjectRefs;
-
     // ---------------------------------------------------
 
     private ProgramContext programContext;
@@ -44,6 +41,15 @@ public class ProgramDriver implements Deactivatable {
     private ProgramTable programTable;
 
     private Program instance;
+
+
+    private Map<String, Object> remoteObjectRefs;
+
+    private GlobalObjectAllocator globalObjectAllocator;
+
+    private StateAllocator stateAllocator;
+
+    private MatrixLoader matrixLoader;
 
     // ---------------------------------------------------
     // Constructor.
@@ -54,26 +60,11 @@ public class ProgramDriver implements Deactivatable {
                          final RuntimeContext runtimeContext) {
 
         this.infraManager = Preconditions.checkNotNull(infraManager);
-
         this.userCodeManager = Preconditions.checkNotNull(userCodeManager);
-
         this.runtimeContext = Preconditions.checkNotNull(runtimeContext);
-
-        this.stateAllocator = new StateAllocator(
-                runtimeContext.netManager,
-                runtimeContext.fileManager,
-                runtimeContext.runtimeManager
-        );
-
-        this.globalObjectAllocator = new GlobalObjectAllocator();
-
-        this.remoteObjectRefs = new HashMap<>();
     }
 
     public void deactivate() {
-
-        stateAllocator.clearContext();
-
         programContext.deactivate();
     }
 
@@ -99,6 +90,11 @@ public class ProgramDriver implements Deactivatable {
                 programTable,
                 nodeDOP
         );
+
+        this.matrixLoader = new MatrixLoader(programContext);
+        this.stateAllocator = new StateAllocator();
+        this.globalObjectAllocator = new GlobalObjectAllocator();
+        this.remoteObjectRefs = new HashMap<>();
 
         instance.injectContext(programContext);
 
@@ -129,6 +125,8 @@ public class ProgramDriver implements Deactivatable {
 
         defineProgram(instance);
 
+        programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
+
         instance.run();
     }
 
@@ -152,23 +150,20 @@ public class ProgramDriver implements Deactivatable {
     private void allocateState() throws Exception {
         for (final StateDescriptor state : programContext.programTable.getState()) {
             if (MatrixBase.class.isAssignableFrom(state.stateType)) {
-                final Pair<MatrixBase, MatrixBase> stateObj = stateAllocator.alloc(programContext, state);
-                if (stateObj.getLeft() != null)
-                    runtimeContext.runtimeManager.putDHT(state.stateName, stateObj.getLeft());
-                if (stateObj.getRight() != null)
-                    remoteObjectRefs.put(state.stateName, stateObj.getRight());
+                final Pair<MatrixBase, MatrixBase> stateAndProxy = stateAllocator.alloc(programContext, state);
+                if (stateAndProxy.getLeft() != null) {
+                    runtimeContext.runtimeManager.putDHT(state.stateName, stateAndProxy.getLeft());
+                    if (!("".equals(state.path)))
+                        matrixLoader.add(state, (Matrix)stateAndProxy.getLeft());
+                }
+                if (stateAndProxy.getRight() != null)
+                    remoteObjectRefs.put(state.stateName, stateAndProxy.getRight());
             } else
                 throw new IllegalStateException();
         }
 
-        try {
-            Thread.sleep(5000); // TODO: REMOVE!!! FEHLER!!!
-        } catch (InterruptedException ex) {
-            //throw new IllegalStateException(ex);
-        }
-
-        programContext.synchronizeUnit("global_barrier");
-        stateAllocator.loadData(programContext);
+        programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
+        matrixLoader.load();
     }
 
     private void bindState(final Program instance) throws Exception {

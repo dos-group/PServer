@@ -180,7 +180,7 @@ public class LocalInputFile implements ILocalInputFile<Record> {
 
         @Override
         public boolean hasNext() {
-            final boolean hasNext = currentLine <= fileSection.linesToRead && recordIterator.hasNext();
+            final boolean hasNext = currentLine < fileSection.linesToRead && recordIterator.hasNext();
             if (!hasNext)
                 close();
             return hasNext;

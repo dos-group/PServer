@@ -1,9 +1,9 @@
 package de.tuberlin.pserver.runtime.state.matrix.partitioner;
 
+import de.tuberlin.pserver.dsl.state.properties.PartitionerType;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
 import de.tuberlin.pserver.runtime.state.matrix.entries.Entry;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.stream.IntStream;
 
 public abstract class MatrixPartitioner {
@@ -81,14 +81,16 @@ public abstract class MatrixPartitioner {
     public abstract MatrixPartitioner ofNode(int nodeId);
 
 
-    public static MatrixPartitioner newInstance(Class<? extends MatrixPartitioner> implClass, long rows, long cols, int nodeId, int[] atNodes) {
-        MatrixPartitioner result;
-        try {
-            result = implClass.getDeclaredConstructor(long.class, long.class, int.class, int[].class).newInstance(rows, cols, nodeId, atNodes);
+    public static MatrixPartitioner create(PartitionerType partitionerType, long rows, long cols, int nodeId, int[] atNodes) {
+        switch (partitionerType) {
+            case NO_PARTITIONER:
+                return new NoPartitioner(rows, cols, nodeId, atNodes);
+            case ROW_PARTITIONER:
+                return new RowPartitioner(rows, cols, nodeId, atNodes);
+            case ROW_VIRTUAL_PARTITIONER:
+                return new VirtualRowPartitioner(rows, cols, nodeId, atNodes);
+            default:
+                throw new IllegalStateException();
         }
-        catch(NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
-            throw new RuntimeException("Failed to instantiate IMatrixPartitioner implementation " + implClass.getName(), e);
-        }
-        return result;
     }
 }

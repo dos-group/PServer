@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.runtime.state.matrix.disttypes;
 
 
+import de.tuberlin.pserver.dsl.state.properties.PartitionerType;
 import de.tuberlin.pserver.math.matrix.ElementType;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
@@ -39,12 +40,12 @@ public class DistributedMatrix64F implements Matrix64F {
                                 final long rows, final long cols,
                                 final MatrixFormat matrixFormat,
                                 final int[] atNodes,
-                                final Class<? extends MatrixPartitioner> partitionerType) {
+                                final PartitionerType partitionerTypeType) {
 
         this.rows = rows;
         this.cols = cols;
-        this.partitioner = MatrixPartitioner.newInstance(
-                partitionerType,
+        this.partitioner = MatrixPartitioner.create(
+                partitionerTypeType,
                 rows, cols,
                 programContext.nodeID,
                 atNodes
