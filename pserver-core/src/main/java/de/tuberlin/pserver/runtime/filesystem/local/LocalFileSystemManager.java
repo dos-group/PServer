@@ -1,13 +1,14 @@
 package de.tuberlin.pserver.runtime.filesystem.local;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.runtime.core.network.NetEvent;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
-import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.runtime.state.matrix.partitioner.MatrixPartitioner;
@@ -42,20 +43,14 @@ public final class LocalFileSystemManager implements FileSystemManager {
     // ---------------------------------------------------
 
     public LocalFileSystemManager(final InfrastructureManager infraManager, final NetManager netManager) {
-
         this.infraManager = Preconditions.checkNotNull(infraManager);
-
         this.netManager = Preconditions.checkNotNull(netManager);
-
         this.inputFileMap = new HashMap<>();
-
         this.registeredIteratorMap = new HashMap<>();
     }
 
     public void clearContext() {
-
         this.inputFileMap.clear();
-
         this.registeredIteratorMap.clear();
     }
 
@@ -69,19 +64,18 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
     @Override
     @SuppressWarnings("unchecked")
-    /*public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath,
-                                                                      final IRecordIteratorProducer recordFormat,
-                                                                      final IMatrixPartitioner partitioner) {*/
-    public <T extends Record> FileDataIterator<T> createFileIterator(final String filePath, /*final IRecordIteratorProducer recordFormat*/ final FileFormat fileFormat, final MatrixPartitioner partitioner) {
+    public <T extends Record> FileDataIterator<T> createFileIterator(final ProgramContext programContext,
+                                                                     final StateDescriptor stateDescriptor) {
 
-        ILocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
+        ILocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(stateDescriptor.path));
         if (inputFile == null) {
-            inputFile = new LocalInputFile(filePath, fileFormat, partitioner);
-            inputFileMap.put(filePath, inputFile);
-            registeredIteratorMap.put(filePath, new ArrayList<>());
+            MatrixPartitioner partitioner = StateDescriptor.createMatrixPartitioner(programContext, stateDescriptor);
+            inputFile = new LocalInputFile(stateDescriptor.path, stateDescriptor.fileFormat, partitioner);
+            inputFileMap.put(stateDescriptor.path, inputFile);
+            registeredIteratorMap.put(stateDescriptor.path, new ArrayList<>());
         }
         final FileDataIterator<T> fileIterator = (FileDataIterator<T>)inputFile.iterator();
-        registeredIteratorMap.get(filePath).add(fileIterator);
+        registeredIteratorMap.get(stateDescriptor.path).add(fileIterator);
         return fileIterator;
     }
 

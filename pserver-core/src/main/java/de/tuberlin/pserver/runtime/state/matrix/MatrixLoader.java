@@ -42,13 +42,9 @@ public final class MatrixLoader {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void add(StateDescriptor state, Matrix stateObj) {
-        FileDataIterator fileIterator = fileManager.createFileIterator(
-                state.path,
-                state.fileFormat,
-                StateDescriptor.createMatrixPartitioner(programContext, state)
-        );
-        loadingTasks.add(Triple.of(state, stateObj, fileIterator));
+    public void add(StateDescriptor stateDescriptor, Matrix stateObj) {
+        FileDataIterator fileIterator = fileManager.createFileIterator(programContext, stateDescriptor);
+        loadingTasks.add(Triple.of(stateDescriptor, stateObj, fileIterator));
     }
 
     @SuppressWarnings("unchecked")

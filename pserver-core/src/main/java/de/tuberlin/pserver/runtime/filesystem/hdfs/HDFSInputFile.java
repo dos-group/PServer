@@ -2,8 +2,10 @@ package de.tuberlin.pserver.runtime.filesystem.hdfs;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.config.IConfig;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
@@ -24,7 +26,7 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
 
     private static final float MAX_SPLIT_SIZE_DISCREPANCY = 1.1f;
 
-    protected static final long READ_WHOLE_SPLIT_FLAG = -1L;
+    //protected static final long READ_WHOLE_SPLIT_FLAG = -1L;
 
     // --------------------------------------------------------------------------------------------
     //  Variables for internal apply.
@@ -60,20 +62,22 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
 
     protected Configuration conf = new Configuration();
 
+    protected final StateDescriptor stateDescriptor;
+
     // --------------------------------------------------------------------------------------------
     //  Constructors
     // --------------------------------------------------------------------------------------------
 
-    public HDFSInputFile(final IConfig config, final NetManager netManager, final String filePath, FileFormat fileFormat) {
+    public HDFSInputFile(final IConfig config, final ProgramContext programContext, final StateDescriptor stateDescriptor) {
         this.config     = Preconditions.checkNotNull(config);
-        this.path       = Preconditions.checkNotNull(filePath);
-        this.filePath   = new Path(filePath);
-        this.netManager = Preconditions.checkNotNull(netManager);
+        this.stateDescriptor = Preconditions.checkNotNull(stateDescriptor);
+        this.path       = Preconditions.checkNotNull(stateDescriptor.path);
+        this.filePath   = new Path(stateDescriptor.path);
         this.fileFormat = Preconditions.checkNotNull(fileFormat);
+        this.netManager = programContext.runtimeContext.netManager;
 
         System.setProperty("HADOOP_HOME", "/home/peel/peel/systems/hadoop-2.4.1");
         System.setProperty("hadoop.home.dir", "/home/peel/peel/systems/hadoop-2.4.1");
-
         this.conf.set("HADOOP_HOME", "/home/peel/peel/systems/hadoop-2.4.1");
         this.conf.set("hadoop.home.dir", "/home/peel/peel/systems/hadoop-2.4.1");
     }
@@ -153,7 +157,10 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
         return new LocatableInputSplitAssigner(splits);
     }
 
-    public FileInputSplit[] createInputSplits(int minNumSplits) throws IOException {
+    public FileInputSplit[] createInputSplits() throws IOException {
+
+        int minNumSplits = stateDescriptor.atNodes.length;
+
         if (minNumSplits < 1) {
             throw new IllegalArgumentException("Number of input splits has to be at least 1.");
         }

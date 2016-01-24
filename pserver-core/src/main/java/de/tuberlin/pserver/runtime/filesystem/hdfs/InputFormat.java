@@ -10,7 +10,7 @@ public interface InputFormat<OT, T extends InputSplit> extends Serializable {
 
     void configure(Configuration parameters);
 
-    public abstract T[] createInputSplits(int minNumSplits) throws IOException;
+    public abstract T[] createInputSplits() throws IOException;
 
     public abstract InputSplitAssigner getInputSplitAssigner(T[] inputSplits);
 
