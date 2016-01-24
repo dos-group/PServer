@@ -21,9 +21,9 @@ public class PushTransactionExecutor extends TransactionExecutor {
 
     public final TransactionDefinition transactionDefinition;
 
-    private final SharedObject[] localSrcStateObjects;
+    private final SharedObject[] srcStateObjects;
 
-    private final SharedObject[] localDstStateObjects;
+    private final SharedObject[] dstStateObjects;
 
     // ---------------------------------------------------
     // Constructors.
@@ -35,9 +35,9 @@ public class PushTransactionExecutor extends TransactionExecutor {
         super(runtimeContext, controller);
         this.transactionDefinition = controller.getTransactionDescriptor().definition;
         final int numSrcStateObjects = controller.getTransactionDescriptor().stateSrcObjectNames.size();
-        this.localSrcStateObjects = new SharedObject[numSrcStateObjects];
+        this.srcStateObjects = new SharedObject[numSrcStateObjects];
         final int numDstStateObjects = controller.getTransactionDescriptor().stateDstObjectNames.size();
-        this.localDstStateObjects = new SharedObject[numDstStateObjects];
+        this.dstStateObjects = new SharedObject[numDstStateObjects];
         registerPushTransactionRequest();
     }
 
@@ -51,13 +51,13 @@ public class PushTransactionExecutor extends TransactionExecutor {
         for (final String srcStateObjectName : controller.getTransactionDescriptor().stateSrcObjectNames) {
             if (ArrayUtils.contains(controller.getTransactionDescriptor().srcStateObjectNodes, runtimeContext.nodeID)) {
                 SharedObject srcObj = runtimeContext.runtimeManager.getDHT(srcStateObjectName);
-                localSrcStateObjects[i++] = srcObj;
+                srcStateObjects[i++] = srcObj;
             }
         }
         i = 0;
         for (final String dstStateObjectName : controller.getTransactionDescriptor().stateDstObjectNames) {
             if (ArrayUtils.contains(controller.getTransactionDescriptor().dstStateObjectNodes, runtimeContext.nodeID)) {
-                localDstStateObjects[i++] = runtimeContext.runtimeManager.getDHT(dstStateObjectName);
+                dstStateObjects[i++] = runtimeContext.runtimeManager.getDHT(dstStateObjectName);
             }
         }
     }
@@ -83,10 +83,10 @@ public class PushTransactionExecutor extends TransactionExecutor {
 
         final List<Object> preparedSrcStateObjects = new ArrayList<>();
         for (int i = 0; i < controller.getTransactionDescriptor().stateSrcObjectNames.size(); ++i) {
-            localSrcStateObjects[i].lock();
+            srcStateObjects[i].lock();
             final Prepare preparePhase = transactionDefinition.preparePhase;
-            preparedSrcStateObjects.add((preparePhase != null) ? preparePhase.prepare(localSrcStateObjects[i]) : localSrcStateObjects[i]);
-            localSrcStateObjects[i].unlock();
+            preparedSrcStateObjects.add((preparePhase != null) ? preparePhase.prepare(srcStateObjects[i]) : srcStateObjects[i]);
+            srcStateObjects[i].unlock();
         }
 
         final TransactionPushRequestEvent request = new TransactionPushRequestEvent(
@@ -128,12 +128,12 @@ public class PushTransactionExecutor extends TransactionExecutor {
                             try {
                                 Object combinedSrcStateObject = transactionDefinition.combinePhase.combine(srcStateObjects);
                                 for (int i = 0; i < controller.getTransactionDescriptor().stateDstObjectNames.size(); ++i) {
-                                    localDstStateObjects[i].lock();
+                                    dstStateObjects[i].lock();
                                     transactionDefinition.applyPhase.apply(
                                             Arrays.asList(combinedSrcStateObject),
-                                            localDstStateObjects[i]
+                                            dstStateObjects[i]
                                     );
-                                    localDstStateObjects[i].unlock();
+                                    dstStateObjects[i].unlock();
                                 }
                             } catch (Exception ex) {
                                 throw new IllegalStateException(ex);
@@ -150,12 +150,12 @@ public class PushTransactionExecutor extends TransactionExecutor {
                         new Thread(() -> {
                             try {
                                 for (int i = 0; i < controller.getTransactionDescriptor().stateDstObjectNames.size(); ++i) {
-                                    localDstStateObjects[i].lock();
+                                    dstStateObjects[i].lock();
                                     transactionDefinition.applyPhase.apply(
                                             Arrays.asList(preparedSrcStateObjects.get(i)),
-                                            localDstStateObjects[i]
+                                            dstStateObjects[i]
                                     );
-                                    localDstStateObjects[i].unlock();
+                                    dstStateObjects[i].unlock();
                                 }
                             } catch (Exception ex) {
                                 throw new IllegalStateException(ex);
