@@ -38,6 +38,8 @@ public final class StateDescriptor {
 
     public final String path;
 
+    public final String label;
+
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
@@ -51,7 +53,8 @@ public final class StateDescriptor {
                            final long cols,
                            final MatrixFormat matrixFormat,
                            final FileFormat fileFormat,
-                           final String path) {
+                           final String path,
+                           final String label) {
 
         this.stateName      = stateName;
         this.stateType      = stateType;
@@ -64,6 +67,7 @@ public final class StateDescriptor {
         this.matrixFormat   = matrixFormat;
         this.fileFormat     = fileFormat;
         this.path           = path;
+        this.label          = label;
     }
 
     // ---------------------------------------------------
@@ -82,7 +86,8 @@ public final class StateDescriptor {
                 state.cols(),
                 state.matrixFormat(),
                 state.fileFormat(),
-                state.path()
+                state.path(),
+                state.labels()
         );
     }
 }

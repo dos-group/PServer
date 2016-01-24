@@ -6,8 +6,10 @@ import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
+import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.core.network.NetEvent;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
+import de.tuberlin.pserver.runtime.dht.DHTManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
@@ -63,16 +65,11 @@ public final class MatrixLoader {
                     state.atNodes
             );
 
-            //try {
-                this.fileIterator = fileManager.createFileIterator(
-                        state.path,
-                        state.fileFormat,
-                        //state.recordFormat.newInstance(),
-                        partitioner
-                );
-            /*} catch(IllegalAccessException | InstantiationException e) {
-                throw new RuntimeException("Could not instantiate RecordFormatConfig", e);
-            }*/
+            this.fileIterator = fileManager.createFileIterator(
+                    state.path,
+                    state.fileFormat,
+                    partitioner
+            );
         }
     }
 
@@ -86,6 +83,8 @@ public final class MatrixLoader {
 
     private final FileSystemManager fileManager;
 
+    private final RuntimeManager runtimeManager;
+
     private final Map<String, MatrixLoadTask<?>> matrixLoadTasks;
 
     private final Map<String, AtomicInteger> fileLoadingBarrier;
@@ -98,10 +97,11 @@ public final class MatrixLoader {
     // Constructor.
     // ---------------------------------------------------
 
-    public MatrixLoader(final NetManager netManager, final FileSystemManager fileManager) {
+    public MatrixLoader(final NetManager netManager, final FileSystemManager fileManager, final RuntimeManager runtimeManager) {
 
         this.netManager         = Preconditions.checkNotNull(netManager);
         this.fileManager        = Preconditions.checkNotNull(fileManager);
+        this.runtimeManager     = Preconditions.checkNotNull(runtimeManager);
         this.matrixLoadTasks    = new ConcurrentHashMap<>();
         this.fileLoadingBarrier = new ConcurrentHashMap<>();
         this.loadingMatrices    = new ConcurrentHashMap<>();
@@ -202,6 +202,11 @@ public final class MatrixLoader {
         final FileDataIterator<? extends Record> fileIterator = task.fileIterator;
         ReusableEntry reusable = new MutableEntryImpl(-1, -1, Double.NaN);
 
+        Matrix labelMatrix = null;
+        if (!"".equals(task.state.label)) {
+            labelMatrix = runtimeManager.getDHT(task.state.label);
+        }
+
         Entry entry;
         while (fileIterator.hasNext()) {
 
@@ -218,12 +223,23 @@ public final class MatrixLoader {
                     // if record belongs to own node, set the value
                     if (targetPartition == nodeId) {
 
+                        if (labelMatrix != null && entry.getCol() == 0) { // Label always on first column.
+                            if (Matrix32F.class.isAssignableFrom(labelMatrix.getClass())) {
+                                labelMatrix.set(record.getRow(), entry.getCol(), record.getLabel().floatValue());
+                            }
+                            if (Matrix64F.class.isAssignableFrom(labelMatrix.getClass())) {
+                                labelMatrix.set(record.getRow(), entry.getCol(), record.getLabel().doubleValue());
+                            }
+                        }
+
                         if (Matrix32F.class.isAssignableFrom(matrix.getClass())) {
                             matrix.set(entry.getRow(), entry.getCol(), entry.getValue().floatValue());
                         }
+
                         if (Matrix64F.class.isAssignableFrom(matrix.getClass())) {
                             matrix.set(entry.getRow(), entry.getCol(), entry.getValue().doubleValue());
                         }
+
                     } else {
                         // otherwise append entry to foreign entries and send them depending on threshold
                         List<Entry> valuesOfTargetNode = getListOrCreateIfNotExists(foreignEntries, targetPartition, foreignEntriesThreshold);

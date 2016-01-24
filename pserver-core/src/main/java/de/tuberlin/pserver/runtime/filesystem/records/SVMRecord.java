@@ -10,7 +10,7 @@ import org.apache.commons.lang.ArrayUtils;
 import java.util.*;
 
 
-public class SVMRecord<V extends Number> implements Record {
+public class SVMRecord<V extends Number> implements Record<V> {
 
     // ---------------------------------------------------
     // Inner Classes.
@@ -24,10 +24,15 @@ public class SVMRecord<V extends Number> implements Record {
             SVMParser.fileFormat = fileFormat;
         }
 
-        protected static <V extends Number> Tuple2<Integer, Map<Long, V>> parse(String line, Optional<long[]> projection) {
+        protected static <V extends Number> Tuple2<V, Map<Long, V>> parse(String line, Optional<long[]> projection) {
 
             StringTokenizer tokenizer = new StringTokenizer(line, fileFormat.SVM_FORMAT.getDelimiter());
-            Integer target = Integer.parseInt(tokenizer.nextToken());
+
+            V label;
+            if (fileFormat.getValueType() == FileFormat.ValueType.FLOAT)
+                label = (V) (Float) Float.parseFloat(tokenizer.nextToken());
+            else
+                label = (V) (Double) Double.parseDouble(tokenizer.nextToken());
 
             List<Long> projectionList = null;
             if (projection.isPresent())
@@ -37,7 +42,7 @@ public class SVMRecord<V extends Number> implements Record {
             while(tokenizer.hasMoreTokens()) {
                 String column = tokenizer.nextToken();
                 Long index = Long.parseLong(column.substring(0, column.indexOf(":")));
-                // We subtract one because array starts at [0, 0] and SVM [1,1]
+                // index is decremented because LIBSVM format starts on col index 1 and we need to load this into a [0,0] matrix
                 index--;
                 if (projectionList == null || projectionList.contains(index)) {
                     if (fileFormat.getValueType() == FileFormat.ValueType.FLOAT)
@@ -47,7 +52,7 @@ public class SVMRecord<V extends Number> implements Record {
                 }
             }
 
-            return new Tuple2<>(target, attributes);
+            return new Tuple2<>(label, attributes);
         }
 
     }
@@ -57,7 +62,7 @@ public class SVMRecord<V extends Number> implements Record {
     // ---------------------------------------------------
 
     private long row;
-    private Tuple2<Integer, Map<Long, V>> data;
+    private Tuple2<V, Map<Long, V>> data;
     private Iterator<Long> attributeIterator;
 
     // ---------------------------------------------------
@@ -82,7 +87,11 @@ public class SVMRecord<V extends Number> implements Record {
         return this.row;
     }
 
-    public int getTarget() {
+    public void setLabel(V label) {
+        this.data._1 = label;
+    }
+
+    public V getLabel() {
         return this.data._1;
     }
 

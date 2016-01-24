@@ -7,11 +7,13 @@ import java.util.Iterator;
 import java.util.Optional;
 
 
-public interface Record extends Iterator<Entry> {
+public interface Record<V extends Number> extends Iterator<Entry> {
 
     int size();
 
-    int getTarget();
+    void setLabel(V label);
+
+    V getLabel();
 
     long getRow();
 

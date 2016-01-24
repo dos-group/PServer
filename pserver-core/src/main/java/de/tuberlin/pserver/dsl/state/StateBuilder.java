@@ -36,6 +36,8 @@ public final class StateBuilder {
 
     private String path;
 
+    private String labelState;
+
     private Class<? extends IMatrixPartitioner> partitioner;
 
     // ---------------------------------------------------
@@ -69,6 +71,8 @@ public final class StateBuilder {
 
     public StateBuilder path(String path) { this.path = path; return this; }
 
+    public StateBuilder label(String labelState) { this.labelState = labelState; return this; }
+
     // ---------------------------------------------------
 
     public MatrixBase build(final String stateName) throws Exception {
@@ -81,7 +85,8 @@ public final class StateBuilder {
                 rows, cols,
                 matrixFormat,
                 fileFormat,
-                path
+                path,
+                labelState
         );
         //programContext.runtimeContext.runtimeManager.allocateState(programContext, descriptor);
         return programContext.runtimeContext.runtimeManager.getDHT(stateName);

@@ -59,7 +59,11 @@ public class ProgramDriver implements Deactivatable {
 
         this.runtimeContext = Preconditions.checkNotNull(runtimeContext);
 
-        this.stateAllocator = new StateAllocator(runtimeContext.netManager, runtimeContext.fileManager);
+        this.stateAllocator = new StateAllocator(
+                runtimeContext.netManager,
+                runtimeContext.fileManager,
+                runtimeContext.runtimeManager
+        );
 
         this.globalObjectAllocator = new GlobalObjectAllocator();
 
@@ -108,6 +112,10 @@ public class ProgramDriver implements Deactivatable {
         } catch (InterruptedException ex) {
             //throw new IllegalStateException(ex);
         }
+
+        //
+        // PSERVER ML PROGRAM EXECUTION LIFECYCLE!
+        //
 
         allocateGlobalObjects();
 

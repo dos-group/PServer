@@ -30,4 +30,6 @@ public @interface State {;
     MatrixFormat matrixFormat() default MatrixFormat.DENSE_FORMAT;
 
     String path() default "";
+
+    String labels() default "";
 }
