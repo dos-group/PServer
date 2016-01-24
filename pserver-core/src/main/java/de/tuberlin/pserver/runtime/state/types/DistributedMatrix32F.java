@@ -20,44 +20,45 @@ public class DistributedMatrix32F implements Matrix32F {
     // Fields.
     // ---------------------------------------------------
 
-    private final long rows;
+    private long rows;
 
-    private final long cols;
+    private long cols;
 
-    private final MatrixPartitioner partitioner;
+    private MatrixPartitioner partitioner;
 
-    private final PartitionShape shape;
+    private PartitionShape shape;
 
-    private final Matrix32F matrixSection;
+    private Matrix32F matrixSection;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
+    public DistributedMatrix32F() { this(null, -1, -1, null, null, null); }
     public DistributedMatrix32F(final ProgramContext programContext,
                                 final long rows, final long cols,
                                 final MatrixFormat matrixFormat,
                                 final int[] atNodes,
                                 final Class<? extends MatrixPartitioner> partitionerType) {
 
-        this.rows = rows;
+        if (programContext != null) {
 
-        this.cols = cols;
+            this.rows = rows;
+            this.cols = cols;
+            this.partitioner = MatrixPartitioner.newInstance(
+                    partitionerType,
+                    rows, cols,
+                    programContext.nodeID,
+                    atNodes
+            );
 
-        this.partitioner = MatrixPartitioner.newInstance(
-                partitionerType,
-                rows, cols,
-                programContext.nodeID,
-                atNodes
-        );
-
-        this.shape = partitioner.getPartitionShape();
-
-        this.matrixSection = new MatrixBuilder()
-                .dimension(shape.rows, shape.cols)
-                .matrixFormat(matrixFormat)
-                .elementType(ElementType.FLOAT_MATRIX)
-                .build();
+            this.shape = partitioner.getPartitionShape();
+            this.matrixSection = new MatrixBuilder()
+                    .dimension(shape.rows, shape.cols)
+                    .matrixFormat(matrixFormat)
+                    .elementType(ElementType.FLOAT_MATRIX)
+                    .build();
+        }
     }
 
     // ---------------------------------------------------

@@ -26,10 +26,10 @@ public abstract class MatrixPartitioner {
     // Constructors.
     // ---------------------------------------------------
 
+    public MatrixPartitioner() { this(-1, -1, -1, null); }
     public MatrixPartitioner(long rows, long cols, int nodeId, int numNodes) {
         this(rows, cols, nodeId, IntStream.iterate(0, x -> x + 1).limit(numNodes).toArray());
     }
-
     public MatrixPartitioner(long rows, long cols, int nodeId, int[] atNodes) {
         /*boolean contained = false;
         for(int node : atNodes) {

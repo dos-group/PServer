@@ -34,6 +34,7 @@ public class DistributedMatrix64F implements Matrix64F {
     // Constructors.
     // ---------------------------------------------------
 
+    public DistributedMatrix64F() { this(null, -1, -1, null, null, null); }
     public DistributedMatrix64F(final ProgramContext programContext,
                                 final long rows, final long cols,
                                 final MatrixFormat matrixFormat,
@@ -41,9 +42,7 @@ public class DistributedMatrix64F implements Matrix64F {
                                 final Class<? extends MatrixPartitioner> partitionerType) {
 
         this.rows = rows;
-
         this.cols = cols;
-
         this.partitioner = MatrixPartitioner.newInstance(
                 partitionerType,
                 rows, cols,
@@ -52,7 +51,6 @@ public class DistributedMatrix64F implements Matrix64F {
         );
         
         this.shape = partitioner.getPartitionShape();
-        
         this.matrixSection = new MatrixBuilder()
                 .dimension(shape.rows, shape.cols)
                 .matrixFormat(matrixFormat)

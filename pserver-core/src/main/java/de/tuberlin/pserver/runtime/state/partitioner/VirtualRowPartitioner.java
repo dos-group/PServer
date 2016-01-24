@@ -11,6 +11,7 @@ public class VirtualRowPartitioner extends MatrixPartitioner {
 
     private final PartitionShape shape;
 
+    public VirtualRowPartitioner() { this(-1, -1, -1, null); }
     public VirtualRowPartitioner(long rows, long cols, int nodeId, int[] atNodes) {
         super(rows, cols, nodeId, atNodes);
         shape = new PartitionShape(rows, cols, 0, 0);

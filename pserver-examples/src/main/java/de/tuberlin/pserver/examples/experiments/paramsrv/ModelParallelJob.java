@@ -6,6 +6,7 @@ import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
+import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
 import de.tuberlin.pserver.dsl.transaction.annotations.TransactionType;
 import de.tuberlin.pserver.dsl.transaction.phases.Update;
@@ -23,14 +24,14 @@ public class ModelParallelJob extends Program {
     @State(at = "0, 1", scope = Scope.PARTITIONED, matrixFormat = MatrixFormat.DENSE_FORMAT, rows = 10, cols = 10)
     public Matrix32F parameters;
 
-    //@State(at = "2, 3", scope = Scope.REPLICATED, matrixFormat = MatrixFormat.DENSE_FORMAT, rows = 1, cols = 10)
-    //public Matrix32F cachedParameters;
+    @State(at = "2, 3", scope = Scope.REPLICATED, matrixFormat = MatrixFormat.DENSE_FORMAT, rows = 1, cols = 10)
+    public Matrix32F cachedParameters;
 
     // ---------------------------------------------------
     // Transaction.
     // ---------------------------------------------------
 
-    /*@Transaction(src = "parameters", dst = "cachedParameters", type = TransactionType.PULL)
+    @Transaction(src = "parameters", dst = "cachedParameters", type = TransactionType.PULL)
     public final TransactionDefinition fetchParameters = new TransactionDefinition(
 
             (Update<Matrix32F>) (parameterList, cachedParameters) -> {
@@ -42,7 +43,7 @@ public class ModelParallelJob extends Program {
                 }
                 System.out.println(strBuilder.toString());
             }
-    );*/
+    );
 
     // ---------------------------------------------------
     // Unit.
@@ -53,19 +54,10 @@ public class ModelParallelJob extends Program {
 
         lifecycle.process(()-> {
 
-            parameters.set(5, 0, 32f);
+            TransactionMng.commit(fetchParameters);
         });
     }
 
-    @Unit(at = "1")
-    public void server1(final Lifecycle lifecycle) {
-
-        lifecycle.process(()-> {
-            Thread.sleep(5000);
-            float val = parameters.get(5, 0);
-            System.out.println("--------------> VAL = " + val);
-        });
-    }
     // ---------------------------------------------------
     // Entry Point.
     // ---------------------------------------------------

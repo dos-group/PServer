@@ -19,6 +19,7 @@ public class RowPartitioner extends MatrixPartitioner {
     // Public Methods.
     // ---------------------------------------------------
 
+    public RowPartitioner() { this(-1, -1, -1, null); }
     public RowPartitioner(long rows, long cols, int nodeId, int[] atNodes) {
         super(rows, cols, nodeId, atNodes);
         shape = getPartitionShape();
@@ -51,6 +52,8 @@ public class RowPartitioner extends MatrixPartitioner {
 
     @Override
     public PartitionShape getPartitionShape() {
+        if (atNodes == null)
+            return null;
         if(shape == null) {
             double rowsPerNode = (double) rows / atNodes.length;
             long rowOffset = (int) Math.ceil(rowsPerNode * nodeId);
