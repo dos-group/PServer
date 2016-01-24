@@ -180,6 +180,7 @@ public class ProgramDriver implements Deactivatable {
             } else {
                 stateObj = remoteObjectRefs.get(state.stateName);
             }
+
             Preconditions.checkState(stateObj != null, "State object '" + state.stateName
                     + "' not found at Node [" + runtimeContext.nodeID + "].");
 

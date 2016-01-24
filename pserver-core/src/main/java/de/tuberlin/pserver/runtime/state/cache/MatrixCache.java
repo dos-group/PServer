@@ -4,7 +4,7 @@ package de.tuberlin.pserver.runtime.state.cache;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.runtime.RuntimeContext;
-import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.MatrixPartitioner;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -26,7 +26,7 @@ public final class MatrixCache<V extends Number, T extends Matrix<V>> {
 
     private final int[] cacheProviderNodes;
 
-    private final IMatrixPartitioner partitioner;
+    private final MatrixPartitioner partitioner;
 
     private final Matrix<V> matrix;
 
@@ -40,7 +40,7 @@ public final class MatrixCache<V extends Number, T extends Matrix<V>> {
 
     public MatrixCache(final RuntimeContext runtimeContext,
                        final int[] cacheProviderNodes,
-                       final IMatrixPartitioner partitioner,
+                       final MatrixPartitioner partitioner,
                        final Matrix<V> matrix,
                        final int cacheSize) {
 

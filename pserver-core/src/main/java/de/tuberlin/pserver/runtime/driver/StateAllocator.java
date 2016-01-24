@@ -10,7 +10,7 @@ import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.core.remoteobj.GlobalObject;
-import de.tuberlin.pserver.runtime.core.remoteobj.GlobalObjectProxy;
+import de.tuberlin.pserver.runtime.state.rpc.GlobalStateMatrixProxy;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import de.tuberlin.pserver.runtime.state.MatrixLoader;
@@ -48,122 +48,117 @@ public class StateAllocator {
         MatrixBase stateObj = null;
         MatrixBase proxyObj = null;
 
-        switch (state.scope) {
+        try {
 
-            case SINGLETON: {
-                if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
+            switch (state.scope) {
 
-                    stateObj = new MatrixBuilder()
-                            .dimension(state.rows, state.cols)
-                            .matrixFormat(state.matrixFormat)
-                            .elementType(ElementType.getElementTypeFromClass(state.stateType))
-                            .build();
-
-                } else {
-
-                    try {
-
+                case SINGLETON: {
+                    if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
+                        stateObj = new MatrixBuilder()
+                                .dimension(state.rows, state.cols)
+                                .matrixFormat(state.matrixFormat)
+                                .elementType(ElementType.getElementTypeFromClass(state.stateType))
+                                .build();
+                    } else {
                         MachineDescriptor md = programContext.runtimeContext.infraManager.getMachine(state.atNodes[0]);
-                        proxyObj = GlobalObjectProxy.create(state.stateName, programContext.runtimeContext.netManager, md, state.stateType);
-
-                    } catch(Throwable t) {
-                        throw new IllegalStateException(t);
+                        proxyObj = GlobalStateMatrixProxy.create(programContext, state);
                     }
                 }
-            }
-            break;
+                break;
 
-            case REPLICATED: {
-                if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
-                    stateObj = new MatrixBuilder()
-                            .dimension(state.rows, state.cols)
-                            .matrixFormat(state.matrixFormat)
-                            .elementType(ElementType.getElementTypeFromClass(state.stateType))
-                            .build();
-
-                    new GlobalObject<>(programContext.runtimeContext.netManager, (Matrix)stateObj, state.stateName);
-
-                } else {
-
-                    try {
-
+                case REPLICATED: {
+                    if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
+                        stateObj = new MatrixBuilder()
+                                .dimension(state.rows, state.cols)
+                                .matrixFormat(state.matrixFormat)
+                                .elementType(ElementType.getElementTypeFromClass(state.stateType))
+                                .build();
+                        new GlobalObject<>(programContext.runtimeContext.netManager, (Matrix)stateObj, state.stateName);
+                    } else {
                         MachineDescriptor md = programContext.runtimeContext.infraManager.getMachine(state.atNodes[0]);
-                        proxyObj = GlobalObjectProxy.create(state.stateName, programContext.runtimeContext.netManager, md, state.stateType);
-
-                    } catch(Throwable t) {
-                        throw new IllegalStateException(t);
+                        proxyObj = GlobalStateMatrixProxy.create(programContext, state);
                     }
                 }
-            }
-            break;
+                break;
 
-            case PARTITIONED: {
-                switch (ElementType.getElementTypeFromClass(state.stateType)) {
-                    case FLOAT_MATRIX: {
-                        if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
+                case PARTITIONED: {
+                    switch (ElementType.getElementTypeFromClass(state.stateType)) {
+                        case FLOAT_MATRIX: {
+                            if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
+                                stateObj = new DistributedMatrix32F(
+                                        programContext,
+                                        state.rows,
+                                        state.cols,
+                                        state.matrixFormat,
+                                        state.atNodes,
+                                        state.partitioner
+                                );
+                                new GlobalObject<>(programContext.runtimeContext.netManager, (Matrix)stateObj, state.stateName);
+                            } else {
+                                proxyObj = GlobalStateMatrixProxy.create(programContext, state);
+                            }
+
+                        }
+                        break;
+                        case DOUBLE_MATRIX: {
+                            if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
+                                stateObj = new DistributedMatrix64F(
+                                        programContext,
+                                        state.rows,
+                                        state.cols,
+                                        state.matrixFormat,
+                                        state.atNodes,
+                                        state.partitioner
+                                );
+                                new GlobalObject<>(programContext.runtimeContext.netManager, (Matrix)stateObj, state.stateName);
+                            } else {
+                                proxyObj = GlobalStateMatrixProxy.create(programContext, state);
+                            }
+                        }
+                        break;
+                    }
+                }
+                break;
+
+                /*case LOGICALLY_PARTITIONED:
+                    switch (ElementType.getElementTypeFromClass(state.stateType)) {
+                        case FLOAT_MATRIX: {
                             stateObj = new DistributedMatrix32F(
                                     programContext,
                                     state.rows,
                                     state.cols,
                                     state.matrixFormat,
                                     state.atNodes,
-                                    state.partitioner
+                                    state.partitioner // TODO: CHANGE!
                             );
                         }
-                    }
-                    break;
-                    case DOUBLE_MATRIX: {
-                        if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
+                        break;
+                        case DOUBLE_MATRIX: {
                             stateObj = new DistributedMatrix64F(
                                     programContext,
                                     state.rows,
                                     state.cols,
                                     state.matrixFormat,
                                     state.atNodes,
-                                    state.partitioner
+                                    state.partitioner // TODO: CHANGE!
                             );
                         }
+                        break;
                     }
-                    break;
-                }
+                    break;*/
             }
-            break;
 
-            case LOGICALLY_PARTITIONED:
-                switch (ElementType.getElementTypeFromClass(state.stateType)) {
-                    case FLOAT_MATRIX: {
-                        stateObj = new DistributedMatrix32F(
-                                programContext,
-                                state.rows,
-                                state.cols,
-                                state.matrixFormat,
-                                state.atNodes,
-                                state.partitioner // TODO: CHANGE!
-                        );
-                    }
-                    break;
-                    case DOUBLE_MATRIX: {
-                        stateObj = new DistributedMatrix64F(
-                                programContext,
-                                state.rows,
-                                state.cols,
-                                state.matrixFormat,
-                                state.atNodes,
-                                state.partitioner // TODO: CHANGE!
-                        );
-                    }
-                    break;
+            if (stateObj != null) {
+                if (!("".equals(state.path))) {
+                    matrixLoader.addLoadingTask(programContext, state, stateObj);
                 }
-                break;
+            } else
+                if (proxyObj == null)
+                    throw new IllegalStateException();
+
+        } catch(Throwable t) {
+            throw new IllegalStateException(t);
         }
-
-        if (stateObj != null) {
-            if (!("".equals(state.path))) {
-                matrixLoader.addLoadingTask(programContext, state, stateObj);
-            }
-        } else
-            if (proxyObj == null)
-                throw new IllegalStateException();
 
         return Pair.of(stateObj, proxyObj);
     }

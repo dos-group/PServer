@@ -7,13 +7,18 @@ import de.tuberlin.pserver.runtime.state.entries.Entry;
  * Partitions a matrix into one partition of the same size as the matrix.
  * Used if no partitioning is applied.
  */
-public class VirtualRowPartitioner extends IMatrixPartitioner {
+public class VirtualRowPartitioner extends MatrixPartitioner {
 
     private final PartitionShape shape;
 
     public VirtualRowPartitioner(long rows, long cols, int nodeId, int[] atNodes) {
         super(rows, cols, nodeId, atNodes);
         shape = new PartitionShape(rows, cols, 0, 0);
+    }
+
+    @Override
+    public int getPartitionOfEntry(long row, long col) {
+        return nodeId;
     }
 
     @Override
@@ -57,7 +62,7 @@ public class VirtualRowPartitioner extends IMatrixPartitioner {
     }
 
     @Override
-    public IMatrixPartitioner ofNode(int nodeId) {
+    public MatrixPartitioner ofNode(int nodeId) {
         return new VirtualRowPartitioner(rows, cols, nodeId, new int[] {nodeId});
     }
 }

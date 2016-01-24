@@ -9,7 +9,6 @@ import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.core.network.NetEvent;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
-import de.tuberlin.pserver.runtime.dht.DHTManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
@@ -18,7 +17,7 @@ import de.tuberlin.pserver.runtime.state.entries.Entry;
 import de.tuberlin.pserver.runtime.state.entries.ImmutableEntryImpl;
 import de.tuberlin.pserver.runtime.state.entries.MutableEntryImpl;
 import de.tuberlin.pserver.runtime.state.entries.ReusableEntry;
-import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.MatrixPartitioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +44,7 @@ public final class MatrixLoader {
 
         final StateDescriptor state;
 
-        final IMatrixPartitioner partitioner;
+        final MatrixPartitioner partitioner;
 
         final FileDataIterator fileIterator;
 
@@ -57,7 +56,7 @@ public final class MatrixLoader {
             this.state = Preconditions.checkNotNull(state);
             this.matrix = Preconditions.checkNotNull(matrix);
 
-            this.partitioner = IMatrixPartitioner.newInstance(
+            this.partitioner = MatrixPartitioner.newInstance(
                     state.partitioner,
                     state.rows,
                     state.cols,
@@ -198,7 +197,7 @@ public final class MatrixLoader {
         // threshold that indicates how many entries are gathered before sending
         int foreignEntriesThreshold = 4096 * 2;
         final Matrix matrix = (Matrix)loadingMatrices.get(task.state.stateName);
-        final IMatrixPartitioner matrixPartitioner = task.partitioner;
+        final MatrixPartitioner matrixPartitioner = task.partitioner;
         final FileDataIterator<? extends Record> fileIterator = task.fileIterator;
         ReusableEntry reusable = new MutableEntryImpl(-1, -1, Double.NaN);
 

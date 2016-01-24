@@ -2,7 +2,7 @@ package de.tuberlin.pserver.runtime.filesystem;
 
 import de.tuberlin.pserver.runtime.core.common.Deactivatable;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
-import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.MatrixPartitioner;
 
 public interface FileSystemManager extends Deactivatable {
 
@@ -21,7 +21,7 @@ public interface FileSystemManager extends Deactivatable {
     public abstract <T extends Record> FileDataIterator<T> createFileIterator(
             final String filePath,
             final FileFormat fileFormat,
-            final IMatrixPartitioner partitioner);
+            final MatrixPartitioner partitioner);
 
     public abstract void clearContext();
 }

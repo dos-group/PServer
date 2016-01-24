@@ -11,7 +11,7 @@ import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
-import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.MatrixPartitioner;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,7 +114,7 @@ public final class HDFSFileSystemManagerClient implements FileSystemManager, Inp
     @SuppressWarnings("unchecked")
     public <T extends Record> FileDataIterator<T> createFileIterator(final String filePath,
                                                                       final FileFormat fileFormat,
-                                                                      final IMatrixPartitioner partitioner) {
+                                                                      final MatrixPartitioner partitioner) {
         HDFSInputFile inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
         if (inputFile == null) {
             inputFile = new HDFSInputFile(config, netManager, filePath, fileFormat);

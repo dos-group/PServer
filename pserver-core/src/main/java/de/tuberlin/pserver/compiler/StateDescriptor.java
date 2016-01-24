@@ -5,8 +5,9 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.math.matrix.ElementType;
 import de.tuberlin.pserver.math.matrix.MatrixFormat;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.MatrixPartitioner;
 
 import java.lang.reflect.Field;
 
@@ -26,7 +27,7 @@ public final class StateDescriptor {
 
     public final int[] atNodes;
 
-    public final Class<? extends IMatrixPartitioner> partitioner;
+    public final Class<? extends MatrixPartitioner> partitioner;
 
     public final long rows;
 
@@ -48,7 +49,7 @@ public final class StateDescriptor {
                            final Class<?> stateType,
                            final Scope scope,
                            final int[] atNodes,
-                           final Class<? extends IMatrixPartitioner> partitioner,
+                           final Class<? extends MatrixPartitioner> partitioner,
                            final long rows,
                            final long cols,
                            final MatrixFormat matrixFormat,
@@ -88,6 +89,15 @@ public final class StateDescriptor {
                 state.fileFormat(),
                 state.path(),
                 state.labels()
+        );
+    }
+
+    public static MatrixPartitioner createMatrixPartitioner(ProgramContext programContext, StateDescriptor state) {
+        return MatrixPartitioner.newInstance(
+                state.partitioner,
+                state.rows, state.cols,
+                programContext.nodeID,
+                state.atNodes
         );
     }
 }

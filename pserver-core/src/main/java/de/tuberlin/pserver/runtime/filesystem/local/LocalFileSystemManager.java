@@ -10,7 +10,7 @@ import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
-import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.MatrixPartitioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +72,7 @@ public final class LocalFileSystemManager implements FileSystemManager {
     /*public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath,
                                                                       final IRecordIteratorProducer recordFormat,
                                                                       final IMatrixPartitioner partitioner) {*/
-    public <T extends Record> FileDataIterator<T> createFileIterator(final String filePath, /*final IRecordIteratorProducer recordFormat*/ final FileFormat fileFormat, final IMatrixPartitioner partitioner) {
+    public <T extends Record> FileDataIterator<T> createFileIterator(final String filePath, /*final IRecordIteratorProducer recordFormat*/ final FileFormat fileFormat, final MatrixPartitioner partitioner) {
 
         ILocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
         if (inputFile == null) {

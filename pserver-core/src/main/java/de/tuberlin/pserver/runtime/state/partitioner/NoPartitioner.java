@@ -3,13 +3,18 @@ package de.tuberlin.pserver.runtime.state.partitioner;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
 import de.tuberlin.pserver.runtime.state.entries.Entry;
 
-public class NoPartitioner extends IMatrixPartitioner {
+public class NoPartitioner extends MatrixPartitioner {
 
     private final PartitionShape shape;
 
     public NoPartitioner(long rows, long cols, int nodeId, int[] atNodes) {
         super(rows, cols, nodeId, atNodes);
         shape = new PartitionShape(rows, cols, 0, 0);
+    }
+
+    @Override
+    public int getPartitionOfEntry(long row, long col) {
+        return -1;
     }
 
     @Override
@@ -53,7 +58,7 @@ public class NoPartitioner extends IMatrixPartitioner {
     }
 
     @Override
-    public IMatrixPartitioner ofNode(int nodeId) {
+    public MatrixPartitioner ofNode(int nodeId) {
         return new VirtualRowPartitioner(rows, cols, nodeId, new int[] {nodeId});
     }
 }

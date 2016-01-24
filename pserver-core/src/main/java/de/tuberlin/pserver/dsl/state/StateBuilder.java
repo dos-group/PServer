@@ -9,7 +9,7 @@ import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.MatrixPartitioner;
 import de.tuberlin.pserver.runtime.state.partitioner.RowPartitioner;
 
 public final class StateBuilder {
@@ -38,7 +38,7 @@ public final class StateBuilder {
 
     private String labelState;
 
-    private Class<? extends IMatrixPartitioner> partitioner;
+    private Class<? extends MatrixPartitioner> partitioner;
 
     // ---------------------------------------------------
     // Constructor.
@@ -59,7 +59,7 @@ public final class StateBuilder {
 
     public StateBuilder at(String at) { this.at = at; return this; }
 
-    public StateBuilder partitioner(Class<? extends IMatrixPartitioner> partitioner) { this.partitioner = partitioner; return this; }
+    public StateBuilder partitioner(Class<? extends MatrixPartitioner> partitioner) { this.partitioner = partitioner; return this; }
 
     public StateBuilder rows(long rows) { this.rows = rows; return this; }
 

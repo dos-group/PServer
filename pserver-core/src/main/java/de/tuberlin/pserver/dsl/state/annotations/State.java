@@ -3,7 +3,7 @@ package de.tuberlin.pserver.dsl.state.annotations;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.MatrixPartitioner;
 import de.tuberlin.pserver.runtime.state.partitioner.RowPartitioner;
 
 import java.lang.annotation.ElementType;
@@ -19,7 +19,7 @@ public @interface State {;
 
     String at() default "";
 
-    Class<? extends IMatrixPartitioner> partitioner() default RowPartitioner.class;
+    Class<? extends MatrixPartitioner> partitioner() default RowPartitioner.class;
 
     long rows() default 0;
 

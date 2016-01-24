@@ -6,9 +6,8 @@ import de.tuberlin.pserver.runtime.state.entries.Entry;
 
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
-import java.util.stream.IntStream;
 
-public class RowPartitioner extends IMatrixPartitioner {
+public class RowPartitioner extends MatrixPartitioner {
 
     // ---------------------------------------------------
     // Fields.
@@ -25,10 +24,6 @@ public class RowPartitioner extends IMatrixPartitioner {
         shape = getPartitionShape();
     }
 
-    public RowPartitioner(long rows, long cols, int nodeId, int numNodes) {
-        this(rows, cols, nodeId, IntStream.iterate(0, x -> x + 1).limit(numNodes).toArray());
-    }
-
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
@@ -39,6 +34,17 @@ public class RowPartitioner extends IMatrixPartitioner {
         int partition = (int) (entry.getRow() / numOfRowsPerInstance);
         if(partition >= atNodes.length) {
             throw new IllegalStateException("The calculated partition id (row = " + entry.getRow() + ", rows = "+rows+", numNodes = "+atNodes.length+") -> " + partition + " must not exceed numNodes.");
+        }
+        return atNodes[partition];
+    }
+
+    @Override
+    public int getPartitionOfEntry(long row, long col) {
+        double numOfRowsPerInstance = (double) rows / atNodes.length;
+        int partition = (int) (row / numOfRowsPerInstance);
+        if(partition >= atNodes.length) {
+            throw new IllegalStateException("The calculated partition id (row = " + row + ", rows = "
+                    + rows +", numNodes = " + atNodes.length +") -> " + partition + " must not exceed numNodes.");
         }
         return atNodes[partition];
     }
@@ -93,7 +99,7 @@ public class RowPartitioner extends IMatrixPartitioner {
     }
 
     @Override
-    public IMatrixPartitioner ofNode(int nodeId) {
+    public MatrixPartitioner ofNode(int nodeId) {
         Preconditions.checkArgument(Arrays.asList(atNodes).contains(nodeId), "Can not construct MatrixByRowPartitioner of node '%d' because it is part of this partitioning. Participating srcStateObjectNodes are: %s", nodeId, Arrays.toString(atNodes));
         return new RowPartitioner(rows, cols, nodeId, atNodes);
     }

@@ -11,7 +11,7 @@ import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.state.MatrixBuilder;
 import de.tuberlin.pserver.runtime.state.RemotePartition;
-import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.MatrixPartitioner;
 
 import java.util.*;
 
@@ -25,7 +25,7 @@ public class DistributedMatrix {
 
     private final int nodeDOP, nodeID;
 
-    private final IMatrixPartitioner partitioner;
+    private final MatrixPartitioner partitioner;
 
     private final PartitionShape shape;
 
@@ -43,7 +43,7 @@ public class DistributedMatrix {
 
     public DistributedMatrix(final ProgramContext programContext,
                              final long rows,final long cols,
-                             final IMatrixPartitioner partitioner,
+                             final MatrixPartitioner partitioner,
                              final MatrixFormat matrixFormat) {
 
         this.programContext    = Preconditions.checkNotNull(programContext);

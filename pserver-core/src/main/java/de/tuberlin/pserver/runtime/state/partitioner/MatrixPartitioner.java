@@ -8,7 +8,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
-public abstract class IMatrixPartitioner {
+public abstract class MatrixPartitioner {
 
     // ---------------------------------------------------
     // Fields.
@@ -26,12 +26,12 @@ public abstract class IMatrixPartitioner {
     // Constructors.
     // ---------------------------------------------------
 
-    public IMatrixPartitioner(long rows, long cols, int nodeId, int numNodes) {
+    public MatrixPartitioner(long rows, long cols, int nodeId, int numNodes) {
         this(rows, cols, nodeId, IntStream.iterate(0, x -> x + 1).limit(numNodes).toArray());
     }
 
-    public IMatrixPartitioner(long rows, long cols, int nodeId, int[] atNodes) {
-        boolean contained = false;
+    public MatrixPartitioner(long rows, long cols, int nodeId, int[] atNodes) {
+        /*boolean contained = false;
         for(int node : atNodes) {
             if(node == nodeId) {
                 contained = true;
@@ -40,10 +40,10 @@ public abstract class IMatrixPartitioner {
         }
         Preconditions.checkArgument(
                 contained,
-                "Failed to instantiate IMatrixPartitioner: nodeId '%s' is not contained in nodeList: %s",
+                "Failed to instantiate MatrixPartitioner: nodeId '%s' is not contained in nodeList: %s",
                 nodeId,
                 Arrays.toString(atNodes)
-        );
+        );*/
         this.rows    = rows;
         this.cols    = cols;
         this.nodeId  = nodeId;
@@ -53,6 +53,8 @@ public abstract class IMatrixPartitioner {
     // ---------------------------------------------------
     // Abstract Methods.
     // ---------------------------------------------------
+
+    public abstract int getPartitionOfEntry(long row, long col);
 
     public abstract int getPartitionOfEntry(Entry entry);
 
@@ -78,11 +80,11 @@ public abstract class IMatrixPartitioner {
         return atNodes;
     }
 
-    public abstract IMatrixPartitioner ofNode(int nodeId);
+    public abstract MatrixPartitioner ofNode(int nodeId);
 
 
-    public static IMatrixPartitioner newInstance(Class<? extends IMatrixPartitioner> implClass, long rows, long cols, int nodeId, int[] atNodes) {
-        IMatrixPartitioner result;
+    public static MatrixPartitioner newInstance(Class<? extends MatrixPartitioner> implClass, long rows, long cols, int nodeId, int[] atNodes) {
+        MatrixPartitioner result;
         try {
             result = implClass.getDeclaredConstructor(long.class, long.class, int.class, int[].class).newInstance(rows, cols, nodeId, atNodes);
         }

@@ -12,7 +12,7 @@ import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
 import de.tuberlin.pserver.math.operations.UnaryOperator;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.state.MatrixBuilder;
-import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.state.partitioner.MatrixPartitioner;
 
 public class DistributedMatrix32F implements Matrix32F {
 
@@ -24,7 +24,7 @@ public class DistributedMatrix32F implements Matrix32F {
 
     private final long cols;
 
-    private final IMatrixPartitioner partitioner;
+    private final MatrixPartitioner partitioner;
 
     private final PartitionShape shape;
 
@@ -38,13 +38,13 @@ public class DistributedMatrix32F implements Matrix32F {
                                 final long rows, final long cols,
                                 final MatrixFormat matrixFormat,
                                 final int[] atNodes,
-                                final Class<? extends IMatrixPartitioner> partitionerType) {
+                                final Class<? extends MatrixPartitioner> partitionerType) {
 
         this.rows = rows;
 
         this.cols = cols;
 
-        this.partitioner = IMatrixPartitioner.newInstance(
+        this.partitioner = MatrixPartitioner.newInstance(
                 partitionerType,
                 rows, cols,
                 programContext.nodeID,
