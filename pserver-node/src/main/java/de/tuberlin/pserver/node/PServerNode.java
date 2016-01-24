@@ -86,7 +86,7 @@ public final class PServerNode extends EventDispatcher {
 
                         ParallelRuntime.INSTANCE.addPrimaryThread(netManager.getDispatcherThread().getId());
 
-                        driver.run();
+                        driver.executeProgram();
 
                         final List<Serializable> results = instance.programContext.getResults();
 

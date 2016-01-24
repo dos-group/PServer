@@ -101,23 +101,23 @@ public class ProgramDriver implements Deactivatable {
         return instance;
     }
 
-    public void run() throws Exception {
-
-        try {
-            Thread.sleep(7000); // TODO: REMOVE !!! FEHLER!!!!!
-        } catch (InterruptedException ex) {
-            //throw new IllegalStateException(ex);
-        }
+    public void executeProgram() throws Exception {
 
         //
         // PSERVER ML PROGRAM EXECUTION LIFECYCLE!
         //
+
+        programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
 
         allocateGlobalObjects();
 
         bindGlobalObjects(instance);
 
         allocateState();
+
+        programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
+
+        matrixLoader.load();
 
         bindState(instance);
 
@@ -161,9 +161,6 @@ public class ProgramDriver implements Deactivatable {
             } else
                 throw new IllegalStateException();
         }
-
-        programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
-        matrixLoader.load();
     }
 
     private void bindState(final Program instance) throws Exception {
