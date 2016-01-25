@@ -1,7 +1,7 @@
 import java.io.File
 
 import CriteoPreprocessingJobTest.{buildJobArguments, meanFile, numFeatures, outputTrain,
-outputTest, stdDevFile, tmpDir, readLibsvmFile}
+outputTest, stdDevFile, tmpDir, readLibsvmFile, DELTA}
 import de.cit.pserver.CriteoPreprocessingJob
 import org.scalatest.{FlatSpec, Inspectors, Matchers}
 
@@ -63,7 +63,7 @@ class CriteoPreprocessingJobTest extends FlatSpec with Matchers with Inspectors 
       expected.label should equal(computed.label)
       for((expEntry, compEntry) <- expected.features zip computed.features) {
         expEntry._1 should equal(compEntry._1)
-        expEntry._2 should equal(compEntry._2 +- 1e-9)
+        expEntry._2 should equal(compEntry._2 +- DELTA)
       }
     }
   }
@@ -78,6 +78,8 @@ object CriteoPreprocessingJobTest {
   val outputTest = tmpDir + "criteo_test.libsvm"
 
   val numFeatures = math.pow(2, 20).toInt
+
+  val DELTA = 1e-9
 
   def buildJobArguments(inputPath: String, outputPath: String, numFeatures: Int, meanFile: String,
                         stdDevFile: String, isTestData: Boolean=false): Array[String] = {
