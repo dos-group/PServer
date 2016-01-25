@@ -1,4 +1,4 @@
-package de.tuberlin.cit.pserver
+package de.cit.pserver
 
 import java.io.{File, PrintWriter}
 import java.nio.charset.Charset
@@ -35,15 +35,15 @@ import scala.util.hashing.MurmurHash3
   * --input <input path>
   * --output <output path>
   * --numFeatures <dimension of the feature vector for one-hot-encoding (defaults to 1048576)>
-  * --mean <path to file the mean of the training data will be written>
-  * --stdDeviation <path to file the std. deviation of the training data will be written>
+  * --mean <path to file the mean of the training data will be written to>
+  * --stdDeviation <path to file the std. deviation of the training data will be written to>
   *
   * --testData
   *   if testData is set, additionally these parameters are required to read mean and std deviation
   *   computed from the training data:
   *   --mean <path to file containing the mean of the training data>
   *   --stdDeviation <path to file containing the std. deviation of the training data>
-  * Labels and data are stored in seperate directories ("/label" and "/data") in the output directory
+  * The output is stored as libsvm sparse matrix format (<label> <col:value> <col:value> ...)
 */
 
 
@@ -79,7 +79,7 @@ object CriteoPreprocessingJob {
 
     val nSamples = input.count()
 
-    // compute mean for integer features or read from file (if test data)
+    // compute mean for integer features or read from file if test data
     val mean =
       if (isTest) {
         val meanFile = Source.fromFile(meanPath)
@@ -93,7 +93,7 @@ object CriteoPreprocessingJob {
         sum.map(_.map(_.toDouble / nSamples))
       }
 
-    // compute standard deviation for integer features or read from file (if test data)
+    // compute standard deviation for integer features or read from file if test data
     val stdDeviation =
       if (isTest) {
         val stdDeviationFile = Source.fromFile(stdDeviationPath)
