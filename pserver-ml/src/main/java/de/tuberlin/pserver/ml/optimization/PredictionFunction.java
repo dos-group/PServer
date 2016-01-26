@@ -11,7 +11,7 @@ public interface PredictionFunction {
 
         @Override
         public float predict(final Matrix32F X, final Matrix32F W) {
-            return (float)X.dot(W);
+            return X.dot(W);
         }
     }
 
