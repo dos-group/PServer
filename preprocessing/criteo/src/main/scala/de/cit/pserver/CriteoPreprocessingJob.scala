@@ -1,4 +1,4 @@
-package de.tuberlin.cit.pserver
+package de.cit.pserver
 
 import java.io.{File, PrintWriter}
 import java.nio.charset.Charset
@@ -7,7 +7,6 @@ import java.nio.file.Paths
 import org.apache.flink.api.common.functions.{RichFlatMapFunction, RichMapFunction}
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.api.scala._
-import org.apache.flink.api.scala.utils._
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.core.fs.FileSystem.WriteMode
 import org.apache.flink.util.Collector
@@ -36,15 +35,15 @@ import scala.util.hashing.MurmurHash3
   * --input <input path>
   * --output <output path>
   * --numFeatures <dimension of the feature vector for one-hot-encoding (defaults to 1048576)>
-  * --mean <path to file the mean of the training data will be written>
-  * --stdDeviation <path to file the std. deviation of the training data will be written>
+  * --mean <path to file the mean of the training data will be written to>
+  * --stdDeviation <path to file the std. deviation of the training data will be written to>
   *
   * --testData
   *   if testData is set, additionally these parameters are required to read mean and std deviation
   *   computed from the training data:
   *   --mean <path to file containing the mean of the training data>
   *   --stdDeviation <path to file containing the std. deviation of the training data>
-  * Labels and data are stored in seperate directories ("/label" and "/data") in the output directory
+  * The output is stored as libsvm sparse matrix format (<label> <col:value> <col:value> ...)
 */
 
 
@@ -76,14 +75,11 @@ object CriteoPreprocessingJob {
     val stdDeviationPath = parameters.get("stdDeviation")
 
 
-    val input = readInput(env, inputPath).zipWithIndex
-
-    val labels = input.map(input => (input._1, input._2._1))
-      .map{rowLabel => (rowLabel._1, if (rowLabel._2 == 1) 1 else -1)}
+    val input = readInput(env, inputPath)
 
     val nSamples = input.count()
 
-    // compute mean for integer features or read from file (if test data)
+    // compute mean for integer features or read from file if test data
     val mean =
       if (isTest) {
         val meanFile = Source.fromFile(meanPath)
@@ -91,13 +87,13 @@ object CriteoPreprocessingJob {
         meanFile.close()
         mean
       } else {
-        val sum = input.map(input => input._2._2).reduce((integerLeft, integerRight) =>
+        val sum = input.map(input => input._2).reduce((integerLeft, integerRight) =>
           (integerLeft, integerRight).zipped map (_ + _))
 
         sum.map(_.map(_.toDouble / nSamples))
       }
 
-    // compute standard deviation for integer features or read from file (if test data)
+    // compute standard deviation for integer features or read from file if test data
     val stdDeviation =
       if (isTest) {
         val stdDeviationFile = Source.fromFile(stdDeviationPath)
@@ -105,7 +101,7 @@ object CriteoPreprocessingJob {
         stdDeviationFile.close()
         stdDeviation
       } else {
-        val deviation = input.map(input => input._2._2).map(new RichMapFunction[Array[Int], Array[Double]]() {
+        val deviation = input.map(input => input._2).map(new RichMapFunction[Array[Int], Array[Double]]() {
           var mean: Array[Double] = null
 
           override def open(config: Configuration): Unit = {
@@ -126,8 +122,8 @@ object CriteoPreprocessingJob {
     dimensions
     */
 
-    val transformedFeatures = input.map(x => (x._1, (x._2._2, x._2._3)))
-      .flatMap(new RichFlatMapFunction[(Long, (Array[Int], Array[String])), (Long, Long, Double)]() {
+    val transformedFeatures = input
+      .flatMap(new RichFlatMapFunction[(Int, Array[Int], Array[String]), String]() {
       var mean: Array[Double] = null
       var variance: Array[Double] = null
 
@@ -136,33 +132,33 @@ object CriteoPreprocessingJob {
         variance = getRuntimeContext.getBroadcastVariable[Array[Double]]("stdDeviation").asScala.head
       }
 
-      def flatMap(in: (Long, (Array[Int], Array[String])), collector: Collector[(Long, Long, Double)]) = {
-        val row = in._1
-        val integerFeatures = in._2._1
-        val categorialFeatures = in._2._2
+      def flatMap(in: (Int, Array[Int], Array[String]), collector: Collector[String]) = {
+        val label = in._1
+        val intFeatures = in._2
+        val catFeatures = in._3
 
-        for (col <- 0 until NUM_INTEGER_FEATURES) {
-          collector.collect((row, col, (integerFeatures(col) - mean(col)) / variance(col)))
+        val normalizedIntFeatures = (intFeatures, mean, variance).zipped.toList.map {
+          case (feature, mean, variance) => (feature - mean) / variance
         }
 
-        val hashedIndices = categorialFeatures
+        val hashedIndices = catFeatures
           .filter(!_.isEmpty)
-          .map(feature => {
-            murmurHash(feature, 1, numFeatures)
-          })
-          .groupBy(_._1).map(colCount => (colCount._1 + NUM_INTEGER_FEATURES, colCount._2.map(_._2).sum))
+          .map(murmurHash(_, 1, numFeatures))
+          .groupBy(_._1)
+          .map(colCount => (colCount._1 + NUM_INTEGER_FEATURES, colCount._2.map(_._2).sum))
           .filter(_._2 != 0)
+          .toSeq.sortBy(_._1)
 
-        hashedIndices.foreach { feature =>
-          collector.collect((row, feature._1, feature._2))
-        }
+        val intStrings = for ((col, value) <- 1 to normalizedIntFeatures.size zip normalizedIntFeatures) yield s"$col:$value"
+        val catStrings = for ((col, value) <- hashedIndices) yield s"$col:$value"
+
+        collector.collect((label.toString ++ intStrings ++ catStrings).mkString(" "))
       }
     }).withBroadcastSet(mean, "mean").withBroadcastSet(stdDeviation, "stdDeviation")
 
-    val (labelsName, dataName) = if (isTest) ("labels_test", "data_test") else ("labels_train", "data_train")
+    val fileName = if (isTest) "criteo_test.libsvm" else "criteo_train.libsvm"
 
-    labels.map(l => (l._1, 0, l._2)).writeAsCsv(Paths.get(outputPath, labelsName).toString, writeMode = WriteMode.OVERWRITE)
-    transformedFeatures.writeAsCsv(Paths.get(outputPath, dataName).toString, writeMode = WriteMode.OVERWRITE)
+    transformedFeatures.writeAsText(Paths.get(outputPath, fileName).toString, writeMode = WriteMode.OVERWRITE)
 
     // execute program
     env.execute("Criteo Preprocessing")
