@@ -11,9 +11,9 @@ import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
 
-import static io.netty.buffer.Unpooled.*;
-
 import java.util.Random;
+
+import static io.netty.buffer.Unpooled.buffer;
 
 public class LZ4CompressionBenchmark {
 

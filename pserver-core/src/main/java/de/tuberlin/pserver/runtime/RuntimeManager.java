@@ -8,8 +8,8 @@ import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.core.common.Deactivatable;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.runtime.core.net.NetEvents;
-import de.tuberlin.pserver.runtime.core.net.NetManager;
+import de.tuberlin.pserver.runtime.core.network.NetEvent;
+import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.dht.DHTKey;
 import de.tuberlin.pserver.runtime.dht.DHTManager;
 import de.tuberlin.pserver.runtime.dht.types.EmbeddedDHTObject;
@@ -66,16 +66,12 @@ public final class RuntimeManager implements Deactivatable {
     }
 
     public void clearContext() {
-
         dhtManager.clearContext();
-
         fileManager.clearContext();
     }
 
     public void deactivate() {
-
         dhtManager.deactivate();
-
         fileManager.deactivate();
     }
 
@@ -116,16 +112,16 @@ public final class RuntimeManager implements Deactivatable {
     public synchronized void send(final String name, final Object value, final int[] nodeIDs) {
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(nodeIDs);
-        final NetEvents.NetEvent event = new NetEvents.NetEvent(MsgEventHandler.MSG_EVENT_PREFIX + name, true);
+        final NetEvent event = new NetEvent(MsgEventHandler.MSG_EVENT_PREFIX + name, true);
         event.setPayload(value);
-        netManager.sendEvent(nodeIDs, event);
+        netManager.dispatchEventAt(nodeIDs, event);
     }
 
     public synchronized void send(final String name, final Object value) {
         Preconditions.checkNotNull(name);
-        final NetEvents.NetEvent event = new NetEvents.NetEvent(MsgEventHandler.MSG_EVENT_PREFIX + name, true);
+        final NetEvent event = new NetEvent(MsgEventHandler.MSG_EVENT_PREFIX + name, true);
         event.setPayload(value);
-        netManager.sendEvent(remoteNodeIDs, event);
+        netManager.dispatchEventAt(remoteNodeIDs, event);
     }
 
     @SuppressWarnings("unchecked")
@@ -157,6 +153,83 @@ public final class RuntimeManager implements Deactivatable {
                 handler.getLatch().await();
             } catch (InterruptedException e) {
                 throw new IllegalStateException(e);
+            }
+        }
+    }
+
+    public static interface PullHandler {
+        public abstract Object handlePull(final String name, final Object requestParam);
+    }
+
+    public void registerPullHandler(final String name, final PullHandler handler) {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(handler);
+        netManager.addEventListener(MsgEventHandler.MSG_EVENT_PREFIX + MsgEventHandler.MSG_REQUEST_EVENT_PREFIX + name, e -> {
+            final NetEvent event = (NetEvent) e;
+            final int srcNodeID = infraManager.getNodeIDFromMachineUID(event.srcMachineID);
+            final Object result = handler.handlePull(name, event.getPayload());
+            RuntimeManager.this.send(MsgEventHandler.MSG_RESPONSE_EVENT_PREFIX + name, result, new int[]{srcNodeID});
+        });
+    }
+
+    public Object[] pull(final String name, Object requestParam) { return pull(name, requestParam, remoteNodeIDs); }
+    public Object[] pull(final String name, Object requestParam, final int[] nodeIDs) {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(nodeIDs);
+        final Object[] pullResponses = new Object[nodeIDs.length];
+        final AtomicInteger responseCounter = new AtomicInteger(0);
+        final MsgEventHandler responseHandler = new MsgEventHandler() {
+            @Override
+            public void handleMsg(int srcNodeID, final Object value) {
+                pullResponses[responseCounter.getAndIncrement()] = value;
+            }
+        };
+        responseHandler.setDispatcher(netManager);
+        responseHandler.setInfraManager(infraManager);
+        responseHandler.setRemoveAfterAwait(true);
+        responseHandler.initLatch(nodeIDs.length);
+        netManager.addEventListener(MsgEventHandler.MSG_EVENT_PREFIX + MsgEventHandler.MSG_RESPONSE_EVENT_PREFIX + name, responseHandler);
+        NetEvent event = new NetEvent(MsgEventHandler.MSG_EVENT_PREFIX + MsgEventHandler.MSG_REQUEST_EVENT_PREFIX + name, true);
+        event.setPayload(requestParam);
+        netManager.dispatchEventAt(nodeIDs, event);
+        try {
+            responseHandler.getLatch().await();
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
+        return pullResponses;
+    }
+
+    // ---------------------------------------------------
+    // DHT Interface.
+    // ---------------------------------------------------
+
+    @SuppressWarnings("unchecked")
+    public <T extends SharedObject> T getDHT(final String name) {
+        final Set<DHTKey> keySet = dhtManager.getKey(name);
+        for (final DHTKey key : keySet) {
+            if (key.getPartitionDescriptor(infraManager.getNodeID()) != null) {
+                return (T) ((EmbeddedDHTObject)dhtManager.get(key)[0]).object;
+            }
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends SharedObject> void putDHT(final String name, final T object) {
+        final EmbeddedDHTObject<T> value = new EmbeddedDHTObject<T>(object);
+        final DHTKey key = dhtManager.createLocalKey(name);
+        value.setValueMetadata(infraManager.getNodeID());
+        dhtManager.put(key, value);
+    }
+
+    @SuppressWarnings("unchecked")
+    public void removeDHT(final String name) {
+        final Set<DHTKey> keySet = dhtManager.getKey(name);
+        for (final DHTKey key : keySet) {
+            if (key.getPartitionDescriptor(infraManager.getNodeID()) != null) {
+                dhtManager.delete(key);
+                break;
             }
         }
     }
@@ -204,82 +277,4 @@ public final class RuntimeManager implements Deactivatable {
         }
         return pullResponses;
     }*/
-
-
-    public static interface PullHandler {
-        public abstract Object handlePull(final String name, final Object requestParam);
-    }
-
-    public void registerPullHandler(final String name, final PullHandler handler) {
-        Preconditions.checkNotNull(name);
-        Preconditions.checkNotNull(handler);
-        netManager.addEventListener(MsgEventHandler.MSG_EVENT_PREFIX + MsgEventHandler.MSG_REQUEST_EVENT_PREFIX + name, e -> {
-            final NetEvents.NetEvent event = (NetEvents.NetEvent) e;
-            final int srcNodeID = infraManager.getNodeIDFromMachineUID(event.srcMachineID);
-            final Object result = handler.handlePull(name, event.getPayload());
-            RuntimeManager.this.send(MsgEventHandler.MSG_RESPONSE_EVENT_PREFIX + name, result, new int[]{srcNodeID});
-        });
-    }
-
-    public Object[] pull(final String name, Object requestParam) { return pull(name, requestParam, remoteNodeIDs); }
-    public Object[] pull(final String name, Object requestParam, final int[] nodeIDs) {
-        Preconditions.checkNotNull(name);
-        Preconditions.checkNotNull(nodeIDs);
-        final Object[] pullResponses = new Object[nodeIDs.length];
-        final AtomicInteger responseCounter = new AtomicInteger(0);
-        final MsgEventHandler responseHandler = new MsgEventHandler() {
-            @Override
-            public void handleMsg(int srcNodeID, final Object value) {
-                pullResponses[responseCounter.getAndIncrement()] = value;
-            }
-        };
-        responseHandler.setDispatcher(netManager);
-        responseHandler.setInfraManager(infraManager);
-        responseHandler.setRemoveAfterAwait(true);
-        responseHandler.initLatch(nodeIDs.length);
-        netManager.addEventListener(MsgEventHandler.MSG_EVENT_PREFIX + MsgEventHandler.MSG_RESPONSE_EVENT_PREFIX + name, responseHandler);
-        NetEvents.NetEvent event = new NetEvents.NetEvent(MsgEventHandler.MSG_EVENT_PREFIX + MsgEventHandler.MSG_REQUEST_EVENT_PREFIX + name, true);
-        event.setPayload(requestParam);
-        netManager.sendEvent(nodeIDs, event);
-        try {
-            responseHandler.getLatch().await();
-        } catch (InterruptedException e) {
-            throw new IllegalStateException(e);
-        }
-        return pullResponses;
-    }
-
-    // ---------------------------------------------------
-    // DHT Interface.
-    // ---------------------------------------------------
-
-    @SuppressWarnings("unchecked")
-    public <T extends SharedObject> T getDHT(final String name) {
-        final Set<DHTKey> keySet = dhtManager.getKey(name);
-        for (final DHTKey key : keySet) {
-            if (key.getPartitionDescriptor(infraManager.getNodeID()) != null) {
-                return (T) ((EmbeddedDHTObject)dhtManager.get(key)[0]).object;
-            }
-        }
-        return null;
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T extends SharedObject> void putDHT(final String name, final T object) {
-        final EmbeddedDHTObject<T> value = new EmbeddedDHTObject<T>(object);
-        final DHTKey key = dhtManager.createLocalKey(name);
-        value.setValueMetadata(infraManager.getNodeID());
-        dhtManager.put(key, value);
-    }
-
-    @SuppressWarnings("unchecked")
-    public void removeDHT(final String name) {
-        final Set<DHTKey> keySet = dhtManager.getKey(name);
-        for (final DHTKey key : keySet) {
-            if (key.getPartitionDescriptor(infraManager.getNodeID()) != null) {
-                dhtManager.delete(key);
-                break;
-            }
-        }
-    }
 }

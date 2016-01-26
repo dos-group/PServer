@@ -4,17 +4,6 @@ import java.io.{File, PrintWriter}
 import java.nio.charset.Charset
 import java.nio.file.Paths
 
-import org.apache.flink.api.common.functions.{RichFlatMapFunction, RichMapFunction}
-import org.apache.flink.api.java.utils.ParameterTool
-import org.apache.flink.api.scala._
-import org.apache.flink.configuration.Configuration
-import org.apache.flink.core.fs.FileSystem.WriteMode
-import org.apache.flink.util.Collector
-
-import scala.collection.JavaConverters._
-import scala.io.Source
-import scala.util.hashing.MurmurHash3
-
 /**
   * This Flink job is used to preprocess the Criteo dataset
   * (http://labs.criteo.com/downloads/download-terabyte-click-logs/)
@@ -44,7 +33,7 @@ import scala.util.hashing.MurmurHash3
   *   --mean <path to file containing the mean of the training data>
   *   --stdDeviation <path to file containing the std. deviation of the training data>
   * The output is stored as libsvm sparse matrix format (<label> <col:value> <col:value> ...)
-*/
+  */
 
 
 object CriteoPreprocessingJob {
@@ -124,37 +113,37 @@ object CriteoPreprocessingJob {
 
     val transformedFeatures = input
       .flatMap(new RichFlatMapFunction[(Int, Array[Int], Array[String]), String]() {
-      var mean: Array[Double] = null
-      var variance: Array[Double] = null
+        var mean: Array[Double] = null
+        var variance: Array[Double] = null
 
-      override def open(config: Configuration): Unit = {
-        mean = getRuntimeContext.getBroadcastVariable[Array[Double]]("mean").asScala.head
-        variance = getRuntimeContext.getBroadcastVariable[Array[Double]]("stdDeviation").asScala.head
-      }
-
-      def flatMap(in: (Int, Array[Int], Array[String]), collector: Collector[String]) = {
-        val label = in._1
-        val intFeatures = in._2
-        val catFeatures = in._3
-
-        val normalizedIntFeatures = (intFeatures, mean, variance).zipped.toList.map {
-          case (feature, mean, variance) => (feature - mean) / variance
+        override def open(config: Configuration): Unit = {
+          mean = getRuntimeContext.getBroadcastVariable[Array[Double]]("mean").asScala.head
+          variance = getRuntimeContext.getBroadcastVariable[Array[Double]]("stdDeviation").asScala.head
         }
 
-        val hashedIndices = catFeatures
-          .filter(!_.isEmpty)
-          .map(murmurHash(_, 1, numFeatures))
-          .groupBy(_._1)
-          .map(colCount => (colCount._1 + NUM_INTEGER_FEATURES, colCount._2.map(_._2).sum))
-          .filter(_._2 != 0)
-          .toSeq.sortBy(_._1)
+        def flatMap(in: (Int, Array[Int], Array[String]), collector: Collector[String]) = {
+          val label = in._1
+          val intFeatures = in._2
+          val catFeatures = in._3
 
-        val intStrings = for ((col, value) <- 1 to normalizedIntFeatures.size zip normalizedIntFeatures) yield s"$col:$value"
-        val catStrings = for ((col, value) <- hashedIndices) yield s"$col:$value"
+          val normalizedIntFeatures = (intFeatures, mean, variance).zipped.toList.map {
+            case (feature, mean, variance) => (feature - mean) / variance
+          }
 
-        collector.collect((label.toString ++ intStrings ++ catStrings).mkString(" "))
-      }
-    }).withBroadcastSet(mean, "mean").withBroadcastSet(stdDeviation, "stdDeviation")
+          val hashedIndices = catFeatures
+            .filter(!_.isEmpty)
+            .map(murmurHash(_, 1, numFeatures))
+            .groupBy(_._1)
+            .map(colCount => (colCount._1 + NUM_INTEGER_FEATURES, colCount._2.map(_._2).sum))
+            .filter(_._2 != 0)
+            .toSeq.sortBy(_._1)
+
+          val intStrings = for ((col, value) <- 1 to normalizedIntFeatures.size zip normalizedIntFeatures) yield s"$col:$value"
+          val catStrings = for ((col, value) <- hashedIndices) yield s"$col:$value"
+
+          collector.collect((label.toString ++ intStrings ++ catStrings).mkString(" "))
+        }
+      }).withBroadcastSet(mean, "mean").withBroadcastSet(stdDeviation, "stdDeviation")
 
     val fileName = if (isTest) "criteo_test.libsvm" else "criteo_train.libsvm"
 

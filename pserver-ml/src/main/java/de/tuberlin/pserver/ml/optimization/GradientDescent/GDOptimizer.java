@@ -6,7 +6,7 @@ import de.tuberlin.pserver.dsl.unit.controlflow.loop.LoopTermination;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
 import de.tuberlin.pserver.ml.optimization.*;
-import de.tuberlin.pserver.runtime.state.MatrixBuilder;
+import de.tuberlin.pserver.runtime.state.matrix.MatrixBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -151,11 +151,6 @@ public class GDOptimizer implements Optimizer, LoopTermination {
                 }
 
                 W.sub(gradient, W);
-
-                if (XIterator.rowNum() % 100 == 0)
-                    System.out.println("==> row = " + XIterator.rowNum());
-
-
             }
 
             if (epoch >= maxIterations - 1) {

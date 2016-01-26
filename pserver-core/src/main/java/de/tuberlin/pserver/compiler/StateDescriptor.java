@@ -2,11 +2,13 @@ package de.tuberlin.pserver.compiler;
 
 import de.tuberlin.pserver.commons.utils.ParseUtils;
 import de.tuberlin.pserver.dsl.state.annotations.State;
+import de.tuberlin.pserver.dsl.state.properties.PartitionerType;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.math.matrix.ElementType;
-import de.tuberlin.pserver.math.matrix.Format;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.math.matrix.MatrixFormat;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
+import de.tuberlin.pserver.runtime.filesystem.FileFormat;
+import de.tuberlin.pserver.runtime.state.matrix.partitioner.MatrixPartitioner;
 
 import java.lang.reflect.Field;
 
@@ -20,23 +22,29 @@ public final class StateDescriptor {
 
     public final Class<?>  stateType;
 
-    public final ElementType elementType;
-
     public final Scope scope;
 
     public final int[] atNodes;
 
-    public final Class<? extends IMatrixPartitioner> partitioner;
+    public final PartitionerType partitionerType;
+
+    // ---------------------------------------------------
+
+    public final MatrixFormat matrixFormat;
+
+    public final ElementType elementType;
 
     public final long rows;
 
     public final long cols;
 
-    public final Format format;
+    // ---------------------------------------------------
 
-    public final Class<? extends IRecordIteratorProducer> recordFormat;
+    public final FileFormat fileFormat;
 
     public final String path;
+
+    public final String label;
 
     // ---------------------------------------------------
     // Constructors.
@@ -46,24 +54,27 @@ public final class StateDescriptor {
                            final Class<?> stateType,
                            final Scope scope,
                            final int[] atNodes,
-                           final Class<? extends IMatrixPartitioner> partitioner,
+                           final PartitionerType partitionerType,
+                           final MatrixFormat matrixFormat,
                            final long rows,
                            final long cols,
-                           final Format format,
-                           final Class<? extends IRecordIteratorProducer> recordFormat,
-                           final String path) {
+                           final FileFormat fileFormat,
+                           final String path,
+                           final String label) {
 
         this.stateName      = stateName;
         this.stateType      = stateType;
-        this.elementType    = ElementType.getElementTypeFromClass(stateType);
         this.scope          = scope;
         this.atNodes        = atNodes;
-        this.partitioner    = partitioner;
+        this.partitionerType = partitionerType;
+        this.matrixFormat   = matrixFormat;
         this.rows           = rows;
         this.cols           = cols;
-        this.format         = format;
-        this.recordFormat   = recordFormat;
+        this.fileFormat     = fileFormat;
         this.path           = path;
+        this.label          = label;
+
+        this.elementType    = ElementType.getElementTypeFromClass(stateType);
     }
 
     // ---------------------------------------------------
@@ -75,14 +86,22 @@ public final class StateDescriptor {
         return new StateDescriptor(
                 field.getName(),
                 field.getType(),
-                state.scope(),
-                parsedAtNodes.length > 0 ? parsedAtNodes : fallBackAtNodes,
+                state.scope(), parsedAtNodes.length > 0 ? parsedAtNodes : fallBackAtNodes,
                 state.partitioner(),
-                state.rows(),
+                state.matrixFormat(), state.rows(),
                 state.cols(),
-                state.format(),
-                state.recordFormat(),
-                state.path()
+                state.fileFormat(),
+                state.path(),
+                state.labels()
+        );
+    }
+
+    public static MatrixPartitioner createMatrixPartitioner(ProgramContext programContext, StateDescriptor state) {
+        return MatrixPartitioner.create(
+                state.partitionerType,
+                state.rows, state.cols,
+                programContext.nodeID,
+                state.atNodes
         );
     }
 }

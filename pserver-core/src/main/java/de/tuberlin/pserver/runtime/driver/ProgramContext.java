@@ -12,8 +12,8 @@ import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.runtime.core.common.Deactivatable;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
-import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.runtime.core.net.NetEvents;
+import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.network.NetEvent;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.Serializable;
@@ -151,7 +151,7 @@ public final class ProgramContext implements Deactivatable {
     public void synchronizeUnit(final String unitName) throws Exception {
         if (UnitMng.GLOBAL_BARRIER.equals(unitName)) {
 
-            final NetEvents.NetEvent syncEvent = new NetEvents.NetEvent(BARRIER_EVENT, true);
+            final NetEvent syncEvent = new NetEvent(BARRIER_EVENT, true);
             runtimeContext.netManager.broadcastEvent(syncEvent);
             AtomicReference<CountDownLatch> barrierRef = barriers.get(unitName);
             barrierRef.get().await();
@@ -160,10 +160,10 @@ public final class ProgramContext implements Deactivatable {
         } else {
 
             final UnitDescriptor unit = programTable.getUnit(unitName);
-            final NetEvents.NetEvent syncEvent = new NetEvents.NetEvent(BARRIER_EVENT + unitName, true);
+            final NetEvent syncEvent = new NetEvent(BARRIER_EVENT + unitName, true);
             final int[] atNodes = ArrayUtils.clone(unit.atNodes);
             final int[] receiverNodeIDs = ArrayUtils.removeElements(atNodes, runtimeContext.nodeID);
-            runtimeContext.netManager.sendEvent(receiverNodeIDs, syncEvent);
+            runtimeContext.netManager.dispatchEventAt(receiverNodeIDs, syncEvent);
             final AtomicReference<CountDownLatch> barrierRef = barriers.get(unitName);
             barrierRef.get().await();
             barrierRef.set(new CountDownLatch(programTable.getUnit(unitName).atNodes.length - 1));

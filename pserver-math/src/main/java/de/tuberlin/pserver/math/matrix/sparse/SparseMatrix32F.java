@@ -17,7 +17,8 @@ import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 public class SparseMatrix32F implements Matrix32F {
 
@@ -165,15 +166,13 @@ public class SparseMatrix32F implements Matrix32F {
             this.data.put(key, value);
     }
 
-
     public void set(final long index, final Float value) {
         if (value == this.data.getNoEntryValue()) {
             if (this.data.containsKey(index))
                 this.data.remove(index);
         }
-        else {
+        else
             this.data.put(index, value);
-        }
     }
 
     @Override
@@ -182,6 +181,7 @@ public class SparseMatrix32F implements Matrix32F {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Matrix32F setDiagonalsToZero(Matrix m) {
         if (m instanceof SparseMatrix32F)
             return this.setDiagonalsToZero((SparseMatrix32F) m);

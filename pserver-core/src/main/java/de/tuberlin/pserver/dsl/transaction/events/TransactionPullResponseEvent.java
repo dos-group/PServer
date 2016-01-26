@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.dsl.transaction.events;
 
 
-import java.util.List;
+import java.util.Map;
 
 public class TransactionPullResponseEvent extends TransactionEvent {
 
@@ -15,16 +15,15 @@ public class TransactionPullResponseEvent extends TransactionEvent {
     // Fields.
     // ---------------------------------------------------
 
-    public final List<Object> responseObjects;
+    public final Map<String, Object> responseSrcStateObjects;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    public TransactionPullResponseEvent(final String transactionName, final List<Object> responseObjects) {
-
+    public TransactionPullResponseEvent() { this(null, null); }
+    public TransactionPullResponseEvent(final String transactionName, final Map<String, Object> responseSrcStateObjects) {
         super(TRANSACTION_RESPONSE + transactionName);
-
-        this.responseObjects = responseObjects;
+        this.responseSrcStateObjects = responseSrcStateObjects;
     }
 }

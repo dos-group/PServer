@@ -5,16 +5,22 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.compiler.Compiler;
 import de.tuberlin.pserver.compiler.*;
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
+import de.tuberlin.pserver.dsl.unit.UnitMng;
+import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.runtime.core.common.Deactivatable;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.runtime.core.usercode.UserCodeManager;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
+import de.tuberlin.pserver.runtime.state.matrix.MatrixLoader;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ProgramDriver implements Deactivatable {
 
@@ -28,8 +34,6 @@ public class ProgramDriver implements Deactivatable {
 
     private final RuntimeContext runtimeContext;
 
-    private final StateAllocator stateAllocator;
-
     // ---------------------------------------------------
 
     private ProgramContext programContext;
@@ -37,6 +41,15 @@ public class ProgramDriver implements Deactivatable {
     private ProgramTable programTable;
 
     private Program instance;
+
+
+    private Map<String, Object> remoteObjectRefs;
+
+    private GlobalObjectAllocator globalObjectAllocator;
+
+    private StateAllocator stateAllocator;
+
+    private MatrixLoader matrixLoader;
 
     // ---------------------------------------------------
     // Constructor.
@@ -47,18 +60,11 @@ public class ProgramDriver implements Deactivatable {
                          final RuntimeContext runtimeContext) {
 
         this.infraManager = Preconditions.checkNotNull(infraManager);
-
         this.userCodeManager = Preconditions.checkNotNull(userCodeManager);
-
         this.runtimeContext = Preconditions.checkNotNull(runtimeContext);
-
-        this.stateAllocator = new StateAllocator(runtimeContext.netManager, runtimeContext.fileManager);
     }
 
     public void deactivate() {
-
-        stateAllocator.clearContext();
-
         programContext.deactivate();
     }
 
@@ -85,26 +91,41 @@ public class ProgramDriver implements Deactivatable {
                 nodeDOP
         );
 
+        this.matrixLoader = new MatrixLoader(programContext);
+        this.stateAllocator = new StateAllocator();
+        this.globalObjectAllocator = new GlobalObjectAllocator();
+        this.remoteObjectRefs = new HashMap<>();
+
         instance.injectContext(programContext);
 
         return instance;
     }
 
-    public void run() throws Exception {
+    public void executeProgram() throws Exception {
 
-        try {
-            Thread.sleep(2000); // TODO: REMOVE !!! FEHLER!!!!!
-        } catch (InterruptedException ex) {
-            //throw new IllegalStateException(ex);
-        }
+        //
+        // PSERVER ML PROGRAM EXECUTION LIFECYCLE!
+        //
+
+        programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
+
+        allocateGlobalObjects();
+
+        bindGlobalObjects(instance);
 
         allocateState();
+
+        programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
+
+        matrixLoader.load();
 
         bindState(instance);
 
         bindTransactions();
 
         defineProgram(instance);
+
+        programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
 
         instance.run();
     }
@@ -113,32 +134,48 @@ public class ProgramDriver implements Deactivatable {
     // Private Methods.
     // ---------------------------------------------------
 
+    private void allocateGlobalObjects() throws Exception {
+        for (final GlobalObjectDescriptor globalObject : programContext.programTable.getGlobalObjects()) {
+            remoteObjectRefs.put(globalObject.stateName, globalObjectAllocator.alloc(programContext, globalObject));
+        }
+    }
+
+    private void bindGlobalObjects(final Program instance) throws Exception {
+        for (final GlobalObjectDescriptor globalObject : programContext.programTable.getGlobalObjects()) {
+            final Field field = programTable.getProgramClass().getDeclaredField(globalObject.stateName);
+            field.set(instance, remoteObjectRefs.get(globalObject.stateName));
+        }
+    }
+
     private void allocateState() throws Exception {
         for (final StateDescriptor state : programContext.programTable.getState()) {
             if (MatrixBase.class.isAssignableFrom(state.stateType)) {
-                final MatrixBase m = stateAllocator.alloc(programContext, state);
-                if (m != null)
-                    runtimeContext.runtimeManager.putDHT(state.stateName, m);
+                final Pair<MatrixBase, MatrixBase> stateAndProxy = stateAllocator.alloc(programContext, state);
+                if (stateAndProxy.getLeft() != null) {
+                    runtimeContext.runtimeManager.putDHT(state.stateName, stateAndProxy.getLeft());
+                    if (!("".equals(state.path)))
+                        matrixLoader.add(state, (Matrix)stateAndProxy.getLeft());
+                }
+                if (stateAndProxy.getRight() != null)
+                    remoteObjectRefs.put(state.stateName, stateAndProxy.getRight());
             } else
                 throw new IllegalStateException();
         }
-
-        try {
-            Thread.sleep(5000); // TODO: REMOVE !!! FEHLER!!!!!
-        } catch (InterruptedException ex) {
-            //throw new IllegalStateException(ex);
-        }
-
-        programContext.synchronizeUnit("global_barrier");
-
-        stateAllocator.loadData(programContext);
     }
 
     private void bindState(final Program instance) throws Exception {
         for (final StateDescriptor state : programTable.getState()) {
             final Field field = programTable.getProgramClass().getDeclaredField(state.stateName);
-            final Object stateObj = runtimeContext.runtimeManager.getDHT(state.stateName);
-            Preconditions.checkState(stateObj != null, "State object '" + state.stateName + "' not found.");
+            final Object stateObj;
+            if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
+                stateObj = runtimeContext.runtimeManager.getDHT(state.stateName);
+            } else {
+                stateObj = remoteObjectRefs.get(state.stateName);
+            }
+
+            Preconditions.checkState(stateObj != null, "State object '" + state.stateName
+                    + "' not found at Node [" + runtimeContext.nodeID + "].");
+
             field.set(instance, stateObj);
         }
     }

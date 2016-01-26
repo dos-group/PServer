@@ -20,10 +20,8 @@ public final class PartitionShape {
     // Constructors.
     // ---------------------------------------------------
 
-    public PartitionShape(long rows, long cols) {
-        this(rows, cols, 0, 0);
-    }
-
+    public PartitionShape() { this(-1, -1, -1, -1); }
+    public PartitionShape(long rows, long cols) { this(rows, cols, 0, 0); }
     public PartitionShape(long rows, long cols, long rowOffset, long colOffset) {
         this.rows = rows;
         this.cols = cols;

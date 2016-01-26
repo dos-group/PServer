@@ -6,7 +6,7 @@ import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.IEventDispatcher;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.runtime.core.net.NetEvents;
+import de.tuberlin.pserver.runtime.core.network.NetEvent;
 
 public abstract class MsgEventHandler implements IEventHandler {
 
@@ -40,7 +40,7 @@ public abstract class MsgEventHandler implements IEventHandler {
 
     @Override
     public void handleEvent(final Event e) {
-        final NetEvents.NetEvent event = (NetEvents.NetEvent) e;
+        final NetEvent event = (NetEvent) e;
         final int srcNodeID = infraManager.getNodeIDFromMachineUID(event.srcMachineID);
         handleMsg(srcNodeID, event.getPayload());
         latch.countDown();

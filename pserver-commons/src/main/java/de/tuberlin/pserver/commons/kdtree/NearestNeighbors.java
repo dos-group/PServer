@@ -16,10 +16,10 @@
 
 package de.tuberlin.pserver.commons.kdtree;
 
-import java.util.PriorityQueue;
-import java.util.Map;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Map;
+import java.util.PriorityQueue;
 
 /**
  * NearestNeighbors implements an algorithm for finding the k-nearest

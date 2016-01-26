@@ -4,8 +4,8 @@ package de.tuberlin.pserver.test.core.programs;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.runtime.core.net.NetEvents;
-import de.tuberlin.pserver.runtime.core.net.NetManager;
+import de.tuberlin.pserver.runtime.core.network.NetEvent;
+import de.tuberlin.pserver.runtime.core.network.NetManager;
 
 import java.util.concurrent.CyclicBarrier;
 
@@ -36,7 +36,7 @@ public class EventSystemSendReceiveTestJob extends Program {
 
             for (int i = 0; i < NUM_MSG; ++i) {
 
-                netManager.sendEvent(1, new NetEvents.NetEvent("test-ping", true));
+                netManager.dispatchEventAt(new int[] {1}, new NetEvent("test-ping", true));
 
                 barrier.await();
             }
@@ -68,7 +68,7 @@ public class EventSystemSendReceiveTestJob extends Program {
 
                 barrier.await();
 
-                netManager.sendEvent(0, new NetEvents.NetEvent("test-pong", true));
+                netManager.dispatchEventAt(new int[]{0}, new NetEvent("test-pong", true));
             }
 
             System.out.println("-- FINISH NODE 1");

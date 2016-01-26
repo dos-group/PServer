@@ -9,14 +9,14 @@ import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
+import de.tuberlin.pserver.dsl.transaction.annotations.TransactionType;
 import de.tuberlin.pserver.dsl.transaction.phases.GenericApply;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
-import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
+import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
 import org.apache.commons.lang3.mutable.MutableDouble;
@@ -45,7 +45,7 @@ public final class GloveWithCompression extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.PARTITIONED, rows = COLS, cols = COLS, path = INPUT_DATA, format = Format.SPARSE_FORMAT)
+    @State(scope = Scope.PARTITIONED, rows = COLS, cols = COLS, path = INPUT_DATA, matrixFormat = MatrixFormat.SPARSE_FORMAT)
     public Matrix32F X;
 
     @State(scope = Scope.REPLICATED, rows = ROWS, cols = COLS * 2)
@@ -154,7 +154,7 @@ public final class GloveWithCompression extends Program {
     }
 
     // ---------------------------------------------------
-    // Entry Point.
+    // EntryImpl Point.
     // ---------------------------------------------------
 
     public static void main(final String[] args) {

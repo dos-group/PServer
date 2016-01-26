@@ -1,11 +1,6 @@
 import java.io.File
 
-import CriteoPreprocessingJobTest.{buildJobArguments, meanFile, numFeatures, outputTrain,
-outputTest, stdDevFile, tmpDir, readLibsvmFile, DELTA}
-import de.cit.pserver.CriteoPreprocessingJob
-import org.scalatest.{FlatSpec, Inspectors, Matchers}
-
-import scala.io.Source
+import CriteoPreprocessingJobTest.{DELTA, buildJobArguments, meanFile, numFeatures, outputTest, outputTrain, readLibsvmFile, stdDevFile, tmpDir}
 
 case class DataPoint(label: Double, features:Seq[(Int, Double)])
 object DataPoint {

@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.ml.optimization;
 
 import de.tuberlin.pserver.math.matrix.Matrix32F;
-import de.tuberlin.pserver.runtime.state.MatrixBuilder;
+import de.tuberlin.pserver.runtime.state.matrix.MatrixBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

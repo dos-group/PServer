@@ -7,16 +7,15 @@ import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
+import de.tuberlin.pserver.dsl.transaction.annotations.TransactionType;
 import de.tuberlin.pserver.dsl.transaction.phases.Update;
-import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
-import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.math.matrix.dense.DenseMatrix64F;
-import de.tuberlin.pserver.runtime.filesystem.record.RowRecordIteratorProducer;
+import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
 
 import java.util.Random;
@@ -41,8 +40,8 @@ public class KMeans extends Program {
             rows = ROWS,
             cols = COLS,
             path = "datasets/stripes2.csv",
-            format = Format.DENSE_FORMAT,
-            recordFormat = RowRecordIteratorProducer.class
+            fileFormat = FileFormat.SVM_FORMAT
+            //recordFormat = RowRecordIteratorProducer.class
     )
     public Matrix64F data;
 
@@ -128,7 +127,7 @@ public class KMeans extends Program {
                 });
                 // END: STANDARD KMEANS ON LOCAL PARTITION
 
-                // Pull model from remote stateObjectNodes and merge.
+                // Pull model from remote srcStateObjectNodes and merge.
                 TransactionMng.commit(centroidsUpdateSync);
             });
 
@@ -141,7 +140,7 @@ public class KMeans extends Program {
     }
 
     // ---------------------------------------------------
-    // Entry Point.
+    // EntryImpl Point.
     // ---------------------------------------------------
 
     public static void main(String[] args) { local(); }

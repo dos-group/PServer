@@ -18,6 +18,8 @@ public class ProgramTable {
 
     private final Map<String, StateDescriptor> stateDescriptors;
 
+    private final Map<String, GlobalObjectDescriptor> globalObjectDescriptors;
+
     private final Map<String, UnitDescriptor> unitDescriptors;
 
     private final Map<String, TransactionDescriptor> transactionDescriptors;
@@ -33,6 +35,8 @@ public class ProgramTable {
         this.programClass = Preconditions.checkNotNull(programClass);
 
         this.stateDescriptors = new TreeMap<>();
+
+        this.globalObjectDescriptors = new TreeMap<>();
 
         this.unitDescriptors = new TreeMap<>();
 
@@ -55,6 +59,10 @@ public class ProgramTable {
         stateDescriptors.put(state.stateName, Preconditions.checkNotNull(state));
     }
 
+    public void addGlobalObject(final GlobalObjectDescriptor globalObject) {
+        globalObjectDescriptors.put(globalObject.stateName, globalObject);
+    }
+
     public void addTransaction(final TransactionDescriptor transaction) {
         transactionDescriptors.put(transaction.transactionName, Preconditions.checkNotNull(transaction));
     }
@@ -73,6 +81,10 @@ public class ProgramTable {
         return stateDescriptors.get(stateName);
     }
 
+    public GlobalObjectDescriptor getGlobalObject(final String globalObjectName) {
+        return globalObjectDescriptors.get(globalObjectName);
+    }
+
     public TransactionDescriptor getTransaction(final String transactionName) {
         return transactionDescriptors.get(transactionName);
     }
@@ -88,6 +100,8 @@ public class ProgramTable {
     // ---------------------------------------------------
 
     public Collection<StateDescriptor> getState() { return stateDescriptors.values(); }
+
+    public Collection<GlobalObjectDescriptor> getGlobalObjects() { return globalObjectDescriptors.values(); }
 
     public Collection<TransactionDescriptor> getTransactions() { return transactionDescriptors.values(); }
 

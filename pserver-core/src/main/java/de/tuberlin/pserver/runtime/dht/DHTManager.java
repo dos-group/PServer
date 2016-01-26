@@ -10,9 +10,9 @@ import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.runtime.core.net.NetEvents;
-import de.tuberlin.pserver.runtime.core.net.NetManager;
+import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.network.NetEvent;
+import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.dht.types.AbstractBufferedDHTObject;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -95,7 +95,7 @@ public final class DHTManager extends EventDispatcher implements Deactivatable {
 
         public void globalPut(final DHTKey key) {
             put(key);
-            final NetEvents.NetEvent event = new NetEvents.NetEvent(DHT_EVENT_ADD_KEY_TO_DIRECTORY);
+            final NetEvent event = new NetEvent(DHT_EVENT_ADD_KEY_TO_DIRECTORY);
             event.setPayload(key);
             netManager.broadcastEvent(event);
         }
@@ -114,7 +114,7 @@ public final class DHTManager extends EventDispatcher implements Deactivatable {
 
         public void globalRemove(final DHTKey key) {
             remove(key);
-            final NetEvents.NetEvent event = new NetEvents.NetEvent(DHT_EVENT_REMOVE_KEY_FROM_DIRECTORY);
+            final NetEvent event = new NetEvent(DHT_EVENT_REMOVE_KEY_FROM_DIRECTORY);
             event.setPayload(key);
             netManager.broadcastEvent(event);
         }
@@ -247,16 +247,16 @@ public final class DHTManager extends EventDispatcher implements Deactivatable {
         @Override
         public void handleEvent(final Event e) {
             executor.execute(() -> {
-                final NetEvents.NetEvent event = (NetEvents.NetEvent) e;
+                final NetEvent event = (NetEvent) e;
                 @SuppressWarnings("unchecked")
                 final Pair<UUID,DHTKey> request = (Pair<UUID,DHTKey>) event.getPayload();
                 final DHTKey key = globalKeyDirectory.get(request.getRight().internalUID);
                 Preconditions.checkState(key != null);
                 final AbstractBufferedDHTObject value = __get(key);
                 //value.compress(); // TODO: Compression!
-                final NetEvents.NetEvent e1 = new NetEvents.NetEvent(DHT_EVENT_GET_VALUE_RESPONSE);
+                final NetEvent e1 = new NetEvent(DHT_EVENT_GET_VALUE_RESPONSE);
                 e1.setPayload(Pair.of(request.getKey(), value));
-                netManager.sendEvent(event.srcMachineID, e1);
+                netManager.dispatchEventAt(event.srcMachineID, e1);
                 logDHTAction(key, DHTAction.GET_VALUE);
             });
         }
@@ -280,14 +280,14 @@ public final class DHTManager extends EventDispatcher implements Deactivatable {
         @Override
         public void handleEvent(final Event e) {
             executor.execute(() -> {
-                final NetEvents.NetEvent event = (NetEvents.NetEvent) e;
+                final NetEvent event = (NetEvent) e;
                 @SuppressWarnings("unchecked")
                 final Triple<UUID,DHTKey,int[]> segmentsRequest = (Triple<UUID,DHTKey,int[]>) event.getPayload();
                 final DHTKey key = globalKeyDirectory.get(segmentsRequest.getMiddle().internalUID);
                 final AbstractBufferedDHTObject.Segment[] segments = __get(segmentsRequest.getMiddle()).getSegments(segmentsRequest.getRight(), nodeID);
-                final NetEvents.NetEvent e1 = new NetEvents.NetEvent(DHT_EVENT_GET_SEGMENTS_RESPONSE);
+                final NetEvent e1 = new NetEvent(DHT_EVENT_GET_SEGMENTS_RESPONSE);
                 e1.setPayload(Pair.of(segmentsRequest.getLeft(), segments));
-                netManager.sendEvent(event.srcMachineID, e1);
+                netManager.dispatchEventAt(event.srcMachineID, e1);
                 logDHTAction(key, DHTAction.GET_SEGMENT);
             });
         }
@@ -309,7 +309,7 @@ public final class DHTManager extends EventDispatcher implements Deactivatable {
         @Override
         public void handleEvent(final Event e) {
             executor.execute(() -> {
-                final NetEvents.NetEvent event = (NetEvents.NetEvent)e;
+                final NetEvent event = (NetEvent)e;
                 final DHTKey key = globalKeyDirectory.get(((DHTKey) event.getPayload()).internalUID);
                 // Local delete.
                 globalKeyDirectory.remove(key);
@@ -411,9 +411,9 @@ public final class DHTManager extends EventDispatcher implements Deactivatable {
                 localPut(key, vals[i]);
             } else {
                 // Remote put.
-                final NetEvents.NetEvent e = new NetEvents.NetEvent(DHT_EVENT_PUT_VALUE);
+                final NetEvent e = new NetEvent(DHT_EVENT_PUT_VALUE);
                 e.setPayload(Pair.of(key, vals[i]));
-                netManager.sendEvent(pd.machine, e);
+                netManager.dispatchEventAt(pd.machine, e);
             }
         }
 
@@ -464,9 +464,9 @@ public final class DHTManager extends EventDispatcher implements Deactivatable {
             } else {
                 // Remote put.
                 executor.submit(() -> {
-                    final NetEvents.NetEvent event = new NetEvents.NetEvent(DHT_EVENT_PUT_SEGMENTS);
+                    final NetEvent event = new NetEvent(DHT_EVENT_PUT_SEGMENTS);
                     event.setPayload(Pair.of(key, segs));
-                    netManager.sendEvent(e.getKey(), event);
+                    netManager.dispatchEventAt(e.getKey(), event);
                 });
             }
         }
@@ -512,9 +512,9 @@ public final class DHTManager extends EventDispatcher implements Deactivatable {
         final CountDownLatch cdl = new CountDownLatch(1);
         final UUID requestID = UUID.randomUUID();
         requestTable.put(requestID, cdl);
-        final NetEvents.NetEvent e = new NetEvents.NetEvent(DHT_EVENT_GET_VALUE_REQUEST);
+        final NetEvent e = new NetEvent(DHT_EVENT_GET_VALUE_REQUEST);
         e.setPayload(Pair.of(requestID, key));
-        netManager.sendEvent(machine, e);
+        netManager.dispatchEventAt(machine, e);
         try {
             if (RESPONSE_TIMEOUT > 0) {
                 // block the caller thread until we get some response...
@@ -581,9 +581,9 @@ public final class DHTManager extends EventDispatcher implements Deactivatable {
         final CountDownLatch cdl = new CountDownLatch(1);
         final UUID requestID = UUID.randomUUID();
         requestTable.put(requestID, cdl);
-        final NetEvents.NetEvent event = new NetEvents.NetEvent(DHT_EVENT_GET_SEGMENTS_REQUEST);
+        final NetEvent event = new NetEvent(DHT_EVENT_GET_SEGMENTS_REQUEST);
         event.setPayload(Triple.of(requestID, key, segmentIndices));
-        netManager.sendEvent(machine, event);
+        netManager.dispatchEventAt(machine, event);
         try {
             if (RESPONSE_TIMEOUT > 0) {
                 // block the caller thread until we get some response...
@@ -618,9 +618,9 @@ public final class DHTManager extends EventDispatcher implements Deactivatable {
                 logDHTAction(key, DHTAction.DELETE_VALUE);
             } else {
                 // Remote delete.
-                final NetEvents.NetEvent e = new NetEvents.NetEvent(DHT_EVENT_DELETE);
+                final NetEvent e = new NetEvent(DHT_EVENT_DELETE);
                 e.setPayload(key);
-                netManager.sendEvent(pd.machine, e);
+                netManager.dispatchEventAt(pd.machine, e);
             }
 
         globalKeyDirectory.globalRemove(key);
