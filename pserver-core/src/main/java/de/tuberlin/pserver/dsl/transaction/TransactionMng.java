@@ -72,8 +72,13 @@ public final class TransactionMng {
             commit(transactionDefinition, requestObject);
     }
 
-    public static List<Object> getResult(final TransactionDefinition transactionDefinition) {
-        return asyncTransactionResult.get(transactionDefinition.getTransactionName());
+    public static List<Object> getTransactionResult(final TransactionDefinition transactionDefinition) {
+        synchronized (asyncTransactionResult) {
+            if (asyncTransactionResult.containsKey(transactionDefinition.getTransactionName())) {
+                return asyncTransactionResult.remove(transactionDefinition.getTransactionName());
+            } else
+                return null;
+        }
     }
 
     public static TransactionBuilder getTransactionBuilder() {
