@@ -64,7 +64,7 @@ public final class TransactionController {
                 @Override
                 public void run() {
                     try {
-                        if (transactionDescriptor.definition.transactionObserver.observe()) {
+                        if (transactionDescriptor.definition.transactionObserver.observe(transactionExecutor.getSrcObjects())) {
                             // TODO: No txn request object supported at the moment.
                             // TODO: No txn results supported at the moment.
                             transactionExecutor.execute(null);

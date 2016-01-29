@@ -42,6 +42,10 @@ public abstract class TransactionExecutor {
 
     public abstract List<Object> execute(final Object requestObject) throws Exception;
 
+    public abstract Object[] getSrcObjects();
+
+    public abstract Object[] getDstObjects();
+
     // ---------------------------------------------------
     // Factory.
     // ---------------------------------------------------

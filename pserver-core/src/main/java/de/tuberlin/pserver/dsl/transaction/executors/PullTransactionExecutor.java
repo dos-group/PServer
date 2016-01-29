@@ -86,6 +86,12 @@ public class PullTransactionExecutor extends TransactionExecutor {
     // ---------------------------------------------------
 
     @Override
+    public Object[] getSrcObjects() { return srcStateObjects; }
+
+    @Override
+    public Object[] getDstObjects() { return dstStateObjects; }
+
+    @Override
     public void bind() throws Exception {
         int i = 0;
         for (final String srcStateObjectName : controller.getTransactionDescriptor().stateSrcObjectNames) {
