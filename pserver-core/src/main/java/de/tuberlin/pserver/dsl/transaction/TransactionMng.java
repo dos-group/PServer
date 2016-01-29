@@ -56,13 +56,15 @@ public final class TransactionMng {
             new Thread(() -> {
                 try {
                     Object result = commit(transactionDefinition);
-                    synchronized (asyncTransactionResult) {
-                        List<Object> txnResults = asyncTransactionResult.get(transactionDefinition.getTransactionName());
-                        if (txnResults == null) {
-                            txnResults = new ArrayList<>();
-                            asyncTransactionResult.put(transactionDefinition.getTransactionName(), txnResults);
+                    if (result != null) {
+                        synchronized (asyncTransactionResult) {
+                            List<Object> txnResults = asyncTransactionResult.get(transactionDefinition.getTransactionName());
+                            if (txnResults == null) {
+                                txnResults = new ArrayList<>();
+                                asyncTransactionResult.put(transactionDefinition.getTransactionName(), txnResults);
+                            }
+                            txnResults.add(result);
                         }
-                        txnResults.add(result);
                     }
                 } catch (Exception e) {
                     throw new RuntimeException(e);
