@@ -20,4 +20,6 @@ public @interface Transaction {
     public String at() default "";
 
     public boolean cache() default false;
+
+    public long observerPeriod() default -1;
 }

@@ -34,6 +34,8 @@ public final class TransactionDescriptor {
 
     public int[] dstStateObjectNodes;
 
+    public long observerPeriod;
+
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
@@ -44,6 +46,7 @@ public final class TransactionDescriptor {
                                  final TransactionDefinition definition,
                                  final TransactionType type,
                                  final boolean cacheRequestObject,
+                                 final long observerPeriod,
                                  final int nodeID,
                                  final ProgramTable programTable) {
 
@@ -53,6 +56,7 @@ public final class TransactionDescriptor {
         this.definition          = Preconditions.checkNotNull(definition);
         this.type                = Preconditions.checkNotNull(type);
         this.cacheRequestObject  = cacheRequestObject;
+        this.observerPeriod      = observerPeriod;
         this.srcStateObjectNodes = programTable.getState(stateSrcObjectNames.get(stateSrcObjectNames.size() - 1)).atNodes;
         this.dstStateObjectNodes = programTable.getState(stateDstObjectNames.get(stateDstObjectNames.size() - 1)).atNodes;
         definition.setTransactionName(transactionName);
@@ -95,6 +99,7 @@ public final class TransactionDescriptor {
                 (TransactionDefinition)field.get(instance),
                 transaction.type(),
                 transaction.cache(),
+                transaction.observerPeriod(),
                 nodeID,
                 programTable
         );

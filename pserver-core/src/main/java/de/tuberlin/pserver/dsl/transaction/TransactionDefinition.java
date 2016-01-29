@@ -19,36 +19,29 @@ public class TransactionDefinition {
 
     public final GenericApply applyPhase;
 
+    public final TransactionObserver transactionObserver;
+
     private String transactionName;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    public TransactionDefinition(final GenericApply applyPhase) {
-
-        this(null, null, applyPhase);
-    }
-
-    public TransactionDefinition(final Combine combinePhase,
-                                 final GenericApply applyPhase) {
-
-        this(null, combinePhase, applyPhase);
-    }
-
-    public TransactionDefinition(final Prepare preparePhase,
-                                 final GenericApply applyPhase) {
-
-        this(preparePhase, null, applyPhase);
-    }
-
+    public TransactionDefinition(final GenericApply applyPhase) { this(null, null, applyPhase, null); }
+    public TransactionDefinition(final Combine combinePhase, final GenericApply applyPhase) { this(null, combinePhase, applyPhase, null); }
+    public TransactionDefinition(final Prepare preparePhase, final GenericApply applyPhase) { this(preparePhase, null, applyPhase, null); }
+    public TransactionDefinition(final GenericApply applyPhase, final TransactionObserver transactionObserver) { this(null, null, applyPhase, transactionObserver); }
+    public TransactionDefinition(final Combine combinePhase, final GenericApply applyPhase, final TransactionObserver transactionObserver) { this(null, combinePhase, applyPhase, transactionObserver); }
+    public TransactionDefinition(final Prepare preparePhase, final GenericApply applyPhase, final TransactionObserver transactionObserver) { this(preparePhase, null, applyPhase, transactionObserver); }
     public TransactionDefinition(final Prepare preparePhase,
                                  final Combine combinePhase,
-                                 final GenericApply applyPhase) {
+                                 final GenericApply applyPhase,
+                                 final TransactionObserver transactionObserver) {
 
         this.preparePhase = preparePhase;
         this.combinePhase = combinePhase;
         this.applyPhase   = Preconditions.checkNotNull(applyPhase);
+        this.transactionObserver = transactionObserver;
     }
 
     // ---------------------------------------------------

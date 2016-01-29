@@ -6,6 +6,7 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
+import de.tuberlin.pserver.dsl.transaction.TransactionObserver;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
 import de.tuberlin.pserver.dsl.transaction.annotations.TransactionType;
 import de.tuberlin.pserver.dsl.transaction.phases.Update;
@@ -70,18 +71,6 @@ public class ParameterServerSketch extends Program {
     public void worker(final Lifecycle lifecycle) {
 
         lifecycle.process(()-> {
-
-            /*new Timer(true).scheduleAtFixedRate(new TimerTask() {
-                @Override
-                public void run() {
-                    try {
-                        TransactionMng.commit(parameterPull);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-
-            }, 0, 10 * 1000);*/
 
             UnitMng.loop(15,  Loop.BULK_SYNCHRONOUS, (e) -> {
 

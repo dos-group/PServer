@@ -27,6 +27,8 @@ public final class TransactionBuilder {
 
     public boolean cache;
 
+    public long observerPeriod;
+
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
@@ -48,6 +50,8 @@ public final class TransactionBuilder {
 
     public TransactionBuilder cache(final boolean cache) { this.cache = cache; return this; }
 
+    public TransactionBuilder observerPeriod(final long observerPeriod) { this.observerPeriod = observerPeriod; return this; }
+
     // ---------------------------------------------------
 
     public TransactionDefinition build(final String transactionName, final TransactionDefinition definition) {
@@ -58,6 +62,7 @@ public final class TransactionBuilder {
                 definition,
                 type,
                 cache,
+                observerPeriod,
                 programContext.nodeID,
                 programContext.programTable
         );
