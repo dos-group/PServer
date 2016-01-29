@@ -234,9 +234,9 @@ public class SparseMatrix32F implements Matrix32F {
     @Override
     public Matrix32F getRow(long row) {
         SparseMatrix32F result = new SparseMatrix32F(1, cols);
-        data.forEachKey(value -> {
-            if (value >= row * cols + 0 && value < row * cols + cols)
-                result.set(value - (row * cols), this.get(value));
+        data.forEachKey(k -> {
+            if (k >= row * cols + 0 && k < row * cols + cols)
+                result.set(k - (row * cols), this.get(k));
             return true;
         });
         return result;
@@ -245,15 +245,15 @@ public class SparseMatrix32F implements Matrix32F {
     @Override
     public Matrix32F getRow(long row, long from, long to) {
         SparseMatrix32F result = new SparseMatrix32F(1, to - from);
-        for (long col = from; col < to; col++)
-            if (this.data.containsKey(row * cols + col))
-                result.set(0, col, this.get(row, col));
+        //for (long col = from; col < to; col++)
+        //    if (this.data.containsKey(row * cols + col))
+        //        result.set(0, col, this.get(row, col));
 
-        //data.forEachKey(value -> {
-        //    if (value >= row * cols + from && value < row * cols + to)
-        //        result.set(value - (row * cols), this.get(value));
-        //    return true;
-        //});
+        data.forEachEntry((k, v) -> {
+            if (k >= row * cols + from && k < row * cols + to)
+                result.set(k - (row * cols), v);
+            return true;
+        });
 
         return result;
     }
