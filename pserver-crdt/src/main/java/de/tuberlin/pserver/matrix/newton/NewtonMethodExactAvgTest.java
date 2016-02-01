@@ -10,22 +10,24 @@ import de.tuberlin.pserver.matrix.crdt.ExactAvgDenseMatrix64F;
 import static org.junit.Assert.assertEquals;
 
 public class NewtonMethodExactAvgTest extends Program {
-    private final long ROWS = 10;
-    private final long COLS = 10;
+    private final long ROWS = 5;
+    private final long COLS = 5;
     private static final String NUM_NODES = "2";
+    private static final String ID = "one";
 
-    @Unit(at="0")
+
+    @Unit
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            ExactAvgDenseMatrix64F m = new ExactAvgDenseMatrix64F(ROWS, COLS, "one", 2, programContext);
+            ExactAvgDenseMatrix64F m = new ExactAvgDenseMatrix64F(ROWS, COLS, ID, Integer.parseInt(NUM_NODES), programContext);
 
             System.out.println("*");
-            new NewtonMethod(m).newton("Newton0.csv");
+            new NewtonMethod(m).newton("Newton" + programContext.runtimeContext.nodeID + ".csv");
             System.out.println("**");
 
             m.finish();
 
-            System.out.println("[DEBUG] Node " + programContext.runtimeContext.nodeID + " Matrix 1: ");
+            System.out.println("[DEBUG] Node " + programContext.runtimeContext.nodeID + " Matrix: ");
             for (int i = 0; i < m.rows(); i++) {
                 System.out.println();
                 for (int k = 0; k < m.cols(); k++) {
@@ -39,33 +41,6 @@ public class NewtonMethodExactAvgTest extends Program {
 
         });
     }
-
-    @Unit(at="1")
-    public void test1(Lifecycle lifecycle) {
-        lifecycle.process(() -> {
-            ExactAvgDenseMatrix64F m = new ExactAvgDenseMatrix64F(ROWS, COLS, "one", 2, programContext);
-
-            System.out.println("*");
-            new NewtonMethod(m).newton("Newton1.csv");
-            System.out.println("**");
-
-            m.finish();
-
-            System.out.println("[DEBUG] Node " + programContext.runtimeContext.nodeID + " Matrix 1: ");
-            for (int i = 0; i < m.rows(); i++) {
-                System.out.println();
-                for (int k = 0; k < m.cols(); k++) {
-                    System.out.print(m.get(i, k) + " ");
-                }
-            }
-            System.out.println();
-
-            System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": " + m.getBuffer());
-            //System.out.println("[DEBUG] Queue of node " + programContext.runtimeContext.nodeID + ": " + m.getQueue().size());
-
-        });
-    }
-
 
     public static void main(String[] args) {
 

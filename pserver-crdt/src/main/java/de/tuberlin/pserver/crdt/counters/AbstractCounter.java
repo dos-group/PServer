@@ -1,8 +1,10 @@
 package de.tuberlin.pserver.crdt.counters;
 
+import com.clearspring.analytics.util.Preconditions;
 import de.tuberlin.pserver.crdt.AbstractCRDT;
-import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * <p>
@@ -19,7 +21,7 @@ public abstract class AbstractCounter extends AbstractCRDT implements Counter {
     // Fields.
     // ---------------------------------------------------
 
-    private long count = 0;
+    private long count;
 
     // ---------------------------------------------------
     // Constructor.
@@ -33,6 +35,7 @@ public abstract class AbstractCounter extends AbstractCRDT implements Counter {
      */
     public AbstractCounter(String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
+        this.count = 0;
     }
 
     // ---------------------------------------------------
@@ -45,8 +48,7 @@ public abstract class AbstractCounter extends AbstractCRDT implements Counter {
      * @return the count
      */
     @Override
-    public long getCount() {
-        // Primitives are passed by value (so are objects, but that is a longer story...)
+    public synchronized long getCount() {
         return count;
     }
 
@@ -60,14 +62,12 @@ public abstract class AbstractCounter extends AbstractCRDT implements Counter {
      * @param i the amount to be added to the count
      * @return true if the count was changed by this operation
      */
-    protected boolean incrementCount(int i) {
-        if(i > 0) {
-            count += i;
-            return true;
-        }
-        else {
-            return false;
-        }
+    @Override
+    public synchronized long increment(int i) {
+        Preconditions.checkArgument(i > 0, "The method increment() can not be invoked with 0 or a negative value: " + i);
+
+        count = Math.addExact(count, i);
+        return count;
     }
 
     /**
@@ -76,13 +76,11 @@ public abstract class AbstractCounter extends AbstractCRDT implements Counter {
      * @param i the amount to be subtracted from the count
      * @return true if the count was changed by this operation
      */
-    protected boolean decrementCount(int i) {
-        if(i > 0) {
-            count -= i;
-            return true;
-        }
-        else {
-            return false;
-        }
+    @Override
+    public synchronized long decrement(int i) {
+        Preconditions.checkArgument(i > 0, "The method decrement() can not be invoked with 0 or a negative value: " + i);
+
+        count = Math.subtractExact(count, i);
+        return count;
     }
 }

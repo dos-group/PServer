@@ -1,16 +1,11 @@
 package de.tuberlin.pserver.crdt.counters;
 
+
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.crdt.CRDT;
-import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.SimpleOperation;
-import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.naming.OperationNotSupportedException;
 import java.io.Serializable;
 
 /**
@@ -18,7 +13,7 @@ import java.io.Serializable;
  * will cause an {@code OpperationNotSupportedException}.
  *
  */
-public class GCounter extends AbstractCounter implements CRDT, Serializable {
+public class GCounter extends AbstractCounter implements Counter, Serializable {
 
     // ---------------------------------------------------
     // Constructor.
@@ -30,27 +25,30 @@ public class GCounter extends AbstractCounter implements CRDT, Serializable {
      * @param id the ID of this CRDT
      * @param programContext the {@code RuntimeManager} belonging to this {@code MLProgram}
      */
-    public GCounter(String id, int noOfReplicas, ProgramContext programContext) {
+    private GCounter(String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
+        ready();
     }
 
-    /*public static GCounter newReplica(String id, int noOfReplicas, ProgramContext programContext) {
+    public static GCounter newReplica(String id, int noOfReplicas, ProgramContext programContext) {
         return new GCounter(id, noOfReplicas, programContext);
-    }*/
+    }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
     @Override
-    public boolean increment(int i) {
-        Preconditions.checkArgument(i >= 0, "Increment does not accept negative values: " + i);
+    public long increment(int i) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
+        long count = super.increment(i);
+        broadcast(new SimpleOperation<>(Operation.OpType.INCREMENT, i));
 
-        if(incrementCount(i)) {
-            broadcast(new SimpleOperation<>(Operation.INCREMENT, i));
-            return true;
-        }
-        return false;
+        return count;
+    }
+
+    private long remoteIncrement(int i) {
+        return super.increment(i);
     }
 
     /**
@@ -62,8 +60,8 @@ public class GCounter extends AbstractCounter implements CRDT, Serializable {
      * @throws UnsupportedOperationException if this method is called
      */
     @Override
-    public boolean decrement(int i) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException();
+    public long decrement(int i) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("The decrement() operation is not supported by the grow-only counter CRDT.");
     }
 
     // ---------------------------------------------------
@@ -80,12 +78,15 @@ public class GCounter extends AbstractCounter implements CRDT, Serializable {
      */
     @Override
     protected boolean update(int srcNodeID, Operation op) {
-        SimpleOperation<Integer> cop = (SimpleOperation<Integer>) op;
+        @SuppressWarnings("unchecked")
+        SimpleOperation<Integer> simpleOp = (SimpleOperation<Integer>) op;
 
-        if (cop.getType() == Operation.INCREMENT) {
-            return incrementCount(cop.getValue());
-        } else {
-            throw new IllegalArgumentException("GCounter CRDTs do not allow the " + op.getOperationType() + " operation.");
+        switch(simpleOp.getType()) {
+            case INCREMENT:
+                remoteIncrement(simpleOp.getValue());
+                return true;
+            default:
+                throw new IllegalArgumentException("GCounter CRDTs do not allow the " + op.getType() + " operation.");
         }
     }
 }

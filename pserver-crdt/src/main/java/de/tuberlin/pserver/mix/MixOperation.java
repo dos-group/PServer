@@ -24,13 +24,8 @@ public class MixOperation<T> implements Operation<T> {
     }
 
     @Override
-    public String getOperationType() {
+    public OpType getType() {
         return null;
-    }
-
-    @Override
-    public int getType() {
-        return 0;
     }
 
     @Override

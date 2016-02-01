@@ -1,15 +1,14 @@
 package de.tuberlin.pserver.crdt.counters;
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.crdt.CRDT;
-import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.SimpleOperation;
-import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 /**
  * An implementation of the {@code Counter} interface which fully supports calls to {@code increment()} and
- * {@code decrement()}. There are no bounds this counter's value (beyond the bounds of the {@code long} data type).
+ * {@code decrement()}. There are no bounds to this counter's value (beyond the bounds of the {@code long} data type).
  */
 public class SimpleCounter extends AbstractCounter implements CRDT {
 
@@ -23,13 +22,38 @@ public class SimpleCounter extends AbstractCounter implements CRDT {
      * @param id the ID for this CRDT
      * @param programContext the {@code ProgramContext} belonging to this {@code MLProgram}
      */
-    public SimpleCounter(String id, int noOfReplicas, ProgramContext programContext) {
+    private SimpleCounter(String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
+        ready();
+    }
+
+    public static SimpleCounter newReplica(String id, int noOfReplicas, ProgramContext programContext) {
+        return new SimpleCounter(id, noOfReplicas, programContext);
     }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
+
+    @Override
+    public long increment(int i) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
+
+        long count = super.increment(i);
+        broadcast(new SimpleOperation<>(Operation.OpType.INCREMENT, i));
+
+        return count;
+    }
+
+    @Override
+    public long decrement(int i) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
+
+        long count = super.decrement(i);
+        broadcast(new SimpleOperation<>(Operation.OpType.DECREMENT, i));
+
+        return count;
+    }
 
     /**
      * Applies an {@code Operation} received from another replica to the local replica of a CRDT. {@code SimpleCounter}
@@ -42,35 +66,18 @@ public class SimpleCounter extends AbstractCounter implements CRDT {
     @Override
     protected boolean update(int srcNodeID, Operation op) {
         @SuppressWarnings("unchecked")
-        SimpleOperation<Integer> cop = (SimpleOperation<Integer>) op;
+        SimpleOperation<Integer> simpleOp = (SimpleOperation<Integer>) op;
 
-        if(cop.getType() == Operation.INCREMENT) {
-            return incrementCount(cop.getValue());
-        }
-        else if(cop.getType() == Operation.DECREMENT) {
-            return decrementCount(cop.getValue());
-        }
-        else {
-            // TODO: throw a specific exception message
-            throw new IllegalOperationException("Blub");
+        switch(simpleOp.getType()) {
+            case INCREMENT:
+                super.increment(simpleOp.getValue());
+                return true;
+            case DECREMENT:
+                super.decrement(simpleOp.getValue());
+                return true;
+            default:
+                throw new IllegalArgumentException("SimpleCounter CRDTs do not allow the " + op.getType() + " operation.");
         }
     }
 
-    @Override
-    public boolean increment(int i) {
-        if(incrementCount(i)) {
-            broadcast(new SimpleOperation<>(Operation.INCREMENT, i));
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean decrement(int i) {
-        if(decrementCount(i)) {
-            broadcast(new SimpleOperation<>(Operation.DECREMENT, i));
-            return true;
-        }
-        return false;
-    }
 }

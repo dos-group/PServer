@@ -56,11 +56,11 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
     protected boolean update(int srcNodeId, Operation op) {
         ArrayOperation<Item<T>> radtOp = (ArrayOperation<Item<T>>) op;
 
-        if(radtOp.getType() == Operation.WRITE) {
+        if(radtOp.getType() == Operation.OpType.WRITE) {
             return remoteWrite(radtOp.getValue());
         }
         else {
-            throw new IllegalArgumentException("Array RADTs do not allow the " + op.getOperationType() + " operation.");
+            throw new IllegalArgumentException("Array RADTs do not allow the " + op.getType() + " operation.");
         }
     }
 
@@ -78,7 +78,7 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
         Item<T> item = new Item<>(index, clock, new S4Vector(sessionID, nodeId, clock, 0), value);
         array[index] = item;
 
-        broadcast(new ArrayOperation<>(Operation.WRITE, item, index, clock, s4));
+        broadcast(new ArrayOperation<>(Operation.OpType.WRITE, item, index, clock, s4));
 
         return true;
     }

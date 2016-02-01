@@ -21,7 +21,7 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
         node = localInsert(index, value, s4, clock);
 
         if(node != null) {
-            broadcast(new ListOperation<>(Operation.INSERT, node, node.getRefNodeS4(), clock, s4));
+            broadcast(new ListOperation<>(Operation.OpType.INSERT, node, node.getRefNodeS4(), clock, s4));
             return true;
         }
 
@@ -40,7 +40,7 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
         node = localUpdate(index, value);
 
         if(node != null) {
-            broadcast(new ListOperation<>(Operation.UPDATE, node, node.getRefNodeS4(), clock, s4));
+            broadcast(new ListOperation<>(Operation.OpType.UPDATE, node, node.getRefNodeS4(), clock, s4));
             return true;
         }
 
@@ -56,11 +56,17 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
 
         if(node != null) {
             // refNode can't be null because that means inserting at the head
-            broadcast(new ListOperation<>(Operation.DELETE, node, null, clock, s4));
+            broadcast(new ListOperation<>(Operation.OpType.DELETE, node, null, clock, s4));
             return true;
         }
 
         return false;
+    }
+
+    @Override
+    public T read(int i) {
+        // TODO: implement this!
+        return null;
     }
 
     @Override
@@ -79,7 +85,7 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
     protected boolean update(int srcNodeId, Operation<?> op) {
         ListOperation<Node<T>> listOp = (ListOperation<Node<T>>) op;
 
-        if(listOp.getType() == Operation.INSERT) {
+        if(listOp.getType() == Operation.OpType.INSERT) {
             // System.out.println("Received PUT: " + listOp.getValue());
             /*System.out.println("Received Key: " + listOp.getRefS4Vector() + ", Value: " + listOp.getValue());
             System.out.println(svi);
@@ -88,10 +94,10 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
             // TODO: causally ready etc. !
             return remoteInsert(listOp.getValue(), listOp.getRefS4Vector());
         }
-        else if(listOp.getType() == Operation.UPDATE) {
+        else if(listOp.getType() == Operation.OpType.UPDATE) {
             return remoteUpdate(listOp.getValue());
         }
-        else if(listOp.getType() == Operation.DELETE) {
+        else if(listOp.getType() == Operation.OpType.DELETE) {
             return remoteDelete(listOp.getValue().getS4HashKey());
         }
         else {

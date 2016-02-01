@@ -1,6 +1,8 @@
 package de.tuberlin.pserver.crdt.graphs;
 
-public interface Graph<T> {
+import de.tuberlin.pserver.crdt.CRDT;
+
+public interface Graph<T> extends CRDT {
 
     public boolean addVertex(Vertex<T> v);
     public boolean removeVertex(Vertex<T> v);

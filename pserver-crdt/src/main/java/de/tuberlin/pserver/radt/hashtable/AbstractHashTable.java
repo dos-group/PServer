@@ -8,7 +8,7 @@ import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import java.util.Hashtable;
 import java.util.LinkedList;
 
-public abstract class AbstractHashTable<K,V> extends AbstractRADT<V> implements IHashTable<V> {
+public abstract class AbstractHashTable<K,V> extends AbstractRADT<V> implements IHashTable<K,V> {
 
     // ---------------------------------------------------
     // Fields.

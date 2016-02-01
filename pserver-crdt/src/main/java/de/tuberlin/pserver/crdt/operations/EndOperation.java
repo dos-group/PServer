@@ -5,6 +5,6 @@ import de.tuberlin.pserver.crdt.CRDT;
 public class EndOperation extends SimpleOperation<Integer> {
 
     public EndOperation() {
-        super(Operation.END, 1);
+        super(OpType.END, 1);
     }
 }

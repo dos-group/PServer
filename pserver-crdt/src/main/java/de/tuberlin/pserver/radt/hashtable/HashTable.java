@@ -28,15 +28,18 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
     // Public Methods.
     // ---------------------------------------------------
 
+    @Override
     public void put(K key, V value) {
         int[] clock = increaseVectorClock();
         S4Vector s4 = new S4Vector(sessionID, nodeId, clock, 0);
 
         Slot<K,V> slot = localPut(key, value, s4, clock);
 
-        broadcast(new HashTableOperation<>(Operation.PUT, key, slot, clock, s4));
+
+        broadcast(new HashTableOperation<>(Operation.OpType.PUT, key, slot, clock, s4));
     }
 
+    @Override
     public V read(K key) {
         if(key == null) return null;
 
@@ -46,6 +49,7 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
         else return slot.getValue();
     }
 
+    @Override
     public boolean remove(K key) {
         Slot<K,V> slot = localRemove(key);
 
@@ -53,7 +57,7 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
             int[] clock = increaseVectorClock();
             S4Vector s4 = new S4Vector(sessionID, nodeId, clock, 0);
 
-            broadcast(new HashTableOperation<>(Operation.REMOVE, key, slot, clock, s4));
+            broadcast(new HashTableOperation<>(Operation.OpType.REMOVE, key, slot, clock, s4));
             return true;
         }
         else {
@@ -61,7 +65,7 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
         }
     }
 
-    // TODO: method should disable this in production mode (if ther is a large number of elements)
+    // TODO: method should disable this in production mode (if there is a large number of elements)
     @Override
     public String toString() {
         // TODO: show or not show tombstones
@@ -87,14 +91,14 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
         @SuppressWarnings("unchecked")
         HashTableOperation<K,Slot<K,V>> radtOp = (HashTableOperation<K,Slot<K,V>>) op;
 
-        if(radtOp.getType() == Operation.PUT) {
+        if(radtOp.getType() == Operation.OpType.PUT) {
             return remotePut(radtOp.getKey(), radtOp.getValue().getValue(), radtOp.getS4Vector());
         }
-        else if(radtOp.getType() == Operation.REMOVE) {
+        else if(radtOp.getType() == Operation.OpType.REMOVE) {
             return remoteRemove(radtOp.getKey(), radtOp.getS4Vector());
         }
         else {
-            throw new IllegalArgumentException("HashTable RADTs do not allow the " + op.getOperationType() + " operation.");
+            throw new IllegalArgumentException("HashTable RADTs do not allow the " + op.getType() + " operation.");
         }
     }
 

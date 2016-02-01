@@ -17,7 +17,7 @@ public abstract class AbstractCRDTMatrix<T> extends AbstractReplicatedMatrix<T> 
                     //Suppress the unchecked warning cause by generics cast from object to Operation<T>
                     @SuppressWarnings("unchecked")
                     Operation<?> op = (Operation<?>) value;
-                    if (op.getType() == Operation.END) {
+                    if (op.getType() == Operation.OpType.END) {
                         addFinishedNode(srcNodeID);
                     } else {
                         update(srcNodeID, op);

@@ -15,15 +15,13 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 
 // TODO: what about exceptions in general
-// TODO: what about when counters reach MAX_INT => exception or keep counting somehow?
 // TODO: what if someone uses the same id for two crdts?
 // TODO: what if only one node is running?
 // TODO: maybe use blocking queues for buffers
 // TODO: comments and documentation
 // TODO: improve the P2P discovery and termination
-// TODO: what if there is not one replica on every node? => pass number of replicas into constructor!?
 // TODO: change constructor to CRDT.newReplica(...) to reflect that it is replicas being dealt with?
-// TODO: Javadoc package descriptions
+// TODO: Timeout for "ready" p2p discovery?
 
 /**
  * <p>
@@ -45,7 +43,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  *
  * @param <T> the type of elements in this CRDT
  */
-public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataType {
+public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataType<T> {
 
     // ---------------------------------------------------
     // Fields.
@@ -63,9 +61,6 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
 
     protected final int nodeId;
 
-    // TODO: is programContext really necessary here?
-    private final ProgramContext programContext;
-
     protected final RuntimeManager runtimeManager;
 
     private final int noOfReplicas;
@@ -74,11 +69,15 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
 
     private volatile boolean allNodesFinished;
 
+    protected boolean isFinished;
+
+    protected Object lock = new Object();
+
+
+
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
-
-    // TODO: do I need the whole programContext if I only use the nodeId
 
     /** Sole constructor
      *
@@ -87,7 +86,7 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
      * */
     protected AbstractReplicatedDataType(String crdtId, int noOfReplicas, ProgramContext programContext) {
         // Threadsafe Sets
-        // TODO: performance depends on a good hash function and good size estimate (resizing is slow)
+        // Todo: Performance depends on a good hash function and good size estimate (resizing is slow)
         this.runningNodes = Collections.newSetFromMap(new ConcurrentHashMap<>());
         this.finishedNodes = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
@@ -95,12 +94,12 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
         this.noOfReplicas = noOfReplicas;
 
         this.runtimeManager = programContext.runtimeContext.runtimeManager;
-        this.programContext = programContext;
         this.crdtId = crdtId;
         this.nodeId = programContext.runtimeContext.nodeID;
 
         this.allNodesRunning = false;
         this.allNodesFinished = false;
+        this.isFinished = false;
 
         runtimeManager.addMsgEventListener("Running_" + crdtId, new MsgEventHandler() {
             @Override
@@ -109,17 +108,13 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
                 LOG.info("[" + nodeId + "|crdt '" + crdtId + "'] Number of running remote replicas: " + runningNodes.size() + "//"
                         + (noOfReplicas - 1));
 
-                if (runningNodes.size() == noOfReplicas - 1) {
+                if(runningNodes.size() == noOfReplicas -1) {
                     allNodesRunning = true;
                     runtimeManager.removeMsgEventListener("Running_" + crdtId, this);
+                }
 
-                    // This is necessary to reach replicas that were not online when the first "Running" message was sent
-                    // TODO: this is so ugly! (toPrimitive())
-                    runtimeManager.send("Running_" + crdtId, 0, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[0])));
-
-                    // TODO: Start the scheduler that periodically broadcasts operations
-                    // TODO: is this really a good idea? Will it not influence calculation results?
-                    // ScheduledThreadPoolExecutor
+                synchronized(AbstractReplicatedDataType.this) {
+                    AbstractReplicatedDataType.this.notifyAll();
                 }
             }
         });
@@ -140,14 +135,13 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
     // TODO: this is blocking if not all nodes start/finish...
     @Override
     public final void finish() {
+        isFinished = true;
 
-        if(!allNodesRunning) LOG.info("[" + nodeId + "|crdt '" + crdtId + "']" + " Waiting for all CRDTs to start");
-        while(!allNodesRunning) {
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        if(!allNodesRunning) {
+            //LOG.info("[" + nodeId + "|crdt '" + crdtId + "']" + " Waiting for all CRDTs to start");
+
+            // TODO: REMOVE THIS!!!
+            throw new RuntimeException("Not All The Nodes Are Running YET.");
         }
 
         System.out.println("[DEBUG] BufferB: " + buffer.size());
@@ -157,8 +151,11 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
         if(!allNodesFinished) LOG.info("[" + nodeId + "|crdt '" + crdtId + "']" + " Waiting for all CRDTs to finish");
         while(!allNodesFinished) {
             try {
-                Thread.sleep(50);
+                synchronized(this) {
+                    this.wait();
+                }
             } catch (InterruptedException e) {
+                // TODO: handle this exception
                 e.printStackTrace();
             }
         }
@@ -221,6 +218,25 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
     protected void ready() {
         // This needs to be sent to all nodes, as we do not know yet which ones will have replicas of the CRDT
         runtimeManager.send("Running_" + crdtId, 0, runtimeManager.getRemoteNodeIDs());
+        while(!allNodesRunning) {
+            synchronized(this) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    // TODO: handle error
+                    e.printStackTrace();
+                }
+            }
+        }
+
+
+        // This is necessary to reach replicas that were not online when the first "Running" message was sent
+        // TODO: this is so ugly! (toPrimitive())
+        runtimeManager.send("Running_" + crdtId, 0, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[runningNodes.size()])));
+
+        // TODO: Start the scheduler that periodically broadcasts operations
+        // TODO: is this really a good idea? Will it not influence calculation results?
+        // ScheduledThreadPoolExecutor
         //runningNodes.add(nodeId);
     }
 
@@ -233,7 +249,7 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
         Operation op = buffer.poll();
 
         while(op != null) {
-            runtimeManager.send("Operation_" + crdtId, op, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[0])));
+            runtimeManager.send("Operation_" + crdtId, op, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[runningNodes.size()])));
             sent = true;
             op = buffer.poll();
         }

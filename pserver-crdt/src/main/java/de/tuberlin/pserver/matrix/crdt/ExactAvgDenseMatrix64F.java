@@ -4,20 +4,15 @@ package de.tuberlin.pserver.matrix.crdt;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
-import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.math.matrix.dense.DenseMatrix64F;
 import de.tuberlin.pserver.math.operations.BinaryOperator;
 import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
 import de.tuberlin.pserver.math.operations.UnaryOperator;
 import de.tuberlin.pserver.math.tuples.Tuple3;
-import de.tuberlin.pserver.math.utils.Utils;
-import de.tuberlin.pserver.matrix.MatrixOperation;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Ideas:
@@ -28,7 +23,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * 4.
  */
 
-public class ExactAvgDenseMatrix64F extends AbstractCRDTMatrix implements Matrix64F, AvgMatrix {
+public class ExactAvgDenseMatrix64F extends AbstractCRDTMatrix implements Matrix64F, AvgMatrix64F {
     private final long rows;
     private final long cols;
     private DenseMatrix64F matrix;

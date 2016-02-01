@@ -25,10 +25,10 @@ public class USet<T> extends AbstractSet<T> {
     protected boolean update(int srcNodeId, Operation op) {
         SimpleOperation<T> sop = (SimpleOperation<T>)op;
 
-        if(sop.getType() == Operation.ADD) {
+        if(sop.getType() == Operation.OpType.ADD) {
             return addElement(sop.getValue());
         }
-        else if(sop.getType() == Operation.REMOVE) {
+        else if(sop.getType() == Operation.OpType.REMOVE) {
             return removeElement(sop.getValue());
         }
         else {
@@ -39,7 +39,7 @@ public class USet<T> extends AbstractSet<T> {
     @Override
     public boolean add(T value) {
         if(addElement(value)) {
-            broadcast(new SimpleOperation<>(Operation.ADD, value));
+            broadcast(new SimpleOperation<>(Operation.OpType.ADD, value));
             return true;
         }
         return false;
@@ -48,7 +48,7 @@ public class USet<T> extends AbstractSet<T> {
     @Override
     public boolean remove(T value) {
         if(removeElement(value)) {
-            broadcast(new SimpleOperation<>(Operation.REMOVE, value));
+            broadcast(new SimpleOperation<>(Operation.OpType.REMOVE, value));
             return true;
         }
         return false;

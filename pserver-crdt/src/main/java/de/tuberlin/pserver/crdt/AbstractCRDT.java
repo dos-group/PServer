@@ -45,7 +45,9 @@ import java.util.Set;
  *
  * @param <T> the type of elements in this CRDT
  */
-public abstract class AbstractCRDT<T> extends AbstractReplicatedDataType<T> implements CRDT {
+public abstract class AbstractCRDT<T> extends AbstractReplicatedDataType<T> implements CRDT<T> {
+    // TODO: this variable is just for tests
+
 
     // ---------------------------------------------------
     // Constructor.
@@ -64,13 +66,19 @@ public abstract class AbstractCRDT<T> extends AbstractReplicatedDataType<T> impl
             @Override
             public void handleMsg(int srcNodeID, Object value) {
                 if (value instanceof Operation) {
-                    //Suppress the unchecked warning cause by generics cast from object to Operation<T>
                     @SuppressWarnings("unchecked")
                     Operation<?> op = (Operation<?>) value;
-                    if (op.getType() == Operation.END) {
+                    //System.out.println("[" + nodeId + "]" + "received update " + op.getType() + ": " + op.getValue());
+                    if (op.getType() == Operation.OpType.END) {
+                        //System.out.println("[" + nodeId + "]" + " Received END token: " + op.getValue());
                         addFinishedNode(srcNodeID);
+                        synchronized (AbstractCRDT.this) {
+                            AbstractCRDT.this.notifyAll();
+                        }
                     } else {
+                        //if(isEnded) System.out.println("[" + nodeId + "]" + " Late submission: " + op.getValue());
                         update(srcNodeID, op);
+
                     }
                 }
             }

@@ -27,10 +27,10 @@ public class LWWSet<T> extends AbstractSet<T> {
     protected boolean update(int srcNodeId, Operation op) {
         TaggedOperation<T,Date> lwws = (TaggedOperation<T,Date>) op;
 
-        if(lwws.getType() == Operation.ADD) {
+        if(lwws.getType() == Operation.OpType.ADD) {
             return addElement(lwws.getValue(), lwws.getTag().getTime());
         }
-        else if(lwws.getType() == Operation.REMOVE) {
+        else if(lwws.getType() == Operation.OpType.REMOVE) {
             return removeElement(lwws.getValue(), lwws.getTag().getTime());
         }
         else {
@@ -42,7 +42,7 @@ public class LWWSet<T> extends AbstractSet<T> {
     public boolean add(T element) {
         Date time = Calendar.getInstance().getTime();
         if(addElement(element, time.getTime())) {
-            broadcast(new TaggedOperation<>(Operation.ADD, element, time));
+            broadcast(new TaggedOperation<>(Operation.OpType.ADD, element, time));
             return true;
         }
         return false;
@@ -52,7 +52,7 @@ public class LWWSet<T> extends AbstractSet<T> {
     public boolean remove(T element) {
         Date time = Calendar.getInstance().getTime();
         if(removeElement(element, time.getTime())) {
-            broadcast(new TaggedOperation<>(Operation.REMOVE, element, time));
+            broadcast(new TaggedOperation<>(Operation.OpType.REMOVE, element, time));
             return true;
         }
         return false;

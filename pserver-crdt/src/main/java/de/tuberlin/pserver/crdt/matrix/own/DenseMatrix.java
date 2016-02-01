@@ -38,10 +38,10 @@ public class DenseMatrix<T> extends AbstractMatrix<T> {
     protected boolean update(int srcNodeId, Operation<?> op) {
         TaggedOperation<Float, Coordinates> mop = (TaggedOperation<Float, Coordinates>) op;
 
-        if (mop.getType() == Operation.SET) {
+        if (mop.getType() == Operation.OpType.SET) {
             return setValue(mop.getTag().getRow(), mop.getTag().getCol(), mop.getValue());
         } else {
-            throw new IllegalArgumentException("GCounter CRDTs do not allow the " + op.getOperationType() + " operation.");
+            throw new IllegalArgumentException("GCounter CRDTs do not allow the " + op.getType() + " operation.");
         }
     }
 
@@ -56,7 +56,7 @@ public class DenseMatrix<T> extends AbstractMatrix<T> {
 
     public boolean set(final long row, final long col, final float value) {
         if(setValue(row, col, value)) {
-            broadcast(new TaggedOperation<>(Operation.SET, value, new Coordinates(row, col) ));
+            broadcast(new TaggedOperation<>(Operation.OpType.SET, value, new Coordinates(row, col) ));
             return true;
         }
         return false;

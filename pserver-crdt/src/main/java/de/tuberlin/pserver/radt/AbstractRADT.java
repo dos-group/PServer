@@ -52,7 +52,7 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
                     @SuppressWarnings("unchecked")
                     Operation op = (Operation) value;
 
-                    if(op.getType() == Operation.END) {
+                    if(op.getType() == Operation.OpType.END) {
                         addFinishedNode(srcNodeID);
                     } else {
                         @SuppressWarnings("unchecked")

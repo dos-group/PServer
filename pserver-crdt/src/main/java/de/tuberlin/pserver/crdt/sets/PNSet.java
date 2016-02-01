@@ -29,10 +29,10 @@ public class PNSet<T> extends AbstractSet<T> {
     protected boolean update(int srcNodeId, Operation op) {
         SimpleOperation<T> sop = (SimpleOperation<T>) op;
 
-        if(sop.getType() == Operation.ADD) {
+        if(sop.getType() == Operation.OpType.ADD) {
             return addElement(sop.getValue());
         }
-        else if(sop.getType() == Operation.REMOVE) {
+        else if(sop.getType() == Operation.OpType.REMOVE) {
             return removeElement(sop.getValue());
         }
         else {
@@ -43,7 +43,7 @@ public class PNSet<T> extends AbstractSet<T> {
     @Override
     public boolean add(T element) {
         if(addElement(element)) {
-            broadcast(new SimpleOperation<T>(Operation.ADD, element));
+            broadcast(new SimpleOperation<T>(Operation.OpType.ADD, element));
             return true;
         }
         return false;
@@ -52,7 +52,7 @@ public class PNSet<T> extends AbstractSet<T> {
     @Override
     public boolean remove(T element) {
         if(removeElement(element)) {
-            broadcast(new SimpleOperation<T>(Operation.REMOVE, element));
+            broadcast(new SimpleOperation<T>(Operation.OpType.REMOVE, element));
             return true;
         }
         return false;

@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.matrix.crdt;
 
 
-import de.tuberlin.pserver.crdt.operations.EndOperation;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix64F;
@@ -10,13 +9,7 @@ import de.tuberlin.pserver.math.operations.BinaryOperator;
 import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
 import de.tuberlin.pserver.math.operations.UnaryOperator;
-import de.tuberlin.pserver.math.tuples.Tuple3;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Ideas:
@@ -25,7 +18,7 @@ import java.util.Map;
  * 2. Always use a+b/2, that way the new value gets a lot of weight :)
  */
 
-public class NoCountAvgDenseMatrix64F extends AbstractCRDTMatrix implements Matrix64F, AvgMatrix {
+public class NoCountAvgDenseMatrix64F extends AbstractCRDTMatrix implements Matrix64F, AvgMatrix64F {
     private final long rows;
     private final long cols;
     private DenseMatrix64F matrix;

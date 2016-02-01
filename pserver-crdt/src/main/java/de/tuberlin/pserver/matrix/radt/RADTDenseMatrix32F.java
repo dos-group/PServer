@@ -74,7 +74,7 @@ public class RADTDenseMatrix32F<T> extends AbstractRADTMatrix<T> implements Matr
             case TRANSPOSE:
                 return remoteTranspose();
             default:
-                throw new IllegalArgumentException("GCounter CRDTs do not allow the " + op.getOperationType() + " operation.");
+                throw new IllegalArgumentException("GCounter CRDTs do not allow the " + ((MatrixOperation<Float>) op).getOpType() + " operation.");
         }
 
     }

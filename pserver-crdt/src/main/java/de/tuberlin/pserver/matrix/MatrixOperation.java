@@ -39,16 +39,10 @@ public class MatrixOperation<T> implements Operation{
         return col;
     }
 
-    // TODO: this isn't really functional, just a remnant from implementing Operation
-    @Override
-    public String getOperationType() {
-        return opType.toString();
-    }
-
     // TODO: this isn't functional, just a remnanat
     @Override
-    public int getType() {
-        return 0;
+    public OpType getType() {
+        return null;
     }
 
     public T getValue() {

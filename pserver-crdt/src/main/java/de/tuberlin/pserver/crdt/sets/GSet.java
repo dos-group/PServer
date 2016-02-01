@@ -22,7 +22,7 @@ public class GSet<T> extends AbstractSet<T> {
     protected boolean update(int srcNodeId, Operation op) {
         SimpleOperation<T> sop = (SimpleOperation<T>)op;
 
-        if(sop.getType() == Operation.ADD) {
+        if(sop.getType() == Operation.OpType.ADD) {
             return addElement(sop.getValue());
         }
         else {
@@ -34,7 +34,7 @@ public class GSet<T> extends AbstractSet<T> {
     @Override
     public boolean add(T element) {
         if(addElement(element)) {
-            broadcast(new SimpleOperation<>(Operation.ADD, element));
+            broadcast(new SimpleOperation<>(Operation.OpType.ADD, element));
             return true;
         }
         return false;
@@ -43,7 +43,7 @@ public class GSet<T> extends AbstractSet<T> {
     @Override
     public boolean remove(T element) {
         if(removeElement(element)) {
-            broadcast(new SimpleOperation<>(Operation.REMOVE, element));
+            broadcast(new SimpleOperation<>(Operation.OpType.REMOVE, element));
             return true;
         }
         return false;

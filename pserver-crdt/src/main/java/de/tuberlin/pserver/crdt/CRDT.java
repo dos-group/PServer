@@ -14,6 +14,6 @@ import de.tuberlin.pserver.crdt.operations.Operation;
  * </p>
  */
 
-public interface CRDT {
+public interface CRDT<T> {
 
 }

@@ -25,7 +25,7 @@ public class AverageMix<T> extends AbstractMix<T> {
         }
         else {
             // TODO: exception text
-            throw new IllegalArgumentException("HashTable RADTs do not allow the " + op.getOperationType() + " operation.");
+            throw new IllegalArgumentException("HashTable RADTs do not allow the " + op.getType() + " operation.");
         }
     }
 

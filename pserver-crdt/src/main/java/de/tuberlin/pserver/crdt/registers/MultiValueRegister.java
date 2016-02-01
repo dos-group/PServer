@@ -29,7 +29,7 @@ import java.util.Set;
             // TODO: is there a way to avoid this cast? It is on a critical path
             TaggedOperation<T,Date> rop = (TaggedOperation<T,Date>) op;
 
-            if(rop.getType() == Operation.WRITE) {
+            if(rop.getType() == Operation.OpType.WRITE) {
                 if(rop.getTag().getTime() > this.time) {
                     return setRegister(rop.getValue(), rop.getTag().getTime());
                 }
@@ -50,12 +50,12 @@ import java.util.Set;
             long t = Calendar.getInstance().getTimeInMillis();
             if(t > this.time) {
                 setRegister(element, t);
-                broadcast(new TaggedOperation<>(Operation.WRITE, element, new Date(t)));
+                broadcast(new TaggedOperation<>(Operation.OpType.WRITE, element, new Date(t)));
                 return true;
             }
             else if(t == this.time) {
                 appendToRegister(element);
-                broadcast(new TaggedOperation<>(Operation.WRITE, element, new Date(t)));
+                broadcast(new TaggedOperation<>(Operation.OpType.WRITE, element, new Date(t)));
                 return true;
             }
 

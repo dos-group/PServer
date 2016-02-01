@@ -4,18 +4,18 @@ import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.matrix.radt.S3Vector;
 
 // Todo: don't really want to implement Operation...
-public class MatrixAvgOperation<T> implements Operation{
+public class MatrixAvgOperation<T> implements Operation {
     public enum MatrixOpType {
         AVERAGE
     }
 
-    private final double sessionID;
+    private final T sessionID;
     private final long row;
     private final long col;
     private final T value;
     private final MatrixOpType opType;
 
-    public MatrixAvgOperation(T value, long row, long col, MatrixOpType opType, double sessionID) {
+    public MatrixAvgOperation(T value, long row, long col, MatrixOpType opType, T sessionID) {
         this.row = row;
         this.col = col;
         this.value = value;
@@ -23,7 +23,7 @@ public class MatrixAvgOperation<T> implements Operation{
         this.sessionID = sessionID;
     }
 
-    public double getSessionID() {
+    public T getSessionID() {
         return sessionID;
     }
 
@@ -35,16 +35,10 @@ public class MatrixAvgOperation<T> implements Operation{
         return col;
     }
 
-    // TODO: this isn't really functional, just a remnant from implementing Operation
-    @Override
-    public String getOperationType() {
-        return opType.toString();
-    }
-
     // TODO: this isn't functional, just a remnanat
     @Override
-    public int getType() {
-        return 0;
+    public OpType getType() {
+        return null;
     }
 
     public T getValue() {

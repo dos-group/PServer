@@ -84,7 +84,7 @@ public class LogisticRegressionTest extends Program {
     @Unit
     public void unit(Lifecycle lifecycle) {
 
-        lifecycle.process(() -> {
+        /*lifecycle.process(() -> {
             W = new ExactAvgDenseMatrix64F(1, 3, "weights", Integer.parseInt(NUM_NODES), programContext);
 
             final Scorer zeroOneLoss = new Scorer(
@@ -137,7 +137,7 @@ public class LogisticRegressionTest extends Program {
                     + accuracy.score(XTest, yTest, W));
 
             result(W);
-        });
+        });*/
     }
 
     // ---------------------------------------------------

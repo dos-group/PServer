@@ -64,7 +64,7 @@ public abstract class AbstractMix<T> extends AbstractReplicatedDataType<T> imple
                     @SuppressWarnings("unchecked")
                     Operation op = (Operation) value;
 
-                    if(op.getType() == Operation.END) {
+                    if(op.getType() == Operation.OpType.END) {
                         addFinishedNode(srcNodeID);
                     } else {
                         @SuppressWarnings("unchecked")

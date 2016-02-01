@@ -60,7 +60,7 @@ public class SimpleCounterTest {
         @Unit(at = "0")
         public void test(Lifecycle lifecycle) {
             lifecycle.process(() -> {
-                SimpleCounter gc = new SimpleCounter("counter", 2, programContext);
+                SimpleCounter gc = SimpleCounter.newReplica("counter", 2, programContext);
                 assertEquals("An initialized SimpleCounter should have count 0", 0L, gc.getCount());
                 gc.finish();
             });
@@ -69,7 +69,7 @@ public class SimpleCounterTest {
         @Unit(at = "1")
         public void test2(Lifecycle lifecycle) {
             lifecycle.process(() -> {
-                SimpleCounter gc = new SimpleCounter("counter", 2, programContext);
+                SimpleCounter gc = SimpleCounter.newReplica("counter", 2, programContext);
                 assertEquals("An initialized SimpleCounter should have count 0", 0L, gc.getCount());
                 gc.finish();
             });
@@ -87,7 +87,7 @@ public class SimpleCounterTest {
         @Unit(at = "0")
         public void test(Lifecycle lifecycle) {
             lifecycle.process(() -> {
-                SimpleCounter gc = new SimpleCounter("counter", 2, programContext);
+                SimpleCounter gc = SimpleCounter.newReplica("counter", 2, programContext);
                 gc.increment(10);
                 assertEquals("Increment should increase the counter", 10, gc.getCount());
                 gc.finish();
@@ -97,7 +97,7 @@ public class SimpleCounterTest {
         @Unit(at = "1")
         public void test2(Lifecycle lifecycle) {
             lifecycle.process(() -> {
-                SimpleCounter gc = new SimpleCounter("counter", 2, programContext);
+                SimpleCounter gc = SimpleCounter.newReplica("counter", 2, programContext);
                 gc.increment(10);
                 assertEquals("Increment should increase the counter", 10, gc.getCount());
                 gc.finish();
@@ -115,7 +115,7 @@ public class SimpleCounterTest {
         @Unit(at = "0")
         public void test(Lifecycle lifecycle) {
             lifecycle.process(() -> {
-                SimpleCounter gc = new SimpleCounter("counter", 2, programContext);
+                SimpleCounter gc = SimpleCounter.newReplica("counter", 2, programContext);
                 gc.decrement(10);
                 assertEquals("Decrement should decrease the counter", -10L, gc.getCount());
                 gc.finish();
@@ -125,7 +125,7 @@ public class SimpleCounterTest {
         @Unit(at = "1")
         public void test2(Lifecycle lifecycle) {
             lifecycle.process(() -> {
-                SimpleCounter gc = new SimpleCounter("counter", 2, programContext);
+                SimpleCounter gc = SimpleCounter.newReplica("counter", 2, programContext);
                 gc.decrement(10);
                 assertEquals("Decrement should decrease the counter", -10L, gc.getCount());
                 gc.finish();
@@ -143,7 +143,7 @@ public class SimpleCounterTest {
         @Unit(at = "0")
         public void test(Lifecycle lifecycle) {
             lifecycle.process(() -> {
-                SimpleCounter gc = new SimpleCounter("counter", 2, programContext);
+                SimpleCounter gc = SimpleCounter.newReplica("counter", 2, programContext);
                 gc.increment(10);
                 gc.finish();
                 assertEquals("Increment should increase the counter", 10, gc.getCount());
@@ -153,7 +153,7 @@ public class SimpleCounterTest {
         @Unit(at = "1")
         public void test2(Lifecycle lifecycle) {
             lifecycle.process(() -> {
-                SimpleCounter gc = new SimpleCounter("counter", 2, programContext);
+                SimpleCounter gc = SimpleCounter.newReplica("counter", 2, programContext);
                 gc.finish();
                 assertEquals("Counter should have received and applied broadcast increment", 10, gc.getCount());
             });
@@ -170,7 +170,7 @@ public class SimpleCounterTest {
         @Unit(at = "0")
         public void test(Lifecycle lifecycle) {
             lifecycle.process(() -> {
-                SimpleCounter gc = new SimpleCounter("counter", 2, programContext);
+                SimpleCounter gc = SimpleCounter.newReplica("counter", 2, programContext);
                 gc.decrement(10);
                 gc.finish();
                 assertEquals("Decrement should decrease the counter", -10, gc.getCount());
@@ -180,7 +180,7 @@ public class SimpleCounterTest {
         @Unit(at = "1")
         public void test2(Lifecycle lifecycle) {
             lifecycle.process(() -> {
-                SimpleCounter gc = new SimpleCounter("counter", 2, programContext);
+                SimpleCounter gc = SimpleCounter.newReplica("counter", 2, programContext);
                 gc.finish();
                 assertEquals("Counter should have received and applied broadcast decrement", -10, gc.getCount());
             });

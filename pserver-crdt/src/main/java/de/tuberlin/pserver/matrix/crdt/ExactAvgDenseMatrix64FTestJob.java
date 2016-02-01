@@ -11,9 +11,9 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public class ExactAvgDenseMatrix64FTestJob extends Program {
-    private final long ROWS = 10;
-    private final long COLS = 10;
-    private final String NUM_NODES = "2";
+    private static final long ROWS = 10;
+    private static final long COLS = 10;
+    private static final String NUM_NODES = "2";
 
     @Unit(at = "0")
     public void test(Lifecycle lifecycle) {
@@ -27,7 +27,7 @@ public class ExactAvgDenseMatrix64FTestJob extends Program {
                 }
             }
 
-            System.out.println("[DEBUG] Node " + programContext.runtimeContext.nodeID + " Matrix 1: ");
+            System.out.println("[DEBUG] Node " + programContext.runtimeContext.nodeID + " Intermediate Matrix 1: ");
             for(int i = 0; i < m.rows(); i++) {
                 System.out.println();
                 for(int k = 0; k < m.cols(); k++) {
@@ -45,7 +45,7 @@ public class ExactAvgDenseMatrix64FTestJob extends Program {
 
             m.finish();
 
-            System.out.println("[DEBUG] Node " + programContext.runtimeContext.nodeID + " Matrix 1: ");
+            System.out.println("[DEBUG] Node " + programContext.runtimeContext.nodeID + " Final Matrix 1: ");
             for (int i = 0; i < m.rows(); i++) {
                 System.out.println();
                 for (int k = 0; k < m.cols(); k++) {
@@ -72,7 +72,7 @@ public class ExactAvgDenseMatrix64FTestJob extends Program {
                 }
             }
 
-            System.out.println("[DEBUG] Node " + programContext.runtimeContext.nodeID + " Matrix 1: ");
+            System.out.println("[DEBUG] Node " + programContext.runtimeContext.nodeID + " Intermediate Matrix 1: ");
             for(int i = 0; i < m.rows(); i++) {
                 System.out.println();
                 for(int k = 0; k < m.cols(); k++) {
@@ -101,7 +101,7 @@ public class ExactAvgDenseMatrix64FTestJob extends Program {
 
             m.finish();
 
-            System.out.println("[DEBUG] Node " + programContext.runtimeContext.nodeID + " Matrix 1: ");
+            System.out.println("[DEBUG] Node " + programContext.runtimeContext.nodeID + " Final Matrix 1: ");
             for(int i = 0; i < m.rows(); i++) {
                 System.out.println();
                 for(int k = 0; k < m.cols(); k++) {
@@ -117,8 +117,7 @@ public class ExactAvgDenseMatrix64FTestJob extends Program {
         });
     }
 
-    @Test
-    public void main() {
+    public static void main(String[] args) {
 
         // Set the number of simulated nodes, can also be
         // configured via 'pserver/pserver-core/src/main/resources/reference.simulation.conf'

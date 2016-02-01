@@ -29,7 +29,7 @@ public class LWWRegister<T extends Comparable> extends AbstractRegister<T> imple
         // TODO: is there a way to avoid this cast? It is on a critical path
         TaggedOperation<T,Date> rop = (TaggedOperation<T, Date>) op;
 
-        if(rop.getType() == Operation.WRITE) {
+        if(rop.getType() == Operation.OpType.WRITE) {
             return setRegister(rop.getValue(), rop.getTag().getTime());
         }
         else {
@@ -61,7 +61,7 @@ public class LWWRegister<T extends Comparable> extends AbstractRegister<T> imple
     @Override
     public boolean set(T element) {
         if(setRegister(element, Calendar.getInstance().getTimeInMillis())) {
-            broadcast(new TaggedOperation<>(Operation.WRITE, element, new Date(time)));
+            broadcast(new TaggedOperation<>(Operation.OpType.WRITE, element, new Date(time)));
             return true;
         }
         return false;

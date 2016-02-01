@@ -53,7 +53,7 @@ public abstract class AbstractCRDTMatrix<T> extends AbstractReplicatedDataType<T
                     @SuppressWarnings("unchecked")
                     Operation op = (Operation) value;
 
-                    if(op.getType() == Operation.END) {
+                    if(op.getType() == Operation.OpType.END) {
                         addFinishedNode(srcNodeID);
                     } else {
                         //System.out.println("[DEBUG:" + nodeId + "] Received: " + op.getValue());

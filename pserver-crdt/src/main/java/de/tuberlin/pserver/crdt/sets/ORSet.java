@@ -24,10 +24,10 @@ public class ORSet<T> extends AbstractSet<T> {
     protected boolean update(int srcNodeId, Operation op) {
         TaggedOperation<T,UUID> sop = (TaggedOperation<T,UUID>) op;
 
-        if(op.getType() == Operation.ADD) {
+        if(op.getType() == Operation.OpType.ADD) {
             return addElement(sop.getValue(), sop.getTag());
         }
-        else if(op.getType() == Operation.REMOVE) {
+        else if(op.getType() == Operation.OpType.REMOVE) {
             return removeElement(sop.getValue(), sop.getTag());
         }
         else {
@@ -40,7 +40,7 @@ public class ORSet<T> extends AbstractSet<T> {
         UUID id = UUID.randomUUID();
 
         if(addElement(value, id)) {
-            broadcast(new TaggedOperation<>(Operation.ADD, value, id));
+            broadcast(new TaggedOperation<>(Operation.OpType.ADD, value, id));
             return true;
         }
         return false;
@@ -51,7 +51,7 @@ public class ORSet<T> extends AbstractSet<T> {
         UUID id = getId(value);
 
         if(removeElement(value, id)) {
-            broadcast(new TaggedOperation<>(Operation.REMOVE, value, id));
+            broadcast(new TaggedOperation<>(Operation.OpType.REMOVE, value, id));
             return true;
         }
         return false;
