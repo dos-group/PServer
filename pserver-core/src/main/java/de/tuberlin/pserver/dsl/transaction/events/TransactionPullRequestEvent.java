@@ -1,8 +1,6 @@
 package de.tuberlin.pserver.dsl.transaction.events;
 
 
-import com.google.common.base.Preconditions;
-
 import java.util.List;
 
 public class TransactionPullRequestEvent extends TransactionEvent {
@@ -27,6 +25,7 @@ public class TransactionPullRequestEvent extends TransactionEvent {
     // Constructors.
     // ---------------------------------------------------
 
+    public TransactionPullRequestEvent() { this(null, null, null, false); }
     public TransactionPullRequestEvent(final String transactionName,
                                        final List<String> stateObjectNames,
                                        final Object requestObject,
@@ -34,7 +33,7 @@ public class TransactionPullRequestEvent extends TransactionEvent {
 
         super(TRANSACTION_REQUEST + transactionName);
 
-        this.stateObjectNames = Preconditions.checkNotNull(stateObjectNames);
+        this.stateObjectNames = stateObjectNames;
 
         this.requestObject = requestObject;
 

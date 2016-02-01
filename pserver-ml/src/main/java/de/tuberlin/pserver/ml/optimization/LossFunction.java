@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.ml.optimization;
 
 import de.tuberlin.pserver.math.matrix.Matrix32F;
-import de.tuberlin.pserver.runtime.state.MatrixBuilder;
+import de.tuberlin.pserver.runtime.state.matrix.MatrixBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +29,6 @@ public interface LossFunction {
         public final PredictionFunction predictionFunction;
 
         public final PartialLossFunction partialLossFunction;
-
 
         public GenericLossFunction(final PredictionFunction predictionFunction,
                                    final PartialLossFunction lossFunction,
@@ -61,41 +60,33 @@ public interface LossFunction {
             return sumLoss + regularizationFunction.regularize(W, lambda);
         }
 
+        Matrix32F gradient = null;
+
         @Override
         public Matrix32F gradient(final Matrix32F X, final Matrix32F y, final Matrix32F W,
                                final float lambda, final boolean newtonMethod) {
 
-            Matrix32F.RowIterator XIterator = X.rowIterator();
-            Matrix32F.RowIterator yIterator = y.rowIterator();
+            if (gradient == null)
+                gradient = new MatrixBuilder().dimension(1, X.cols()).build();
+            else
+                gradient.assign(0f);
 
-            Matrix32F gradient = new MatrixBuilder().dimension(1, X.cols()).build();
+            //Matrix32F.RowIterator XIterator = X.rowIterator();
+            //Matrix32F.RowIterator yIterator = y.rowIterator();
 
-            while (XIterator.hasNext()) {
+            //while (XIterator.hasNext()) {
 
-                Matrix32F derivative = partialLossFunction.derivative(XIterator.get(),
-                        (float)yIterator.get().get(0), predictionFunction.predict(X, W));
+                Matrix32F derivative = partialLossFunction.derivative(X, y.get(0), predictionFunction.predict(X, W));
 
                 gradient.add(derivative, gradient);
 
-                XIterator.next();
-                yIterator.next();
-            }
+                //XIterator.next();
+                //yIterator.next();
+            //}
 
             if (newtonMethod) {
-
-                XIterator.reset();
-                yIterator.reset();
-
-                /*
-                if (newtonMethod) {
-                    Matrix32F hessian = partialLossFunction.hessian(X, y, predictionFunction.predict(X, W));
-                    double hessianRegularization = regularizationFunction.regularizeHessian(W, lambda);
-
-                    return (hessian.applyOnElements(e -> e + hessianRegularizer)).invert().dot(derivative.add(regularizer));
-                } else {
-                    return derivative.add(regularizer);
-                }
-                */
+                //XIterator.reset();
+                //yIterator.reset();
             }
 
             gradient.add(regularizationFunction.regularizeDerivative(W, lambda), gradient);

@@ -1,27 +1,21 @@
 package de.tuberlin.pserver.examples.experiments.glove;
 
 import de.tuberlin.pserver.client.PServerExecutor;
-import de.tuberlin.pserver.commons.compression.Compressor;
-import de.tuberlin.pserver.commons.serialization.ObjectSerializer;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
-import de.tuberlin.pserver.dsl.transaction.phases.GenericApply;
-import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
+import de.tuberlin.pserver.dsl.transaction.annotations.TransactionType;
 import de.tuberlin.pserver.dsl.transaction.phases.Update;
-import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
-import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
+import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
 import org.apache.commons.lang3.mutable.MutableDouble;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Random;
 
@@ -42,28 +36,11 @@ public final class GloVe extends Program {
     // 1072146 ms (Local: 4 Nodes with 8 Threads per Node) - 32F - 17.86min => Optimized Math!
 
     // 1318430
-    
-    // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    /*private static final int        ROWS = 50;
-
-    private static final int        COLS = 36073;
-
-    private static final double     ALPHA = 0.75;
-
-    private static final int        X_MAX = 10;
-
-    private static final double     LEARNING_RATE = 0.05;
-
-    private static final int        NUM_EPOCHS = 15;
-
-    private static final String     INPUT_DATA = "/input/reddit/cooccmat_mincount_15_windowsize_15";*/
 
     // ---------------------------------------------------
+    // Large Experiment
 
-    private static final long       ROWS = 20;
+    /*private static final long       ROWS = 20;
 
     private static final long       COLS = 3717689;
 
@@ -75,13 +52,34 @@ public final class GloVe extends Program {
 
     private static final int        NUM_EPOCHS = 10;
 
-    private static final String     INPUT_DATA = "/input/reddit/cooccmat_mincount_15_windowsize_15";
+    private static final String     INPUT_DATA = "/input/reddit/cooccmat_mincount_15_windowsize_15"*/
+
+
+    // ---------------------------------------------------
+    // Constants.
+    // ---------------------------------------------------
+
+    private static final String NUM_NODES = "2";
+
+    private static final int        ROWS = 50;
+
+    private static final int        COLS = 36073;
+
+    private static final double     ALPHA = 0.75;
+
+    private static final int        X_MAX = 10;
+
+    private static final double     LEARNING_RATE = 0.05;
+
+    private static final int        NUM_EPOCHS = 15;
+
+    private static final String     INPUT_DATA = "datasets/text8_coocc.csv";
 
     // ---------------------------------------------------
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.PARTITIONED, rows = COLS, cols = COLS /*, path = INPUT_DATA*/, format = Format.SPARSE_FORMAT)
+    @State(scope = Scope.PARTITIONED, rows = COLS, cols = COLS ,path = INPUT_DATA, fileFormat = FileFormat.SVM_FORMAT)
     public Matrix32F X;
 
     @State(scope = Scope.REPLICATED, rows = ROWS, cols = COLS * 2)
@@ -100,28 +98,23 @@ public final class GloVe extends Program {
     // Transactions.
     // ---------------------------------------------------
 
-    /*@Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PUSH)
+    @Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PULL)
     public final TransactionDefinition sync = new TransactionDefinition(
 
             (Update<Matrix32F>) (remoteUpdates, localState) -> {
                 for (final Matrix32F update : remoteUpdates)
                     Parallel.For(update, (i, j, v) -> localState.set(i, j, (localState.get(i, j) + update.get(i, j)) / 2));
             }
-    );*/
+    );
 
-    private ObjectSerializer serializer = ObjectSerializer.Factory.create(ObjectSerializer.SerializerType.KRYO_SERIALIZER);
-
+    /*private ObjectSerializer serializer = ObjectSerializer.Factory.create(ObjectSerializer.SerializerType.KRYO_SERIALIZER);
     private Compressor compressor = Compressor.Factory.create(Compressor.CompressionType.LZ4_COMPRESSION);
-
     @Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PUSH)
     public final TransactionDefinition sync = new TransactionDefinition(
-
             (Prepare<Matrix32F, Pair<Integer, byte[]>>) (remoteMatrix) -> {
                 final byte[] serializedObj = serializer.serialize(remoteMatrix);
                 return Pair.of(serializedObj.length, compressor.compress(serializedObj));
-            }
-            ,
-
+            },
             (GenericApply<Pair<Integer, byte[]>,Matrix32F,Matrix32F>) (remoteUpdates, localState) -> {
                 for (final Pair<Integer, byte[]> update : remoteUpdates) {
                     final Matrix32F updateMtx = serializer.deserialize(compressor.decompress(update.getRight(), update.getLeft()), DenseMatrix32F.class);
@@ -129,7 +122,7 @@ public final class GloVe extends Program {
                 }
                 return null;
             }
-    );
+    );*/
 
     // ---------------------------------------------------
     // Units.
@@ -148,53 +141,53 @@ public final class GloVe extends Program {
 
         }).process(() ->
 
-            UnitMng.loop(NUM_EPOCHS, (e0) -> {
+                        UnitMng.loop(NUM_EPOCHS, (e0) -> {
 
-                final MutableDouble costI = new MutableDouble(0.0);
+                            final MutableDouble costI = new MutableDouble(0.0);
 
-                LOG.info("Epoch = " + e0 + " at Node " + programContext.nodeID);
+                            LOG.info("Epoch = " + e0 + " at Node " + programContext.nodeID);
 
-                atomic(state(W, B, GradSq, GradSqB), () -> {
-                    Parallel.For(X, (wordVecIdx, j, v) -> {
-                        if (v == 0) return;
+                            atomic(state(W, B, GradSq, GradSqB), () -> {
+                                Parallel.For(X, (wordVecIdx, j, v) -> {
+                                    if (v == 0) return;
 
-                        final long ctxVecIdx = j + COLS;
-                        final Matrix32F w1  = W.getCol(wordVecIdx);
-                        final float     b1  = B.get(wordVecIdx);
-                        final Matrix32F gs1 = GradSq.getCol(wordVecIdx);
-                        final Matrix32F w2  = W.getCol(ctxVecIdx);
-                        final float     b2  = B.get(ctxVecIdx);
-                        final Matrix32F gs2 = GradSq.getCol(ctxVecIdx);
+                                    final long ctxVecIdx = j + COLS;
+                                    final Matrix32F w1  = W.getCol(wordVecIdx);
+                                    final float     b1  = B.get(wordVecIdx);
+                                    final Matrix32F gs1 = GradSq.getCol(wordVecIdx);
+                                    final Matrix32F w2  = W.getCol(ctxVecIdx);
+                                    final float     b2  = B.get(ctxVecIdx);
+                                    final Matrix32F gs2 = GradSq.getCol(ctxVecIdx);
 
-                        final float diff = w1.dot(w2) + b1 + b2 - (float) Math.log(v);
-                        float fdiff = (v > X_MAX) ? diff : (float) Math.pow(v / X_MAX, ALPHA) * diff;
+                                    final float diff = w1.dot(w2) + b1 + b2 - (float) Math.log(v);
+                                    float fdiff = (v > X_MAX) ? diff : (float) Math.pow(v / X_MAX, ALPHA) * diff;
 
-                        costI.add(0.5 * diff * fdiff);
+                                    costI.add(0.5 * diff * fdiff);
 
-                        fdiff *= LEARNING_RATE;
+                                    fdiff *= LEARNING_RATE;
 
-                        final Matrix32F grad1 = w2.scale(fdiff);
-                        final Matrix32F grad2 = w1.scale(fdiff);
+                                    final Matrix32F grad1 = w2.scale(fdiff);
+                                    final Matrix32F grad2 = w1.scale(fdiff);
 
-                        W.assignColumn(wordVecIdx, w1.sub(grad1.applyOnElements(gs1, (el1, el2) -> (el1 / (float) Math.sqrt(el2)))));
-                        W.assignColumn(ctxVecIdx, w2.sub(grad2.applyOnElements(gs2, (el1, el2) -> (el1 / (float) Math.sqrt(el2)))));
+                                    W.assignColumn(wordVecIdx, w1.sub(grad1.applyOnElements(gs1, (el1, el2) -> (el1 / (float) Math.sqrt(el2)))));
+                                    W.assignColumn(ctxVecIdx, w2.sub(grad2.applyOnElements(gs2, (el1, el2) -> (el1 / (float) Math.sqrt(el2)))));
 
-                        B.set(0, wordVecIdx, (float) (b1 - fdiff / Math.sqrt(GradSqB.get(0, wordVecIdx))));
-                        B.set(0, ctxVecIdx, (float) (b2 - fdiff / Math.sqrt(GradSqB.get(0, ctxVecIdx))));
+                                    B.set(0, wordVecIdx, (float) (b1 - fdiff / Math.sqrt(GradSqB.get(0, wordVecIdx))));
+                                    B.set(0, ctxVecIdx, (float) (b2 - fdiff / Math.sqrt(GradSqB.get(0, ctxVecIdx))));
 
-                        gs1.assign(gs1.applyOnElements(grad1, (el1, el2) -> el1 + el2 * el2));
-                        gs2.assign(gs2.applyOnElements(grad2, (el1, el2) -> el1 + el2 * el2));
+                                    gs1.assign(gs1.applyOnElements(grad1, (el1, el2) -> el1 + el2 * el2));
+                                    gs2.assign(gs2.applyOnElements(grad2, (el1, el2) -> el1 + el2 * el2));
 
-                        GradSq.assignColumn(wordVecIdx, gs1);
-                        GradSq.assignColumn(ctxVecIdx, gs2);
+                                    GradSq.assignColumn(wordVecIdx, gs1);
+                                    GradSq.assignColumn(ctxVecIdx, gs2);
 
-                        GradSqB.set(0, wordVecIdx, GradSqB.get(0, wordVecIdx) + fdiff * fdiff);
-                        GradSqB.set(0, ctxVecIdx, GradSqB.get(0, ctxVecIdx) + fdiff * fdiff);
-                    });
-                });
+                                    GradSqB.set(0, wordVecIdx, GradSqB.get(0, wordVecIdx) + fdiff * fdiff);
+                                    GradSqB.set(0, ctxVecIdx, GradSqB.get(0, ctxVecIdx) + fdiff * fdiff);
+                                });
+                            });
 
-                TransactionMng.commit(sync);
-            })
+                            TransactionMng.commit(sync);
+                        })
         );
     }
 
@@ -204,63 +197,15 @@ public final class GloVe extends Program {
 
     public static void main(final String[] args) {
 
-        //PServerExecutor.LOCAL
-        //        .run(GloVe.class)
-        //       .done();
+        System.setProperty("simulation.numNodes", NUM_NODES);
+
+        PServerExecutor.LOCAL
+                .run(GloVe.class)
+                .done();
 
         //System.setProperty("pserver.profile", "wally");
         //PServerExecutor.REMOTE
         //        .run(GloVe.class)
         //        .done();
-
-        final int size_mb = 1;
-
-        final int num_elements = (int)(1048576.0 * size_mb / Double.BYTES);
-
-        final double[] model = new double[num_elements];
-
-
-
-        final Random rand = new Random(42);
-
-        for (int i = 0; i < num_elements; ++i) {
-            model[i] = rand.nextGaussian() * Double.MAX_VALUE;
-        }
-
-
-
-        final ObjectSerializer serializer = ObjectSerializer.Factory.create(ObjectSerializer.SerializerType.KRYO_SERIALIZER);
-
-        final Compressor compressor = Compressor.Factory.create(Compressor.CompressionType.LZ4_COMPRESSION);
-
-
-
-        final int num_of_runs = 5;
-
-        for (int i = 0; i < num_of_runs; ++i) {
-
-            final long start = System.currentTimeMillis();
-
-            final byte[] serialized_model = serializer.serialize(model);
-
-            final byte[] compressed_model = compressor.compress(serialized_model);
-
-            final long stop = System.currentTimeMillis();
-
-            if (i == num_of_runs - 1) {
-
-                final long uncompressed_size = model.length * Double.BYTES;
-
-                final long compressed_size = compressed_model.length / Double.BYTES;
-
-                System.out.println("time: " + ((stop - start) / 1000));
-
-                System.out.println("uncompressed: " + uncompressed_size);
-
-                System.out.println("compressed:   " + compressed_size);
-
-                System.out.println("ratio:        " + ((uncompressed_size / compressed_size) * 100.0) + "%");
-            }
-        }
     }
 }

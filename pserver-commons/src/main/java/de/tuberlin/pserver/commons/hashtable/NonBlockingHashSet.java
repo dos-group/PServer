@@ -35,6 +35,7 @@ public class NonBlockingHashSet<E> extends AbstractSet<E> implements Serializabl
   /** Add {@code o} to the set.  
    * @return any old match for {@code o} if it was already in the set, or {@code o} otherwise.
    */
+  @SuppressWarnings("unchecked")
   public E addIfAbsent( final E o ) { return (E)_map.putIfAbsent(o,V); }
 
  /** 
@@ -45,7 +46,8 @@ public class NonBlockingHashSet<E> extends AbstractSet<E> implements Serializabl
  /** 
    * @return Returns the match for {@code o} if {@code o} is in the set.
    */
-  public E get( final E o ) { return (E)_map.get(o); }
+ @SuppressWarnings("unchecked")
+ public E get( final E o ) { return (E)_map.get(o); }
 
   /** Remove {@code o} from the set.  
    * @return <tt>true</tt> if {@code o} was removed to the set, <tt>false</tt>
@@ -62,7 +64,8 @@ public class NonBlockingHashSet<E> extends AbstractSet<E> implements Serializabl
   /** Empty the set. */
   public void    clear      (                    ) { _map.clear(); }
 
-  public Iterator<E>iterator(                    ) { return _map.keySet().iterator(); }
+    @SuppressWarnings("unchecked")
+    public Iterator<E>iterator(                    ) { return _map.keySet().iterator(); }
 
   // ---
 

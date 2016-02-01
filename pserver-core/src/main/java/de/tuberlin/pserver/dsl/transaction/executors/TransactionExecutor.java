@@ -2,7 +2,7 @@ package de.tuberlin.pserver.dsl.transaction.executors;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
-import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
+import de.tuberlin.pserver.dsl.transaction.annotations.TransactionType;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 
 import java.util.List;
@@ -41,6 +41,10 @@ public abstract class TransactionExecutor {
     public abstract void bind() throws Exception;
 
     public abstract List<Object> execute(final Object requestObject) throws Exception;
+
+    public abstract Object[] getSrcObjects();
+
+    public abstract Object[] getDstObjects();
 
     // ---------------------------------------------------
     // Factory.

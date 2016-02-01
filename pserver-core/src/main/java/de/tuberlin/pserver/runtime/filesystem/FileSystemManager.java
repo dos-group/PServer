@@ -1,9 +1,9 @@
 package de.tuberlin.pserver.runtime.filesystem;
 
+import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.common.Deactivatable;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
+import de.tuberlin.pserver.runtime.filesystem.records.Record;
 
 public interface FileSystemManager extends Deactivatable {
 
@@ -19,10 +19,9 @@ public interface FileSystemManager extends Deactivatable {
 
     public abstract void computeInputSplitsForRegisteredFiles();
 
-    public abstract <T extends IRecord> FileDataIterator<T> createFileIterator(
-                            final String filePath,
-                            final IRecordIteratorProducer recordFormat,
-                            final IMatrixPartitioner partitioner);
+    public abstract <T extends Record> FileDataIterator<T> createFileIterator(
+            final ProgramContext programContext,
+            final StateDescriptor stateDescriptor);
 
     public abstract void clearContext();
 }

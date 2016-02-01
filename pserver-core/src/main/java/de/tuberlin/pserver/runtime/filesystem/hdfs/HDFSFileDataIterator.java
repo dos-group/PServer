@@ -3,14 +3,14 @@ package de.tuberlin.pserver.runtime.filesystem.hdfs;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.core.config.IConfig;
-import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSection;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
+import de.tuberlin.pserver.runtime.filesystem.records.Record;
 
 import java.io.IOException;
 
-public class HDFSFileDataIterator implements FileDataIterator<IRecord> {
+public class HDFSFileDataIterator implements FileDataIterator<Record> {
 
     // ---------------------------------------------------
     // Fields.
@@ -86,10 +86,12 @@ public class HDFSFileDataIterator implements FileDataIterator<IRecord> {
     }
 
     @Override
-    public IRecord next() {
+    public Record next() {
         try {
-            return inputFile.nextRecord(null);
-        } catch(IOException e) {
+            //return inputFile.nextRecord(null);
+            return inputFile.nextRecord();
+        }
+        catch(IOException e) {
             throw new IllegalStateException(e);
         }
     }

@@ -7,8 +7,8 @@ import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.runtime.core.net.NetManager;
+import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.driver.ProgramDriver;
 import de.tuberlin.pserver.runtime.events.ProgramFailureEvent;
 import de.tuberlin.pserver.runtime.events.ProgramResultEvent;
@@ -57,13 +57,9 @@ public final class PServerNode extends EventDispatcher {
 
     @Override
     public void deactivate() {
-
         runtimeManager.deactivate();
-
         netManager.deactivate();
-
         infraManager.deactivate();
-
         super.deactivate();
     }
 
@@ -90,7 +86,7 @@ public final class PServerNode extends EventDispatcher {
 
                         ParallelRuntime.INSTANCE.addPrimaryThread(netManager.getDispatcherThread().getId());
 
-                        driver.run();
+                        driver.executeProgram();
 
                         final List<Serializable> results = instance.programContext.getResults();
 
@@ -101,7 +97,7 @@ public final class PServerNode extends EventDispatcher {
                                 results
                         );
 
-                        netManager.sendEvent(programSubmission.clientMachine, jre);
+                        netManager.dispatchEventAt(programSubmission.clientMachine, jre);
 
                     } catch (Throwable ex) {
 
@@ -114,7 +110,7 @@ public final class PServerNode extends EventDispatcher {
                                 ExceptionUtils.getStackTrace(ex)
                         );
 
-                        netManager.sendEvent(programSubmission.clientMachine, jfe);
+                        netManager.dispatchEventAt(programSubmission.clientMachine, jfe);
 
                     } finally {
 

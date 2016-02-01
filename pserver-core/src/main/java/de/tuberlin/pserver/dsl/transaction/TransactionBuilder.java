@@ -4,7 +4,7 @@ package de.tuberlin.pserver.dsl.transaction;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.utils.ParseUtils;
 import de.tuberlin.pserver.compiler.TransactionDescriptor;
-import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
+import de.tuberlin.pserver.dsl.transaction.annotations.TransactionType;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 public final class TransactionBuilder {
@@ -17,7 +17,9 @@ public final class TransactionBuilder {
 
     // ---------------------------------------------------
 
-    public String stateObjectNames;
+    public String srcStateObjectNames;
+
+    public String dstStateObjectNames;
 
     public TransactionType type;
 
@@ -25,14 +27,14 @@ public final class TransactionBuilder {
 
     public boolean cache;
 
+    public long observerPeriod;
+
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
     public TransactionBuilder(final ProgramContext programContext) {
-
         this.programContext = Preconditions.checkNotNull(programContext);
-
         clear();
     }
 
@@ -40,7 +42,7 @@ public final class TransactionBuilder {
     // Public Methods.
     // ---------------------------------------------------
 
-    public TransactionBuilder state(final String stateObjectNames) { this.stateObjectNames = stateObjectNames; return this; }
+    public TransactionBuilder state(final String stateObjectNames) { this.srcStateObjectNames = stateObjectNames; return this; }
 
     public TransactionBuilder type(final TransactionType type) { this.type = type; return this; }
 
@@ -48,15 +50,19 @@ public final class TransactionBuilder {
 
     public TransactionBuilder cache(final boolean cache) { this.cache = cache; return this; }
 
+    public TransactionBuilder observerPeriod(final long observerPeriod) { this.observerPeriod = observerPeriod; return this; }
+
     // ---------------------------------------------------
 
     public TransactionDefinition build(final String transactionName, final TransactionDefinition definition) {
         final TransactionDescriptor descriptor = new TransactionDescriptor(
                 transactionName,
-                ParseUtils.parseStateList(stateObjectNames),
+                ParseUtils.parseStateList(srcStateObjectNames),
+                ParseUtils.parseStateList(dstStateObjectNames),
                 definition,
                 type,
                 cache,
+                observerPeriod,
                 programContext.nodeID,
                 programContext.programTable
         );
@@ -66,7 +72,8 @@ public final class TransactionBuilder {
     // ---------------------------------------------------
 
     public void clear() {
-        this.stateObjectNames = "";
+        this.srcStateObjectNames = "";
+        this.dstStateObjectNames = "";
         this.type = TransactionType.PUSH;
         this.at = "";
         this.cache = false;

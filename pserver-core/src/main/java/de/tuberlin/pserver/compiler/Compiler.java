@@ -2,6 +2,7 @@ package de.tuberlin.pserver.compiler;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.dsl.state.annotations.GlobalObject;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
@@ -12,8 +13,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.IntStream;
 
 public final class Compiler {
@@ -44,6 +43,7 @@ public final class Compiler {
 
     public ProgramTable compile(final Program instance, final int nodeDOP) throws Exception {
         analyzeUnits(nodeDOP);
+        analyzeGlobalObjects();
         analyzeState();
         analyzeTransactions(instance);
         return programTable;
@@ -89,6 +89,22 @@ public final class Compiler {
                     );
                     semanticCheck(state);
                     programTable.addState(state);
+                }
+            }
+        }
+    }
+
+    private void analyzeGlobalObjects() {
+        for (final Field field : programClass.getDeclaredFields()) {
+            for (final Annotation an : field.getDeclaredAnnotations()) {
+                if (an instanceof GlobalObject) {
+                    final GlobalObject globalObjectProperties = (GlobalObject) an;
+                    final GlobalObjectDescriptor globalObject = GlobalObjectDescriptor.fromAnnotatedField(
+                            globalObjectProperties,
+                            field,
+                            IntStream.iterate(0, x -> x + 1).limit(runtimeContext.numOfNodes).toArray()
+                    );
+                    programTable.addGlobalObject(globalObject);
                 }
             }
         }

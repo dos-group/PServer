@@ -17,7 +17,8 @@
 
 package de.tuberlin.pserver.commons.kdtree;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * A RangeSearchTree is a spatial data structure that supports the

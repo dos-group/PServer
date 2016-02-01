@@ -2,6 +2,7 @@ package de.tuberlin.pserver.ml.optimization;
 
 
 import de.tuberlin.pserver.math.matrix.Matrix32F;
+import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
 
 public interface RegularizationFunction {
 
@@ -23,7 +24,7 @@ public interface RegularizationFunction {
 
         @Override
         public Matrix32F regularizeDerivative(final Matrix32F W, final float lambda) {
-            Matrix32F regularization = W.scale(lambda);
+            Matrix32F regularization = ((DenseMatrix32F)W).fastScaleNew(lambda);
             // do not regularize intercept
             regularization.set(0, 0, lambda);
             return regularization;

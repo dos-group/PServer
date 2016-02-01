@@ -4,8 +4,9 @@ import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.LoopTermination;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
+import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
 import de.tuberlin.pserver.ml.optimization.*;
-import de.tuberlin.pserver.runtime.state.MatrixBuilder;
+import de.tuberlin.pserver.runtime.state.matrix.MatrixBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,7 +103,7 @@ public class GDOptimizer implements Optimizer, LoopTermination {
 
         UnitMng.loop(this, syncMode, (epoch) -> {
 
-            Matrix32F gradient = new MatrixBuilder().dimension(1, X.cols()).build();
+            DenseMatrix32F gradient = new MatrixBuilder().dimension(1, X.cols()).build();
 
             Matrix32F batchX = new MatrixBuilder().dimension(batchSize, X.cols()).build();
 
@@ -117,37 +118,40 @@ public class GDOptimizer implements Optimizer, LoopTermination {
 
                     for (int sample = 0; sample < batchSize; ++sample) {
 
-                        if (shuffle) {
+                        if (shuffle)
                             XIterator.nextRandom();
-                        } else {
+                        else
                             XIterator.next();
-                        }
 
                         batchX.assignRow(sample, XIterator.get());
                         batchY.assignRow(sample, y.getRow(XIterator.rowNum()));
                     }
 
-                    gradient = lossFunction.gradient(batchX, batchY, W, regularization, newtonMethod);
+                    gradient = (DenseMatrix32F) lossFunction.gradient(batchX, batchY, W, regularization, newtonMethod);
+
                 } else {
 
-                    if (shuffle) {
+                    if (shuffle)
                         XIterator.nextRandom();
-                    } else {
+                    else
                         XIterator.next();
-                    }
 
-                    gradient = lossFunction.gradient(XIterator.get(), y.getRow(XIterator.rowNum()),
-                            W, regularization, newtonMethod);
+                    gradient = (DenseMatrix32F) lossFunction.gradient(
+                            XIterator.get(),
+                            y.getRow(XIterator.rowNum()),
+                            W,
+                            regularization,
+                            newtonMethod
+                    );
                 }
 
                 if (!newtonMethod) {
-                    gradient.scale(learningRate, gradient);
+                    //gradient.scale(learningRate, gradient);
+                    gradient.fastScale(learningRate);
                 }
 
                 W.sub(gradient, W);
             }
-
-            LOG.info("Objective[" + epoch + "]: " + lossFunction.loss(X, y, W, regularization));
 
             if (epoch >= maxIterations - 1) {
                 converged = true;

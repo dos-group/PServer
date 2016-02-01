@@ -1,16 +1,16 @@
 package de.tuberlin.pserver.runtime.filesystem;
 
-import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
+import de.tuberlin.pserver.runtime.filesystem.records.Record;
 
 import java.util.Iterator;
 
-public interface FileDataIterator<T extends IRecord> extends Iterator<T> {
+public interface FileDataIterator<T extends Record> extends Iterator<T> {
 
-    public abstract void initialize();
+    void initialize();
 
-    public abstract void reset();
+    void reset();
 
-    public abstract String getFilePath();
+    String getFilePath();
 
-    public abstract FileSection getFileSection();
+    FileSection getFileSection();
 }

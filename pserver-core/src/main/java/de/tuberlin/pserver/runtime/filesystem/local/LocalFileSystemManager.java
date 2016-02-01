@@ -1,16 +1,17 @@
 package de.tuberlin.pserver.runtime.filesystem.local;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.runtime.core.net.NetEvents;
-import de.tuberlin.pserver.runtime.core.net.NetManager;
+import de.tuberlin.pserver.runtime.core.network.NetEvent;
+import de.tuberlin.pserver.runtime.core.network.NetManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
+import de.tuberlin.pserver.runtime.filesystem.records.Record;
+import de.tuberlin.pserver.runtime.state.matrix.partitioner.MatrixPartitioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,27 +36,21 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
     private final Map<String,ILocalInputFile<?>> inputFileMap;
 
-    private final Map<String,List<FileDataIterator<? extends IRecord>>> registeredIteratorMap;
+    private final Map<String,List<FileDataIterator<? extends Record>>> registeredIteratorMap;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
     public LocalFileSystemManager(final InfrastructureManager infraManager, final NetManager netManager) {
-
         this.infraManager = Preconditions.checkNotNull(infraManager);
-
         this.netManager = Preconditions.checkNotNull(netManager);
-
         this.inputFileMap = new HashMap<>();
-
         this.registeredIteratorMap = new HashMap<>();
     }
 
     public void clearContext() {
-
         this.inputFileMap.clear();
-
         this.registeredIteratorMap.clear();
     }
 
@@ -69,18 +64,18 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T extends IRecord> FileDataIterator<T> createFileIterator(final String filePath,
-                                                                      final IRecordIteratorProducer recordFormat,
-                                                                      final IMatrixPartitioner partitioner) {
+    public <T extends Record> FileDataIterator<T> createFileIterator(final ProgramContext programContext,
+                                                                     final StateDescriptor stateDescriptor) {
 
-        ILocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(filePath));
+        ILocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(stateDescriptor.path));
         if (inputFile == null) {
-            inputFile = new LocalInputFile(filePath, recordFormat, partitioner);
-            inputFileMap.put(filePath, inputFile);
-            registeredIteratorMap.put(filePath, new ArrayList<>());
+            MatrixPartitioner partitioner = StateDescriptor.createMatrixPartitioner(programContext, stateDescriptor);
+            inputFile = new LocalInputFile(stateDescriptor.path, stateDescriptor.fileFormat, partitioner);
+            inputFileMap.put(stateDescriptor.path, inputFile);
+            registeredIteratorMap.put(stateDescriptor.path, new ArrayList<>());
         }
         final FileDataIterator<T> fileIterator = (FileDataIterator<T>)inputFile.iterator();
-        registeredIteratorMap.get(filePath).add(fileIterator);
+        registeredIteratorMap.get(stateDescriptor.path).add(fileIterator);
         return fileIterator;
     }
 
@@ -110,18 +105,18 @@ public final class LocalFileSystemManager implements FileSystemManager {
                 (k, v) -> v.forEach(FileDataIterator::initialize)
         );
 
-        netManager.broadcastEvent(new NetEvents.NetEvent(PSERVER_LFSM_COMPUTED_FILE_SPLITS, true));
+        netManager.broadcastEvent(new NetEvent(PSERVER_LFSM_COMPUTED_FILE_SPLITS, true));
 
         LOG.debug("["+infraManager.getNodeID()+"] Finished computing local input splits");
 
         while(splitComputationLatch.getCount() > 0) {
-            LOG.debug("["+infraManager.getNodeID()+"] Waiting for other stateObjectNodes to finish computing input splits");
+            LOG.debug("["+infraManager.getNodeID()+"] Waiting for other srcStateObjectNodes to finish computing input splits");
             try {
                 splitComputationLatch.await(1000, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {}
         }
 
-        LOG.debug("["+infraManager.getNodeID()+"] All stateObjectNodes finished computing local input splits");
+        LOG.debug("["+infraManager.getNodeID()+"] All srcStateObjectNodes finished computing local input splits");
 
         netManager.removeEventListener(PSERVER_LFSM_COMPUTED_FILE_SPLITS, handler); // TODO: This can lead to a deadlock!
     }

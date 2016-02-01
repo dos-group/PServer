@@ -1,15 +1,14 @@
 package de.tuberlin.pserver.runtime.events;
 
 
-import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import de.tuberlin.pserver.commons.json.GsonUtils;
-import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.runtime.core.net.NetEvents;
+import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.network.NetEvent;
 
 import java.util.UUID;
 
-public final class ProgramFailureEvent extends NetEvents.NetEvent {
+public final class ProgramFailureEvent extends NetEvent {
 
     // ---------------------------------------------------
     // Constants.
@@ -42,6 +41,7 @@ public final class ProgramFailureEvent extends NetEvents.NetEvent {
     // Constructors.
     // ---------------------------------------------------
 
+    public ProgramFailureEvent() { this(null, null, -1, -1, null, null); }
     public ProgramFailureEvent(final MachineDescriptor machine,
                                final UUID programID,
                                final int nodeID,
@@ -51,11 +51,11 @@ public final class ProgramFailureEvent extends NetEvents.NetEvent {
 
         super(PSERVER_FAILURE_JOB_EVENT);
 
-        this.machine        = Preconditions.checkNotNull(machine);
-        this.programID      = Preconditions.checkNotNull(programID);
+        this.machine        = machine;
+        this.programID      = programID;
         this.nodeID         = nodeID;
         this.slotID         = slotID;
-        this.programName    = Preconditions.checkNotNull(programName);
+        this.programName    = programName;
         this.stackTrace     = exceptionMessage;
     }
 

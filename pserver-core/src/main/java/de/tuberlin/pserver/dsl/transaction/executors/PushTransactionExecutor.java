@@ -6,10 +6,12 @@ import de.tuberlin.pserver.dsl.transaction.events.TransactionPushRequestEvent;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.RuntimeContext;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PushTransactionExecutor extends TransactionExecutor {
 
@@ -19,7 +21,9 @@ public class PushTransactionExecutor extends TransactionExecutor {
 
     public final TransactionDefinition transactionDefinition;
 
-    private final SharedObject[] localStateObjects;
+    private final SharedObject[] srcStateObjects;
+
+    private final SharedObject[] dstStateObjects;
 
     // ---------------------------------------------------
     // Constructors.
@@ -29,14 +33,12 @@ public class PushTransactionExecutor extends TransactionExecutor {
                                    final TransactionController controller) {
 
         super(runtimeContext, controller);
-
         this.transactionDefinition = controller.getTransactionDescriptor().definition;
-
-        final int numStateObjects = controller.getTransactionDescriptor().stateObjectNames.size();
-
-        this.localStateObjects = new SharedObject[numStateObjects];
-
-        register();
+        final int numSrcStateObjects = controller.getTransactionDescriptor().stateSrcObjectNames.size();
+        this.srcStateObjects = new SharedObject[numSrcStateObjects];
+        final int numDstStateObjects = controller.getTransactionDescriptor().stateDstObjectNames.size();
+        this.dstStateObjects = new SharedObject[numDstStateObjects];
+        registerPushTransactionRequest();
     }
 
     // ---------------------------------------------------
@@ -44,37 +46,64 @@ public class PushTransactionExecutor extends TransactionExecutor {
     // ---------------------------------------------------
 
     @Override
+    public Object[] getSrcObjects() { return srcStateObjects; }
+
+    @Override
+    public Object[] getDstObjects() { return dstStateObjects; }
+
+    @Override
     public void bind() throws Exception {
-
         int i = 0;
-
-        for (final String stateObjectName : controller.getTransactionDescriptor().stateObjectNames) {
-            localStateObjects[i++] = runtimeContext.runtimeManager.getDHT(stateObjectName);
+        for (final String srcStateObjectName : controller.getTransactionDescriptor().stateSrcObjectNames) {
+            if (ArrayUtils.contains(controller.getTransactionDescriptor().srcStateObjectNodes, runtimeContext.nodeID)) {
+                SharedObject srcObj = runtimeContext.runtimeManager.getDHT(srcStateObjectName);
+                srcStateObjects[i++] = srcObj;
+            }
+        }
+        i = 0;
+        for (final String dstStateObjectName : controller.getTransactionDescriptor().stateDstObjectNames) {
+            if (ArrayUtils.contains(controller.getTransactionDescriptor().dstStateObjectNodes, runtimeContext.nodeID)) {
+                dstStateObjects[i++] = runtimeContext.runtimeManager.getDHT(dstStateObjectName);
+            }
         }
     }
 
     @Override
     public synchronized List<Object> execute(final Object requestObject) throws Exception {
 
-        final List<Object> preparedStateObjects = new ArrayList<>();
+        // --------------------------------------------------
 
-        for (int i = 0; i < controller.getTransactionDescriptor().stateObjectNames.size(); ++i) {
+        int[] txnDstNodes = ArrayUtils.removeElements(
+                controller.getTransactionDescriptor().dstStateObjectNodes,
+                runtimeContext.nodeID
+        );
 
-            localStateObjects[i].lock();
+        if (txnDstNodes.length == 0)
+            return null;
+
+        // --------------------------------------------------
+
+        //
+        // Apply prepare phase on src-state object.
+        //
+
+        final List<Object> preparedSrcStateObjects = new ArrayList<>();
+        for (int i = 0; i < controller.getTransactionDescriptor().stateSrcObjectNames.size(); ++i) {
+            srcStateObjects[i].lock();
             final Prepare preparePhase = transactionDefinition.preparePhase;
-            preparedStateObjects.add((preparePhase != null) ? preparePhase.prepare(localStateObjects[i]) : localStateObjects[i]);
-            localStateObjects[i].unlock();
+            preparedSrcStateObjects.add((preparePhase != null) ? preparePhase.prepare(srcStateObjects[i]) : srcStateObjects[i]);
+            srcStateObjects[i].unlock();
         }
 
         final TransactionPushRequestEvent request = new TransactionPushRequestEvent(
                 transactionName,
-                controller.getTransactionDescriptor().stateObjectNames,
-                preparedStateObjects,
+                controller.getTransactionDescriptor().stateDstObjectNames,
+                preparedSrcStateObjects,
                 requestObject,
                 controller.getTransactionDescriptor().cacheRequestObject
         );
 
-        runtimeContext.netManager.sendEvent(controller.getTransactionDescriptor().stateObjectNodes, request);
+        runtimeContext.netManager.dispatchEventAt(txnDstNodes, request);
 
         return null;
     }
@@ -83,28 +112,63 @@ public class PushTransactionExecutor extends TransactionExecutor {
     // Private Methods.
     // ---------------------------------------------------
 
-    private void register() {
-        runtimeContext.netManager.addEventListener(TransactionPushRequestEvent.TRANSACTION_REQUEST + transactionName, event -> {
+    private void registerPushTransactionRequest() {
+        // Register push request listener only at the associated destination nodes.
+        if (ArrayUtils.contains(controller.getTransactionDescriptor().dstStateObjectNodes, runtimeContext.nodeID)) {
 
-            try {
+            if (transactionDefinition.combinePhase != null) { // USE COMBINER -> synchronous
 
-                final TransactionPushRequestEvent request = (TransactionPushRequestEvent) event;
+                AtomicInteger requestIndex = new AtomicInteger(0);
+                int numRequests = controller.getTransactionDescriptor().srcStateObjectNodes.length - 1;
+                List<Object> srcStateObjects = new ArrayList<>(numRequests);
 
-                final List<Object> preparedStateObjects = request.stateObjectsValues;
+                runtimeContext.netManager.addEventListener(TransactionPushRequestEvent.TRANSACTION_REQUEST + transactionName, event -> {
+                    final TransactionPushRequestEvent request = (TransactionPushRequestEvent) event;
+                    srcStateObjects.addAll(request.srcStateObjectsValues);
+                    int requestCounter = requestIndex.incrementAndGet();
 
-                for (int i = 0; i < controller.getTransactionDescriptor().stateObjectNames.size(); ++i) {
+                    System.out.println("NODE [" + runtimeContext.nodeID + "] RECEIVED " + requestCounter + " PUSH REQUESTS.");
 
-                    localStateObjects[i].lock();
+                    if (requestCounter == numRequests) {
+                        new Thread(() -> {
+                            try {
+                                Object combinedSrcStateObject = transactionDefinition.combinePhase.combine(srcStateObjects);
+                                for (int i = 0; i < controller.getTransactionDescriptor().stateDstObjectNames.size(); ++i) {
+                                    dstStateObjects[i].lock();
+                                    transactionDefinition.applyPhase.apply(
+                                            Arrays.asList(combinedSrcStateObject),
+                                            dstStateObjects[i]
+                                    );
+                                    dstStateObjects[i].unlock();
+                                }
+                            } catch (Exception ex) {
+                                throw new IllegalStateException(ex);
+                            }
+                        }).start();
+                    }
+                });
 
-                    transactionDefinition.applyPhase.apply(Arrays.asList(preparedStateObjects.get(i)), localStateObjects[i]);
+            } else {
 
-                    localStateObjects[i].unlock();
-                }
-
-            } catch (Exception ex) {
-
-                throw new IllegalStateException(ex);
+                runtimeContext.netManager.addEventListener(TransactionPushRequestEvent.TRANSACTION_REQUEST + transactionName, event -> {
+                        final TransactionPushRequestEvent request = (TransactionPushRequestEvent) event;
+                        final List<Object> preparedSrcStateObjects = request.srcStateObjectsValues;
+                        new Thread(() -> {
+                            try {
+                                for (int i = 0; i < controller.getTransactionDescriptor().stateDstObjectNames.size(); ++i) {
+                                    dstStateObjects[i].lock();
+                                    transactionDefinition.applyPhase.apply(
+                                            Arrays.asList(preparedSrcStateObjects.get(i)),
+                                            dstStateObjects[i]
+                                    );
+                                    dstStateObjects[i].unlock();
+                                }
+                            } catch (Exception ex) {
+                                throw new IllegalStateException(ex);
+                            }
+                        }).start();
+                });
             }
-        });
+        }
     }
 }

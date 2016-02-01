@@ -1,17 +1,16 @@
 package de.tuberlin.pserver.runtime.events;
 
-import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import de.tuberlin.pserver.commons.json.GsonUtils;
-import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.runtime.core.net.NetEvents;
+import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.network.NetEvent;
 
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-public final class ProgramResultEvent extends NetEvents.NetEvent {
+public final class ProgramResultEvent extends NetEvent {
 
     // ---------------------------------------------------
     // Constants.
@@ -39,6 +38,7 @@ public final class ProgramResultEvent extends NetEvents.NetEvent {
     // Constructors.
     // ---------------------------------------------------
 
+    public ProgramResultEvent() { this(null, -1, null, null); }
     public ProgramResultEvent(final MachineDescriptor workerMachine,
                               final int nodeID,
                               final UUID programID,
@@ -46,9 +46,9 @@ public final class ProgramResultEvent extends NetEvents.NetEvent {
 
         super(PSERVER_JOB_RESULT_EVENT);
 
-        this.workerMachine  = Preconditions.checkNotNull(workerMachine);
+        this.workerMachine  = workerMachine;
         this.nodeID         = nodeID;
-        this.programID      = Preconditions.checkNotNull(programID);
+        this.programID      = programID;
         this.resultObjects  = resultObjects != null ? Collections.unmodifiableList(resultObjects) : null;
     }
 

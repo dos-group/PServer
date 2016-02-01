@@ -6,16 +6,14 @@ import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
-import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
+import de.tuberlin.pserver.dsl.transaction.annotations.TransactionType;
 import de.tuberlin.pserver.dsl.transaction.phases.Update;
-import de.tuberlin.pserver.dsl.transaction.properties.TransactionType;
-import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
-import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
+import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.ml.optimization.GradientDescent.GDOptimizer;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
@@ -32,10 +30,10 @@ public class LogisticRegressionCriteo extends Program {
 
     private static final String NUM_NODES = "1";
 
-    private static final String X_TRAIN_PATH = "/tbd/data_train";
-    private static final String Y_TRAIN_PATH = "/tbd/labels_train";
-    private static final String X_TEST_PATH  = "/tbd/data_test";
-    private static final String Y_TEST_PATH  = "/tbd/labels_test";
+    private static final String X_TRAIN_PATH = "datasets/data_train";
+    private static final String Y_TRAIN_PATH = "datasets/labels_train";
+    private static final String X_TEST_PATH  = "datasets/data_test";
+    private static final String Y_TEST_PATH  = "datasets/labels_test";
 
     private static final int N_TRAIN = 80000;
     private static final int N_TEST = 20000;
@@ -49,13 +47,13 @@ public class LogisticRegressionCriteo extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = D, path = X_TRAIN_PATH, format = Format.SPARSE_FORMAT)
+    @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = D, path = X_TRAIN_PATH, matrixFormat = MatrixFormat.SPARSE_FORMAT)
     public Matrix32F XTrain;
 
     @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = 1, path = Y_TRAIN_PATH)
     public Matrix32F yTrain;
 
-    @State(scope = Scope.REPLICATED, rows = N_TEST, cols = D, path = X_TEST_PATH, format = Format.SPARSE_FORMAT)
+    @State(scope = Scope.REPLICATED, rows = N_TEST, cols = D, path = X_TEST_PATH, matrixFormat = MatrixFormat.SPARSE_FORMAT)
     public Matrix32F XTest;
 
     @State(scope = Scope.REPLICATED, rows = N_TEST, cols = 1, path = Y_TEST_PATH)
@@ -92,6 +90,7 @@ public class LogisticRegressionCriteo extends Program {
 
         lifecycle.process(() -> {
 
+
             final Scorer zeroOneLoss = new Scorer(
                     new ScoreFunction.ZeroOneLoss(),
                     new PredictionFunction.LinearBinaryPrediction());
@@ -117,14 +116,14 @@ public class LogisticRegressionCriteo extends Program {
 
             optimizer.optimize(XTrain, yTrain, W);
 
-            System.out.println("Loss[" + programContext.nodeID +"]: "
+            /*System.out.println("Loss[" + programContext.nodeID +"]: "
                     + zeroOneLoss.score(XTest, yTest, W));
             System.out.println("Accuracy[" + programContext.nodeID +"]: "
-                    + accuracy.score(XTest, yTest, W));
+                    + accuracy.score(XTest, yTest, W));*/
 
         }).postProcess(() -> {
 
-            UnitMng.barrier(UnitMng.GLOBAL_BARRIER);
+            /*UnitMng.barrier(UnitMng.GLOBAL_BARRIER);
 
             TransactionMng.commit(syncW);
 
@@ -141,12 +140,12 @@ public class LogisticRegressionCriteo extends Program {
             System.out.println("Accuracy merged[" + programContext.nodeID +"]: "
                     + accuracy.score(XTest, yTest, W));
 
-            result(W);
+            result(W);*/
         });
     }
 
     // ---------------------------------------------------
-    // Entry Point.
+    // EntryImpl Point.
     // ---------------------------------------------------
 
     public static void main(final String[] args) { local(); }

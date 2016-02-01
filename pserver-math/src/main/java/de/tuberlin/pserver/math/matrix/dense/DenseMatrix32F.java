@@ -3,12 +3,14 @@ package de.tuberlin.pserver.math.matrix.dense;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix32F;
+import de.tuberlin.pserver.math.matrix.sparse.SparseMatrix32F;
 import de.tuberlin.pserver.math.operations.BinaryOperator;
 import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.operations.MatrixElementUnaryOperator;
 import de.tuberlin.pserver.math.operations.UnaryOperator;
 import de.tuberlin.pserver.math.utils.Utils;
 
+import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -19,10 +21,8 @@ public class DenseMatrix32F implements Matrix32F {
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
-
-    //private static final Logger LOG = LoggerFactory.getLogger(DMatrix.class);
-
-    private float[] data;
+    
+    public float[] data;
 
     private long rows;
 
@@ -301,8 +301,9 @@ public class DenseMatrix32F implements Matrix32F {
 
     @Override
     public Matrix32F assign(final Float v) {
-        for (int i = 0; i < rows * cols; ++i)
-            data[i] = v;
+        //for (int i = 0; i < rows * cols; ++i)
+        //    data[i] = v;
+        Arrays.fill(data, v);
         return this;
     }
 
@@ -386,8 +387,25 @@ public class DenseMatrix32F implements Matrix32F {
 
     @Override
     public Matrix32F add(final Matrix<Float> B, final Matrix<Float> C) {
-        Utils.checkShapeEqual(this, B, C);
-        return this.applyOnElements(B, (x, y) -> x + y, C);
+        //Utils.checkShapeEqual(this, B, C);
+        //return this.applyOnElements(B, (x, y) -> x + y, C);
+        if (B.getClass() == DenseMatrix32F.class && C.getClass() == DenseMatrix32F.class) {
+            DenseMatrix32F b = (DenseMatrix32F) B;
+            DenseMatrix32F c = (DenseMatrix32F) C;
+            for (int i = 0; i < data.length; ++i) {
+                c.data[i] = data[i] + b.data[i];
+            }
+        }
+        if (B.getClass() == SparseMatrix32F.class && C.getClass() == DenseMatrix32F.class) {
+            SparseMatrix32F b = (SparseMatrix32F) B;
+            DenseMatrix32F c = (DenseMatrix32F) C;
+            b.data.forEachEntry((k,v) -> {
+                c.data[(int)k] = data[(int)k] + v;
+                return true;
+            });
+            //applyOnElements(B, (x, y) -> x + y, C);
+        }
+        return this;
     }
 
     @Override
@@ -431,8 +449,23 @@ public class DenseMatrix32F implements Matrix32F {
 
     @Override
     public Matrix32F sub(final Matrix<Float> B, final Matrix<Float> C) {
-        Utils.checkShapeEqual(this, B, C);
-        return this.applyOnElements(B, (x, y) -> x - y, C);
+        if (B.getClass() == DenseMatrix32F.class && C.getClass() == DenseMatrix32F.class) {
+            DenseMatrix32F b = (DenseMatrix32F) B;
+            DenseMatrix32F c = (DenseMatrix32F) C;
+            for (int i = 0; i < data.length; ++i) {
+                c.data[i] = data[i] - b.data[i];
+            }
+        }
+        if (B.getClass() == SparseMatrix32F.class && C.getClass() == DenseMatrix32F.class) {
+            SparseMatrix32F b = (SparseMatrix32F) B;
+            DenseMatrix32F c = (DenseMatrix32F) C;
+            b.data.forEachEntry((k,v) -> {
+                c.data[(int)k] = data[(int)k] - v;
+                return true;
+            });
+            //applyOnElements(B, (x, y) -> x + y, C);
+        }
+        return this;
     }
 
     // ----------------------------------------
@@ -462,9 +495,29 @@ public class DenseMatrix32F implements Matrix32F {
 
     @Override
     public Matrix32F scale(final Float a, final Matrix<Float> B) {
-        Utils.checkShapeEqual(this, B);
-        return applyOnElements(x -> a * x, B);
+        //Utils.checkShapeEqual(this, B);
+        //return applyOnElements(x -> a * x, B);
+        for (int i = 0; i < data.length; ++i)
+            data[i] = data[i] * a;
+        return this;
     }
+
+    public void fastScale(float a) {
+        for (int i = 0; i < data.length; ++i)
+            data[i] = data[i] * a;
+    }
+
+    public DenseMatrix32F fastScaleNew(float a) {
+
+        float[] c = Arrays.copyOf(data, data.length);
+
+        for (int i = 0; i < data.length; ++i)
+            c[i] = data[i] * a;
+
+        return new DenseMatrix32F(rows, cols, c);
+    }
+
+
 
     // ----------------------------------------
 
@@ -520,8 +573,17 @@ public class DenseMatrix32F implements Matrix32F {
         //Preconditions.checkArgument(B.layout() == Layout.ROW_LAYOUT);
         //Preconditions.checkArgument(B.rows() == 1);
         //Preconditions.checkArgument(cols == B.cols());
-        for (int i = 0; i < cols * rows; i++) {
-            result += this.get(i) * B.get(i);
+
+        if (B.getClass() == DenseMatrix32F.class) {
+            DenseMatrix32F b = (DenseMatrix32F) B;
+            for (int i = 0; i < cols * rows; i++) {
+                result += this.data[i] * b.data[i];
+            }
+        }
+        if (B.getClass() == SparseMatrix32F.class) {
+            for (int i = 0; i < cols * rows; i++) {
+                result += this.data[i] * B.get(i);
+            }
         }
         //}
         /*else if(this.layout == Layout.COLUMN_LAYOUT) {

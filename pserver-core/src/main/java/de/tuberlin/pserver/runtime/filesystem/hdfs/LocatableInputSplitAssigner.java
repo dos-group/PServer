@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.runtime.filesystem.hdfs;
 
-import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

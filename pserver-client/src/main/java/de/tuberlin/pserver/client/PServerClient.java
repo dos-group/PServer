@@ -2,13 +2,14 @@ package de.tuberlin.pserver.client;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.compiler.Program;
+import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.runtime.core.config.IConfig;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
-import de.tuberlin.pserver.runtime.core.infra.MachineDescriptor;
-import de.tuberlin.pserver.runtime.core.net.NetManager;
+import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
+import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.core.usercode.UserCodeManager;
 import de.tuberlin.pserver.runtime.events.ProgramFailureEvent;
 import de.tuberlin.pserver.runtime.events.ProgramResultEvent;
@@ -114,7 +115,7 @@ public final class PServerClient extends EventDispatcher {
 
         final long start = System.nanoTime();
         final UUID jobUID = UUID.randomUUID();
-        final List<Pair<String, byte[]>> byteCode = userCodeManager.extractClass(jobClass);
+        final List<Tuple2<String, byte[]>> byteCode = userCodeManager.extractClass(jobClass);
         final ProgramSubmissionEvent jobSubmission = new ProgramSubmissionEvent(
                 machine,
                 jobUID,
@@ -125,7 +126,7 @@ public final class PServerClient extends EventDispatcher {
         activeJobs.put(jobUID, jobLatch);
         LOG.info("Submit Job '" + jobClass.getSimpleName() + "'.");
         infraManager.getMachines().forEach(md -> {
-            if (!md.equals(machine)) netManager.sendEvent(md, jobSubmission);
+            if (!md.equals(machine)) netManager.dispatchEventAt(md, jobSubmission);
         });
 
         try {
@@ -137,7 +138,6 @@ public final class PServerClient extends EventDispatcher {
         LOG.info("Job '" + jobClass.getSimpleName()
                 + "' [" + jobSubmission.programID +"] finished in "
                 + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms.");
-
 
         boolean programError = false;
         for (int i = 0; i < infraManager.getMachines().size(); ++i) {

@@ -1,7 +1,5 @@
 package de.tuberlin.pserver.runtime.core.events;
 
-import com.google.common.base.Preconditions;
-
 import java.io.Serializable;
 
 public class Event implements Serializable {
@@ -22,11 +20,12 @@ public class Event implements Serializable {
     // Constructors.
     // ---------------------------------------------------
 
+    public Event() { this(null, null, false); }
     public Event(final String type) { this(type, null, false); }
     public Event(final String type, final boolean isSticky) { this(type, null, isSticky); }
     public Event(final String type, Object payload) { this(type, payload, false); }
     public Event(final String type, Object payload, final boolean isSticky) {
-        Preconditions.checkNotNull(type);
+        //Preconditions.checkNotNull(type);
         this.type = type;
         this.isSticky = isSticky;
         setPayload(payload);

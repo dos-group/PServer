@@ -80,7 +80,7 @@ public final class ClusterSimulator implements Deactivatable {
                 throw new IllegalStateException(e);
             }
 
-            // Write number of stateObjectNodes to zookeeper.
+            // Write number of srcStateObjectNodes to zookeeper.
             ZookeeperClient zookeeperClient = new ZookeeperClient(zkServer);
             try {
                 zookeeperClient.writeNumNodes(numNodes);
@@ -99,7 +99,7 @@ public final class ClusterSimulator implements Deactivatable {
         if (!isDebug) {
             for (int i = 0; i < numNodes; ++i) {
                 //List<String> nodeJvmOpts = new ArrayList<>(jvmOpts);
-                // nodeJvmOpts.add(String.format("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=%d",8000+i));
+                // nodeJvmOpts.add(String.fileFormat("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=%d",8000+i));
                 peList.add(new ProcessExecutor(mainClass).execute(jvmOpts.toArray(new String[jvmOpts.size()])));
             }
         }

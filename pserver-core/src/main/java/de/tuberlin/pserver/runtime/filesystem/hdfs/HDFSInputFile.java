@@ -2,12 +2,14 @@ package de.tuberlin.pserver.runtime.filesystem.hdfs;
 
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.config.IConfig;
-import de.tuberlin.pserver.runtime.core.net.NetManager;
+import de.tuberlin.pserver.runtime.core.network.NetManager;
+import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecord;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIterator;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
+import de.tuberlin.pserver.runtime.filesystem.FileFormat;
+import de.tuberlin.pserver.runtime.filesystem.records.Record;
+import de.tuberlin.pserver.runtime.filesystem.records.RecordIterator;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.slf4j.Logger;
@@ -16,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 
-public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
+public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
 
     private static final Logger LOG = LoggerFactory.getLogger(HDFSInputFile.class);
 
@@ -24,7 +26,7 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
 
     private static final float MAX_SPLIT_SIZE_DISCREPANCY = 1.1f;
 
-    protected static final long READ_WHOLE_SPLIT_FLAG = -1L;
+    //protected static final long READ_WHOLE_SPLIT_FLAG = -1L;
 
     // --------------------------------------------------------------------------------------------
     //  Variables for internal apply.
@@ -40,9 +42,9 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
 
     protected transient long splitLength;
 
-    protected transient IRecordIteratorProducer format;
+    protected transient FileFormat fileFormat;
 
-    protected transient IRecordIterator recordIterator;
+    protected transient RecordIterator recordIterator;
 
     // --------------------------------------------------------------------------------------------
     //  The configuration parameters. Configured on the instance and serialized to be shipped.
@@ -60,20 +62,22 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
 
     protected Configuration conf = new Configuration();
 
+    protected final StateDescriptor stateDescriptor;
+
     // --------------------------------------------------------------------------------------------
     //  Constructors
     // --------------------------------------------------------------------------------------------
 
-    public HDFSInputFile(final IConfig config, final NetManager netManager, final String filePath, IRecordIteratorProducer format) {
+    public HDFSInputFile(final IConfig config, final ProgramContext programContext, final StateDescriptor stateDescriptor) {
         this.config     = Preconditions.checkNotNull(config);
-        this.path       = Preconditions.checkNotNull(filePath);
-        this.filePath   = new Path(filePath);
-        this.netManager = Preconditions.checkNotNull(netManager);
-        this.format     = Preconditions.checkNotNull(format);
+        this.stateDescriptor = Preconditions.checkNotNull(stateDescriptor);
+        this.path       = Preconditions.checkNotNull(stateDescriptor.path);
+        this.filePath   = new Path(stateDescriptor.path);
+        this.fileFormat = Preconditions.checkNotNull(fileFormat);
+        this.netManager = programContext.runtimeContext.netManager;
 
         System.setProperty("HADOOP_HOME", "/home/peel/peel/systems/hadoop-2.4.1");
         System.setProperty("hadoop.home.dir", "/home/peel/peel/systems/hadoop-2.4.1");
-
         this.conf.set("HADOOP_HOME", "/home/peel/peel/systems/hadoop-2.4.1");
         this.conf.set("hadoop.home.dir", "/home/peel/peel/systems/hadoop-2.4.1");
     }
@@ -153,7 +157,10 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
         return new LocatableInputSplitAssigner(splits);
     }
 
-    public FileInputSplit[] createInputSplits(int minNumSplits) throws IOException {
+    public FileInputSplit[] createInputSplits() throws IOException {
+
+        int minNumSplits = stateDescriptor.atNodes.length;
+
         if (minNumSplits < 1) {
             throw new IllegalArgumentException("Number of input splits has to be at least 1.");
         }
@@ -179,7 +186,6 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
                 }
             }
         } else {
-
             files.add(pathFile);
             totalLength += pathFile.getLen();
         }
@@ -262,7 +268,9 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
                             bytesUnassigned, blocks[blockIndex].getHosts());
                     inputSplits.add(fis);
                 }
+
             } else {
+
                 final BlockLocation[] blocks = fs.getFileBlockLocations(file, 0, 0);
                 String[] hosts;
                 if (blocks.length > 0)
@@ -274,7 +282,6 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
                 inputSplits.add(fis);
             }
         }
-
 
         FileInputSplit[] fileInputSplits = inputSplits.toArray(new FileInputSplit[inputSplits.size()]);
 
@@ -332,7 +339,7 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
             this.stream.readLine();
         }
 
-        this.recordIterator = format.getRecordIterator(this.stream);
+        this.recordIterator = RecordIterator.create(this.fileFormat, this.stream, null);
     }
 
     @Override
@@ -340,9 +347,14 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
         return !recordIterator.hasNext();
     }
 
-    @Override
-    public IRecord nextRecord(IRecord reuse) throws IOException {
+    /*@Override
+    public Record nextRecord(Record reuse) throws IOException {
         return recordIterator.next(0);
+    }*/
+
+    @Override
+    public Record nextRecord() throws IOException {
+        return recordIterator.next();
     }
 
     public void close() throws IOException {
@@ -358,7 +370,7 @@ public class HDFSInputFile implements InputFormat<IRecord,FileInputSplit> {
                 "File Input (" + this.filePath.toString() + ')';
     }
 
-    public FileDataIterator<IRecord> iterator(final InputSplitProvider isp) {
+    public FileDataIterator<Record> iterator(final InputSplitProvider isp) {
         return new HDFSFileDataIterator(
                 config,
                 netManager.getMachineDescriptor(),

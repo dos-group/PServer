@@ -4,14 +4,12 @@ package de.tuberlin.pserver.dsl.state;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.utils.ParseUtils;
 import de.tuberlin.pserver.compiler.StateDescriptor;
+import de.tuberlin.pserver.dsl.state.properties.PartitionerType;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
-import de.tuberlin.pserver.math.matrix.Format;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
+import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-import de.tuberlin.pserver.runtime.filesystem.record.IRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.filesystem.record.RowColValRecordIteratorProducer;
-import de.tuberlin.pserver.runtime.state.partitioner.IMatrixPartitioner;
-import de.tuberlin.pserver.runtime.state.partitioner.RowPartitioner;
+import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 
 public final class StateBuilder {
 
@@ -31,13 +29,15 @@ public final class StateBuilder {
 
     private long cols;
 
-    private Format format;
+    private MatrixFormat matrixFormat;
+
+    private FileFormat fileFormat;
 
     private String path;
 
-    private Class<? extends IRecordIteratorProducer> recordFormat;
+    private String labelState;
 
-    private Class<? extends IMatrixPartitioner> partitioner;
+    private PartitionerType partitionerType;
 
     // ---------------------------------------------------
     // Constructor.
@@ -58,17 +58,19 @@ public final class StateBuilder {
 
     public StateBuilder at(String at) { this.at = at; return this; }
 
-    public StateBuilder partitioner(Class<? extends IMatrixPartitioner> partitioner) { this.partitioner = partitioner; return this; }
+    public StateBuilder partitioner(PartitionerType partitionerType) { this.partitionerType = partitionerType; return this; }
 
     public StateBuilder rows(long rows) { this.rows = rows; return this; }
 
     public StateBuilder cols(long cols) { this.cols = cols; return this; }
 
-    public StateBuilder format(Format format) { this.format = format; return this; }
+    public StateBuilder matrixFormat(MatrixFormat matrixFormat) { this.matrixFormat = matrixFormat; return this; }
 
-    public StateBuilder recordFormat(Class<? extends IRecordIteratorProducer> recordFormat) { this.recordFormat = recordFormat; return this; }
+    public StateBuilder fileFormat(FileFormat fileFormat) { this.fileFormat = fileFormat; return this; }
 
     public StateBuilder path(String path) { this.path = path; return this; }
+
+    public StateBuilder label(String labelState) { this.labelState = labelState; return this; }
 
     // ---------------------------------------------------
 
@@ -76,15 +78,13 @@ public final class StateBuilder {
         final StateDescriptor descriptor = new StateDescriptor(
                 stateName,
                 MatrixBase.class,
-                scope,
-                ParseUtils.parseNodeRanges(at),
-                partitioner,
-                rows, cols,
-                format,
-                recordFormat,
-                path
+                scope, ParseUtils.parseNodeRanges(at),
+                partitionerType,
+                matrixFormat, rows, cols,
+                fileFormat,
+                path,
+                labelState
         );
-        //programContext.runtimeContext.runtimeManager.allocateState(programContext, descriptor);
         return programContext.runtimeContext.runtimeManager.getDHT(stateName);
     }
 
@@ -93,11 +93,10 @@ public final class StateBuilder {
     public void clear() {
         this.scope = Scope.REPLICATED;
         this.at = "";
-        this.partitioner = RowPartitioner.class;
+        this.partitionerType = PartitionerType.ROW_PARTITIONER;
         this.rows = 0;
         this.cols = 0;
-        this.format = Format.DENSE_FORMAT;
-        this.recordFormat = RowColValRecordIteratorProducer.class;
+        this.fileFormat = FileFormat.DENSE_FORMAT;
         this.path = "";
     }
 }

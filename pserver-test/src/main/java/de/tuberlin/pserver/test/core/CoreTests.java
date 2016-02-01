@@ -57,17 +57,17 @@ public class CoreTests {
     @Test
     public void testAsymmetricAggregator() { assert client.execute(ASymAggregatorTestJob.class) != null; }
 
-    @Test
-    public void testMatrixDenseLoadingRowColVal() { assert client.execute(MatrixDenseLoadingRowColValTestJob.class) != null; }
+    //@Test
+    //public void testMatrixDenseLoadingRowColVal() { assert client.execute(MatrixDenseLoadingRowColValTestJob.class) != null; }
 
-    @Test
-    public void testMatrixSparseLoading() { assert client.execute(MatrixSparseLoadingTestJob.class) != null; }
+    //@Test
+    //public void testMatrixSparseLoading() { assert client.execute(MatrixSparseLoadingTestJob.class) != null; }
 
     @Test
     public void testReplicatedMatrix() { assert client.execute(ReplicatedMatrixTestJob.class) != null; }
 
-    @Test
-    public void testMatrixDenseLoadingRow() { assert client.execute(MatrixDenseLoadingRowTestJob.class) != null; }
+    //@Test
+    //public void testMatrixDenseLoadingRow() { assert client.execute(MatrixDenseLoadingRowTestJob.class) != null; }
 
     // --------------------------------------------------
 

@@ -2,7 +2,7 @@ package de.tuberlin.pserver.dsl.transaction;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.dsl.transaction.phases.Fuse;
+import de.tuberlin.pserver.dsl.transaction.phases.Combine;
 import de.tuberlin.pserver.dsl.transaction.phases.GenericApply;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 
@@ -15,9 +15,11 @@ public class TransactionDefinition {
 
     public final Prepare preparePhase;
 
-    public final Fuse fusionPhase;
+    public final Combine combinePhase;
 
     public final GenericApply applyPhase;
+
+    public final TransactionObserver transactionObserver;
 
     private String transactionName;
 
@@ -25,33 +27,21 @@ public class TransactionDefinition {
     // Constructors.
     // ---------------------------------------------------
 
-    public TransactionDefinition(final GenericApply applyPhase) {
-
-        this(null, null, applyPhase);
-    }
-
-    public TransactionDefinition(final Fuse fusionPhase,
-                                 final GenericApply applyPhase) {
-
-        this(null, fusionPhase, applyPhase);
-    }
-
+    public TransactionDefinition(final GenericApply applyPhase) { this(null, null, applyPhase, null); }
+    public TransactionDefinition(final Combine combinePhase, final GenericApply applyPhase) { this(null, combinePhase, applyPhase, null); }
+    public TransactionDefinition(final Prepare preparePhase, final GenericApply applyPhase) { this(preparePhase, null, applyPhase, null); }
+    public TransactionDefinition(final GenericApply applyPhase, final TransactionObserver transactionObserver) { this(null, null, applyPhase, transactionObserver); }
+    public TransactionDefinition(final Combine combinePhase, final GenericApply applyPhase, final TransactionObserver transactionObserver) { this(null, combinePhase, applyPhase, transactionObserver); }
+    public TransactionDefinition(final Prepare preparePhase, final GenericApply applyPhase, final TransactionObserver transactionObserver) { this(preparePhase, null, applyPhase, transactionObserver); }
     public TransactionDefinition(final Prepare preparePhase,
-                                 final GenericApply applyPhase) {
-
-        this(preparePhase, null, applyPhase);
-    }
-
-
-    public TransactionDefinition(final Prepare preparePhase,
-                                 final Fuse fusionPhase,
-                                 final GenericApply applyPhase) {
+                                 final Combine combinePhase,
+                                 final GenericApply applyPhase,
+                                 final TransactionObserver transactionObserver) {
 
         this.preparePhase = preparePhase;
-
-        this.fusionPhase  = fusionPhase;
-
+        this.combinePhase = combinePhase;
         this.applyPhase   = Preconditions.checkNotNull(applyPhase);
+        this.transactionObserver = transactionObserver;
     }
 
     // ---------------------------------------------------
