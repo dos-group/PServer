@@ -30,6 +30,7 @@ public class SimpleCounterTestJob extends Program {
                 gc.decrement(i);
 
                 if ((i % 2) == 0) {
+                    gc.increment(i + 2);
                     gc2.decrement(i);
                 }
             }
@@ -39,12 +40,12 @@ public class SimpleCounterTestJob extends Program {
 
             result(gc.getCount(), gc2.getCount());
 
-            /*
+
             System.out.println("[DEBUG] Count of node " + programContext.runtimeContext.nodeID + ": " + gc.getCount());
             System.out.println("[DEBUG] Count of node " + programContext.runtimeContext.nodeID + ": " + gc2.getCount());
             System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": " + gc.getBuffer());
             System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": " + gc2.getBuffer());
-            */
+
         });
     }
 

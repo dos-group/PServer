@@ -2,9 +2,17 @@ package de.tuberlin.pserver.crdt.operations;
 
 import com.google.common.base.Preconditions;
 
-public class SimpleOperation<T> implements Operation<T> {
+import java.io.Serializable;
+
+public class SimpleOperation<T> implements Operation<T>, Serializable {
     private final OpType type;
     private final T value;
+
+    // No args constructor for Serialization (?)
+    public SimpleOperation() {
+        this.type = null;
+        this.value = null;
+    }
 
     public SimpleOperation(OpType type, T value) {
         Preconditions.checkNotNull(type, "Operation type can not be null");

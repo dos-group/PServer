@@ -1,10 +1,8 @@
 package de.tuberlin.pserver.crdt.counters;
 
-import com.clearspring.analytics.util.Preconditions;
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.crdt.AbstractCRDT;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * <p>
