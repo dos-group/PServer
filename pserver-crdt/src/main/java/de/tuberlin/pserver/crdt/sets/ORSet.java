@@ -8,6 +8,7 @@ import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.*;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  *
@@ -80,7 +81,7 @@ public class ORSet<T> extends AbstractSet<T> {
         return a;
     }
 
-    public Set<T> getSet() {
+    public synchronized Set<T> getSet() {
         return map.keySet();
     }
 
@@ -90,5 +91,9 @@ public class ORSet<T> extends AbstractSet<T> {
         }
 
         return null;
+    }
+
+    public void applyToElements(T arg, Function<T,T> f) {
+        f.apply(arg);
     }
 }

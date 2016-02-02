@@ -1,34 +1,19 @@
 package de.tuberlin.pserver.crdt.sets;
 
-import de.tuberlin.pserver.crdt.CRDT;
-import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.SimpleOperation;
-import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.HashSet;
 import java.util.Set;
 
+// Grow only Set
 public class GSet<T> extends AbstractSet<T> {
     private final Set<T> set;
 
     public GSet(String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
         this.set = new HashSet<>();
-    }
-
-    @Override
-    protected boolean update(int srcNodeId, Operation op) {
-        SimpleOperation<T> sop = (SimpleOperation<T>)op;
-
-        if(sop.getType() == Operation.OpType.ADD) {
-            return addElement(sop.getValue());
-        }
-        else {
-            // TODO: formulate exception
-            throw new IllegalOperationException("blub");
-        }
     }
 
     @Override
@@ -42,23 +27,29 @@ public class GSet<T> extends AbstractSet<T> {
 
     @Override
     public boolean remove(T element) {
-        if(removeElement(element)) {
-            broadcast(new SimpleOperation<>(Operation.OpType.REMOVE, element));
-            return true;
-        }
-        return false;
+        throw new UnsupportedOperationException("The remove() operation is not supported by the grow-only set CRDT.");
     }
 
     @Override
-    public Set<T> getSet() {
-        return this.set;
+    public synchronized Set<T> getSet() {
+        // Defensive copy
+        return new HashSet<>(this.set);
     }
 
-    private boolean addElement(T element) {
+    @Override
+    protected boolean update(int srcNodeId, Operation op) {
+        @SuppressWarnings("unchecked")
+        SimpleOperation<T> simpleOp = (SimpleOperation<T>)op;
+
+        switch(simpleOp.getType()) {
+            case ADD:
+                return addElement(simpleOp.getValue());
+            default:
+                throw new IllegalArgumentException("GSet CRDTs do not allow the " + op.getType() + " operation.");
+        }
+    }
+
+    private synchronized boolean addElement(T element) {
         return set.add(element);
-    }
-
-    private boolean removeElement(T element) {
-        return set.remove(element);
     }
 }

@@ -5,18 +5,19 @@ import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 public abstract class AbstractRegister<T> extends AbstractCRDT<T> implements Register<T> {
-    protected T value;
+    private T value;
 
     public AbstractRegister(String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
     }
 
-
-    public T getValue() {
+    public synchronized T get() {
         return this.value;
     }
 
-    protected void setValue(T value) {
+    @Override
+    public synchronized boolean set(T value) {
         this.value = value;
+        return true;
     }
 }

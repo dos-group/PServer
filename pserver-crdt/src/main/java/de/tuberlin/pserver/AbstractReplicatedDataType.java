@@ -133,6 +133,7 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
      */
     // This shouldn't be called from a thread in parallel execution! Only by main thread.
     // TODO: this is blocking if not all nodes start/finish...
+    // TODO: add a timeout
     @Override
     public final void finish() {
         isFinished = true;

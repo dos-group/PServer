@@ -25,6 +25,7 @@ public class LWWSet<T> extends AbstractSet<T> {
 
     @Override
     protected boolean update(int srcNodeId, Operation op) {
+        @SuppressWarnings("unchecked")
         TaggedOperation<T,Date> lwws = (TaggedOperation<T,Date>) op;
 
         if(lwws.getType() == Operation.OpType.ADD) {
