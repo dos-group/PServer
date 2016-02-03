@@ -9,6 +9,7 @@ import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * In a Two-Phase Set an element may be added and removed but never added again thereafter.
@@ -16,29 +17,29 @@ import java.util.Set;
 
 public class TwoPSet<T> extends AbstractSet<T> {
     private final Set<T> set;
-    private final Set<T> tombstone;
+    private final Set<T> tombstoneSet;
 
     public TwoPSet(String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
 
         this.set = new HashSet<>();
-        this.tombstone = new HashSet<>();
+        this.tombstoneSet = new HashSet<>();
+        ready();
     }
 
     @Override
     protected boolean update(int srcNodeId, Operation op) {
-        // TODO: I hate this cast....
-        SimpleOperation<T> sop = (SimpleOperation<T>)op;
+        @SuppressWarnings("unchecked")
+        SimpleOperation<T> simpleOp = (SimpleOperation<T>)op;
 
-        if(sop.getType() == Operation.OpType.ADD) {
-            return addElement(sop.getValue());
-        }
-        else if(sop.getType() == Operation.OpType.REMOVE) {
-            return removeElement(sop.getValue());
-        }
-        else {
-            // TODO: specifiy exception.
-            throw new IllegalOperationException("Blub");
+        switch(simpleOp.getType()) {
+            case ADD:
+                return addElement(simpleOp.getValue());
+            case REMOVE:
+                return removeElement(simpleOp.getValue());
+            default:
+                throw new IllegalArgumentException("2PSet CRDTs do not allow the " + op.getType() + " operation.");
+
         }
     }
 
@@ -61,20 +62,23 @@ public class TwoPSet<T> extends AbstractSet<T> {
     }
 
     @Override
-    public Set<T> getSet() {
-        return new HashSet<>(this.set);
+    public synchronized Set<T> getSet() {
+        return set.stream()
+                .filter(val -> !tombstoneSet.contains(val))
+                .collect(Collectors.toSet());
     }
 
-    private boolean addElement(T element) {
-        if(!tombstone.contains(element)) {
-            return set.add(element);
+    private synchronized boolean addElement(T element) {
+        if(!tombstoneSet.contains(element)) {
+            set.add(element);
+            return true;
         }
         return false;
     }
 
-    private boolean removeElement(T element) {
-        if(set.remove(element)){
-            tombstone.add(element);
+    private synchronized boolean removeElement(T element) {
+        if(set.contains(element) && !tombstoneSet.contains(element)){
+            tombstoneSet.add(element);
             return true;
         }
         return false;

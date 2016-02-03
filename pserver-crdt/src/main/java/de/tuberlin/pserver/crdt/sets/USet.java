@@ -1,10 +1,8 @@
 package de.tuberlin.pserver.crdt.sets;
 
-import de.tuberlin.pserver.crdt.CRDT;
+import de.tuberlin.pserver.crdt.exceptions.NotUniqueException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.SimpleOperation;
-import de.tuberlin.pserver.runtime.RuntimeManager;
-import de.tuberlin.pserver.crdt.exceptions.NotUniqueException;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.HashSet;
@@ -12,27 +10,32 @@ import java.util.Set;
 
 /**
  * The Unique Set assumes each value inserted into the set is unique. Hence, there is no need for a tombstone set.
+ * However, add must always be delivered before remove!
  */
 
 public class USet<T> extends AbstractSet<T> {
-    private final Set<T> set = new HashSet<>();
+    private final Set<T> set;
 
     public USet(String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
+        
+        this.set = new HashSet<>();
+        ready();
     }
 
     @Override
     protected boolean update(int srcNodeId, Operation op) {
-        SimpleOperation<T> sop = (SimpleOperation<T>)op;
+        @SuppressWarnings("unchecked")
+        SimpleOperation<T> simpleOp = (SimpleOperation<T>)op;
 
-        if(sop.getType() == Operation.OpType.ADD) {
-            return addElement(sop.getValue());
-        }
-        else if(sop.getType() == Operation.OpType.REMOVE) {
-            return removeElement(sop.getValue());
-        }
-        else {
-            return false;
+        switch(simpleOp.getType()) {
+            case ADD:
+                return addElement(simpleOp.getValue());
+            case REMOVE:
+                return removeElement(simpleOp.getValue());
+            default:
+                throw new IllegalArgumentException("USet CRDTs do not allow the " + op.getType() + " operation.");
+
         }
     }
 
@@ -55,11 +58,11 @@ public class USet<T> extends AbstractSet<T> {
     }
 
     @Override
-    public Set<T> getSet() {
-        return set;
+    public synchronized Set<T> getSet() {
+        return new HashSet<>(set);
     }
 
-    private boolean addElement(T value) {
+    private synchronized boolean addElement(T value) {
         if(!set.add(value)) {
             throw new NotUniqueException("The value "+ value + " is already contained in the Unique Set and cannot be " +
                     "added again.");
@@ -67,7 +70,7 @@ public class USet<T> extends AbstractSet<T> {
         return true;
     }
 
-    private boolean removeElement(T value) {
+    private synchronized boolean removeElement(T value) {
         return set.remove(value);
     }
 }
