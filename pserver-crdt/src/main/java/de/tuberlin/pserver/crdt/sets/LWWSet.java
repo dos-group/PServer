@@ -8,6 +8,8 @@ import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * An element is in the set if it is in the add-Set and not in the remove-Set with a higher timestamp.
@@ -67,20 +69,9 @@ public class LWWSet<T> extends AbstractSet<T> {
 
     @Override
     public synchronized java.util.Set<T> getSet() {
-        // TODO: maybe try this with java 8 streams
-        java.util.Set<T> set = new HashSet<T>();
-
-        for(T key : addMap.keySet()) {
-            if(!removeMap.containsKey(key)) set.add(key);
-            else {
-                // remove operation is prioritized over add
-                if(addMap.get(key) > removeMap.get(key)) {
-                    set.add(key);
-                }
-            }
-        }
-
-        return set;
+        return addMap.keySet().stream()
+                .filter(key -> !removeMap.containsKey(key) || addMap.get(key) > removeMap.get(key))
+                .collect(Collectors.toSet());
     }
 
     private synchronized boolean addElement(T element, long time) {

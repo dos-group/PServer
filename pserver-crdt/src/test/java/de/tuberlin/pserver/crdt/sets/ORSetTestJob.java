@@ -13,7 +13,6 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-// TODO: this needs testing and debugging and major cleanup
 public class ORSetTestJob extends Program {
     private static final int NUM_NODES = 2;
     private static final int NUM_REPLICAS = 2;

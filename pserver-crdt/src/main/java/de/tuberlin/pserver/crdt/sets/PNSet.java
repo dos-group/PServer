@@ -1,10 +1,7 @@
 package de.tuberlin.pserver.crdt.sets;
 
-import de.tuberlin.pserver.crdt.CRDT;
-import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.SimpleOperation;
-import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.HashMap;
@@ -16,34 +13,34 @@ import java.util.stream.Collectors;
  *
  * Maintain a counter for each element. The element is in the set if its count is &gt; 0.
  */
-// TODO: At the moment, negative values are allowed. Perhaps it would be good to give a choice for not allowing negative count.
 public class PNSet<T> extends AbstractSet<T> {
     private final Map<T, Integer> counter;
 
     public PNSet(String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
         counter = new HashMap<>();
+        ready();
     }
 
     @Override
     protected boolean update(int srcNodeId, Operation op) {
-        SimpleOperation<T> sop = (SimpleOperation<T>) op;
+        @SuppressWarnings("unchecked")
+        SimpleOperation<T> simpleOp = (SimpleOperation<T>) op;
 
-        if(sop.getType() == Operation.OpType.ADD) {
-            return addElement(sop.getValue());
-        }
-        else if(sop.getType() == Operation.OpType.REMOVE) {
-            return removeElement(sop.getValue());
-        }
-        else {
-            throw new IllegalOperationException("The operation " + op.getType() + " cannot be applied to a PNSet");
+        switch(simpleOp.getType()) {
+            case ADD:
+                return addElement(simpleOp.getValue());
+            case REMOVE:
+                return removeElement(simpleOp.getValue());
+            default:
+                throw new IllegalArgumentException("PNSet CRDTs do not allow the " + op.getType() + " operation.");
         }
     }
 
     @Override
     public boolean add(T element) {
         if(addElement(element)) {
-            broadcast(new SimpleOperation<T>(Operation.OpType.ADD, element));
+            broadcast(new SimpleOperation<>(Operation.OpType.ADD, element));
             return true;
         }
         return false;
@@ -52,38 +49,30 @@ public class PNSet<T> extends AbstractSet<T> {
     @Override
     public boolean remove(T element) {
         if(removeElement(element)) {
-            broadcast(new SimpleOperation<T>(Operation.OpType.REMOVE, element));
+            broadcast(new SimpleOperation<>(Operation.OpType.REMOVE, element));
             return true;
         }
         return false;
     }
 
     @Override
-    public Set<T> getSet() {
-        return counter.keySet().stream().filter(key -> counter.get(key) > 0).collect(Collectors.toSet());
+    public synchronized Set<T> getSet() {
+        return counter.keySet().stream()
+                .filter(key -> counter.get(key) > 0)
+                .collect(Collectors.toSet());
     }
 
-    private boolean addElement(T element) {
-        Integer count = counter.get(element);
+    private synchronized boolean addElement(T element) {
+        counter.putIfAbsent(element, 0);
+        counter.compute(element, (key, val) -> ++val);
 
-        if(count == null) {
-            counter.put(element, 1);
-        }
-        else {
-            counter.put(element, ++count);
-        }
         return true;
     }
 
-    private boolean removeElement(T element) {
-        Integer count = counter.get(element);
+    private synchronized boolean removeElement(T element) {
+        counter.putIfAbsent(element, 0);
+        counter.computeIfPresent(element, (key, val) -> --val);
 
-        if(count == null) {
-            counter.put(element, -1);
-        }
-        else {
-            counter.put(element, --count);
-        }
         return true;
     }
 }

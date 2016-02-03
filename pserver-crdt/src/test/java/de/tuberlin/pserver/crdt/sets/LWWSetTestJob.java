@@ -46,10 +46,10 @@ public class LWWSetTestJob extends Program {
             lwws.finish();
             result(lwws.getSet().toArray());
 
-            /*
+
             System.out.println("[DEBUG] Set of node " + programContext.runtimeContext.nodeID + ": " + lwws.getSet());
             System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": " + lwws.getBuffer());
-            */
+
         });
     }
 
