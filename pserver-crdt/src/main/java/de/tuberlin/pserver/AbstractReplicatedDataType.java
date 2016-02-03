@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 // TODO: improve the P2P discovery and termination
 // TODO: change constructor to CRDT.newReplica(...) to reflect that it is replicas being dealt with?
 // TODO: Timeout for "ready" p2p discovery?
+// TODO: ready() function should be blocking or non-blocking with buffer?
 
 /**
  * <p>
@@ -111,6 +112,7 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
                 if(runningNodes.size() == noOfReplicas -1) {
                     allNodesRunning = true;
                     runtimeManager.removeMsgEventListener("Running_" + crdtId, this);
+                    broadcastBuffer();
                 }
 
                 synchronized(AbstractReplicatedDataType.this) {
@@ -145,7 +147,7 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
             throw new RuntimeException("Not All The Nodes Are Running YET.");
         }
 
-        System.out.println("[DEBUG] BufferB: " + buffer.size());
+        //System.out.println("[DEBUG] BufferB: " + buffer.size());
 
         broadcast(new EndOperation());
 

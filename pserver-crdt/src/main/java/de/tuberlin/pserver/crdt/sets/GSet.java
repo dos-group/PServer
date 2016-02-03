@@ -14,6 +14,7 @@ public class GSet<T> extends AbstractSet<T> {
     public GSet(String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
         this.set = new HashSet<>();
+        ready();
     }
 
     @Override

@@ -7,43 +7,49 @@ import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * An element is in the set if it is in the add-Set and not in the remove-Set with a higher timestamp.
  */
 // TODO: what about if this grows infinitely until it is too large for memory? Manual Garbage collection somehow?
+/**
+ * TODO: At the moment remove takes precedent with concurrent operations. Perhaps allow a flag for the user to choose if
+ *  add or remove should take precedent
+ */
 public class LWWSet<T> extends AbstractSet<T> {
     private final Map<T, Long> addMap;
     private final Map<T, Long> removeMap;
 
     public LWWSet(String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
-        
-        addMap = new HashMap<>();
-        removeMap = new HashMap<>();
+
+        addMap = new ConcurrentHashMap<>();
+        removeMap = new ConcurrentHashMap<>();
+        ready();
     }
 
     @Override
     protected boolean update(int srcNodeId, Operation op) {
         @SuppressWarnings("unchecked")
-        TaggedOperation<T,Date> lwws = (TaggedOperation<T,Date>) op;
+        TaggedOperation<T,Long> taggedOp = (TaggedOperation<T,Long>) op;
 
-        if(lwws.getType() == Operation.OpType.ADD) {
-            return addElement(lwws.getValue(), lwws.getTag().getTime());
-        }
-        else if(lwws.getType() == Operation.OpType.REMOVE) {
-            return removeElement(lwws.getValue(), lwws.getTag().getTime());
-        }
-        else {
-            return false;
+        switch(taggedOp.getType()) {
+            case ADD:
+                return addElement(taggedOp.getValue(), taggedOp.getTag());
+            case REMOVE:
+                return removeElement(taggedOp.getValue(), taggedOp.getTag());
+            default:
+                throw new IllegalArgumentException("LWWSet CRDTs do not allow the " + op.getType() + " operation.");
+
         }
     }
 
     @Override
     public boolean add(T element) {
-        Date time = Calendar.getInstance().getTime();
-        if(addElement(element, time.getTime())) {
-            broadcast(new TaggedOperation<>(Operation.OpType.ADD, element, time));
+        long timestamp = System.nanoTime();
+        if(addElement(element, timestamp)) {
+            broadcast(new TaggedOperation<>(Operation.OpType.ADD, element, timestamp));
             return true;
         }
         return false;
@@ -51,48 +57,53 @@ public class LWWSet<T> extends AbstractSet<T> {
 
     @Override
     public boolean remove(T element) {
-        Date time = Calendar.getInstance().getTime();
-        if(removeElement(element, time.getTime())) {
-            broadcast(new TaggedOperation<>(Operation.OpType.REMOVE, element, time));
+        long timestamp = System.nanoTime();
+        if(removeElement(element, timestamp)) {
+            broadcast(new TaggedOperation<>(Operation.OpType.REMOVE, element, timestamp));
             return true;
         }
         return false;
     }
 
     @Override
-    public java.util.Set<T> getSet() {
+    public synchronized java.util.Set<T> getSet() {
+        // TODO: maybe try this with java 8 streams
         java.util.Set<T> set = new HashSet<T>();
 
         for(T key : addMap.keySet()) {
-            if(removeMap.get(key) != null){
+            if(!removeMap.containsKey(key)) set.add(key);
+            else {
+                // remove operation is prioritized over add
                 if(addMap.get(key) > removeMap.get(key)) {
                     set.add(key);
                 }
             }
-            else {
-                set.add(key);
-            }
         }
+
         return set;
     }
 
-    private boolean addElement(T element, long time) {
-        if (addMap.get(element) == null) {
-            addMap.put(element, time);
+    private synchronized boolean addElement(T element, long time) {
+        Long oldVal = addMap.putIfAbsent(element, time);
+        if(oldVal == null) return true;
+
+        if(time > oldVal) {
+            addMap.replace(element, time);
+            return true;
         }
-        else if (time > addMap.get(element)) {
-            addMap.put(element, time);
-        }
-        return true;
+
+        return false;
     }
 
-    private boolean removeElement(T element, long time) {
-        if (removeMap.get(element) == null) {
-            removeMap.put(element, time);
+    private synchronized boolean removeElement(T element, long time) {
+        Long oldVal = removeMap.putIfAbsent(element, time);
+        if(oldVal == null) return true;
+
+        if(time > oldVal) {
+            removeMap.replace(element, time);
+            return true;
         }
-        else if (time > removeMap.get(element)) {
-            removeMap.put(element, time);
-        }
-        return true;
+
+        return false;
     }
 }

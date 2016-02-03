@@ -1,14 +1,11 @@
 package de.tuberlin.pserver.crdt.sets;
 
-import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.TaggedOperation;
-import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.*;
 import java.util.Set;
-import java.util.function.Function;
 
 /**
  *
@@ -19,20 +16,22 @@ public class ORSet<T> extends AbstractSet<T> {
 
     public ORSet(String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
+        ready();
     }
 
     @Override
     protected boolean update(int srcNodeId, Operation op) {
-        TaggedOperation<T,UUID> sop = (TaggedOperation<T,UUID>) op;
-
-        if(op.getType() == Operation.OpType.ADD) {
-            return addElement(sop.getValue(), sop.getTag());
-        }
-        else if(op.getType() == Operation.OpType.REMOVE) {
-            return removeElement(sop.getValue(), sop.getTag());
-        }
-        else {
-            throw new IllegalOperationException("This operation is not supported by ORSet");
+        switch(op.getType()) {
+            case ADD:
+                @SuppressWarnings("unchecked")
+                TaggedOperation<T,UUID> taggedOp = (TaggedOperation<T,UUID>) op;
+                return addElement(taggedOp.getValue(), taggedOp.getTag());
+            case REMOVE:
+                @SuppressWarnings("unchecked")
+                TaggedOperation<T,List<UUID>> listTaggedOp = (TaggedOperation<T,List<UUID>>) op;
+                return removeElement(listTaggedOp.getValue(), listTaggedOp.getTag());
+            default:
+                throw new IllegalArgumentException("ORSet CRDTs do not allow the " + op.getType() + " operation.");
         }
     }
 
@@ -48,52 +47,45 @@ public class ORSet<T> extends AbstractSet<T> {
     }
 
     @Override
-    public boolean remove(T value) {
-        UUID id = getId(value);
+    public synchronized boolean remove(T value) {
+        List<UUID> idList = getIds(value);
+        if(idList.size() == 0) return false;
 
-        if(removeElement(value, id)) {
-            broadcast(new TaggedOperation<>(Operation.OpType.REMOVE, value, id));
+        if(removeElement(value, idList)) {
+            broadcast(new TaggedOperation<>(Operation.OpType.REMOVE, value, idList));
             return true;
         }
         return false;
     }
 
-    private boolean addElement(T value, UUID id) {
-        final ArrayList<UUID> list;
+    private synchronized boolean addElement(T value, UUID id) {
+        //System.out.println("[" + nodeId + "] Add: " + value + ", " + id);
 
-        System.out.println("Add: " + value + ", " + id);
-        if(map.get(value) == null) {
-            list = new ArrayList<>();
-            list.add(id);
-            map.put(value, list);
-        }
-        else {
-            map.get(value).add(id);
-        }
+        map.putIfAbsent(value, new ArrayList<>());
+        map.get(value).add(id);
+
         return true;
     }
 
-    private boolean removeElement(T value, UUID id) {
-        System.out.println("Remove: " + value + ", " + id);
-        boolean a = map.get(value).remove(id);
+    private synchronized boolean removeElement(T value, List<UUID> id) {
+        //System.out.println("[" + nodeId + "] Remove: " + value + ", " + id);
 
+        boolean removed = map.get(value).removeAll(id);
         if(map.get(value).size() == 0) { map.remove(value);}
-        return a;
+
+        return removed;
     }
 
+    @Override
     public synchronized Set<T> getSet() {
         return map.keySet();
     }
 
-    public UUID getId(T value) {
-        if(map.get(value) != null) {
-            return map.get(value).get(0);
+    private synchronized List<UUID> getIds(T value) {
+        if(map.containsKey(value)) {
+            return new ArrayList<>(map.get(value));
         }
 
-        return null;
-    }
-
-    public void applyToElements(T arg, Function<T,T> f) {
-        f.apply(arg);
+        return new ArrayList<>();
     }
 }
