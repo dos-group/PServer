@@ -12,9 +12,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Created by Morgan K. Geldenhuys on 25.01.16.
- */
 public class SVMConverter {
 
     private static class Attribute {

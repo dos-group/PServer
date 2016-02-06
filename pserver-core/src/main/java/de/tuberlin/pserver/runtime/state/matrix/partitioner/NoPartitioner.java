@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.runtime.state.matrix.partitioner;
 
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
-import de.tuberlin.pserver.runtime.state.matrix.entries.Entry;
+import de.tuberlin.pserver.runtime.filesystem.records.Entry;
 
 public class NoPartitioner extends MatrixPartitioner {
 
