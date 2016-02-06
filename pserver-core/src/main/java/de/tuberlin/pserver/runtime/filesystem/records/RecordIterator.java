@@ -9,7 +9,6 @@ import java.io.InputStreamReader;
 import java.util.Iterator;
 import java.util.Optional;
 
-
 public abstract class RecordIterator<T extends Record> implements Iterator<T> {
 
     // ---------------------------------------------------

@@ -1,11 +1,8 @@
 package de.tuberlin.pserver.runtime.filesystem;
 
+import de.tuberlin.pserver.runtime.filesystem.records.Entry;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.runtime.filesystem.records.RecordIterator;
-import de.tuberlin.pserver.runtime.state.matrix.entries.Entry;
-import de.tuberlin.pserver.runtime.state.matrix.entries.ImmutableEntryImpl;
-import de.tuberlin.pserver.runtime.state.matrix.entries.MutableEntryImpl;
-import de.tuberlin.pserver.runtime.state.matrix.entries.ReusableEntry;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,10 +44,10 @@ public class FileSystemTest {
 
     @Test
     public void testEntries() {
-        Entry<Float> entry = new ImmutableEntryImpl<>(1, 1, 0.1F);
+        Entry<Float> entry = new Entry<>(1, 1, 0.1F);
         assertEquals(entry.getValue(), new Float(0.1));
 
-        ReusableEntry<Double> reusableEntry = new MutableEntryImpl<>(2, 3, 0.3);
+        Entry<Double> reusableEntry = new Entry<>(2, 3, 0.3);
         reusableEntry.set(2, 3, 0.4);
         assertEquals(reusableEntry.getValue(), new Double(0.4));
     }

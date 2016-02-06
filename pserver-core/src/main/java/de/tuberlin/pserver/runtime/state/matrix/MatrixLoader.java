@@ -7,10 +7,11 @@ import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
+import de.tuberlin.pserver.runtime.filesystem.records.Entry;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
-import de.tuberlin.pserver.runtime.state.matrix.entries.Entry;
-import de.tuberlin.pserver.runtime.state.matrix.entries.MutableEntryImpl;
-import de.tuberlin.pserver.runtime.state.matrix.entries.ReusableEntry;
+//import de.tuberlin.pserver.runtime.state.matrix.entries.Entry;
+//import de.tuberlin.pserver.runtime.state.matrix.entries.MutableEntryImpl;
+//import de.tuberlin.pserver.runtime.state.matrix.entries.ReusableEntry;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.ArrayList;
@@ -61,14 +62,16 @@ public final class MatrixLoader {
                 labelMatrix = programContext.runtimeContext.runtimeManager.getDHT(state.label);
             }
 
-            final ReusableEntry reusable = new MutableEntryImpl(-1, -1, Double.NaN);
+            //final ReusableEntry reusable = new MutableEntryImpl(-1, -1, Double.NaN);
+            Entry entry = new Entry(-1, -1, Double.NaN);
             while (fileIterator.hasNext()) {
 
                 final Record record = fileIterator.next();
 
                 // iterate through entries in record
                 while (record.hasNext()) {
-                    final Entry entry = record.next(reusable);
+                    //final Entry entry = record.next(reusable);
+                    entry = record.next(entry);
 
                     if (entry.getRow() >= state.rows || entry.getCol() >= state.cols)
                         continue;

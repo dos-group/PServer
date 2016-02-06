@@ -26,7 +26,7 @@ public class LibSVMReaderJob extends Program {
     public Matrix32F XTrainLabel;
 
     @State(scope = Scope.PARTITIONED, rows = 270, cols = 13, matrixFormat = MatrixFormat.DENSE_FORMAT,
-            path = "datasets/svmSmallTestFile", fileFormat = FileFormat.SVM_FORMAT, labels = "XTrainLabel")
+            path = "datasets/XY_test", fileFormat = FileFormat.SVM_FORMAT, labels = "XTrainLabel")
     public Matrix32F XTrainFeatures;
 
     // ---------------------------------------------------
