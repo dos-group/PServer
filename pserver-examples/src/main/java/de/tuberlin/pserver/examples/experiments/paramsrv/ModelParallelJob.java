@@ -34,7 +34,7 @@ public class ModelParallelJob extends Program {
     @Transaction(src = "parameters", dst = "cachedParameters", type = TransactionType.PULL)
     public final TransactionDefinition fetchParameters = new TransactionDefinition(
 
-            (Update<Matrix32F>) (parameterList, cachedParameters) -> {
+            (Update<Matrix32F>) (requestObj, parameterList, cachedParameters) -> {
                 StringBuilder strBuilder = new StringBuilder();
                 for (Matrix32F parameter : parameterList) {
                     strBuilder.append("PARTITION - ");

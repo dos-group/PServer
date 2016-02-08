@@ -101,7 +101,7 @@ public final class GloVe extends Program {
     @Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PULL)
     public final TransactionDefinition sync = new TransactionDefinition(
 
-            (Update<Matrix32F>) (remoteUpdates, localState) -> {
+            (Update<Matrix32F>) (requestObj, remoteUpdates, localState) -> {
                 for (final Matrix32F update : remoteUpdates)
                     Parallel.For(update, (i, j, v) -> localState.set(i, j, (localState.get(i, j) + update.get(i, j)) / 2));
             }

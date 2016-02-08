@@ -48,7 +48,7 @@ public class ParameterServerSketch extends Program {
     @Transaction(src = "gradients", dst = "parameter", type = TransactionType.PUSH)
     public final TransactionDefinition parameterUpdate = new TransactionDefinition(
 
-            (Update<Matrix32F>) (remoteGradients, parameter) -> {
+            (Update<Matrix32F>) (requestObj, remoteGradients, parameter) -> {
                 for (Matrix32F grad : remoteGradients) {
                     parameter.add(grad, parameter);
                 }
@@ -58,7 +58,7 @@ public class ParameterServerSketch extends Program {
     @Transaction(src = "parameter", dst = "parameterCache", type = TransactionType.PULL)
     public final TransactionDefinition parameterPull = new TransactionDefinition(
 
-            (Update<Matrix32F>) (remoteParameters, parameterCache) -> {
+            (Update<Matrix32F>) (requestObj, remoteParameters, parameterCache) -> {
                 parameterCache.assign(remoteParameters.get(0));
             }
     );

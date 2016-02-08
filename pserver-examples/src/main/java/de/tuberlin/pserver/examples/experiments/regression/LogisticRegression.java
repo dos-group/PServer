@@ -71,7 +71,7 @@ public class LogisticRegression extends Program {
     @Transaction(state = "W", type = TransactionType.PULL)
     public final TransactionDefinition syncW = new TransactionDefinition(
 
-            (Update<Matrix32F>) (remoteUpdates, localState) -> {
+            (Update<Matrix32F>) (requestObj, remoteUpdates, localState) -> {
                 int count = 1;
                 if (remoteUpdates != null) {
                     for (final Matrix32F update : remoteUpdates) {

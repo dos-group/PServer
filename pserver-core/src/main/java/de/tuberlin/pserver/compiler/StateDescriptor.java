@@ -5,14 +5,38 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.PartitionerType;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.math.matrix.ElementType;
+import de.tuberlin.pserver.math.matrix.Matrix32F;
+import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.math.matrix.MatrixFormat;
+import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
+import de.tuberlin.pserver.math.matrix.dense.DenseMatrix64F;
+import de.tuberlin.pserver.math.matrix.sparse.SparseMatrix32F;
+import de.tuberlin.pserver.math.matrix.sparse.SparseMatrix64F;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
+import de.tuberlin.pserver.runtime.state.matrix.disttypes.DistributedMatrix32F;
+import de.tuberlin.pserver.runtime.state.matrix.disttypes.DistributedMatrix64F;
 import de.tuberlin.pserver.runtime.state.matrix.partitioner.MatrixPartitioner;
 
 import java.lang.reflect.Field;
 
 public final class StateDescriptor {
+
+    // ---------------------------------------------------
+    // State Types.
+    // ---------------------------------------------------
+
+    public static final Class<?>[] LOCAL_STATE_TYPES = {
+
+            Matrix32F.class,
+            Matrix64F.class,
+            DenseMatrix32F.class,
+            DenseMatrix64F.class,
+            SparseMatrix32F.class,
+            SparseMatrix64F.class,
+            DistributedMatrix32F.class,
+            DistributedMatrix64F.class,
+    };
 
     // ---------------------------------------------------
     // Fields.

@@ -91,7 +91,7 @@ public class PushTransactionExecutor extends TransactionExecutor {
         for (int i = 0; i < controller.getTransactionDescriptor().stateSrcObjectNames.size(); ++i) {
             srcStateObjects[i].lock();
             final Prepare preparePhase = transactionDefinition.preparePhase;
-            preparedSrcStateObjects.add((preparePhase != null) ? preparePhase.prepare(srcStateObjects[i]) : srcStateObjects[i]);
+            preparedSrcStateObjects.add((preparePhase != null) ? preparePhase.prepare(requestObject, srcStateObjects[i]) : srcStateObjects[i]);
             srcStateObjects[i].unlock();
         }
 
@@ -121,10 +121,12 @@ public class PushTransactionExecutor extends TransactionExecutor {
                 AtomicInteger requestIndex = new AtomicInteger(0);
                 int numRequests = controller.getTransactionDescriptor().srcStateObjectNodes.length - 1;
                 List<Object> srcStateObjects = new ArrayList<>(numRequests);
+                List<Object> srcRequestObjects = new ArrayList<>(numRequests);
 
                 runtimeContext.netManager.addEventListener(TransactionPushRequestEvent.TRANSACTION_REQUEST + transactionName, event -> {
                     final TransactionPushRequestEvent request = (TransactionPushRequestEvent) event;
                     srcStateObjects.addAll(request.srcStateObjectsValues);
+                    srcRequestObjects.add(request.requestObject);
                     int requestCounter = requestIndex.incrementAndGet();
 
                     System.out.println("NODE [" + runtimeContext.nodeID + "] RECEIVED " + requestCounter + " PUSH REQUESTS.");
@@ -132,10 +134,10 @@ public class PushTransactionExecutor extends TransactionExecutor {
                     if (requestCounter == numRequests) {
                         new Thread(() -> {
                             try {
-                                Object combinedSrcStateObject = transactionDefinition.combinePhase.combine(srcStateObjects);
+                                Object combinedSrcStateObject = transactionDefinition.combinePhase.combine(srcRequestObjects, srcStateObjects);
                                 for (int i = 0; i < controller.getTransactionDescriptor().stateDstObjectNames.size(); ++i) {
                                     dstStateObjects[i].lock();
-                                    transactionDefinition.applyPhase.apply(
+                                    transactionDefinition.applyPhase.apply(srcRequestObjects,
                                             Arrays.asList(combinedSrcStateObject),
                                             dstStateObjects[i]
                                     );
@@ -157,7 +159,7 @@ public class PushTransactionExecutor extends TransactionExecutor {
                             try {
                                 for (int i = 0; i < controller.getTransactionDescriptor().stateDstObjectNames.size(); ++i) {
                                     dstStateObjects[i].lock();
-                                    transactionDefinition.applyPhase.apply(
+                                    transactionDefinition.applyPhase.apply(Arrays.asList(request.requestObject),
                                             Arrays.asList(preparedSrcStateObjects.get(i)),
                                             dstStateObjects[i]
                                     );

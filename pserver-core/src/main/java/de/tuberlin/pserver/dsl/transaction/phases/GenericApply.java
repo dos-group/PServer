@@ -5,5 +5,5 @@ import java.util.List;
 
 public interface GenericApply<I1, I2, O> extends TransactionPhase {
 
-    public O apply(final List<I1> remoteObjects, final I2 localObject) throws Exception;
+    public O apply(final List<Object> requestObj, final List<I1> remoteObjects, final I2 localObject) throws Exception;
 }

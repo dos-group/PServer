@@ -68,10 +68,10 @@ public final class GloveWithCompression extends Program {
 
     private Compressor compressor = Compressor.Factory.create(Compressor.CompressionType.LZ4_COMPRESSION);
 
-    @Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PULL)
+    /*@Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PULL)
     public final TransactionDefinition sync = new TransactionDefinition(
 
-            (Prepare<Matrix32F, Pair<Integer, byte[]>>) (remoteMatrix) -> {
+            (Prepare<Matrix32F, Pair<Integer, byte[]>>) (requestObjs, remoteMatrix) -> {
                 final byte[] serializedObj = serializer.serialize(remoteMatrix);
                 return Pair.of(serializedObj.length, compressor.compress(serializedObj));
             }
@@ -84,7 +84,7 @@ public final class GloveWithCompression extends Program {
                 }
                 return null;
             }
-    );
+    );*/
 
     // ---------------------------------------------------
     // Units.
@@ -148,7 +148,7 @@ public final class GloveWithCompression extends Program {
                     });
                 });
 
-                TransactionMng.commit(sync);
+                //TransactionMng.commit(sync);
             })
         );
     }

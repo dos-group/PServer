@@ -85,7 +85,7 @@ public class LDA extends Program{
 
             // TODO: this must be a delta update of (latest local state) - (state at previous sync)
 
-            (Update<Matrix64F>) (remoteUpdates, localState) -> {
+            (Update<Matrix64F>) (requestObj, remoteUpdates, localState) -> {
                 for (final Matrix64F update : remoteUpdates)
                     Parallel.For(update, (i, j, v) -> localState.set(i, j, localState.get(i, j) + update.get(i, j)));
             }

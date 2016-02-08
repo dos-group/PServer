@@ -32,7 +32,7 @@ public class DataParallelJob extends Program {
     @Transaction(state = "model", type = TransactionType.PUSH)
     public final TransactionDefinition syncModel = new TransactionDefinition(
 
-            (Combine<Matrix32F>) (gradients) -> {
+            (Combine<Matrix32F>) (requestObj, gradients) -> {
                 Matrix32F combinedGradient = gradients.get(0);
                 for (int i = 1; i < gradients.size(); ++i) {
                     combinedGradient.add(gradients.get(i), combinedGradient);
@@ -40,7 +40,7 @@ public class DataParallelJob extends Program {
                 return combinedGradient;
             },
 
-            (Update<Matrix32F>) (remoteModels, localModel) -> {
+            (Update<Matrix32F>) (requestObj, remoteModels, localModel) -> {
                 StringBuilder strBuilder = new StringBuilder();
                 for (Matrix32F remoteModel : remoteModels) {
                     for (int i = 0; i < 10; ++i)

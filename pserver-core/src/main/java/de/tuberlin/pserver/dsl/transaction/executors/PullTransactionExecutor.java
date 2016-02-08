@@ -40,6 +40,8 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
     private final Thread combinerThread;
 
+    private Object requestObject;
+
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
@@ -68,7 +70,7 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
                 for (String srcStateName : controller.getTransactionDescriptor().stateSrcObjectNames) {
                     List<Object> srcStates = collectedResponseSrcStateObjects.get(srcStateName);
-                    Object combinedSrcStateObject = transactionDefinition.combinePhase.combine(srcStates);
+                    Object combinedSrcStateObject = transactionDefinition.combinePhase.combine(Arrays.asList(requestObject), srcStates);
                     collectedResponseSrcStateObjects.put(srcStateName, Arrays.asList(combinedSrcStateObject));
                 }
 
@@ -148,7 +150,7 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
             for (int i = 0; i < controller.getTransactionDescriptor().stateDstObjectNames.size(); ++i) {
                 resultObjects.add(
-                        transactionDefinition.applyPhase.apply(
+                        transactionDefinition.applyPhase.apply(Arrays.asList(requestObject),
                                 collectedResponseSrcStateObjects.get(controller.getTransactionDescriptor().stateSrcObjectNames.get(i)),
                                 dstStateObjects[i]
                         )
@@ -179,7 +181,7 @@ public class PullTransactionExecutor extends TransactionExecutor {
                         srcStateObjects[i].lock();
                         final Prepare preparePhase = transactionDefinition.preparePhase;
                         final Object prepareInput = request.getPayload() == null ? srcStateObjects[i] : request.requestObject;
-                        preparedOutputs.put(request.stateObjectNames.get(i), (preparePhase != null) ? preparePhase.prepare(prepareInput) : prepareInput);
+                        preparedOutputs.put(request.stateObjectNames.get(i), (preparePhase != null) ? preparePhase.prepare(request, prepareInput) : prepareInput);
                         srcStateObjects[i].unlock();
                     }
 

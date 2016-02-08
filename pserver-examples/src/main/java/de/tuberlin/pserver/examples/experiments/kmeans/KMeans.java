@@ -18,6 +18,7 @@ import de.tuberlin.pserver.math.matrix.dense.DenseMatrix64F;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
 
+import java.util.List;
 import java.util.Random;
 
 public class KMeans extends Program {
@@ -60,10 +61,9 @@ public class KMeans extends Program {
     @Transaction(state = "centroidsUpdate", type = TransactionType.PUSH)
     public final TransactionDefinition centroidsUpdateSync = new TransactionDefinition(
 
-            (Update<Matrix64F>) (remoteUpdates, localState) -> {
+            (Update<Matrix64F>) (requestObj, remoteUpdates, localState) -> {
 
                 for (final Matrix64F update : remoteUpdates) {
-
                     Parallel.For(update, (i, j, v) -> centroidsUpdate.set(i, j, centroidsUpdate.get(i, j) + update.get(i, j)));
                 }
 

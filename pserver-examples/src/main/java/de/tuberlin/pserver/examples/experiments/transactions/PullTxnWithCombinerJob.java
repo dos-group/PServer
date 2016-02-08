@@ -32,7 +32,7 @@ public class PullTxnWithCombinerJob extends Program {
     @Transaction(state = "model", type = TransactionType.PULL)
     public final TransactionDefinition syncModel = new TransactionDefinition(
 
-            (Combine<Matrix32F>) (models) -> {
+            (Combine<Matrix32F>) (requestObj, models) -> {
                 Matrix32F combinedModel = models.get(0);
                 for (int i = 1; i < models.size(); ++i) {
                     combinedModel.add(models.get(i), combinedModel);
@@ -40,7 +40,7 @@ public class PullTxnWithCombinerJob extends Program {
                 return combinedModel;
             },
 
-            (Update<Matrix32F>) (remoteModels, localModel) -> {
+            (Update<Matrix32F>) (requestObj, remoteModels, localModel) -> {
                 StringBuilder strBuilder = new StringBuilder();
                 for (Matrix32F remoteModel : remoteModels) {
                     for (int i = 0; i < 10; ++i)
