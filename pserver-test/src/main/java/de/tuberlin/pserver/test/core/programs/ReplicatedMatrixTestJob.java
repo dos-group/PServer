@@ -2,7 +2,7 @@ package de.tuberlin.pserver.test.core.programs;
 
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.PartitionerType;
+import de.tuberlin.pserver.math.matrix32.partitioner.PartitionerType;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;

@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.runtime.state.matrix.disttypes;
 
 
-import de.tuberlin.pserver.dsl.state.properties.PartitionerType;
+import de.tuberlin.pserver.math.matrix32.partitioner.PartitionerType;
 import de.tuberlin.pserver.math.matrix.ElementType;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.Matrix64F;

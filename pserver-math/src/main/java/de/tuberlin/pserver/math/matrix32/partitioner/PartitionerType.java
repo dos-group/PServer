@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.dsl.state.properties;
+package de.tuberlin.pserver.math.matrix32.partitioner;
 
 public enum PartitionerType {
 

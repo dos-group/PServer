@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.dsl.state.annotations;
 
-import de.tuberlin.pserver.dsl.state.properties.PartitionerType;
+import de.tuberlin.pserver.math.matrix32.partitioner.PartitionerType;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;

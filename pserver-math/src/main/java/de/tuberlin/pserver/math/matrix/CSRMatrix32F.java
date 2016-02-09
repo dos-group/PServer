@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.examples.experiments.regression;
+package de.tuberlin.pserver.math.matrix;
 
 
 import de.tuberlin.pserver.math.matrix.sparse.SparseMatrix32F;
@@ -9,7 +9,10 @@ import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntFloatMap;
 import gnu.trove.map.hash.TIntFloatHashMap;
 
-public final class CSRMatrix32F {
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+public final class CSRMatrix32F extends Matrix32FBase {
 
     // ---------------------------------------------------
     // Functional Interfaces.
@@ -31,15 +34,21 @@ public final class CSRMatrix32F {
     private int[] rowPtrArr;
     private float[] valueArr;
 
-    private TIntList colList;
-    private TIntList rowPtrList;
-    private TFloatList valueList;
+    transient private TIntList colList;
+    transient private TIntList rowPtrList;
+    transient private TFloatList valueList;
+
+    transient private Lock lock;
+    transient private Object owner;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
+    public CSRMatrix32F() { this.lock = new ReentrantLock(true); }
+
     public CSRMatrix32F(long cols) {
+        this();
         this.cols = cols;
         colList = new TIntArrayList();
         rowPtrList = new TIntArrayList();
@@ -51,8 +60,20 @@ public final class CSRMatrix32F {
     // Public Methods.
     // ---------------------------------------------------
 
+    @Override  public long sizeOf() { return valueArr.length * Float.BYTES + (valueArr.length + rowPtrArr.length) * Integer.BYTES; }
+    @Override  public Object toArray() { throw new UnsupportedOperationException(); }
+    @Override  public void setArray(Object data) { throw new UnsupportedOperationException(); }
+    @Override  public void lock() { lock.lock(); }
+    @Override  public void unlock() { lock.unlock(); }
+    @Override  public void setOwner(final Object owner) { this.owner = owner; }
+    @Override  public Object getOwner() { return owner; }
+
     public long rows() { return rows; }
     public long cols() { return cols; }
+
+    public Float get(final long row, final long col) {
+        return 0f;
+    }
 
     public void addRow(TIntFloatMap vector) {
         vector.forEachEntry((k, v) -> {

@@ -4,7 +4,7 @@ package de.tuberlin.pserver.dsl.state;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.utils.ParseUtils;
 import de.tuberlin.pserver.compiler.StateDescriptor;
-import de.tuberlin.pserver.dsl.state.properties.PartitionerType;
+import de.tuberlin.pserver.math.matrix32.partitioner.PartitionerType;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.math.matrix.MatrixFormat;

@@ -11,32 +11,33 @@ import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
 import de.tuberlin.pserver.math.matrix.sparse.SparseMatrix32F;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
+import de.tuberlin.pserver.math.matrix.CSRMatrix32F;
 import de.tuberlin.pserver.runtime.state.matrix.MatrixBuilder;
 
 import java.util.Arrays;
 
 
-public class LogisticRegressionCriteoFast extends Program {
+public class LogRegCriteoRM extends Program {
 
     // ---------------------------------------------------
     // Constants.
     // ---------------------------------------------------
 
-    private static final String NUM_NODES = "1";
+    private static final String NUM_NODES = "4";
     private static final String X_TRAIN_PATH = "datasets/svm_train";
     private static final int N_TRAIN = 80000;
     private static final int D = 1048615;
     private static float STEP_SIZE = 1e-3f;
-    private static int NUM_EPOCHS = 1000;
+    private static int NUM_EPOCHS = 15;
 
     // ---------------------------------------------------
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.REPLICATED, rows = N_TRAIN, cols = 1)
+    @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = 1)
     public Matrix32F trainLabel;
 
-    @State(scope = Scope.REPLICATED, rows = N_TRAIN, cols = D,
+    @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = D,
             path = X_TRAIN_PATH, matrixFormat = MatrixFormat.SPARSE_FORMAT,
             fileFormat = FileFormat.SVM_FORMAT, labels = "trainLabel")
 
@@ -97,7 +98,7 @@ public class LogisticRegressionCriteoFast extends Program {
         System.setProperty("simulation.numNodes", NUM_NODES);
 
         PServerExecutor.LOCAL
-                .run(LogisticRegressionCriteoFast.class)
+                .run(LogRegCriteoRM.class)
                 .done();
     }
 }

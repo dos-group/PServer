@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.runtime.state.matrix.partitioner;
 
-import de.tuberlin.pserver.dsl.state.properties.PartitionerType;
+import de.tuberlin.pserver.math.matrix32.partitioner.PartitionerType;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
 import de.tuberlin.pserver.runtime.state.matrix.entries.Entry;
 

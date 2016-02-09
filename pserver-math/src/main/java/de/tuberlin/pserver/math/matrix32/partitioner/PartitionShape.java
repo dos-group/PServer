@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.math.matrix.partitioning;
+package de.tuberlin.pserver.math.matrix32.partitioner;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
