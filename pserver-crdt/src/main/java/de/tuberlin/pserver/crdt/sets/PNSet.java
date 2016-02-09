@@ -1,5 +1,6 @@
 package de.tuberlin.pserver.crdt.sets;
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.SimpleOperation;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
@@ -39,6 +40,8 @@ public class PNSet<T> extends AbstractSet<T> {
 
     @Override
     public boolean add(T element) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
+
         if(addElement(element)) {
             broadcast(new SimpleOperation<>(Operation.OpType.ADD, element));
             return true;
@@ -48,6 +51,8 @@ public class PNSet<T> extends AbstractSet<T> {
 
     @Override
     public boolean remove(T element) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
+
         if(removeElement(element)) {
             broadcast(new SimpleOperation<>(Operation.OpType.REMOVE, element));
             return true;

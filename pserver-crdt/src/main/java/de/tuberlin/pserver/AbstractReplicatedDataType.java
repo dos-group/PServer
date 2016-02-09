@@ -1,5 +1,6 @@
 package de.tuberlin.pserver;
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.crdt.operations.EndOperation;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.runtime.RuntimeManager;
@@ -16,13 +17,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 // TODO: what about exceptions in general
 // TODO: what if someone uses the same id for two crdts?
-// TODO: what if only one node is running?
-// TODO: maybe use blocking queues for buffers
 // TODO: comments and documentation
 // TODO: improve the P2P discovery and termination
-// TODO: change constructor to CRDT.newReplica(...) to reflect that it is replicas being dealt with?
 // TODO: Timeout for "ready" p2p discovery?
 // TODO: ready() function should be blocking or non-blocking with buffer?
+// TODO: make nice logging messages
 
 /**
  * <p>
@@ -86,6 +85,10 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
      * @param programContext the {@code ProgramContext} belonging to this {@code MLProgram}
      * */
     protected AbstractReplicatedDataType(String crdtId, int noOfReplicas, ProgramContext programContext) {
+        Preconditions.checkArgument(crdtId != null);
+        Preconditions.checkArgument(noOfReplicas > 0);
+        Preconditions.checkArgument(programContext != null);
+
         // Threadsafe Sets
         // Todo: Performance depends on a good hash function and good size estimate (resizing is slow)
         this.runningNodes = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -98,15 +101,15 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
         this.crdtId = crdtId;
         this.nodeId = programContext.runtimeContext.nodeID;
 
-        this.allNodesRunning = false;
-        this.allNodesFinished = false;
+        this.allNodesRunning = noOfReplicas > 1 ? false : true;
+        this.allNodesFinished = noOfReplicas > 1 ? false : true;
         this.isFinished = false;
 
         runtimeManager.addMsgEventListener("Running_" + crdtId, new MsgEventHandler() {
             @Override
             public void handleMsg(int srcNodeID, Object value) {
                 runningNodes.add(srcNodeID);
-                LOG.info("[" + nodeId + "|crdt '" + crdtId + "'] Number of running remote replicas: " + runningNodes.size() + "//"
+                LOG.info("[node " + nodeId + "|crdt '" + crdtId + "'] Number of running remote replicas: " + runningNodes.size() + "//"
                         + (noOfReplicas - 1));
 
                 if(runningNodes.size() == noOfReplicas -1) {
@@ -120,8 +123,6 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
                 }
             }
         });
-
-        //ready();
     }
 
     // ---------------------------------------------------
@@ -147,11 +148,9 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
             throw new RuntimeException("Not All The Nodes Are Running YET.");
         }
 
-        //System.out.println("[DEBUG] BufferB: " + buffer.size());
-
         broadcast(new EndOperation());
 
-        if(!allNodesFinished) LOG.info("[" + nodeId + "|crdt '" + crdtId + "']" + " Waiting for all CRDTs to finish");
+        if(!allNodesFinished) LOG.info("[node " + nodeId + "|crdt '" + crdtId + "']" + " Waiting for all CRDTs to finish");
         while(!allNodesFinished) {
             try {
                 synchronized(this) {
@@ -190,10 +189,9 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
         if(allNodesRunning) {
             broadcastBuffer();
 
-            // TODO: Not necessarily all nodes have replicas of this CRDT
             runtimeManager.send("Operation_" + crdtId, op, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[0])));
         } else {
-            buffer(op);
+            buffer.add(op);
         }
     }
 
@@ -206,7 +204,7 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
      */
     protected abstract boolean update(int srcNodeId, Operation<?> op);
 
-    protected void addFinishedNode(int nodeID) {
+    protected synchronized void addFinishedNode(int nodeID) {
         finishedNodes.add(nodeID);
 
         if(finishedNodes.size() == noOfReplicas - 1) {
@@ -232,7 +230,6 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
             }
         }
 
-
         // This is necessary to reach replicas that were not online when the first "Running" message was sent
         // TODO: this is so ugly! (toPrimitive())
         runtimeManager.send("Running_" + crdtId, 0, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[runningNodes.size()])));
@@ -241,10 +238,6 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
         // TODO: is this really a good idea? Will it not influence calculation results?
         // ScheduledThreadPoolExecutor
         //runningNodes.add(nodeId);
-    }
-
-    private void buffer(Operation op) {
-        buffer.add(op);
     }
 
     private boolean broadcastBuffer() {

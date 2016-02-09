@@ -1,5 +1,6 @@
 package de.tuberlin.pserver.crdt.sets;
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.TaggedOperation;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
@@ -37,6 +38,8 @@ public class ORSet<T> extends AbstractSet<T> {
 
     @Override
     public boolean add(T value) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
+
         UUID id = UUID.randomUUID();
 
         if(addElement(value, id)) {
@@ -48,6 +51,8 @@ public class ORSet<T> extends AbstractSet<T> {
 
     @Override
     public synchronized boolean remove(T value) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
+
         List<UUID> idList = getIds(value);
         if(idList.size() == 0) return false;
 

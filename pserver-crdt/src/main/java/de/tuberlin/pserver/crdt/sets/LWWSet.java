@@ -1,5 +1,6 @@
 package de.tuberlin.pserver.crdt.sets;
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.TaggedOperation;
@@ -49,6 +50,8 @@ public class LWWSet<T> extends AbstractSet<T> {
 
     @Override
     public boolean add(T element) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
+
         long timestamp = System.nanoTime();
         if(addElement(element, timestamp)) {
             broadcast(new TaggedOperation<>(Operation.OpType.ADD, element, timestamp));
@@ -59,6 +62,8 @@ public class LWWSet<T> extends AbstractSet<T> {
 
     @Override
     public boolean remove(T element) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
+
         long timestamp = System.nanoTime();
         if(removeElement(element, timestamp)) {
             broadcast(new TaggedOperation<>(Operation.OpType.REMOVE, element, timestamp));

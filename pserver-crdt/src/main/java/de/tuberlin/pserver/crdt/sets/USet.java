@@ -1,5 +1,6 @@
 package de.tuberlin.pserver.crdt.sets;
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.crdt.exceptions.NotUniqueException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.SimpleOperation;
@@ -41,6 +42,8 @@ public class USet<T> extends AbstractSet<T> {
 
     @Override
     public boolean add(T value) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
+
         if(addElement(value)) {
             broadcast(new SimpleOperation<>(Operation.OpType.ADD, value));
             return true;
@@ -50,6 +53,8 @@ public class USet<T> extends AbstractSet<T> {
 
     @Override
     public boolean remove(T value) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
+
         if(removeElement(value)) {
             broadcast(new SimpleOperation<>(Operation.OpType.REMOVE, value));
             return true;

@@ -41,6 +41,7 @@ public class GCounter extends AbstractCounter implements Counter, Serializable {
     @Override
     public long increment(int i) {
         Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
+
         long count = super.increment(i);
         broadcast(new SimpleOperation<>(Operation.OpType.INCREMENT, i));
 

@@ -6,9 +6,6 @@ import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 
-/**
- * A Grow-Only Set supports operations add and lookup. There is no remove operation!
- */
 
 // TODO: this needs more testing and debugging + cleanup
 public class LinkedListTestJob extends Program {
@@ -37,11 +34,12 @@ public class LinkedListTestJob extends Program {
 
             list.update(5, 12345);
 
-            System.out.println(list);
+            System.out.println("Before delete: " + list);
 
+            // TODO: delete is not working properly :/
             list.delete(6);
 
-            System.out.println(list);
+            System.out.println("After delete: " + list);
 
             list.finish();
 

@@ -8,5 +8,5 @@ public interface IArray<T> extends RADT {
 
     boolean write(int index, T value);
 
-    T[] getLocalCopy();
+    Object[] getArray();
 }

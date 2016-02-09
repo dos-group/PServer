@@ -16,6 +16,13 @@ public abstract class CObject<T> implements Serializable {
     // Constructor.
     // ---------------------------------------------------
 
+    // no-args constructor for serialization
+    public CObject() {
+        this.vectorClock = null;
+        this.s4Vector = null;
+        this.value = null;
+    }
+
     public CObject(int[] vectorClock, S4Vector s4Vector, T value) {
         this.vectorClock = vectorClock;
         this.s4Vector = s4Vector;

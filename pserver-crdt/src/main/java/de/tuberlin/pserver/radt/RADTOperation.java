@@ -16,6 +16,13 @@ public abstract class RADTOperation<V> extends SimpleOperation<V> {
     // Constructor.
     // ---------------------------------------------------
 
+    // No arg constructor for serialization
+   public RADTOperation() {
+        super();
+        this.vectorClock = null;
+        this.s4 = null;
+    }
+
     public RADTOperation(OpType type, V value, int[] vectorClock, S4Vector s4) {
         super(type, value);
         this.vectorClock = vectorClock;

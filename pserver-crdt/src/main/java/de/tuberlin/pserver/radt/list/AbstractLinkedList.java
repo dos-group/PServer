@@ -2,16 +2,15 @@ package de.tuberlin.pserver.radt.list;
 
 import de.tuberlin.pserver.radt.AbstractRADT;
 import de.tuberlin.pserver.radt.S4Vector;
-import de.tuberlin.pserver.radt.Cemetery;
+import de.tuberlin.pserver.radt.hashtable.HashTableCemetery;
 import de.tuberlin.pserver.radt.hashtable.HashTable;
-import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 public abstract class AbstractLinkedList<T> extends AbstractRADT<T> implements ILinkedList<T> {
     // TODO: change to private
     protected final HashTable<S4Vector, Node<T>> svi; // S4Vector Index
     private Node<T> head;
-    protected final Cemetery<Node<T>> cemetery;
+    protected final LinkedListCemetery<T> cemetery;
 
 
     protected AbstractLinkedList(String id, int noOfReplicas, ProgramContext programContext) {
@@ -19,7 +18,7 @@ public abstract class AbstractLinkedList<T> extends AbstractRADT<T> implements I
 
         this.svi = new HashTable<>(id+"_svi", noOfReplicas, programContext);
         this.head = null;
-        this.cemetery = new Cemetery<>();
+        this.cemetery = new LinkedListCemetery<>(noOfReplicas, nodeId);
     }
 
     public Node<T> getHead() {

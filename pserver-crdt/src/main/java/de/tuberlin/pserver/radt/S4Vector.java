@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.radt;
 
 import java.io.Serializable;
+import java.util.stream.IntStream;
 
 public class S4Vector implements Serializable {
 
@@ -19,17 +20,28 @@ public class S4Vector implements Serializable {
     // Constructor.
     // ---------------------------------------------------
 
-    public S4Vector(int sessionNumber, int siteId, int[] vectorClock, int seq) {
-        this.sessionNumber = sessionNumber;
+    // no args constructor for serialization
+    public S4Vector() {
+        this.sessionNumber = 0;
+        this.siteId = 0;
+        this.vectorClockSum = 0;
+        this.seq = 0;
+    }
+
+    public S4Vector(int siteId, int[] vectorClock) {
+        /*
+         * From Roh et al. (2010):
+         * "As a unit of collaboration, a session begins with initial vector clocks and identical RADT structures at all
+         *  sites. When a membership changes or a collaboration newly begins with the same RADT structure stored on disk,
+         *  s_o[ssn] increases."
+         *
+         *  As we are not allowing membership of an RADT to change or members to be added later, the sessionNumber will
+         *  never increase in our implementation.
+         */
+        this.sessionNumber = 0;
         this.siteId = siteId;
-
-        int sum = 0;
-        for(int i : vectorClock) {
-            sum = sum + i;
-        }
-        this.vectorClockSum = sum;
-
-        this.seq = seq;
+        this.vectorClockSum = IntStream.of(vectorClock).sum();
+        this.seq = vectorClock[siteId];
     }
 
     // ---------------------------------------------------
@@ -64,11 +76,7 @@ public class S4Vector implements Serializable {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("<");
-        sb.append(sessionNumber).append(", ").append(siteId).append(", ").append(vectorClockSum).append(", ")
-        .append(seq);
-        sb.append(">");
-        return sb.toString();
+        return "<" + sessionNumber + ", " + siteId + ", " + vectorClockSum + ", " + seq + ">";
     }
 
     @Override

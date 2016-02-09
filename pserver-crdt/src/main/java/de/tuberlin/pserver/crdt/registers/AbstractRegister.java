@@ -1,5 +1,6 @@
 package de.tuberlin.pserver.crdt.registers;
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.crdt.AbstractCRDT;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;

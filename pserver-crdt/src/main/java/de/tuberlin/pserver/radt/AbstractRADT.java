@@ -2,6 +2,7 @@ package de.tuberlin.pserver.radt;
 
 import de.tuberlin.pserver.AbstractReplicatedDataType;
 import de.tuberlin.pserver.crdt.operations.Operation;
+import de.tuberlin.pserver.radt.arrays.ArrayOperation;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.events.MsgEventHandler;
@@ -19,8 +20,6 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
     protected final int[] vectorClock;
     // priority queue
     private final Queue<RADTOperation<CObject<T>>> queue;
-    // TODO: Not sure what this does...
-    protected int sessionID;
 
     // ---------------------------------------------------
     // Constructor.
@@ -30,7 +29,7 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
         super(id, noOfReplicas, programContext);
 
         // Initialize vector clock
-        this.vectorClock = new int[runtimeManager.getNodeIDs().length];
+        this.vectorClock = new int[noOfReplicas];
         Arrays.fill(vectorClock, 0);
 
         // Initialize queue
@@ -39,10 +38,6 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
             else if (o2.getValue().getS4Vector().takesPrecedenceOver(o1.getValue().getS4Vector())) return 1;
             else return 0;
         });
-
-        // Initialize session ID
-        // TODO: what is this for?
-        this.sessionID = 0;
 
         runtimeManager.addMsgEventListener("Operation_" + id, new MsgEventHandler() {
             @Override
@@ -54,9 +49,13 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
 
                     if(op.getType() == Operation.OpType.END) {
                         addFinishedNode(srcNodeID);
+                        synchronized (AbstractRADT.this) {
+                            AbstractRADT.this.notifyAll();
+                        }
                     } else {
                         @SuppressWarnings("unchecked")
                         RADTOperation<CObject<T>> radtOp = (RADTOperation<CObject<T>>) value;
+                        //System.out.println("[" + nodeId + "] Received " + ((ArrayOperation<T>)radtOp).getValue() + "; " + radtOp.getS4Vector());
                         queue.add(radtOp);
 
                         while(queue.peek() != null && isCausallyReadyFor(queue.peek())) {
@@ -70,28 +69,28 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
         });
 
         // Start the RADT
-        ready();
+        //ready();
     }
 
     // ---------------------------------------------------
     // Protected Methods.
     // ---------------------------------------------------
 
-    protected boolean isCausallyReadyFor(RADTOperation<CObject<T>> op) {
+    protected synchronized boolean isCausallyReadyFor(RADTOperation<CObject<T>> op) {
         // TODO: what about if sum > vectorClockSum => must the operation be purged from queue?
         // TODO: this needs verification
-        System.out.println();
-        System.out.println("Local vector clock: " + vectorClock[op.getS4Vector().getSiteId()]);
-        System.out.println("Remote vector clock: " + op.getVectorClock()[op.getS4Vector().getSiteId()]);
+        //System.out.println();
+        //System.out.println("Local vector clock: " + vectorClock[op.getS4Vector().getSiteId()]);
+        //System.out.println("Remote vector clock: " + op.getVectorClock()[op.getS4Vector().getSiteId()]);
         return vectorClock[op.getS4Vector().getSiteId()] == (op.getVectorClock()[op.getS4Vector().getSiteId()] - 1);
     }
 
-    protected int[] increaseVectorClock() {
+    protected synchronized int[] increaseVectorClock() {
         vectorClock[nodeId]++;
         return vectorClock.clone();
     }
 
-    protected void updateVectorClock(int[] remoteVectorClock) {
+    protected synchronized void updateVectorClock(int[] remoteVectorClock) {
         for(int i = 0; i < remoteVectorClock.length; i++) {
             vectorClock[i] = Math.max(vectorClock[i], remoteVectorClock[i]);
         }

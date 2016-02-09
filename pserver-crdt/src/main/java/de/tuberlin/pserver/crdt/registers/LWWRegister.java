@@ -1,5 +1,6 @@
 package de.tuberlin.pserver.crdt.registers;
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.TaggedOperation;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
@@ -21,9 +22,11 @@ public class LWWRegister<T extends Comparable> extends AbstractRegister<T> imple
 
     @Override
     public synchronized boolean set(T element) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
+
         long time = System.nanoTime();
 
-        if (setRegister(element, time)) {
+        if(setRegister(element, time)) {
             broadcast(new TaggedOperation<>(Operation.OpType.ASSIGN, element, time));
             return true;
         }

@@ -11,6 +11,14 @@ public class Node<T> extends CObject<T> implements Serializable {
     private Node<T> next; // Next in hash table
     private Node<T> link; // Next in linked list
 
+    // no-args constructor for serialization
+    public Node() {
+        this.s4HashKey = null;
+        this.refNodeS4 = null;
+        this.next = null;
+        this.link = null;
+    }
+
     public Node(T value, S4Vector s4HashKey, S4Vector s4Vector, Node<T> next, Node<T> link, S4Vector refNodeS4, int[] vectorClock) {
         super(vectorClock, s4Vector, value);
         this.s4HashKey = s4HashKey;

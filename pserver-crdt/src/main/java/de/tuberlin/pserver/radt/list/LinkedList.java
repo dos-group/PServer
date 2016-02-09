@@ -5,18 +5,22 @@ import de.tuberlin.pserver.radt.S4Vector;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class LinkedList<T> extends AbstractLinkedList<T>{
 
     // TODO: do I need size?
     public LinkedList(String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
+        ready();
     }
 
     public boolean insert(int index, T value) {
         Node<T> node;
         int[] clock = increaseVectorClock();
 
-        S4Vector s4 = new S4Vector(sessionID, nodeId, clock, 0);
+        S4Vector s4 = new S4Vector(nodeId, clock);
 
         node = localInsert(index, value, s4, clock);
 
@@ -35,7 +39,7 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
         Node<T> node;
         int[] clock = increaseVectorClock();
 
-        S4Vector s4 = new S4Vector(sessionID, nodeId, clock, 0);
+        S4Vector s4 = new S4Vector(nodeId, clock);
 
         node = localUpdate(index, value);
 
@@ -47,10 +51,11 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
         return false;
     }
 
+    // TODO: delete is not working properly :/
     public boolean delete(int index) {
         int[] clock = increaseVectorClock();
 
-        S4Vector s4 = new S4Vector(sessionID, nodeId, clock, 0);
+        S4Vector s4 = new S4Vector(nodeId, clock);
 
         Node<T> node = localDelete(index);
 
@@ -71,14 +76,27 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("LinkedList{\n");
-        Node<T> node = getHead();
+        final StringBuilder sb = new StringBuilder("LinkedList{ ");
+        /*List<T> =
         while(node != null) {
-            sb.append(node.getValue() + "\n");
+            if(node.getLink() != null) sb.append(node.getValue() + ", ");
+            else sb.append(node.getValue() + " }");
             node = node.getLink();
         }
-        sb.append('}');
-        return sb.toString();
+        return sb.toString();*/
+        return getList().toString();
+    }
+
+    @Override
+    public List<T> getList() {
+        ArrayList<T> list = new ArrayList<>();
+
+        Node<T> node = getHead();
+        while(node != null && !node.isTombstone()) {
+            list.add(node.getValue());
+            node = node.getLink();
+        }
+        return list;
     }
 
     @Override
@@ -143,7 +161,7 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
 
     private Node<T> localDelete(int index) {
         Node<T> node = getNodeByIndex(index);
-        if(node != null) node.makeTombstone();;
+        if(node != null) node.makeTombstone();
 
         return node;
     }
@@ -251,7 +269,7 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
         if(!node.isTombstone()) {
             node.makeTombstone();
             node.setS4Vector(s4);
-            cemetery.enrol(node);
+            cemetery.enrol(nodeId, node);
         }
 
         return true;

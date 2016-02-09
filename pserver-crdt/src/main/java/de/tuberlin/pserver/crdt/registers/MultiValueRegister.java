@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.crdt.registers;
 
-import com.clearspring.analytics.util.Preconditions;
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.crdt.operations.TaggedOperation;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
@@ -27,6 +27,8 @@ public class MultiValueRegister<T> extends AbstractRegister<Set<T>> implements R
 
     @Override
     public synchronized boolean set(Set<T> elements) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
+
         // TODO: for large sets, the i/o network layer seems to produce errors
         int[] version = increaseVersionVector();
         //Set<T> broadcastSet = new HashSet<>();

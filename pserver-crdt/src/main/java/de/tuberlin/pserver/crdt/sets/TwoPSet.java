@@ -1,5 +1,6 @@
 package de.tuberlin.pserver.crdt.sets;
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.crdt.CRDT;
 import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
@@ -45,6 +46,8 @@ public class TwoPSet<T> extends AbstractSet<T> {
 
     @Override
     public boolean add(T element) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
+
         if(addElement(element)) {
             broadcast(new SimpleOperation<T>(Operation.OpType.ADD, element));
             return true;
@@ -54,6 +57,8 @@ public class TwoPSet<T> extends AbstractSet<T> {
 
     @Override
     public boolean remove(T element) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
+
         if(removeElement(element)) {
             broadcast(new SimpleOperation<T>(Operation.OpType.REMOVE, element));
             return true;

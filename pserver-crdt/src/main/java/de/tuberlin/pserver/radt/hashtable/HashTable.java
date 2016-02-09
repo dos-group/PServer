@@ -1,10 +1,7 @@
 package de.tuberlin.pserver.radt.hashtable;
 
-import de.tuberlin.pserver.crdt.exceptions.IllegalOperationException;
 import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.radt.Cemetery;
 import de.tuberlin.pserver.radt.S4Vector;
-import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 public class HashTable<K,V> extends AbstractHashTable<K,V> {
@@ -13,7 +10,6 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
     // Fields.
     // ---------------------------------------------------
 
-    private final Cemetery<Slot<K,V>> cemetery;
 
     // ---------------------------------------------------
     // Constructor.
@@ -21,7 +17,7 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
 
     public HashTable(String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
-        cemetery = new Cemetery<>();
+        ready();
     }
 
     // ---------------------------------------------------
@@ -31,7 +27,7 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
     @Override
     public void put(K key, V value) {
         int[] clock = increaseVectorClock();
-        S4Vector s4 = new S4Vector(sessionID, nodeId, clock, 0);
+        S4Vector s4 = new S4Vector(nodeId, clock);
 
         Slot<K,V> slot = localPut(key, value, s4, clock);
 
@@ -55,7 +51,7 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
 
         if(slot != null) {
             int[] clock = increaseVectorClock();
-            S4Vector s4 = new S4Vector(sessionID, nodeId, clock, 0);
+            S4Vector s4 = new S4Vector(nodeId, clock);
 
             broadcast(new HashTableOperation<>(Operation.OpType.REMOVE, key, slot, clock, s4));
             return true;
@@ -72,8 +68,11 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
         final StringBuilder sb = new StringBuilder("HashTable{\n");
         for(K k : hashTable.keySet()) {
             Slot<K,V> s = hashTable.get(k);
-            while(s != null) {
-                sb.append("  Key: ").append(k).append(", Value: ").append(s.getValue()).append("\n");
+            while(s != null){// && !s.isTombstone()) {
+                sb.append("  Key: ").append(k).append(", Value: ");
+                if(s.getValue() == null) sb.append("tombstone" + "\n");
+                else sb.append(s.getValue() + "\n");
+
                 s = s.getNextSlot();
             }
         }
@@ -92,10 +91,14 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
         HashTableOperation<K,Slot<K,V>> radtOp = (HashTableOperation<K,Slot<K,V>>) op;
 
         if(radtOp.getType() == Operation.OpType.PUT) {
-            return remotePut(radtOp.getKey(), radtOp.getValue().getValue(), radtOp.getS4Vector());
+            boolean result = remotePut(radtOp.getKey(), radtOp.getValue().getValue(), radtOp.getS4Vector());
+            cemetery.updateVectorClocks(radtOp.getS4Vector().getSiteId(), radtOp.getVectorClock());
+            return result;
         }
         else if(radtOp.getType() == Operation.OpType.REMOVE) {
-            return remoteRemove(radtOp.getKey(), radtOp.getS4Vector());
+            boolean result = remoteRemove(radtOp.getKey(), radtOp.getS4Vector());
+            cemetery.updateVectorClocks(radtOp.getS4Vector().getSiteId(), radtOp.getVectorClock());
+            return result;
         }
         else {
             throw new IllegalArgumentException("HashTable RADTs do not allow the " + op.getType() + " operation.");
@@ -123,6 +126,7 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
         }
     }
 
+    // TODO: this method is not right yet somehow...
     private Slot<K,V> localRemove(K key) {
         // TODO: what about chaining scheme?
         Slot<K,V> slot = hashTable.get(key);
@@ -132,6 +136,7 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
         }
         else {
             slot.setValue(null);
+            cemetery.enrol(nodeId, slot);
             return slot;
         }
     }
@@ -150,7 +155,7 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
             return false;
         }
         else if (slot != null && slot.isTombstone()) {
-            cemetery.withdraw(slot);
+            cemetery.withdraw(nodeId, slot);
         }
         else if(slot == null) {
             slot = new Slot<>(key, value, s4, null, null);
@@ -182,9 +187,10 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
         if(s4.takesPrecedenceOver(slot.getS4Vector()))  return false;
 
         if(!slot.isTombstone()) {
-            cemetery.enrol(slot);
+            cemetery.enrol(nodeId, slot);
             slot.makeTombstone();
         }
+        cemetery.enrol(nodeId, slot);
 
         slot.setS4Vector(s4);
         slot.setValue(null);

@@ -84,6 +84,6 @@ public abstract class AbstractCRDT<T> extends AbstractReplicatedDataType<T> impl
             }
         });
 
-        ready();
+        //ready();
     }
 }

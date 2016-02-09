@@ -2,10 +2,11 @@ package de.tuberlin.pserver.radt.arrays;
 
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.radt.S4Vector;
-import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.radt.list.Node;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Array<T> extends AbstractArray<T> implements IArray<T>{
 
@@ -21,6 +22,7 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
      */
     public Array(int size, String id, int noOfReplicas, ProgramContext programContext) {
         super(size, id, noOfReplicas, programContext);
+        ready();
     }
 
     // ---------------------------------------------------
@@ -38,14 +40,27 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
     }
 
     @Override
-    public T[] getLocalCopy() {
+    public synchronized Object[] getArray() {
         List<T> result = new LinkedList<>();
 
-        for (Item<T> item : array) {
-            result.add(item.getValue());
+        for (int i = 0; i < size; i++) {
+            result.add(get(i).getValue());
         }
 
-        return (T[])result.toArray();
+        return result.toArray();
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Array[");
+
+        for(int i = 0; i < size; i++) {
+            sb.append(get(i).getValue());
+            if (i < size - 1) sb.append(", ");
+        }
+        sb.append("]");
+
+        return sb.toString();
     }
 
     // ---------------------------------------------------
@@ -54,13 +69,14 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
 
     @Override
     protected boolean update(int srcNodeId, Operation op) {
-        ArrayOperation<Item<T>> radtOp = (ArrayOperation<Item<T>>) op;
+        @SuppressWarnings("unchecked")
+        ArrayOperation<Item<T>> arrayOp = (ArrayOperation<Item<T>>) op;
 
-        if(radtOp.getType() == Operation.OpType.WRITE) {
-            return remoteWrite(radtOp.getValue());
-        }
-        else {
-            throw new IllegalArgumentException("Array RADTs do not allow the " + op.getType() + " operation.");
+        switch(arrayOp.getType()) {
+            case WRITE:
+                return remoteWrite(arrayOp.getValue());
+            default:
+                throw new IllegalArgumentException("Array RADTs do not allow the " + op.getType() + " operation.");
         }
     }
 
@@ -68,25 +84,27 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
     // Private Methods.
     // ---------------------------------------------------
 
-    private T localRead(int index) {
-        return array[index].getValue();
+    private synchronized T localRead(int index) {
+        return get(index).getValue();
     }
 
-    private boolean localWrite(int index, T value) {
+    private synchronized boolean localWrite(int index, T value) {
         int[] clock = increaseVectorClock();
-        S4Vector s4 = new S4Vector(sessionID, nodeId, clock, 0);
-        Item<T> item = new Item<>(index, clock, new S4Vector(sessionID, nodeId, clock, 0), value);
-        array[index] = item;
+        S4Vector s4 = new S4Vector(nodeId, clock);
+
+        Item<T> item = new Item<>(index, clock, s4, value);
+        set(index, item);
 
         broadcast(new ArrayOperation<>(Operation.OpType.WRITE, item, index, clock, s4));
 
         return true;
     }
 
-    private boolean remoteWrite(Item<T> item) {
-        Item old = array[item.getIndex()];
-        if(old.getS4Vector().takesPrecedenceOver(item.getS4Vector())) {
-            array[item.getIndex()] = item;
+    private synchronized boolean remoteWrite(Item<T> item) {
+        Item current = get(item.getIndex());
+
+        if(current.getS4Vector().takesPrecedenceOver(item.getS4Vector())) {
+            set(item.getIndex(), item);
             return true;
         }
 
