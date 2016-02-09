@@ -22,11 +22,11 @@ public class LibSVMReaderJob extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.PARTITIONED, rows = 270, cols = 1, matrixFormat = MatrixFormat.DENSE_FORMAT)
+    @State(scope = Scope.PARTITIONED, rows = 16000, cols = 1, matrixFormat = MatrixFormat.DENSE_FORMAT)
     public Matrix32F XTrainLabel;
 
-    @State(scope = Scope.PARTITIONED, rows = 270, cols = 13, matrixFormat = MatrixFormat.DENSE_FORMAT,
-            path = "datasets/svmSmallTestFile", fileFormat = FileFormat.SVM_FORMAT, labels = "XTrainLabel")
+    @State(scope = Scope.PARTITIONED, rows = 16000, cols = 3, matrixFormat = MatrixFormat.DENSE_FORMAT,
+            path = "datasets/XY_train", fileFormat = FileFormat.SVM_FORMAT, labels = "XTrainLabel")
     public Matrix32F XTrainFeatures;
 
     // ---------------------------------------------------

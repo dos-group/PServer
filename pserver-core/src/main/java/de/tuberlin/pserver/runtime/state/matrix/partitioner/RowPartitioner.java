@@ -2,7 +2,7 @@ package de.tuberlin.pserver.runtime.state.matrix.partitioner;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
-import de.tuberlin.pserver.runtime.state.matrix.entries.Entry;
+import de.tuberlin.pserver.runtime.filesystem.records.Entry;
 
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
