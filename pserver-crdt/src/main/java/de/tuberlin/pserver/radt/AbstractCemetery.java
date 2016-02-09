@@ -46,20 +46,32 @@ public abstract class AbstractCemetery<T extends CObject> implements Cemetery<T>
 
     @Override
     public synchronized boolean enrol(int nodeId, T cObj) {
-        System.out.println("*enrol*");
+        //System.out.println("*enrol*");
+        cObj.makeTombstone();
         return cemetery.get(nodeId).add(cObj);
     }
 
+    // TODO: improve this, don't really want to have to check every queue...
     @Override
-    public synchronized boolean withdraw(int nodeId, T cObj) {
-        return cemetery.get(nodeId).remove(cObj);
+    public synchronized boolean withdraw(T cObj) {
+        boolean withdrawn = false;
+
+        for(Queue queue : cemetery) {
+            if(queue.contains(cObj)) {
+                queue.remove(cObj);
+                withdrawn = true;
+                break;
+            }
+        }
+
+        return withdrawn;
     }
 
-    protected synchronized boolean conditionOne(CObject obj) {
+    protected synchronized boolean allReplicasHaveExecutedDelete(CObject obj) {
         // Every site has executed the deletion D, therefore from now on only operations happening after D will arrive
+        if(obj == null) return false;
         //System.out.println("Seq: " + obj.getS4Vector().getSeq());
         //System.out.println("Min: " + getMinVectorClockEntry(obj.getS4Vector().getSiteId())+"\n");
-        if(obj == null) return false;
         return obj.getS4Vector().getSeq() <= getMinVectorClockEntry(obj.getS4Vector().getSiteId());
     }
 
@@ -72,7 +84,7 @@ public abstract class AbstractCemetery<T extends CObject> implements Cemetery<T>
 
         for(int i = 0; i < lastVectorClocks.length; i++) {
             if(i != nodeId) {
-                System.out.println(lastVectorClocks[i][siteId]);
+                //System.out.println(lastVectorClocks[i][siteId]);
                 if (lastVectorClocks[i][siteId] < min) {
                     min = lastVectorClocks[i][siteId];
                 }
@@ -82,7 +94,7 @@ public abstract class AbstractCemetery<T extends CObject> implements Cemetery<T>
         return min;
     }
 
-    public void updateVectorClocks(int srcNode, int[] vectorClock) {
+    public void updateAndPurge(int srcNode, int[] vectorClock) {
         lastVectorClocks[srcNode] = vectorClock;
         // TODO: when, where and how often to purge?
         purge();

@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.radt.arrays;
 
+import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.radt.S4Vector;
-import de.tuberlin.pserver.radt.list.Node;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.LinkedList;
@@ -36,6 +36,7 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
 
     @Override
     public boolean write(int index, T value) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on an RADT no more changes can be made to it");
         return localWrite(index, value);
     }
 
@@ -92,7 +93,7 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
         int[] clock = increaseVectorClock();
         S4Vector s4 = new S4Vector(nodeId, clock);
 
-        Item<T> item = new Item<>(index, clock, s4, value);
+        Item<T> item = new Item<>(index, s4, value);
         set(index, item);
 
         broadcast(new ArrayOperation<>(Operation.OpType.WRITE, item, index, clock, s4));
@@ -103,7 +104,7 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
     private synchronized boolean remoteWrite(Item<T> item) {
         Item current = get(item.getIndex());
 
-        if(current.getS4Vector().takesPrecedenceOver(item.getS4Vector())) {
+        if(current.getS4Vector().precedes(item.getS4Vector())) {
             set(item.getIndex(), item);
             return true;
         }

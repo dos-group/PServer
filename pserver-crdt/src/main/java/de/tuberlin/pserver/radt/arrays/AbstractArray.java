@@ -22,7 +22,7 @@ public abstract class AbstractArray<T> extends AbstractRADT<T> implements IArray
         // Initialize array
         array = new ArrayList<>();
         for(int i = 0; i < size; i++) {
-            array.add(new Item<T>(-1, vectorClock, new S4Vector(nodeId, new int[0]), null));
+            array.add(new Item<T>(-1, new S4Vector(nodeId, new int[0]), null));
         }
     }
 

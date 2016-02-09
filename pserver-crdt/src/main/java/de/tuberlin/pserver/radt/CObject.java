@@ -1,5 +1,8 @@
 package de.tuberlin.pserver.radt;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import java.io.Serializable;
 
 public abstract class CObject<T> implements Serializable {
@@ -8,7 +11,6 @@ public abstract class CObject<T> implements Serializable {
     // Fields.
     // ---------------------------------------------------
 
-    private final int[] vectorClock;
     private S4Vector s4Vector;
     private T value;
 
@@ -18,13 +20,11 @@ public abstract class CObject<T> implements Serializable {
 
     // no-args constructor for serialization
     public CObject() {
-        this.vectorClock = null;
         this.s4Vector = null;
         this.value = null;
     }
 
-    public CObject(int[] vectorClock, S4Vector s4Vector, T value) {
-        this.vectorClock = vectorClock;
+    public CObject(S4Vector s4Vector, T value) {
         this.s4Vector = s4Vector;
         this.value = value;
     }
@@ -33,24 +33,49 @@ public abstract class CObject<T> implements Serializable {
     // Public Methods.
     // ---------------------------------------------------
 
-    public int[] getVectorClock() {
-        return vectorClock;
-    }
-
-    public S4Vector getS4Vector() {
+    public synchronized S4Vector getS4Vector() {
         return s4Vector;
     }
 
-    public void setS4Vector(S4Vector vector) {
+    public synchronized void setS4Vector(S4Vector vector) {
         this.s4Vector = vector;
     }
 
-    public T getValue() {
+    public synchronized T getValue() {
         return value;
     }
 
-    public void setValue(T value) {
+    public synchronized void setValue(T value) {
         this.value = value;
+    }
+
+    public boolean isTombstone() {
+        return getValue() == null;
+    }
+
+    public synchronized void makeTombstone() {
+        setValue(null);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof CObject)) return false;
+
+        CObject<?> other = (CObject<?>) obj;
+
+        return new EqualsBuilder()
+                .append(this.s4Vector, other.s4Vector)
+                .append(this.value, other.value)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(s4Vector)
+                .append(value)
+                .toHashCode();
     }
 }
 

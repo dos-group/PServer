@@ -2,8 +2,6 @@ package de.tuberlin.pserver.radt;
 
 import de.tuberlin.pserver.AbstractReplicatedDataType;
 import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.radt.arrays.ArrayOperation;
-import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.events.MsgEventHandler;
 
@@ -34,8 +32,8 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
 
         // Initialize queue
         this.queue = new PriorityQueue<>((o1, o2) -> {
-            if (o1.getValue().getS4Vector().takesPrecedenceOver(o2.getValue().getS4Vector())) return -1;
-            else if (o2.getValue().getS4Vector().takesPrecedenceOver(o1.getValue().getS4Vector())) return 1;
+            if (o1.getValue().getS4Vector().precedes(o2.getValue().getS4Vector())) return -1;
+            else if (o2.getValue().getS4Vector().precedes(o1.getValue().getS4Vector())) return 1;
             else return 0;
         });
 

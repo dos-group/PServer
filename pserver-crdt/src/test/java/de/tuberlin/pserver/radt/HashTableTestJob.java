@@ -7,6 +7,7 @@ import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.radt.hashtable.HashTable;
+import org.junit.Test;
 
 import java.io.Serializable;
 import java.util.List;
@@ -34,6 +35,11 @@ public class HashTableTestJob extends Program {
                 for (int i = 0; i <= 10; i++) {
                     hashTable.put(i, i);
                 }
+
+                hashTable.put(11, 11);
+                for (int i = 0; i <= 10; i++) {
+                    hashTable.put(i, i);
+                }
             }
             else {
                 for (int i = 20; i <= 30; i++) {
@@ -46,22 +52,23 @@ public class HashTableTestJob extends Program {
                 hashTable.put(2, 333);
                 hashTable.put(3, 444);
                 hashTable.put(4, 555);
-                Thread.sleep(5000);
 
                 hashTable.put(454, 3434);
                 hashTable.remove(454);
+
+                Thread.sleep(3000);
+                hashTable.put(11, 11);
             }
 
             hashTable.finish();
-            //result(hashTable.get);
+            //result(hashTable.getEntrySet().toArray());
 
-            System.out.println("[DEBUG] HashTable of node " + programContext.runtimeContext.nodeID + ": "
+            System.out.println("\n[DEBUG] HashTable of node " + programContext.runtimeContext.nodeID + ": "
                     + hashTable.toString());
-            System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": "
-                    + hashTable.getBuffer());
         });
     }
 
+    @Test
     public static void main(final String[] args) {
         final List<List<Serializable>> results = Lists.newArrayList();
 
@@ -76,10 +83,12 @@ public class HashTableTestJob extends Program {
                 .results(results)
                 .done();
 
-        /*Object[] firstResult = ((Object[])results.get(0).get(0));
+        // TODO: assert test results.
+
+        //Object[] firstResult = ((Object[])results.get(0).get(0));
 
         // Compare results of the CRDTs
-        for(int i = 1; i < results.size(); i++) {
+        /*for(int i = 1; i < results.size(); i++) {
             assertArrayEquals("The resulting CRDTs are not identical", firstResult, (Object[])results.get(i).get(0));
         }*/
     }

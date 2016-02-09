@@ -1,5 +1,7 @@
 package de.tuberlin.pserver.radt.hashtable;
 
+import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.crdt.exceptions.CRDTException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.radt.S4Vector;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
@@ -25,56 +27,56 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
     // ---------------------------------------------------
 
     @Override
-    public void put(K key, V value) {
+    public synchronized void put(K key, V value) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
+        Preconditions.checkArgument(key != null);
+        Preconditions.checkArgument(value != null);
+
         int[] clock = increaseVectorClock();
         S4Vector s4 = new S4Vector(nodeId, clock);
 
-        Slot<K,V> slot = localPut(key, value, s4, clock);
+        map.put(key, new Slot<>(key, value, s4));
 
-
-        broadcast(new HashTableOperation<>(Operation.OpType.PUT, key, slot, clock, s4));
+        broadcast(new HashTableOperation<>(Operation.OpType.PUT, key, value, clock, s4));
     }
 
     @Override
-    public V read(K key) {
+    public synchronized V read(K key) {
         if(key == null) return null;
 
-        Slot<K,V> slot = hashTable.get(key);
+        Slot<K,V> slot = map.get(key);
 
         if(slot == null || slot.isTombstone()) return null;
-        else return slot.getValue();
+
+        return slot.getValue();
     }
 
     @Override
-    public boolean remove(K key) {
-        Slot<K,V> slot = localRemove(key);
+    public synchronized boolean remove(K key) {
+        Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
 
-        if(slot != null) {
-            int[] clock = increaseVectorClock();
-            S4Vector s4 = new S4Vector(nodeId, clock);
+        Slot<K,V> slot = map.get(key);
 
-            broadcast(new HashTableOperation<>(Operation.OpType.REMOVE, key, slot, clock, s4));
-            return true;
-        }
-        else {
-            return false;
-        }
+        if(slot == null) return false;
+        else cemetery.enrol(nodeId, slot);
+
+        int[] clock = increaseVectorClock();
+        S4Vector s4 = new S4Vector(nodeId, clock);
+
+        broadcast(new HashTableOperation<>(Operation.OpType.REMOVE, key, null, clock, s4));
+        return true;
     }
 
-    // TODO: method should disable this in production mode (if there is a large number of elements)
+    // TODO: should disable this in production mode (if there is a large number of elements)?
     @Override
-    public String toString() {
-        // TODO: show or not show tombstones
+    public synchronized String toString() {
         final StringBuilder sb = new StringBuilder("HashTable{\n");
-        for(K k : hashTable.keySet()) {
-            Slot<K,V> s = hashTable.get(k);
-            while(s != null){// && !s.isTombstone()) {
-                sb.append("  Key: ").append(k).append(", Value: ");
-                if(s.getValue() == null) sb.append("tombstone" + "\n");
-                else sb.append(s.getValue() + "\n");
-
-                s = s.getNextSlot();
-            }
+        for(Slot<K,V> slot : map.values()) {
+            sb.append("  Key: ")
+                    .append(slot.getKey())
+                    .append(", Value: ")
+                    .append(slot.getValue() != null ? slot.getValue() : "tombstone")
+                    .append("\n");
         }
 
         sb.append('}');
@@ -88,20 +90,20 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
     @Override
     protected boolean update(int srcNodeId, Operation<?> op) {
         @SuppressWarnings("unchecked")
-        HashTableOperation<K,Slot<K,V>> radtOp = (HashTableOperation<K,Slot<K,V>>) op;
+        HashTableOperation<K,V> hashOp = (HashTableOperation<K,V>) op;
+        boolean result;
 
-        if(radtOp.getType() == Operation.OpType.PUT) {
-            boolean result = remotePut(radtOp.getKey(), radtOp.getValue().getValue(), radtOp.getS4Vector());
-            cemetery.updateVectorClocks(radtOp.getS4Vector().getSiteId(), radtOp.getVectorClock());
-            return result;
-        }
-        else if(radtOp.getType() == Operation.OpType.REMOVE) {
-            boolean result = remoteRemove(radtOp.getKey(), radtOp.getS4Vector());
-            cemetery.updateVectorClocks(radtOp.getS4Vector().getSiteId(), radtOp.getVectorClock());
-            return result;
-        }
-        else {
-            throw new IllegalArgumentException("HashTable RADTs do not allow the " + op.getType() + " operation.");
+        switch(hashOp.getType()) {
+            case PUT:
+                result = remotePut(hashOp.getKey(), hashOp.getValue(), hashOp.getS4Vector());
+                cemetery.updateAndPurge(hashOp.getS4Vector().getSiteId(), hashOp.getVectorClock());
+                return result;
+            case REMOVE:
+                result = remoteRemove(hashOp.getKey(), hashOp.getS4Vector());
+                cemetery.updateAndPurge(hashOp.getS4Vector().getSiteId(), hashOp.getVectorClock());
+                return result;
+            default:
+                throw new IllegalArgumentException("HashTable RADTs do not allow the " + op.getType() + " operation.");
         }
     }
 
@@ -109,91 +111,41 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
     // Private Methods.
     // ---------------------------------------------------
 
+    private synchronized boolean remotePut(K key, V value, S4Vector s4) {
+        Slot<K,V> currSlot = map.get(key);
+        //System.out.println("[DEBUG]" + nodeId+"|"+key + " Remote Put, Value: " + value);
 
-    private Slot<K,V> localPut(K key, V value, S4Vector s4, int[] clock) {
-        // Seperate chaining scheme is used to handle collisionsbout collLinkedList<isions?
-        // TODO: is collision handling working here with just setting slot.getNextSlot()?
-        Slot<K,V> slot = hashTable.get(key);
-
-        if(slot != null) {
-            slot = new Slot<>(key, value, s4, slot.getNextSlot(), clock);
-            hashTable.put(key, slot);
-            return slot;
-        } else {
-            slot = new Slot<>(key, value, s4, null, clock);
-            hashTable.put(key, slot);
-            return slot;
-        }
-    }
-
-    // TODO: this method is not right yet somehow...
-    private Slot<K,V> localRemove(K key) {
-        // TODO: what about chaining scheme?
-        Slot<K,V> slot = hashTable.get(key);
-
-        if(slot == null){
-            return null;
-        }
-        else {
-            slot.setValue(null);
-            cemetery.enrol(nodeId, slot);
-            return slot;
-        }
-    }
-
-    private boolean remotePut(K key, V value, S4Vector s4) {
-        Slot<K,V> previous = null;
-        Slot<K,V> slot = hashTable.get(key);
-
-        // Chaining in case of collisions
-        while(slot != null && !key.equals(slot.getKey())) {
-            previous = slot;
-            slot = slot.getNextSlot();
+        if(currSlot == null) {
+            //System.out.println("[DEBUG]" + nodeId+"|"+key + " Remote Put, slot is empty");
+            map.put(key, new Slot<>(key, value, s4));
+            return true;
         }
 
-        if(slot != null && s4.takesPrecedenceOver(slot.getS4Vector())) {
-            return false;
-        }
-        else if (slot != null && slot.isTombstone()) {
-            cemetery.withdraw(nodeId, slot);
-        }
-        else if(slot == null) {
-            slot = new Slot<>(key, value, s4, null, null);
-            if(previous != null) {
-                previous.setNextSlot(slot);
-            }
-            hashTable.put(key, slot);
-        }
+        if(s4.precedes(currSlot.getS4Vector())) return false;
 
-        slot.setValue(value);
-        slot.setS4Vector(s4);
+        if(currSlot.isTombstone()) cemetery.withdraw(currSlot);
+
+        currSlot.setValue(value);
+        currSlot.setS4Vector(s4);
 
         return true;
     }
 
     // TODO: double-check implementation of this method
-    private boolean remoteRemove(K key, S4Vector s4) {
-        Slot<K,V> slot = hashTable.get(key);
+    private synchronized boolean remoteRemove(K key, S4Vector s4) {
+        Slot<K,V> currSlot = map.get(key);
 
-        while(slot != null && !key.equals(slot.getKey())) {
-            slot = slot.getNextSlot();
+        //System.out.println("[DEBUG]" + nodeId + "|" + key + " Remote Remove");
+
+        if(currSlot == null) {
+            throw new CRDTException("Attempting to remote remove a slot which doesn't exist at the replica " + nodeId);
         }
 
-        if(slot == null) {
-            // TODO: Exception text
-            throw new NoSlotException("blub");
-        }
+        if(s4.precedes(currSlot.getS4Vector()))  return false;
 
-        if(s4.takesPrecedenceOver(slot.getS4Vector()))  return false;
+        if(!currSlot.isTombstone()) cemetery.enrol(nodeId, currSlot);
 
-        if(!slot.isTombstone()) {
-            cemetery.enrol(nodeId, slot);
-            slot.makeTombstone();
-        }
-        cemetery.enrol(nodeId, slot);
-
-        slot.setS4Vector(s4);
-        slot.setValue(null);
+        currSlot.setS4Vector(s4);
 
         return true;
     }

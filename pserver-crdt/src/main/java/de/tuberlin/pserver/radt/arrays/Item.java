@@ -11,8 +11,8 @@ public class Item<T> extends CObject<T> {
         this.index = -1;
     }
 
-    public Item(int index, int[] vectorClock, S4Vector s4Vector, T value) {
-        super(vectorClock, s4Vector, value);
+    public Item(int index, S4Vector s4Vector, T value) {
+        super(s4Vector, value);
         this.index = index;
     }
 

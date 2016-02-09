@@ -65,7 +65,7 @@ public class S4Vector implements Serializable {
         return seq;
     }
 
-    public boolean takesPrecedenceOver(S4Vector other) {
+    public boolean precedes(S4Vector other) {
         return  (this.sessionNumber < other.getSessionNumber()) ||
                 (this.sessionNumber == other.sessionNumber
                         && this.vectorClockSum < other.getVectorClockSum()) ||

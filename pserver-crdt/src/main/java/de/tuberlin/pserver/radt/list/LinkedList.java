@@ -2,7 +2,6 @@ package de.tuberlin.pserver.radt.list;
 
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.radt.S4Vector;
-import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.ArrayList;
@@ -131,7 +130,7 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
         Node<T> ref = getNodeByIndex(index);
         if(ref != null) {
             // TODO: this is probably wrong => see Roh et al (doesn't make sense) to try and get it right
-            node = new Node<>(value, s4, s4, ref.getNext(), ref.getLink(), ref.getS4HashKey(), vectorClock);
+            node = new Node<>(value, s4, s4, ref.getNext(), ref.getLink(), ref.getS4HashKey());
 
             setSVIEntry(node);
             ref.setNext(node);
@@ -140,7 +139,7 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
             return node;
         }
         else if(getHead() == null && index == 0) {
-            node = new Node<>(value, s4, s4, null, null, null, vectorClock);
+            node = new Node<>(value, s4, s4, null, null, null);
 
             setSVIEntry(node);
             setHead(node);
@@ -200,7 +199,7 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
 
         // 3. Scan possible places to insert the node
         if(refS4 == null) {
-            if(getHead() == null || getHead().getS4HashKey().takesPrecedenceOver(node.getS4HashKey())) {
+            if(getHead() == null || getHead().getS4HashKey().precedes(node.getS4HashKey())) {
                 if(getHead() != null) {
                     node.setLink(getHead());
 
@@ -219,7 +218,7 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
             }
         }
 
-        while(ref.getLink() != null && node.getS4HashKey().takesPrecedenceOver(ref.getLink().getS4HashKey())) {
+        while(ref.getLink() != null && node.getS4HashKey().precedes(ref.getLink().getS4HashKey())) {
             ref = ref.getLink();
         }
 
@@ -246,7 +245,7 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
         }
 
         if(oldNode.isTombstone()) return false;
-        if(node.getS4Vector().takesPrecedenceOver(oldNode.getS4Vector())) return false;
+        if(node.getS4Vector().precedes(oldNode.getS4Vector())) return false;
 
 
         oldNode.setValue(node.getValue());
