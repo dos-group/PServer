@@ -7,9 +7,9 @@ import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import de.tuberlin.pserver.types.matrix.properties.MatrixFormat;
-import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
-import de.tuberlin.pserver.types.matrix.partitioner.PartitionType;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.partitioner.PartitionType;
+import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
 
 public final class StateBuilder {
 
@@ -29,7 +29,7 @@ public final class StateBuilder {
 
     private long cols;
 
-    private MatrixFormat matrixFormat;
+    private MatrixType matrixType;
 
     private FileFormat fileFormat;
 
@@ -64,7 +64,7 @@ public final class StateBuilder {
 
     public StateBuilder cols(long cols) { this.cols = cols; return this; }
 
-    public StateBuilder matrixFormat(MatrixFormat matrixFormat) { this.matrixFormat = matrixFormat; return this; }
+    public StateBuilder matrixFormat(MatrixType matrixType) { this.matrixType = matrixType; return this; }
 
     public StateBuilder fileFormat(FileFormat fileFormat) { this.fileFormat = fileFormat; return this; }
 
@@ -80,7 +80,7 @@ public final class StateBuilder {
                 Matrix32F.class,
                 scope, ParseUtils.parseNodeRanges(at),
                 partitionType,
-                matrixFormat, rows, cols,
+                matrixType, rows, cols,
                 fileFormat,
                 path,
                 labelState

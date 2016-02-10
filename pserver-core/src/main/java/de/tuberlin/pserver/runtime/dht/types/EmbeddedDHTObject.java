@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.runtime.dht.types;
 
-import de.tuberlin.pserver.types.DistributedType;
+import de.tuberlin.pserver.types.metadata.DistributedType;
 
 public class EmbeddedDHTObject<T extends DistributedType> extends AbstractBufferedDHTObject {
 

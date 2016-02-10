@@ -2,8 +2,8 @@ package de.tuberlin.pserver.dsl.state.annotations;
 
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import de.tuberlin.pserver.types.matrix.properties.MatrixFormat;
-import de.tuberlin.pserver.types.matrix.partitioner.PartitionType;
+import de.tuberlin.pserver.types.matrix.implementation.partitioner.PartitionType;
+import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -26,7 +26,7 @@ public @interface State {;
 
     long cols() default 0;
 
-    MatrixFormat matrixFormat() default MatrixFormat.DENSE_FORMAT;
+    MatrixType matrixFormat() default MatrixType.DENSE_FORMAT;
 
 
     FileFormat fileFormat() default FileFormat.UNDEFINED;

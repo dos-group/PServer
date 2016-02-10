@@ -2,9 +2,9 @@ package de.tuberlin.pserver.runtime.filesystem.records;
 
 import de.tuberlin.pserver.commons.tuples.Tuple2;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import de.tuberlin.pserver.types.matrix.f32.entries.Entry32F;
-import de.tuberlin.pserver.types.matrix.f32.entries.ImmutableEntryImpl32F;
-import de.tuberlin.pserver.types.matrix.f32.entries.ReusableEntry32F;
+import de.tuberlin.pserver.types.matrix.implementation.f32.entries.Entry32F;
+import de.tuberlin.pserver.types.matrix.implementation.f32.entries.ImmutableEntryImpl32F;
+import de.tuberlin.pserver.types.matrix.implementation.f32.entries.ReusableEntry32F;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.util.*;

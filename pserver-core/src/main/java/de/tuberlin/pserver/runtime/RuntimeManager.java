@@ -16,7 +16,7 @@ import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.events.Handler;
 import de.tuberlin.pserver.runtime.events.MsgEventHandler;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
-import de.tuberlin.pserver.types.DistributedType;
+import de.tuberlin.pserver.types.metadata.DistributedType;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Set;

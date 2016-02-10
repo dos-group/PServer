@@ -8,9 +8,9 @@ import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.types.matrix.MatrixBuilder;
-import de.tuberlin.pserver.types.matrix.properties.MatrixFormat;
-import de.tuberlin.pserver.types.matrix.f32.dense.DenseMatrix32F;
-import de.tuberlin.pserver.types.matrix.f32.sparse.CSRMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.f32.dense.DenseMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.f32.sparse.CSRMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
 
 import java.util.Arrays;
 
@@ -36,7 +36,7 @@ public class LogRegCriteoRM extends Program {
     public DenseMatrix32F trainLabel;
 
     @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = D,
-            path = X_TRAIN_PATH, matrixFormat = MatrixFormat.SPARSE_FORMAT,
+            path = X_TRAIN_PATH, matrixFormat = MatrixType.SPARSE_FORMAT,
             fileFormat = FileFormat.SVM_FORMAT, labels = "trainLabel")
     public CSRMatrix32F trainFeatures;
 

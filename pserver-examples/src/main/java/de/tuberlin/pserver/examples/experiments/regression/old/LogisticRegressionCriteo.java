@@ -15,8 +15,8 @@ import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.ml.optimization.GradientDescent.GDOptimizer;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
-import de.tuberlin.pserver.types.matrix.properties.MatrixFormat;
-import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
 
 import java.io.Serializable;
 import java.util.List;
@@ -47,13 +47,13 @@ public class LogisticRegressionCriteo extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = D, path = X_TRAIN_PATH, matrixFormat = MatrixFormat.SPARSE_FORMAT)
+    @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = D, path = X_TRAIN_PATH, matrixFormat = MatrixType.SPARSE_FORMAT)
     public Matrix32F XTrain;
 
     @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = 1, path = Y_TRAIN_PATH)
     public Matrix32F yTrain;
 
-    @State(scope = Scope.REPLICATED, rows = N_TEST, cols = D, path = X_TEST_PATH, matrixFormat = MatrixFormat.SPARSE_FORMAT)
+    @State(scope = Scope.REPLICATED, rows = N_TEST, cols = D, path = X_TEST_PATH, matrixFormat = MatrixType.SPARSE_FORMAT)
     public Matrix32F XTest;
 
     @State(scope = Scope.REPLICATED, rows = N_TEST, cols = 1, path = Y_TEST_PATH)

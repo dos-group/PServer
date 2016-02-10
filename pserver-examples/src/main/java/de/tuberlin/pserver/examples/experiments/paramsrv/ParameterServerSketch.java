@@ -14,8 +14,8 @@ import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import de.tuberlin.pserver.types.matrix.properties.MatrixFormat;
-import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
 
 
 public class ParameterServerSketch extends Program {
@@ -26,15 +26,15 @@ public class ParameterServerSketch extends Program {
 
     // ParamServer runs on Node 0, 1.
 
-    @State(at = "0", scope = Scope.PARTITIONED, matrixFormat = MatrixFormat.DENSE_FORMAT, rows = 10, cols = 10000)
+    @State(at = "0", scope = Scope.PARTITIONED, matrixFormat = MatrixType.DENSE_FORMAT, rows = 10, cols = 10000)
     public Matrix32F parameter;
 
     // Worker runs on Node 2, 3.
 
-    @State(at = "2, 3", scope = Scope.REPLICATED, matrixFormat = MatrixFormat.SPARSE_FORMAT, rows = 10, cols = 10000)
+    @State(at = "2, 3", scope = Scope.REPLICATED, matrixFormat = MatrixType.SPARSE_FORMAT, rows = 10, cols = 10000)
     public Matrix32F parameterCache;
 
-    @State(at = "2, 3", scope = Scope.REPLICATED, matrixFormat = MatrixFormat.DENSE_FORMAT, rows = 10, cols = 10000)
+    @State(at = "2, 3", scope = Scope.REPLICATED, matrixFormat = MatrixType.DENSE_FORMAT, rows = 10, cols = 10000)
     public Matrix32F gradients;
 
     @State(scope = Scope.PARTITIONED, rows = 300000, cols = 10000, path = "datasets/XXX", fileFormat = FileFormat.SVM_FORMAT)

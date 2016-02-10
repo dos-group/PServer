@@ -5,11 +5,11 @@ import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
-import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
-import de.tuberlin.pserver.types.matrix.f32.entries.Entry32F;
-import de.tuberlin.pserver.types.matrix.f32.entries.MutableEntryImpl32F;
-import de.tuberlin.pserver.types.matrix.f32.entries.ReusableEntry32F;
-import de.tuberlin.pserver.types.matrix.f32.sparse.CSRMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.f32.entries.Entry32F;
+import de.tuberlin.pserver.types.matrix.implementation.f32.entries.MutableEntryImpl32F;
+import de.tuberlin.pserver.types.matrix.implementation.f32.entries.ReusableEntry32F;
+import de.tuberlin.pserver.types.matrix.implementation.f32.sparse.CSRMatrix32F;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import org.apache.commons.lang3.tuple.Triple;
 

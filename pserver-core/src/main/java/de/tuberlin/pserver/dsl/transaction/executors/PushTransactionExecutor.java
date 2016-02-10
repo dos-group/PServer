@@ -5,7 +5,7 @@ import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.events.TransactionPushRequestEvent;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 import de.tuberlin.pserver.runtime.RuntimeContext;
-import de.tuberlin.pserver.types.DistributedType;
+import de.tuberlin.pserver.types.metadata.DistributedType;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.ArrayList;

@@ -15,8 +15,8 @@ import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
-import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
-import de.tuberlin.pserver.types.matrix.f32.dense.DenseMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.f32.dense.DenseMatrix32F;
 
 import java.util.Random;
 

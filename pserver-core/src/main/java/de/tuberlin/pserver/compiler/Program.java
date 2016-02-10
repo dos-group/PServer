@@ -6,7 +6,7 @@ import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-import de.tuberlin.pserver.types.DistributedType;
+import de.tuberlin.pserver.types.metadata.DistributedType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

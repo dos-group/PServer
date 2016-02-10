@@ -3,7 +3,7 @@ package de.tuberlin.pserver.runtime.parallel;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 
 import java.util.ArrayList;
 import java.util.List;

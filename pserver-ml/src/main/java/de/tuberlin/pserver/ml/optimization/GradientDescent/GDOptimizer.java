@@ -5,8 +5,8 @@ import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.LoopTermination;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.types.matrix.MatrixBuilder;
-import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
-import de.tuberlin.pserver.types.matrix.f32.dense.DenseMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.f32.dense.DenseMatrix32F;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
