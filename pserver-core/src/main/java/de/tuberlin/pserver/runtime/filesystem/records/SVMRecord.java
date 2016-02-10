@@ -9,7 +9,6 @@ import org.apache.commons.lang.ArrayUtils;
 
 import java.util.*;
 
-
 public class SVMRecord implements Record {
 
     // ---------------------------------------------------
@@ -127,4 +126,5 @@ public class SVMRecord implements Record {
         this.attributeIterator = data._2.keySet().iterator();
         return this;
     }
+
 }

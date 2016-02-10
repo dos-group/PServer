@@ -7,8 +7,8 @@ import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import de.tuberlin.pserver.types.matrix.MatrixFormat;
 import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
+import de.tuberlin.pserver.types.matrix.f32.dense.DenseMatrix32F;
 import de.tuberlin.pserver.types.matrix.f32.sparse.CSRMatrix32F;
 
 public class LibSVMReaderJob extends Program {
@@ -23,11 +23,12 @@ public class LibSVMReaderJob extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.PARTITIONED, rows = 270, cols = 1, matrixFormat = MatrixFormat.DENSE_FORMAT)
-    public Matrix32F XTrainLabel;
+    @State(scope = Scope.PARTITIONED, rows = 16000, cols = 1)
+    public DenseMatrix32F XTrainLabel;
 
-    @State(scope = Scope.PARTITIONED, rows = 270, cols = 13, matrixFormat = MatrixFormat.DENSE_FORMAT,
-            path = "datasets/svmSmallTestFile", fileFormat = FileFormat.SVM_FORMAT, labels = "XTrainLabel")
+    @State(scope = Scope.PARTITIONED, rows = 270, cols = 13, path = "datasets/svmSmallTestFile",
+            fileFormat = FileFormat.SVM_FORMAT, labels = "XTrainLabel")
+
     public CSRMatrix32F XTrainFeatures;
 
     // ---------------------------------------------------
