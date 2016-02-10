@@ -1,5 +1,7 @@
 package de.tuberlin.pserver.radt.list;
 
+import com.clearspring.analytics.util.Preconditions;
+import de.tuberlin.pserver.crdt.exceptions.CRDTException;
 import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.radt.S4Vector;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
@@ -7,7 +9,7 @@ import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LinkedList<T> extends AbstractLinkedList<T>{
+public class LinkedList<T> extends AbstractLinkedList<T> {
 
     // TODO: do I need size?
     public LinkedList(String id, int noOfReplicas, ProgramContext programContext) {
@@ -15,76 +17,133 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
         ready();
     }
 
-    public boolean insert(int index, T value) {
-        Node<T> node;
+    private synchronized boolean insertAtHead(T value) {
         int[] clock = increaseVectorClock();
-
         S4Vector s4 = new S4Vector(nodeId, clock);
 
-        node = localInsert(index, value, s4, clock);
+        Node<T> node = new Node<>(value, s4, s4, getHead());
 
-        if(node != null) {
-            broadcast(new ListOperation<>(Operation.OpType.INSERT, node, node.getRefNodeS4(), clock, s4));
-            return true;
-        }
+        svi.put(s4, node);
+        setHead(node);
 
-        return false;
-        /*System.out.println("Local put " + value + " at " + siteID + " with Vectorclock: <" + s4.getSessionNumber() +
-                ", "+ s4.getSiteId() + ", " + s4.getVectorClockSum() + ", " + s4.getSeq() +">");
-        System.out.println(this);*/
+        broadcast(new ListOperation<>(Operation.OpType.INSERT, value, null, clock, s4));
+
+        return true;
     }
 
-    public boolean update(int index, T value) {
-        Node<T> node;
-        int[] clock = increaseVectorClock();
+    // From Roh et al: The first object is referred to by index 1. An insert adds a new node next to (on the right of)
+    // its reference. To insert x at the head, we use Insert(0,x).
+    @Override
+    public synchronized boolean insert(int index, T value) {
+        if(index == 0) return insertAtHead(value);
 
+        Node<T> refNode = getNodeByIndex(index);
+
+        if (refNode == null) return false;
+
+        int[] clock = increaseVectorClock();
         S4Vector s4 = new S4Vector(nodeId, clock);
 
-        node = localUpdate(index, value);
+        // TODO: does the node constructor need two fields for s4 or is it always the same value?
+        Node<T> node = new Node<>(value, s4, s4, refNode.getLink());
 
-        if(node != null) {
-            broadcast(new ListOperation<>(Operation.OpType.UPDATE, node, node.getRefNodeS4(), clock, s4));
-            return true;
-        }
+        svi.put(s4, node);
+        refNode.setLink(node);
 
-        return false;
-    }
+        broadcast(new ListOperation<>(Operation.OpType.INSERT, node.getValue(), refNode.getS4Vector(), clock, s4));
 
-    // TODO: delete is not working properly :/
-    public boolean delete(int index) {
-        int[] clock = increaseVectorClock();
 
-        S4Vector s4 = new S4Vector(nodeId, clock);
+        return true;
 
-        Node<T> node = localDelete(index);
-
-        if(node != null) {
-            // refNode can't be null because that means inserting at the head
-            broadcast(new ListOperation<>(Operation.OpType.DELETE, node, null, clock, s4));
-            return true;
-        }
-
-        return false;
     }
 
     @Override
     public T read(int i) {
-        // TODO: implement this!
-        return null;
+        Node<T> node = getNodeByIndex(i);
+
+        return node != null ? node.getValue() : null;
+    }
+
+    @Override
+    public synchronized boolean update(int index, T value) {
+        index++; // to adjust for getNodeById() method returning element left of index (for inserts etc.)
+        // TODO: error text
+        // TODO: index out of bounds check?
+        Preconditions.checkArgument(value != null);
+        Node<T> node = getNodeByIndex(index);
+
+        if(node == null) return false;
+
+        int[] clock = increaseVectorClock();
+        S4Vector s4 = new S4Vector(nodeId, clock);
+        node.setUpdateDeleteS4(s4);
+
+        node.setValue(value);
+
+        // TODO: reorder listoperation arguments
+        broadcast(new ListOperation<>(Operation.OpType.UPDATE, value, s4, clock, node.getS4Vector()));
+
+        return true;
+    }
+
+    @Override
+    public synchronized boolean delete(int index) {
+        index++; // to adjust for getNodeById() method returning element left of index (for inserts etc.)
+        Node<T> node = getNodeByIndex(index);
+
+        if(node == null) return false;
+
+        System.out.println("Found node " + node.getValue());
+
+
+        cemetery.enrol(nodeId, node);
+
+        int[] clock = increaseVectorClock();
+        S4Vector s4 = new S4Vector(nodeId, clock);
+        node.setUpdateDeleteS4(s4);
+
+        broadcast(new ListOperation<>(Operation.OpType.DELETE, null, node.getUpdateDeleteS4(), clock, node.getS4Vector()));
+
+        return true;
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("LinkedList{ ");
-        /*List<T> =
+        final StringBuilder sb = new StringBuilder("\nLinkedList {");
+        Node<T> node = getHead();
+
         while(node != null) {
-            if(node.getLink() != null) sb.append(node.getValue() + ", ");
-            else sb.append(node.getValue() + " }");
+            if(!node.isTombstone()) sb.append(node.getValue());
+            else sb.append("tombstone");
+
+            if(node.getLink() != null) sb.append(", ");
+            else sb.append("}\n");
             node = node.getLink();
         }
-        return sb.toString();*/
-        return getList().toString();
+        return sb.toString();
     }
+
+
+    //FOR DEBUG
+
+    /*@Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("\nLinkedList {\n");
+        Node<T> node = getHead();
+
+        while(node != null) {
+            if(!node.isTombstone()) sb.append(node.getValue());
+            else sb.append("tombstone");
+
+            sb.append("   | " + node.getS4Vector() + " | " + node.getUpdateDeleteS4());
+
+            if(node.getLink() != null) sb.append(", \n");
+            else sb.append("}\n");
+            node = node.getLink();
+        }
+        return sb.toString();
+    }*/
+
 
     @Override
     public List<T> getList() {
@@ -95,197 +154,120 @@ public class LinkedList<T> extends AbstractLinkedList<T>{
             list.add(node.getValue());
             node = node.getLink();
         }
-        return list;
+
+    return list;
     }
 
     @Override
     protected boolean update(int srcNodeId, Operation<?> op) {
-        ListOperation<Node<T>> listOp = (ListOperation<Node<T>>) op;
+        @SuppressWarnings("unchecked")
+        ListOperation<T> listOp = (ListOperation<T>) op;
 
-        if(listOp.getType() == Operation.OpType.INSERT) {
-            // System.out.println("Received PUT: " + listOp.getValue());
-            /*System.out.println("Received Key: " + listOp.getRefS4Vector() + ", Value: " + listOp.getValue());
-            System.out.println(svi);
-            System.out.println(this);
-            System.out.println(getSVIEntry(listOp.getRefS4Vector()));*/
-            // TODO: causally ready etc. !
-            return remoteInsert(listOp.getValue(), listOp.getRefS4Vector());
+        switch(listOp.getType()) {
+            case INSERT:
+                return remoteInsert(listOp.getValue(), listOp.getS4Vector(), listOp.getSecondaryS4());
+            case UPDATE:
+                return remoteUpdate(listOp.getS4Vector(), listOp.getValue(), listOp.getSecondaryS4());
+            case DELETE:
+                return remoteDelete(listOp.getS4Vector(), listOp.getSecondaryS4(), srcNodeId);
+            default:
+                throw new IllegalArgumentException("LinkedList RADTs do not allow the " + op.getType() + " operation.");
         }
-        else if(listOp.getType() == Operation.OpType.UPDATE) {
-            return remoteUpdate(listOp.getValue());
+    }
+
+    private synchronized boolean remoteInsertAtHead(T value, S4Vector s4) {
+        Node<T> node = new Node<>(value, s4, s4, null);
+        svi.put(s4, node);
+
+        if(getHead() == null) {
+            setHead(node);
         }
-        else if(listOp.getType() == Operation.OpType.DELETE) {
-            return remoteDelete(listOp.getValue().getS4HashKey());
+        else if(getHead().getS4Vector().precedes(s4)) {
+            node.setLink(getHead());
+            setHead(node);
         }
         else {
-            // TODO: exception message
-            throw new UnsupportedOperationException("blub");
+            Node<T> refNode = getHead();
+
+            // Find the right place to insert
+            while(refNode.getLink() != null && s4.precedes(refNode.getLink().getS4Vector()))
+                refNode = refNode.getLink();
+
+            node.setLink(refNode.getLink());
+            refNode.setLink(node);
         }
-        
+
+        return true;
     }
 
-    private Node<T> localInsert(int index, T value, S4Vector s4, int[] vectorClock) {
-        Node<T> node;
+    private synchronized boolean remoteInsert(T value, S4Vector s4, S4Vector refS4) {
+        //System.out.println("\n[" + nodeId +"] Inserting value: " + value + " s4: " + s4 + " refS4: " + refS4);
+        //System.out.println(this + "\n");
 
-        Node<T> ref = getNodeByIndex(index);
-        if(ref != null) {
-            // TODO: this is probably wrong => see Roh et al (doesn't make sense) to try and get it right
-            node = new Node<>(value, s4, s4, ref.getNext(), ref.getLink(), ref.getS4HashKey());
+        if (refS4 == null) return remoteInsertAtHead(value, s4);
 
-            setSVIEntry(node);
-            ref.setNext(node);
-            ref.setLink(node);
+        // 1. Find the left node (reference node) in the hash table
+        Node<T> refNode = getSVIEntry(refS4);
 
-            return node;
-        }
-        else if(getHead() == null && index == 0) {
-            node = new Node<>(value, s4, s4, null, null, null);
+        if (refNode == null)
+            throw new CRDTException("Could not find the reference node " + refS4 + " for remote insert " + value);
 
-            setSVIEntry(node);
-            setHead(node);
-
-            return node;
-        }
-        else {
-            return null;
-        }
-    }
-
-    private Node<T> localUpdate(int i, T value) {
-        Node<T> node = getNodeByIndex(i);
-        if(node != null) node.setValue(value);
-
-        return node;
-    }
-
-    private Node<T> localDelete(int index) {
-        Node<T> node = getNodeByIndex(index);
-        if(node != null) node.makeTombstone();
-
-        return node;
-    }
-
-    private boolean remoteInsert(Node<T> node, S4Vector refS4) {
-        Node<T> ref = null; // The node to the left of where we want to insert
-
-       /* if(refS4 == null && getHead() == null) {
-            node.setLink(null);
-            node.setNext(null);
-            setHead(node);
-
-            return true;
-        }*/
-
-        // 1. Find the left node in the hash table
-        if(refS4 != null) {
-            ref = getSVIEntry(refS4);
-
-            while(ref != null && !ref.getS4HashKey().equals(refS4)) {
-                System.out.println("***");
-                ref = ref.getNext();
-            }
-
-            if(ref == null) {
-                // TODO: throw new NoRefObjException
-                throw new RuntimeException("It's Over !!!!!");}
-        }
-
-        node.setNext(getSVIEntry(node.getS4HashKey()));
-        // TODO: is this necessary? What is exactly going on here?
-        setSVIEntry(node);
 
         // 2. Make new node
-        //node = new Node<>(value, s4, s4, )
+        Node<T> node = new Node<>(value, s4, s4, null);
 
-        // 3. Scan possible places to insert the node
-        if(refS4 == null) {
-            if(getHead() == null || getHead().getS4HashKey().precedes(node.getS4HashKey())) {
-                if(getHead() != null) {
-                    node.setLink(getHead());
 
-                } else {
-                    setHead(node);
-                    return true;
-                }
-                // Do I need to create a node here first?
+        // 3. Place new node into hashtable
+        svi.put(s4, node);
 
-                setHead(node);
-                //setSVIEntry(node);
-                return true;
-            }
-            else {
-                ref = getHead();
-            }
-        }
+        // 4. Find the right place to insert
+        while(refNode.getLink() != null && node.getS4Vector().precedes(refNode.getLink().getS4Vector()))
+            refNode = refNode.getLink();
 
-        while(ref.getLink() != null && node.getS4HashKey().precedes(ref.getLink().getS4HashKey())) {
-            ref = ref.getLink();
-        }
+        // 5. Insert into list
+        node.setLink(refNode.getLink());
+        refNode.setLink(node);
 
-        node.setLink(ref.getLink());
-        ref.setLink(node);
         return true;
     }
 
-    private boolean remoteUpdate(Node<T> node) {
-        Node<T> oldNode = getSVIEntry(node.getS4HashKey());
+    private boolean remoteUpdate(S4Vector currS4, T value, S4Vector newS4) {
+        Node<T> node = getSVIEntry(currS4);
 
-        System.out.println("***"+oldNode);
-        System.out.println(oldNode.getS4HashKey());
-        System.out.println(node);
-        System.out.println(node.getS4HashKey());
+        if(node == null) throw new CRDTException("Could not find the node " + currS4 + " for remote update with " + value);
 
-        while(oldNode != null && !oldNode.getS4HashKey().equals(node.getS4HashKey())) {
-            oldNode = oldNode.getNext();
-        }
+        if(node.isTombstone()) return false;
 
-        if(oldNode == null) {
-            // TODO: throw new NoTargetObjException
-            throw new RuntimeException("That's all folks!");
-        }
+        if(newS4.precedes(node.getUpdateDeleteS4())) return false;
 
-        if(oldNode.isTombstone()) return false;
-        if(node.getS4Vector().precedes(oldNode.getS4Vector())) return false;
+        node.setValue(value);
+        node.setUpdateDeleteS4(newS4);
 
-
-        oldNode.setValue(node.getValue());
-        oldNode.setS4Vector(node.getS4Vector());
         return true;
     }
 
-    private boolean remoteDelete(S4Vector s4) {
+    private boolean remoteDelete(S4Vector s4, S4Vector newUpadteDeleteS4, int srcNodeId) {
         Node<T> node = getSVIEntry(s4);
 
-        while(node != null && !node.getS4HashKey().equals(s4)) {
-            node = node.getNext();
-        }
+        if(node == null) throw new CRDTException("Could not find the node " + s4 + " for deletion");
 
-        if(node == null) {
-            // TODO: throw new NoTargetObjException
-            throw new RuntimeException("Oh no!");
-        }
+        if(node.isTombstone()) return true;
 
-        if(!node.isTombstone()) {
-            node.makeTombstone();
-            node.setS4Vector(s4);
-            cemetery.enrol(nodeId, node);
-        }
+        node.setUpdateDeleteS4(newUpadteDeleteS4);
+        cemetery.enrol(srcNodeId, node);
 
         return true;
     }
 
 
-
+    // From Roh et al: The first object is referred to by index 1. An insert adds a new node next to (on the right of)
+    // its reference. To insert x at the head, we use Insert(0,x).
     private Node<T> getNodeByIndex(int index) {
         Node<T> node = getHead();
-        if(index == 0) return node;
-
         int k = 0;
 
         while(node != null) {
             if(!node.isTombstone()) {
-                // The first object is referred to by index 1. An insert adds a new node next to (on the right of) its
-                // reference. To insert x at the head, we use Insert(0,x).
                 if(index == ++k) {
                     return node;
                 } else {

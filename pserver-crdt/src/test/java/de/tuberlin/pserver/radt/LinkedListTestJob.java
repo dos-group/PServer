@@ -1,46 +1,66 @@
-package de.tuberlin.pserver.radt.list;
+package de.tuberlin.pserver.radt;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
+import de.tuberlin.pserver.radt.list.LinkedList;
+import org.junit.Test;
 
 
-// TODO: this needs more testing and debugging + cleanup
 public class LinkedListTestJob extends Program {
 
-    @Unit(at = "0")
+    @Unit
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
             LinkedList<Integer> list = new LinkedList<>("one", 2, programContext);
 
-            for (int i = 0; i <= 10; i++) {
-                list.insert(i, i);
+           /* if(programContext.nodeID % 2 == 0) {
+                for (int i = 0; i <= 10; i++) {
+                    list.insert(i, i);
+                }
+
+            }
+            else {
+                for (int i = 0; i <= 10; i++) {
+                    list.insert(i, i+10);
+                }
+
+            }*/
+
+            if(programContext.nodeID % 2 == 0) {
+                for (int i = 0; i <= 10; i++) {
+                    list.insert(i, i);
+                }
+
+                list.insert(0, 33); // insert at head
+                list.insert(5, 55); // insert in middle
+                list.insert(13, 77); // insert at end
+                list.insert(20, 11); // insert outside range (has no effect, should return false)
+
+
+                list.update(2, 99); // update value
+
+
+                list.delete(3); // delete an item
+            }
+            else {
+                for (int i = 0; i <= 10; i++) {
+                    list.insert(i, i+10);
+                }
+
+                list.insert(0, 333); // insert at head
+                list.insert(7, 555); // insert in middle
+                list.insert(46, 111); // insert outside range (has no effect, should return false)
+
+
+                list.update(5, 999); // update value
+
+
+                list.delete(10); // delete an item
             }
 
-            Thread.sleep(10);
-
-            list.insert(0, 99); // TODO: insert at head gives error if head is not already null!
-            list.insert(1, 11);
-            list.insert(6, 22);
-            //list.insert(13, 33);
-            list.insert(7, 44);
-            list.insert(5, 55);
-            //list.insert(12, 66);
-            list.insert(2, 1000);
-
-            Thread.sleep(500);
-
-            list.update(5, 12345);
-
-            System.out.println("Before delete: " + list);
-
-            // TODO: delete is not working properly :/
-            list.delete(6);
-
-            System.out.println("After delete: " + list);
-
             list.finish();
 
             System.out.println("[DEBUG] LinkedList of node " + programContext.runtimeContext.nodeID + ": "
@@ -50,19 +70,7 @@ public class LinkedListTestJob extends Program {
         });
     }
 
-    @Unit(at = "1")
-    public void test2(Lifecycle lifecycle) {
-        lifecycle.process(() -> {
-            LinkedList<Integer> list = new LinkedList<>("one", 2, programContext);
-            list.finish();
-
-            System.out.println("[DEBUG] LinkedList of node " + programContext.runtimeContext.nodeID + ": "
-                    + list.toString());
-            System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": "
-                    + list.getBuffer());
-        });
-    }
-
+    @Test
     public static void main(final String[] args) {
 
         // Set the number of simulated nodes, can also be

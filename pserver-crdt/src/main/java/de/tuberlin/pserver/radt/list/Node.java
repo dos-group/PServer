@@ -6,57 +6,39 @@ import de.tuberlin.pserver.radt.CObject;
 import java.io.Serializable;
 
 public class Node<T> extends CObject<T> implements Serializable {
-    private final S4Vector s4HashKey;
-    private final S4Vector refNodeS4;
+    // Regular s4 vector for hash key and precedence of inserts is in super class
+    // TODO: rename refNodeS4
+    private S4Vector updateDeleteS4; // For precedence of deletes and updates
     private Node<T> next; // Next in hash table
     private Node<T> link; // Next in linked list
 
     // no-args constructor for serialization
     public Node() {
-        this.s4HashKey = null;
-        this.refNodeS4 = null;
-        this.next = null;
+        //this.s4HashKey = null;
+        this.updateDeleteS4 = null;
         this.link = null;
     }
 
-    public Node(T value, S4Vector s4HashKey, S4Vector s4Vector, Node<T> next, Node<T> link, S4Vector refNodeS4) {
+    public Node(T value, S4Vector s4Vector, S4Vector updateDeleteS4, Node<T> link) {
         super(s4Vector, value);
-        this.s4HashKey = s4HashKey;
-        this.refNodeS4 = refNodeS4;
-        this.next = next;
+        this.updateDeleteS4 = updateDeleteS4;
         this.link = link;
-    }
-
-    public void setNext(Node<T> next) {
-        this.next = next;
     }
 
     public void setLink(Node<T> link) {
         this.link = link;
     }
 
-    public S4Vector getS4HashKey() {
-        return s4HashKey;
-    }
-
-    public Node<T> getNext() {
-        return next;
-    }
-
     public Node<T> getLink() {
         return link;
     }
 
-    public boolean isTombstone() {
-        return getValue() == null;
+    public S4Vector getUpdateDeleteS4() {
+        return updateDeleteS4;
     }
 
-    public void makeTombstone() {
-        this.setValue(null);
-    }
-
-    public S4Vector getRefNodeS4() {
-        return refNodeS4;
+    public void setUpdateDeleteS4(S4Vector s4) {
+        this.updateDeleteS4 = s4;
     }
 
     @Override
