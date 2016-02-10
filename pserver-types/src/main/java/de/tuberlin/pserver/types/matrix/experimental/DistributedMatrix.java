@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.runtime.state.matrix.disttypes.experimental;
+package de.tuberlin.pserver.types.matrix.experimental;
 
 /*
 import com.google.common.base.Preconditions;

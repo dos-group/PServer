@@ -1,7 +1,8 @@
 package de.tuberlin.pserver.types.matrix.f32.dense;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.types.matrix.DistributedMatrixType;
+import de.tuberlin.pserver.types.InternalData;
+import de.tuberlin.pserver.types.matrix.AbstractDistributedMatrixType;
 import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
 import de.tuberlin.pserver.types.matrix.f32.operations.BinaryOperator32;
 import de.tuberlin.pserver.types.matrix.f32.operations.MatrixAggregation32;
@@ -13,7 +14,7 @@ import de.tuberlin.pserver.types.matrix.partitioner.PartitionType;
 import java.util.Arrays;
 import java.util.Random;
 
-public class DenseMatrix32F extends DistributedMatrixType implements Matrix32F {
+public class DenseMatrix32F extends AbstractDistributedMatrixType implements Matrix32F {
 
     // ---------------------------------------------------
     // Fields.
@@ -26,36 +27,33 @@ public class DenseMatrix32F extends DistributedMatrixType implements Matrix32F {
     // ---------------------------------------------------
 
     public DenseMatrix32F(DenseMatrix32F toCopy) {
-        super(toCopy.partitioner.getPartitionType(), toCopy.nodeID, toCopy.nodes, toCopy.globalRows, toCopy.globalCols);
+        super(toCopy.nodeID, toCopy.nodes, toCopy.partitioner.getPartitionType(), toCopy.globalRows, toCopy.globalCols);
         this.data = (data == null) ? new float[(int)(rows() * cols())] : Preconditions.checkNotNull(data);
     }
 
     public DenseMatrix32F(long globalRows, long globalCols) {
-        this(PartitionType.NO_PARTITIONER, -1, null, globalRows, globalCols, null);
+        this(-1, null, PartitionType.NO_PARTITIONER, globalRows, globalCols, null);
     }
 
     public DenseMatrix32F(long globalRows, long globalCols, final float[] data) {
-        this(PartitionType.NO_PARTITIONER, -1, null, globalRows, globalCols, data);
+        this(-1, null, PartitionType.NO_PARTITIONER, globalRows, globalCols, data);
     }
 
-    public DenseMatrix32F(PartitionType type, int nodeID, int[] nodes, long globalRows, long globalCols, final float[] data) {
-        super(type, nodeID, nodes, globalRows, globalCols);
+    public DenseMatrix32F(int nodeID, int[] nodes, PartitionType partitionType, long globalRows, long globalCols, final float[] data) {
+        super(nodeID, nodes, partitionType, globalRows, globalCols);
         this.data = (data == null) ? new float[(int)(rows() * cols())] : Preconditions.checkNotNull(data);
     }
 
     // ---------------------------------------------------
-    // MetaData Methods.
+    // Distributed Type Metadata.
     // ---------------------------------------------------
 
-    @Override
-    public Object toArray() {
-        return data;
-    }
+    @Override public long sizeOf() { return shape.rows * shape.cols * Float.BYTES; }
 
-    @Override
-    public void setArray(final Object data) {
-        this.data = (float[])data;
-    }
+    @Override public long globalSizeOf() { return globalRows * globalCols * Float.BYTES; }
+
+    @SuppressWarnings("unchecked")
+    @Override public InternalData<float[]> internal() { return new InternalData<>(data); }
 
     // ---------------------------------------------------
     // Public Methods.

@@ -1,7 +1,8 @@
 package de.tuberlin.pserver.types.matrix.f32.sparse;
 
 
-import de.tuberlin.pserver.types.matrix.DistributedMatrixType;
+import de.tuberlin.pserver.types.InternalData;
+import de.tuberlin.pserver.types.matrix.AbstractDistributedMatrixType;
 import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
 import de.tuberlin.pserver.types.matrix.f32.operations.BinaryOperator32;
 import de.tuberlin.pserver.types.matrix.f32.operations.MatrixAggregation32;
@@ -19,7 +20,7 @@ import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-public class SparseMatrix32F extends DistributedMatrixType implements Matrix32F {
+public class SparseMatrix32F extends AbstractDistributedMatrixType implements Matrix32F {
 
     // ---------------------------------------------------
     // Logger.
@@ -41,22 +42,17 @@ public class SparseMatrix32F extends DistributedMatrixType implements Matrix32F 
     // Constructors.
     // ---------------------------------------------------
 
-    public SparseMatrix32F(PartitionType type, int nodeID, int[] nodes, long globalRows, long globalCols, final float[] data) {
-        super(type, nodeID, nodes, globalRows, globalCols);
-        this.data = new TLongFloatHashMap((int)(rows() * cols() * 0.1));
-    }
-
     public SparseMatrix32F(long globalRows, long globalCols) {
-        this(PartitionType.NO_PARTITIONER, -1, null, globalRows, globalCols, null);
+        this(-1, null, PartitionType.NO_PARTITIONER, globalRows, globalCols, null);
     }
 
     public SparseMatrix32F(long globalRows, long globalCols, final float[] data) {
-        this(PartitionType.NO_PARTITIONER, -1, null, globalRows, globalCols, data);
+        this(-1, null, PartitionType.NO_PARTITIONER, globalRows, globalCols, data);
     }
-    
+
     // Copy Constructor
     private SparseMatrix32F(SparseMatrix32F m) {
-        this(PartitionType.NO_PARTITIONER, -1, null, m.rows(), m.cols(), null);
+        this(-1, null, PartitionType.NO_PARTITIONER, m.rows(), m.cols(), null);
         m.data.forEachEntry((k, v) -> {
             this.data.put(k, v);
             return true;
@@ -72,24 +68,21 @@ public class SparseMatrix32F extends DistributedMatrixType implements Matrix32F 
         });
     }
 
-    // ---------------------------------------------------
-    // MetaData Methods.
-    // ---------------------------------------------------
-
-    @Override
-    public Object toArray() {
-        throw new UnsupportedOperationException();
+    public SparseMatrix32F(int nodeID, int[] nodes, PartitionType partitionType, long globalRows, long globalCols, final float[] data) {
+        super(nodeID, nodes, partitionType, globalRows, globalCols);
+        this.data = new TLongFloatHashMap((int)(rows() * cols() * 0.1));
     }
 
-    @Override
-    public void setArray(Object data) {
-        float[] mData = (float[]) data;
-        logger.info("Warning! 'setArray' is potentially a very expensive operation.");
-        this.data = new TLongFloatHashMap();
-        for (int i = 0; i < mData.length; i++) {
-            if (mData[i] != 0F) this.data.put(i, mData[i]);
-        }
-    }
+    // ---------------------------------------------------
+    // Distributed Type Metadata.
+    // ---------------------------------------------------
+
+    @Override public long sizeOf() { return data.size() * Float.BYTES; }
+
+    @Override public long globalSizeOf() { throw new UnsupportedOperationException(); }
+
+    @SuppressWarnings("unchecked")
+    @Override public InternalData<TLongFloatMap> internal() { return new InternalData<>(data); };
 
     // ---------------------------------------------------
     // Private Methods.

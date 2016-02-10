@@ -20,7 +20,7 @@ public class EmbeddedDHTObject<T extends DistributedType> extends AbstractBuffer
         super((int)object.sizeOf(), false);
         this.object = object;
         //this.data   = object.toArray();
-        this.object.setOwner(this);
+        this.object.owner(this);
     }
 
     // ---------------------------------------------------

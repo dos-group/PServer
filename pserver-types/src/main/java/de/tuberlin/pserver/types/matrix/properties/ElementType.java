@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.types.matrix;
+package de.tuberlin.pserver.types.matrix.properties;
 
 import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
 import de.tuberlin.pserver.types.matrix.f32.dense.DenseMatrix32F;

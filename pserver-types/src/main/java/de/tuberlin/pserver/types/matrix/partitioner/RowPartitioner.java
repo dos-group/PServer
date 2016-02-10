@@ -8,7 +8,7 @@ public class RowPartitioner extends MatrixPartitioner {
     // Fields.
     // ---------------------------------------------------
 
-    private PartitionShape shape;
+    private MatrixPartitionShape shape;
 
     // ---------------------------------------------------
     // Public Methods.
@@ -45,14 +45,14 @@ public class RowPartitioner extends MatrixPartitioner {
     }
 
     @Override
-    public PartitionShape getPartitionShape() {
+    public MatrixPartitionShape getPartitionShape() {
         if (atNodes == null)
             return null;
         if(shape == null) {
             double rowsPerNode = (double) rows / atNodes.length;
             long rowOffset = (int) Math.ceil(rowsPerNode * nodeId);
             long numRows = (int) (Math.ceil(rowsPerNode * (nodeId + 1)) - rowOffset);
-            shape = new PartitionShape(numRows, cols, rowOffset, 0);
+            shape = new MatrixPartitionShape(numRows, cols, rowOffset, 0);
         }
         return shape;
     }

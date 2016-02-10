@@ -10,7 +10,7 @@ import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
-import de.tuberlin.pserver.types.matrix.MatrixFormat;
+import de.tuberlin.pserver.types.matrix.properties.MatrixFormat;
 import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
 import org.apache.commons.lang3.mutable.MutableDouble;
 

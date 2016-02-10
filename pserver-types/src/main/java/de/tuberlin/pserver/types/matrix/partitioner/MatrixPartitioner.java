@@ -56,7 +56,7 @@ public abstract class MatrixPartitioner {
 
     public abstract int getPartitionOfEntry(Entry32F entry);
 
-    public abstract PartitionShape getPartitionShape();
+    public abstract MatrixPartitionShape getPartitionShape();
 
     public abstract long translateGlobalToLocalRow(long row);
 

@@ -7,6 +7,8 @@ import de.tuberlin.pserver.types.matrix.f32.dense.DenseMatrix32F;
 import de.tuberlin.pserver.types.matrix.f32.sparse.CSRMatrix32F;
 import de.tuberlin.pserver.types.matrix.f32.sparse.SparseMatrix32F;
 import de.tuberlin.pserver.types.matrix.partitioner.PartitionType;
+import de.tuberlin.pserver.types.matrix.properties.ElementType;
+import de.tuberlin.pserver.types.matrix.properties.MatrixFormat;
 
 public final class MatrixBuilder {
 
@@ -47,33 +49,33 @@ public final class MatrixBuilder {
     }
 
     public Matrix32F build() {
-        return build(PartitionType.NO_PARTITIONER, -1, null, null);
+        return build(-1, null, PartitionType.NO_PARTITIONER, null);
     }
 
-    public Matrix32F build(PartitionType type, int nodeID, int[] nodes) {
-        return build(type, nodeID, nodes, null);
+    public Matrix32F build(int nodeID, int[] nodes, PartitionType partitionType) {
+        return build(nodeID, nodes, partitionType, null);
     }
 
-    public Matrix32F build(PartitionType type, int nodeID, int[] nodes, final float[] data) {
+    public Matrix32F build(int nodeID, int[] nodes, PartitionType partitionType, final float[] data) {
         switch (matrixFormat) {
             case SPARSE_FORMAT:
                 switch (elementType) {
                     case FLOAT_MATRIX:
-                        return new SparseMatrix32F(type, nodeID, nodes, rows, cols, data);
+                        return new SparseMatrix32F(nodeID, nodes, partitionType, rows, cols, data);
                     case DOUBLE_MATRIX:
                         throw new IllegalStateException();
                 } break;
             case DENSE_FORMAT:
                 switch (elementType) {
                     case FLOAT_MATRIX:
-                        return new DenseMatrix32F(type, nodeID, nodes, rows, cols, data);
+                        return new DenseMatrix32F(nodeID, nodes, partitionType, rows, cols, data);
                     case DOUBLE_MATRIX:
                         throw new IllegalStateException();
                 } break;
             case CSR_FORMAT:
                 switch (elementType) {
                     case FLOAT_MATRIX:
-                        return new CSRMatrix32F(type, nodeID, nodes, rows, cols);
+                        return new CSRMatrix32F(nodeID, nodes, partitionType, rows, cols);
                     case DOUBLE_MATRIX:
                         throw new IllegalStateException();
                 } break;

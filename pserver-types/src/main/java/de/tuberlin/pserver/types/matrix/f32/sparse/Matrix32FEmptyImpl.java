@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.types.matrix.f32.sparse;
 
 
-import de.tuberlin.pserver.types.matrix.DistributedMatrixType;
+import de.tuberlin.pserver.types.matrix.AbstractDistributedMatrixType;
 import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
 import de.tuberlin.pserver.types.matrix.f32.operations.BinaryOperator32;
 import de.tuberlin.pserver.types.matrix.f32.operations.MatrixAggregation32;
@@ -9,24 +9,14 @@ import de.tuberlin.pserver.types.matrix.f32.operations.MatrixElementUnaryOperato
 import de.tuberlin.pserver.types.matrix.f32.operations.UnaryOperator32;
 import de.tuberlin.pserver.types.matrix.partitioner.PartitionType;
 
-class Matrix32FEmptyImpl extends DistributedMatrixType implements Matrix32F {
+abstract class Matrix32FEmptyImpl extends AbstractDistributedMatrixType implements Matrix32F {
 
-    public Matrix32FEmptyImpl(DistributedMatrixType m) {
+    public Matrix32FEmptyImpl(AbstractDistributedMatrixType m) {
         super(m);
     }
 
-    public Matrix32FEmptyImpl(PartitionType type, int nodeID, int[] nodes, long globalRows, long globalCols) {
-        super(type, nodeID, nodes, globalRows, globalCols);
-    }
-
-    @Override
-    public void setArray(Object data) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Object toArray() {
-        throw new UnsupportedOperationException();
+    public Matrix32FEmptyImpl(int nodeID, int[] nodes, PartitionType partitionType, long globalRows, long globalCols) {
+        super(nodeID, nodes, partitionType, globalRows, globalCols);
     }
 
     @Override

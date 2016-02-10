@@ -1,34 +1,26 @@
 package de.tuberlin.pserver.types;
 
-import java.io.Serializable;
+public class InternalData<T> {
 
-public interface DistributedType extends Serializable {
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
+    private T data;
+
+    // ---------------------------------------------------
+    // Constructor.
+    // ---------------------------------------------------
+
+    public InternalData(T data) {
+        set(data);
+    }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    int nodeId();
+    public void set(T data) { this.data = data; }
 
-    int[] nodes();
-
-    // ---------------------------------------------------
-
-    void owner(final Object owner);
-
-    Object owner();
-
-    // ---------------------------------------------------
-
-    void lock();
-
-    void unlock();
-
-    // ---------------------------------------------------
-
-    long sizeOf();
-
-    // ---------------------------------------------------
-
-    <T> InternalData<T> internal();
+    public T get() { return data; }
 }

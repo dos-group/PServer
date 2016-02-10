@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.runtime.state.matrix.disttypes.experimental;
+package de.tuberlin.pserver.types.matrix.experimental;
 
 /*
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;

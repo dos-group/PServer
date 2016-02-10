@@ -8,7 +8,7 @@ import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.types.matrix.MatrixBuilder;
-import de.tuberlin.pserver.types.matrix.MatrixFormat;
+import de.tuberlin.pserver.types.matrix.properties.MatrixFormat;
 import de.tuberlin.pserver.types.matrix.f32.dense.DenseMatrix32F;
 import de.tuberlin.pserver.types.matrix.f32.sparse.CSRMatrix32F;
 

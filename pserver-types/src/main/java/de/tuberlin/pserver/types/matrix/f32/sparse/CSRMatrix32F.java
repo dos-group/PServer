@@ -2,7 +2,8 @@ package de.tuberlin.pserver.types.matrix.f32.sparse;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.types.matrix.DistributedMatrixType;
+import de.tuberlin.pserver.types.InternalData;
+import de.tuberlin.pserver.types.matrix.AbstractDistributedMatrixType;
 import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
 import de.tuberlin.pserver.types.matrix.partitioner.PartitionType;
 import gnu.trove.list.TFloatList;
@@ -41,7 +42,7 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
     // Constructors.
     // ---------------------------------------------------
 
-    public CSRMatrix32F(DistributedMatrixType m) {
+    public CSRMatrix32F(AbstractDistributedMatrixType m) {
         super(m);
         colList = new TIntArrayList();
         rowPtrList = new TIntArrayList();
@@ -49,8 +50,8 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
         rowPtrList.add(colList.size());
     }
 
-    public CSRMatrix32F(PartitionType type, int nodeID, int[] nodes, long globalRows, long globalCols) {
-        super(type, nodeID, nodes, globalRows, globalCols);
+    public CSRMatrix32F(int nodeID, int[] nodes, PartitionType partitionType, long globalRows, long globalCols) {
+        super(nodeID, nodes, partitionType, globalRows, globalCols);
         colList = new TIntArrayList();
         rowPtrList = new TIntArrayList();
         valueList = new TFloatArrayList();
@@ -58,10 +59,19 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
     }
 
     // ---------------------------------------------------
-    // Public Methods.
+    // Distributed Type Metadata.
     // ---------------------------------------------------
 
-    @Override  public long sizeOf() { return 0; }
+    @Override public long sizeOf() { return valueArr != null ? valueArr.length * Float.BYTES + (rowPtrArr.length + colArr.length) * Integer.BYTES : -1; }
+
+    @Override public long globalSizeOf() { throw new UnsupportedOperationException(); }
+
+    @SuppressWarnings("unchecked")
+    @Override public InternalData<Object[]> internal() { return new InternalData<>(new Object[] {rowPtrArr, colArr, valueArr}); }
+
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
 
     @Override public float get(final long row, final long col) {
         return 0f;

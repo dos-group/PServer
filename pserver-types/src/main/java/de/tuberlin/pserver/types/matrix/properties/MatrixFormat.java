@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.types.matrix;
+package de.tuberlin.pserver.types.matrix.properties;
 
 public enum MatrixFormat {
 

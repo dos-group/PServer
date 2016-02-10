@@ -28,14 +28,11 @@ public final class MatrixLoader {
 
         public MatrixLoaderStrategy(StateDescriptor state)  { this.state = state; }
 
+        public void done(Matrix32F dataMatrix) {}
+
         abstract public void putRecord(Record record, Matrix32F dataMatrix, Matrix32F labelMatrix);
 
-        public void done(Matrix32F dataMatrix) {}
-    }
-
-    // ---------------------------------------------------
-
-    private static final class MatrixLoaderFactory {
+        // Factory Method.
         public static MatrixLoaderStrategy createLoader(StateDescriptor state) {
             if (CSRMatrix32F.class.isAssignableFrom(state.stateType))
                 return new CSRMatrix32LoaderStrategy(state);
@@ -81,7 +78,7 @@ public final class MatrixLoader {
                 if (entry.getRow() > state.rows || entry.getCol() > state.cols)
                     continue;
                 if (labelMatrix != null && entry.getCol() == 0) // Label always on first column.
-                    labelMatrix.set(record.getRow() - labelMatrix.shape().rowOffset, entry.getCol(), record.getLabel());
+                    labelMatrix.set(record.getRow(), entry.getCol(), record.getLabel()); // TODO: VERIFY THAT!!!!!!!!!!!!!!!!!!!!
                 else {
                     rowData.put((int) (entry.getCol() - ((labelMatrix != null) ? 1 : 0) % state.cols), entry.getValue());
                 }
@@ -136,7 +133,7 @@ public final class MatrixLoader {
             if (!"".equals(state.label)) {
                 labelMatrix = programContext.runtimeContext.runtimeManager.getDHT(state.label);
             }
-            final MatrixLoaderStrategy loader = MatrixLoaderFactory.createLoader(state);
+            final MatrixLoaderStrategy loader = MatrixLoaderStrategy.createLoader(state);
             while (fileIterator.hasNext())
                 loader.putRecord(fileIterator.next(), dataMatrix, labelMatrix);
             loader.done(dataMatrix);

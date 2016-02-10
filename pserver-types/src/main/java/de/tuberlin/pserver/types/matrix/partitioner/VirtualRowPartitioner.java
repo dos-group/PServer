@@ -8,11 +8,11 @@ import de.tuberlin.pserver.types.matrix.f32.entries.Entry32F;
  */
 public class VirtualRowPartitioner extends MatrixPartitioner {
 
-    private final PartitionShape shape;
+    private final MatrixPartitionShape shape;
 
     public VirtualRowPartitioner(PartitionType partitionType, long rows, long cols, int nodeId, int[] atNodes) {
         super(partitionType, rows, cols, nodeId, atNodes);
-        shape = new PartitionShape(rows, cols, 0, 0);
+        shape = new MatrixPartitionShape(rows, cols, 0, 0);
     }
 
     @Override public int getPartitionOfEntry(long row, long col) {
@@ -23,7 +23,7 @@ public class VirtualRowPartitioner extends MatrixPartitioner {
         return nodeId;
     }
 
-    @Override public PartitionShape getPartitionShape() {
+    @Override public MatrixPartitionShape getPartitionShape() {
         return shape;
     }
 

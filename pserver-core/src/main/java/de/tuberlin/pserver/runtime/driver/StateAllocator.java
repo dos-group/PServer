@@ -4,7 +4,7 @@ package de.tuberlin.pserver.runtime.driver;
 import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.remoteobj.GlobalObject;
 import de.tuberlin.pserver.runtime.state.matrix.rpc.GlobalStateMatrixProxy;
-import de.tuberlin.pserver.types.matrix.ElementType;
+import de.tuberlin.pserver.types.matrix.properties.ElementType;
 import de.tuberlin.pserver.types.matrix.MatrixBuilder;
 import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
 import de.tuberlin.pserver.types.matrix.partitioner.PartitionType;
@@ -12,7 +12,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.tukaani.xz.UnsupportedOptionsException;
 
-public class StateAllocator {
+public final class StateAllocator {
 
     // ---------------------------------------------------
     // Public Methods.
@@ -46,7 +46,7 @@ public class StateAllocator {
                         .dimension(state.rows, state.cols)
                         .matrixFormat(state.matrixFormat)
                         .elementType(ElementType.getElementTypeFromClass(state.stateType))
-                        .build(partitionType, programContext.nodeID, state.atNodes);
+                        .build(programContext.nodeID, state.atNodes, partitionType);
 
                 new GlobalObject<>(programContext.runtimeContext.netManager, stateObj, state.stateName);
 

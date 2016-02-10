@@ -91,7 +91,7 @@ public class KMeans extends Program {
                 data[i] = (float)rand.nextDouble();
             }
 
-            centroids.setArray(data);
+            // centroids.setArray(data); // TODO: SOLVE THAT PROBLEM!
 
         }).process(() -> {
 

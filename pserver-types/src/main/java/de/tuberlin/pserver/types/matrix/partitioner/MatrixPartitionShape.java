@@ -2,7 +2,7 @@ package de.tuberlin.pserver.types.matrix.partitioner;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
-public final class PartitionShape {
+public final class MatrixPartitionShape {
 
     // ---------------------------------------------------
     // Fields.
@@ -20,17 +20,17 @@ public final class PartitionShape {
     // Constructors.
     // ---------------------------------------------------
 
-    public PartitionShape() { this(-1, -1, -1, -1); }
-    public PartitionShape(long rows, long cols) { this(rows, cols, 0, 0); }
-    public PartitionShape(long rows, long cols, long rowOffset, long colOffset) {
+    public MatrixPartitionShape() { this(-1, -1, -1, -1); }
+    public MatrixPartitionShape(long rows, long cols) { this(rows, cols, 0, 0); }
+    public MatrixPartitionShape(long rows, long cols, long rowOffset, long colOffset) {
         this.rows = rows;
         this.cols = cols;
         this.rowOffset = rowOffset;
         this.colOffset = colOffset;
     }
 
-    public PartitionShape create(long row, long col) {
-        return new PartitionShape(row, col);
+    public MatrixPartitionShape create(long row, long col) {
+        return new MatrixPartitionShape(row, col);
     }
 
     // ---------------------------------------------------
@@ -41,13 +41,13 @@ public final class PartitionShape {
         return row < rows && col < cols;
     }
 
-    public PartitionShape intersect(PartitionShape other) {
+    public MatrixPartitionShape intersect(MatrixPartitionShape other) {
         long maxRowStart = Math.max(rowOffset, other.rowOffset);
         long minRowEnd   = Math.min(rowOffset + rows, other.rowOffset + other.rows);
         long maxColStart = Math.max(colOffset, other.colOffset);
         long minColEnd   = Math.min(colOffset + cols, other.colOffset + other.cols);
         if(maxRowStart <= minRowEnd && maxColStart <= minColEnd) {
-            return new PartitionShape(minRowEnd - maxRowStart, minColEnd - maxColStart, maxRowStart, maxColStart);
+            return new MatrixPartitionShape(minRowEnd - maxRowStart, minColEnd - maxColStart, maxRowStart, maxColStart);
         }
         return null;
     }
@@ -58,7 +58,7 @@ public final class PartitionShape {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        PartitionShape that = (PartitionShape) o;
+        MatrixPartitionShape that = (MatrixPartitionShape) o;
         return new EqualsBuilder()
                 .append(rows, that.rows)
                 .append(cols, that.cols)
