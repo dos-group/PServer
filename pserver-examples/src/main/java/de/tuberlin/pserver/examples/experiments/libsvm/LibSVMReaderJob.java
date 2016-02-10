@@ -6,11 +6,10 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.Matrix32F;
-import de.tuberlin.pserver.math.matrix.MatrixFormat;
-import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import de.tuberlin.pserver.runtime.state.matrix.disttypes.DistributedMatrix32F;
+import de.tuberlin.pserver.types.matrix.MatrixFormat;
+import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
+import de.tuberlin.pserver.types.matrix.f32.sparse.CSRMatrix32F;
 
 public class LibSVMReaderJob extends Program {
 
@@ -29,7 +28,7 @@ public class LibSVMReaderJob extends Program {
 
     @State(scope = Scope.PARTITIONED, rows = 270, cols = 13, matrixFormat = MatrixFormat.DENSE_FORMAT,
             path = "datasets/svmSmallTestFile", fileFormat = FileFormat.SVM_FORMAT, labels = "XTrainLabel")
-    public Matrix32F XTrainFeatures;
+    public CSRMatrix32F XTrainFeatures;
 
     // ---------------------------------------------------
     // Units.
@@ -39,9 +38,7 @@ public class LibSVMReaderJob extends Program {
     public void unit(final Lifecycle lifecycle) {
 
         lifecycle.process(() -> {
-
             Thread.sleep(2000 * programContext.nodeID);
-
             int i = 0;
             Matrix32F.RowIterator it = XTrainFeatures.rowIterator();
             while (it.hasNext()) {

@@ -11,7 +11,7 @@ import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
-import de.tuberlin.pserver.runtime.state.matrix.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.types.matrix.partitioner.MatrixPartitioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

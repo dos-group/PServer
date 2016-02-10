@@ -7,7 +7,7 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.Matrix64F;
+import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
 
 public class SingletonMatrixTestJob extends Program {
 
@@ -16,7 +16,7 @@ public class SingletonMatrixTestJob extends Program {
     private static final int COLS = 100;
 
     @State(scope = Scope.SINGLETON, at = "0", rows = ROWS, cols = COLS)
-    public Matrix64F W;
+    public Matrix32F W;
 
     @Unit(at = "1 - 3")
     public void main(final Lifecycle lifecycle) {
@@ -27,7 +27,7 @@ public class SingletonMatrixTestJob extends Program {
             for (int i = programContext.nodeID * rows; i < programContext.nodeID * rows + rows; ++i) {
                 for (int j = 0; j < COLS; ++j) {
 
-                    W.set(i, j, (double)programContext.nodeID);
+                    W.set(i, j, programContext.nodeID);
                     final double value = W.get(i, j);
 
                     Preconditions.checkState(value == programContext.nodeID,

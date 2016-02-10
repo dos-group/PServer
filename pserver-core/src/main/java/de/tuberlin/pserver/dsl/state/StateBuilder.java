@@ -4,12 +4,12 @@ package de.tuberlin.pserver.dsl.state;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.utils.ParseUtils;
 import de.tuberlin.pserver.compiler.StateDescriptor;
-import de.tuberlin.pserver.math.matrix32.partitioner.PartitionerType;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
-import de.tuberlin.pserver.math.matrix.MatrixBase;
-import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
+import de.tuberlin.pserver.types.matrix.MatrixFormat;
+import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
+import de.tuberlin.pserver.types.matrix.partitioner.PartitionType;
 
 public final class StateBuilder {
 
@@ -37,7 +37,7 @@ public final class StateBuilder {
 
     private String labelState;
 
-    private PartitionerType partitionerType;
+    private PartitionType partitionType;
 
     // ---------------------------------------------------
     // Constructor.
@@ -58,7 +58,7 @@ public final class StateBuilder {
 
     public StateBuilder at(String at) { this.at = at; return this; }
 
-    public StateBuilder partitioner(PartitionerType partitionerType) { this.partitionerType = partitionerType; return this; }
+    public StateBuilder partitioner(PartitionType partitionType) { this.partitionType = partitionType; return this; }
 
     public StateBuilder rows(long rows) { this.rows = rows; return this; }
 
@@ -74,12 +74,12 @@ public final class StateBuilder {
 
     // ---------------------------------------------------
 
-    public MatrixBase build(final String stateName) throws Exception {
+    public Matrix32F build(final String stateName) throws Exception {
         final StateDescriptor descriptor = new StateDescriptor(
                 stateName,
-                MatrixBase.class,
+                Matrix32F.class,
                 scope, ParseUtils.parseNodeRanges(at),
-                partitionerType,
+                partitionType,
                 matrixFormat, rows, cols,
                 fileFormat,
                 path,
@@ -93,7 +93,7 @@ public final class StateBuilder {
     public void clear() {
         this.scope = Scope.REPLICATED;
         this.at = "";
-        this.partitionerType = PartitionerType.ROW_PARTITIONER;
+        this.partitionType = PartitionType.ROW_PARTITIONER;
         this.rows = 0;
         this.cols = 0;
         this.fileFormat = FileFormat.DENSE_FORMAT;

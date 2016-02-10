@@ -12,9 +12,9 @@ import de.tuberlin.pserver.dsl.transaction.phases.Update;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.Matrix32F;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
+import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
 import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.util.Random;
@@ -111,13 +111,13 @@ public final class GloVe extends Program {
     private Compressor compressor = Compressor.Factory.create(Compressor.CompressionType.LZ4_COMPRESSION);
     @Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PUSH)
     public final TransactionDefinition sync = new TransactionDefinition(
-            (Prepare<Matrix32F, Pair<Integer, byte[]>>) (remoteMatrix) -> {
+            (Prepare<Matrix32, Pair<Integer, byte[]>>) (remoteMatrix) -> {
                 final byte[] serializedObj = serializer.serialize(remoteMatrix);
                 return Pair.of(serializedObj.length, compressor.compress(serializedObj));
             },
-            (GenericApply<Pair<Integer, byte[]>,Matrix32F,Matrix32F>) (remoteUpdates, localState) -> {
+            (GenericApply<Pair<Integer, byte[]>,Matrix32,Matrix32>) (remoteUpdates, localState) -> {
                 for (final Pair<Integer, byte[]> update : remoteUpdates) {
-                    final Matrix32F updateMtx = serializer.deserialize(compressor.decompress(update.getRight(), update.getLeft()), DenseMatrix32F.class);
+                    final Matrix32 updateMtx = serializer.deserialize(compressor.decompress(update.getRight(), update.getLeft()), DenseMatrix32.class);
                     Parallel.For(updateMtx, (i, j, v) -> localState.set(i, j, (localState.get(i, j) + updateMtx.get(i, j)) / 2));
                 }
                 return null;
@@ -141,53 +141,53 @@ public final class GloVe extends Program {
 
         }).process(() ->
 
-                        UnitMng.loop(NUM_EPOCHS, (e0) -> {
+            UnitMng.loop(NUM_EPOCHS, (e0) -> {
 
-                            final MutableDouble costI = new MutableDouble(0.0);
+                final MutableDouble costI = new MutableDouble(0.0);
 
-                            LOG.info("Epoch = " + e0 + " at Node " + programContext.nodeID);
+                LOG.info("Epoch = " + e0 + " at Node " + programContext.nodeID);
 
-                            atomic(state(W, B, GradSq, GradSqB), () -> {
-                                Parallel.For(X, (wordVecIdx, j, v) -> {
-                                    if (v == 0) return;
+                atomic(state(W, B, GradSq, GradSqB), () -> {
+                    Parallel.For(X, (wordVecIdx, j, v) -> {
+                        if (v == 0) return;
 
-                                    final long ctxVecIdx = j + COLS;
-                                    final Matrix32F w1  = W.getCol(wordVecIdx);
-                                    final float     b1  = B.get(wordVecIdx);
-                                    final Matrix32F gs1 = GradSq.getCol(wordVecIdx);
-                                    final Matrix32F w2  = W.getCol(ctxVecIdx);
-                                    final float     b2  = B.get(ctxVecIdx);
-                                    final Matrix32F gs2 = GradSq.getCol(ctxVecIdx);
+                        final long ctxVecIdx = j + COLS;
+                        final Matrix32F w1  = W.getCol(wordVecIdx);
+                        final float     b1  = B.get(wordVecIdx);
+                        final Matrix32F gs1 = GradSq.getCol(wordVecIdx);
+                        final Matrix32F w2  = W.getCol(ctxVecIdx);
+                        final float     b2  = B.get(ctxVecIdx);
+                        final Matrix32F gs2 = GradSq.getCol(ctxVecIdx);
 
-                                    final float diff = w1.dot(w2) + b1 + b2 - (float) Math.log(v);
-                                    float fdiff = (v > X_MAX) ? diff : (float) Math.pow(v / X_MAX, ALPHA) * diff;
+                        final float diff = w1.dot(w2) + b1 + b2 - (float) Math.log(v);
+                        float fdiff = (v > X_MAX) ? diff : (float) Math.pow(v / X_MAX, ALPHA) * diff;
 
-                                    costI.add(0.5 * diff * fdiff);
+                        costI.add(0.5 * diff * fdiff);
 
-                                    fdiff *= LEARNING_RATE;
+                        fdiff *= LEARNING_RATE;
 
-                                    final Matrix32F grad1 = w2.scale(fdiff);
-                                    final Matrix32F grad2 = w1.scale(fdiff);
+                        final Matrix32F grad1 = w2.scale(fdiff);
+                        final Matrix32F grad2 = w1.scale(fdiff);
 
-                                    W.assignColumn(wordVecIdx, w1.sub(grad1.applyOnElements(gs1, (el1, el2) -> (el1 / (float) Math.sqrt(el2)))));
-                                    W.assignColumn(ctxVecIdx, w2.sub(grad2.applyOnElements(gs2, (el1, el2) -> (el1 / (float) Math.sqrt(el2)))));
+                        W.assignColumn(wordVecIdx, w1.sub(grad1.applyOnElements(gs1, (el1, el2) -> (el1 / (float) Math.sqrt(el2)))));
+                        W.assignColumn(ctxVecIdx, w2.sub(grad2.applyOnElements(gs2, (el1, el2) -> (el1 / (float) Math.sqrt(el2)))));
 
-                                    B.set(0, wordVecIdx, (float) (b1 - fdiff / Math.sqrt(GradSqB.get(0, wordVecIdx))));
-                                    B.set(0, ctxVecIdx, (float) (b2 - fdiff / Math.sqrt(GradSqB.get(0, ctxVecIdx))));
+                        B.set(0, wordVecIdx, (float) (b1 - fdiff / Math.sqrt(GradSqB.get(0, wordVecIdx))));
+                        B.set(0, ctxVecIdx, (float) (b2 - fdiff / Math.sqrt(GradSqB.get(0, ctxVecIdx))));
 
-                                    gs1.assign(gs1.applyOnElements(grad1, (el1, el2) -> el1 + el2 * el2));
-                                    gs2.assign(gs2.applyOnElements(grad2, (el1, el2) -> el1 + el2 * el2));
+                        gs1.assign(gs1.applyOnElements(grad1, (el1, el2) -> el1 + el2 * el2));
+                        gs2.assign(gs2.applyOnElements(grad2, (el1, el2) -> el1 + el2 * el2));
 
-                                    GradSq.assignColumn(wordVecIdx, gs1);
-                                    GradSq.assignColumn(ctxVecIdx, gs2);
+                        GradSq.assignColumn(wordVecIdx, gs1);
+                        GradSq.assignColumn(ctxVecIdx, gs2);
 
-                                    GradSqB.set(0, wordVecIdx, GradSqB.get(0, wordVecIdx) + fdiff * fdiff);
-                                    GradSqB.set(0, ctxVecIdx, GradSqB.get(0, ctxVecIdx) + fdiff * fdiff);
-                                });
-                            });
+                        GradSqB.set(0, wordVecIdx, GradSqB.get(0, wordVecIdx) + fdiff * fdiff);
+                        GradSqB.set(0, ctxVecIdx, GradSqB.get(0, ctxVecIdx) + fdiff * fdiff);
+                    });
+                });
 
-                            TransactionMng.commit(sync);
-                        })
+                TransactionMng.commit(sync);
+            })
         );
     }
 

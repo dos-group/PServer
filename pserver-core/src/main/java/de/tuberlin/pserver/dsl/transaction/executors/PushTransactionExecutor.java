@@ -4,8 +4,8 @@ import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.events.TransactionPushRequestEvent;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
-import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.RuntimeContext;
+import de.tuberlin.pserver.types.DistributedType;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.ArrayList;
@@ -21,9 +21,9 @@ public class PushTransactionExecutor extends TransactionExecutor {
 
     public final TransactionDefinition transactionDefinition;
 
-    private final SharedObject[] srcStateObjects;
+    private final DistributedType[] srcStateObjects;
 
-    private final SharedObject[] dstStateObjects;
+    private final DistributedType[] dstStateObjects;
 
     // ---------------------------------------------------
     // Constructors.
@@ -35,9 +35,9 @@ public class PushTransactionExecutor extends TransactionExecutor {
         super(runtimeContext, controller);
         this.transactionDefinition = controller.getTransactionDescriptor().definition;
         final int numSrcStateObjects = controller.getTransactionDescriptor().stateSrcObjectNames.size();
-        this.srcStateObjects = new SharedObject[numSrcStateObjects];
+        this.srcStateObjects = new DistributedType[numSrcStateObjects];
         final int numDstStateObjects = controller.getTransactionDescriptor().stateDstObjectNames.size();
-        this.dstStateObjects = new SharedObject[numDstStateObjects];
+        this.dstStateObjects = new DistributedType[numDstStateObjects];
         registerPushTransactionRequest();
     }
 
@@ -56,7 +56,7 @@ public class PushTransactionExecutor extends TransactionExecutor {
         int i = 0;
         for (final String srcStateObjectName : controller.getTransactionDescriptor().stateSrcObjectNames) {
             if (ArrayUtils.contains(controller.getTransactionDescriptor().srcStateObjectNodes, runtimeContext.nodeID)) {
-                SharedObject srcObj = runtimeContext.runtimeManager.getDHT(srcStateObjectName);
+                DistributedType srcObj = runtimeContext.runtimeManager.getDHT(srcStateObjectName);
                 srcStateObjects[i++] = srcObj;
             }
         }

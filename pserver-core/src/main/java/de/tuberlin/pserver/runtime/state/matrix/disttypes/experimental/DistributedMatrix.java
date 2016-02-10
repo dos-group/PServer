@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.runtime.state.matrix.disttypes.experimental;
 
-
+/*
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.math.matrix.Matrix;
 import de.tuberlin.pserver.math.matrix.MatrixFormat;
@@ -9,7 +9,7 @@ import de.tuberlin.pserver.math.operations.MatrixAggregation;
 import de.tuberlin.pserver.math.tuples.Tuple2;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-import de.tuberlin.pserver.runtime.state.matrix.MatrixBuilder;
+import de.tuberlin.pserver.math.matrix32.MatrixBuilder;
 import de.tuberlin.pserver.runtime.state.matrix.partitioner.MatrixPartitioner;
 
 import java.util.*;
@@ -233,7 +233,7 @@ public class DistributedMatrix {
             }
         }
         return targetMatrix;
-    }
+    }*/
 
     /**
      * Calculates the minimal set of RemotePartitions that need to be fetched in order to construct a Matrix of a given
@@ -245,7 +245,7 @@ public class DistributedMatrix {
      * @param targetShape The shape of the Matrix that is to be constructed
      * @return The minimal set of RemotePartitions that need to be fetched in order to construct a Matrix of shape targetShape from sourceMatrix
      */
-    private static Map<Integer,RemotePartition> getIntersectingRemotePartitions(DistributedMatrix sourceMatrix, PartitionShape targetShape) {
+    /*private static Map<Integer,RemotePartition> getIntersectingRemotePartitions(DistributedMatrix sourceMatrix, PartitionShape targetShape) {
         Map<Integer,RemotePartition> remotePartitions = new HashMap<>(sourceMatrix.nodeDOP);
         // iterate over all nodes, the source matrix is partitioned across
         for(int i : sourceMatrix.partitioner.getNodes()) {
@@ -259,14 +259,14 @@ public class DistributedMatrix {
             //System.out.println(i + ": " + remoteShape + " intersect " + targetShape + " = " + intersection);
         }
         return remotePartitions;
-    }
+    }*/
 
     /**
      * This is currently only supported for quadratic matrices!<br>
      * Non-quadratic matrices would require column-based partitioning.
      * @return
      */
-    public DistributedMatrix transpose() {
+    /*public DistributedMatrix transpose() {
         // create transposed local shape
         PartitionShape transposedShape = new PartitionShape(shape.cols, shape.rows, shape.colOffset, shape.rowOffset);
         // get all remote partitions that intersect transposed local shape
@@ -285,4 +285,4 @@ public class DistributedMatrix {
         DistributedMatrix remoteView = constructMatrixFromRemotePartitions(remoteToLocalPartitionMapping, result);
         return remoteView;
     }
-}
+}*/

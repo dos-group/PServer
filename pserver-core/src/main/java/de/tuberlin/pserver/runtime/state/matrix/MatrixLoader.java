@@ -1,14 +1,15 @@
 package de.tuberlin.pserver.runtime.state.matrix;
 
 import de.tuberlin.pserver.compiler.StateDescriptor;
-import de.tuberlin.pserver.math.matrix.*;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
-import de.tuberlin.pserver.runtime.state.matrix.entries.Entry;
-import de.tuberlin.pserver.runtime.state.matrix.entries.MutableEntryImpl;
-import de.tuberlin.pserver.runtime.state.matrix.entries.ReusableEntry;
+import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
+import de.tuberlin.pserver.types.matrix.f32.entries.Entry32F;
+import de.tuberlin.pserver.types.matrix.f32.entries.MutableEntryImpl32F;
+import de.tuberlin.pserver.types.matrix.f32.entries.ReusableEntry32F;
+import de.tuberlin.pserver.types.matrix.f32.sparse.CSRMatrix32F;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -27,9 +28,9 @@ public final class MatrixLoader {
 
         public MatrixLoaderStrategy(StateDescriptor state)  { this.state = state; }
 
-        abstract public void putRecord(Record record, MatrixBase dataMatrix, MatrixBase labelMatrix);
+        abstract public void putRecord(Record record, Matrix32F dataMatrix, Matrix32F labelMatrix);
 
-        public void done(MatrixBase dataMatrix) {}
+        public void done(Matrix32F dataMatrix) {}
     }
 
     // ---------------------------------------------------
@@ -37,81 +38,60 @@ public final class MatrixLoader {
     private static final class MatrixLoaderFactory {
         public static MatrixLoaderStrategy createLoader(StateDescriptor state) {
             if (CSRMatrix32F.class.isAssignableFrom(state.stateType))
-                return new CSRMatrix32FLoaderStrategy(state);
+                return new CSRMatrix32LoaderStrategy(state);
             if (Matrix32F.class.isAssignableFrom(state.stateType))
-                return new Matrix32FLoaderStrategy(state);
-            if (Matrix64F.class.isAssignableFrom(state.stateType))
-                return new Matrix64FLoaderStrategy(state);
+                return new Matrix32LoaderStrategy(state);
             throw new IllegalStateException();
         }
     }
 
     // ---------------------------------------------------
 
-    private final static class Matrix32FLoaderStrategy extends MatrixLoaderStrategy {
+    private final static class Matrix32LoaderStrategy extends MatrixLoaderStrategy {
 
-        private final ReusableEntry<Float> reusable = new MutableEntryImpl<>(-1, -1, Float.NaN);
+        private final ReusableEntry32F reusable = new MutableEntryImpl32F(-1, -1, Float.NaN);
 
-        public Matrix32FLoaderStrategy(StateDescriptor state)  { super(state); }
+        public Matrix32LoaderStrategy(StateDescriptor state)  { super(state); }
 
         @Override
-        public void putRecord(Record record, MatrixBase dataMatrix, MatrixBase labelMatrix) {
+        public void putRecord(Record record, Matrix32F dataMatrix, Matrix32F labelMatrix) {
             while (record.hasNext()) { // Iterate through entries in record...
-                final Entry entry = record.next(reusable);
-                if (entry.getRow() >= state.rows || entry.getCol() >= state.cols)
-                    continue;
+                final Entry32F entry = record.next(reusable);
+                if (entry.getRow() > state.rows || entry.getCol() > state.cols)
+                    return;
                 if (labelMatrix != null && entry.getCol() == 0) // Label always on first column.
-                    ((Matrix32F) labelMatrix).set(record.getRow(), entry.getCol(), record.getLabel().floatValue());
+                    labelMatrix.set(record.getRow() - labelMatrix.shape().rowOffset, entry.getCol(), record.getLabel());
                 else
-                    ((Matrix32F) dataMatrix).set(entry.getRow(), entry.getCol(), entry.getValue().floatValue());
+                    dataMatrix.set(entry.getRow() - dataMatrix.shape().rowOffset, entry.getCol() - ((labelMatrix != null) ? 1 : 0), entry.getValue());
             }
         }
     }
 
-    private final static class Matrix64FLoaderStrategy extends MatrixLoaderStrategy {
+    private final static class CSRMatrix32LoaderStrategy extends MatrixLoaderStrategy {
 
-        private final ReusableEntry<Double> reusable = new MutableEntryImpl<>(-1, -1, Double.NaN);
-
-        public Matrix64FLoaderStrategy(StateDescriptor state)  { super(state); }
-
-        @Override
-        public void putRecord(Record record, MatrixBase dataMatrix, MatrixBase labelMatrix) {
-            while (record.hasNext()) { // Iterate through entries in record...
-                final Entry entry = record.next(reusable);
-                if (entry.getRow() >= state.rows || entry.getCol() >= state.cols)
-                    continue;
-                if (labelMatrix != null && entry.getCol() == 0) // Label always on first column.
-                    ((Matrix64F) labelMatrix).set(record.getRow(), entry.getCol(), record.getLabel().doubleValue());
-                else
-                    ((Matrix64F) dataMatrix).set(entry.getRow(), entry.getCol(), entry.getValue().doubleValue());
-            }
-        }
-    }
-
-    private final static class CSRMatrix32FLoaderStrategy extends MatrixLoaderStrategy {
-
-        private final ReusableEntry<Float> reusable = new MutableEntryImpl<>(-1, -1, Float.NaN);
+        private final ReusableEntry32F reusable = new MutableEntryImpl32F(-1, -1, Float.NaN);
         private final TIntFloatHashMap rowData = new TIntFloatHashMap();
 
-        public CSRMatrix32FLoaderStrategy(StateDescriptor state)  { super(state); }
+        public CSRMatrix32LoaderStrategy(StateDescriptor state)  { super(state); }
 
         @Override
-        public void putRecord(Record record, MatrixBase dataMatrix, MatrixBase labelMatrix) {
+        public void putRecord(Record record, Matrix32F dataMatrix, Matrix32F labelMatrix) {
             while (record.hasNext()) { // Iterate through entries in record...
-                final Entry entry = record.next(reusable);
-                if (entry.getRow() >= state.rows || entry.getCol() >= state.cols)
+                final Entry32F entry = record.next(reusable);
+                if (entry.getRow() > state.rows || entry.getCol() > state.cols)
                     continue;
                 if (labelMatrix != null && entry.getCol() == 0) // Label always on first column.
-                    ((Matrix32F) labelMatrix).set(record.getRow(), entry.getCol(), record.getLabel().floatValue());
-                else
-                    rowData.put((int)(entry.getCol() % state.cols), entry.getValue().floatValue());
+                    labelMatrix.set(record.getRow() - labelMatrix.shape().rowOffset, entry.getCol(), record.getLabel());
+                else {
+                    rowData.put((int) (entry.getCol() - ((labelMatrix != null) ? 1 : 0) % state.cols), entry.getValue());
+                }
             }
             ((CSRMatrix32F) dataMatrix).addRow(rowData);
             rowData.clear();
         }
 
         @Override
-        public void done(MatrixBase dataMatrix) {
+        public void done(Matrix32F dataMatrix) {
             ((CSRMatrix32F) dataMatrix).build();
         }
     }
@@ -124,7 +104,7 @@ public final class MatrixLoader {
 
     private final FileSystemManager fileManager;
 
-    private final List<Triple<StateDescriptor, Matrix, FileDataIterator>> loadingTasks;
+    private final List<Triple<StateDescriptor, Matrix32F, FileDataIterator>> loadingTasks;
 
     // ---------------------------------------------------
     // Constructor.
@@ -140,7 +120,7 @@ public final class MatrixLoader {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void add(StateDescriptor stateDescriptor, Matrix stateObj) {
+    public void add(StateDescriptor stateDescriptor, Matrix32F stateObj) {
         FileDataIterator fileIterator = fileManager.createFileIterator(programContext, stateDescriptor);
         loadingTasks.add(Triple.of(stateDescriptor, stateObj, fileIterator));
     }
@@ -148,11 +128,11 @@ public final class MatrixLoader {
     @SuppressWarnings("unchecked")
     public void load() {
         programContext.runtimeContext.fileManager.computeInputSplitsForRegisteredFiles();
-        for (Triple<StateDescriptor, Matrix, FileDataIterator> task : loadingTasks) {
+        for (Triple<StateDescriptor, Matrix32F, FileDataIterator> task : loadingTasks) {
             StateDescriptor state = task.getLeft();
-            Matrix dataMatrix = task.getMiddle();
+            Matrix32F dataMatrix = task.getMiddle();
             FileDataIterator<Record> fileIterator = task.getRight();
-            Matrix labelMatrix = null;
+            Matrix32F labelMatrix = null;
             if (!"".equals(state.label)) {
                 labelMatrix = programContext.runtimeContext.runtimeManager.getDHT(state.label);
             }

@@ -29,7 +29,7 @@
         </dependency>
         <dependency>
             <groupId>de.tuberlin.pserver</groupId>
-            <artifactId>pserver-math</artifactId>
+            <artifactId>pserver-types</artifactId>
         </dependency>
 
         <!-- SYSTEM DEPENDENCIES -->

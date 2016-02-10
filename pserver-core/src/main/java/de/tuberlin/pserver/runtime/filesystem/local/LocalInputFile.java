@@ -6,7 +6,7 @@ import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.filesystem.FileSection;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.runtime.filesystem.records.RecordIterator;
-import de.tuberlin.pserver.runtime.state.matrix.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.types.matrix.partitioner.MatrixPartitioner;
 
 import java.io.*;
 

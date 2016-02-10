@@ -4,7 +4,7 @@ import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.core.remoteobj.MethodInvocationMsg;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-import de.tuberlin.pserver.runtime.state.matrix.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.types.matrix.partitioner.MatrixPartitioner;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -44,7 +44,13 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
         this.requestLatches     = new ConcurrentHashMap<>();
         this.resultObjects      = new ConcurrentHashMap<>();
 
-        this.partitioner = StateDescriptor.createMatrixPartitioner(programContext, stateDescriptor);
+        this.partitioner = MatrixPartitioner.createPartitioner(
+                stateDescriptor.partitionType,
+                programContext.nodeID,
+                stateDescriptor.atNodes,
+                stateDescriptor.rows,
+                stateDescriptor.cols
+        );
 
         netManager.addEventListener(MethodInvocationMsg.METHOD_INVOCATION_EVENT + "_" + stateDescriptor.stateName, (event) -> {
             MethodInvocationMsg mim = (MethodInvocationMsg)event;
@@ -122,7 +128,7 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T create(ProgramContext programContext, StateDescriptor stateDescriptor) throws Throwable {
+    public static <T> T create(ProgramContext programContext, StateDescriptor stateDescriptor) throws Exception {
         return (T) Proxy.newProxyInstance(
                 stateDescriptor.stateType.getClassLoader(),
                 new Class<?>[]{stateDescriptor.stateType},

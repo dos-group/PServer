@@ -12,8 +12,8 @@ import de.tuberlin.pserver.dsl.transaction.phases.Combine;
 import de.tuberlin.pserver.dsl.transaction.phases.Update;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.Matrix32F;
-import de.tuberlin.pserver.math.matrix.MatrixFormat;
+import de.tuberlin.pserver.types.matrix.MatrixFormat;
+import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
 
 
 public class DataParallelJob extends Program {

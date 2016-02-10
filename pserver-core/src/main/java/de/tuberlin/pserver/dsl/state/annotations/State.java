@@ -1,9 +1,9 @@
 package de.tuberlin.pserver.dsl.state.annotations;
 
-import de.tuberlin.pserver.math.matrix32.partitioner.PartitionerType;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
-import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
+import de.tuberlin.pserver.types.matrix.MatrixFormat;
+import de.tuberlin.pserver.types.matrix.partitioner.PartitionType;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -18,7 +18,7 @@ public @interface State {;
 
     String at() default "";
 
-    PartitionerType partitioner() default PartitionerType.ROW_PARTITIONER;
+    PartitionType partitioner() default PartitionType.ROW_PARTITIONER;
 
     // --- Matrix Specific ---
 

@@ -2,23 +2,21 @@ package de.tuberlin.pserver.compiler;
 
 import de.tuberlin.pserver.commons.utils.ParseUtils;
 import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.math.matrix32.partitioner.PartitionerType;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
-import de.tuberlin.pserver.math.matrix.ElementType;
-import de.tuberlin.pserver.math.matrix.Matrix32F;
-import de.tuberlin.pserver.math.matrix.Matrix64F;
-import de.tuberlin.pserver.math.matrix.MatrixFormat;
-import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
-import de.tuberlin.pserver.math.matrix.dense.DenseMatrix64F;
-import de.tuberlin.pserver.math.matrix.sparse.SparseMatrix32F;
-import de.tuberlin.pserver.math.matrix.sparse.SparseMatrix64F;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import de.tuberlin.pserver.runtime.state.matrix.disttypes.DistributedMatrix32F;
-import de.tuberlin.pserver.runtime.state.matrix.disttypes.DistributedMatrix64F;
-import de.tuberlin.pserver.runtime.state.matrix.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.types.matrix.ElementType;
+import de.tuberlin.pserver.types.matrix.MatrixFormat;
+import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
+import de.tuberlin.pserver.types.matrix.f32.dense.DenseMatrix32F;
+import de.tuberlin.pserver.types.matrix.f32.sparse.CSRMatrix32F;
+import de.tuberlin.pserver.types.matrix.f32.sparse.SparseMatrix32F;
+import de.tuberlin.pserver.types.matrix.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.types.matrix.partitioner.PartitionType;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class StateDescriptor {
 
@@ -26,17 +24,16 @@ public final class StateDescriptor {
     // State Types.
     // ---------------------------------------------------
 
-    public static final Class<?>[] LOCAL_STATE_TYPES = {
+    private static final Map<Class<?>, MatrixFormat> MTX_TYPE_FORMAT_MAP;
 
-            Matrix32F.class,
-            Matrix64F.class,
-            DenseMatrix32F.class,
-            DenseMatrix64F.class,
-            SparseMatrix32F.class,
-            SparseMatrix64F.class,
-            DistributedMatrix32F.class,
-            DistributedMatrix64F.class,
-    };
+    static {
+
+        MTX_TYPE_FORMAT_MAP = new HashMap<>();
+        MTX_TYPE_FORMAT_MAP.put(Matrix32F.class,         MatrixFormat.DENSE_FORMAT);
+        MTX_TYPE_FORMAT_MAP.put(DenseMatrix32F.class,    MatrixFormat.DENSE_FORMAT);
+        MTX_TYPE_FORMAT_MAP.put(SparseMatrix32F.class,   MatrixFormat.SPARSE_FORMAT);
+        MTX_TYPE_FORMAT_MAP.put(CSRMatrix32F.class,      MatrixFormat.CSR_FORMAT);
+    }
 
     // ---------------------------------------------------
     // Fields.
@@ -50,7 +47,7 @@ public final class StateDescriptor {
 
     public final int[] atNodes;
 
-    public final PartitionerType partitionerType;
+    public final PartitionType partitionType;
 
     // ---------------------------------------------------
 
@@ -78,7 +75,7 @@ public final class StateDescriptor {
                            final Class<?> stateType,
                            final Scope scope,
                            final int[] atNodes,
-                           final PartitionerType partitionerType,
+                           final PartitionType partitionType,
                            final MatrixFormat matrixFormat,
                            final long rows,
                            final long cols,
@@ -90,7 +87,7 @@ public final class StateDescriptor {
         this.stateType      = stateType;
         this.scope          = scope;
         this.atNodes        = atNodes;
-        this.partitionerType = partitionerType;
+        this.partitionType = partitionType;
         this.matrixFormat   = matrixFormat;
         this.rows           = rows;
         this.cols           = cols;
@@ -107,12 +104,14 @@ public final class StateDescriptor {
 
     public static StateDescriptor fromAnnotatedField(final State state, final Field field, final int[] fallBackAtNodes) {
         int[] parsedAtNodes = ParseUtils.parseNodeRanges(state.at());
+        MatrixFormat matrixFormat = MTX_TYPE_FORMAT_MAP.get(field.getType());
         return new StateDescriptor(
                 field.getName(),
                 field.getType(),
                 state.scope(), parsedAtNodes.length > 0 ? parsedAtNodes : fallBackAtNodes,
                 state.partitioner(),
-                state.matrixFormat(), state.rows(),
+                matrixFormat,
+                state.rows(),
                 state.cols(),
                 state.fileFormat(),
                 state.path(),
@@ -121,11 +120,12 @@ public final class StateDescriptor {
     }
 
     public static MatrixPartitioner createMatrixPartitioner(ProgramContext programContext, StateDescriptor state) {
-        return MatrixPartitioner.create(
-                state.partitionerType,
-                state.rows, state.cols,
+        return MatrixPartitioner.createPartitioner(
+                state.partitionType,
                 programContext.nodeID,
-                state.atNodes
+                state.atNodes,
+                state.rows,
+                state.cols
         );
     }
 }

@@ -6,13 +6,11 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.Matrix32F;
-import de.tuberlin.pserver.math.matrix.MatrixFormat;
-import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
-import de.tuberlin.pserver.math.matrix.sparse.SparseMatrix32F;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import de.tuberlin.pserver.math.matrix.CSRMatrix32F;
-import de.tuberlin.pserver.runtime.state.matrix.MatrixBuilder;
+import de.tuberlin.pserver.types.matrix.MatrixBuilder;
+import de.tuberlin.pserver.types.matrix.MatrixFormat;
+import de.tuberlin.pserver.types.matrix.f32.dense.DenseMatrix32F;
+import de.tuberlin.pserver.types.matrix.f32.sparse.CSRMatrix32F;
 
 import java.util.Arrays;
 
@@ -23,7 +21,7 @@ public class LogRegCriteoRM extends Program {
     // Constants.
     // ---------------------------------------------------
 
-    private static final String NUM_NODES = "4";
+    private static final String NUM_NODES = "1";
     private static final String X_TRAIN_PATH = "datasets/svm_train";
     private static final int N_TRAIN = 80000;
     private static final int D = 1048615;
@@ -35,18 +33,15 @@ public class LogRegCriteoRM extends Program {
     // ---------------------------------------------------
 
     @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = 1)
-    public Matrix32F trainLabel;
+    public DenseMatrix32F trainLabel;
 
     @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = D,
             path = X_TRAIN_PATH, matrixFormat = MatrixFormat.SPARSE_FORMAT,
             fileFormat = FileFormat.SVM_FORMAT, labels = "trainLabel")
-
-    public Matrix32F trainFeatures;
+    public CSRMatrix32F trainFeatures;
 
     @State(scope = Scope.REPLICATED, rows = 1, cols = D)
-    public Matrix32F W;
-
-    private CSRMatrix32F csrData = new CSRMatrix32F(D);
+    public DenseMatrix32F W;
 
     // ---------------------------------------------------
     // Units.
@@ -55,31 +50,25 @@ public class LogRegCriteoRM extends Program {
     @Unit
     public void unit(Lifecycle lifecycle) {
 
-        lifecycle.preProcess(() -> {
+        lifecycle.process(() -> {
 
-            csrData = CSRMatrix32F.fromSparseMatrix32F((SparseMatrix32F)trainFeatures);
-
-        }).process(() -> {
-
-            DenseMatrix32F M = (DenseMatrix32F)W;
-            DenseMatrix32F Y = (DenseMatrix32F)trainLabel;
-            DenseMatrix32F grad = new MatrixBuilder().dimension(1, csrData.cols()).build();
-            DenseMatrix32F derivative = new MatrixBuilder().dimension(1, csrData.cols()).build();
+            DenseMatrix32F grad = (DenseMatrix32F)new MatrixBuilder().dimension(1, trainFeatures.cols()).build();
+            DenseMatrix32F derivative = (DenseMatrix32F)new MatrixBuilder().dimension(1, trainFeatures.cols()).build();
 
             for (int e = 0; e < NUM_EPOCHS; ++e) {
                 Arrays.fill(derivative.data, 0f);
                 Arrays.fill(grad.data, 0f);
-                csrData.processRows((row, valueList, rowStart, rowEnd, colList) -> {
+                trainFeatures.processRows((row, valueList, rowStart, rowEnd, colList) -> {
                     float yPredict = 0;
                     for (int i = rowStart; i < rowEnd; ++i) {
-                        yPredict += valueList[i] *  M.data[colList[i]];
+                        yPredict += valueList[i] *  W.data[colList[i]];
                     }
-                    float f = Y.data[row] - yPredict;
+                    float f = trainLabel.data[row] - yPredict;
                     for (int j = rowStart; j < rowEnd; ++j) {
                         int ci = colList[j];
                         derivative.data[ci] = valueList[ci] * f;
                         grad.data[ci] += derivative.data[ci] * STEP_SIZE;
-                        M.data[ci] -= grad.data[ci];
+                        W.data[ci] -= grad.data[ci];
                     }
                 });
             }

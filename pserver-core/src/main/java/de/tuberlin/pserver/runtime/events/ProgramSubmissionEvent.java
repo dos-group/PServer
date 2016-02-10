@@ -2,7 +2,7 @@ package de.tuberlin.pserver.runtime.events;
 
 import com.google.gson.Gson;
 import de.tuberlin.pserver.commons.json.GsonUtils;
-import de.tuberlin.pserver.math.tuples.Tuple2;
+import de.tuberlin.pserver.commons.tuples.Tuple2;
 import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
 import de.tuberlin.pserver.runtime.core.network.NetEvent;
 

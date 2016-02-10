@@ -13,12 +13,11 @@ import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
-import de.tuberlin.pserver.math.matrix.Matrix64F;
-import de.tuberlin.pserver.math.matrix.dense.DenseMatrix64F;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
+import de.tuberlin.pserver.types.matrix.f32.Matrix32F;
+import de.tuberlin.pserver.types.matrix.f32.dense.DenseMatrix32F;
 
-import java.util.List;
 import java.util.Random;
 
 public class KMeans extends Program {
@@ -44,15 +43,15 @@ public class KMeans extends Program {
             fileFormat = FileFormat.SVM_FORMAT
             //recordFormat = RowRecordIteratorProducer.class
     )
-    public Matrix64F data;
+    public Matrix32F data;
 
     @State(scope = Scope.REPLICATED,
             rows = K,
             cols = COLS + 1
     )
-    public Matrix64F centroidsUpdate;
+    public Matrix32F centroidsUpdate;
 
-    public final Matrix64F centroids = new DenseMatrix64F(K, COLS);
+    public final Matrix32F centroids = new DenseMatrix32F(K, COLS);
 
     // ---------------------------------------------------
     // Transactions.
@@ -61,22 +60,19 @@ public class KMeans extends Program {
     @Transaction(state = "centroidsUpdate", type = TransactionType.PUSH)
     public final TransactionDefinition centroidsUpdateSync = new TransactionDefinition(
 
-            (Update<Matrix64F>) (requestObj, remoteUpdates, localState) -> {
-
-                for (final Matrix64F update : remoteUpdates) {
+            (Update<Matrix32F>) (requestObj, remoteUpdates, localState) -> {
+                for (final Matrix32F update : remoteUpdates) {
                     Parallel.For(update, (i, j, v) -> centroidsUpdate.set(i, j, centroidsUpdate.get(i, j) + update.get(i, j)));
                 }
-
                 for (int i = 0; i < K; i++) {
                     if (centroidsUpdate.get(i, COLS) > 0) {
-                        final Matrix64F update = centroidsUpdate.getRow(i, 0, COLS);
+                        final Matrix32F update = centroidsUpdate.getRow(i, 0, COLS);
                         if (centroidsUpdate.get(i, COLS) > 0) {
-                            centroids.assignRow(i, update.scale(1. / centroidsUpdate.get(i, COLS), update));
+                            centroids.assignRow(i, update.scale(1f / centroidsUpdate.get(i, COLS), update));
                         }
                     }
                 }
-
-                centroidsUpdate.assign(0.);
+                centroidsUpdate.assign(0f);
             }
     );
 
@@ -90,25 +86,25 @@ public class KMeans extends Program {
         lifecycle.preProcess(() -> {
 
             Random rand = new Random(42);
-            double[] data = new double[(int)(K * COLS)];
+            float[] data = new float[(int)(K * COLS)];
             for (int i = 0; i < K * COLS; i++) {
-                data[i] = rand.nextDouble();
+                data[i] = (float)rand.nextDouble();
             }
 
             centroids.setArray(data);
 
         }).process(() -> {
 
-            centroidsUpdate.assign(0.);
+            centroidsUpdate.assign(0f);
 
             UnitMng.loop(10, Loop.BULK_SYNCHRONOUS, (iteration) -> {
 
                 // BEGIN: STANDARD KMEANS ON LOCAL PARTITION+
                 atomic(state(data), () -> {
-                    Matrix64F.RowIterator it = data.rowIterator();
+                    Matrix32F.RowIterator it = data.rowIterator();
                     while (it.hasNext()) {
 
-                        final Matrix64F point = it.get();
+                        final Matrix32F point = it.get();
                         it.next();
                         double closestDistance = Double.MAX_VALUE;
                         long closestCentroidId = -1;
@@ -119,8 +115,8 @@ public class KMeans extends Program {
                                 closestCentroidId = centroidId;
                             }
                         }
-                        Matrix64F updateDelta = point.copy(1, COLS + 1);
-                        updateDelta.set(0, COLS, 1.);
+                        Matrix32F updateDelta = point.copy(1, COLS + 1);
+                        updateDelta.set(0, COLS, 1f);
 
                         centroidsUpdate.assignRow(closestCentroidId, centroidsUpdate.getRow(closestCentroidId).add(updateDelta));
                     }

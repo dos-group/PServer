@@ -1,5 +1,6 @@
 package de.tuberlin.pserver.runtime.state.matrix.disttypes.experimental;
 
+/*
 import de.tuberlin.pserver.math.matrix.partitioning.PartitionShape;
 
 // simple wrapper for a partition to attach a nodeId to it
@@ -14,3 +15,4 @@ public class RemotePartition {
         this.nodeId = nodeId;
     }
 }
+*/

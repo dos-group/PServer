@@ -2,7 +2,7 @@ package de.tuberlin.pserver.runtime.core.usercode;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.compression.Compressor;
-import de.tuberlin.pserver.math.tuples.Tuple2;
+import de.tuberlin.pserver.commons.tuples.Tuple2;
 
 import java.io.File;
 import java.io.FileInputStream;

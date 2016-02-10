@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.runtime.dht.types;
 
-import de.tuberlin.pserver.math.SharedObject;
+import de.tuberlin.pserver.types.DistributedType;
 
-public class EmbeddedDHTObject<T extends SharedObject> extends AbstractBufferedDHTObject {
+public class EmbeddedDHTObject<T extends DistributedType> extends AbstractBufferedDHTObject {
 
     // ---------------------------------------------------
     // Fields.
