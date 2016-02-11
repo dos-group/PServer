@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.radt.hashtable;
 
 import de.tuberlin.pserver.radt.AbstractCemetery;
+import de.tuberlin.pserver.radt.CObject;
 
 import java.util.*;
 
@@ -36,5 +37,13 @@ public class HashTableCemetery<K,V> extends AbstractCemetery<Slot<K,V>> {
             }
         }
         return purged;
+    }
+
+    private synchronized boolean allReplicasHaveExecutedDelete(Slot<K,V> slot) {
+        // Every site has executed the deletion D, therefore from now on only operations happening after D will arrive
+        if(slot == null) return false;
+        System.out.println("Seq: " + slot.getS4Vector().getSeq());
+        System.out.println("Min: " + getMinVectorClockEntry(slot.getS4Vector().getSiteId())+"\n");
+        return slot.getS4Vector().getSeq() <= getMinVectorClockEntry(slot.getS4Vector().getSiteId());
     }
 }

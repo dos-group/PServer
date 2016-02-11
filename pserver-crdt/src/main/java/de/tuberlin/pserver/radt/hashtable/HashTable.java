@@ -96,11 +96,11 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
         switch(hashOp.getType()) {
             case PUT:
                 result = remotePut(hashOp.getKey(), hashOp.getValue(), hashOp.getS4Vector());
-                cemetery.updateAndPurge(hashOp.getS4Vector().getSiteId(), hashOp.getVectorClock());
+                cemetery.updateAndPurge(hashOp.getVectorClock(), hashOp.getS4Vector().getSiteId());
                 return result;
             case REMOVE:
                 result = remoteRemove(hashOp.getKey(), hashOp.getS4Vector());
-                cemetery.updateAndPurge(hashOp.getS4Vector().getSiteId(), hashOp.getVectorClock());
+                cemetery.updateAndPurge(hashOp.getVectorClock(), hashOp.getS4Vector().getSiteId());
                 return result;
             default:
                 throw new IllegalArgumentException("HashTable RADTs do not allow the " + op.getType() + " operation.");

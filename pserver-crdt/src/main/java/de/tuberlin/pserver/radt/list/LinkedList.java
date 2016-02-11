@@ -6,14 +6,22 @@ import de.tuberlin.pserver.crdt.operations.Operation;
 import de.tuberlin.pserver.radt.S4Vector;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
+import javax.xml.stream.events.Characters;
 import java.util.ArrayList;
 import java.util.List;
 
+
+// TODO: create an add() method !?
 public class LinkedList<T> extends AbstractLinkedList<T> {
+    // TODO: I would like to initialize cemetery in AbstractLinkedList
+    protected final LinkedListCemetery<T> cemetery;
+
 
     // TODO: do I need size?
     public LinkedList(String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
+        this.cemetery = new LinkedListCemetery<>(this, noOfReplicas, nodeId);
+
         ready();
     }
 
@@ -93,7 +101,7 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
 
         if(node == null) return false;
 
-        System.out.println("Found node " + node.getValue());
+        //System.out.println("Found node " + node.getValue());
 
 
         cemetery.enrol(nodeId, node);
@@ -114,7 +122,7 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
 
         while(node != null) {
             if(!node.isTombstone()) sb.append(node.getValue());
-            else sb.append("tombstone");
+            else sb.append("t");
 
             if(node.getLink() != null) sb.append(", ");
             else sb.append("}\n");
@@ -150,8 +158,8 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
         ArrayList<T> list = new ArrayList<>();
 
         Node<T> node = getHead();
-        while(node != null && !node.isTombstone()) {
-            list.add(node.getValue());
+        while(node != null) {
+            if(!node.isTombstone()) list.add(node.getValue());
             node = node.getLink();
         }
 
@@ -162,14 +170,22 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
     protected boolean update(int srcNodeId, Operation<?> op) {
         @SuppressWarnings("unchecked")
         ListOperation<T> listOp = (ListOperation<T>) op;
+        boolean result;
 
         switch(listOp.getType()) {
             case INSERT:
-                return remoteInsert(listOp.getValue(), listOp.getS4Vector(), listOp.getSecondaryS4());
+                result = remoteInsert(listOp.getValue(), listOp.getS4Vector(), listOp.getSecondaryS4());
+                cemetery.updateAndPurge(listOp.getVectorClock(), srcNodeId);
+                return result;
             case UPDATE:
-                return remoteUpdate(listOp.getS4Vector(), listOp.getValue(), listOp.getSecondaryS4());
+                result = remoteUpdate(listOp.getS4Vector(), listOp.getValue(), listOp.getSecondaryS4());
+                cemetery.updateAndPurge(listOp.getVectorClock(), srcNodeId);
+                return result;
             case DELETE:
-                return remoteDelete(listOp.getS4Vector(), listOp.getSecondaryS4(), srcNodeId);
+                result = remoteDelete(listOp.getS4Vector(), listOp.getSecondaryS4(), srcNodeId);
+                cemetery.updateAndPurge(listOp.getVectorClock(), srcNodeId);
+                return result;
+
             default:
                 throw new IllegalArgumentException("LinkedList RADTs do not allow the " + op.getType() + " operation.");
         }
@@ -262,7 +278,7 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
 
     // From Roh et al: The first object is referred to by index 1. An insert adds a new node next to (on the right of)
     // its reference. To insert x at the head, we use Insert(0,x).
-    private Node<T> getNodeByIndex(int index) {
+    /* package */ Node<T> getNodeByIndex(int index) {
         Node<T> node = getHead();
         int k = 0;
 
@@ -277,5 +293,24 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
         }
 
         return null;
+    }
+
+    /* package */ synchronized boolean removeTombstone(Node<T> node) {
+        // TODO: exception text
+        Preconditions.checkArgument(node != null);
+        Preconditions.checkArgument(node.isTombstone());
+
+        Node<T> refNode = getHead();
+
+        while(refNode != null && !node.equals(refNode.getLink())) {
+            refNode = refNode.getLink();
+        }
+
+        if(refNode == null) throw new CRDTException("blub");
+
+        svi.remove(node.getS4Vector());
+        refNode.setLink(node.getLink());
+
+        return false;
     }
 }

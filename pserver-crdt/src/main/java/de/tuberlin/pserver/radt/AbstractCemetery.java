@@ -67,24 +67,13 @@ public abstract class AbstractCemetery<T extends CObject> implements Cemetery<T>
         return withdrawn;
     }
 
-    protected synchronized boolean allReplicasHaveExecutedDelete(CObject obj) {
-        // Every site has executed the deletion D, therefore from now on only operations happening after D will arrive
-        if(obj == null) return false;
-        //System.out.println("Seq: " + obj.getS4Vector().getSeq());
-        //System.out.println("Min: " + getMinVectorClockEntry(obj.getS4Vector().getSiteId())+"\n");
-        return obj.getS4Vector().getSeq() <= getMinVectorClockEntry(obj.getS4Vector().getSiteId());
-    }
-
-    protected synchronized boolean conditionTwo(CObject obj) {
-        return false;
-    }
-
     protected synchronized int getMinVectorClockEntry(int siteId) {
         int min = Integer.MAX_VALUE;
 
         for(int i = 0; i < lastVectorClocks.length; i++) {
+            // TODO: use a map instead of nodeId != null ?
             if(i != nodeId) {
-                //System.out.println(lastVectorClocks[i][siteId]);
+                //System.out.println(lastVectorClocks[i][0] + ", " + lastVectorClocks[i][1]);
                 if (lastVectorClocks[i][siteId] < min) {
                     min = lastVectorClocks[i][siteId];
                 }
@@ -94,7 +83,23 @@ public abstract class AbstractCemetery<T extends CObject> implements Cemetery<T>
         return min;
     }
 
-    public void updateAndPurge(int srcNode, int[] vectorClock) {
+    protected synchronized int getMinVectorSumEntry() {
+        int min = Integer.MAX_VALUE;
+        int curr;
+
+        for(int i = 0; i < lastVectorClocks.length; i++) {
+            if(i != nodeId) {
+                curr = Arrays.stream(lastVectorClocks[i]).sum();
+                if(curr < min) {
+                    min = curr;
+                }
+            }
+        }
+
+        return min;
+    }
+
+    public void updateAndPurge(int[] vectorClock, int srcNode) {
         lastVectorClocks[srcNode] = vectorClock;
         // TODO: when, where and how often to purge?
         purge();

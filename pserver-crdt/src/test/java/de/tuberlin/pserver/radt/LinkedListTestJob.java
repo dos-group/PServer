@@ -44,6 +44,7 @@ public class LinkedListTestJob extends Program {
 
 
                 list.delete(3); // delete an item
+                list.insert(3, 1000);
             }
             else {
                 for (int i = 0; i <= 10; i++) {
@@ -59,14 +60,13 @@ public class LinkedListTestJob extends Program {
 
 
                 list.delete(10); // delete an item
+
+                list.insert(10, 100);
             }
 
             list.finish();
 
-            System.out.println("[DEBUG] LinkedList of node " + programContext.runtimeContext.nodeID + ": "
-                    + list.toString());
-            System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": "
-                    + list.getBuffer());
+            System.out.println("[DEBUG] LinkedList of node " + programContext.runtimeContext.nodeID + ": " + list);
         });
     }
 

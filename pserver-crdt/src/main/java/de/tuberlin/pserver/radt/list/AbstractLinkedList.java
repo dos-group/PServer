@@ -13,7 +13,6 @@ import java.util.Map;
 public abstract class AbstractLinkedList<T> extends AbstractRADT<T> implements ILinkedList<T> {
     protected final Map<S4Vector, Node<T>> svi; // S4Vector Index
     private Node<T> head;
-    protected final LinkedListCemetery<T> cemetery;
 
 
     protected AbstractLinkedList(String id, int noOfReplicas, ProgramContext programContext) {
@@ -21,7 +20,6 @@ public abstract class AbstractLinkedList<T> extends AbstractRADT<T> implements I
 
         this.svi = Collections.synchronizedMap(new HashMap<>());
         this.head = null;
-        this.cemetery = new LinkedListCemetery<>(noOfReplicas, nodeId);
     }
 
     public Node<T> getHead() {
