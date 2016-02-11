@@ -4,13 +4,14 @@ import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.commons.compression.Compressor;
 import de.tuberlin.pserver.commons.serialization.ObjectSerializer;
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
+import de.tuberlin.pserver.types.matrix.annotation.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
+import de.tuberlin.pserver.types.metadata.DistScheme;
 import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.util.Random;
@@ -36,19 +37,19 @@ public final class GloveWithCompression extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.PARTITIONED, rows = COLS, cols = COLS, path = INPUT_DATA, matrixFormat = MatrixType.SPARSE_FORMAT)
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = COLS, cols = COLS, path = INPUT_DATA, type = MatrixType.SPARSE_FORMAT)
     public Matrix32F X;
 
-    @State(scope = Scope.REPLICATED, rows = ROWS, cols = COLS * 2)
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = ROWS, cols = COLS * 2)
     public Matrix32F W;
 
-    @State(scope = Scope.REPLICATED, rows = ROWS, cols = COLS * 2)
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = ROWS, cols = COLS * 2)
     public Matrix32F GradSq;
 
-    @State(scope = Scope.REPLICATED, rows = 1, cols = COLS * 2)
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = 1, cols = COLS * 2)
     public Matrix32F B;
 
-    @State(scope = Scope.REPLICATED, rows = 1, cols = COLS * 2)
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = 1, cols = COLS * 2)
     public Matrix32F GradSqB;
 
     // ---------------------------------------------------
@@ -59,7 +60,7 @@ public final class GloveWithCompression extends Program {
 
     private Compressor compressor = Compressor.Factory.create(Compressor.CompressionType.LZ4_COMPRESSION);
 
-    /*@Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PULL)
+    /*@Transaction(state = "W, GradSq, B, GradSqB", mtxType = TransactionType.PULL)
     public final TransactionDefinition sync = new TransactionDefinition(
 
             (Prepare<Matrix32F, Pair<Integer, byte[]>>) (requestObjs, remoteMatrix) -> {

@@ -10,10 +10,6 @@ public final class StateDescriptor {
     // Fields.
     // ---------------------------------------------------
 
-    public final String name;
-
-    public final Class<?>  type;
-
     public final DistributedDeclaration declaration;
 
     public final DistributedType instance;
@@ -22,9 +18,7 @@ public final class StateDescriptor {
     // Constructors.
     // ---------------------------------------------------
 
-    public StateDescriptor(String name, Class<?>  type, DistributedDeclaration declaration, DistributedType instance) {
-        this.name = name;
-        this.type = type;
+    public StateDescriptor(DistributedDeclaration declaration, DistributedType instance) {
         this.declaration = declaration;
         this.instance = instance;
     }

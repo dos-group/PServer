@@ -8,7 +8,7 @@ import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.types.DistributedDeclaration;
-import de.tuberlin.pserver.types.TypeFactory;
+import de.tuberlin.pserver.types.PServerTypeFactory;
 import de.tuberlin.pserver.types.metadata.DistributedType;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -83,20 +83,19 @@ public final class Compiler {
     private void analyzeState() {
         int[] allNodes = IntStream.iterate(0, x -> x + 1).limit(runtimeContext.numOfNodes).toArray();
         for (final Field field : programClass.getDeclaredFields()) {
-            for (final Annotation an : field.getDeclaredAnnotations()) {
-                if (TypeFactory.isSupported(an.getClass())) {
+            for (final Annotation typeAn : field.getDeclaredAnnotations()) {
+
+                if (PServerTypeFactory.isSupportedType(typeAn.annotationType())) {
 
                     Pair<DistributedDeclaration, DistributedType> declAndInstance =
-                            TypeFactory.createDistributedObject(runtimeContext.nodeID, allNodes, an);
+                            PServerTypeFactory.newInstance(runtimeContext.nodeID, allNodes, field.getType(), field.getName(), typeAn);
 
-                    StateDescriptor stateDescriptor = new StateDescriptor(
-                            field.getName(),
-                            field.getType(),
+                    StateDescriptor state = new StateDescriptor(
                             declAndInstance.getLeft(),
                             declAndInstance.getRight()
                     );
 
-                    programTable.addState(stateDescriptor);
+                    programTable.addState(state);
                 }
             }
         }
@@ -136,9 +135,4 @@ public final class Compiler {
             }
         }
     }
-
-    // ---------------------------------------------------
-    // Semantic Check of Annotations.
-    // ---------------------------------------------------
-
 }

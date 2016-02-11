@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.runtime.filesystem.local;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
@@ -11,6 +12,7 @@ import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.types.matrix.implementation.partitioner.AbstractMatrixPartitioner;
+import de.tuberlin.pserver.types.matrix.metadata.DistributedMatrixType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,17 +66,17 @@ public final class LocalFileSystemManager implements FileSystemManager {
     @Override
     @SuppressWarnings("unchecked")
     public <T extends Record> FileDataIterator<T> createFileIterator(final ProgramContext programContext,
-                                                                     final StateDescriptor stateDescriptor) {
+                                                                     final StateDescriptor state) {
 
-        ILocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(stateDescriptor.path));
+        ILocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(state.declaration.path));
         if (inputFile == null) {
-            AbstractMatrixPartitioner partitioner = StateDescriptor.createMatrixPartitioner(programContext, stateDescriptor);
-            inputFile = new LocalInputFile(stateDescriptor.path, stateDescriptor.fileFormat, partitioner);
-            inputFileMap.put(stateDescriptor.path, inputFile);
-            registeredIteratorMap.put(stateDescriptor.path, new ArrayList<>());
+            AbstractMatrixPartitioner partitioner = ((DistributedMatrixType)state.instance).partitioner();
+            inputFile = new LocalInputFile(state.declaration.path, state.declaration.format, partitioner);
+            inputFileMap.put(state.declaration.path, inputFile);
+            registeredIteratorMap.put(state.declaration.path, new ArrayList<>());
         }
         final FileDataIterator<T> fileIterator = (FileDataIterator<T>)inputFile.iterator();
-        registeredIteratorMap.get(stateDescriptor.path).add(fileIterator);
+        registeredIteratorMap.get(state.declaration.path).add(fileIterator);
         return fileIterator;
     }
 

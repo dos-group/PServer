@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.types.matrix.implementation.f32.operations;
+package de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations;
 
 @FunctionalInterface
 public interface BinaryOperator32 {

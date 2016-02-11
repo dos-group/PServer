@@ -69,7 +69,7 @@ public class TSNEJob extends Program {
     // Transactions.
     // ---------------------------------------------------
 
-    @Transaction(state = "Y", type = TransactionType.PULL)
+    @Transaction(state = "Y", mtxType = TransactionType.PULL)
     public TransactionDefinition syncY = new TransactionDefinition(
 
             (Prepare<Matrix32, Matrix32>) (requestObj, object) -> null,

@@ -126,7 +126,7 @@ public class DistributedMatrix {
 //                return totalAgg;
 //            }
 //            case COLUMN_PARTITIONED: throw new IllegalStateException();
-//            case BLOCK_PARTITIONED: throw new IllegalStateException();
+//            case B_PARTITIONED: throw new IllegalStateException();
 //            default: throw new IllegalStateException();
 //        }
         return null;
@@ -151,7 +151,7 @@ public class DistributedMatrix {
 //                );
 //            } break;
 //            case COLUMN_PARTITIONED: throw new IllegalStateException();
-//            case BLOCK_PARTITIONED: throw new IllegalStateException();
+//            case B_PARTITIONED: throw new IllegalStateException();
 //            default: throw new IllegalStateException();
 //        }
 //        return this;

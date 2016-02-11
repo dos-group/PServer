@@ -1,8 +1,7 @@
 package de.tuberlin.pserver.types.matrix.implementation.partitioner;
 
-import de.tuberlin.pserver.types.matrix.implementation.f32.entries.Entry32F;
 import de.tuberlin.pserver.types.matrix.metadata.DistributedMatrixType;
-import de.tuberlin.pserver.types.metadata.DistributionScheme;
+import de.tuberlin.pserver.types.metadata.DistScheme;
 
 public abstract class AbstractMatrixPartitioner {
 
@@ -27,13 +26,13 @@ public abstract class AbstractMatrixPartitioner {
     // Factory Method.
     // ---------------------------------------------------
 
-    public static AbstractMatrixPartitioner createPartitioner(DistributionScheme distributionScheme, DistributedMatrixType distributedMatrixType) {
-        switch (distributionScheme) {
-            case HORIZONTAL_PARTITIONED:
+    public static AbstractMatrixPartitioner createPartitioner(DistScheme distScheme, DistributedMatrixType distributedMatrixType) {
+        switch (distScheme) {
+            case H_PARTITIONED:
                 return new MatrixRowPartitioner(distributedMatrixType);
-            case VERTICAL_PARTITIONED:
+            case V_PARTITIONED:
                 return new MatrixColumnPartitioner(distributedMatrixType);
-            case BLOCK_PARTITIONED:
+            case B_PARTITIONED:
                 return new MatrixBlockPartitioner(distributedMatrixType);
             default:
                 return null;
@@ -51,8 +50,6 @@ public abstract class AbstractMatrixPartitioner {
     // ---------------------------------------------------
 
     public abstract int getPartitionOfEntry(long row, long col);
-
-    public abstract int getPartitionOfEntry(Entry32F entry);
 
     public abstract long globalToLocalRow(long row);
 

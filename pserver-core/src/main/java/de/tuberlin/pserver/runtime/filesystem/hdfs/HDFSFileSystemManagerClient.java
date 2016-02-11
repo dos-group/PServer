@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.runtime.filesystem.hdfs;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.config.IConfig;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
@@ -110,18 +111,18 @@ public final class HDFSFileSystemManagerClient implements FileSystemManager, Inp
     @Override
     @SuppressWarnings("unchecked")
     public <T extends Record> FileDataIterator<T> createFileIterator(final ProgramContext programContext,
-                                                                     final StateDescriptor stateDescriptor) {
-        HDFSInputFile inputFile = inputFileMap.get(Preconditions.checkNotNull(stateDescriptor.path));
+                                                                     final StateDescriptor state) {
+        HDFSInputFile inputFile = inputFileMap.get(Preconditions.checkNotNull(state.declaration.path));
         if (inputFile == null) {
-            inputFile = new HDFSInputFile(config, programContext, stateDescriptor);
+            inputFile = new HDFSInputFile(config, programContext, state);
             final Configuration conf = new Configuration();
             conf.set("fs.defaultFS", config.getString("filesystem.hdfs.url"));
             inputFile.configure(conf);
-            inputFileMap.put(stateDescriptor.path, inputFile);
-            registeredIteratorMap.put(stateDescriptor.path, new ArrayList<>());
+            inputFileMap.put(state.declaration.path, inputFile);
+            registeredIteratorMap.put(state.declaration.path, new ArrayList<>());
         }
         final FileDataIterator<T> fileIterator = (FileDataIterator<T>)inputFile.iterator(this);
-        registeredIteratorMap.get(stateDescriptor.path).add(fileIterator);
+        registeredIteratorMap.get(state.declaration.path).add(fileIterator);
         return fileIterator;
     }
 

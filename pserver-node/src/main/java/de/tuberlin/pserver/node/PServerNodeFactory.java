@@ -136,7 +136,7 @@ public final class PServerNodeFactory {
     }
 
     private FileSystemManager createFileSystem(final int nodeID) {
-        final String type = config.getString("filesystem.type");
+        final String type = config.getString("filesystem.mtxType");
         final FileSystemType fsType = FileSystemType.valueOf(type);
         switch (fsType) {
             case HDFS_FILE_SYSTEM:

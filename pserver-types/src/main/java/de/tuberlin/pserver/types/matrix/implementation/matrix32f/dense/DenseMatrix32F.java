@@ -1,14 +1,14 @@
-package de.tuberlin.pserver.types.matrix.implementation.f32.dense;
+package de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.f32.operations.BinaryOperator32;
-import de.tuberlin.pserver.types.matrix.implementation.f32.operations.MatrixAggregation32;
-import de.tuberlin.pserver.types.matrix.implementation.f32.operations.MatrixElementUnaryOperator32;
-import de.tuberlin.pserver.types.matrix.implementation.f32.operations.UnaryOperator32;
-import de.tuberlin.pserver.types.matrix.implementation.f32.sparse.SparseMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.BinaryOperator32;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.MatrixAggregation32;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.MatrixElementUnaryOperator32;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.UnaryOperator32;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.SparseMatrix32F;
 import de.tuberlin.pserver.types.matrix.metadata.AbstractDistributedMatrixType;
-import de.tuberlin.pserver.types.metadata.DistributionScheme;
+import de.tuberlin.pserver.types.metadata.DistScheme;
 import de.tuberlin.pserver.types.metadata.InternalData;
 
 import java.util.Arrays;
@@ -32,15 +32,15 @@ public class DenseMatrix32F extends AbstractDistributedMatrixType implements Mat
     }
 
     public DenseMatrix32F(long globalRows, long globalCols) {
-        this(-1, null, DistributionScheme.LOCAL, globalRows, globalCols, null);
+        this(-1, null, DistScheme.LOCAL, globalRows, globalCols, null);
     }
 
     public DenseMatrix32F(long globalRows, long globalCols, final float[] data) {
-        this(-1, null, DistributionScheme.LOCAL, globalRows, globalCols, data);
+        this(-1, null, DistScheme.LOCAL, globalRows, globalCols, data);
     }
 
-    public DenseMatrix32F(int nodeID, int[] nodes, DistributionScheme distributionScheme, long globalRows, long globalCols, final float[] data) {
-        super(nodeID, nodes, distributionScheme, globalRows, globalCols);
+    public DenseMatrix32F(int nodeID, int[] nodes, DistScheme distScheme, long globalRows, long globalCols, final float[] data) {
+        super(nodeID, nodes, distScheme, globalRows, globalCols);
         this.data = (data == null) ? new float[(int)(rows() * cols())] : Preconditions.checkNotNull(data);
     }
 

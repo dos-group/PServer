@@ -3,7 +3,6 @@ package de.tuberlin.pserver.examples.experiments.paramsrv;
 
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
@@ -11,8 +10,10 @@ import de.tuberlin.pserver.dsl.transaction.annotations.TransactionType;
 import de.tuberlin.pserver.dsl.transaction.phases.Update;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
+import de.tuberlin.pserver.types.matrix.annotation.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
+import de.tuberlin.pserver.types.metadata.DistScheme;
 
 public class ModelParallelJob extends Program {
 
@@ -20,10 +21,12 @@ public class ModelParallelJob extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(at = "0, 1", scope = Scope.PARTITIONED, matrixFormat = MatrixType.DENSE_FORMAT, rows = 10, cols = 10)
+    @Matrix(scheme = DistScheme.H_PARTITIONED, at = "0, 1",
+            type = MatrixType.DENSE_FORMAT, rows = 10, cols = 10)
     public Matrix32F parameters;
 
-    @State(at = "2, 3", scope = Scope.REPLICATED, matrixFormat = MatrixType.DENSE_FORMAT, rows = 1, cols = 10)
+    @Matrix(scheme = DistScheme.REPLICATED, at = "2, 3",
+            type = MatrixType.DENSE_FORMAT, rows = 1, cols = 10)
     public Matrix32F cachedParameters;
 
     // ---------------------------------------------------

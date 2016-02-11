@@ -4,17 +4,13 @@ import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
+import de.tuberlin.pserver.runtime.filesystem.records.Entry32F;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.types.matrix.annotation.MatrixDeclaration;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.f32.entries.Entry32F;
-import de.tuberlin.pserver.types.matrix.implementation.f32.entries.MutableEntryImpl32F;
-import de.tuberlin.pserver.types.matrix.implementation.f32.entries.ReusableEntry32F;
-import de.tuberlin.pserver.types.matrix.implementation.f32.sparse.CSRMatrix32F;
-import de.tuberlin.pserver.types.matrix.metadata.DistributedMatrixType;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.CSRMatrix32F;
 import gnu.trove.map.hash.TIntFloatHashMap;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,9 +33,9 @@ public final class MatrixLoader {
 
         // Factory Method.
         public static MatrixLoaderStrategy createLoader(StateDescriptor state) {
-            if (CSRMatrix32F.class.isAssignableFrom(state.type))
+            if (CSRMatrix32F.class.isAssignableFrom(state.declaration.type))
                 return new CSRMatrix32LoaderStrategy((Matrix32F) state.instance);
-            if (Matrix32F.class.isAssignableFrom(state.type))
+            if (Matrix32F.class.isAssignableFrom(state.declaration.type))
                 return new Matrix32LoaderStrategy((Matrix32F) state.instance);
             throw new IllegalStateException();
         }
@@ -49,8 +45,7 @@ public final class MatrixLoader {
 
     private final static class Matrix32LoaderStrategy extends MatrixLoaderStrategy {
 
-        private final ReusableEntry32F reusable = new MutableEntryImpl32F(-1, -1, Float.NaN);
-
+        private final Entry32F reusable = new Entry32F(-1, -1, Float.NaN);
         public Matrix32LoaderStrategy(Matrix32F matrix)  { super(matrix); }
 
         @Override
@@ -69,7 +64,7 @@ public final class MatrixLoader {
 
     private final static class CSRMatrix32LoaderStrategy extends MatrixLoaderStrategy {
 
-        private final ReusableEntry32F reusable = new MutableEntryImpl32F(-1, -1, Float.NaN);
+        private final Entry32F reusable = new Entry32F(-1, -1, Float.NaN);
         private final TIntFloatHashMap rowData = new TIntFloatHashMap();
 
         public CSRMatrix32LoaderStrategy(Matrix32F matrix)  { super(matrix); }
@@ -120,9 +115,9 @@ public final class MatrixLoader {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void add(StateDescriptor stateDescriptor, Matrix32F stateObj) {
-        FileDataIterator fileIterator = fileManager.createFileIterator(programContext, stateDescriptor);
-        loadingTasks.add(Pair.of(stateDescriptor, fileIterator));
+    public void add(StateDescriptor state, Matrix32F stateObj) {
+        FileDataIterator fileIterator = fileManager.createFileIterator(programContext, state);
+        loadingTasks.add(Pair.of(state, fileIterator));
     }
 
     @SuppressWarnings("unchecked")

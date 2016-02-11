@@ -1,13 +1,13 @@
-package de.tuberlin.pserver.types.matrix.implementation.f32.sparse;
+package de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse;
 
 
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.f32.operations.BinaryOperator32;
-import de.tuberlin.pserver.types.matrix.implementation.f32.operations.MatrixAggregation32;
-import de.tuberlin.pserver.types.matrix.implementation.f32.operations.MatrixElementUnaryOperator32;
-import de.tuberlin.pserver.types.matrix.implementation.f32.operations.UnaryOperator32;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.BinaryOperator32;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.MatrixAggregation32;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.MatrixElementUnaryOperator32;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.UnaryOperator32;
 import de.tuberlin.pserver.types.matrix.metadata.AbstractDistributedMatrixType;
-import de.tuberlin.pserver.types.metadata.DistributionScheme;
+import de.tuberlin.pserver.types.metadata.DistScheme;
 import de.tuberlin.pserver.types.metadata.InternalData;
 import gnu.trove.map.TLongFloatMap;
 import gnu.trove.map.hash.TLongFloatHashMap;
@@ -44,12 +44,12 @@ public class SparseMatrix32F extends AbstractDistributedMatrixType implements Ma
 
     // Local Constructor.
     public SparseMatrix32F(long globalRows, long globalCols) {
-        this(-1, null,DistributionScheme.LOCAL, globalRows, globalCols);
+        this(-1, null, DistScheme.LOCAL, globalRows, globalCols);
     }
 
     // Global Constructor.
-    public SparseMatrix32F(int nodeID, int[] nodes, DistributionScheme distributionScheme, long globalRows, long globalCols) {
-        super(nodeID, nodes, distributionScheme, globalRows, globalCols);
+    public SparseMatrix32F(int nodeID, int[] nodes, DistScheme distScheme, long globalRows, long globalCols) {
+        super(nodeID, nodes, distScheme, globalRows, globalCols);
         this.data = new TLongFloatHashMap((int)(rows() * cols() * 0.1));
     }
 

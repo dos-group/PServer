@@ -2,7 +2,7 @@ package de.tuberlin.pserver.runtime.filesystem.local;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
-import de.tuberlin.pserver.runtime.filesystem.FileFormat;
+import de.tuberlin.pserver.types.common.FileFormat;
 import de.tuberlin.pserver.runtime.filesystem.FileSection;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.runtime.filesystem.records.RecordIterator;

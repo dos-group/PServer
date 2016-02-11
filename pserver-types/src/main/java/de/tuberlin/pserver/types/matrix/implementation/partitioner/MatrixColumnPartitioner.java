@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.types.matrix.implementation.partitioner;
 
 
-import de.tuberlin.pserver.types.matrix.implementation.f32.entries.Entry32F;
 import de.tuberlin.pserver.types.matrix.metadata.DistributedMatrixType;
 
 public class MatrixColumnPartitioner extends AbstractMatrixPartitioner {
@@ -23,8 +22,6 @@ public class MatrixColumnPartitioner extends AbstractMatrixPartitioner {
     // ---------------------------------------------------
 
     @Override public int getPartitionOfEntry(long row, long col) { return 0; }
-
-    @Override public int getPartitionOfEntry(Entry32F entry) { return 0; }
 
     @Override public long globalToLocalRow(long row) { return 0; }
 

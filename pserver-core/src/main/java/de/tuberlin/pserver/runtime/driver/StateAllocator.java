@@ -25,7 +25,9 @@ public final class StateAllocator {
 
             if (ArrayUtils.contains(state.instance.nodes(), state.instance.nodeId())) {
 
-                new GlobalObject<>(programContext.runtimeContext.netManager, stateObj, state.name);
+                stateObj = (Matrix32F) state.instance;
+
+                new GlobalObject<>(programContext.runtimeContext.netManager, stateObj, state.declaration.name);
 
             } else {
 

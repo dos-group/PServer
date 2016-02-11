@@ -14,7 +14,7 @@ public interface DistributedType extends Serializable {
 
     // ---------------------------------------------------
 
-    DistributionScheme distributionScheme();
+    DistScheme distributionScheme();
 
     // ---------------------------------------------------
 

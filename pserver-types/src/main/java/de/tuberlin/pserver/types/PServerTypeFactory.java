@@ -10,12 +10,13 @@ import de.tuberlin.pserver.types.matrix.annotation.MatrixDeclaration;
 import de.tuberlin.pserver.types.metadata.DistributedType;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class TypeFactory {
+public final class PServerTypeFactory {
 
     // ---------------------------------------------------
     // Fields.
@@ -23,41 +24,50 @@ public final class TypeFactory {
 
     private static final List<Class<?>> supportedAnnotations;
 
-    private static final Map<Class<?>, Pair<Class<? extends DistributedDeclaration>, DistributedTypeBuilder>> types;
+    private static final Map<Class<?>, Pair<Class<? extends DistributedDeclaration>, DistributedTypeBuilder>> registeredTypes;
 
     static {
         supportedAnnotations = new ArrayList<>();
         supportedAnnotations.add(Matrix.class);
         supportedAnnotations.add(Collection.class);
 
-        types = new HashMap<>();
-        types.put(Matrix.class,      Pair.of(MatrixDeclaration.class,        new MatrixBuilder()));
-        types.put(Collection.class,  Pair.of(CollectionDeclaration.class,    new CollectionBuilder()));
+        registeredTypes = new HashMap<>();
+        registeredTypes.put(Matrix.class,      Pair.of(MatrixDeclaration.class,        new MatrixBuilder()));
+        registeredTypes.put(Collection.class,  Pair.of(CollectionDeclaration.class,    new CollectionBuilder()));
     }
 
     // ---------------------------------------------------
     // Factory Method.
     // ---------------------------------------------------
 
-    public static boolean isSupported(Class<?> annotationType) {
+    public static boolean isSupportedType(Class<?> annotationType) {
         return supportedAnnotations.contains(annotationType);
     }
 
     @SuppressWarnings("unchecked")
-    public static <I, T extends DistributedDeclaration, E extends DistributedType> Pair<T,E> createDistributedObject(int nodeID, int[] allNodes, I typeAnnotation) {
-        if (!typeAnnotation.getClass().isAnnotation())
-            throw new IllegalStateException();
+    public static <T extends DistributedDeclaration, E extends DistributedType> Pair<T,E> newInstance(
+            int nodeID,
+            int[] allNodes,
+            Class<?> type,
+            String name,
+            Annotation typeAnnotation) {
+
         Pair<Class<? extends DistributedDeclaration>, DistributedTypeBuilder> registeredType
-                = types.get(typeAnnotation.getClass());
+                = registeredTypes.get(typeAnnotation.annotationType());
+
         if (registeredType == null)
             throw new IllegalStateException();
+
         Class<? extends DistributedDeclaration> declClass = registeredType.getLeft();
         DistributedDeclaration declaration;
         try {
-            declaration = declClass.getDeclaredConstructor(int[].class, typeAnnotation.getClass()).newInstance(allNodes, typeAnnotation);
+            declaration = declClass.getDeclaredConstructor(int[].class, type.getClass(), String.class, typeAnnotation.annotationType())
+                    .newInstance(allNodes, type, name, typeAnnotation);
         } catch (Exception e) { throw new IllegalStateException(e); }
+
         DistributedTypeBuilder distributedTypeBuilder = registeredType.getRight();
         DistributedType distributedType = distributedTypeBuilder.build(nodeID, declaration);
+
         return Pair.of((T)declaration, (E)distributedType);
     }
 }

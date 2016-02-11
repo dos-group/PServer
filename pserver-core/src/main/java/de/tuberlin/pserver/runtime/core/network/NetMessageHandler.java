@@ -8,7 +8,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
  * which serves as the container for all application logic that applies to handling inbound
  * and outbound data.
  *
- * This type receives inbound events and data to be handled by the framework.
+ * This mtxType receives inbound events and data to be handled by the framework.
  */
 public final class NetMessageHandler extends SimpleChannelInboundHandler<Object> { // ChannelInboundHandlerAdapter
 

@@ -2,13 +2,14 @@ package de.tuberlin.pserver.examples.experiments.libsvm;
 
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.runtime.filesystem.FileFormat;
+import de.tuberlin.pserver.types.common.FileFormat;
+import de.tuberlin.pserver.types.matrix.annotation.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.f32.dense.DenseMatrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.f32.sparse.CSRMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.CSRMatrix32F;
+import de.tuberlin.pserver.types.metadata.DistScheme;
 
 public class LibSVMReaderJob extends Program {
 
@@ -18,16 +19,16 @@ public class LibSVMReaderJob extends Program {
 
     private static final int NUM_SIMULATION_NODES = 2;
 
+    private static final String FILE_PATH = "datasets/svmSmallTestFile";
+
     // ---------------------------------------------------
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.PARTITIONED, rows = 16000, cols = 1)
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = 16000, cols = 1)
     public DenseMatrix32F XTrainLabel;
 
-    @State(scope = Scope.PARTITIONED, rows = 270, cols = 13, path = "datasets/svmSmallTestFile",
-            fileFormat = FileFormat.SVM_FORMAT, labels = "XTrainLabel")
-
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = 270, cols = 13, path = FILE_PATH, format = FileFormat.SVM_FORMAT, labels = "XTrainLabel")
     public CSRMatrix32F XTrainFeatures;
 
     // ---------------------------------------------------

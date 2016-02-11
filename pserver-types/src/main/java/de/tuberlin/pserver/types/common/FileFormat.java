@@ -1,8 +1,6 @@
-package de.tuberlin.pserver.runtime.filesystem;
+package de.tuberlin.pserver.types.common;
 
-/**
- * Created by Morgan K. Geldenhuys on 18.12.15.
- */
+
 public enum FileFormat {
 
     UNDEFINED(null, null, null),

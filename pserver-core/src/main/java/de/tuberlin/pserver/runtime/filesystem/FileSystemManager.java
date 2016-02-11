@@ -21,7 +21,7 @@ public interface FileSystemManager extends Deactivatable {
 
     <T extends Record> FileDataIterator<T> createFileIterator(
             final ProgramContext programContext,
-            final StateDescriptor stateDescriptor);
+            final StateDescriptor state);
 
     void clearContext();
 }

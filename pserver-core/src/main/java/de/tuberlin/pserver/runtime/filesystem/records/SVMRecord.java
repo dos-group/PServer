@@ -1,10 +1,7 @@
 package de.tuberlin.pserver.runtime.filesystem.records;
 
 import de.tuberlin.pserver.commons.tuples.Tuple2;
-import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import de.tuberlin.pserver.types.matrix.implementation.f32.entries.Entry32F;
-import de.tuberlin.pserver.types.matrix.implementation.f32.entries.ImmutableEntryImpl32F;
-import de.tuberlin.pserver.types.matrix.implementation.f32.entries.ReusableEntry32F;
+import de.tuberlin.pserver.types.common.FileFormat;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.util.*;
@@ -111,11 +108,11 @@ public class SVMRecord implements Record {
 
     @Override
     @SuppressWarnings("unchecked")
-    public Entry32F next(ReusableEntry32F reusableEntry) {
+    public Entry32F next(Entry32F reusableEntry) {
         Long index = this.attributeIterator.next();
         float value = this.data._2.get(index);
         if (reusableEntry == null)
-            return new ImmutableEntryImpl32F(this.row, index, value);
+            return new Entry32F(this.row, index, value);
         return reusableEntry.set(this.row, index, value);
     }
 

@@ -2,7 +2,6 @@ package de.tuberlin.pserver.examples.experiments.kmeans;
 
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
@@ -12,10 +11,12 @@ import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
-import de.tuberlin.pserver.runtime.filesystem.FileFormat;
+import de.tuberlin.pserver.types.common.FileFormat;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
+import de.tuberlin.pserver.types.matrix.annotation.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.f32.dense.DenseMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
+import de.tuberlin.pserver.types.metadata.DistScheme;
 
 import java.util.Random;
 
@@ -35,16 +36,15 @@ public class KMeans extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.PARTITIONED,
+    @Matrix(scheme = DistScheme.H_PARTITIONED,
             rows = ROWS,
             cols = COLS,
             path = "datasets/stripes2.csv",
-            fileFormat = FileFormat.SVM_FORMAT
-            //recordFormat = RowRecordIteratorProducer.class
+            format = FileFormat.SVM_FORMAT
     )
     public Matrix32F data;
 
-    @State(scope = Scope.REPLICATED,
+    @Matrix(scheme = DistScheme.REPLICATED,
             rows = K,
             cols = COLS + 1
     )

@@ -1,16 +1,22 @@
 package de.tuberlin.pserver.types.matrix.annotation;
 
 
+import de.tuberlin.pserver.types.common.FileFormat;
 import de.tuberlin.pserver.types.matrix.implementation.properties.ElementType;
-import de.tuberlin.pserver.types.matrix.implementation.properties.InputFormat;
 import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
-import de.tuberlin.pserver.types.metadata.DistributionScheme;
+import de.tuberlin.pserver.types.metadata.DistScheme;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(java.lang.annotation.ElementType.FIELD)
 public @interface Matrix {
 
     String at() default "";
 
-    DistributionScheme scheme() default DistributionScheme.REPLICATED;
+    DistScheme scheme() default DistScheme.REPLICATED;
 
     long rows() default 0;
 
@@ -20,7 +26,7 @@ public @interface Matrix {
 
     ElementType elementType() default ElementType.FLOAT_MATRIX;
 
-    InputFormat format() default InputFormat.UNDEFINED;
+    FileFormat format() default FileFormat.UNDEFINED;
 
     String path() default "";
 

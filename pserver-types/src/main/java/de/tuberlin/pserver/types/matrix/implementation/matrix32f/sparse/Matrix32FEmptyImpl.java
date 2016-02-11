@@ -1,18 +1,18 @@
-package de.tuberlin.pserver.types.matrix.implementation.f32.sparse;
+package de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse;
 
 
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.f32.operations.BinaryOperator32;
-import de.tuberlin.pserver.types.matrix.implementation.f32.operations.MatrixAggregation32;
-import de.tuberlin.pserver.types.matrix.implementation.f32.operations.MatrixElementUnaryOperator32;
-import de.tuberlin.pserver.types.matrix.implementation.f32.operations.UnaryOperator32;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.BinaryOperator32;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.MatrixAggregation32;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.MatrixElementUnaryOperator32;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.UnaryOperator32;
 import de.tuberlin.pserver.types.matrix.metadata.AbstractDistributedMatrixType;
-import de.tuberlin.pserver.types.metadata.DistributionScheme;
+import de.tuberlin.pserver.types.metadata.DistScheme;
 
 abstract class Matrix32FEmptyImpl extends AbstractDistributedMatrixType implements Matrix32F {
 
-    public Matrix32FEmptyImpl(int nodeID, int[] nodes, DistributionScheme distributionScheme, long globalRows, long globalCols) {
-        super(nodeID, nodes, distributionScheme, globalRows, globalCols);
+    public Matrix32FEmptyImpl(int nodeID, int[] nodes, DistScheme distScheme, long globalRows, long globalCols) {
+        super(nodeID, nodes, distScheme, globalRows, globalCols);
     }
 
     @Override

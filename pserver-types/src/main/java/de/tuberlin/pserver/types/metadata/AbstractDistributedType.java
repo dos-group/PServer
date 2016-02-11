@@ -13,7 +13,7 @@ public abstract class AbstractDistributedType implements DistributedType {
 
     public final int[] nodes;
 
-    public final DistributionScheme distributionScheme;
+    public final DistScheme distScheme;
 
     transient private Object owner;
 
@@ -24,13 +24,13 @@ public abstract class AbstractDistributedType implements DistributedType {
     // ---------------------------------------------------
 
     public AbstractDistributedType(AbstractDistributedType m) {
-        this(m.nodeID, m.nodes, m.distributionScheme);
+        this(m.nodeID, m.nodes, m.distScheme);
     }
 
-    public AbstractDistributedType(int nodeID, int[] nodes, DistributionScheme distributionScheme) {
+    public AbstractDistributedType(int nodeID, int[] nodes, DistScheme distScheme) {
         this.nodes = nodes;
         this.nodeID = nodeID;
-        this.distributionScheme = distributionScheme;
+        this.distScheme = distScheme;
         this.lock = new ReentrantLock(true);
     }
 
@@ -44,7 +44,7 @@ public abstract class AbstractDistributedType implements DistributedType {
 
     // ---------------------------------------------------
 
-    public DistributionScheme distributionScheme() { return distributionScheme; }
+    public DistScheme distributionScheme() { return distScheme; }
 
     // ---------------------------------------------------
 

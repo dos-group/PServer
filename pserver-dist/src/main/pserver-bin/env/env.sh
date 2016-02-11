@@ -69,7 +69,7 @@ while [ $# -gt 0 ]; do
 			;;
 		*)
 			# if the current profile defined the function 'profile_parse_arg' call it to parse the current arg
-			if [ "$(type -t profile_parse_arg 2>/dev/null)" == "function" ]; then
+			if [ "$(mtxType -t profile_parse_arg 2>/dev/null)" == "function" ]; then
 				if [ -z ${2+x} ]; then
 					if ! profile_parse_arg "${1}"; then
 						echo "[ERROR][${HOSTNAME}] unrecognized argument '${1}'"
@@ -89,6 +89,6 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
-if [ "$(type -t profile_env 2>/dev/null)" == "function" ]; then
+if [ "$(mtxType -t profile_env 2>/dev/null)" == "function" ]; then
 	profile_env
 fi

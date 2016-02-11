@@ -56,7 +56,7 @@ public class ProgramTable {
     // ---------------------------------------------------
 
     public void addState(final StateDescriptor state) {
-        stateDescriptors.put(state.stateName, Preconditions.checkNotNull(state));
+        stateDescriptors.put(state.declaration.name, Preconditions.checkNotNull(state));
     }
 
     public void addGlobalObject(final GlobalObjectDescriptor globalObject) {

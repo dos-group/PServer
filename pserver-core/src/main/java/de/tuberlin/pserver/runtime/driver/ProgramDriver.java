@@ -149,15 +149,15 @@ public class ProgramDriver implements Deactivatable {
 
     private void allocateState() throws Exception {
         for (final StateDescriptor state : programContext.programTable.getState()) {
-            if (Matrix32F.class.isAssignableFrom(state.type)) {
+            if (Matrix32F.class.isAssignableFrom(state.declaration.type)) {
                 final Pair<Matrix32F, Matrix32F> stateAndProxy = stateAllocator.alloc(programContext, state);
                 if (stateAndProxy.getLeft() != null) {
-                    runtimeContext.runtimeManager.putDHT(state.name, stateAndProxy.getLeft());
+                    runtimeContext.runtimeManager.putDHT(state.declaration.name, stateAndProxy.getLeft());
                     if (!("".equals(((MatrixDeclaration)state.declaration).path)))
                         matrixLoader.add(state, stateAndProxy.getLeft());
                 }
                 if (stateAndProxy.getRight() != null)
-                    remoteObjectRefs.put(state.name, stateAndProxy.getRight());
+                    remoteObjectRefs.put(state.declaration.name, stateAndProxy.getRight());
             } else
                 throw new IllegalStateException();
         }
@@ -165,15 +165,15 @@ public class ProgramDriver implements Deactivatable {
 
     private void bindState(final Program instance) throws Exception {
         for (final StateDescriptor state : programTable.getState()) {
-            final Field field = programTable.getProgramClass().getDeclaredField(state.name);
+            final Field field = programTable.getProgramClass().getDeclaredField(state.declaration.name);
             final Object stateObj;
             if (ArrayUtils.contains(state.instance.nodes(), programContext.nodeID)) {
-                stateObj = runtimeContext.runtimeManager.getDHT(state.name);
+                stateObj = runtimeContext.runtimeManager.getDHT(state.declaration.name);
             } else {
-                stateObj = remoteObjectRefs.get(state.name);
+                stateObj = remoteObjectRefs.get(state.declaration.name);
             }
 
-            Preconditions.checkState(stateObj != null, "State object '" + state.name
+            Preconditions.checkState(stateObj != null, "State object '" + state.declaration.name
                     + "' not found at Node [" + runtimeContext.nodeID + "].");
 
             field.set(instance, stateObj);

@@ -28,22 +28,22 @@ public final class IConfigFactory {
      *
      * 
      * <ol>
-     * <li/>A classpath entry named <code>reference.${type}.conf</code> containing default values.
-     * <li/>A config file named <code>reference.${type}.conf</code> containing default values
+     * <li/>A classpath entry named <code>reference.${mtxType}.conf</code> containing default values.
+     * <li/>A config file named <code>reference.${mtxType}.conf</code> containing default values
      * <li/>A config containing values from the current runtime (e.g. the number of CPU cores).
      * <li/>A classpath entry named <code>profile.${pserver.profile}.conf</code> (optional).
      * <li/>A config file named <code>profile.${pserver.profile}.conf</code> (optional).
      * <li/>A config constructed from the current System properties.
      * </ol>
      * 
-     * @param type The configuration type to load.
+     * @param type The configuration mtxType to load.
      * @param rootDir The root directory the config files are located at. Ignored if null.
      * @return A resolved config instance constructed according to the above guidelines.
      */
     public static IConfig load(final IConfig.Type type, String rootDir) {
         // options for configuration parsing
         ConfigParseOptions opts = ConfigParseOptions.defaults().setClassLoader(TypesafeConfig.class.getClassLoader());
-        // type suffix for the files at step 1 and 4
+        // mtxType suffix for the files at step 1 and 4
         String s = type != null ? String.format("%s.conf", type.name) : "conf";
         // 0. initial configuration is empty
         Config config = ConfigFactory.empty();

@@ -1,6 +1,5 @@
 package de.tuberlin.pserver.types.matrix.implementation.partitioner;
 
-import de.tuberlin.pserver.types.matrix.implementation.f32.entries.Entry32F;
 import de.tuberlin.pserver.types.matrix.metadata.DistributedMatrixType;
 
 public class MatrixRowPartitioner extends AbstractMatrixPartitioner {
@@ -16,16 +15,6 @@ public class MatrixRowPartitioner extends AbstractMatrixPartitioner {
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
-
-    @Override
-    public int getPartitionOfEntry(final Entry32F entry) {
-        double numOfRowsPerInstance = (double) distributedMatrixType.rows() / distributedMatrixType.nodes().length;
-        int partition = (int) (entry.getRow() / numOfRowsPerInstance);
-        if(partition >= distributedMatrixType.nodes().length) {
-            throw new IllegalStateException("The calculated partition id (row = " + entry.getRow() + ", distributedMatrixType.rows() = "+distributedMatrixType.rows()+", numNodes = "+distributedMatrixType.nodes().length+") -> " + partition + " must not exceed numNodes.");
-        }
-        return distributedMatrixType.nodes()[partition];
-    }
 
     @Override
     public int getPartitionOfEntry(long row, long col) {

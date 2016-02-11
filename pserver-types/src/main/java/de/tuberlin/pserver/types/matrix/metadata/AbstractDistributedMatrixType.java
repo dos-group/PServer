@@ -3,7 +3,7 @@ package de.tuberlin.pserver.types.matrix.metadata;
 
 import de.tuberlin.pserver.types.matrix.implementation.partitioner.AbstractMatrixPartitioner;
 import de.tuberlin.pserver.types.metadata.AbstractDistributedType;
-import de.tuberlin.pserver.types.metadata.DistributionScheme;
+import de.tuberlin.pserver.types.metadata.DistScheme;
 
 public abstract class AbstractDistributedMatrixType extends AbstractDistributedType implements DistributedMatrixType {
 
@@ -26,14 +26,14 @@ public abstract class AbstractDistributedMatrixType extends AbstractDistributedT
     // ---------------------------------------------------
 
     //public AbstractDistributedMatrixType(AbstractDistributedMatrixType m) {
-    //    this(m.nodeID, m.nodes, m.distributionScheme(), m.partitioner.getPartitionType(), m.globalRows, m.globalCols);
+    //    this(m.nodeID, m.nodes, m.distScheme(), m.partitioner.getPartitionType(), m.globalRows, m.globalCols);
     //}
 
-    public AbstractDistributedMatrixType(int nodeID, int[] nodes, DistributionScheme distributionScheme, long globalRows, long globalCols) {
-        super(nodeID, nodes, distributionScheme);
+    public AbstractDistributedMatrixType(int nodeID, int[] nodes, DistScheme distScheme, long globalRows, long globalCols) {
+        super(nodeID, nodes, distScheme);
         this.globalRows     = globalRows;
         this.globalCols     = globalCols;
-        this.partitioner    = AbstractMatrixPartitioner.createPartitioner(distributionScheme, this);
+        this.partitioner    = AbstractMatrixPartitioner.createPartitioner(distScheme, this);
         this.rows = partitioner != null ? partitioner.matrixPartitionShape().rows : globalRows;
         this.cols = partitioner != null ? partitioner.matrixPartitionShape().cols : globalCols;
     }
