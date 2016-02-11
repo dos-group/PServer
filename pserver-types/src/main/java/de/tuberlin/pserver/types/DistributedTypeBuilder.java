@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.types;
 
 
+import de.tuberlin.pserver.types.metadata.DistributedDeclaration;
 import de.tuberlin.pserver.types.metadata.DistributedType;
 
 public abstract class DistributedTypeBuilder<T extends DistributedType, E extends DistributedDeclaration> {

@@ -2,7 +2,7 @@ package de.tuberlin.pserver.types.matrix.annotation;
 
 
 import de.tuberlin.pserver.commons.utils.ParseUtils;
-import de.tuberlin.pserver.types.DistributedDeclaration;
+import de.tuberlin.pserver.types.metadata.DistributedDeclaration;
 
 public final class MatrixDeclaration extends DistributedDeclaration {
 

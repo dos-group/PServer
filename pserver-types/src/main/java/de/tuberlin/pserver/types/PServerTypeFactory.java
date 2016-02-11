@@ -7,6 +7,7 @@ import de.tuberlin.pserver.types.collection.annotation.CollectionDeclaration;
 import de.tuberlin.pserver.types.matrix.MatrixBuilder;
 import de.tuberlin.pserver.types.matrix.annotation.Matrix;
 import de.tuberlin.pserver.types.matrix.annotation.MatrixDeclaration;
+import de.tuberlin.pserver.types.metadata.DistributedDeclaration;
 import de.tuberlin.pserver.types.metadata.DistributedType;
 import org.apache.commons.lang3.tuple.Pair;
 

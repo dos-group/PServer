@@ -9,7 +9,7 @@ import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.runtime.filesystem.records.RecordIterator;
-import de.tuberlin.pserver.types.common.FileFormat;
+import de.tuberlin.pserver.types.metadata.FileFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.slf4j.Logger;

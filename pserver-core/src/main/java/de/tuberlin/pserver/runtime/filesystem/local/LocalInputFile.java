@@ -5,8 +5,8 @@ import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSection;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.runtime.filesystem.records.RecordIterator;
-import de.tuberlin.pserver.types.common.FileFormat;
 import de.tuberlin.pserver.types.matrix.implementation.partitioner.AbstractMatrixPartitioner;
+import de.tuberlin.pserver.types.metadata.FileFormat;
 
 import java.io.*;
 

@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.types.collection.annotation;
 
 import de.tuberlin.pserver.commons.utils.ParseUtils;
-import de.tuberlin.pserver.types.DistributedDeclaration;
+import de.tuberlin.pserver.types.metadata.DistributedDeclaration;
 
 
 public class CollectionDeclaration extends DistributedDeclaration {

@@ -12,11 +12,11 @@ import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
-import de.tuberlin.pserver.types.common.FileFormat;
 import de.tuberlin.pserver.types.matrix.annotation.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
 import de.tuberlin.pserver.types.metadata.DistScheme;
+import de.tuberlin.pserver.types.metadata.FileFormat;
 
 import java.util.Random;
 

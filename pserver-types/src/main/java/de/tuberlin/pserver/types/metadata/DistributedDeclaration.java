@@ -1,7 +1,4 @@
-package de.tuberlin.pserver.types;
-
-import de.tuberlin.pserver.types.common.FileFormat;
-import de.tuberlin.pserver.types.metadata.DistScheme;
+package de.tuberlin.pserver.types.metadata;
 
 public abstract class DistributedDeclaration {
 

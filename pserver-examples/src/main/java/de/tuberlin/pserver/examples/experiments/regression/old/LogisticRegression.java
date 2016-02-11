@@ -15,10 +15,10 @@ import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.ml.optimization.GradientDescent.GDOptimizer;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
-import de.tuberlin.pserver.types.common.FileFormat;
 import de.tuberlin.pserver.types.matrix.annotation.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import de.tuberlin.pserver.types.metadata.DistScheme;
+import de.tuberlin.pserver.types.metadata.FileFormat;
 
 import java.io.Serializable;
 import java.util.List;

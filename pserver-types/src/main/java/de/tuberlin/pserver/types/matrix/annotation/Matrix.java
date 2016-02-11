@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.types.matrix.annotation;
 
 
-import de.tuberlin.pserver.types.common.FileFormat;
 import de.tuberlin.pserver.types.metadata.DistScheme;
+import de.tuberlin.pserver.types.metadata.FileFormat;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
