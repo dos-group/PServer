@@ -12,8 +12,8 @@ import de.tuberlin.pserver.dsl.transaction.annotations.TransactionType;
 import de.tuberlin.pserver.dsl.transaction.phases.Update;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.Matrix32F;
-import de.tuberlin.pserver.math.matrix.MatrixFormat;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
 
 public class ModelParallelJob extends Program {
 
@@ -21,10 +21,10 @@ public class ModelParallelJob extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(at = "0, 1", scope = Scope.PARTITIONED, matrixFormat = MatrixFormat.DENSE_FORMAT, rows = 10, cols = 10)
+    @State(at = "0, 1", scope = Scope.PARTITIONED, matrixFormat = MatrixType.DENSE_FORMAT, rows = 10, cols = 10)
     public Matrix32F parameters;
 
-    @State(at = "2, 3", scope = Scope.REPLICATED, matrixFormat = MatrixFormat.DENSE_FORMAT, rows = 1, cols = 10)
+    @State(at = "2, 3", scope = Scope.REPLICATED, matrixFormat = MatrixType.DENSE_FORMAT, rows = 1, cols = 10)
     public Matrix32F cachedParameters;
 
     // ---------------------------------------------------
@@ -34,7 +34,7 @@ public class ModelParallelJob extends Program {
     @Transaction(src = "parameters", dst = "cachedParameters", type = TransactionType.PULL)
     public final TransactionDefinition fetchParameters = new TransactionDefinition(
 
-            (Update<Matrix32F>) (parameterList, cachedParameters) -> {
+            (Update<Matrix32F>) (requestObj, parameterList, cachedParameters) -> {
                 StringBuilder strBuilder = new StringBuilder();
                 for (Matrix32F parameter : parameterList) {
                     strBuilder.append("PARTITION - ");

@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.runtime.dht.types;
 
-import de.tuberlin.pserver.math.SharedObject;
+import de.tuberlin.pserver.types.metadata.DistributedType;
 
-public class EmbeddedDHTObject<T extends SharedObject> extends AbstractBufferedDHTObject {
+public class EmbeddedDHTObject<T extends DistributedType> extends AbstractBufferedDHTObject {
 
     // ---------------------------------------------------
     // Fields.
@@ -20,7 +20,7 @@ public class EmbeddedDHTObject<T extends SharedObject> extends AbstractBufferedD
         super((int)object.sizeOf(), false);
         this.object = object;
         //this.data   = object.toArray();
-        this.object.setOwner(this);
+        this.object.owner(this);
     }
 
     // ---------------------------------------------------

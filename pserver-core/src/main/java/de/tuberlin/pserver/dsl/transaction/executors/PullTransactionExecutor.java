@@ -5,8 +5,8 @@ import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.events.TransactionPullRequestEvent;
 import de.tuberlin.pserver.dsl.transaction.events.TransactionPullResponseEvent;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
-import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.RuntimeContext;
+import de.tuberlin.pserver.types.metadata.DistributedType;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.*;
@@ -30,15 +30,17 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
     private final Map<String, List<Object>> collectedResponseSrcStateObjects = new HashMap<>();
 
-    private final SharedObject[] srcStateObjects;
+    private final DistributedType[] srcStateObjects;
 
-    private final SharedObject[] dstStateObjects;
+    private final DistributedType[] dstStateObjects;
 
     private final int[] txnSrcNodes;
 
     private CountDownLatch responseLatch;
 
     private final Thread combinerThread;
+
+    private Object requestObject;
 
     // ---------------------------------------------------
     // Constructors.
@@ -52,9 +54,9 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
         this.transactionDefinition = controller.getTransactionDescriptor().definition;
         final int numSrcStateObjects = controller.getTransactionDescriptor().stateSrcObjectNames.size();
-        this.srcStateObjects = new SharedObject[numSrcStateObjects];
+        this.srcStateObjects = new DistributedType[numSrcStateObjects];
         final int numDstStateObjects = controller.getTransactionDescriptor().stateDstObjectNames.size();
-        this.dstStateObjects = new SharedObject[numDstStateObjects];
+        this.dstStateObjects = new DistributedType[numDstStateObjects];
 
         txnSrcNodes = ArrayUtils.removeElements(
                 controller.getTransactionDescriptor().srcStateObjectNodes,
@@ -68,7 +70,7 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
                 for (String srcStateName : controller.getTransactionDescriptor().stateSrcObjectNames) {
                     List<Object> srcStates = collectedResponseSrcStateObjects.get(srcStateName);
-                    Object combinedSrcStateObject = transactionDefinition.combinePhase.combine(srcStates);
+                    Object combinedSrcStateObject = transactionDefinition.combinePhase.combine(Arrays.asList(requestObject), srcStates);
                     collectedResponseSrcStateObjects.put(srcStateName, Arrays.asList(combinedSrcStateObject));
                 }
 
@@ -96,7 +98,7 @@ public class PullTransactionExecutor extends TransactionExecutor {
         int i = 0;
         for (final String srcStateObjectName : controller.getTransactionDescriptor().stateSrcObjectNames) {
             if (ArrayUtils.contains(controller.getTransactionDescriptor().srcStateObjectNodes, runtimeContext.nodeID)) {
-                SharedObject srcObj = runtimeContext.runtimeManager.getDHT(srcStateObjectName);
+                DistributedType srcObj = runtimeContext.runtimeManager.getDHT(srcStateObjectName);
                 srcStateObjects[i++] = srcObj;
             }
         }
@@ -148,7 +150,7 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
             for (int i = 0; i < controller.getTransactionDescriptor().stateDstObjectNames.size(); ++i) {
                 resultObjects.add(
-                        transactionDefinition.applyPhase.apply(
+                        transactionDefinition.applyPhase.apply(Arrays.asList(requestObject),
                                 collectedResponseSrcStateObjects.get(controller.getTransactionDescriptor().stateSrcObjectNames.get(i)),
                                 dstStateObjects[i]
                         )
@@ -179,7 +181,7 @@ public class PullTransactionExecutor extends TransactionExecutor {
                         srcStateObjects[i].lock();
                         final Prepare preparePhase = transactionDefinition.preparePhase;
                         final Object prepareInput = request.getPayload() == null ? srcStateObjects[i] : request.requestObject;
-                        preparedOutputs.put(request.stateObjectNames.get(i), (preparePhase != null) ? preparePhase.prepare(prepareInput) : prepareInput);
+                        preparedOutputs.put(request.stateObjectNames.get(i), (preparePhase != null) ? preparePhase.prepare(request, prepareInput) : prepareInput);
                         srcStateObjects[i].unlock();
                     }
 

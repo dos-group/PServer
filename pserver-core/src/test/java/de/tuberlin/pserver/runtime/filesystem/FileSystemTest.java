@@ -1,6 +1,9 @@
 package de.tuberlin.pserver.runtime.filesystem;
+/*
+=======
 
 import de.tuberlin.pserver.runtime.filesystem.records.Entry;
+>>>>>>> 9097fbfdbfaca15b3d76d4cd7700e16c4759a4e1
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.runtime.filesystem.records.RecordIterator;
 import org.junit.After;
@@ -15,9 +18,6 @@ import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * Created by hegemon on 23.12.15.
- */
 public class FileSystemTest {
 
     private InputStream inputStream;
@@ -89,3 +89,4 @@ public class FileSystemTest {
     }
 
 }
+*/

@@ -6,21 +6,13 @@ import de.tuberlin.pserver.commons.serialization.ObjectSerializer;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
-import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
-import de.tuberlin.pserver.dsl.transaction.TransactionMng;
-import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
-import de.tuberlin.pserver.dsl.transaction.annotations.TransactionType;
-import de.tuberlin.pserver.dsl.transaction.phases.GenericApply;
-import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.Matrix32F;
-import de.tuberlin.pserver.math.matrix.MatrixFormat;
-import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
 import org.apache.commons.lang3.mutable.MutableDouble;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Random;
 
@@ -45,7 +37,7 @@ public final class GloveWithCompression extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.PARTITIONED, rows = COLS, cols = COLS, path = INPUT_DATA, matrixFormat = MatrixFormat.SPARSE_FORMAT)
+    @State(scope = Scope.PARTITIONED, rows = COLS, cols = COLS, path = INPUT_DATA, matrixFormat = MatrixType.SPARSE_FORMAT)
     public Matrix32F X;
 
     @State(scope = Scope.REPLICATED, rows = ROWS, cols = COLS * 2)
@@ -68,10 +60,10 @@ public final class GloveWithCompression extends Program {
 
     private Compressor compressor = Compressor.Factory.create(Compressor.CompressionType.LZ4_COMPRESSION);
 
-    @Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PULL)
+    /*@Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PULL)
     public final TransactionDefinition sync = new TransactionDefinition(
 
-            (Prepare<Matrix32F, Pair<Integer, byte[]>>) (remoteMatrix) -> {
+            (Prepare<Matrix32F, Pair<Integer, byte[]>>) (requestObjs, remoteMatrix) -> {
                 final byte[] serializedObj = serializer.serialize(remoteMatrix);
                 return Pair.of(serializedObj.length, compressor.compress(serializedObj));
             }
@@ -84,7 +76,7 @@ public final class GloveWithCompression extends Program {
                 }
                 return null;
             }
-    );
+    );*/
 
     // ---------------------------------------------------
     // Units.
@@ -148,7 +140,7 @@ public final class GloveWithCompression extends Program {
                     });
                 });
 
-                TransactionMng.commit(sync);
+                //TransactionMng.commit(sync);
             })
         );
     }

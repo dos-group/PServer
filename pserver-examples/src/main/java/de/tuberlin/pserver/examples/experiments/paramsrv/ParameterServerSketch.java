@@ -6,7 +6,6 @@ import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
-import de.tuberlin.pserver.dsl.transaction.TransactionObserver;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
 import de.tuberlin.pserver.dsl.transaction.annotations.TransactionType;
 import de.tuberlin.pserver.dsl.transaction.phases.Update;
@@ -14,9 +13,9 @@ import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
-import de.tuberlin.pserver.math.matrix.Matrix32F;
-import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
 
 
 public class ParameterServerSketch extends Program {
@@ -27,15 +26,15 @@ public class ParameterServerSketch extends Program {
 
     // ParamServer runs on Node 0, 1.
 
-    @State(at = "0", scope = Scope.PARTITIONED, matrixFormat = MatrixFormat.DENSE_FORMAT, rows = 10, cols = 10000)
+    @State(at = "0", scope = Scope.PARTITIONED, matrixFormat = MatrixType.DENSE_FORMAT, rows = 10, cols = 10000)
     public Matrix32F parameter;
 
     // Worker runs on Node 2, 3.
 
-    @State(at = "2, 3", scope = Scope.REPLICATED, matrixFormat = MatrixFormat.SPARSE_FORMAT, rows = 10, cols = 10000)
+    @State(at = "2, 3", scope = Scope.REPLICATED, matrixFormat = MatrixType.SPARSE_FORMAT, rows = 10, cols = 10000)
     public Matrix32F parameterCache;
 
-    @State(at = "2, 3", scope = Scope.REPLICATED, matrixFormat = MatrixFormat.DENSE_FORMAT, rows = 10, cols = 10000)
+    @State(at = "2, 3", scope = Scope.REPLICATED, matrixFormat = MatrixType.DENSE_FORMAT, rows = 10, cols = 10000)
     public Matrix32F gradients;
 
     @State(scope = Scope.PARTITIONED, rows = 300000, cols = 10000, path = "datasets/XXX", fileFormat = FileFormat.SVM_FORMAT)
@@ -48,7 +47,7 @@ public class ParameterServerSketch extends Program {
     @Transaction(src = "gradients", dst = "parameter", type = TransactionType.PUSH)
     public final TransactionDefinition parameterUpdate = new TransactionDefinition(
 
-            (Update<Matrix32F>) (remoteGradients, parameter) -> {
+            (Update<Matrix32F>) (requestObj, remoteGradients, parameter) -> {
                 for (Matrix32F grad : remoteGradients) {
                     parameter.add(grad, parameter);
                 }
@@ -58,7 +57,7 @@ public class ParameterServerSketch extends Program {
     @Transaction(src = "parameter", dst = "parameterCache", type = TransactionType.PULL)
     public final TransactionDefinition parameterPull = new TransactionDefinition(
 
-            (Update<Matrix32F>) (remoteParameters, parameterCache) -> {
+            (Update<Matrix32F>) (requestObj, remoteParameters, parameterCache) -> {
                 parameterCache.assign(remoteParameters.get(0));
             }
     );

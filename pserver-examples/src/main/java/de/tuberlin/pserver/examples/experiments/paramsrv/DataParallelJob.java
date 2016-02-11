@@ -12,8 +12,8 @@ import de.tuberlin.pserver.dsl.transaction.phases.Combine;
 import de.tuberlin.pserver.dsl.transaction.phases.Update;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.Matrix32F;
-import de.tuberlin.pserver.math.matrix.MatrixFormat;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
 
 
 public class DataParallelJob extends Program {
@@ -22,7 +22,7 @@ public class DataParallelJob extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.REPLICATED, matrixFormat = MatrixFormat.DENSE_FORMAT, rows = 1, cols = 10)
+    @State(scope = Scope.REPLICATED, matrixFormat = MatrixType.DENSE_FORMAT, rows = 1, cols = 10)
     public Matrix32F model;
 
     // ---------------------------------------------------
@@ -32,7 +32,7 @@ public class DataParallelJob extends Program {
     @Transaction(state = "model", type = TransactionType.PUSH)
     public final TransactionDefinition syncModel = new TransactionDefinition(
 
-            (Combine<Matrix32F>) (gradients) -> {
+            (Combine<Matrix32F>) (requestObj, gradients) -> {
                 Matrix32F combinedGradient = gradients.get(0);
                 for (int i = 1; i < gradients.size(); ++i) {
                     combinedGradient.add(gradients.get(i), combinedGradient);
@@ -40,7 +40,7 @@ public class DataParallelJob extends Program {
                 return combinedGradient;
             },
 
-            (Update<Matrix32F>) (remoteModels, localModel) -> {
+            (Update<Matrix32F>) (requestObj, remoteModels, localModel) -> {
                 StringBuilder strBuilder = new StringBuilder();
                 for (Matrix32F remoteModel : remoteModels) {
                     for (int i = 0; i < 10; ++i)

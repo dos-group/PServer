@@ -3,10 +3,10 @@ package de.tuberlin.pserver.ml.optimization.GradientDescent;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.LoopTermination;
-import de.tuberlin.pserver.math.matrix.Matrix32F;
-import de.tuberlin.pserver.math.matrix.dense.DenseMatrix32F;
 import de.tuberlin.pserver.ml.optimization.*;
-import de.tuberlin.pserver.runtime.state.matrix.MatrixBuilder;
+import de.tuberlin.pserver.types.matrix.MatrixBuilder;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.f32.dense.DenseMatrix32F;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,7 +103,7 @@ public class GDOptimizer implements Optimizer, LoopTermination {
 
         UnitMng.loop(this, syncMode, (epoch) -> {
 
-            DenseMatrix32F gradient = new MatrixBuilder().dimension(1, X.cols()).build();
+            DenseMatrix32F gradient = (DenseMatrix32F) new MatrixBuilder().dimension(1, X.cols()).build();
 
             Matrix32F batchX = new MatrixBuilder().dimension(batchSize, X.cols()).build();
 
@@ -146,8 +146,8 @@ public class GDOptimizer implements Optimizer, LoopTermination {
                 }
 
                 if (!newtonMethod) {
-                    //gradient.scale(learningRate, gradient);
-                    gradient.fastScale(learningRate);
+                    gradient.scale(learningRate, gradient);
+                    //gradient.fastScale(learningRate);
                 }
 
                 W.sub(gradient, W);

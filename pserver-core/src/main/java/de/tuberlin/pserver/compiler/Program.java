@@ -3,10 +3,10 @@ package de.tuberlin.pserver.compiler;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.dsl.unit.controlflow.base.Body;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
+import de.tuberlin.pserver.types.metadata.DistributedType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,16 +98,16 @@ public abstract class Program extends EventDispatcher {
 
     // ---------------------------------------------------
 
-    public static SharedObject[] state(SharedObject... objects) { return objects; }
+    public static DistributedType[] state(DistributedType... objects) { return objects; }
 
-    public static void atomic(SharedObject[] stateObjects, final Body body) throws Exception {
+    public static void atomic(DistributedType[] stateObjects, final Body body) throws Exception {
 
-        for (final SharedObject stateObj :stateObjects)
+        for (final DistributedType stateObj :stateObjects)
             stateObj.lock();
 
         body.body();
 
-        for (final SharedObject stateObj :stateObjects)
+        for (final DistributedType stateObj :stateObjects)
             stateObj.unlock();
     }
 }

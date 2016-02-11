@@ -12,11 +12,10 @@ import de.tuberlin.pserver.dsl.transaction.phases.Update;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.math.matrix.ElementType;
-import de.tuberlin.pserver.math.matrix.Matrix32F;
-import de.tuberlin.pserver.math.matrix.Matrix64F;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
-import de.tuberlin.pserver.runtime.state.matrix.MatrixBuilder;
+import de.tuberlin.pserver.types.matrix.MatrixBuilder;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.properties.ElementType;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -41,8 +40,8 @@ public class LDA extends Program{
     // Hyperparameter
     private static final int N_TOPICS = 20;
     private static final int N_ITER = 1000;
-    private static final double ALPHA = 0.1;
-    private static final double BETA = 0.1;
+    private static final float ALPHA = 0.1f;
+    private static final float BETA = 0.1f;
 
 
     // ---------------------------------------------------
@@ -51,15 +50,15 @@ public class LDA extends Program{
 
     // D is a document-term matrix, representing the corpus
     @State(scope = Scope.PARTITIONED, rows = N_DOCUMENTS, cols = N_VOCABULARY, path = DOC_TERM_PATH)
-    public Matrix64F D;
+    public Matrix32F D;
 
     // N_kw keeps track of how instances of a vocabulary word are assigned to topic k
     @State(scope = Scope.REPLICATED, rows = N_TOPICS, cols = N_VOCABULARY)
-    public Matrix64F N_kw;
+    public Matrix32F N_kw;
 
     // N_k keeps track of how many words w are assigned to topic k
     @State(scope = Scope.REPLICATED, rows = N_TOPICS, cols = 1)
-    public Matrix64F N_k;
+    public Matrix32F N_k;
 
     // theta is the distribution over topics for each document
     //@State(scope = Scope.PARTITIONED, rows = N_DOCUMENTS, cols = N_TOPICS)
@@ -70,7 +69,7 @@ public class LDA extends Program{
     //public Matrix64F phi;
 
     // N_dk keeps track of how many words in document d belong to topic k
-    public Matrix64F N_dk;
+    public Matrix32F N_dk;
 
     // Z is the topic assignment of each word w belonging to the local partition of the corpus D
     public Matrix32F Z;
@@ -85,8 +84,8 @@ public class LDA extends Program{
 
             // TODO: this must be a delta update of (latest local state) - (state at previous sync)
 
-            (Update<Matrix64F>) (remoteUpdates, localState) -> {
-                for (final Matrix64F update : remoteUpdates)
+            (Update<Matrix32F>) (requestObj, remoteUpdates, localState) -> {
+                for (final Matrix32F update : remoteUpdates)
                     Parallel.For(update, (i, j, v) -> localState.set(i, j, localState.get(i, j) + update.get(i, j)));
             }
     );
@@ -100,7 +99,7 @@ public class LDA extends Program{
     public void main(Lifecycle lifecycle) {
         lifecycle.preProcess(() -> {
             // number of words in the local partition of the corpus D
-            int nWords = D.sum().intValue();
+            int nWords = (int)D.sum();
 
             Z = new MatrixBuilder()
                     .dimension(nWords, 1)
@@ -109,7 +108,7 @@ public class LDA extends Program{
 
             N_dk = new MatrixBuilder()
                     .dimension(N_DOCUMENTS, N_TOPICS)
-                    .elementType(ElementType.DOUBLE_MATRIX)
+                    .elementType(ElementType.FLOAT_MATRIX)
                     .build();
 
             Random rand = new Random();
@@ -125,10 +124,10 @@ public class LDA extends Program{
 
             for (int d = 0; d < D.rows(); d++) {
                 for (int w = 0; w < D.cols(); w++) {
-                    int wCount = D.get(d, w).intValue();
+                    int wCount = (int)D.get(d, w);
                     if (wCount != 0) {
                         for (int i = 0; i < wCount; i++) {
-                            int topic = Z.get(zIndex).intValue();
+                            int topic = (int)Z.get(zIndex);
 
                             N_dk.set(d, topic, N_dk.get(d, topic) + 1);
                             N_kw.set(topic, w, N_kw.get(topic, w) + 1);
@@ -148,21 +147,21 @@ public class LDA extends Program{
 
                 for (int d = 0; d < N_DOCUMENTS; d++) {
                     for (int w = 0; w < N_VOCABULARY; w++) {
-                        int wCount = D.get(d, w).intValue();
+                        int wCount = (int)D.get(d, w);
                         if (wCount != 0) {
                             for (int i = 0; i < wCount; i++) {
-                                int topic = Z.get(zIndex).intValue();
+                                int topic = (int)Z.get(zIndex);
 
                                 N_dk.set(d, topic, N_dk.get(d, topic) - 1);
                                 N_kw.set(topic, w, N_kw.get(topic, w) - 1);
                                 N_k.set(topic, 0, N_k.get(topic) - 1);
 
-                                Matrix64F pZ = new MatrixBuilder().
+                                Matrix32F pZ = new MatrixBuilder().
                                         dimension(N_TOPICS, 1)
                                         .elementType(ElementType.DOUBLE_MATRIX)
                                         .build();
 
-                                double pZsum = 0.0;
+                                float pZsum = 0.0f;
 
                                 for (int k = 0; k < N_TOPICS; k++) {
                                     double p_zk = (N_dk.get(d, k) + ALPHA) * (N_kw.get(k, w) + BETA) / (N_k.get(k) + BETA * N_VOCABULARY);
@@ -170,7 +169,7 @@ public class LDA extends Program{
                                     pZ.set(k, 0, pZsum);
                                 }
 
-                                pZ.scale(1. / pZsum, pZ);
+                                pZ.scale(1f / pZsum, pZ);
 
                                 double u = rand.nextDouble();
 
@@ -204,12 +203,12 @@ public class LDA extends Program{
         }).postProcess(() -> {
 
             // TODO: this must be global
-            Matrix64F theta = new MatrixBuilder()
+            Matrix32F theta = new MatrixBuilder()
                     .dimension(N_DOCUMENTS, N_TOPICS)
                     .elementType(ElementType.DOUBLE_MATRIX)
                     .build();
 
-            Matrix64F phi = new MatrixBuilder()
+            Matrix32F phi = new MatrixBuilder()
                     .dimension(N_TOPICS, N_VOCABULARY)
                     .elementType(ElementType.DOUBLE_MATRIX)
                     .build();
@@ -221,7 +220,7 @@ public class LDA extends Program{
             }
 
             for (int d = 0; d < N_DOCUMENTS; d++) {
-                int nWords = D.getRow(d).sum().intValue();
+                int nWords = (int)D.getRow(d).sum();
                 for (int k = 0; k < N_TOPICS; k++) {
                     theta.set(d, k, (N_dk.get(d, k) + ALPHA) / (nWords + N_TOPICS * ALPHA));
                 }
@@ -232,9 +231,9 @@ public class LDA extends Program{
         });
         }
 
-                // ---------------------------------------------------
-                // EntryImpl Point
-                // ---------------------------------------------------
+    // ---------------------------------------------------
+    // EntryImpl Point
+    // ---------------------------------------------------
 
     public static void main(final String[] args) { local(); }
 
@@ -250,8 +249,8 @@ public class LDA extends Program{
                 .results(result)
                 .done();
 
-        Matrix64F theta = (Matrix64F) result.get(0).get(0);
-        Matrix64F phi = (Matrix64F) result.get(0).get(1);
+        Matrix32F theta = (Matrix32F) result.get(0).get(0);
+        Matrix32F phi = (Matrix32F) result.get(0).get(1);
 
         try (PrintWriter writer = new PrintWriter("/Users/Chris/Downloads/theta.csv", "UTF-8")) {
             for (int i = 0; i < theta.rows(); ++i) {

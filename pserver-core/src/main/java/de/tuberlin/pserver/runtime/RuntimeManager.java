@@ -5,7 +5,6 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.compiler.TransactionDescriptor;
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
-import de.tuberlin.pserver.math.SharedObject;
 import de.tuberlin.pserver.runtime.core.common.Deactivatable;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.runtime.core.network.NetEvent;
@@ -17,6 +16,7 @@ import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.events.Handler;
 import de.tuberlin.pserver.runtime.events.MsgEventHandler;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
+import de.tuberlin.pserver.types.metadata.DistributedType;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Set;
@@ -205,7 +205,7 @@ public final class RuntimeManager implements Deactivatable {
     // ---------------------------------------------------
 
     @SuppressWarnings("unchecked")
-    public <T extends SharedObject> T getDHT(final String name) {
+    public <T extends DistributedType> T getDHT(final String name) {
         final Set<DHTKey> keySet = dhtManager.getKey(name);
         for (final DHTKey key : keySet) {
             if (key.getPartitionDescriptor(infraManager.getNodeID()) != null) {
@@ -216,7 +216,7 @@ public final class RuntimeManager implements Deactivatable {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends SharedObject> void putDHT(final String name, final T object) {
+    public <T extends DistributedType> void putDHT(final String name, final T object) {
         final EmbeddedDHTObject<T> value = new EmbeddedDHTObject<T>(object);
         final DHTKey key = dhtManager.createLocalKey(name);
         value.setValueMetadata(infraManager.getNodeID());

@@ -2,17 +2,38 @@ package de.tuberlin.pserver.compiler;
 
 import de.tuberlin.pserver.commons.utils.ParseUtils;
 import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.PartitionerType;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
-import de.tuberlin.pserver.math.matrix.ElementType;
-import de.tuberlin.pserver.math.matrix.MatrixFormat;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
-import de.tuberlin.pserver.runtime.state.matrix.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.f32.dense.DenseMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.f32.sparse.CSRMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.f32.sparse.SparseMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.types.matrix.implementation.partitioner.PartitionType;
+import de.tuberlin.pserver.types.matrix.implementation.properties.ElementType;
+import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class StateDescriptor {
+
+    // ---------------------------------------------------
+    // State Types.
+    // ---------------------------------------------------
+
+    private static final Map<Class<?>, MatrixType> MTX_TYPE_FORMAT_MAP;
+
+    static {
+
+        MTX_TYPE_FORMAT_MAP = new HashMap<>();
+        MTX_TYPE_FORMAT_MAP.put(Matrix32F.class,         MatrixType.DENSE_FORMAT);
+        MTX_TYPE_FORMAT_MAP.put(DenseMatrix32F.class,    MatrixType.DENSE_FORMAT);
+        MTX_TYPE_FORMAT_MAP.put(SparseMatrix32F.class,   MatrixType.SPARSE_FORMAT);
+        MTX_TYPE_FORMAT_MAP.put(CSRMatrix32F.class,      MatrixType.CSR_FORMAT);
+    }
 
     // ---------------------------------------------------
     // Fields.
@@ -26,11 +47,11 @@ public final class StateDescriptor {
 
     public final int[] atNodes;
 
-    public final PartitionerType partitionerType;
+    public final PartitionType partitionType;
 
     // ---------------------------------------------------
 
-    public final MatrixFormat matrixFormat;
+    public final MatrixType matrixType;
 
     public final ElementType elementType;
 
@@ -54,8 +75,8 @@ public final class StateDescriptor {
                            final Class<?> stateType,
                            final Scope scope,
                            final int[] atNodes,
-                           final PartitionerType partitionerType,
-                           final MatrixFormat matrixFormat,
+                           final PartitionType partitionType,
+                           final MatrixType matrixType,
                            final long rows,
                            final long cols,
                            final FileFormat fileFormat,
@@ -66,8 +87,8 @@ public final class StateDescriptor {
         this.stateType      = stateType;
         this.scope          = scope;
         this.atNodes        = atNodes;
-        this.partitionerType = partitionerType;
-        this.matrixFormat   = matrixFormat;
+        this.partitionType = partitionType;
+        this.matrixType = matrixType;
         this.rows           = rows;
         this.cols           = cols;
         this.fileFormat     = fileFormat;
@@ -83,12 +104,14 @@ public final class StateDescriptor {
 
     public static StateDescriptor fromAnnotatedField(final State state, final Field field, final int[] fallBackAtNodes) {
         int[] parsedAtNodes = ParseUtils.parseNodeRanges(state.at());
+        MatrixType matrixType = MTX_TYPE_FORMAT_MAP.get(field.getType());
         return new StateDescriptor(
                 field.getName(),
                 field.getType(),
                 state.scope(), parsedAtNodes.length > 0 ? parsedAtNodes : fallBackAtNodes,
                 state.partitioner(),
-                state.matrixFormat(), state.rows(),
+                matrixType,
+                state.rows(),
                 state.cols(),
                 state.fileFormat(),
                 state.path(),
@@ -97,11 +120,12 @@ public final class StateDescriptor {
     }
 
     public static MatrixPartitioner createMatrixPartitioner(ProgramContext programContext, StateDescriptor state) {
-        return MatrixPartitioner.create(
-                state.partitionerType,
-                state.rows, state.cols,
+        return MatrixPartitioner.createPartitioner(
+                state.partitionType,
                 programContext.nodeID,
-                state.atNodes
+                state.atNodes,
+                state.rows,
+                state.cols
         );
     }
 }

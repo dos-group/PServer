@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
-public class SVMRecordIterator<V extends Number> extends RecordIterator<Record> {
+public class SVMRecordIterator extends RecordIterator<Record> {
 
     // ---------------------------------------------------
     // Constructors.

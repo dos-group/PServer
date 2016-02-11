@@ -6,14 +6,13 @@ import de.tuberlin.pserver.compiler.Compiler;
 import de.tuberlin.pserver.compiler.*;
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
-import de.tuberlin.pserver.math.matrix.Matrix;
-import de.tuberlin.pserver.math.matrix.MatrixBase;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.runtime.core.common.Deactivatable;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.runtime.core.usercode.UserCodeManager;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
 import de.tuberlin.pserver.runtime.state.matrix.MatrixLoader;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -149,12 +148,12 @@ public class ProgramDriver implements Deactivatable {
 
     private void allocateState() throws Exception {
         for (final StateDescriptor state : programContext.programTable.getState()) {
-            if (MatrixBase.class.isAssignableFrom(state.stateType)) {
-                final Pair<MatrixBase, MatrixBase> stateAndProxy = stateAllocator.alloc(programContext, state);
+            if (Matrix32F.class.isAssignableFrom(state.stateType)) {
+                final Pair<Matrix32F, Matrix32F> stateAndProxy = stateAllocator.alloc(programContext, state);
                 if (stateAndProxy.getLeft() != null) {
                     runtimeContext.runtimeManager.putDHT(state.stateName, stateAndProxy.getLeft());
                     if (!("".equals(state.path)))
-                        matrixLoader.add(state, (Matrix)stateAndProxy.getLeft());
+                        matrixLoader.add(state, stateAndProxy.getLeft());
                 }
                 if (stateAndProxy.getRight() != null)
                     remoteObjectRefs.put(state.stateName, stateAndProxy.getRight());

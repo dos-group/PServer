@@ -1,12 +1,15 @@
 package de.tuberlin.pserver.runtime.filesystem.records;
 
-import de.tuberlin.pserver.math.tuples.Tuple2;
+import de.tuberlin.pserver.commons.tuples.Tuple2;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
+import de.tuberlin.pserver.types.matrix.implementation.f32.entries.Entry32F;
+import de.tuberlin.pserver.types.matrix.implementation.f32.entries.ImmutableEntryImpl32F;
+import de.tuberlin.pserver.types.matrix.implementation.f32.entries.ReusableEntry32F;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.util.*;
 
-public class SVMRecord<V extends Number> implements Record<V> {
+public class SVMRecord implements Record {
 
     // ---------------------------------------------------
     // Inner Classes.
@@ -51,7 +54,6 @@ public class SVMRecord<V extends Number> implements Record<V> {
 
             return new Tuple2<>(label, attributes);
         }
-
     }
 
     // ---------------------------------------------------
@@ -59,7 +61,7 @@ public class SVMRecord<V extends Number> implements Record<V> {
     // ---------------------------------------------------
 
     private long row;
-    private Tuple2<V, Map<Long, V>> data;
+    private Tuple2<Float, Map<Long, Float>> data;
     private Iterator<Long> attributeIterator;
 
     // ---------------------------------------------------
@@ -84,11 +86,11 @@ public class SVMRecord<V extends Number> implements Record<V> {
         return this.row;
     }
 
-    public void setLabel(V label) {
+    public void setLabel(float label) {
         this.data._1 = label;
     }
 
-    public V getLabel() {
+    public float getLabel() {
         return this.data._1;
     }
 
@@ -103,22 +105,22 @@ public class SVMRecord<V extends Number> implements Record<V> {
     }
 
     @Override
-    public Entry<V> next() {
+    public Entry32F next() {
         return this.next(null);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public Entry<V> next(Entry entry) {
+    public Entry32F next(ReusableEntry32F reusableEntry) {
         Long index = this.attributeIterator.next();
-        V value = this.data._2.get(index);
-        if (entry == null)
-            return new Entry(this.row, index, value);
-        return entry.set(this.row, index, value);
+        float value = this.data._2.get(index);
+        if (reusableEntry == null)
+            return new ImmutableEntryImpl32F(this.row, index, value);
+        return reusableEntry.set(this.row, index, value);
     }
 
     @Override
-    public SVMRecord<V> set(long row, String line, Optional<long[]> projection) {
+    public SVMRecord set(long row, String line, Optional<long[]> projection) {
         this.row = row;
         this.data = SVMParser.parse(line, projection);
         this.attributeIterator = data._2.keySet().iterator();

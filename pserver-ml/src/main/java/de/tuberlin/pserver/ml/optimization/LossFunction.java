@@ -1,7 +1,8 @@
 package de.tuberlin.pserver.ml.optimization;
 
-import de.tuberlin.pserver.math.matrix.Matrix32F;
-import de.tuberlin.pserver.runtime.state.matrix.MatrixBuilder;
+
+import de.tuberlin.pserver.types.matrix.MatrixBuilder;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,14 +10,14 @@ import org.slf4j.LoggerFactory;
 
 public interface LossFunction {
 
-    public abstract float loss(final Matrix32F X, final Matrix32F y, final Matrix32F W, final float lambda);
+    float loss(final Matrix32F X, final Matrix32F y, final Matrix32F W, final float lambda);
 
-    public abstract Matrix32F gradient(final Matrix32F X, final Matrix32F y, final Matrix32F W,
-                                    final float lambda, final boolean newtonMethod);
+    Matrix32F gradient(final Matrix32F X, final Matrix32F y, final Matrix32F W,
+                       final float lambda, final boolean newtonMethod);
 
-    public abstract Pair<Float, Matrix32F> lossAndGradient(final Matrix32F X, final Matrix32F y,
-                                                         final Matrix32F W, final float lambda,
-                                                         final boolean newtonMethod);
+    Pair<Float, Matrix32F> lossAndGradient(final Matrix32F X, final Matrix32F y,
+                                           final Matrix32F W, final float lambda,
+                                           final boolean newtonMethod);
 
     // ---------------------------------------------------
 
@@ -64,7 +65,7 @@ public interface LossFunction {
 
         @Override
         public Matrix32F gradient(final Matrix32F X, final Matrix32F y, final Matrix32F W,
-                               final float lambda, final boolean newtonMethod) {
+                                  final float lambda, final boolean newtonMethod) {
 
             if (gradient == null)
                 gradient = new MatrixBuilder().dimension(1, X.cols()).build();
@@ -96,7 +97,7 @@ public interface LossFunction {
 
         @Override
         public Pair<Float, Matrix32F> lossAndGradient(final Matrix32F X, final Matrix32F y, final Matrix32F W,
-                                                    final float lambda, final boolean newtonMethod) {
+                                                      final float lambda, final boolean newtonMethod) {
 
             float loss = loss(X, y, W, lambda);
 

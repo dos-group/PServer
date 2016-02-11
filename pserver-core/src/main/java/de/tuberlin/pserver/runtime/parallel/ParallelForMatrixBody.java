@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.runtime.parallel;
 
 
-public interface ParallelForMatrixBody<V extends Number> {
+public interface ParallelForMatrixBody {
 
-    public void perform(final long i, final long j, final V value) throws Exception;
+    void perform(final long i, final long j, final float value) throws Exception;
 }
