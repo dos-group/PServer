@@ -10,7 +10,7 @@ public class CollectionDeclaration extends DistributedDeclaration {
     // Constructor.
     // ---------------------------------------------------
 
-    public CollectionDeclaration(Collection collectionAnnotation) {
-        super(ParseUtils.parseNodeRanges(collectionAnnotation.at()), collectionAnnotation.scheme());
+    public CollectionDeclaration(int[] allNodes, Collection collectionAnnotation) {
+        super("".equals(collectionAnnotation.at()) ? allNodes : ParseUtils.parseNodeRanges(collectionAnnotation.at()), collectionAnnotation.scheme());
     }
 }

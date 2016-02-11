@@ -12,6 +12,7 @@ import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.runtime.core.usercode.UserCodeManager;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
 import de.tuberlin.pserver.runtime.state.matrix.MatrixLoader;
+import de.tuberlin.pserver.types.matrix.annotation.MatrixDeclaration;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -148,15 +149,15 @@ public class ProgramDriver implements Deactivatable {
 
     private void allocateState() throws Exception {
         for (final StateDescriptor state : programContext.programTable.getState()) {
-            if (Matrix32F.class.isAssignableFrom(state.stateType)) {
+            if (Matrix32F.class.isAssignableFrom(state.type)) {
                 final Pair<Matrix32F, Matrix32F> stateAndProxy = stateAllocator.alloc(programContext, state);
                 if (stateAndProxy.getLeft() != null) {
-                    runtimeContext.runtimeManager.putDHT(state.stateName, stateAndProxy.getLeft());
-                    if (!("".equals(state.path)))
+                    runtimeContext.runtimeManager.putDHT(state.name, stateAndProxy.getLeft());
+                    if (!("".equals(((MatrixDeclaration)state.declaration).path)))
                         matrixLoader.add(state, stateAndProxy.getLeft());
                 }
                 if (stateAndProxy.getRight() != null)
-                    remoteObjectRefs.put(state.stateName, stateAndProxy.getRight());
+                    remoteObjectRefs.put(state.name, stateAndProxy.getRight());
             } else
                 throw new IllegalStateException();
         }
@@ -164,15 +165,15 @@ public class ProgramDriver implements Deactivatable {
 
     private void bindState(final Program instance) throws Exception {
         for (final StateDescriptor state : programTable.getState()) {
-            final Field field = programTable.getProgramClass().getDeclaredField(state.stateName);
+            final Field field = programTable.getProgramClass().getDeclaredField(state.name);
             final Object stateObj;
-            if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
-                stateObj = runtimeContext.runtimeManager.getDHT(state.stateName);
+            if (ArrayUtils.contains(state.instance.nodes(), programContext.nodeID)) {
+                stateObj = runtimeContext.runtimeManager.getDHT(state.name);
             } else {
-                stateObj = remoteObjectRefs.get(state.stateName);
+                stateObj = remoteObjectRefs.get(state.name);
             }
 
-            Preconditions.checkState(stateObj != null, "State object '" + state.stateName
+            Preconditions.checkState(stateObj != null, "State object '" + state.name
                     + "' not found at Node [" + runtimeContext.nodeID + "].");
 
             field.set(instance, stateObj);

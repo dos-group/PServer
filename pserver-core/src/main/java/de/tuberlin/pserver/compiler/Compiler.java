@@ -3,12 +3,15 @@ package de.tuberlin.pserver.compiler;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.dsl.state.annotations.GlobalObject;
-import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.runtime.RuntimeContext;
+import de.tuberlin.pserver.types.DistributedDeclaration;
+import de.tuberlin.pserver.types.TypeFactory;
+import de.tuberlin.pserver.types.metadata.DistributedType;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -78,17 +81,22 @@ public final class Compiler {
     }
 
     private void analyzeState() {
+        int[] allNodes = IntStream.iterate(0, x -> x + 1).limit(runtimeContext.numOfNodes).toArray();
         for (final Field field : programClass.getDeclaredFields()) {
             for (final Annotation an : field.getDeclaredAnnotations()) {
-                if (an instanceof State) {
-                    final State stateProperties = (State) an;
-                    final StateDescriptor state = StateDescriptor.fromAnnotatedField(
-                            stateProperties,
-                            field,
-                            IntStream.iterate(0, x -> x + 1).limit(runtimeContext.numOfNodes).toArray()
+                if (TypeFactory.isSupported(an.getClass())) {
+
+                    Pair<DistributedDeclaration, DistributedType> declAndInstance =
+                            TypeFactory.createDistributedObject(runtimeContext.nodeID, allNodes, an);
+
+                    StateDescriptor stateDescriptor = new StateDescriptor(
+                            field.getName(),
+                            field.getType(),
+                            declAndInstance.getLeft(),
+                            declAndInstance.getRight()
                     );
-                    semanticCheck(state);
-                    programTable.addState(state);
+
+                    programTable.addState(stateDescriptor);
                 }
             }
         }
@@ -133,7 +141,4 @@ public final class Compiler {
     // Semantic Check of Annotations.
     // ---------------------------------------------------
 
-    private void semanticCheck(final StateDescriptor state) {
-        //throw new NotImplementedException("NOT IMPLEMENTED");
-    }
 }

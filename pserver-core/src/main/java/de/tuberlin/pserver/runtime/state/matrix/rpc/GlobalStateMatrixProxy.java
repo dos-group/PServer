@@ -4,7 +4,6 @@ import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.core.remoteobj.MethodInvocationMsg;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-import de.tuberlin.pserver.types.matrix.implementation.partitioner.AbstractMatrixPartitioner;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -30,8 +29,6 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
 
     private final StateDescriptor stateDescriptor;
 
-    private final AbstractMatrixPartitioner partitioner;
-
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
@@ -44,17 +41,9 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
         this.requestLatches     = new ConcurrentHashMap<>();
         this.resultObjects      = new ConcurrentHashMap<>();
 
-        this.partitioner = AbstractMatrixPartitioner.createPartitioner(
-                stateDescriptor.partitionType,
-                programContext.nodeID,
-                stateDescriptor.atNodes,
-                stateDescriptor.rows,
-                stateDescriptor.cols
-        );
-
-        netManager.addEventListener(MethodInvocationMsg.METHOD_INVOCATION_EVENT + "_" + stateDescriptor.stateName, (event) -> {
+        netManager.addEventListener(MethodInvocationMsg.METHOD_INVOCATION_EVENT + "_" + stateDescriptor.name, (event) -> {
             MethodInvocationMsg mim = (MethodInvocationMsg)event;
-            if (mim.classID == stateDescriptor.stateType.hashCode() && requestLatches.containsKey(mim.callID)) {
+            if (mim.classID == stateDescriptor.type.hashCode() && requestLatches.containsKey(mim.callID)) {
                 CountDownLatch cdl = requestLatches.remove(mim.callID);
                 if (mim.result != null)
                     resultObjects.put(mim.callID, mim.result);
@@ -70,9 +59,9 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
         CountDownLatch cdl = new CountDownLatch(1);
         requestLatches.put(callID, cdl);
         MethodInvocationMsg invokeMsg = new MethodInvocationMsg(
-                stateDescriptor.stateName,
+                stateDescriptor.name,
                 callID,
-                stateDescriptor.stateType.hashCode(),
+                stateDescriptor.type.hashCode(),
                 MethodInvocationMsg.getMethodID(method),
                 arguments,
                 null
@@ -107,22 +96,26 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
         // TODO: This is likely to require a complete redesign of the DistributedMatrix abstraction....brrr
         //
 
-        switch (stateDescriptor.scope) {
+        switch (stateDescriptor.instance.distributionScheme()) {
 
-            case SINGLETON:
-            case REPLICATED: {
-                netManager.dispatchEventAt(stateDescriptor.atNodes, invokeMsg);
-            } break;
-
-            case PARTITIONED: {
+            /*case PARTITIONED: {
                 if (("set".equals(method.getName()) || "get".equals(method.getName())) && method.getParameterCount() >= 2) {
                     int[] dstNode = {partitioner.getPartitionOfEntry((Long) arguments[0], (Long) arguments[1])};
                     netManager.dispatchEventAt(dstNode, invokeMsg);
                 } else
                     throw new UnsupportedOperationException();
-            } break;
+            } break;*/
 
-            case LOGICALLY_PARTITIONED:
+            case LOCAL:
+                throw new IllegalStateException();
+            case SINGLETON:
+            case REPLICATED:
+                netManager.dispatchEventAt(stateDescriptor.instance.nodes(), invokeMsg);
+            case HORIZONTAL_PARTITIONED:
+                throw new UnsupportedOperationException();
+            case VERTICAL_PARTITIONED:
+                throw new UnsupportedOperationException();
+            case BLOCK_PARTITIONED:
                 throw new UnsupportedOperationException();
         }
     }
@@ -130,8 +123,8 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
     @SuppressWarnings("unchecked")
     public static <T> T create(ProgramContext programContext, StateDescriptor stateDescriptor) throws Exception {
         return (T) Proxy.newProxyInstance(
-                stateDescriptor.stateType.getClassLoader(),
-                new Class<?>[]{stateDescriptor.stateType},
+                stateDescriptor.type.getClassLoader(),
+                new Class<?>[]{stateDescriptor.type},
                 new GlobalStateMatrixProxy(programContext, stateDescriptor)
         );
     }

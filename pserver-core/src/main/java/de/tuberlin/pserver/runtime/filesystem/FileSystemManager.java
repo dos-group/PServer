@@ -11,17 +11,17 @@ public interface FileSystemManager extends Deactivatable {
     // Constants.
     // ---------------------------------------------------
 
-    public static final String PSERVER_LFSM_COMPUTED_FILE_SPLITS  = "PSERVER_LFSM_COMPUTED_FILE_SPLITS";
+    String PSERVER_LFSM_COMPUTED_FILE_SPLITS  = "PSERVER_LFSM_COMPUTED_FILE_SPLITS";
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    public abstract void computeInputSplitsForRegisteredFiles();
+    void computeInputSplitsForRegisteredFiles();
 
-    public abstract <T extends Record> FileDataIterator<T> createFileIterator(
+    <T extends Record> FileDataIterator<T> createFileIterator(
             final ProgramContext programContext,
             final StateDescriptor stateDescriptor);
 
-    public abstract void clearContext();
+    void clearContext();
 }

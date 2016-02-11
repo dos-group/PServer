@@ -4,7 +4,6 @@ import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.commons.compression.Compressor;
 import de.tuberlin.pserver.commons.serialization.ObjectSerializer;
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;

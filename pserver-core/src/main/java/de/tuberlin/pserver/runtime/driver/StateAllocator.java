@@ -18,37 +18,14 @@ public final class StateAllocator {
     // ---------------------------------------------------
 
     @SuppressWarnings("unchecked")
-    public Pair<Matrix32F, Matrix32F> alloc(final ProgramContext programContext, final StateDescriptor state)
+    public Pair<Matrix32F, Matrix32F> alloc(ProgramContext programContext, StateDescriptor state)
             throws Exception {
 
         Matrix32F stateObj = null, proxyObj = null;
 
-            PartitionType partitionType;
+            if (ArrayUtils.contains(state.instance.nodes(), state.instance.nodeId())) {
 
-            switch (state.scope) {
-                case SINGLETON:
-                    partitionType = PartitionType.NO_PARTITIONER;
-                    break;
-                case REPLICATED:
-                    partitionType = PartitionType.NO_PARTITIONER;
-                    break;
-                case PARTITIONED:
-                    partitionType = PartitionType.ROW_PARTITIONER;
-                    break;
-                default:
-                    throw new UnsupportedOptionsException();
-            }
-
-            if (ArrayUtils.contains(state.atNodes, programContext.nodeID)) {
-
-                stateObj = new MatrixBuilder()
-                        .dimension(state.rows, state.cols)
-                        .matrixType(state.matrixType)
-                        .elementType(ElementType.getElementTypeFromClass(state.stateType))
-                        .partitionType(partitionType)
-                        .build(programContext.nodeID, state.atNodes);
-
-                new GlobalObject<>(programContext.runtimeContext.netManager, stateObj, state.stateName);
+                new GlobalObject<>(programContext.runtimeContext.netManager, stateObj, state.name);
 
             } else {
 

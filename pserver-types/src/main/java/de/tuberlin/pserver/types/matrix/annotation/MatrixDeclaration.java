@@ -31,8 +31,8 @@ public final class MatrixDeclaration extends DistributedDeclaration {
     // Constructor.
     // ---------------------------------------------------
 
-    public MatrixDeclaration(Matrix matrixAnnotation) {
-        super(ParseUtils.parseNodeRanges(matrixAnnotation.at()), matrixAnnotation.scheme());
+    public MatrixDeclaration(int[] allNodes, Matrix matrixAnnotation) {
+        super("".equals(matrixAnnotation.at()) ? allNodes : ParseUtils.parseNodeRanges(matrixAnnotation.at()), matrixAnnotation.scheme());
         this.rows   = matrixAnnotation.rows();
         this.cols   = matrixAnnotation.cols();
         this.type   = matrixAnnotation.type();

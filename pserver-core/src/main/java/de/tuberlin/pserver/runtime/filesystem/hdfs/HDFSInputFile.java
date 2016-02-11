@@ -2,7 +2,6 @@ package de.tuberlin.pserver.runtime.filesystem.hdfs;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.config.IConfig;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;

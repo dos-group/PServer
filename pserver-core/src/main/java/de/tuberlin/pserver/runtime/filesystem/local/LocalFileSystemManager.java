@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.runtime.filesystem.local;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
