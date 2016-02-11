@@ -7,8 +7,7 @@ import de.tuberlin.pserver.dsl.state.annotations.GlobalObject;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.types.matrix.annotation.Matrix;
-import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
 import de.tuberlin.pserver.types.metadata.DistScheme;
 
 import java.util.ArrayList;
@@ -16,8 +15,8 @@ import java.util.List;
 
 public class GlobalObjectJob extends Program {
 
-    @Matrix(scheme = DistScheme.REPLICATED, at = "0", type = MatrixType.DENSE_FORMAT, rows = 1, cols = 10000)
-    public Matrix32F parameters;
+    @Matrix(scheme = DistScheme.REPLICATED, at = "0", rows = 1, cols = 10000)
+    public DenseMatrix32F parameters;
 
     @GlobalObject(at = "0", impl = ArrayList.class)
     public List<String> globalList;

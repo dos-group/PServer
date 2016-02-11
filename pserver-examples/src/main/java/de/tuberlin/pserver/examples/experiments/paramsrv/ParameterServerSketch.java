@@ -14,7 +14,8 @@ import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.types.common.FileFormat;
 import de.tuberlin.pserver.types.matrix.annotation.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.SparseMatrix32F;
 import de.tuberlin.pserver.types.metadata.DistScheme;
 
 
@@ -25,20 +26,18 @@ public class ParameterServerSketch extends Program {
     // ---------------------------------------------------
 
     // ParamServer runs on Node 0, 1.
-
-    @Matrix(scheme = DistScheme.H_PARTITIONED, at = "0", type = MatrixType.DENSE_FORMAT, rows = 10, cols = 10000)
-    public Matrix32F parameter;
+    @Matrix(scheme = DistScheme.H_PARTITIONED, at = "0", rows = 10, cols = 10000)
+    public DenseMatrix32F parameter;
 
     // Worker runs on Node 2, 3.
+    @Matrix(scheme = DistScheme.REPLICATED, at = "2, 3", rows = 10, cols = 10000)
+    public SparseMatrix32F parameterCache;
 
-    @Matrix(scheme = DistScheme.REPLICATED, at = "2, 3", type = MatrixType.SPARSE_FORMAT, rows = 10, cols = 10000)
-    public Matrix32F parameterCache;
-
-    @Matrix(scheme = DistScheme.REPLICATED, at = "2, 3", type = MatrixType.DENSE_FORMAT, rows = 10, cols = 10000)
-    public Matrix32F gradients;
+    @Matrix(scheme = DistScheme.REPLICATED, at = "2, 3", rows = 10, cols = 10000)
+    public DenseMatrix32F gradients;
 
     @Matrix(scheme = DistScheme.H_PARTITIONED, rows = 300000, cols = 10000, path = "datasets/XXX", format = FileFormat.SVM_FORMAT)
-    public Matrix32F data;
+    public SparseMatrix32F data;
 
     // ---------------------------------------------------
     // Transaction.

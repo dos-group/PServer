@@ -9,7 +9,6 @@ import de.tuberlin.pserver.types.matrix.MatrixBuilder;
 import de.tuberlin.pserver.types.matrix.annotation.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.CSRMatrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
 import de.tuberlin.pserver.types.metadata.DistScheme;
 
 import java.util.Arrays;
@@ -36,8 +35,7 @@ public class LogRegCriteoRM extends Program {
     public DenseMatrix32F trainLabel;
 
     @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TRAIN, cols = D,
-            path = X_TRAIN_PATH, type = MatrixType.SPARSE_FORMAT,
-            format = FileFormat.SVM_FORMAT, labels = "trainLabel")
+            path = X_TRAIN_PATH, format = FileFormat.SVM_FORMAT, labels = "trainLabel")
     public CSRMatrix32F trainFeatures;
 
     @Matrix(scheme = DistScheme.REPLICATED, rows = 1, cols = D)

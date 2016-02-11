@@ -12,7 +12,6 @@ import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.types.matrix.annotation.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
 import de.tuberlin.pserver.types.metadata.DistScheme;
 
 public class ModelParallelJob extends Program {
@@ -21,12 +20,10 @@ public class ModelParallelJob extends Program {
     // State.
     // ---------------------------------------------------
 
-    @Matrix(scheme = DistScheme.H_PARTITIONED, at = "0, 1",
-            type = MatrixType.DENSE_FORMAT, rows = 10, cols = 10)
+    @Matrix(scheme = DistScheme.H_PARTITIONED, at = "0, 1", rows = 10, cols = 10)
     public Matrix32F parameters;
 
-    @Matrix(scheme = DistScheme.REPLICATED, at = "2, 3",
-            type = MatrixType.DENSE_FORMAT, rows = 1, cols = 10)
+    @Matrix(scheme = DistScheme.REPLICATED, at = "2, 3", rows = 1, cols = 10)
     public Matrix32F cachedParameters;
 
     // ---------------------------------------------------

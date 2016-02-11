@@ -10,7 +10,8 @@ import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
 import de.tuberlin.pserver.types.matrix.annotation.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.SparseMatrix32F;
 import de.tuberlin.pserver.types.metadata.DistScheme;
 import org.apache.commons.lang3.mutable.MutableDouble;
 
@@ -37,20 +38,20 @@ public final class GloveWithCompression extends Program {
     // State.
     // ---------------------------------------------------
 
-    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = COLS, cols = COLS, path = INPUT_DATA, type = MatrixType.SPARSE_FORMAT)
-    public Matrix32F X;
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = COLS, cols = COLS, path = INPUT_DATA)
+    public SparseMatrix32F X;
 
     @Matrix(scheme = DistScheme.H_PARTITIONED, rows = ROWS, cols = COLS * 2)
-    public Matrix32F W;
+    public DenseMatrix32F W;
 
     @Matrix(scheme = DistScheme.H_PARTITIONED, rows = ROWS, cols = COLS * 2)
-    public Matrix32F GradSq;
+    public DenseMatrix32F GradSq;
 
     @Matrix(scheme = DistScheme.H_PARTITIONED, rows = 1, cols = COLS * 2)
-    public Matrix32F B;
+    public DenseMatrix32F B;
 
     @Matrix(scheme = DistScheme.H_PARTITIONED, rows = 1, cols = COLS * 2)
-    public Matrix32F GradSqB;
+    public DenseMatrix32F GradSqB;
 
     // ---------------------------------------------------
     // Transactions.

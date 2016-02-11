@@ -3,8 +3,6 @@ package de.tuberlin.pserver.types.matrix.annotation;
 
 import de.tuberlin.pserver.commons.utils.ParseUtils;
 import de.tuberlin.pserver.types.DistributedDeclaration;
-import de.tuberlin.pserver.types.matrix.implementation.properties.ElementType;
-import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
 
 public final class MatrixDeclaration extends DistributedDeclaration {
 
@@ -15,10 +13,6 @@ public final class MatrixDeclaration extends DistributedDeclaration {
     public final long rows;
 
     public final long cols;
-
-    public final MatrixType mtxType;
-
-    public final ElementType elementType;
 
     // ---------------------------------------------------
     // Constructor.
@@ -36,7 +30,5 @@ public final class MatrixDeclaration extends DistributedDeclaration {
 
         this.rows   = matrixAnnotation.rows();
         this.cols   = matrixAnnotation.cols();
-        this.mtxType = matrixAnnotation.type();
-        this.elementType = matrixAnnotation.elementType();
     }
 }
