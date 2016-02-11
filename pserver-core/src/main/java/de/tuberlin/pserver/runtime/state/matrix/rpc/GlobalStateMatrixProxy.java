@@ -4,7 +4,7 @@ import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.core.remoteobj.MethodInvocationMsg;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-import de.tuberlin.pserver.types.matrix.implementation.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.types.matrix.implementation.partitioner.AbstractMatrixPartitioner;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -30,7 +30,7 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
 
     private final StateDescriptor stateDescriptor;
 
-    private final MatrixPartitioner partitioner;
+    private final AbstractMatrixPartitioner partitioner;
 
     // ---------------------------------------------------
     // Constructors.
@@ -44,7 +44,7 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
         this.requestLatches     = new ConcurrentHashMap<>();
         this.resultObjects      = new ConcurrentHashMap<>();
 
-        this.partitioner = MatrixPartitioner.createPartitioner(
+        this.partitioner = AbstractMatrixPartitioner.createPartitioner(
                 stateDescriptor.partitionType,
                 programContext.nodeID,
                 stateDescriptor.atNodes,

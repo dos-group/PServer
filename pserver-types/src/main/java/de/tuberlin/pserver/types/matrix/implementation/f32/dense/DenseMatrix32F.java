@@ -7,8 +7,8 @@ import de.tuberlin.pserver.types.matrix.implementation.f32.operations.MatrixAggr
 import de.tuberlin.pserver.types.matrix.implementation.f32.operations.MatrixElementUnaryOperator32;
 import de.tuberlin.pserver.types.matrix.implementation.f32.operations.UnaryOperator32;
 import de.tuberlin.pserver.types.matrix.implementation.f32.sparse.SparseMatrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.partitioner.PartitionType;
 import de.tuberlin.pserver.types.matrix.metadata.AbstractDistributedMatrixType;
+import de.tuberlin.pserver.types.metadata.DistributionScheme;
 import de.tuberlin.pserver.types.metadata.InternalData;
 
 import java.util.Arrays;
@@ -27,20 +27,20 @@ public class DenseMatrix32F extends AbstractDistributedMatrixType implements Mat
     // ---------------------------------------------------
 
     public DenseMatrix32F(DenseMatrix32F toCopy) {
-        super(toCopy.nodeID, toCopy.nodes, toCopy.partitioner.getPartitionType(), toCopy.globalRows, toCopy.globalCols);
+        super(toCopy.nodeID, toCopy.nodes, toCopy.distributionScheme(), toCopy.globalRows(), toCopy.globalCols());
         this.data = (data == null) ? new float[(int)(rows() * cols())] : Preconditions.checkNotNull(data);
     }
 
     public DenseMatrix32F(long globalRows, long globalCols) {
-        this(-1, null, PartitionType.NO_PARTITIONER, globalRows, globalCols, null);
+        this(-1, null, DistributionScheme.LOCAL, globalRows, globalCols, null);
     }
 
     public DenseMatrix32F(long globalRows, long globalCols, final float[] data) {
-        this(-1, null, PartitionType.NO_PARTITIONER, globalRows, globalCols, data);
+        this(-1, null, DistributionScheme.LOCAL, globalRows, globalCols, data);
     }
 
-    public DenseMatrix32F(int nodeID, int[] nodes, PartitionType partitionType, long globalRows, long globalCols, final float[] data) {
-        super(nodeID, nodes, partitionType, globalRows, globalCols);
+    public DenseMatrix32F(int nodeID, int[] nodes, DistributionScheme distributionScheme, long globalRows, long globalCols, final float[] data) {
+        super(nodeID, nodes, distributionScheme, globalRows, globalCols);
         this.data = (data == null) ? new float[(int)(rows() * cols())] : Preconditions.checkNotNull(data);
     }
 
@@ -48,7 +48,7 @@ public class DenseMatrix32F extends AbstractDistributedMatrixType implements Mat
     // Distributed Type Metadata.
     // ---------------------------------------------------
 
-    @Override public long sizeOf() { return shape.rows * shape.cols * Float.BYTES; }
+    @Override public long sizeOf() { return rows() * cols() * Float.BYTES; }
 
     @Override public long globalSizeOf() { return globalRows * globalCols * Float.BYTES; }
 

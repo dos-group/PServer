@@ -2,6 +2,7 @@ package de.tuberlin.pserver.types.collection.implementation;
 
 
 import de.tuberlin.pserver.types.collection.metadata.AbstractDistributedCollectionType;
+import de.tuberlin.pserver.types.metadata.DistributionScheme;
 import de.tuberlin.pserver.types.metadata.InternalData;
 
 import java.util.ArrayList;
@@ -21,8 +22,8 @@ public final class DistributedCollection<T> extends AbstractDistributedCollectio
     // Constructor.
     // ---------------------------------------------------
 
-    public DistributedCollection(int nodeID, int[] nodes) {
-        super(nodeID, nodes);
+    public DistributedCollection(int nodeID, int[] nodes, DistributionScheme distributionScheme) {
+        super(nodeID, nodes, distributionScheme);
         this.data = new ArrayList<>();
     }
 

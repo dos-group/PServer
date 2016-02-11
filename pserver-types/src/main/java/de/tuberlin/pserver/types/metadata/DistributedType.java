@@ -14,6 +14,10 @@ public interface DistributedType extends Serializable {
 
     // ---------------------------------------------------
 
+    DistributionScheme distributionScheme();
+
+    // ---------------------------------------------------
+
     void owner(final Object owner);
 
     Object owner();

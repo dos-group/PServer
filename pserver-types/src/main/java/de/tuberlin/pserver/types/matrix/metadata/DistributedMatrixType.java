@@ -1,14 +1,10 @@
 package de.tuberlin.pserver.types.matrix.metadata;
 
-import de.tuberlin.pserver.types.matrix.implementation.partitioner.MatrixPartitionShape;
-import de.tuberlin.pserver.types.matrix.implementation.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.types.matrix.implementation.partitioner.AbstractMatrixPartitioner;
 import de.tuberlin.pserver.types.metadata.DistributedType;
+import de.tuberlin.pserver.types.metadata.DistributionScheme;
 
 public interface DistributedMatrixType extends DistributedType {
-
-    MatrixPartitioner partitioner();
-
-    MatrixPartitionShape shape();
 
     long rows();
 
@@ -19,4 +15,6 @@ public interface DistributedMatrixType extends DistributedType {
     long globalCols();
 
     long globalSizeOf();
+
+    AbstractMatrixPartitioner partitioner();
 }

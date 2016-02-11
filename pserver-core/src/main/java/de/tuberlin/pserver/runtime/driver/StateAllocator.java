@@ -6,7 +6,6 @@ import de.tuberlin.pserver.runtime.core.remoteobj.GlobalObject;
 import de.tuberlin.pserver.runtime.state.matrix.rpc.GlobalStateMatrixProxy;
 import de.tuberlin.pserver.types.matrix.MatrixBuilder;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.partitioner.PartitionType;
 import de.tuberlin.pserver.types.matrix.implementation.properties.ElementType;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -44,7 +43,7 @@ public final class StateAllocator {
 
                 stateObj = new MatrixBuilder()
                         .dimension(state.rows, state.cols)
-                        .matrixFormat(state.matrixType)
+                        .matrixType(state.matrixType)
                         .elementType(ElementType.getElementTypeFromClass(state.stateType))
                         .partitionType(partitionType)
                         .build(programContext.nodeID, state.atNodes);

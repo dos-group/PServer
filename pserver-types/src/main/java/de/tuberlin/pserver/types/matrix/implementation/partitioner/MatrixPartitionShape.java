@@ -52,7 +52,10 @@ public final class MatrixPartitionShape {
         return null;
     }
 
-    @Override public String toString() { return "PartitionShape ("+rows+"+"+rowOffset+","+cols+"+"+colOffset+")"; }
+    @Override public String toString() {
+        return "PartitionShape (rows = " + rows + ", rowOffset = "  + rowOffset
+            + ", cols = " + cols + ", colOffset = " + colOffset + ")";
+    }
 
     @Override
     public boolean equals(Object o) {

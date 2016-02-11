@@ -9,8 +9,7 @@ import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.f32.dense.DenseMatrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.f32.sparse.CSRMatrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.f32.sparse.SparseMatrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.partitioner.MatrixPartitioner;
-import de.tuberlin.pserver.types.matrix.implementation.partitioner.PartitionType;
+import de.tuberlin.pserver.types.matrix.implementation.partitioner.AbstractMatrixPartitioner;
 import de.tuberlin.pserver.types.matrix.implementation.properties.ElementType;
 import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
 
@@ -116,16 +115,6 @@ public final class StateDescriptor {
                 state.fileFormat(),
                 state.path(),
                 state.labels()
-        );
-    }
-
-    public static MatrixPartitioner createMatrixPartitioner(ProgramContext programContext, StateDescriptor state) {
-        return MatrixPartitioner.createPartitioner(
-                state.partitionType,
-                programContext.nodeID,
-                state.atNodes,
-                state.rows,
-                state.cols
         );
     }
 }

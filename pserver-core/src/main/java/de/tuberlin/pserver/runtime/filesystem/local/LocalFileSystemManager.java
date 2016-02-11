@@ -11,7 +11,7 @@ import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
-import de.tuberlin.pserver.types.matrix.implementation.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.types.matrix.implementation.partitioner.AbstractMatrixPartitioner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +69,7 @@ public final class LocalFileSystemManager implements FileSystemManager {
 
         ILocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(stateDescriptor.path));
         if (inputFile == null) {
-            MatrixPartitioner partitioner = StateDescriptor.createMatrixPartitioner(programContext, stateDescriptor);
+            AbstractMatrixPartitioner partitioner = StateDescriptor.createMatrixPartitioner(programContext, stateDescriptor);
             inputFile = new LocalInputFile(stateDescriptor.path, stateDescriptor.fileFormat, partitioner);
             inputFileMap.put(stateDescriptor.path, inputFile);
             registeredIteratorMap.put(stateDescriptor.path, new ArrayList<>());

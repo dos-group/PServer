@@ -8,7 +8,6 @@ import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.partitioner.PartitionType;
 import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
 
 public final class StateBuilder {

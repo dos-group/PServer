@@ -6,17 +6,13 @@ import de.tuberlin.pserver.types.matrix.implementation.f32.operations.BinaryOper
 import de.tuberlin.pserver.types.matrix.implementation.f32.operations.MatrixAggregation32;
 import de.tuberlin.pserver.types.matrix.implementation.f32.operations.MatrixElementUnaryOperator32;
 import de.tuberlin.pserver.types.matrix.implementation.f32.operations.UnaryOperator32;
-import de.tuberlin.pserver.types.matrix.implementation.partitioner.PartitionType;
 import de.tuberlin.pserver.types.matrix.metadata.AbstractDistributedMatrixType;
+import de.tuberlin.pserver.types.metadata.DistributionScheme;
 
 abstract class Matrix32FEmptyImpl extends AbstractDistributedMatrixType implements Matrix32F {
 
-    public Matrix32FEmptyImpl(AbstractDistributedMatrixType m) {
-        super(m);
-    }
-
-    public Matrix32FEmptyImpl(int nodeID, int[] nodes, PartitionType partitionType, long globalRows, long globalCols) {
-        super(nodeID, nodes, partitionType, globalRows, globalCols);
+    public Matrix32FEmptyImpl(int nodeID, int[] nodes, DistributionScheme distributionScheme, long globalRows, long globalCols) {
+        super(nodeID, nodes, distributionScheme, globalRows, globalCols);
     }
 
     @Override

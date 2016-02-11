@@ -3,15 +3,13 @@ package de.tuberlin.pserver.types.matrix.implementation.f32.sparse;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.partitioner.PartitionType;
-import de.tuberlin.pserver.types.matrix.metadata.AbstractDistributedMatrixType;
+import de.tuberlin.pserver.types.metadata.DistributionScheme;
 import de.tuberlin.pserver.types.metadata.InternalData;
 import gnu.trove.list.TFloatList;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntFloatMap;
-import gnu.trove.map.hash.TIntFloatHashMap;
 
 import java.util.Random;
 
@@ -42,16 +40,14 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
     // Constructors.
     // ---------------------------------------------------
 
-    public CSRMatrix32F(AbstractDistributedMatrixType m) {
-        super(m);
-        colList = new TIntArrayList();
-        rowPtrList = new TIntArrayList();
-        valueList = new TFloatArrayList();
-        rowPtrList.add(colList.size());
+    // Local Constructor.
+    public CSRMatrix32F(long globalRows, long globalCols) {
+        this(-1, null, DistributionScheme.LOCAL, globalRows, globalCols);
     }
 
-    public CSRMatrix32F(int nodeID, int[] nodes, PartitionType partitionType, long globalRows, long globalCols) {
-        super(nodeID, nodes, partitionType, globalRows, globalCols);
+    // Global Constructor.
+    public CSRMatrix32F(int nodeID, int[] nodes, DistributionScheme distributionScheme, long globalRows, long globalCols) {
+        super(nodeID, nodes, distributionScheme, globalRows, globalCols);
         colList = new TIntArrayList();
         rowPtrList = new TIntArrayList();
         valueList = new TFloatArrayList();
@@ -107,7 +103,7 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
     // Private Methods.
     // ---------------------------------------------------
 
-    private static int binarySearch(long[] a, int fromIndex, int toIndex, long key) {
+    /*private static int binarySearch(long[] a, int fromIndex, int toIndex, long key) {
         int low = fromIndex;
         int high = toIndex - 1;
         while (low <= high) {
@@ -137,13 +133,13 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
         rowPtr[0] = o;
         rowPtr[1] = s - o;
         return rowPtr;
-    }
+    }*/
 
     // ---------------------------------------------------
     // Public Static Methods.
     // ---------------------------------------------------
 
-    public static CSRMatrix32F fromSparseMatrix32F(SparseMatrix32F m) {
+    /*public static CSRMatrix32F fromSparseMatrix32F(SparseMatrix32F m) {
         CSRMatrix32F csrData = new CSRMatrix32F(m);
         m.createSortedKeys();
         TIntFloatHashMap d = new TIntFloatHashMap();
@@ -159,7 +155,7 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
         }
         csrData.build();
         return csrData;
-    }
+    }*/
 
     // ---------------------------------------------------
     // ROW ITERATOR.

@@ -2,6 +2,7 @@ package de.tuberlin.pserver.types.collection.metadata;
 
 
 import de.tuberlin.pserver.types.metadata.AbstractDistributedType;
+import de.tuberlin.pserver.types.metadata.DistributionScheme;
 
 public abstract class AbstractDistributedCollectionType extends AbstractDistributedType implements DistributedCollectionType {
 
@@ -15,8 +16,8 @@ public abstract class AbstractDistributedCollectionType extends AbstractDistribu
     // Constructor.
     // ---------------------------------------------------
 
-    public AbstractDistributedCollectionType(int nodeID, int[] nodes) {
-        super(nodeID, nodes);
+    public AbstractDistributedCollectionType(int nodeID, int[] nodes, DistributionScheme distributionScheme) {
+        super(nodeID, nodes, distributionScheme);
 
         // TODO!
     }

@@ -6,8 +6,8 @@ import de.tuberlin.pserver.types.matrix.implementation.f32.operations.BinaryOper
 import de.tuberlin.pserver.types.matrix.implementation.f32.operations.MatrixAggregation32;
 import de.tuberlin.pserver.types.matrix.implementation.f32.operations.MatrixElementUnaryOperator32;
 import de.tuberlin.pserver.types.matrix.implementation.f32.operations.UnaryOperator32;
-import de.tuberlin.pserver.types.matrix.implementation.partitioner.PartitionType;
 import de.tuberlin.pserver.types.matrix.metadata.AbstractDistributedMatrixType;
+import de.tuberlin.pserver.types.metadata.DistributionScheme;
 import de.tuberlin.pserver.types.metadata.InternalData;
 import gnu.trove.map.TLongFloatMap;
 import gnu.trove.map.hash.TLongFloatHashMap;
@@ -42,34 +42,14 @@ public class SparseMatrix32F extends AbstractDistributedMatrixType implements Ma
     // Constructors.
     // ---------------------------------------------------
 
+    // Local Constructor.
     public SparseMatrix32F(long globalRows, long globalCols) {
-        this(-1, null, PartitionType.NO_PARTITIONER, globalRows, globalCols, null);
+        this(-1, null,DistributionScheme.LOCAL, globalRows, globalCols);
     }
 
-    public SparseMatrix32F(long globalRows, long globalCols, final float[] data) {
-        this(-1, null, PartitionType.NO_PARTITIONER, globalRows, globalCols, data);
-    }
-
-    // Copy Constructor
-    private SparseMatrix32F(SparseMatrix32F m) {
-        this(-1, null, PartitionType.NO_PARTITIONER, m.rows(), m.cols(), null);
-        m.data.forEachEntry((k, v) -> {
-            this.data.put(k, v);
-            return true;
-        });
-    }
-
-    // Copy Constructor
-    private SparseMatrix32F(SparseMatrix32F m, long rows, long cols) {
-        this(rows, cols);
-        m.data.forEachEntry((k, v) -> {
-            this.data.put(k, v);
-            return true;
-        });
-    }
-
-    public SparseMatrix32F(int nodeID, int[] nodes, PartitionType partitionType, long globalRows, long globalCols, final float[] data) {
-        super(nodeID, nodes, partitionType, globalRows, globalCols);
+    // Global Constructor.
+    public SparseMatrix32F(int nodeID, int[] nodes, DistributionScheme distributionScheme, long globalRows, long globalCols) {
+        super(nodeID, nodes, distributionScheme, globalRows, globalCols);
         this.data = new TLongFloatHashMap((int)(rows() * cols() * 0.1));
     }
 

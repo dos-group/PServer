@@ -34,7 +34,7 @@ public class MatrixDenseLoadingRowColValTestJob extends Program {
             cols = COLS,
             scope = Scope.PARTITIONED,
             recordFormat = RowColValRecordIteratorProducer.class,
-            matrixFormat = MatrixFormat.DENSE_FORMAT
+            matrixType = MatrixFormat.DENSE_FORMAT
     )
     public Matrix64F matrix;
 
