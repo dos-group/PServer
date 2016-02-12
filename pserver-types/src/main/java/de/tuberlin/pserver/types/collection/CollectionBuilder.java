@@ -1,19 +1,19 @@
 package de.tuberlin.pserver.types.collection;
 
 
-import de.tuberlin.pserver.types.DistributedTypeBuilder;
-import de.tuberlin.pserver.types.collection.annotation.CollectionDeclaration;
-import de.tuberlin.pserver.types.collection.implementation.DistributedCollection;
+import de.tuberlin.pserver.types.AbstractBuilder;
+import de.tuberlin.pserver.types.collection.annotations.Collection;
+import de.tuberlin.pserver.types.collection.typeinfo.CollectionTypeInfo;
 
-public class CollectionBuilder extends DistributedTypeBuilder<DistributedCollection, CollectionDeclaration> {
+public class CollectionBuilder extends AbstractBuilder<CollectionTypeInfo, Collection> {
 
     @Override
-    public DistributedCollection build(int nodeID, CollectionDeclaration declaration) {
+    public CollectionTypeInfo build(int nodeID, int[] allNodes, Class<?> type, String name, Collection annotation) {
         return null;
     }
 
     @Override
-    public DistributedCollection build(int nodeID, int[] nodes) {
+    public CollectionTypeInfo build(int nodeID, int[] nodes, Class<?> type, String name) {
         return null;
     }
 }

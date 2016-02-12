@@ -2,14 +2,14 @@ package de.tuberlin.pserver.runtime.filesystem.hdfs;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.config.IConfig;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.runtime.filesystem.records.RecordIterator;
-import de.tuberlin.pserver.types.metadata.FileFormat;
+import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
+import de.tuberlin.pserver.types.typeinfo.properties.FileFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.slf4j.Logger;
@@ -62,17 +62,17 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
 
     protected Configuration conf = new Configuration();
 
-    protected final StateDescriptor state;
+    protected final DistributedTypeInfo state;
 
     // --------------------------------------------------------------------------------------------
     //  Constructors
     // --------------------------------------------------------------------------------------------
 
-    public HDFSInputFile(final IConfig config, final ProgramContext programContext, final StateDescriptor state) {
+    public HDFSInputFile(final IConfig config, final ProgramContext programContext, final DistributedTypeInfo state) {
         this.config     = Preconditions.checkNotNull(config);
         this.state      = Preconditions.checkNotNull(state);
-        this.path       = Preconditions.checkNotNull(state.declaration.path);
-        this.filePath   = new Path(state.declaration.path);
+        this.path       = Preconditions.checkNotNull(state.input().filePath());
+        this.filePath   = new Path(state.input().filePath());
         this.fileFormat = Preconditions.checkNotNull(fileFormat);
         this.netManager = programContext.runtimeContext.netManager;
 
@@ -159,7 +159,7 @@ public class HDFSInputFile implements InputFormat<Record,FileInputSplit> {
 
     public FileInputSplit[] createInputSplits() throws IOException {
 
-        int minNumSplits = state.instance.nodes().length;
+        int minNumSplits = state.nodes().length;
 
         if (minNumSplits < 1) {
             throw new IllegalArgumentException("Number of input splits has to be at least 1.");

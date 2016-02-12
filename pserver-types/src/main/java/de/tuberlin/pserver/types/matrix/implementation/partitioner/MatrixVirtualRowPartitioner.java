@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.types.matrix.implementation.partitioner;
 
-import de.tuberlin.pserver.types.matrix.metadata.DistributedMatrixType;
+import de.tuberlin.pserver.types.matrix.typeinfo.MatrixTypeInfo;
 
 
 public class MatrixVirtualRowPartitioner extends AbstractMatrixPartitioner {
@@ -9,7 +9,9 @@ public class MatrixVirtualRowPartitioner extends AbstractMatrixPartitioner {
     // Constructor.
     // ---------------------------------------------------
 
-    public MatrixVirtualRowPartitioner(DistributedMatrixType distributedMatrixType) {
+    public MatrixVirtualRowPartitioner() {};
+
+    public MatrixVirtualRowPartitioner(MatrixTypeInfo distributedMatrixType) {
         super(distributedMatrixType);
     }
 

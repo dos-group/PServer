@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.types.matrix.implementation.partitioner;
 
 
-import de.tuberlin.pserver.types.matrix.metadata.DistributedMatrixType;
+import de.tuberlin.pserver.types.matrix.typeinfo.MatrixTypeInfo;
 
 public class MatrixBlockPartitioner extends AbstractMatrixPartitioner {
 
@@ -9,7 +9,9 @@ public class MatrixBlockPartitioner extends AbstractMatrixPartitioner {
     // Constructor.
     // ---------------------------------------------------
 
-    public MatrixBlockPartitioner(DistributedMatrixType distributedMatrixType) {
+    public MatrixBlockPartitioner() {}
+
+    public MatrixBlockPartitioner(MatrixTypeInfo distributedMatrixType) {
         super(distributedMatrixType);
 
         // TODO: IMPLEMENT!

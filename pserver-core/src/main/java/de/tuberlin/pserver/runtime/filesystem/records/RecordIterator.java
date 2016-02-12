@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.runtime.filesystem.records;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.types.metadata.FileFormat;
+import de.tuberlin.pserver.types.typeinfo.properties.FileFormat;
 
 import java.io.BufferedReader;
 import java.io.InputStream;

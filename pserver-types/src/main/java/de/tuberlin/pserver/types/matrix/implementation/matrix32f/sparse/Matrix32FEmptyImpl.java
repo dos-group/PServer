@@ -6,13 +6,16 @@ import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.Bina
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.MatrixAggregation32;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.MatrixElementUnaryOperator32;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.UnaryOperator32;
-import de.tuberlin.pserver.types.matrix.metadata.AbstractDistributedMatrixType;
-import de.tuberlin.pserver.types.metadata.DistScheme;
+import de.tuberlin.pserver.types.matrix.typeinfo.AbstractMatrixTypeInfo;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
-abstract class Matrix32FEmptyImpl extends AbstractDistributedMatrixType implements Matrix32F {
+abstract class Matrix32FEmptyImpl extends AbstractMatrixTypeInfo implements Matrix32F {
 
-    public Matrix32FEmptyImpl(int nodeID, int[] nodes, DistScheme distScheme, long globalRows, long globalCols) {
-        super(nodeID, nodes, distScheme, globalRows, globalCols);
+    public Matrix32FEmptyImpl() {}
+
+    public Matrix32FEmptyImpl(int nodeID, int[] nodes, Class<?> type, String name, DistScheme distScheme,
+                           long globalRows, long globalCols, final float[] data) {
+        super(nodeID, nodes, type, name, distScheme, globalRows, globalCols);
     }
 
     @Override

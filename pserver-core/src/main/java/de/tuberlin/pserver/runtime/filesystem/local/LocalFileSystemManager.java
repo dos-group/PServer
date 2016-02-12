@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.runtime.filesystem.local;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
@@ -12,7 +11,8 @@ import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.types.matrix.implementation.partitioner.AbstractMatrixPartitioner;
-import de.tuberlin.pserver.types.matrix.metadata.DistributedMatrixType;
+import de.tuberlin.pserver.types.matrix.typeinfo.MatrixTypeInfo;
+import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,17 +66,17 @@ public final class LocalFileSystemManager implements FileSystemManager {
     @Override
     @SuppressWarnings("unchecked")
     public <T extends Record> FileDataIterator<T> createFileIterator(final ProgramContext programContext,
-                                                                     final StateDescriptor state) {
+                                                                     final DistributedTypeInfo state) {
 
-        ILocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(state.declaration.path));
+        ILocalInputFile<?> inputFile = inputFileMap.get(Preconditions.checkNotNull(state.input().filePath()));
         if (inputFile == null) {
-            AbstractMatrixPartitioner partitioner = ((DistributedMatrixType)state.instance).partitioner();
-            inputFile = new LocalInputFile(state.declaration.path, state.declaration.format, partitioner);
-            inputFileMap.put(state.declaration.path, inputFile);
-            registeredIteratorMap.put(state.declaration.path, new ArrayList<>());
+            AbstractMatrixPartitioner partitioner = ((MatrixTypeInfo)state).partitioner();
+            inputFile = new LocalInputFile(state.input().filePath(), state.input().fileFormat(), partitioner);
+            inputFileMap.put(state.input().filePath(), inputFile);
+            registeredIteratorMap.put(state.input().filePath(), new ArrayList<>());
         }
         final FileDataIterator<T> fileIterator = (FileDataIterator<T>)inputFile.iterator();
-        registeredIteratorMap.get(state.declaration.path).add(fileIterator);
+        registeredIteratorMap.get(state.input().filePath()).add(fileIterator);
         return fileIterator;
     }
 

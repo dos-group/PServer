@@ -1,9 +1,9 @@
 package de.tuberlin.pserver.runtime.filesystem;
 
-import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.common.Deactivatable;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
+import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
 
 public interface FileSystemManager extends Deactivatable {
 
@@ -21,7 +21,7 @@ public interface FileSystemManager extends Deactivatable {
 
     <T extends Record> FileDataIterator<T> createFileIterator(
             final ProgramContext programContext,
-            final StateDescriptor state);
+            final DistributedTypeInfo typeInfo);
 
     void clearContext();
 }

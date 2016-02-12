@@ -6,7 +6,7 @@ import de.tuberlin.pserver.dsl.transaction.events.TransactionPullRequestEvent;
 import de.tuberlin.pserver.dsl.transaction.events.TransactionPullResponseEvent;
 import de.tuberlin.pserver.dsl.transaction.phases.Prepare;
 import de.tuberlin.pserver.runtime.RuntimeContext;
-import de.tuberlin.pserver.types.metadata.DistributedType;
+import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.*;
@@ -30,9 +30,9 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
     private final Map<String, List<Object>> collectedResponseSrcStateObjects = new HashMap<>();
 
-    private final DistributedType[] srcStateObjects;
+    private final DistributedTypeInfo[] srcStateObjects;
 
-    private final DistributedType[] dstStateObjects;
+    private final DistributedTypeInfo[] dstStateObjects;
 
     private final int[] txnSrcNodes;
 
@@ -54,9 +54,9 @@ public class PullTransactionExecutor extends TransactionExecutor {
 
         this.transactionDefinition = controller.getTransactionDescriptor().definition;
         final int numSrcStateObjects = controller.getTransactionDescriptor().stateSrcObjectNames.size();
-        this.srcStateObjects = new DistributedType[numSrcStateObjects];
+        this.srcStateObjects = new DistributedTypeInfo[numSrcStateObjects];
         final int numDstStateObjects = controller.getTransactionDescriptor().stateDstObjectNames.size();
-        this.dstStateObjects = new DistributedType[numDstStateObjects];
+        this.dstStateObjects = new DistributedTypeInfo[numDstStateObjects];
 
         txnSrcNodes = ArrayUtils.removeElements(
                 controller.getTransactionDescriptor().srcStateObjectNodes,
@@ -98,7 +98,7 @@ public class PullTransactionExecutor extends TransactionExecutor {
         int i = 0;
         for (final String srcStateObjectName : controller.getTransactionDescriptor().stateSrcObjectNames) {
             if (ArrayUtils.contains(controller.getTransactionDescriptor().srcStateObjectNodes, runtimeContext.nodeID)) {
-                DistributedType srcObj = runtimeContext.runtimeManager.getDHT(srcStateObjectName);
+                DistributedTypeInfo srcObj = runtimeContext.runtimeManager.getDHT(srcStateObjectName);
                 srcStateObjects[i++] = srcObj;
             }
         }

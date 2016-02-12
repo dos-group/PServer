@@ -15,10 +15,10 @@ import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.ml.optimization.GradientDescent.GDOptimizer;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
-import de.tuberlin.pserver.types.matrix.annotation.Matrix;
+import de.tuberlin.pserver.types.matrix.annotations.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.metadata.DistScheme;
-import de.tuberlin.pserver.types.metadata.FileFormat;
+import de.tuberlin.pserver.types.typeinfo.annotations.Load;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
 import java.io.Serializable;
 import java.util.List;
@@ -49,16 +49,20 @@ public class LogisticRegression extends Program {
     // State.
     // ---------------------------------------------------
 
-    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TRAIN, cols = D, path = X_TRAIN_PATH, format = FileFormat.SVM_FORMAT)
+    @Load(filePath = X_TRAIN_PATH)
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TRAIN, cols = D)
     public Matrix32F XTrain;
 
-    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TRAIN, cols = 1, path = Y_TRAIN_PATH)
+    @Load(filePath = Y_TRAIN_PATH)
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TRAIN, cols = 1)
     public Matrix32F yTrain;
 
-    @Matrix(scheme = DistScheme.REPLICATED, rows = N_TEST, cols = D, path = X_TEST_PATH)
+    @Load(filePath = X_TEST_PATH)
+    @Matrix(scheme = DistScheme.REPLICATED, rows = N_TEST, cols = D)
     public Matrix32F XTest;
 
-    @Matrix(scheme = DistScheme.REPLICATED, rows = N_TEST, cols = 1, path = Y_TEST_PATH)
+    @Load(filePath = Y_TEST_PATH)
+    @Matrix(scheme = DistScheme.REPLICATED, rows = N_TEST, cols = 1)
     public Matrix32F yTest;
 
     @Matrix(scheme = DistScheme.REPLICATED, rows = 1, cols = D)

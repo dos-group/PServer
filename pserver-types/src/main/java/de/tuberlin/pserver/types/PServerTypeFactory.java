@@ -2,14 +2,10 @@ package de.tuberlin.pserver.types;
 
 
 import de.tuberlin.pserver.types.collection.CollectionBuilder;
-import de.tuberlin.pserver.types.collection.annotation.Collection;
-import de.tuberlin.pserver.types.collection.annotation.CollectionDeclaration;
+import de.tuberlin.pserver.types.collection.annotations.Collection;
 import de.tuberlin.pserver.types.matrix.MatrixBuilder;
-import de.tuberlin.pserver.types.matrix.annotation.Matrix;
-import de.tuberlin.pserver.types.matrix.annotation.MatrixDeclaration;
-import de.tuberlin.pserver.types.metadata.DistributedDeclaration;
-import de.tuberlin.pserver.types.metadata.DistributedType;
-import org.apache.commons.lang3.tuple.Pair;
+import de.tuberlin.pserver.types.matrix.annotations.Matrix;
+import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -25,16 +21,17 @@ public final class PServerTypeFactory {
 
     private static final List<Class<?>> supportedAnnotations;
 
-    private static final Map<Class<?>, Pair<Class<? extends DistributedDeclaration>, DistributedTypeBuilder>> registeredTypes;
+    private static final Map<Class<?>, AbstractBuilder> registeredTypes;
 
     static {
+
         supportedAnnotations = new ArrayList<>();
         supportedAnnotations.add(Matrix.class);
         supportedAnnotations.add(Collection.class);
 
         registeredTypes = new HashMap<>();
-        registeredTypes.put(Matrix.class,      Pair.of(MatrixDeclaration.class,        new MatrixBuilder()));
-        registeredTypes.put(Collection.class,  Pair.of(CollectionDeclaration.class,    new CollectionBuilder()));
+        registeredTypes.put(Matrix.class,      new MatrixBuilder());
+        registeredTypes.put(Collection.class,  new CollectionBuilder());
     }
 
     // ---------------------------------------------------
@@ -46,29 +43,16 @@ public final class PServerTypeFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T extends DistributedDeclaration, E extends DistributedType> Pair<T,E> newInstance(
+    public static <T extends DistributedTypeInfo> T newInstance(
             int nodeID,
             int[] allNodes,
             Class<?> type,
             String name,
             Annotation typeAnnotation) {
 
-        Pair<Class<? extends DistributedDeclaration>, DistributedTypeBuilder> registeredType
-                = registeredTypes.get(typeAnnotation.annotationType());
-
-        if (registeredType == null)
+        AbstractBuilder builder = registeredTypes.get(typeAnnotation.annotationType());
+        if (builder == null)
             throw new IllegalStateException();
-
-        Class<? extends DistributedDeclaration> declClass = registeredType.getLeft();
-        DistributedDeclaration declaration;
-        try {
-            declaration = declClass.getDeclaredConstructor(int[].class, type.getClass(), String.class, typeAnnotation.annotationType())
-                    .newInstance(allNodes, type, name, typeAnnotation);
-        } catch (Exception e) { throw new IllegalStateException(e); }
-
-        DistributedTypeBuilder distributedTypeBuilder = registeredType.getRight();
-        DistributedType distributedType = distributedTypeBuilder.build(nodeID, declaration);
-
-        return Pair.of((T)declaration, (E)distributedType);
+        return (T)builder.build(nodeID, allNodes, type, name, typeAnnotation);
     }
 }

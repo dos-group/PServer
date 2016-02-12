@@ -5,11 +5,11 @@ import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.types.matrix.MatrixBuilder;
-import de.tuberlin.pserver.types.matrix.annotation.Matrix;
+import de.tuberlin.pserver.types.matrix.annotations.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.CSRMatrix32F;
-import de.tuberlin.pserver.types.metadata.DistScheme;
-import de.tuberlin.pserver.types.metadata.FileFormat;
+import de.tuberlin.pserver.types.typeinfo.annotations.Load;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
 import java.util.Arrays;
 
@@ -34,8 +34,8 @@ public class LogRegCriteoRM extends Program {
     @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TRAIN, cols = 1)
     public DenseMatrix32F trainLabel;
 
-    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TRAIN, cols = D,
-            path = X_TRAIN_PATH, format = FileFormat.SVM_FORMAT, labels = "trainLabel")
+    @Load(filePath = X_TRAIN_PATH, labels = "trainLabel")
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TRAIN, cols = D)
     public CSRMatrix32F trainFeatures;
 
     @Matrix(scheme = DistScheme.REPLICATED, rows = 1, cols = D)

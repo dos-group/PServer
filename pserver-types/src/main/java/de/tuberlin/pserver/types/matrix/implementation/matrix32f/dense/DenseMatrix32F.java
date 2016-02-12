@@ -7,14 +7,14 @@ import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.Matr
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.MatrixElementUnaryOperator32;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.UnaryOperator32;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.SparseMatrix32F;
-import de.tuberlin.pserver.types.matrix.metadata.AbstractDistributedMatrixType;
-import de.tuberlin.pserver.types.metadata.DistScheme;
-import de.tuberlin.pserver.types.metadata.InternalData;
+import de.tuberlin.pserver.types.matrix.typeinfo.AbstractMatrixTypeInfo;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
+import de.tuberlin.pserver.types.typeinfo.properties.InternalData;
 
 import java.util.Arrays;
 import java.util.Random;
 
-public class DenseMatrix32F extends AbstractDistributedMatrixType implements Matrix32F {
+public class DenseMatrix32F extends AbstractMatrixTypeInfo implements Matrix32F {
 
     // ---------------------------------------------------
     // Fields.
@@ -26,21 +26,25 @@ public class DenseMatrix32F extends AbstractDistributedMatrixType implements Mat
     // Constructors.
     // ---------------------------------------------------
 
+    public DenseMatrix32F() {}
+
     public DenseMatrix32F(DenseMatrix32F toCopy) {
-        super(toCopy.nodeID, toCopy.nodes, toCopy.distributionScheme(), toCopy.globalRows(), toCopy.globalCols());
+        super(toCopy.nodeID, toCopy.nodes, toCopy.type(), toCopy.name(), toCopy.distributionScheme(),
+                toCopy.globalRows(), toCopy.globalCols());
         this.data = (data == null) ? new float[(int)(rows() * cols())] : Preconditions.checkNotNull(data);
     }
 
     public DenseMatrix32F(long globalRows, long globalCols) {
-        this(-1, null, DistScheme.LOCAL, globalRows, globalCols, null);
+        this(-1, null, null, null, DistScheme.LOCAL, globalRows, globalCols, null);
     }
 
     public DenseMatrix32F(long globalRows, long globalCols, final float[] data) {
-        this(-1, null, DistScheme.LOCAL, globalRows, globalCols, data);
+        this(-1, null, null, null, DistScheme.LOCAL, globalRows, globalCols, data);
     }
 
-    public DenseMatrix32F(int nodeID, int[] nodes, DistScheme distScheme, long globalRows, long globalCols, final float[] data) {
-        super(nodeID, nodes, distScheme, globalRows, globalCols);
+    public DenseMatrix32F(int nodeID, int[] nodes, Class<?> type, String name, DistScheme distScheme,
+                          long globalRows, long globalCols, final float[] data) {
+        super(nodeID, nodes, type, name, distScheme, globalRows, globalCols);
         this.data = (data == null) ? new float[(int)(rows() * cols())] : Preconditions.checkNotNull(data);
     }
 

@@ -12,11 +12,11 @@ import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
-import de.tuberlin.pserver.types.matrix.annotation.Matrix;
+import de.tuberlin.pserver.types.matrix.annotations.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
-import de.tuberlin.pserver.types.metadata.DistScheme;
-import de.tuberlin.pserver.types.metadata.FileFormat;
+import de.tuberlin.pserver.types.typeinfo.annotations.Load;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
 import java.util.Random;
 
@@ -36,18 +36,11 @@ public class KMeans extends Program {
     // State.
     // ---------------------------------------------------
 
-    @Matrix(scheme = DistScheme.H_PARTITIONED,
-            rows = ROWS,
-            cols = COLS,
-            path = "datasets/stripes2.csv",
-            format = FileFormat.SVM_FORMAT
-    )
+    @Load(filePath = "datasets/stripes2.csv")
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = ROWS, cols = COLS)
     public Matrix32F data;
 
-    @Matrix(scheme = DistScheme.REPLICATED,
-            rows = K,
-            cols = COLS + 1
-    )
+    @Matrix(scheme = DistScheme.REPLICATED, rows = K, cols = COLS + 1)
     public Matrix32F centroidsUpdate;
 
     public final Matrix32F centroids = new DenseMatrix32F(K, COLS);

@@ -12,10 +12,11 @@ import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
 import de.tuberlin.pserver.types.matrix.MatrixBuilder;
-import de.tuberlin.pserver.types.matrix.annotation.Matrix;
+import de.tuberlin.pserver.types.matrix.annotations.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.properties.ElementType;
-import de.tuberlin.pserver.types.metadata.DistScheme;
+import de.tuberlin.pserver.types.typeinfo.annotations.Load;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -43,13 +44,13 @@ public class LDA extends Program{
     private static final float ALPHA = 0.1f;
     private static final float BETA = 0.1f;
 
-
     // ---------------------------------------------------
     // State
     // ---------------------------------------------------
 
     // D is a document-term matrix, representing the corpus
-    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_DOCUMENTS, cols = N_VOCABULARY, path = DOC_TERM_PATH)
+    @Load(filePath = DOC_TERM_PATH)
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_DOCUMENTS, cols = N_VOCABULARY)
     public Matrix32F D;
 
     // N_kw keeps track of how instances of a vocabulary word are assigned to topic k

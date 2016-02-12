@@ -3,6 +3,7 @@ package de.tuberlin.pserver.compiler;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
+import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
 
 import java.util.Collection;
 import java.util.Map;
@@ -16,7 +17,7 @@ public class ProgramTable {
 
     private final Class<? extends Program> programClass;
 
-    private final Map<String, StateDescriptor> stateDescriptors;
+    private final Map<String, DistributedTypeInfo> stateDescriptors;
 
     private final Map<String, GlobalObjectDescriptor> globalObjectDescriptors;
 
@@ -55,8 +56,8 @@ public class ProgramTable {
 
     // ---------------------------------------------------
 
-    public void addState(final StateDescriptor state) {
-        stateDescriptors.put(state.declaration.name, Preconditions.checkNotNull(state));
+    public void addState(final DistributedTypeInfo state) {
+        stateDescriptors.put(state.name(), Preconditions.checkNotNull(state));
     }
 
     public void addGlobalObject(final GlobalObjectDescriptor globalObject) {
@@ -77,8 +78,8 @@ public class ProgramTable {
 
     // ---------------------------------------------------
 
-    public StateDescriptor getState(final String stateName) {
-        return stateDescriptors.get(stateName);
+    public DistributedTypeInfo getState(final String name) {
+        return stateDescriptors.get(name);
     }
 
     public GlobalObjectDescriptor getGlobalObject(final String globalObjectName) {
@@ -99,7 +100,7 @@ public class ProgramTable {
 
     // ---------------------------------------------------
 
-    public Collection<StateDescriptor> getState() { return stateDescriptors.values(); }
+    public Collection<DistributedTypeInfo> getState() { return stateDescriptors.values(); }
 
     public Collection<GlobalObjectDescriptor> getGlobalObjects() { return globalObjectDescriptors.values(); }
 

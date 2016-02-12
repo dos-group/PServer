@@ -1,9 +1,9 @@
-package de.tuberlin.pserver.types.matrix.metadata;
+package de.tuberlin.pserver.types.matrix.typeinfo;
 
 import de.tuberlin.pserver.types.matrix.implementation.partitioner.AbstractMatrixPartitioner;
-import de.tuberlin.pserver.types.metadata.DistributedType;
+import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
 
-public interface DistributedMatrixType extends DistributedType {
+public interface MatrixTypeInfo extends DistributedTypeInfo {
 
     long rows();
 

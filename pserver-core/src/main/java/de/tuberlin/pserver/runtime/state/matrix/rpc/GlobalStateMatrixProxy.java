@@ -1,9 +1,10 @@
 package de.tuberlin.pserver.runtime.state.matrix.rpc;
 
-import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.core.remoteobj.MethodInvocationMsg;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -27,23 +28,23 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
 
     private final Map<UUID, Object> resultObjects;
 
-    private final StateDescriptor state;
+    private final DistributedTypeInfo state;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
     private GlobalStateMatrixProxy(ProgramContext programContext,
-                                   StateDescriptor state) {
+                                   DistributedTypeInfo state) {
 
         this.netManager     = programContext.runtimeContext.netManager;
         this.state          = state;
         this.requestLatches = new ConcurrentHashMap<>();
         this.resultObjects  = new ConcurrentHashMap<>();
 
-        netManager.addEventListener(MethodInvocationMsg.METHOD_INVOCATION_EVENT + "_" + state.declaration.name, (event) -> {
+        netManager.addEventListener(MethodInvocationMsg.METHOD_INVOCATION_EVENT + "_" + state.name(), (event) -> {
             MethodInvocationMsg mim = (MethodInvocationMsg)event;
-            if (mim.classID == state.declaration.type.hashCode() && requestLatches.containsKey(mim.callID)) {
+            if (mim.classID == state.type().hashCode() && requestLatches.containsKey(mim.callID)) {
                 CountDownLatch cdl = requestLatches.remove(mim.callID);
                 if (mim.result != null)
                     resultObjects.put(mim.callID, mim.result);
@@ -59,9 +60,9 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
         CountDownLatch cdl = new CountDownLatch(1);
         requestLatches.put(callID, cdl);
         MethodInvocationMsg invokeMsg = new MethodInvocationMsg(
-                state.declaration.name,
+                state.name(),
                 callID,
-                state.declaration.type.hashCode(),
+                state.type().hashCode(),
                 MethodInvocationMsg.getMethodID(method),
                 arguments,
                 null
@@ -96,7 +97,7 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
         // TODO: This is likely to require a complete redesign of the DistributedMatrix abstraction....brrr
         //
 
-        switch (state.instance.distributionScheme()) {
+        switch (state.distributionScheme()) {
 
             /*case PARTITIONED: {
                 if (("set".equals(method.getName()) || "get".equals(method.getName())) && method.getParameterCount() >= 2) {
@@ -110,7 +111,8 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
                 throw new IllegalStateException();
             case SINGLETON:
             case REPLICATED:
-                netManager.dispatchEventAt(state.instance.nodes(), invokeMsg);
+                netManager.dispatchEventAt(state.nodes(), invokeMsg);
+                break;
             case H_PARTITIONED:
                 throw new UnsupportedOperationException();
             case V_PARTITIONED:
@@ -121,10 +123,10 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T create(ProgramContext programContext, StateDescriptor state) throws Exception {
+    public static <T> T create(ProgramContext programContext, DistributedTypeInfo state) throws Exception {
         return (T) Proxy.newProxyInstance(
-                state.declaration.type.getClassLoader(),
-                new Class<?>[]{state.declaration.type},
+                state.type().getClassLoader(),
+                new Class<?>[]{Matrix32F.class},
                 new GlobalStateMatrixProxy(programContext, state)
         );
     }

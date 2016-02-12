@@ -6,9 +6,9 @@ import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.Bina
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.MatrixAggregation32;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.MatrixElementUnaryOperator32;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.UnaryOperator32;
-import de.tuberlin.pserver.types.matrix.metadata.AbstractDistributedMatrixType;
-import de.tuberlin.pserver.types.metadata.DistScheme;
-import de.tuberlin.pserver.types.metadata.InternalData;
+import de.tuberlin.pserver.types.matrix.typeinfo.AbstractMatrixTypeInfo;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
+import de.tuberlin.pserver.types.typeinfo.properties.InternalData;
 import gnu.trove.map.TLongFloatMap;
 import gnu.trove.map.hash.TLongFloatHashMap;
 import org.apache.commons.lang3.NotImplementedException;
@@ -20,7 +20,7 @@ import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-public class SparseMatrix32F extends AbstractDistributedMatrixType implements Matrix32F {
+public class SparseMatrix32F extends AbstractMatrixTypeInfo implements Matrix32F {
 
     // ---------------------------------------------------
     // Logger.
@@ -42,14 +42,15 @@ public class SparseMatrix32F extends AbstractDistributedMatrixType implements Ma
     // Constructors.
     // ---------------------------------------------------
 
-    // Local Constructor.
+    public SparseMatrix32F() {}
+
     public SparseMatrix32F(long globalRows, long globalCols) {
-        this(-1, null, DistScheme.LOCAL, globalRows, globalCols);
+        this(-1, null, null, null, DistScheme.LOCAL, globalRows, globalCols, null);
     }
 
-    // Global Constructor.
-    public SparseMatrix32F(int nodeID, int[] nodes, DistScheme distScheme, long globalRows, long globalCols) {
-        super(nodeID, nodes, distScheme, globalRows, globalCols);
+    public SparseMatrix32F(int nodeID, int[] nodes, Class<?> type, String name, DistScheme distScheme,
+                          long globalRows, long globalCols, final float[] data) {
+        super(nodeID, nodes, type, name, distScheme, globalRows, globalCols);
         this.data = new TLongFloatHashMap((int)(rows() * cols() * 0.1));
     }
 

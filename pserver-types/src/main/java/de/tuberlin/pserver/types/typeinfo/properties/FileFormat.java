@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.types.metadata;
+package de.tuberlin.pserver.types.typeinfo.properties;
 
 
 public enum FileFormat {

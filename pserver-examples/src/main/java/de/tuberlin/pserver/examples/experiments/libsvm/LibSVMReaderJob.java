@@ -4,12 +4,12 @@ import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.types.matrix.annotation.Matrix;
+import de.tuberlin.pserver.types.matrix.annotations.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.CSRMatrix32F;
-import de.tuberlin.pserver.types.metadata.DistScheme;
-import de.tuberlin.pserver.types.metadata.FileFormat;
+import de.tuberlin.pserver.types.typeinfo.annotations.Load;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
 public class LibSVMReaderJob extends Program {
 
@@ -28,7 +28,8 @@ public class LibSVMReaderJob extends Program {
     @Matrix(scheme = DistScheme.H_PARTITIONED, rows = 16000, cols = 1)
     public DenseMatrix32F XTrainLabel;
 
-    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = 270, cols = 13, path = FILE_PATH, format = FileFormat.SVM_FORMAT, labels = "XTrainLabel")
+    @Load(filePath = FILE_PATH, labels = "XTrainLabel")
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = 270, cols = 13)
     public CSRMatrix32F XTrainFeatures;
 
     // ---------------------------------------------------

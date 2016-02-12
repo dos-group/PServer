@@ -1,8 +1,12 @@
-package de.tuberlin.pserver.types.metadata;
+package de.tuberlin.pserver.types.typeinfo;
+
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
+import de.tuberlin.pserver.types.typeinfo.properties.InputDescriptor;
+import de.tuberlin.pserver.types.typeinfo.properties.InternalData;
 
 import java.io.Serializable;
 
-public interface DistributedType extends Serializable {
+public interface DistributedTypeInfo extends Serializable {
 
     // ---------------------------------------------------
     // Public Methods.
@@ -35,4 +39,16 @@ public interface DistributedType extends Serializable {
     // ---------------------------------------------------
 
     <T> InternalData<T> internal();
+
+    // ---------------------------------------------------
+
+    String name();
+
+    Class<?> type();
+
+    // ---------------------------------------------------
+
+    void input(InputDescriptor id);
+
+    InputDescriptor input();
 }

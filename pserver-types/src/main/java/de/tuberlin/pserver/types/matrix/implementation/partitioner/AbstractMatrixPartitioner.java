@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.types.matrix.implementation.partitioner;
 
-import de.tuberlin.pserver.types.matrix.metadata.DistributedMatrixType;
-import de.tuberlin.pserver.types.metadata.DistScheme;
+import de.tuberlin.pserver.types.matrix.typeinfo.MatrixTypeInfo;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
 public abstract class AbstractMatrixPartitioner {
 
@@ -9,7 +9,7 @@ public abstract class AbstractMatrixPartitioner {
     // Fields.
     // ---------------------------------------------------
 
-    protected final DistributedMatrixType distributedMatrixType;
+    protected final MatrixTypeInfo distributedMatrixType;
 
     protected final MatrixPartitionShape matrixShape;
 
@@ -17,7 +17,12 @@ public abstract class AbstractMatrixPartitioner {
     // Constructors.
     // ---------------------------------------------------
 
-    public AbstractMatrixPartitioner(DistributedMatrixType distributedMatrixType) {
+    public AbstractMatrixPartitioner() {
+        this.distributedMatrixType = null;
+        this.matrixShape = null;
+    }
+
+    public AbstractMatrixPartitioner(MatrixTypeInfo distributedMatrixType) {
         this.distributedMatrixType = distributedMatrixType;
         this.matrixShape = computeMatrixPartitionShape();
     }
@@ -26,7 +31,7 @@ public abstract class AbstractMatrixPartitioner {
     // Factory Method.
     // ---------------------------------------------------
 
-    public static AbstractMatrixPartitioner createPartitioner(DistScheme distScheme, DistributedMatrixType distributedMatrixType) {
+    public static AbstractMatrixPartitioner createPartitioner(DistScheme distScheme, MatrixTypeInfo distributedMatrixType) {
         switch (distScheme) {
             case H_PARTITIONED:
                 return new MatrixRowPartitioner(distributedMatrixType);

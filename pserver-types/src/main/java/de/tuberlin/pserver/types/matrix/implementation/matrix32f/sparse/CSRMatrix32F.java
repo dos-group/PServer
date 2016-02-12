@@ -3,8 +3,8 @@ package de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.metadata.DistScheme;
-import de.tuberlin.pserver.types.metadata.InternalData;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
+import de.tuberlin.pserver.types.typeinfo.properties.InternalData;
 import gnu.trove.list.TFloatList;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TFloatArrayList;
@@ -40,14 +40,17 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
     // Constructors.
     // ---------------------------------------------------
 
+    public CSRMatrix32F() {
+    }
+
     // Local Constructor.
     public CSRMatrix32F(long globalRows, long globalCols) {
-        this(-1, null, DistScheme.LOCAL, globalRows, globalCols);
+        this(-1, null, null, null, DistScheme.LOCAL, globalRows, globalCols);
     }
 
     // Global Constructor.
-    public CSRMatrix32F(int nodeID, int[] nodes, DistScheme distScheme, long globalRows, long globalCols) {
-        super(nodeID, nodes, distScheme, globalRows, globalCols);
+    public CSRMatrix32F(int nodeID, int[] nodes, Class<?> type, String name, DistScheme distScheme, long globalRows, long globalCols) {
+        super(nodeID, nodes, type, name, distScheme, globalRows, globalCols, null);
         colList = new TIntArrayList();
         rowPtrList = new TIntArrayList();
         valueList = new TFloatArrayList();

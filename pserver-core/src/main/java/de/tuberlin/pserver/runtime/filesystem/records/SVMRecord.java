@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.runtime.filesystem.records;
 
 import de.tuberlin.pserver.commons.tuples.Tuple2;
-import de.tuberlin.pserver.types.metadata.FileFormat;
+import de.tuberlin.pserver.types.typeinfo.properties.FileFormat;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.util.*;

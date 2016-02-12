@@ -8,11 +8,12 @@ import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
-import de.tuberlin.pserver.types.matrix.annotation.Matrix;
+import de.tuberlin.pserver.types.matrix.annotations.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.SparseMatrix32F;
-import de.tuberlin.pserver.types.metadata.DistScheme;
+import de.tuberlin.pserver.types.typeinfo.annotations.Load;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.util.Random;
@@ -38,7 +39,8 @@ public final class GloveWithCompression extends Program {
     // State.
     // ---------------------------------------------------
 
-    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = COLS, cols = COLS, path = INPUT_DATA)
+    @Load(filePath = INPUT_DATA)
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = COLS, cols = COLS)
     public SparseMatrix32F X;
 
     @Matrix(scheme = DistScheme.H_PARTITIONED, rows = ROWS, cols = COLS * 2)

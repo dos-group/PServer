@@ -1,8 +1,7 @@
-package de.tuberlin.pserver.types.matrix.annotation;
+package de.tuberlin.pserver.types.matrix.annotations;
 
 
-import de.tuberlin.pserver.types.metadata.DistScheme;
-import de.tuberlin.pserver.types.metadata.FileFormat;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -19,10 +18,4 @@ public @interface Matrix {
     long rows() default 0;
 
     long cols() default 0;
-
-    FileFormat format() default FileFormat.UNDEFINED;
-
-    String path() default "";
-
-    String labels() default "";
 }

@@ -1,9 +1,12 @@
-package de.tuberlin.pserver.types.metadata;
+package de.tuberlin.pserver.types.typeinfo;
+
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
+import de.tuberlin.pserver.types.typeinfo.properties.InputDescriptor;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public abstract class AbstractDistributedType implements DistributedType {
+public abstract class AbstractDistributedTypeInfo implements DistributedTypeInfo {
 
     // ---------------------------------------------------
     // Fields.
@@ -13,25 +16,37 @@ public abstract class AbstractDistributedType implements DistributedType {
 
     public final int[] nodes;
 
+    public final String name;
+
+    public final Class<?> type;
+
     public final DistScheme distScheme;
 
     transient private Object owner;
 
     transient private final Lock lock;
 
+    private InputDescriptor inputDescriptor;
+
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
-    public AbstractDistributedType(AbstractDistributedType m) {
-        this(m.nodeID, m.nodes, m.distScheme);
+    public AbstractDistributedTypeInfo() {
+        this(-1, null, null, null, null);
     }
 
-    public AbstractDistributedType(int nodeID, int[] nodes, DistScheme distScheme) {
-        this.nodes = nodes;
-        this.nodeID = nodeID;
+    public AbstractDistributedTypeInfo(AbstractDistributedTypeInfo m) {
+        this(m.nodeID, m.nodes, m.type(), m.name(), m.distScheme);
+    }
+
+    public AbstractDistributedTypeInfo(int nodeID, int[] nodes, Class<?> type, String name, DistScheme distScheme) {
+        this.nodes      = nodes;
+        this.nodeID     = nodeID;
+        this.type       = type;
+        this.name       = name;
         this.distScheme = distScheme;
-        this.lock = new ReentrantLock(true);
+        this.lock       = new ReentrantLock(true);
     }
 
     // ---------------------------------------------------
@@ -57,4 +72,15 @@ public abstract class AbstractDistributedType implements DistributedType {
     public void lock() { lock.lock(); }
 
     public void unlock() { lock.unlock(); }
+
+
+    public String name() { return name; }
+
+    public Class<?> type() { return type; }
+
+    // ---------------------------------------------------
+
+    public void input(InputDescriptor id) { inputDescriptor = id; }
+
+    public InputDescriptor input() { return inputDescriptor; }
 }

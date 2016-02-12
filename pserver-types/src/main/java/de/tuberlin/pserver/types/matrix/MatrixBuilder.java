@@ -2,21 +2,22 @@ package de.tuberlin.pserver.types.matrix;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.types.DistributedTypeBuilder;
-import de.tuberlin.pserver.types.matrix.annotation.MatrixDeclaration;
+import de.tuberlin.pserver.commons.utils.ParseUtils;
+import de.tuberlin.pserver.types.AbstractBuilder;
+import de.tuberlin.pserver.types.matrix.annotations.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.CSRMatrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.SparseMatrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.properties.ElementType;
 import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
-import de.tuberlin.pserver.types.metadata.DistScheme;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public final class MatrixBuilder extends DistributedTypeBuilder<Matrix32F, MatrixDeclaration> {
+public final class MatrixBuilder extends AbstractBuilder<Matrix32F, Matrix> {
 
     // ---------------------------------------------------
     // Type Registration.
@@ -85,32 +86,33 @@ public final class MatrixBuilder extends DistributedTypeBuilder<Matrix32F, Matri
     // ---------------------------------------------------
 
     @Override
-    public Matrix32F build(int nodeID, MatrixDeclaration declaration) {
-        distributionScheme(declaration.distScheme);
-        dimension(declaration.rows, declaration.cols);
-        inferMatrixType(declaration.type);
-        return build(nodeID, declaration.nodes);
+    public Matrix32F build(int nodeID, int[] allNodes, Class<?> type, String name, Matrix annotation) {
+        distributionScheme(annotation.scheme());
+        dimension(annotation.rows(), annotation.cols());
+        inferMatrixType(type);
+        int[] nodes = "".equals(annotation.at()) ? allNodes : ParseUtils.parseNodeRanges(annotation.at());
+        return build(nodeID, nodes, type, name);
     }
 
     @Override
-    public Matrix32F build(int nodeID, int[] nodes) {
+    public Matrix32F build(int nodeID, int[] nodes, Class<?> type, String name) {
         Matrix32F matrix;
         switch (matrixType) {
             case SPARSE_FORMAT:
                 switch (elementType) {
-                    case FLOAT_MATRIX: matrix = new SparseMatrix32F(nodeID, nodes, distScheme, rows, cols); break;
+                    case FLOAT_MATRIX: matrix = new SparseMatrix32F(nodeID, nodes, type, name, distScheme, rows, cols, null); break;
                     case DOUBLE_MATRIX: throw new IllegalStateException();
                     default: throw new IllegalStateException();
                 } break;
             case DENSE_FORMAT:
                 switch (elementType) {
-                    case FLOAT_MATRIX: matrix = new DenseMatrix32F(nodeID, nodes, distScheme, rows, cols, null); break;
+                    case FLOAT_MATRIX: matrix = new DenseMatrix32F(nodeID, nodes, type, name, distScheme, rows, cols, null); break;
                     case DOUBLE_MATRIX: throw new IllegalStateException();
                     default: throw new IllegalStateException();
                 } break;
             case CSR_FORMAT:
                 switch (elementType) {
-                    case FLOAT_MATRIX: matrix = new CSRMatrix32F(nodeID, nodes, distScheme, rows, cols); break;
+                    case FLOAT_MATRIX: matrix = new CSRMatrix32F(nodeID, nodes, type, name, distScheme, rows, cols); break;
                     case DOUBLE_MATRIX: throw new IllegalStateException();
                     default: throw new IllegalStateException();
                 } break;

@@ -8,10 +8,10 @@ import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.types.PServerTypeFactory;
-import de.tuberlin.pserver.types.metadata.DistributedDeclaration;
-import de.tuberlin.pserver.types.metadata.DistributedType;
+import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
+import de.tuberlin.pserver.types.typeinfo.annotations.Load;
+import de.tuberlin.pserver.types.typeinfo.properties.InputDescriptor;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -84,18 +84,18 @@ public final class Compiler {
         int[] allNodes = IntStream.iterate(0, x -> x + 1).limit(runtimeContext.numOfNodes).toArray();
         for (final Field field : programClass.getDeclaredFields()) {
             for (final Annotation typeAn : field.getDeclaredAnnotations()) {
-
                 if (PServerTypeFactory.isSupportedType(typeAn.annotationType())) {
-
-                    Pair<DistributedDeclaration, DistributedType> declAndInstance =
+                    DistributedTypeInfo instance =
                             PServerTypeFactory.newInstance(runtimeContext.nodeID, allNodes, field.getType(), field.getName(), typeAn);
+                    programTable.addState(instance);
 
-                    StateDescriptor state = new StateDescriptor(
-                            declAndInstance.getLeft(),
-                            declAndInstance.getRight()
-                    );
-
-                    programTable.addState(state);
+                    for (final Annotation loadAn : field.getDeclaredAnnotations()) {
+                        if (loadAn instanceof Load) {
+                            InputDescriptor id = InputDescriptor.createInputDescriptor((Load) loadAn);
+                            instance.input(id);
+                            break;
+                        }
+                    }
                 }
             }
         }

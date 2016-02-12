@@ -1,7 +1,7 @@
-package de.tuberlin.pserver.types.collection.annotation;
+package de.tuberlin.pserver.types.collection.annotations;
 
 
-import de.tuberlin.pserver.types.metadata.DistScheme;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -1,16 +1,16 @@
 package de.tuberlin.pserver.types.collection.implementation;
 
 
-import de.tuberlin.pserver.types.collection.metadata.AbstractDistributedCollectionType;
-import de.tuberlin.pserver.types.metadata.DistScheme;
-import de.tuberlin.pserver.types.metadata.InternalData;
+import de.tuberlin.pserver.types.collection.typeinfo.AbstractCollectionTypeInfo;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
+import de.tuberlin.pserver.types.typeinfo.properties.InternalData;
 
 import java.util.ArrayList;
 import java.util.List;
 
 // TODO: READ IT - http://atomix.io/atomix/user-manual/resources/
 
-public final class DistributedCollection<T> extends AbstractDistributedCollectionType {
+public final class DCollection<T> extends AbstractCollectionTypeInfo {
 
     // ---------------------------------------------------
     // Fields.
@@ -22,8 +22,8 @@ public final class DistributedCollection<T> extends AbstractDistributedCollectio
     // Constructor.
     // ---------------------------------------------------
 
-    public DistributedCollection(int nodeID, int[] nodes, DistScheme distScheme) {
-        super(nodeID, nodes, distScheme);
+    public DCollection(int nodeID, int[] nodes, Class<?> type, String name, DistScheme distScheme) {
+        super(nodeID, nodes, type, name, distScheme);
         this.data = new ArrayList<>();
     }
 
