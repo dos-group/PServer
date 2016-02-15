@@ -22,19 +22,19 @@ public abstract class AbstractLinkedList<T> extends AbstractRADT<T> implements I
         this.head = null;
     }
 
-    public Node<T> getHead() {
+    public synchronized Node<T> getHead() {
         return head;
     }
 
-    protected Node<T> getSVIEntry(S4Vector s4) {
+    protected synchronized Node<T> getSVIEntry(S4Vector s4) {
         return svi.get(s4);
     }
 
-    protected void setSVIEntry(Node<T> node) {
+    protected synchronized void setSVIEntry(Node<T> node) {
         svi.put(node.getS4Vector(), node);
     }
 
-    protected void setHead(Node<T> node) {
+    protected synchronized void setHead(Node<T> node) {
         this.head = node;
     }
 

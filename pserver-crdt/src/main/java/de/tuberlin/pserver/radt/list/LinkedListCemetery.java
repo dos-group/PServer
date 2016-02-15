@@ -27,18 +27,19 @@ public class LinkedListCemetery<T> extends AbstractCemetery<Node<T>> {
 
     public synchronized boolean purge() {
         boolean purged = false;
-        int i = 0;
         Node<T> node;
 
         for(Queue<Node<T>> queue : cemetery) {
-            //System.out.println("[DEBUG]" + nodeId +" Checking cemetery queue " + i);
-            i++;
 
+            //System.out.println(nodeId + "One: " + allReplicasHaveExecutedDelete(queue.peek()) + ", Two: " + noTwo(queue.peek()));
 
-            while(allReplicasHaveExecutedDelete(queue.peek())) {
+            while(allReplicasHaveExecutedDelete(queue.peek()) && noTwo(queue.peek())) {
                 node = queue.poll();
+                //System.out.println(list);
                 //System.out.println("[DEBUG]" + nodeId +" Removing " + node.getS4Vector());
                 list.removeTombstone(node);
+                //System.out.println(list);
+
                 purged = true;
             }
         }
@@ -54,6 +55,7 @@ public class LinkedListCemetery<T> extends AbstractCemetery<Node<T>> {
     }
 
     private synchronized boolean noTwo(Node<T> node) {
+        if(node == null) return false;
         if(node.getLink() == null) return true;
         // TODO: should I use node.getUpdateDeleteS4().getSiteId() ? => prob no
         return node.getLink().getS4Vector().getVectorClockSum() < getMinVectorSumEntry();

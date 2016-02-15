@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.radt;
+package de.tuberlin.pserver.performance;
 
 
 import com.google.common.collect.Lists;
@@ -16,7 +16,7 @@ import java.util.List;
 import static org.junit.Assert.assertArrayEquals;
 
 
-public class LinkedListTestJob extends Program {
+public class LinkedListPerformanceTest extends Program {
     private static final int NUM_NODES = 5;
     private static final String RADT_ID = "linkedList";
     private static final int NUM_ELEMENTS = 1000;
@@ -88,7 +88,7 @@ public class LinkedListTestJob extends Program {
         System.setProperty("jvmOptions", "[\"-Xmx256m\"]");
 
         PServerExecutor.LOCAL
-                .run(LinkedListTestJob.class)
+                .run(LinkedListPerformanceTest.class)
                 .results(results)
                 .done();
 

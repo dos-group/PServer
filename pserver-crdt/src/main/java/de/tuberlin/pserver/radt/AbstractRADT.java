@@ -32,8 +32,8 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
 
         // Initialize queue
         this.queue = new PriorityQueue<>((o1, o2) -> {
-            if (o1.getValue().getS4Vector().precedes(o2.getValue().getS4Vector())) return -1;
-            else if (o2.getValue().getS4Vector().precedes(o1.getValue().getS4Vector())) return 1;
+            if (o1.getS4Vector().precedes(o2.getS4Vector())) return -1;
+            else if (o2.getS4Vector().precedes(o1.getS4Vector())) return 1;
             else return 0;
         });
 
@@ -56,7 +56,26 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
                         //System.out.println("[" + nodeId + "] Received " + ((ArrayOperation<T>)radtOp).getValue() + "; " + radtOp.getS4Vector());
                         queue.add(radtOp);
 
+                        /*StringBuilder sb = new StringBuilder();
+                        sb.append("\n"+nodeId + " Local vector clock: [");
+                        for(int i = 0; i < vectorClock.length; i++) {
+                            sb.append(vectorClock[i] + ", ");
+                        }
+                        sb.append("]");
+                        System.out.println(sb.toString());
+
+                        StringBuilder sb2 = new StringBuilder();
+                        sb2.append(nodeId + " Queue head vector clock: [");
+                        for(int i = 0; i < queue.peek().getVectorClock().length; i++) {
+                            sb2.append(queue.peek().getVectorClock()[i] + ", ");
+                        }
+                        sb2.append("]");
+                        System.out.println(sb2.toString());*/
+
+
+
                         while(queue.peek() != null && isCausallyReadyFor(queue.peek())) {
+                            //System.out.println("Applied");
                             radtOp = queue.poll();
                             updateVectorClock(radtOp.getVectorClock());
                             update(srcNodeID, radtOp);
@@ -80,7 +99,21 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
         //System.out.println();
         //System.out.println("Local vector clock: " + vectorClock[op.getS4Vector().getSiteId()]);
         //System.out.println("Remote vector clock: " + op.getVectorClock()[op.getS4Vector().getSiteId()]);
-        return vectorClock[op.getS4Vector().getSiteId()] == (op.getVectorClock()[op.getS4Vector().getSiteId()] - 1);
+        boolean condition1 = (vectorClock[op.getS4Vector().getSiteId()] + 1) == op.getVectorClock()[op.getS4Vector().getSiteId()];
+        boolean condition2 = condTwo(op);
+
+
+        return condition1 && condition2;
+    }
+
+    private synchronized boolean condTwo(RADTOperation<CObject<T>> op) {
+        for (int i = 0; i < vectorClock.length; i++) {
+            if(i != op.getS4Vector().getSiteId()) {
+                if(op.getVectorClock()[i] > vectorClock[i]) return false;
+            }
+        }
+
+        return true;
     }
 
     protected synchronized int[] increaseVectorClock() {
@@ -92,6 +125,11 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
         for(int i = 0; i < remoteVectorClock.length; i++) {
             vectorClock[i] = Math.max(vectorClock[i], remoteVectorClock[i]);
         }
+    }
+
+    // TODO: delete this method
+    public Queue<RADTOperation<CObject<T>>> getQueue() {
+        return this.queue;
     }
 
     // ---------------------------------------------------

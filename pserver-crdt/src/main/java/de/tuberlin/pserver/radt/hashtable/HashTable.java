@@ -32,6 +32,9 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
         Preconditions.checkArgument(key != null);
         Preconditions.checkArgument(value != null);
 
+        //System.out.println("[DEBUG] " + nodeId+"|"+key + " Put, Value: " + value);
+
+
         int[] clock = increaseVectorClock();
         S4Vector s4 = new S4Vector(nodeId, clock);
 
@@ -62,6 +65,10 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
 
         int[] clock = increaseVectorClock();
         S4Vector s4 = new S4Vector(nodeId, clock);
+
+        slot.setS4Vector(s4);
+        //System.out.println("[DEBUG] " + nodeId+"|"+key + " Remove");
+
 
         broadcast(new HashTableOperation<>(Operation.OpType.REMOVE, key, null, clock, s4));
         return true;
@@ -113,15 +120,17 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
 
     private synchronized boolean remotePut(K key, V value, S4Vector s4) {
         Slot<K,V> currSlot = map.get(key);
-        //System.out.println("[DEBUG]" + nodeId+"|"+key + " Remote Put, Value: " + value);
+        //System.out.println("[DEBUG] " + nodeId+"|"+key + " Remote Put, Value: " + value);
 
         if(currSlot == null) {
-            //System.out.println("[DEBUG]" + nodeId+"|"+key + " Remote Put, slot is empty");
+            System.out.println("[DEBUG]" + nodeId+"|"+key + " Remote Put, slot is empty");
             map.put(key, new Slot<>(key, value, s4));
             return true;
         }
 
         if(s4.precedes(currSlot.getS4Vector())) return false;
+
+        //System.out.println("[DEBUG] " + nodeId+"|"+key + " Remote Put Executed, Value: " + value);
 
         if(currSlot.isTombstone()) cemetery.withdraw(currSlot);
 
@@ -131,17 +140,19 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
         return true;
     }
 
-    // TODO: double-check implementation of this method
     private synchronized boolean remoteRemove(K key, S4Vector s4) {
         Slot<K,V> currSlot = map.get(key);
 
-        //System.out.println("[DEBUG]" + nodeId + "|" + key + " Remote Remove");
+        //System.out.println("[DEBUG] " + nodeId + "|" + key + " Remote Remove ");
+        //System.out.println("Curr S4: " + currSlot.getS4Vector() + ", New S4: " + s4);
 
         if(currSlot == null) {
-            throw new CRDTException("Attempting to remote remove a slot which doesn't exist at the replica " + nodeId);
+            throw new CRDTException("Attempting to remote remove slot with key " + key + " which doesn't exist at node " + nodeId);
         }
 
         if(s4.precedes(currSlot.getS4Vector()))  return false;
+
+        //System.out.println("[DEBUG] " + nodeId + "|" + key + " Remote Remove Executed");
 
         if(!currSlot.isTombstone()) cemetery.enrol(nodeId, currSlot);
 

@@ -11,48 +11,36 @@ import org.junit.Test;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Random;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 public class ArrayTestJob extends Program {
-    private static final int NUM_NODES = 2;
-    private static final int NUM_REPLICAS = 2;
-    private static final int ARRAY_SIZE = 5;
+    private static final int NUM_NODES = 3;
+    private static final int ARRAY_SIZE = 1000;
+    private static final int ITERATIONS = 1000;
+    private static final int MAX_VALUE = 100000;
 
     private static final String RADT_ID = "array";
 
     @Unit
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            Array<Integer> array = new Array<>(ARRAY_SIZE, RADT_ID, NUM_REPLICAS, programContext);
+            Array<Integer> array = new Array<>(ARRAY_SIZE, RADT_ID, NUM_NODES, programContext);
+            Random rand = new Random(Calendar.getInstance().getTimeInMillis());
 
-            if(programContext.nodeID % 2 == 0) {
-                for (int i = 0; i <= 10; i++) {
-                    array.write(1, i);
-                }
+            System.out.println("[TEST] " + programContext.nodeID + " Starting writes");
 
-                Thread.sleep(1000);
-
-                array.write(0, 11);
-                array.write(1, 22);
-                array.write(2, 33);
-                array.write(3, 44);
-                array.write(4, 55);
+            for(int i = 0; i < ITERATIONS; i++) {
+                array.write(rand.nextInt(ARRAY_SIZE), rand.nextInt(MAX_VALUE));
             }
-            else {
-                for (int i = 20; i <= 30; i++) {
-                    array.write(1, i);
-                }
 
-                array.write(0, 111);
-                array.write(1, 222);
-                array.write(2, 333);
-                array.write(3, 444);
-                array.write(4, 555);
-            }
             array.finish();
+
+            System.out.println("[TEST] " + programContext.nodeID + " Finished.");
 
             result(array.getArray());
 
@@ -82,5 +70,8 @@ public class ArrayTestJob extends Program {
         for(int i = 1; i < results.size(); i++) {
             assertArrayEquals("The resulting CRDTs are not identical", firstResult, (Object[])results.get(i).get(0));
         }
+
+        System.out.println("[TEST] Passed: CRDTs have converged to consistent state.");
+
     }
 }

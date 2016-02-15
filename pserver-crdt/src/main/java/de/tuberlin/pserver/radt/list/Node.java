@@ -25,24 +25,24 @@ public class Node<T> extends CObject<T> implements Serializable {
         this.link = link;
     }
 
-    public void setLink(Node<T> link) {
+    public synchronized void setLink(Node<T> link) {
         this.link = link;
     }
 
-    public Node<T> getLink() {
+    public synchronized Node<T> getLink() {
         return link;
     }
 
-    public S4Vector getUpdateDeleteS4() {
+    public synchronized S4Vector getUpdateDeleteS4() {
         return updateDeleteS4;
     }
 
-    public void setUpdateDeleteS4(S4Vector s4) {
+    public synchronized void setUpdateDeleteS4(S4Vector s4) {
         this.updateDeleteS4 = s4;
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
         final StringBuilder sb = new StringBuilder(getValue().toString());
         return sb.toString();
     }

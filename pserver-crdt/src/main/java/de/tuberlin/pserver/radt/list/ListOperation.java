@@ -12,19 +12,19 @@ public class ListOperation<T> extends RADTOperation<T> {
      * DELETE: secondary s4 is the s4 vector used for precedence of updates/deletes (s_p in Roh et al.)
      */
     // TODO: explain the different types
-    private final S4Vector secondaryS4;
+    private final S4Vector refS4;
 
     // no-args constructor for serialization
     public ListOperation() {
-        this.secondaryS4 = null;
+        this.refS4 = null;
     }
 
-    public ListOperation(OpType type, T value, S4Vector secondaryS4, int[] vectorClock, S4Vector s4) {
+    public ListOperation(OpType type, T value, S4Vector s4, S4Vector refS4, int[] vectorClock) {
         super(type, value, vectorClock, s4);
-        this.secondaryS4 = secondaryS4;
+        this.refS4 = refS4;
     }
 
-    public S4Vector getSecondaryS4() {
-        return secondaryS4;
+    public S4Vector getRefS4() {
+        return refS4;
     }
 }

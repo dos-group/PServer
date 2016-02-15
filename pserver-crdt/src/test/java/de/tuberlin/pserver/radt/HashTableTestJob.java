@@ -7,64 +7,53 @@ import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.radt.hashtable.HashTable;
+import org.jblas.util.Random;
 import org.junit.Test;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertArrayEquals;
 
 public class HashTableTestJob extends Program {
-    private static final int NUM_NODES = 2;
-    private static final int NUM_REPLICAS = 2;
+    private static final int NUM_NODES = 4;
+    private static final int NUM_ELEMENTS = 1000;
+
 
     private static final String RADT_ID = "hashtable";
 
     @Unit
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            HashTable<Integer, Integer> hashTable = new HashTable<>(RADT_ID, NUM_REPLICAS, programContext);
+            HashTable<Integer, Integer> hashTable = new HashTable<>(RADT_ID, NUM_NODES, programContext);
 
-            if(programContext.nodeID % 2 == 0) {
-                hashTable.put(555, 10000);
-                hashTable.put(444, 10000);
-                hashTable.remove(555);
-                hashTable.remove(444);
-                Thread.sleep(5000);
+            System.out.println("[TEST] " + programContext.nodeID + " Starting puts");
 
-                for (int i = 0; i <= 10; i++) {
-                    hashTable.put(i, i);
-                }
+            IntStream.range(0, NUM_ELEMENTS)
+                    .forEach(i -> hashTable.put(Random.nextInt(NUM_ELEMENTS), Random.nextInt(NUM_ELEMENTS)));
 
-                hashTable.put(11, 11);
-                for (int i = 0; i <= 10; i++) {
-                    hashTable.put(i, i);
-                }
-            }
-            else {
-                for (int i = 20; i <= 30; i++) {
+            System.out.println("[TEST] " + programContext.nodeID + " Starting removes");
 
-                    hashTable.put(1, i);
-                }
-
-                hashTable.put(0, 111);
-                hashTable.put(1, 222);
-                hashTable.put(2, 333);
-                hashTable.put(3, 444);
-                hashTable.put(4, 555);
-
-                hashTable.put(454, 3434);
-                hashTable.remove(454);
-
-                Thread.sleep(3000);
-                hashTable.put(11, 11);
-            }
+            IntStream.range(0,NUM_ELEMENTS/5)
+                    .forEach(i -> hashTable.remove(Random.nextInt(NUM_ELEMENTS / 2)));
 
             hashTable.finish();
-            //result(hashTable.getEntrySet().toArray());
+
+
+            List<int[]> result = hashTable.getEntrySet().stream()
+                    .map(entry -> new int[]{entry.getKey(), entry.getValue()})
+                    .collect(Collectors.toList());
+
+            result(result.toArray());
+
+            System.out.println("[TEST] " + programContext.nodeID + " Finished.");
 
             System.out.println("\n[DEBUG] HashTable of node " + programContext.runtimeContext.nodeID + ": "
                     + hashTable.toString());
+            System.out.println("[DEBUG] Queue of HashTable of node " + programContext.runtimeContext.nodeID + ": "
+                    + hashTable.getQueue().size());
         });
     }
 
@@ -85,11 +74,13 @@ public class HashTableTestJob extends Program {
 
         // TODO: assert test results.
 
-        //Object[] firstResult = ((Object[])results.get(0).get(0));
+        Object[] firstResult = ((Object[])results.get(0).get(0));
 
-        // Compare results of the CRDTs
-        /*for(int i = 1; i < results.size(); i++) {
+        //Compare results of the CRDTs
+        for(int i = 1; i < results.size(); i++) {
             assertArrayEquals("The resulting CRDTs are not identical", firstResult, (Object[])results.get(i).get(0));
-        }*/
+        }
+
+        System.out.println("[TEST] Passed: CRDTs have converged to consistent state.");
     }
 }

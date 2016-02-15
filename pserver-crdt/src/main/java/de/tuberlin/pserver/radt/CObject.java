@@ -49,7 +49,7 @@ public abstract class CObject<T> implements Serializable {
         this.value = value;
     }
 
-    public boolean isTombstone() {
+    public synchronized boolean isTombstone() {
         return getValue() == null;
     }
 
@@ -58,7 +58,7 @@ public abstract class CObject<T> implements Serializable {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public synchronized boolean equals(Object obj) {
         if (this == obj) return true;
         if (!(obj instanceof CObject)) return false;
 
@@ -71,7 +71,7 @@ public abstract class CObject<T> implements Serializable {
     }
 
     @Override
-    public int hashCode() {
+    public synchronized int hashCode() {
         return new HashCodeBuilder(17, 37)
                 .append(s4Vector)
                 .append(value)

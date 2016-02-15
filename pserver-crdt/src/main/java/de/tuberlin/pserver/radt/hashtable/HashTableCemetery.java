@@ -42,8 +42,8 @@ public class HashTableCemetery<K,V> extends AbstractCemetery<Slot<K,V>> {
     private synchronized boolean allReplicasHaveExecutedDelete(Slot<K,V> slot) {
         // Every site has executed the deletion D, therefore from now on only operations happening after D will arrive
         if(slot == null) return false;
-        System.out.println("Seq: " + slot.getS4Vector().getSeq());
-        System.out.println("Min: " + getMinVectorClockEntry(slot.getS4Vector().getSiteId())+"\n");
+        //System.out.println("Seq: " + slot.getS4Vector().getSeq());
+        //System.out.println("Min: " + getMinVectorClockEntry(slot.getS4Vector().getSiteId())+"\n");
         return slot.getS4Vector().getSeq() <= getMinVectorClockEntry(slot.getS4Vector().getSiteId());
     }
 }
