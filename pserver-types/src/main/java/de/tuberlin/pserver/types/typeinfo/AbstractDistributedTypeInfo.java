@@ -20,6 +20,8 @@ public abstract class AbstractDistributedTypeInfo implements DistributedTypeInfo
 
     public final Class<?> type;
 
+    public boolean globalAccess = false;
+
     public final DistScheme distScheme;
 
     transient private Object owner;
@@ -73,10 +75,15 @@ public abstract class AbstractDistributedTypeInfo implements DistributedTypeInfo
 
     public void unlock() { lock.unlock(); }
 
+    // ---------------------------------------------------
 
     public String name() { return name; }
 
     public Class<?> type() { return type; }
+
+    public void setGlobalAccess() { globalAccess = true; }
+
+    public boolean hasGlobalAccess() { return globalAccess; }
 
     // ---------------------------------------------------
 

@@ -46,6 +46,10 @@ public interface DistributedTypeInfo extends Serializable {
 
     Class<?> type();
 
+    void setGlobalAccess();
+
+    boolean hasGlobalAccess();
+
     // ---------------------------------------------------
 
     void input(InputDescriptor id);

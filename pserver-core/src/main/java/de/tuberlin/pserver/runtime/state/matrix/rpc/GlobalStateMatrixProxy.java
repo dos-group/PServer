@@ -126,7 +126,7 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
     public static <T> T create(ProgramContext programContext, DistributedTypeInfo state) throws Exception {
         return (T) Proxy.newProxyInstance(
                 state.type().getClassLoader(),
-                new Class<?>[]{Matrix32F.class},
+                new Class<?>[]{state.type()},
                 new GlobalStateMatrixProxy(programContext, state)
         );
     }

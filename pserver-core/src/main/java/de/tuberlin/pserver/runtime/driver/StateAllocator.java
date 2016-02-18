@@ -28,7 +28,8 @@ public final class StateAllocator {
 
             } else {
 
-                proxyObj = GlobalStateMatrixProxy.create(programContext, state);
+                if (state.hasGlobalAccess())
+                    proxyObj = GlobalStateMatrixProxy.create(programContext, state);
             }
 
         return Pair.of(stateObj, proxyObj);

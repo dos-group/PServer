@@ -9,6 +9,7 @@ import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.types.PServerTypeFactory;
 import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
+import de.tuberlin.pserver.types.typeinfo.annotations.GlobalAccess;
 import de.tuberlin.pserver.types.typeinfo.annotations.Load;
 import de.tuberlin.pserver.types.typeinfo.properties.InputDescriptor;
 import org.apache.commons.lang3.ArrayUtils;
@@ -88,12 +89,16 @@ public final class Compiler {
                     DistributedTypeInfo instance =
                             PServerTypeFactory.newInstance(runtimeContext.nodeID, allNodes, field.getType(), field.getName(), typeAn);
                     programTable.addState(instance);
-
-                    for (final Annotation loadAn : field.getDeclaredAnnotations()) {
-                        if (loadAn instanceof Load) {
-                            InputDescriptor id = InputDescriptor.createInputDescriptor((Load) loadAn);
+                    for (final Annotation an : field.getDeclaredAnnotations()) {
+                        if (an instanceof Load) {
+                            InputDescriptor id = InputDescriptor.createInputDescriptor((Load) an);
                             instance.input(id);
-                            break;
+                        }
+                        if (an instanceof GlobalAccess) {
+                            if (!field.getType().isInterface()) {
+                                throw new IllegalStateException("Global access requires a interface type for field: " + field.getName());
+                            }
+                            instance.setGlobalAccess();
                         }
                     }
                 }
