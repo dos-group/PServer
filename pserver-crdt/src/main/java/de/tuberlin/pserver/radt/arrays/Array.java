@@ -71,7 +71,7 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
     @Override
     protected boolean update(int srcNodeId, Operation op) {
         @SuppressWarnings("unchecked")
-        ArrayOperation<Item<T>> arrayOp = (ArrayOperation<Item<T>>) op;
+        ArrayOperation<Element<T>> arrayOp = (ArrayOperation<Element<T>>) op;
 
         switch(arrayOp.getType()) {
             case WRITE:
@@ -93,7 +93,7 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
         int[] clock = increaseVectorClock();
         S4Vector s4 = new S4Vector(nodeId, clock);
 
-        Item<T> item = new Item<>(index, s4, value);
+        Element<T> item = new Element<>(index, s4, value);
         set(index, item);
 
         broadcast(new ArrayOperation<>(Operation.OpType.WRITE, item, index, clock, s4));
@@ -101,8 +101,8 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
         return true;
     }
 
-    private synchronized boolean remoteWrite(Item<T> item) {
-        Item current = get(item.getIndex());
+    private synchronized boolean remoteWrite(Element<T> item) {
+        Element current = get(item.getIndex());
 
         if(current.getS4Vector().precedes(item.getS4Vector())) {
             set(item.getIndex(), item);

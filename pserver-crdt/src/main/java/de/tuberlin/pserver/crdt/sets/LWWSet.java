@@ -79,7 +79,7 @@ public class LWWSet<T> extends AbstractSet<T> {
                 .collect(Collectors.toSet());
     }
 
-    private synchronized boolean addElement(T element, long time) {
+    private synchronized boolean  addElement(T element, long time) {
         Long oldVal = addMap.putIfAbsent(element, time);
         if(oldVal == null) return true;
 

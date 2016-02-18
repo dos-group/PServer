@@ -110,6 +110,7 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
         if(node == null) return false;
 
         cemetery.enrol(nodeId, node);
+        size--;
 
 
         int[] clock = increaseVectorClock();
@@ -300,6 +301,7 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
 
         node.setUpdateDeleteS4(s4);
         cemetery.enrol(srcNodeId, node);
+        size--;
 
         return true;
     }

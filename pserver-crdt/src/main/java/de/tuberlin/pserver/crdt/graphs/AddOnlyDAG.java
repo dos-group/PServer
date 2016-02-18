@@ -15,14 +15,23 @@ import java.util.Set;
 // TODO: This implementation is not functional yet... :( => saved for later
 public class AddOnlyDAG<T> extends AbstractGraph<T> {
 
-
     public AddOnlyDAG(String id, int noOfReplicas, ProgramContext programContext) {
         super(id, noOfReplicas, programContext);
+
+        // Add left and right sentinels
+        Vertex<T> leftSentinel = new Vertex<>(0, null);
+        Vertex<T> rightSentinel = new Vertex<>(1, null);
+        addVertex(leftSentinel);
+        addVertex(rightSentinel);
+
+        // Add default sentinel edge
+        addEdge(new Edge(leftSentinel, rightSentinel));
+
+        ready();
     }
 
     @Override
     public boolean addVertex(Vertex<T> v) {
-
         return vertices.add(v);
     }
 

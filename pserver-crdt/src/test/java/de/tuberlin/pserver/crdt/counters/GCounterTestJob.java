@@ -14,29 +14,22 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 public class GCounterTestJob extends Program {
-    private static final int NUM_NODES = 2;
-    private static final int NUM_REPLICAS = 2;
-
-    private static final String CRDT_ID1 = "all";
-    private static final String CRDT_ID2 = "odd";
+    private static final int NUM_NODES = 3;
+    private static final int NUM_OPERATIONS = 10000;
+    private static final String CRDT_ID1 = "counter";
 
     @Unit
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            GCounter counter = GCounter.newReplica(CRDT_ID1, NUM_REPLICAS, programContext);
-            GCounter evenCounter = GCounter.newReplica(CRDT_ID2, NUM_REPLICAS, programContext);
+            GCounter counter = GCounter.newReplica(CRDT_ID1, NUM_NODES, programContext);
 
-            for (int i = 1; i < 10000; i++) {
+            for (int i = 1; i < NUM_OPERATIONS; i++) {
                 counter.increment(i);
-                if ((i % 2) == 0) {
-                    evenCounter.increment(i);
-                }
             }
 
             counter.finish();
-            evenCounter.finish();
 
-            result(counter.getCount(), evenCounter.getCount());
+            result(counter.getCount());
 
             /*
             System.out.println("[DEBUG] Count of node " + programContext.runtimeContext.nodeID + ": " + counter.getCount());
@@ -63,7 +56,10 @@ public class GCounterTestJob extends Program {
                 .done();
 
         // Compare results of the CRDTs
-        assertEquals("Blub", (Long)results.get(0).get(0), (Long)results.get(1).get(0));
-        assertEquals("Blub", (Long)results.get(0).get(1), (Long)results.get(1).get(1));
+        long firstCount = (Long) results.get(0).get(0);
+
+        for(int i = 1; i < NUM_NODES; i++) {
+            assertEquals("CRDTs are not equal.", firstCount, (long)results.get(1).get(0));
+        }
     }
 }

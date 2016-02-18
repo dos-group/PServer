@@ -84,9 +84,6 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
                 }
             }
         });
-
-        // Start the RADT
-        //ready();
     }
 
     // ---------------------------------------------------
@@ -94,11 +91,6 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
     // ---------------------------------------------------
 
     protected synchronized boolean isCausallyReadyFor(RADTOperation<CObject<T>> op) {
-        // TODO: what about if sum > vectorClockSum => must the operation be purged from queue?
-        // TODO: this needs verification
-        //System.out.println();
-        //System.out.println("Local vector clock: " + vectorClock[op.getS4Vector().getSiteId()]);
-        //System.out.println("Remote vector clock: " + op.getVectorClock()[op.getS4Vector().getSiteId()]);
         boolean condition1 = (vectorClock[op.getS4Vector().getSiteId()] + 1) == op.getVectorClock()[op.getS4Vector().getSiteId()];
         boolean condition2 = condTwo(op);
 

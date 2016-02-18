@@ -15,13 +15,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 
-// TODO: what about exceptions in general
-// TODO: what if someone uses the same id for two crdts?
+// TODO: what if someone uses the same id for two crdts? => perhaps have a CRDT manager?
 // TODO: comments and documentation
 // TODO: improve the P2P discovery and termination
-// TODO: Timeout for "ready" p2p discovery?
-// TODO: ready() function should be blocking or non-blocking with buffer?
-// TODO: make nice logging messages
+// TODO: make nice logging messages (+ exceptions)
 
 /**
  * <p>
@@ -101,8 +98,8 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
         this.crdtId = crdtId;
         this.nodeId = programContext.runtimeContext.nodeID;
 
-        this.allNodesRunning = noOfReplicas > 1 ? false : true;
-        this.allNodesFinished = noOfReplicas > 1 ? false : true;
+        this.allNodesRunning = noOfReplicas == 1;
+        this.allNodesFinished = noOfReplicas == 1;
         this.isFinished = false;
 
         runtimeManager.addMsgEventListener("Running_" + crdtId, new MsgEventHandler() {
@@ -134,9 +131,7 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
      * to wait for all replicas of this CRDT to finish and will apply any updates received to reach the replica's final
      * state. (This is a blocking call)
      */
-    // This shouldn't be called from a thread in parallel execution! Only by main thread.
-    // TODO: this is blocking if not all nodes start/finish...
-    // TODO: add a timeout
+    // This shouldn't be called from a thread in parallel execution on a single node! Only by main thread.
     @Override
     public final void finish() {
         isFinished = true;
@@ -157,7 +152,9 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
                     this.wait();
                 }
             } catch (InterruptedException e) {
-                // TODO: handle this exception
+                /* TODO: handle this exception, this could for example be called if one node has died and the other nodes
+                 * TODO: must be woken up.
+                 */
                 e.printStackTrace();
             }
         }
@@ -184,14 +181,23 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
      * @param op the operation that should be broadcast
      */
     protected final void broadcast(Operation op) {
-        // TODO: batch processing
         // send to all nodes
-        if(allNodesRunning) {
-            broadcastBuffer();
+        buffer.add(op);
 
-            runtimeManager.send("Operation_" + crdtId, op, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[0])));
-        } else {
-            buffer.add(op);
+        // handling of the output buffer can be done here. For example, aggregating commutative operations
+        // handling of network load can also be done here. For that, information from the network layer is needed
+
+        // Implement buffer.aggregate();
+
+
+        if (allNodesRunning) {
+            op = buffer.poll();
+
+            while (op != null) {
+                if (buffer.size() > 1) System.out.println("*Buffer");
+                runtimeManager.send("Operation_" + crdtId, op, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[runningNodes.size()])));
+                op = buffer.poll();
+            }
         }
     }
 
@@ -219,8 +225,8 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
     protected void ready() {
         // This needs to be sent to all nodes, as we do not know yet which ones will have replicas of the CRDT
         runtimeManager.send("Running_" + crdtId, 0, runtimeManager.getRemoteNodeIDs());
-        while(!allNodesRunning) {
-            synchronized(this) {
+        while (!allNodesRunning) {
+            synchronized (this) {
                 try {
                     wait();
                 } catch (InterruptedException e) {
@@ -233,11 +239,6 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
         // This is necessary to reach replicas that were not online when the first "Running" message was sent
         // TODO: this is so ugly! (toPrimitive())
         runtimeManager.send("Running_" + crdtId, 0, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[runningNodes.size()])));
-
-        // TODO: Start the scheduler that periodically broadcasts operations
-        // TODO: is this really a good idea? Will it not influence calculation results?
-        // ScheduledThreadPoolExecutor
-        //runningNodes.add(nodeId);
     }
 
     private boolean broadcastBuffer() {
@@ -245,6 +246,7 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
         Operation op = buffer.poll();
 
         while(op != null) {
+            System.out.println("Buffer");
             runtimeManager.send("Operation_" + crdtId, op, ArrayUtils.toPrimitive(runningNodes.toArray(new Integer[runningNodes.size()])));
             sent = true;
             op = buffer.poll();
