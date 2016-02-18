@@ -28,7 +28,7 @@ public class DistributedMatrix {
 
     private final PartitionShape shape;
 
-    private final MatrixFormat matrixFormat;
+    private final MatrixFormat matrixType;
 
     private final Matrix matrix;
 
@@ -43,20 +43,20 @@ public class DistributedMatrix {
     public DistributedMatrix(final ProgramContext programContext,
                              final long rows,final long cols,
                              final MatrixPartitioner partitioner,
-                             final MatrixFormat matrixFormat) {
+                             final MatrixFormat matrixType) {
 
         this.programContext    = Preconditions.checkNotNull(programContext);
         this.nodeDOP        = programContext.nodeDOP;
         this.nodeID         = programContext.runtimeContext.nodeID;
         this.partitioner    = Preconditions.checkNotNull(partitioner);
         this.shape          = partitioner.getPartitionShape();
-        this.matrixFormat   = matrixFormat;
+        this.matrixType   = matrixType;
 
         final long _rows = shape.rows;
         final long _cols = shape.cols;
         this.matrix  = new MatrixBuilder()
                 .dimension(_rows, _cols)
-                .matrixFormat(matrixFormat)
+                .matrixType(matrixType)
                 .build();
 
         programContext.runtimeContext.runtimeManager.registerPullHandler(GET_BLOCK, new RuntimeManager.PullHandler() {
@@ -126,7 +126,7 @@ public class DistributedMatrix {
 //                return totalAgg;
 //            }
 //            case COLUMN_PARTITIONED: throw new IllegalStateException();
-//            case BLOCK_PARTITIONED: throw new IllegalStateException();
+//            case B_PARTITIONED: throw new IllegalStateException();
 //            default: throw new IllegalStateException();
 //        }
         return null;
@@ -151,7 +151,7 @@ public class DistributedMatrix {
 //                );
 //            } break;
 //            case COLUMN_PARTITIONED: throw new IllegalStateException();
-//            case BLOCK_PARTITIONED: throw new IllegalStateException();
+//            case B_PARTITIONED: throw new IllegalStateException();
 //            default: throw new IllegalStateException();
 //        }
 //        return this;
@@ -163,11 +163,11 @@ public class DistributedMatrix {
     // ---------------------------------------------------
 
     public long translateRow(final long row) {
-        return partitioner.translateGlobalToLocalRow(row);
+        return partitioner.globalToLocalRow(row);
     }
 
     public long translateCol(final long col) {
-        return partitioner.translateGlobalToLocalCol(col);
+        return partitioner.globalToLocalColumn(col);
     }
 
     private Set<Tuple2<PartitionShape,Matrix>> fetchRemotePartitions(Set<Tuple2<RemotePartition,PartitionShape>> remotePartitions) {

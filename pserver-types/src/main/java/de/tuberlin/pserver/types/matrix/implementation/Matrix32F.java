@@ -1,13 +1,13 @@
 package de.tuberlin.pserver.types.matrix.implementation;
 
 
-import de.tuberlin.pserver.types.matrix.implementation.f32.operations.BinaryOperator32;
-import de.tuberlin.pserver.types.matrix.implementation.f32.operations.MatrixAggregation32;
-import de.tuberlin.pserver.types.matrix.implementation.f32.operations.MatrixElementUnaryOperator32;
-import de.tuberlin.pserver.types.matrix.implementation.f32.operations.UnaryOperator32;
-import de.tuberlin.pserver.types.matrix.metadata.DistributedMatrixType;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.BinaryOperator32;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.MatrixAggregation32;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.MatrixElementUnaryOperator32;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.operations.UnaryOperator32;
+import de.tuberlin.pserver.types.matrix.typeinfo.MatrixTypeInfo;
 
-public interface Matrix32F extends DistributedMatrixType {
+public interface Matrix32F extends MatrixTypeInfo {
 
     // ---------------------------------------------------
 

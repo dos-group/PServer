@@ -3,8 +3,6 @@ package de.tuberlin.pserver.examples.experiments.regression.old;
 import com.google.common.collect.Lists;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
 import de.tuberlin.pserver.dsl.transaction.annotations.TransactionType;
@@ -15,8 +13,10 @@ import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
 import de.tuberlin.pserver.ml.optimization.GradientDescent.GDOptimizer;
 import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
+import de.tuberlin.pserver.types.matrix.annotations.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
+import de.tuberlin.pserver.types.typeinfo.annotations.Load;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
 import java.io.Serializable;
 import java.util.List;
@@ -47,19 +47,23 @@ public class LogisticRegressionCriteo extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = D, path = X_TRAIN_PATH, matrixFormat = MatrixType.SPARSE_FORMAT)
+    @Load(filePath = X_TRAIN_PATH)
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TRAIN, cols = D)
     public Matrix32F XTrain;
 
-    @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = 1, path = Y_TRAIN_PATH)
+    @Load(filePath = Y_TRAIN_PATH)
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TRAIN, cols = 1)
     public Matrix32F yTrain;
 
-    @State(scope = Scope.REPLICATED, rows = N_TEST, cols = D, path = X_TEST_PATH, matrixFormat = MatrixType.SPARSE_FORMAT)
+    @Load(filePath = X_TEST_PATH)
+    @Matrix(scheme = DistScheme.REPLICATED, rows = N_TEST, cols = D)
     public Matrix32F XTest;
 
-    @State(scope = Scope.REPLICATED, rows = N_TEST, cols = 1, path = Y_TEST_PATH)
+    @Load(filePath = Y_TEST_PATH)
+    @Matrix(scheme = DistScheme.REPLICATED, rows = N_TEST, cols = 1)
     public Matrix32F yTest;
 
-    @State(scope = Scope.REPLICATED, rows = 1, cols = D)
+    @Matrix(scheme = DistScheme.REPLICATED, rows = 1, cols = D)
     public Matrix32F W;
 
     // ---------------------------------------------------

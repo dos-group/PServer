@@ -11,7 +11,7 @@ public final class StateMng {
 
     private static ProgramContext programContext;
 
-    private static StateBuilder stateBuilder;
+    //private static StateBuilder stateBuilder;
 
     // ---------------------------------------------------
     // Constructor.
@@ -19,15 +19,15 @@ public final class StateMng {
 
     public static void setProgramContext(final ProgramContext programContext) {
         StateMng.programContext = Preconditions.checkNotNull(programContext);
-        StateMng.stateBuilder   = new StateBuilder(StateMng.programContext);
+        //StateMng.stateBuilder   = new StateBuilder(StateMng.programContext);
     }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    public static StateBuilder getStateBuilder() {
-        stateBuilder.clear();
-        return stateBuilder;
-    }
+    //public static StateBuilder getStateBuilder() {
+    //    stateBuilder.clear();
+    //    return stateBuilder;
+    //}
 }

@@ -83,7 +83,7 @@ fetch-logs)
             # the zookeeper logfile is just called "zookeeper.out". We want to replace that filename with ${ZOOKEEPER_LOG_FILENAME}
             ZOOKEEPER_LOG_FILENAME="zookeeper-${PSERVER_IDENT_STRING}-node-${HOSTNAME}.out"
             # print the log files we are about to fetch and replace a possibly existing zookeeper logfile with the intended file unitName right away
-            ssh -n ${PSERVER_SSH_OPTS} ${HOST} -- "find \"${PSERVER_DESTINATION_LOG_DIR}\" -type f -print0 2> /dev/null; find \"${ZOOKEEPER_LOG_DIR}\" -type f -print0 2> /dev/null" | xargs -0 -I '{}' sh -c 'echo [NOTICE]['"${HOST}"'] $(basename {})' | sed 's/zookeeper.out\(.*\)$/'"${ZOOKEEPER_LOG_FILENAME}"\\1'/g'
+            ssh -n ${PSERVER_SSH_OPTS} ${HOST} -- "find \"${PSERVER_DESTINATION_LOG_DIR}\" -mtxType f -print0 2> /dev/null; find \"${ZOOKEEPER_LOG_DIR}\" -mtxType f -print0 2> /dev/null" | xargs -0 -I '{}' sh -c 'echo [NOTICE]['"${HOST}"'] $(basename {})' | sed 's/zookeeper.out\(.*\)$/'"${ZOOKEEPER_LOG_FILENAME}"\\1'/g'
             # create tmp dir for logs
             PSERVER_LOG_DIR_TMP="${PSERVER_LOG_DIR}/tmp"
             if [ -e "${PSERVER_LOG_DIR_TMP}" ]; then
@@ -183,6 +183,6 @@ reset)
 
 esac
 
-if [ "$(type -t profile_finish_hook 2>/dev/null)" == "function" ]; then
+if [ "$(mtxType -t profile_finish_hook 2>/dev/null)" == "function" ]; then
 	profile_finish_hook
 fi

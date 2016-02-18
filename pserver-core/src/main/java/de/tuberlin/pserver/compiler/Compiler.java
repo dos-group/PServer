@@ -3,11 +3,14 @@ package de.tuberlin.pserver.compiler;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.dsl.state.annotations.GlobalObject;
-import de.tuberlin.pserver.dsl.state.annotations.State;
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.runtime.RuntimeContext;
+import de.tuberlin.pserver.types.PServerTypeFactory;
+import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
+import de.tuberlin.pserver.types.typeinfo.annotations.Load;
+import de.tuberlin.pserver.types.typeinfo.properties.InputDescriptor;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.lang.annotation.Annotation;
@@ -78,17 +81,21 @@ public final class Compiler {
     }
 
     private void analyzeState() {
+        int[] allNodes = IntStream.iterate(0, x -> x + 1).limit(runtimeContext.numOfNodes).toArray();
         for (final Field field : programClass.getDeclaredFields()) {
-            for (final Annotation an : field.getDeclaredAnnotations()) {
-                if (an instanceof State) {
-                    final State stateProperties = (State) an;
-                    final StateDescriptor state = StateDescriptor.fromAnnotatedField(
-                            stateProperties,
-                            field,
-                            IntStream.iterate(0, x -> x + 1).limit(runtimeContext.numOfNodes).toArray()
-                    );
-                    semanticCheck(state);
-                    programTable.addState(state);
+            for (final Annotation typeAn : field.getDeclaredAnnotations()) {
+                if (PServerTypeFactory.isSupportedType(typeAn.annotationType())) {
+                    DistributedTypeInfo instance =
+                            PServerTypeFactory.newInstance(runtimeContext.nodeID, allNodes, field.getType(), field.getName(), typeAn);
+                    programTable.addState(instance);
+
+                    for (final Annotation loadAn : field.getDeclaredAnnotations()) {
+                        if (loadAn instanceof Load) {
+                            InputDescriptor id = InputDescriptor.createInputDescriptor((Load) loadAn);
+                            instance.input(id);
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -127,13 +134,5 @@ public final class Compiler {
                 }
             }
         }
-    }
-
-    // ---------------------------------------------------
-    // Semantic Check of Annotations.
-    // ---------------------------------------------------
-
-    private void semanticCheck(final StateDescriptor state) {
-        //throw new NotImplementedException("NOT IMPLEMENTED");
     }
 }

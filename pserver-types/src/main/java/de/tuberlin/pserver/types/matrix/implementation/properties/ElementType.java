@@ -1,9 +1,9 @@
 package de.tuberlin.pserver.types.matrix.implementation.properties;
 
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.f32.dense.DenseMatrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.f32.sparse.CSRMatrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.f32.sparse.SparseMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.CSRMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.SparseMatrix32F;
 
 public enum ElementType {
 

@@ -85,7 +85,7 @@ ProgramFailureEvent {
   "nodeID": 3,
   "slotID": 0,
   "programName": "SharedVarTestJob",
-  "type": "PROGRAM_FAILURE_JOB_EVENT",
+  "mtxType": "PROGRAM_FAILURE_JOB_EVENT",
   "isSticky": false
 }
  ==> JAVA STACK TRACE [

@@ -2,8 +2,6 @@ package de.tuberlin.pserver.examples.experiments.glove;
 
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
@@ -12,9 +10,11 @@ import de.tuberlin.pserver.dsl.transaction.phases.Update;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
+import de.tuberlin.pserver.types.matrix.annotations.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.typeinfo.annotations.Load;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.util.Random;
@@ -79,19 +79,20 @@ public final class GloVe extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.PARTITIONED, rows = COLS, cols = COLS ,path = INPUT_DATA, fileFormat = FileFormat.SVM_FORMAT)
+    @Load(filePath = INPUT_DATA)
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = COLS, cols = COLS)
     public Matrix32F X;
 
-    @State(scope = Scope.REPLICATED, rows = ROWS, cols = COLS * 2)
+    @Matrix(scheme = DistScheme.REPLICATED, rows = ROWS, cols = COLS * 2)
     public Matrix32F W;
 
-    @State(scope = Scope.REPLICATED, rows = ROWS, cols = COLS * 2)
+    @Matrix(scheme = DistScheme.REPLICATED, rows = ROWS, cols = COLS * 2)
     public Matrix32F GradSq;
 
-    @State(scope = Scope.REPLICATED, rows = 1, cols = COLS * 2)
+    @Matrix(scheme = DistScheme.REPLICATED, rows = 1, cols = COLS * 2)
     public Matrix32F B;
 
-    @State(scope = Scope.REPLICATED, rows = 1, cols = COLS * 2)
+    @Matrix(scheme = DistScheme.REPLICATED, rows = 1, cols = COLS * 2)
     public Matrix32F GradSqB;
 
     // ---------------------------------------------------
@@ -109,7 +110,7 @@ public final class GloVe extends Program {
 
     /*private ObjectSerializer serializer = ObjectSerializer.Factory.create(ObjectSerializer.SerializerType.KRYO_SERIALIZER);
     private Compressor compressor = Compressor.Factory.create(Compressor.CompressionType.LZ4_COMPRESSION);
-    @Transaction(state = "W, GradSq, B, GradSqB", type = TransactionType.PUSH)
+    @Transaction(state = "W, GradSq, B, GradSqB", mtxType = TransactionType.PUSH)
     public final TransactionDefinition sync = new TransactionDefinition(
             (Prepare<Matrix32, Pair<Integer, byte[]>>) (remoteMatrix) -> {
                 final byte[] serializedObj = serializer.serialize(remoteMatrix);

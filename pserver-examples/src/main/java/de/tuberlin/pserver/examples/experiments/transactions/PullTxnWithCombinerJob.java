@@ -3,8 +3,6 @@ package de.tuberlin.pserver.examples.experiments.transactions;
 
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
@@ -13,8 +11,10 @@ import de.tuberlin.pserver.dsl.transaction.phases.Combine;
 import de.tuberlin.pserver.dsl.transaction.phases.Update;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
+import de.tuberlin.pserver.types.matrix.annotations.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
 public class PullTxnWithCombinerJob extends Program {
 
@@ -22,8 +22,8 @@ public class PullTxnWithCombinerJob extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.REPLICATED, matrixFormat = MatrixType.DENSE_FORMAT, rows = 1, cols = 10)
-    public Matrix32F model;
+    @Matrix(scheme = DistScheme.REPLICATED, rows = 1, cols = 10)
+    public DenseMatrix32F model;
 
     // ---------------------------------------------------
     // Transaction.

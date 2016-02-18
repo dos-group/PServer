@@ -16,7 +16,7 @@ import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.events.Handler;
 import de.tuberlin.pserver.runtime.events.MsgEventHandler;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
-import de.tuberlin.pserver.types.metadata.DistributedType;
+import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Set;
@@ -205,7 +205,7 @@ public final class RuntimeManager implements Deactivatable {
     // ---------------------------------------------------
 
     @SuppressWarnings("unchecked")
-    public <T extends DistributedType> T getDHT(final String name) {
+    public <T extends DistributedTypeInfo> T getDHT(final String name) {
         final Set<DHTKey> keySet = dhtManager.getKey(name);
         for (final DHTKey key : keySet) {
             if (key.getPartitionDescriptor(infraManager.getNodeID()) != null) {
@@ -216,7 +216,7 @@ public final class RuntimeManager implements Deactivatable {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends DistributedType> void putDHT(final String name, final T object) {
+    public <T extends DistributedTypeInfo> void putDHT(final String name, final T object) {
         final EmbeddedDHTObject<T> value = new EmbeddedDHTObject<T>(object);
         final DHTKey key = dhtManager.createLocalKey(name);
         value.setValueMetadata(infraManager.getNodeID());

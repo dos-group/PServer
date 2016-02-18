@@ -57,8 +57,8 @@ public final class TransactionDescriptor {
         this.type                = Preconditions.checkNotNull(type);
         this.cacheRequestObject  = cacheRequestObject;
         this.observerPeriod      = observerPeriod;
-        this.srcStateObjectNodes = programTable.getState(stateSrcObjectNames.get(stateSrcObjectNames.size() - 1)).atNodes;
-        this.dstStateObjectNodes = programTable.getState(stateDstObjectNames.get(stateDstObjectNames.size() - 1)).atNodes;
+        this.srcStateObjectNodes = programTable.getState(stateSrcObjectNames.get(stateSrcObjectNames.size() - 1)).nodes();
+        this.dstStateObjectNodes = programTable.getState(stateDstObjectNames.get(stateDstObjectNames.size() - 1)).nodes();
         definition.setTransactionName(transactionName);
     }
 

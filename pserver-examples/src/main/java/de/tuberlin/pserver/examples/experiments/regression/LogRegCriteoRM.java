@@ -2,15 +2,14 @@ package de.tuberlin.pserver.examples.experiments.regression;
 
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.types.matrix.MatrixBuilder;
-import de.tuberlin.pserver.types.matrix.implementation.f32.dense.DenseMatrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.f32.sparse.CSRMatrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
+import de.tuberlin.pserver.types.matrix.annotations.Matrix;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.CSRMatrix32F;
+import de.tuberlin.pserver.types.typeinfo.annotations.Load;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
 import java.util.Arrays;
 
@@ -32,15 +31,14 @@ public class LogRegCriteoRM extends Program {
     // State.
     // ---------------------------------------------------
 
-    @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = 1)
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TRAIN, cols = 1)
     public DenseMatrix32F trainLabel;
 
-    @State(scope = Scope.PARTITIONED, rows = N_TRAIN, cols = D,
-            path = X_TRAIN_PATH, matrixFormat = MatrixType.SPARSE_FORMAT,
-            fileFormat = FileFormat.SVM_FORMAT, labels = "trainLabel")
+    @Load(filePath = X_TRAIN_PATH, labels = "trainLabel")
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TRAIN, cols = D)
     public CSRMatrix32F trainFeatures;
 
-    @State(scope = Scope.REPLICATED, rows = 1, cols = D)
+    @Matrix(scheme = DistScheme.REPLICATED, rows = 1, cols = D)
     public DenseMatrix32F W;
 
     // ---------------------------------------------------

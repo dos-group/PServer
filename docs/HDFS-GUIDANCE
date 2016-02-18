@@ -12,7 +12,7 @@ Parameter Server and HDFS
 	(a) Configure core-site.xml: .../hadoop-2.4.1/etc/hadoop/core-site.xml
 		e.g.
 			<?xml version="1.0"?>
-			<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+			<?xml-stylesheet mtxType="text/xsl" href="configuration.xsl"?>
 			<!-- Put site-specific property overrides in this file. -->
 			<!--suppress ALL -->
 			<configuration>

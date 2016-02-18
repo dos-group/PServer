@@ -6,7 +6,7 @@ import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-import de.tuberlin.pserver.types.metadata.DistributedType;
+import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,16 +98,16 @@ public abstract class Program extends EventDispatcher {
 
     // ---------------------------------------------------
 
-    public static DistributedType[] state(DistributedType... objects) { return objects; }
+    public static DistributedTypeInfo[] state(DistributedTypeInfo... objects) { return objects; }
 
-    public static void atomic(DistributedType[] stateObjects, final Body body) throws Exception {
+    public static void atomic(DistributedTypeInfo[] stateObjects, final Body body) throws Exception {
 
-        for (final DistributedType stateObj :stateObjects)
+        for (final DistributedTypeInfo stateObj :stateObjects)
             stateObj.lock();
 
         body.body();
 
-        for (final DistributedType stateObj :stateObjects)
+        for (final DistributedTypeInfo stateObj :stateObjects)
             stateObj.unlock();
     }
 }

@@ -1,10 +1,10 @@
 package de.tuberlin.pserver.runtime.state.matrix.rpc;
 
-import de.tuberlin.pserver.compiler.StateDescriptor;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.core.remoteobj.MethodInvocationMsg;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-import de.tuberlin.pserver.types.matrix.implementation.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -28,33 +28,23 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
 
     private final Map<UUID, Object> resultObjects;
 
-    private final StateDescriptor stateDescriptor;
-
-    private final MatrixPartitioner partitioner;
+    private final DistributedTypeInfo state;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
     private GlobalStateMatrixProxy(ProgramContext programContext,
-                                   StateDescriptor stateDescriptor) {
+                                   DistributedTypeInfo state) {
 
-        this.netManager         = programContext.runtimeContext.netManager;
-        this.stateDescriptor    = stateDescriptor;
-        this.requestLatches     = new ConcurrentHashMap<>();
-        this.resultObjects      = new ConcurrentHashMap<>();
+        this.netManager     = programContext.runtimeContext.netManager;
+        this.state          = state;
+        this.requestLatches = new ConcurrentHashMap<>();
+        this.resultObjects  = new ConcurrentHashMap<>();
 
-        this.partitioner = MatrixPartitioner.createPartitioner(
-                stateDescriptor.partitionType,
-                programContext.nodeID,
-                stateDescriptor.atNodes,
-                stateDescriptor.rows,
-                stateDescriptor.cols
-        );
-
-        netManager.addEventListener(MethodInvocationMsg.METHOD_INVOCATION_EVENT + "_" + stateDescriptor.stateName, (event) -> {
+        netManager.addEventListener(MethodInvocationMsg.METHOD_INVOCATION_EVENT + "_" + state.name(), (event) -> {
             MethodInvocationMsg mim = (MethodInvocationMsg)event;
-            if (mim.classID == stateDescriptor.stateType.hashCode() && requestLatches.containsKey(mim.callID)) {
+            if (mim.classID == state.type().hashCode() && requestLatches.containsKey(mim.callID)) {
                 CountDownLatch cdl = requestLatches.remove(mim.callID);
                 if (mim.result != null)
                     resultObjects.put(mim.callID, mim.result);
@@ -70,9 +60,9 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
         CountDownLatch cdl = new CountDownLatch(1);
         requestLatches.put(callID, cdl);
         MethodInvocationMsg invokeMsg = new MethodInvocationMsg(
-                stateDescriptor.stateName,
+                state.name(),
                 callID,
-                stateDescriptor.stateType.hashCode(),
+                state.type().hashCode(),
                 MethodInvocationMsg.getMethodID(method),
                 arguments,
                 null
@@ -107,32 +97,37 @@ public final class GlobalStateMatrixProxy implements InvocationHandler {
         // TODO: This is likely to require a complete redesign of the DistributedMatrix abstraction....brrr
         //
 
-        switch (stateDescriptor.scope) {
+        switch (state.distributionScheme()) {
 
-            case SINGLETON:
-            case REPLICATED: {
-                netManager.dispatchEventAt(stateDescriptor.atNodes, invokeMsg);
-            } break;
-
-            case PARTITIONED: {
+            /*case PARTITIONED: {
                 if (("set".equals(method.getName()) || "get".equals(method.getName())) && method.getParameterCount() >= 2) {
                     int[] dstNode = {partitioner.getPartitionOfEntry((Long) arguments[0], (Long) arguments[1])};
                     netManager.dispatchEventAt(dstNode, invokeMsg);
                 } else
                     throw new UnsupportedOperationException();
-            } break;
+            } break;*/
 
-            case LOGICALLY_PARTITIONED:
+            case LOCAL:
+                throw new IllegalStateException();
+            case SINGLETON:
+            case REPLICATED:
+                netManager.dispatchEventAt(state.nodes(), invokeMsg);
+                break;
+            case H_PARTITIONED:
+                throw new UnsupportedOperationException();
+            case V_PARTITIONED:
+                throw new UnsupportedOperationException();
+            case B_PARTITIONED:
                 throw new UnsupportedOperationException();
         }
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T create(ProgramContext programContext, StateDescriptor stateDescriptor) throws Exception {
+    public static <T> T create(ProgramContext programContext, DistributedTypeInfo state) throws Exception {
         return (T) Proxy.newProxyInstance(
-                stateDescriptor.stateType.getClassLoader(),
-                new Class<?>[]{stateDescriptor.stateType},
-                new GlobalStateMatrixProxy(programContext, stateDescriptor)
+                state.type().getClassLoader(),
+                new Class<?>[]{Matrix32F.class},
+                new GlobalStateMatrixProxy(programContext, state)
         );
     }
 }

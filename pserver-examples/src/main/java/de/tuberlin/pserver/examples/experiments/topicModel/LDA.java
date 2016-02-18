@@ -3,8 +3,6 @@ package de.tuberlin.pserver.examples.experiments.topicModel;
 import com.google.common.collect.Lists;
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
 import de.tuberlin.pserver.dsl.transaction.annotations.TransactionType;
@@ -14,8 +12,11 @@ import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
 import de.tuberlin.pserver.types.matrix.MatrixBuilder;
+import de.tuberlin.pserver.types.matrix.annotations.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.properties.ElementType;
+import de.tuberlin.pserver.types.typeinfo.annotations.Load;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -43,21 +44,21 @@ public class LDA extends Program{
     private static final float ALPHA = 0.1f;
     private static final float BETA = 0.1f;
 
-
     // ---------------------------------------------------
     // State
     // ---------------------------------------------------
 
     // D is a document-term matrix, representing the corpus
-    @State(scope = Scope.PARTITIONED, rows = N_DOCUMENTS, cols = N_VOCABULARY, path = DOC_TERM_PATH)
+    @Load(filePath = DOC_TERM_PATH)
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_DOCUMENTS, cols = N_VOCABULARY)
     public Matrix32F D;
 
     // N_kw keeps track of how instances of a vocabulary word are assigned to topic k
-    @State(scope = Scope.REPLICATED, rows = N_TOPICS, cols = N_VOCABULARY)
+    @Matrix(scheme = DistScheme.REPLICATED, rows = N_TOPICS, cols = N_VOCABULARY)
     public Matrix32F N_kw;
 
     // N_k keeps track of how many words w are assigned to topic k
-    @State(scope = Scope.REPLICATED, rows = N_TOPICS, cols = 1)
+    @Matrix(scheme = DistScheme.REPLICATED, rows = N_TOPICS, cols = 1)
     public Matrix32F N_k;
 
     // theta is the distribution over topics for each document

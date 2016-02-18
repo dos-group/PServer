@@ -2,11 +2,11 @@ package de.tuberlin.pserver.runtime.filesystem.local;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.filesystem.FileDataIterator;
-import de.tuberlin.pserver.runtime.filesystem.FileFormat;
 import de.tuberlin.pserver.runtime.filesystem.FileSection;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.runtime.filesystem.records.RecordIterator;
-import de.tuberlin.pserver.types.matrix.implementation.partitioner.MatrixPartitioner;
+import de.tuberlin.pserver.types.matrix.implementation.partitioner.AbstractMatrixPartitioner;
+import de.tuberlin.pserver.types.typeinfo.properties.FileFormat;
 
 import java.io.*;
 
@@ -22,7 +22,7 @@ public class LocalInputFile implements ILocalInputFile<Record> {
 
     private final FileSection fileSection;
 
-    private final MatrixPartitioner partitioner;
+    private final AbstractMatrixPartitioner partitioner;
 
     // ---------------------------------------------------
     // Constructor.
@@ -30,7 +30,7 @@ public class LocalInputFile implements ILocalInputFile<Record> {
 
     public LocalInputFile(final String filePath,
                           final FileFormat fileFormat,
-                          final MatrixPartitioner partitioner) {
+                          final AbstractMatrixPartitioner partitioner) {
 
         this.filePath       = Preconditions.checkNotNull(filePath);
         this.fileFormat     = Preconditions.checkNotNull(fileFormat);

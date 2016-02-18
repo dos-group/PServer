@@ -3,11 +3,11 @@ package de.tuberlin.pserver.test.core.programs;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
+import de.tuberlin.pserver.types.matrix.annotations.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
 public class SingletonMatrixTestJob extends Program {
 
@@ -15,7 +15,7 @@ public class SingletonMatrixTestJob extends Program {
 
     private static final int COLS = 100;
 
-    @State(scope = Scope.SINGLETON, at = "0", rows = ROWS, cols = COLS)
+    @Matrix(scheme = DistScheme.SINGLETON, at = "0", rows = ROWS, cols = COLS)
     public Matrix32F W;
 
     @Unit(at = "1 - 3")

@@ -2,8 +2,6 @@ package de.tuberlin.pserver.examples.experiments.paramsrv;
 
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.dsl.state.annotations.State;
-import de.tuberlin.pserver.dsl.state.properties.Scope;
 import de.tuberlin.pserver.dsl.transaction.TransactionDefinition;
 import de.tuberlin.pserver.dsl.transaction.TransactionMng;
 import de.tuberlin.pserver.dsl.transaction.annotations.Transaction;
@@ -13,9 +11,12 @@ import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
-import de.tuberlin.pserver.runtime.filesystem.FileFormat;
+import de.tuberlin.pserver.types.matrix.annotations.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
-import de.tuberlin.pserver.types.matrix.implementation.properties.MatrixType;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.SparseMatrix32F;
+import de.tuberlin.pserver.types.typeinfo.annotations.Load;
+import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
 
 public class ParameterServerSketch extends Program {
@@ -25,20 +26,19 @@ public class ParameterServerSketch extends Program {
     // ---------------------------------------------------
 
     // ParamServer runs on Node 0, 1.
-
-    @State(at = "0", scope = Scope.PARTITIONED, matrixFormat = MatrixType.DENSE_FORMAT, rows = 10, cols = 10000)
-    public Matrix32F parameter;
+    @Matrix(scheme = DistScheme.H_PARTITIONED, at = "0", rows = 10, cols = 10000)
+    public DenseMatrix32F parameter;
 
     // Worker runs on Node 2, 3.
+    @Matrix(scheme = DistScheme.REPLICATED, at = "2, 3", rows = 10, cols = 10000)
+    public SparseMatrix32F parameterCache;
 
-    @State(at = "2, 3", scope = Scope.REPLICATED, matrixFormat = MatrixType.SPARSE_FORMAT, rows = 10, cols = 10000)
-    public Matrix32F parameterCache;
+    @Matrix(scheme = DistScheme.REPLICATED, at = "2, 3", rows = 10, cols = 10000)
+    public DenseMatrix32F gradients;
 
-    @State(at = "2, 3", scope = Scope.REPLICATED, matrixFormat = MatrixType.DENSE_FORMAT, rows = 10, cols = 10000)
-    public Matrix32F gradients;
-
-    @State(scope = Scope.PARTITIONED, rows = 300000, cols = 10000, path = "datasets/XXX", fileFormat = FileFormat.SVM_FORMAT)
-    public Matrix32F data;
+    @Load(filePath = "datasets/XXX")
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = 300000, cols = 10000)
+    public SparseMatrix32F data;
 
     // ---------------------------------------------------
     // Transaction.
