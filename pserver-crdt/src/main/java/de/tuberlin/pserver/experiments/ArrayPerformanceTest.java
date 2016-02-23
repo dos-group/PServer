@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.performance;
+package de.tuberlin.pserver.experiments;
 
 
 import com.google.common.collect.Lists;
@@ -8,8 +8,6 @@ import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.radt.arrays.Array;
-import de.tuberlin.pserver.radt.list.LinkedList;
-import org.junit.Test;
 
 import java.io.Serializable;
 import java.util.Calendar;
@@ -33,8 +31,6 @@ public class ArrayPerformanceTest extends Program {
             this.value = value;
         }
     }
-
-
 
     @Unit
     public void test(Lifecycle lifecycle) {
@@ -76,7 +72,6 @@ public class ArrayPerformanceTest extends Program {
         });
     }
 
-    @Test
     public static void main(final String[] args) {
         final List<List<Serializable>> results = Lists.newArrayList();
 

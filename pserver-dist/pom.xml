@@ -43,6 +43,10 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>pserver-ml</artifactId>
         </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>pserver-crdt</artifactId>
+        </dependency>
     </dependencies>
 
     <!-- See main pom.xml for explanation of profiles -->

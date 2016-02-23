@@ -69,6 +69,9 @@ public class LogRegCriteoRM extends Program {
                         W.data[ci] -= grad.data[ci];
                     }
                 });
+
+
+
             }
         });
     }

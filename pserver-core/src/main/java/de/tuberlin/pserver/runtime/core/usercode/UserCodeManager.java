@@ -78,11 +78,11 @@ public final class UserCodeManager {
         for (final Tuple2<String, byte[]> c : byteCode) {
             final String className = c._1;
             final byte[] compressedBinary = c._2;
-            try {
-                clazz = Class.forName(className);
-            } catch (ClassNotFoundException e) {
+            //try {
+            //    clazz = Class.forName(className);
+            //} catch (ClassNotFoundException e) {
                 clazz = classLoader.buildClassFromByteArray(className, compressor.decompress(compressedBinary));
-            }
+            //}
         }
         return clazz;
     }

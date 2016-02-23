@@ -29,7 +29,7 @@ if [ -z ${HOSTLIST+x} ] || [ -z "${HOSTLIST}" ]; then
     HOSTLIST="${SLAVES_FILE}"
 fi
 
-if [ "$(mtxType -t run_on_host 2>/dev/null)" != "function" ]; then
+if [ "$(type -t run_on_host 2>/dev/null)" != "function" ]; then
 	echo "[ERROR][${HOSTNAME}] You have to define a function 'run_on_host <HOST>' before including this snippet"
     exit 1
 fi

@@ -243,6 +243,6 @@ zookeeper-stop)
 
 esac
 
-if [ "$(mtxType -t profile_finish_hook 2>/dev/null)" == "function" ]; then
+if [ "$(type -t profile_finish_hook 2>/dev/null)" == "function" ]; then
 	profile_finish_hook
 fi

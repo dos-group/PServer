@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.performance;
+package de.tuberlin.pserver.experiments;
 
 
 import com.google.common.collect.Lists;
@@ -8,7 +8,8 @@ import de.tuberlin.pserver.crdt.counters.SimpleCounter;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import org.junit.Test;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.Serializable;
 import java.util.Calendar;
@@ -18,65 +19,28 @@ import java.util.Random;
 import static org.junit.Assert.assertEquals;
 
 public class CounterPerformanceTest extends Program {
-    private static final int NUM_NODES = 4;
-    private static final int NUM_OPERATIONS = 10000;
+    private static final int NUM_NODES = 16;
+    private static final int NUM_OPERATIONS = 1000000;
 
     private static final String CRDT_ID = "counter";
-
-    enum Type {
-        INCREMENT,
-        DECREMENT
-    }
-
-    private class Command {
-        Type type;
-        int value;
-
-        public Command(Type type, int value) {
-            this.type = type;
-            this.value = value;
-        }
-    }
 
     @Unit
     public void test(final Lifecycle lifecycle) {
         lifecycle.process(() -> {
 
             SimpleCounter counter = SimpleCounter.newReplica(CRDT_ID, NUM_NODES, programContext);
-            Random rand = new Random(Calendar.getInstance().getTimeInMillis());
-            List<Command> buffer = new java.util.LinkedList<>();
 
 
-            System.out.println("[TEST] " + programContext.nodeID + " Filling operation buffer");
-            double p = 0;
 
-            // 1. Fill the buffer with writes
-            for(int i = 0; i < NUM_OPERATIONS; i++) {
-                p = rand.nextDouble();
-                if(p < 0.5) {
-                    buffer.add(new Command(Type.INCREMENT, 1));
-                }
-                else {
-                    buffer.add(new Command(Type.DECREMENT, 1));
-                }
-            }
 
             UnitMng.barrier(UnitMng.GLOBAL_BARRIER);
             final long startTime = Calendar.getInstance().getTimeInMillis();
 
             System.out.println("[TEST] " + programContext.nodeID + " Starting operations");
 
-            for(Command com : buffer) {
-                switch(com.type) {
-                    case INCREMENT:
-                        counter.increment(com.value);
-                        break;
-                    case DECREMENT:
-                        counter.decrement(com.value);
-                        break;
-                    default:
-                        throw new RuntimeException("Unknown command: " + com.type);
-                }
+
+            for(int i = 0; i < NUM_OPERATIONS; i++) {
+                counter.increment(1);
             }
 
             final long intermediateTime = Calendar.getInstance().getTimeInMillis();
@@ -97,17 +61,17 @@ public class CounterPerformanceTest extends Program {
         });
     }
 
-    @Test
     public static void main(final String[] args) {
         final List<List<Serializable>> results = Lists.newArrayList();
 
         // Set the number of simulated nodes, can also be
         // configured via 'pserver/pserver-core/src/main/resources/reference.simulation.conf'
-        System.setProperty("simulation.numNodes", String.valueOf(NUM_NODES));
+        //System.setProperty("simulation.numNodes", String.valueOf(NUM_NODES));
         // Set the memory each simulated node gets.
-        System.setProperty("jvmOptions", "[\"-Xmx512m\"]");
+        //System.setProperty("jvmOptions", "[\"-Xmx512m\"]");
 
-        PServerExecutor.LOCAL
+        System.setProperty("pserver.profile", "wally");
+        PServerExecutor.REMOTE
                 .run(CounterPerformanceTest.class)
                 .results(results)
                 .done();
@@ -123,14 +87,20 @@ public class CounterPerformanceTest extends Program {
 
         System.out.println("\n[TEST] ***Results***");
         long avgTime = 0;
+        long avgRegplicationTime = 0;
+
         for(int i = 0; i < NUM_NODES; i++) {
             System.out.println("[TEST] Node " + i + ": "
                     + "execution time " + results.get(i).get(1) + "ms, "
-                    + "replication time " + results.get(i).get(2) + "ms, ");
+                    + "replication time " + results.get(i).get(2) + "ms, "
+                    + "count value = " + results.get(i).get(0));
             avgTime += (long)results.get(i).get(1);
+            avgRegplicationTime += (long)results.get(i).get(2);
         }
         avgTime /= NUM_NODES;
+        avgRegplicationTime /= NUM_NODES;
 
-        System.out.println("[TEST] Avg. execution time: " + avgTime + "ms");
+        System.out.println("[TEST] Avg. execution time: " + avgTime + "ms"
+                    + ", Avg convergence time: " + avgRegplicationTime + "ms");
     }
 }
