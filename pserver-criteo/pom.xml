@@ -9,6 +9,7 @@
 		<version>1.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>pserver-criteo</artifactId>
+	<!--packaging>jar</packaging-->
 	<packaging>jar</packaging>
 	<name>pserver-criteo</name>
 	<url>http://cit.tu-berlin.de</url>

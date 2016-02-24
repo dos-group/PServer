@@ -1,8 +1,20 @@
-package de.cit.pserver
+package de.tuberlin.pserver.criteo
 
 import java.io.{File, PrintWriter}
+import java.net.URI
 import java.nio.charset.Charset
 import java.nio.file.Paths
+
+import org.apache.flink.configuration.Configuration
+import org.apache.flink.api.common.functions.{RichFlatMapFunction, RichMapFunction}
+import org.apache.flink.api.java.utils.ParameterTool
+import org.apache.flink.api.scala._
+import org.apache.flink.core.fs.FileSystem.WriteMode
+import org.apache.flink.util.Collector
+
+import scala.io.Source
+import scala.collection.JavaConverters._
+import scala.util.hashing.MurmurHash3
 
 /**
   * This Flink job is used to preprocess the Criteo dataset
@@ -47,7 +59,6 @@ object CriteoPreprocessingJob {
 
   def main(args: Array[String]) {
     val env = ExecutionEnvironment.getExecutionEnvironment
-    env.setParallelism(1)
 
     val parameters = ParameterTool.fromArgs(args)
 
@@ -145,15 +156,12 @@ object CriteoPreprocessingJob {
         }
       }).withBroadcastSet(mean, "mean").withBroadcastSet(stdDeviation, "stdDeviation")
 
-    val fileName = if (isTest) "criteo_test.libsvm" else "criteo_train.libsvm"
+    val fileName = if (isTest) "criteo_test" else "criteo_train"
 
-    transformedFeatures.writeAsText(Paths.get(outputPath, fileName).toString, writeMode = WriteMode.OVERWRITE)
+    transformedFeatures.writeAsText(outputPath + fileName, writeMode = WriteMode.OVERWRITE)
 
     // execute program
     env.execute("Criteo Preprocessing")
-
-    println("mean: " + mean.collect().head.mkString(","))
-    println("stdDeviation: " + stdDeviation.collect().head.mkString(","))
 
     if (! isTest) {
       val meanWriter = new PrintWriter(new File(meanPath))

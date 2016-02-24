@@ -161,6 +161,11 @@
                 <artifactId>pserver-criteo</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-criteo-spark</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <!-- SYSTEM DEPENDENCIES -->
             <dependency>
@@ -365,6 +370,7 @@
         <module>pserver-dist</module>
         <module>pserver-dist-peel</module>
         <module>pserver-criteo</module>
+        <module>pserver-criteo-spark</module>
     </modules>
 
 </project>
