@@ -3,12 +3,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>de.tuberlin.cit.pserver</groupId>
-	<artifactId>criteo</artifactId>
-	<version>1.0-SNAPSHOT</version>
+	<parent>
+		<groupId>de.tuberlin.pserver</groupId>
+		<artifactId>pserver</artifactId>
+		<version>1.0-SNAPSHOT</version>
+	</parent>
+	<artifactId>pserver-criteo</artifactId>
 	<packaging>jar</packaging>
-
-	<name>criteo-preprocessing</name>
+	<name>pserver-criteo</name>
 	<url>http://cit.tu-berlin.de</url>
 
 	<repositories>
