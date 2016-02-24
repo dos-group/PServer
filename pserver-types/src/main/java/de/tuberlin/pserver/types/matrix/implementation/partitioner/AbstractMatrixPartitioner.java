@@ -40,7 +40,7 @@ public abstract class AbstractMatrixPartitioner {
             case B_PARTITIONED:
                 return new MatrixBlockPartitioner(distributedMatrixType);
             default:
-                return null;
+                return new NoPartitioner(distributedMatrixType);
         }
     }
 

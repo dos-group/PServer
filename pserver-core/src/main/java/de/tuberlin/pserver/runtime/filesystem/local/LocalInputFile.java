@@ -91,7 +91,7 @@ public class LocalInputFile implements ILocalInputFile<Record> {
             lnr.skip(Long.MAX_VALUE);
             final int numLines = lnr.getLineNumber();
             lnr.close();
-            return  numLines + 1;  // TODO: The first or the last line seems to be not counted...
+            return  numLines; //+ 1;  // TODO: The first or the last line seems to be not counted...
         } catch(IOException ioe) {
             throw new IllegalStateException(ioe);
         }
@@ -188,7 +188,9 @@ public class LocalInputFile implements ILocalInputFile<Record> {
 
         @Override
         public Record next() {
-            return recordIterator.next(fileSection.blockLineOffset + currentLine++);
+            Record record = recordIterator.next(fileSection.blockLineOffset + currentLine);
+            ++currentLine;
+            return record;
         }
 
         // ---------------------------------------------------

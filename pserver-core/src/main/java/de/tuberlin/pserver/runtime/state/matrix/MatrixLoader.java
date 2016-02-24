@@ -51,8 +51,8 @@ public final class MatrixLoader {
         public void putRecord(Record record, Matrix32F dataMatrix, Matrix32F labelMatrix) {
             while (record.hasNext()) { // Iterate through entries in record...
                 final Entry32F entry = record.next(reusable);
-                if (entry.getRow() > matrix.rows() || entry.getCol() > matrix.cols())
-                    return;
+                if (entry.getRow() - labelMatrix.partitioner().matrixPartitionShape().rowOffset > matrix.rows() || entry.getCol() > matrix.cols())
+                    continue;
                 if (labelMatrix != null && entry.getCol() == 0) // Label always on first column.
                     labelMatrix.set(record.getRow() - labelMatrix.partitioner().matrixPartitionShape().rowOffset, entry.getCol(), record.getLabel());
                 else
@@ -72,12 +72,13 @@ public final class MatrixLoader {
         public void putRecord(Record record, Matrix32F dataMatrix, Matrix32F labelMatrix) {
             while (record.hasNext()) { // Iterate through entries in record...
                 final Entry32F entry = record.next(reusable);
-                if (entry.getRow() > matrix.rows() || entry.getCol() > matrix.cols())
+                if (entry.getRow() - labelMatrix.partitioner().matrixPartitionShape().rowOffset > matrix.rows() || entry.getCol() > matrix.cols())
                     continue;
                 if (labelMatrix != null && entry.getCol() == 0) // Label always on first column.
-                    labelMatrix.set(record.getRow(), entry.getCol(), record.getLabel()); // TODO: VERIFY THAT!!!!!!!!!!!!!!!!!!!!
+                    labelMatrix.set(record.getRow() - labelMatrix.partitioner().matrixPartitionShape().rowOffset, entry.getCol(), record.getLabel()); // TODO: VERIFY THAT!!!!!!!!!!!!!!!!!!!!
                 else {
-                    rowData.put((int) (entry.getCol() - ((labelMatrix != null) ? 1 : 0) % matrix.cols()), entry.getValue());
+                    //rowData.put((int) (entry.getCol() - ((labelMatrix != null) ? 1 : 0) % matrix.cols()), entry.getValue());
+                    rowData.put((int) entry.getCol() - ((labelMatrix != null) ? 1 : 0), entry.getValue());
                 }
             }
             ((CSRMatrix32F) dataMatrix).addRow(rowData);
@@ -114,7 +115,7 @@ public final class MatrixLoader {
     // Public Methods.
     // ---------------------------------------------------
 
-    public void add(DistributedTypeInfo state, Matrix32F stateObj) {
+    public void add(DistributedTypeInfo state) {
         FileDataIterator fileIterator = fileManager.createFileIterator(programContext, state);
         loadingTasks.add(Pair.of(state, fileIterator));
     }

@@ -20,12 +20,12 @@ public class LogRegCriteoRM extends Program {
     // Constants.
     // ---------------------------------------------------
 
-    private static final String NUM_NODES = "1";
+    private static final String NUM_NODES = "2";
     private static final String X_TRAIN_PATH = "datasets/svm_train";
     private static final int N_TRAIN = 80000;
     private static final int D = 1048615;
     private static float STEP_SIZE = 1e-3f;
-    private static int NUM_EPOCHS = 15;
+    private static int NUM_EPOCHS = 100;
 
     // ---------------------------------------------------
     // State.
@@ -49,17 +49,15 @@ public class LogRegCriteoRM extends Program {
     public void unit(Lifecycle lifecycle) {
 
         lifecycle.process(() -> {
-
             DenseMatrix32F grad = (DenseMatrix32F)new MatrixBuilder().dimension(1, trainFeatures.cols()).build();
             DenseMatrix32F derivative = (DenseMatrix32F)new MatrixBuilder().dimension(1, trainFeatures.cols()).build();
-
             for (int e = 0; e < NUM_EPOCHS; ++e) {
                 Arrays.fill(derivative.data, 0f);
                 Arrays.fill(grad.data, 0f);
                 trainFeatures.processRows((row, valueList, rowStart, rowEnd, colList) -> {
                     float yPredict = 0;
                     for (int i = rowStart; i < rowEnd; ++i) {
-                        yPredict += valueList[i] *  W.data[colList[i]];
+                        yPredict += valueList[i] * W.data[colList[i]];
                     }
                     float f = trainLabel.data[row] - yPredict;
                     for (int j = rowStart; j < rowEnd; ++j) {

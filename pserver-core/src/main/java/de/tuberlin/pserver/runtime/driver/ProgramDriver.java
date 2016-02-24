@@ -154,7 +154,7 @@ public class ProgramDriver implements Deactivatable {
                 if (stateAndProxy.getLeft() != null) {
                     runtimeContext.runtimeManager.putDHT(state.name(), stateAndProxy.getLeft());
                     if (state.input() != null && !("".equals(state.input().filePath())))
-                        matrixLoader.add(state, stateAndProxy.getLeft());
+                        matrixLoader.add(state);
                 }
                 if (stateAndProxy.getRight() != null)
                     remoteObjectRefs.put(state.name(), stateAndProxy.getRight());
