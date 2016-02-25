@@ -72,22 +72,22 @@ public interface LossFunction {
             else
                 gradient.assign(0f);
 
-            //Matrix32F.RowIterator XIterator = X.rowIterator();
-            //Matrix32F.RowIterator yIterator = y.rowIterator();
+            Matrix32F.RowIterator XIterator = X.rowIterator();
+            Matrix32F.RowIterator yIterator = y.rowIterator();
 
-            //while (XIterator.hasNext()) {
+            while (XIterator.hasNext()) {
 
                 Matrix32F derivative = partialLossFunction.derivative(X, y.get(0), predictionFunction.predict(X, W));
 
                 gradient.add(derivative, gradient);
 
-                //XIterator.next();
-                //yIterator.next();
-            //}
+                XIterator.next();
+                yIterator.next();
+            }
 
             if (newtonMethod) {
-                //XIterator.reset();
-                //yIterator.reset();
+                XIterator.reset();
+                yIterator.reset();
             }
 
             gradient.add(regularizationFunction.regularizeDerivative(W, lambda), gradient);

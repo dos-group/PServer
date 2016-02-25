@@ -17,6 +17,8 @@ import de.tuberlin.pserver.ml.optimization.*;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
 import de.tuberlin.pserver.types.matrix.annotations.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.CSRMatrix32F;
 import de.tuberlin.pserver.types.typeinfo.annotations.Load;
 import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
@@ -32,14 +34,12 @@ public class LogisticRegression extends Program {
 
     private static final String NUM_NODES = "2";
 
-    private static final String X_TRAIN_PATH = "datasets/X_train.csv";
-    private static final String Y_TRAIN_PATH = "datasets/Y_train.csv";
-    private static final String X_TEST_PATH  = "datasets/X_test.csv";
-    private static final String Y_TEST_PATH  = "datasets/Y_test.csv";
+    private static final String X_TRAIN_PATH = "datasets/svm_train";
+    private static final String X_TEST_PATH  = "datasets/svm_test";
 
-    private static final int N_TRAIN = 16000;
-    private static final int N_TEST = 4000;
-    private static final int D = 3;
+    private static final int N_TRAIN = 80000;
+    private static final int N_TEST = 20000;
+    private static final int D = 1048576;
 
     private static float STEP_SIZE = 1e-3f;
     private static int NUM_EPOCHS = 1;
@@ -49,24 +49,22 @@ public class LogisticRegression extends Program {
     // State.
     // ---------------------------------------------------
 
-    @Load(filePath = X_TRAIN_PATH)
-    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TRAIN, cols = D)
-    public Matrix32F XTrain;
-
-    @Load(filePath = Y_TRAIN_PATH)
     @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TRAIN, cols = 1)
-    public Matrix32F yTrain;
+    public DenseMatrix32F trainLabel;
 
-    @Load(filePath = X_TEST_PATH)
-    @Matrix(scheme = DistScheme.REPLICATED, rows = N_TEST, cols = D)
-    public Matrix32F XTest;
+    @Load(filePath = X_TRAIN_PATH, labels = "trainLabel")
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TRAIN, cols = D)
+    public CSRMatrix32F trainFeatures;
 
-    @Load(filePath = Y_TEST_PATH)
-    @Matrix(scheme = DistScheme.REPLICATED, rows = N_TEST, cols = 1)
-    public Matrix32F yTest;
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TEST, cols = 1)
+    public DenseMatrix32F testLabel;
+
+    @Load(filePath = X_TEST_PATH, labels = "testLabel")
+    @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TEST, cols = D)
+    public CSRMatrix32F testFeatures;
 
     @Matrix(scheme = DistScheme.REPLICATED, rows = 1, cols = D)
-    public Matrix32F W;
+    public DenseMatrix32F W;
 
     // ---------------------------------------------------
     // Transactions.
@@ -119,12 +117,12 @@ public class LogisticRegression extends Program {
                     .setSyncMode(Loop.ASYNCHRONOUS)
                     .setShuffle(false);
 
-            optimizer.optimize(XTrain, yTrain, W);
+            optimizer.optimize(trainFeatures, trainLabel, W);
 
             System.out.println("Loss[" + programContext.nodeID +"]: "
-                    + zeroOneLoss.score(XTest, yTest, W));
+                    + zeroOneLoss.score(trainFeatures, trainLabel, W));
             System.out.println("Accuracy[" + programContext.nodeID +"]: "
-                    + accuracy.score(XTest, yTest, W));
+                    + accuracy.score(testFeatures, testLabel, W));
 
         }).postProcess(() -> {
 
@@ -141,9 +139,9 @@ public class LogisticRegression extends Program {
                     new PredictionFunction.LinearBinaryPrediction());
 
             System.out.println("Loss merged[" + programContext.nodeID +"]: "
-                    + zeroOneLoss.score(XTest, yTest, W));
+                    + zeroOneLoss.score(testFeatures, testLabel, W));
             System.out.println("Accuracy merged[" + programContext.nodeID +"]: "
-                    + accuracy.score(XTest, yTest, W));
+                    + accuracy.score(testFeatures, testLabel, W));
 
             result(W);
         });
