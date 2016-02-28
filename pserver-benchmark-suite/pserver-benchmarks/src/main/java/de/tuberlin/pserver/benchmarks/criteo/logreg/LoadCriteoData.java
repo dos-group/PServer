@@ -54,9 +54,9 @@ public class LoadCriteoData extends Program {
     // ---------------------------------------------------
 
     private static void local() {
-        //System.setProperty("simulation.numNodes", "1");
+        System.setProperty("simulation.numNodes", "1");
 
-        PServerExecutor.REMOTE
+        PServerExecutor.DISTRIBUTED
                 .run(LoadCriteoData.class)
                 .done();
     }

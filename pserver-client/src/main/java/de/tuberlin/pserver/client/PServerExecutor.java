@@ -17,13 +17,13 @@ import java.util.UUID;
 
 public enum PServerExecutor {
 
-    LOCAL        (true,     false),
+    LOCAL (true,     false),
 
-    LOCAL_DEBUG  (true,     true),
+    LOCAL_DEBUG (true,     true),
 
-    REMOTE       (false,    false),
+    DISTRIBUTED (false,    false),
 
-    REMOTE_DEBUG (false,    true); // Not used at the moment.
+    DISTRIBUTED_DEBUG (false,    true); // Not used at the moment.
 
     // ---------------------------------------------------
     // Fields.

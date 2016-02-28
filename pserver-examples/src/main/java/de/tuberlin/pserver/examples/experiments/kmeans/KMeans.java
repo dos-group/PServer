@@ -137,7 +137,7 @@ public class KMeans extends Program {
     // ---------------------------------------------------
 
     private static void cluster() {
-        PServerExecutor.REMOTE
+        PServerExecutor.DISTRIBUTED
                 .run(ConfigLoader.loadResource("distributed.conf"), KMeans.class)
                 .done();
     }

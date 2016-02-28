@@ -374,9 +374,7 @@
         <module>pserver-test</module>
         <module>pserver-dist</module>
         <module>pserver-dist-peel</module>
-        <module>pserver-criteo</module>
-        <module>pserver-criteo-spark</module>
-        <module>pserver-benchmarks</module>
+        <module>pserver-benchmark-suite</module>
     </modules>
 
 </project>

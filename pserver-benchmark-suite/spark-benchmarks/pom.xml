@@ -5,13 +5,13 @@
 
 	<parent>
 		<groupId>de.tuberlin.pserver</groupId>
-		<artifactId>pserver</artifactId>
+		<artifactId>pserver-benchmark-suite</artifactId>
 		<version>1.0-SNAPSHOT</version>
 	</parent>
-	<artifactId>pserver-criteo-spark</artifactId>
+	<artifactId>spark-benchmarks</artifactId>
 	<!--packaging>jar</packaging-->
 	<packaging>pom</packaging>
-	<name>pserver-criteo-spark</name>
+	<name>spark-benchmarks</name>
 	<url>http://cit.tu-berlin.de</url>
 
     <properties>

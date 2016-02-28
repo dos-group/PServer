@@ -159,7 +159,7 @@ public final class GloveWithCompression extends Program {
                 .done();
 
         //System.setProperty("pserver.profile", "wally");
-        //PServerExecutor.REMOTE
+        //PServerExecutor.DISTRIBUTED
         //        .run(GloVe.class)
         //        .done();
     }

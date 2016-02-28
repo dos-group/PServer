@@ -5,13 +5,12 @@
 
 	<parent>
 		<groupId>de.tuberlin.pserver</groupId>
-		<artifactId>pserver</artifactId>
+		<artifactId>pserver-benchmark-suite</artifactId>
 		<version>1.0-SNAPSHOT</version>
 	</parent>
-	<artifactId>pserver-criteo</artifactId>
-	<!--packaging>jar</packaging-->
+	<artifactId>pre-processing</artifactId>
 	<packaging>jar</packaging>
-	<name>pserver-criteo</name>
+	<name>pre-processing</name>
 	<url>http://cit.tu-berlin.de</url>
 
 	<repositories>

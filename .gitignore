@@ -50,6 +50,7 @@ crashlytics-build.properties
 
 /target/
 */target/
+*/*/target/
 *.*~
 logs/
 
