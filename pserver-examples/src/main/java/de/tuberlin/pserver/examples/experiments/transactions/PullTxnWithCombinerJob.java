@@ -77,7 +77,6 @@ public class PullTxnWithCombinerJob extends Program {
     // ---------------------------------------------------
 
     public static void main(final String[] args) {
-        System.setProperty("simulation.numNodes", "4");
         PServerExecutor.LOCAL
                 .run(PullTxnWithCombinerJob.class)
                 .done();

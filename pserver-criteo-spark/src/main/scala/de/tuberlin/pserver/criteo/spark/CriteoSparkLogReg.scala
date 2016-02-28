@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.criteo
 
-import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.mllib.classification.{LogisticRegressionWithSGD}
+import org.apache.spark.mllib.classification.LogisticRegressionWithSGD
 import org.apache.spark.mllib.util.MLUtils
+import org.apache.spark.{SparkConf, SparkContext}
 
 object CriteoSparkLogReg extends App {
 

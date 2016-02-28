@@ -53,6 +53,7 @@ public final class TransactionController {
     // Private Methods.
     // ---------------------------------------------------
 
+    @SuppressWarnings("unchecked")
     private void activateTransactionObserver() {
 
         if (transactionDescriptor.observerPeriod != -1

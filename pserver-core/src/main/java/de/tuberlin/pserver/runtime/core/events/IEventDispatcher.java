@@ -1,6 +1,6 @@
 package de.tuberlin.pserver.runtime.core.events;
 
-import de.tuberlin.pserver.runtime.core.common.Deactivatable;
+import de.tuberlin.pserver.runtime.core.lifecycle.Deactivatable;
 
 import java.util.List;
 

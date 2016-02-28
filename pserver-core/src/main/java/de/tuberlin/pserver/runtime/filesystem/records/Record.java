@@ -1,10 +1,9 @@
 package de.tuberlin.pserver.runtime.filesystem.records;
 
 import java.util.Iterator;
-import java.util.Optional;
 
 
-public interface Record extends Iterator<Entry32F> {
+public interface Record extends Iterator<RecordEntry32F> {
 
     int size();
 
@@ -14,9 +13,7 @@ public interface Record extends Iterator<Entry32F> {
 
     long getRow();
 
-    Entry32F next();
+    RecordEntry32F next();
 
-    Entry32F next(Entry32F reusableEntry);
-
-    Record set(long row, String line, Optional<long[]> projection);
+    Record set(long row, String line);
 }

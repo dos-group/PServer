@@ -3,20 +3,7 @@ package de.tuberlin.pserver.runtime.core.config;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public interface IConfig {
-
-    public static enum Type {
-
-        PSERVER_CLIENT("client"),
-
-        PSERVER_NODE("node"),
-
-        PSERVER_SIMULATION("simulation");
-
-        protected final String name;
-
-        private Type(final String name) { this.name = name; }
-    }
+public interface Config {
 
     boolean hasPath(final String path);
 
@@ -34,9 +21,9 @@ public interface IConfig {
 
     String getString(final String path);
 
-    IConfig getObject(final String path);
+    Config getObject(final String path);
 
-    IConfig getConfig(final String path);
+    Config getConfig(final String path);
 
     Object getAnyRef(final String path);
 
@@ -56,7 +43,7 @@ public interface IConfig {
 
     List<String> getStringList(final String path);
 
-    List<? extends IConfig> getObjectList(final String path);
+    List<? extends Config> getObjectList(final String path);
 
     List<? extends Object> getAnyRefList(final String path);
 

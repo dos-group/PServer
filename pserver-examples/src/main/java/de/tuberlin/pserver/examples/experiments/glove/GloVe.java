@@ -59,8 +59,6 @@ public final class GloVe extends Program {
     // Constants.
     // ---------------------------------------------------
 
-    private static final String NUM_NODES = "2";
-
     private static final int        ROWS = 50;
 
     private static final int        COLS = 36073;
@@ -198,7 +196,7 @@ public final class GloVe extends Program {
 
     public static void main(final String[] args) {
 
-        System.setProperty("simulation.numNodes", NUM_NODES);
+        System.setProperty("global.simNodes", "2");
 
         PServerExecutor.LOCAL
                 .run(GloVe.class)

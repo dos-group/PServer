@@ -28,8 +28,6 @@ public class LogisticRegressionCriteo extends Program {
     // Constants.
     // ---------------------------------------------------
 
-    private static final String NUM_NODES = "1";
-
     private static final String X_TRAIN_PATH = "datasets/data_train";
     private static final String Y_TRAIN_PATH = "datasets/labels_train";
     private static final String X_TEST_PATH  = "datasets/data_test";
@@ -157,7 +155,7 @@ public class LogisticRegressionCriteo extends Program {
     // ---------------------------------------------------
 
     private static void local() {
-        System.setProperty("simulation.numNodes", NUM_NODES);
+        System.setProperty("global.simNodes", "1");
 
         final List<List<Serializable>> result = Lists.newArrayList();
 

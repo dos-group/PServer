@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.runtime.parallel;
 
 import de.tuberlin.pserver.commons.ds.NestedIntervalTree;
-import de.tuberlin.pserver.runtime.core.common.Deactivatable;
+import de.tuberlin.pserver.runtime.core.lifecycle.Deactivatable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

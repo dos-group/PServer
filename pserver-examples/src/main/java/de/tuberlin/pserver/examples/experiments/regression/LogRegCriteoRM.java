@@ -6,8 +6,10 @@ import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.types.matrix.MatrixBuilder;
 import de.tuberlin.pserver.types.matrix.annotations.Matrix;
+import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.CSRMatrix32F;
+import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.SparseMatrix32F;
 import de.tuberlin.pserver.types.typeinfo.annotations.Load;
 import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
@@ -20,7 +22,6 @@ public class LogRegCriteoRM extends Program {
     // Constants.
     // ---------------------------------------------------
 
-    private static final String NUM_NODES = "2";
     private static final String X_TRAIN_PATH = "datasets/svm_train";
     private static final int N_TRAIN = 80000;
     private static final int D = 1048615;
@@ -49,7 +50,8 @@ public class LogRegCriteoRM extends Program {
     public void unit(Lifecycle lifecycle) {
 
         lifecycle.process(() -> {
-            DenseMatrix32F grad = (DenseMatrix32F)new MatrixBuilder().dimension(1, trainFeatures.cols()).build();
+
+            /*DenseMatrix32F grad = (DenseMatrix32F)new MatrixBuilder().dimension(1, trainFeatures.cols()).build();
             DenseMatrix32F derivative = (DenseMatrix32F)new MatrixBuilder().dimension(1, trainFeatures.cols()).build();
             for (int e = 0; e < NUM_EPOCHS; ++e) {
                 Arrays.fill(derivative.data, 0f);
@@ -67,7 +69,7 @@ public class LogRegCriteoRM extends Program {
                         W.data[ci] -= grad.data[ci];
                     }
                 });
-            }
+            }*/
         });
     }
 
@@ -80,7 +82,7 @@ public class LogRegCriteoRM extends Program {
     // ---------------------------------------------------
 
     private static void local() {
-        System.setProperty("simulation.numNodes", NUM_NODES);
+        System.setProperty("global.simNodes", "2");
 
         PServerExecutor.LOCAL
                 .run(LogRegCriteoRM.class)

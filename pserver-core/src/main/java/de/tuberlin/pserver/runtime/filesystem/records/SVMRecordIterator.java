@@ -4,7 +4,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
-public class SVMRecordIterator extends RecordIterator<Record> {
+public class SVMRecordIterator extends RecordIterator {
+
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
+
+    private long row;
 
     // ---------------------------------------------------
     // Constructors.
@@ -12,6 +18,7 @@ public class SVMRecordIterator extends RecordIterator<Record> {
 
     public SVMRecordIterator(InputStream inputStream, Optional<long[]> projection) {
         super(inputStream, projection);
+        reusableRecord = new SVMRecord(this.projection);
     }
 
     // ---------------------------------------------------
@@ -25,44 +32,21 @@ public class SVMRecordIterator extends RecordIterator<Record> {
             if (reader.read() < 0) {
                 this.reader.close();
                 return false;
-            }
-            else {
+            } else {
                 reader.reset();
                 return true;
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             return false;
         }
     }
 
     @Override
     public Record next() {
-        String line;
         try {
-            line = reader.readLine();
+            return this.reusableRecord.set(row++, reader.readLine());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
-        //this.row++;
-        if (this.reusableRecord == null)
-            return this.reusableRecord = new SVMRecord(this.row++, line, this.projection);
-        else
-            return this.reusableRecord.set(this.row++, line, this.projection);
-    }
-
-    @Override
-    public Record next(long lineNum) {
-        String line;
-        try {
-            line = reader.readLine();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        this.row = lineNum;
-        if (this.reusableRecord == null)
-            return this.reusableRecord = new SVMRecord(this.row, line, this.projection);
-        else
-            return this.reusableRecord.set(this.row, line, this.projection);
     }
 }

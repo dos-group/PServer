@@ -1,19 +1,17 @@
 package de.tuberlin.pserver.criteo
 
 import java.io.{File, PrintWriter}
-import java.net.URI
 import java.nio.charset.Charset
-import java.nio.file.Paths
 
-import org.apache.flink.configuration.Configuration
 import org.apache.flink.api.common.functions.{RichFlatMapFunction, RichMapFunction}
 import org.apache.flink.api.java.utils.ParameterTool
 import org.apache.flink.api.scala._
+import org.apache.flink.configuration.Configuration
 import org.apache.flink.core.fs.FileSystem.WriteMode
 import org.apache.flink.util.Collector
 
-import scala.io.Source
 import scala.collection.JavaConverters._
+import scala.io.Source
 import scala.util.hashing.MurmurHash3
 
 /**

@@ -139,15 +139,8 @@ public final class RPCManager {
 
         public MethodSignature() { this(null, null, null, null, null); }
         public MethodSignature(String className, String methodName, Class<?>[] argumentTypes, Object[] arguments, Class<?> returnType) {
-            Preconditions.checkNotNull(methodName);
-            Preconditions.checkNotNull(argumentTypes);
-            Preconditions.checkNotNull(arguments);
-            Preconditions.checkNotNull(returnType);
-
             this.className = className;
-
             this.methodName = methodName;
-
             if (arguments != null) {
                 this.argumentTypes = argumentTypes;
                 this.arguments = arguments;
@@ -155,7 +148,6 @@ public final class RPCManager {
                 this.argumentTypes = null;
                 this.arguments = null;
             }
-
             this.returnType = returnType;
         }
     }

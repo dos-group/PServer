@@ -3,7 +3,7 @@ package de.tuberlin.pserver.runtime.memory;
 
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.unsafe.UnsafeOp;
-import de.tuberlin.pserver.runtime.core.config.IConfig;
+import de.tuberlin.pserver.runtime.core.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +40,7 @@ public final class MemoryManager {
 
     // ---------------------------------------------------
 
-    private final IConfig config;
+    private final Config config;
 
     public final double longLifeHeapFraction;
 
@@ -78,7 +78,7 @@ public final class MemoryManager {
     // Constructor.
     // ---------------------------------------------------
 
-    public MemoryManager(final IConfig config) {
+    public MemoryManager(final Config config) {
 
         synchronized (globalMemoryManagerMutex) {
             if (!globalMemoryManagerInstance.compareAndSet(null, this))

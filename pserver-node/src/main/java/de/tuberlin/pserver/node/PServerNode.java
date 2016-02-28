@@ -71,23 +71,14 @@ public final class PServerNode extends EventDispatcher {
 
         @Override
         public void handleEvent(final Event event) {
-
             final ProgramSubmissionEvent programSubmission = (ProgramSubmissionEvent)event;
-
             try {
-
                 final Program instance = driver.install(programSubmission);
-
                 new Thread(() -> {
-
                     try {
-
                         ParallelRuntime.INSTANCE.create(runtimeContext.numOfCores);
-
                         ParallelRuntime.INSTANCE.addPrimaryThread(netManager.getDispatcherThread().getId());
-
                         driver.executeProgram();
-
                         final List<Serializable> results = instance.programContext.getResults();
 
                         final ProgramResultEvent jre = new ProgramResultEvent(
@@ -100,7 +91,6 @@ public final class PServerNode extends EventDispatcher {
                         netManager.dispatchEventAt(programSubmission.clientMachine, jre);
 
                     } catch (Throwable ex) {
-
                         final ProgramFailureEvent jfe = new ProgramFailureEvent(
                                 machine,
                                 programSubmission.programID,
@@ -111,18 +101,13 @@ public final class PServerNode extends EventDispatcher {
                         );
 
                         netManager.dispatchEventAt(programSubmission.clientMachine, jfe);
-
                     } finally {
-
                         driver.deactivate();
-
                         runtimeManager.clearContext();
-
                         ParallelRuntime.INSTANCE.deactivate();
                     }
 
                 }).start();
-
             } catch (Exception ex) {
                 throw new IllegalStateException(ex);
             }

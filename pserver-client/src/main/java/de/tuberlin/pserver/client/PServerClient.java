@@ -3,7 +3,7 @@ package de.tuberlin.pserver.client;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.tuples.Tuple2;
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.runtime.core.config.IConfig;
+import de.tuberlin.pserver.runtime.core.config.Config;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
@@ -30,7 +30,7 @@ public final class PServerClient extends EventDispatcher {
 
     private static final Logger LOG = LoggerFactory.getLogger(PServerClient.class);
 
-    private final IConfig config;
+    private final Config config;
 
     private final MachineDescriptor machine;
 
@@ -159,7 +159,7 @@ public final class PServerClient extends EventDispatcher {
         return jobResults.get(Pair.of(jobUID, nodeID));
     }
 
-    public IConfig getConfig() { return config; }
+    public Config getConfig() { return config; }
 
     public int getNumberOfWorkers() { return infraManager.getMachines().size(); }
 }

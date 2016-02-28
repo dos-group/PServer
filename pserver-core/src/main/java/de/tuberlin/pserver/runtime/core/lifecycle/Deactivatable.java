@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.runtime.core.common;
+package de.tuberlin.pserver.runtime.core.lifecycle;
 
 public interface Deactivatable {
 

@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.runtime.core.infra;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.runtime.core.common.Deactivatable;
-import de.tuberlin.pserver.runtime.core.config.IConfig;
+import de.tuberlin.pserver.runtime.core.config.Config;
+import de.tuberlin.pserver.runtime.core.lifecycle.Deactivatable;
 import org.apache.curator.CuratorZookeeperClient;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -237,9 +237,9 @@ public final class ZookeeperClient implements Deactivatable{
         }
     }
 
-    public static String buildServersString(List<? extends IConfig> servers) {
+    public static String buildServersString(List<? extends Config> servers) {
         StringBuilder sb = new StringBuilder();
-        for (final IConfig server : servers) {
+        for (final Config server : servers) {
             sb.append(server.getString("host"));
             sb.append(':');
             sb.append(server.getInt("port"));

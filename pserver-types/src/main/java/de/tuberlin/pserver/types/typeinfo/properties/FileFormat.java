@@ -6,7 +6,7 @@ public enum FileFormat {
     UNDEFINED(null, null, null),
     DENSE_FORMAT(",", "\n", ValueType.FLOAT),
     SPARSE_FORMAT(",", "\n", ValueType.FLOAT),
-    SVM_FORMAT(" \t", "\n", ValueType.FLOAT);
+    SVM_FORMAT(" ", "\n", ValueType.FLOAT);
 
     public enum ValueType {
         FLOAT, DOUBLE

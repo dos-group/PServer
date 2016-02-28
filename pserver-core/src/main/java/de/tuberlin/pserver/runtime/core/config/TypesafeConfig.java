@@ -1,17 +1,16 @@
 package de.tuberlin.pserver.runtime.core.config;
 
-import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class TypesafeConfig implements IConfig {
+public class TypesafeConfig implements Config {
 
-    private final Config delegate;
+    private final com.typesafe.config.Config delegate;
 
-    protected TypesafeConfig(final Config config) {
+    protected TypesafeConfig(final com.typesafe.config.Config config) {
         this.delegate = config;
     }
 
@@ -56,12 +55,12 @@ public class TypesafeConfig implements IConfig {
     }
 
     @Override
-    public IConfig getObject(final String path) {
+    public Config getObject(final String path) {
         return new TypesafeConfig(delegate.getObject(path).toConfig());
     }
 
     @Override
-    public IConfig getConfig(final String path) {
+    public Config getConfig(final String path) {
         return new TypesafeConfig(delegate.getConfig(path));
     }
 
@@ -111,9 +110,9 @@ public class TypesafeConfig implements IConfig {
     }
 
     @Override
-    public List<? extends IConfig> getObjectList(final String path) {
+    public List<? extends Config> getObjectList(final String path) {
         List<? extends ConfigObject> x = delegate.getObjectList(path);
-        List<IConfig> y = new ArrayList<IConfig>(x.size());
+        List<Config> y = new ArrayList<Config>(x.size());
         for (ConfigObject o : x) {
             y.add(new TypesafeConfig(o.toConfig()));
         }

@@ -2,9 +2,9 @@ package de.tuberlin.pserver.runtime.core.infra;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.runtime.core.common.Deactivatable;
-import de.tuberlin.pserver.runtime.core.config.IConfig;
+import de.tuberlin.pserver.runtime.core.config.Config;
 import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
+import de.tuberlin.pserver.runtime.core.lifecycle.Deactivatable;
 import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,7 @@ public final class InfrastructureManager extends EventDispatcher implements Deac
 
     private static final Logger LOG = LoggerFactory.getLogger(InfrastructureManager.class);
 
-    private final IConfig config;
+    private final Config config;
 
     private final MachineDescriptor machine;
 
@@ -36,7 +36,7 @@ public final class InfrastructureManager extends EventDispatcher implements Deac
     // Constructors.
     // ---------------------------------------------------
 
-    public InfrastructureManager(final MachineDescriptor machine, final IConfig config, final boolean isClient) {
+    public InfrastructureManager(final MachineDescriptor machine, final Config config, final boolean isClient) {
         super(true, "INFRASTRUCTURE-MANAGER-THREAD");
         this.config     = Preconditions.checkNotNull(config);
         this.machine    = Preconditions.checkNotNull(machine);
@@ -57,7 +57,7 @@ public final class InfrastructureManager extends EventDispatcher implements Deac
     // ---------------------------------------------------
 
     public void start() {
-        final String zookeeperServer = ZookeeperClient.buildServersString(config.getObjectList("zookeeper.servers"));
+        final String zookeeperServer = ZookeeperClient.buildServersString(config.getObjectList("global.zookeeper.servers"));
         ZookeeperClient.checkConnectionString(zookeeperServer);
         try {
             zookeeper = new ZookeeperClient(zookeeperServer);

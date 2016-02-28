@@ -30,9 +30,6 @@ public class LDA extends Program{
     // Parameters
     // ---------------------------------------------------
 
-    // Configuration
-    private static final String NUM_NODES = "1";
-
     // Input
     private static final String DOC_TERM_PATH = "/Users/Chris/Downloads/reuters_doc_term.csv";
     private static final int N_DOCUMENTS = 395;
@@ -241,7 +238,7 @@ public class LDA extends Program{
     // ---------------------------------------------------
 
     private static void local() {
-        System.setProperty("simulation.numNodes", NUM_NODES);
+        System.setProperty("global.simNodes", "1");
 
         final List<List<Serializable>> result = Lists.newArrayList();
 
