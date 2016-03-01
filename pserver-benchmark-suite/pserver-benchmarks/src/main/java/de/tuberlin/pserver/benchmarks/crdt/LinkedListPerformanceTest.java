@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.performance;
+package de.tuberlin.pserver.benchmarks.crdt;
 
 
 import com.google.common.collect.Lists;
