@@ -1,17 +1,9 @@
 package de.tuberlin.pserver.crdt;
 
 import de.tuberlin.pserver.AbstractReplicatedDataType;
-import de.tuberlin.pserver.crdt.operations.EndOperation;
-import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.operations.Operation;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.events.MsgEventHandler;
-import org.apache.commons.lang3.ArrayUtils;
-
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
 
 
 // TODO: what about exceptions in general
@@ -64,7 +56,7 @@ public abstract class AbstractCRDT<T> extends AbstractReplicatedDataType<T> impl
 
         runtimeManager.addMsgEventListener("Operation_" + id, new MsgEventHandler() {
             @Override
-            public void handleMsg(int srcNodeID, Object value) {
+            public synchronized void handleMsg(int srcNodeID, Object value) {
                 if (value instanceof Operation) {
                     @SuppressWarnings("unchecked")
                     Operation<?> op = (Operation<?>) value;
@@ -83,7 +75,5 @@ public abstract class AbstractCRDT<T> extends AbstractReplicatedDataType<T> impl
                 }
             }
         });
-
-        //ready();
     }
 }

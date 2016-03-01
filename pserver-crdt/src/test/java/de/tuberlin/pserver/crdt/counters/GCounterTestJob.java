@@ -15,7 +15,7 @@ import static org.junit.Assert.assertEquals;
 
 public class GCounterTestJob extends Program {
     private static final int NUM_NODES = 3;
-    private static final int NUM_OPERATIONS = 10000;
+    private static final int NUM_OPERATIONS = 100000;
     private static final String CRDT_ID1 = "counter";
 
     @Unit

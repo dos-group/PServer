@@ -1,8 +1,8 @@
 package de.tuberlin.pserver;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.crdt.operations.EndOperation;
-import de.tuberlin.pserver.crdt.operations.Operation;
+import de.tuberlin.pserver.operations.EndOperation;
+import de.tuberlin.pserver.operations.Operation;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.events.MsgEventHandler;
@@ -104,7 +104,7 @@ public abstract class AbstractReplicatedDataType<T> implements ReplicatedDataTyp
 
         runtimeManager.addMsgEventListener("Running_" + crdtId, new MsgEventHandler() {
             @Override
-            public void handleMsg(int srcNodeID, Object value) {
+            public synchronized void handleMsg(int srcNodeID, Object value) {
                 runningNodes.add(srcNodeID);
                 LOG.info("[node " + nodeId + "|crdt '" + crdtId + "'] Number of running remote replicas: " + runningNodes.size() + "//"
                         + (noOfReplicas - 1));

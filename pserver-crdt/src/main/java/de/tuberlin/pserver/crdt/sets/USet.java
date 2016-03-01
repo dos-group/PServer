@@ -1,9 +1,9 @@
 package de.tuberlin.pserver.crdt.sets;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.crdt.exceptions.NotUniqueException;
-import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.crdt.operations.SimpleOperation;
+import de.tuberlin.pserver.ReplicatedDataTypeException;
+import de.tuberlin.pserver.operations.Operation;
+import de.tuberlin.pserver.operations.SimpleOperation;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.HashSet;
@@ -69,7 +69,7 @@ public class USet<T> extends AbstractSet<T> {
 
     private synchronized boolean addElement(T value) {
         if(!set.add(value)) {
-            throw new NotUniqueException("The value "+ value + " is already contained in the Unique Set and cannot be " +
+            throw new ReplicatedDataTypeException("The value "+ value + " is already contained in the Unique Set and cannot be " +
                     "added again.");
         }
         return true;

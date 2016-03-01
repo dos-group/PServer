@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.radt.arrays;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.crdt.operations.Operation;
+import de.tuberlin.pserver.operations.Operation;
 import de.tuberlin.pserver.radt.S4Vector;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
@@ -71,11 +71,11 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
     @Override
     protected boolean update(int srcNodeId, Operation op) {
         @SuppressWarnings("unchecked")
-        ArrayOperation<Element<T>> arrayOp = (ArrayOperation<Element<T>>) op;
+        ArrayOperation<T> arrayOp = (ArrayOperation<T>) op;
 
         switch(arrayOp.getType()) {
             case WRITE:
-                return remoteWrite(arrayOp.getValue());
+                return remoteWrite(arrayOp.getValue(), arrayOp.getIndex(), arrayOp.getS4Vector());
             default:
                 throw new IllegalArgumentException("Array RADTs do not allow the " + op.getType() + " operation.");
         }
@@ -93,19 +93,19 @@ public class Array<T> extends AbstractArray<T> implements IArray<T>{
         int[] clock = increaseVectorClock();
         S4Vector s4 = new S4Vector(nodeId, clock);
 
-        Element<T> item = new Element<>(index, s4, value);
+        Element<T> item = new Element<>(value, s4);
         set(index, item);
 
-        broadcast(new ArrayOperation<>(Operation.OpType.WRITE, item, index, clock, s4));
+        broadcast(new ArrayOperation<>(Operation.OpType.WRITE, value, index, clock, s4));
 
         return true;
     }
 
-    private synchronized boolean remoteWrite(Element<T> item) {
-        Element current = get(item.getIndex());
+    private synchronized boolean remoteWrite(T value, int index, S4Vector s4) { //Element<T> item) {
+        Element current = get(index);
 
-        if(current.getS4Vector().precedes(item.getS4Vector())) {
-            set(item.getIndex(), item);
+        if(current.getS4Vector().precedes(s4)) {
+            set(index, new Element<>(value, s4));
             return true;
         }
 

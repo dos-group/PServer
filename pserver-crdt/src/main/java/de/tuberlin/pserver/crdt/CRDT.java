@@ -1,7 +1,5 @@
 package de.tuberlin.pserver.crdt;
 
-import de.tuberlin.pserver.crdt.operations.Operation;
-
 /**
  * <p>
  * The root interface in the CRDT hierarchy. This interface is meant to be implemented by classes that represent

@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.crdt.registers;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.crdt.operations.TaggedOperation;
+import de.tuberlin.pserver.operations.Operation;
+import de.tuberlin.pserver.operations.TaggedOperation;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.*;

@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.radt.hashtable;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.crdt.exceptions.CRDTException;
-import de.tuberlin.pserver.crdt.operations.Operation;
+import de.tuberlin.pserver.ReplicatedDataTypeException;
+import de.tuberlin.pserver.operations.Operation;
 import de.tuberlin.pserver.radt.S4Vector;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
@@ -95,7 +95,7 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
     // ---------------------------------------------------
 
     @Override
-    protected boolean update(int srcNodeId, Operation<?> op) {
+    protected synchronized boolean update(int srcNodeId, Operation<?> op) {
         @SuppressWarnings("unchecked")
         HashTableOperation<K,V> hashOp = (HashTableOperation<K,V>) op;
         boolean result;
@@ -103,11 +103,11 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
         switch(hashOp.getType()) {
             case PUT:
                 result = remotePut(hashOp.getKey(), hashOp.getValue(), hashOp.getS4Vector());
-                cemetery.updateAndPurge(hashOp.getVectorClock(), hashOp.getS4Vector().getSiteId());
+                cemetery.updateAndPurge(vectorClock, hashOp.getVectorClock(), hashOp.getS4Vector().getSiteId());
                 return result;
             case REMOVE:
                 result = remoteRemove(hashOp.getKey(), hashOp.getS4Vector());
-                cemetery.updateAndPurge(hashOp.getVectorClock(), hashOp.getS4Vector().getSiteId());
+                cemetery.updateAndPurge(vectorClock, hashOp.getVectorClock(), hashOp.getS4Vector().getSiteId());
                 return result;
             default:
                 throw new IllegalArgumentException("HashTable RADTs do not allow the " + op.getType() + " operation.");
@@ -123,7 +123,7 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
         //System.out.println("[DEBUG] " + nodeId+"|"+key + " Remote Put, Value: " + value);
 
         if(currSlot == null) {
-            System.out.println("[DEBUG]" + nodeId+"|"+key + " Remote Put, slot is empty");
+            //System.out.println("[DEBUG]" + nodeId+"|"+key + " Remote Put, slot is empty");
             map.put(key, new Slot<>(key, value, s4));
             return true;
         }
@@ -140,6 +140,17 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
         return true;
     }
 
+    public synchronized int getTombstones() {
+        int sum = 0;
+
+
+        for(Slot slot : map.values()) {
+            if(slot.isTombstone()) sum++;
+        }
+
+        return sum;
+
+    }
     private synchronized boolean remoteRemove(K key, S4Vector s4) {
         Slot<K,V> currSlot = map.get(key);
 
@@ -147,7 +158,7 @@ public class HashTable<K,V> extends AbstractHashTable<K,V> {
         //System.out.println("Curr S4: " + currSlot.getS4Vector() + ", New S4: " + s4);
 
         if(currSlot == null) {
-            throw new CRDTException("Attempting to remote remove slot with key " + key + " which doesn't exist at node " + nodeId);
+            throw new ReplicatedDataTypeException("Attempting to remote remove slot with key " + key + " which doesn't exist at node " + nodeId);
         }
 
         if(s4.precedes(currSlot.getS4Vector()))  return false;

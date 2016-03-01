@@ -17,9 +17,9 @@ import static org.junit.Assert.assertArrayEquals;
 
 
 public class LinkedListTestJob extends Program {
-    private static final int NUM_NODES = 5;
+    private static final int NUM_NODES = 3;
     private static final String RADT_ID = "linkedList";
-    private static final int NUM_ELEMENTS = 1000;
+    private static final int NUM_ELEMENTS = 20;
 
 
     @Unit
@@ -29,33 +29,39 @@ public class LinkedListTestJob extends Program {
 
             System.out.println("[TEST] " + programContext.nodeID + " Starting inserts");
 
-            for (int i = 0; i <= NUM_ELEMENTS; i++) {
-                if (list.size() > 10) {
-                    list.insert(Random.nextInt(list.size()), i * (programContext.nodeID + 1));
-                }
-                else {
-                    list.insert(i , i * (programContext.nodeID + 1));
+            for (int i = 0; i <= 5; i++) {
 
-                }
-            }
-
-            System.out.println("[TEST] " + programContext.nodeID + " Starting updates");
-            for (int i = 0; i <= NUM_ELEMENTS/2; i++) {
-                list.update(Random.nextInt(NUM_ELEMENTS), i * (programContext.nodeID + 1));
+                System.out.println("[DEBUG][" + programContext.nodeID + "] Inserting " + i*(programContext.nodeID+1) + " at " + i);
+                list.insert(i, i * (programContext.nodeID + 1));
             }
 
             System.out.println("[TEST] " + programContext.nodeID + " Starting deletes");
 
-            for (int i = 0; i < NUM_ELEMENTS/5; i++) {
-                list.delete(Random.nextInt(NUM_ELEMENTS/2));
+            for (int i = 0; i < 2; i++) {
+                int val = Random.nextInt(10);
+                System.out.println("[DEBUG][" + programContext.nodeID + "] Deleting " + val + " at " + i);
+
+                list.delete(val);
             }
 
-            Thread.sleep(3000);
+
+            System.out.println("[TEST] " + programContext.nodeID + " Starting updates");
+            int index = Random.nextInt(10);
+
+
+            for (int i = 0; i <= 2; i++) {
+                System.out.println("[DEBUG][" + programContext.nodeID + "] Updating " + i * (programContext.nodeID + 1) + " at " + index);
+
+                list.update(index, i * (programContext.nodeID + 1));
+            }
+
+
+            /*Thread.sleep(3000);
 
             for (int i = 0; i <= 10; i++) {
                 list.insert(Random.nextInt(list.size()), Random.nextInt(NUM_ELEMENTS/2));
             }
-
+*/
             System.out.println("[TEST] " + programContext.nodeID + " Finished.");
 
             list.finish();

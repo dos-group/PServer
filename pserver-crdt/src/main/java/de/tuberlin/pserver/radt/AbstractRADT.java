@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.radt;
 
 import de.tuberlin.pserver.AbstractReplicatedDataType;
-import de.tuberlin.pserver.crdt.operations.Operation;
+import de.tuberlin.pserver.operations.Operation;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.events.MsgEventHandler;
 
@@ -39,7 +39,7 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
 
         runtimeManager.addMsgEventListener("Operation_" + id, new MsgEventHandler() {
             @Override
-            public void handleMsg(int srcNodeID, Object value) {
+            public synchronized void handleMsg(int srcNodeID, Object value) {
                 if (value instanceof Operation) {
                     //Suppress the unchecked warning cause by generics cast from object to Operation<T>
                     @SuppressWarnings("unchecked")
@@ -54,27 +54,28 @@ public abstract class AbstractRADT<T> extends AbstractReplicatedDataType<T> impl
                         @SuppressWarnings("unchecked")
                         RADTOperation<CObject<T>> radtOp = (RADTOperation<CObject<T>>) value;
                         //System.out.println("[" + nodeId + "] Received " + ((ArrayOperation<T>)radtOp).getValue() + "; " + radtOp.getS4Vector());
+
+
                         queue.add(radtOp);
 
-                        /*StringBuilder sb = new StringBuilder();
-                        sb.append("\n"+nodeId + " Local vector clock: [");
-                        for(int i = 0; i < vectorClock.length; i++) {
-                            sb.append(vectorClock[i] + ", ");
-                        }
-                        sb.append("]");
-                        System.out.println(sb.toString());
+                            /*StringBuilder sb = new StringBuilder();
+                            sb.append("\n"+nodeId + " Local vector clock: [");
+                            for(int i = 0; i < vectorClock.length; i++) {
+                                sb.append(vectorClock[i] + ", ");
+                            }
+                            sb.append("]");
+                            System.out.println(sb.toString());
 
-                        StringBuilder sb2 = new StringBuilder();
-                        sb2.append(nodeId + " Queue head vector clock: [");
-                        for(int i = 0; i < queue.peek().getVectorClock().length; i++) {
-                            sb2.append(queue.peek().getVectorClock()[i] + ", ");
-                        }
-                        sb2.append("]");
-                        System.out.println(sb2.toString());*/
+                            StringBuilder sb2 = new StringBuilder();
+                            sb2.append(nodeId + " Queue head vector clock: [");
+                            for(int i = 0; i < queue.peek().getVectorClock().length; i++) {
+                                sb2.append(queue.peek().getVectorClock()[i] + ", ");
+                            }
+                            sb2.append("]");
+                            System.out.println(sb2.toString());*/
 
 
-
-                        while(queue.peek() != null && isCausallyReadyFor(queue.peek())) {
+                        while (queue.peek() != null && isCausallyReadyFor(queue.peek())) {
                             //System.out.println("Applied");
                             radtOp = queue.poll();
                             updateVectorClock(radtOp.getVectorClock());

@@ -25,7 +25,7 @@ public class LWWRegisterTestJob extends Program {
     @Unit
     public void test(Lifecycle lifecycle) {
         lifecycle.process(() -> {
-            LWWRegister<Integer> register = new LWWRegister<>(CRDT_ID, NUM_REPLICAS, programContext, (i1, i2) -> i1 > i2);
+            LWWRegister<Integer> register = new LWWRegister<>(CRDT_ID, NUM_REPLICAS, programContext); //, (i1, i2) -> i1 > i2);
             Random rand = new Random(Calendar.getInstance().getTimeInMillis());
 
             for (int i = 0; i <= 10000; i++) {
@@ -39,11 +39,11 @@ public class LWWRegisterTestJob extends Program {
 
             result(register.get(), register.getTimestamp());
 
-            /*
+
             System.out.println("[DEBUG] Register of node " + programContext.runtimeContext.nodeID + ": " + register.get());
             System.out.println("[DEBUG] Buffer of node " + programContext.runtimeContext.nodeID + ": " + register.getBuffer());
             System.out.println("[DEBUG] Timestamp of node " + programContext.runtimeContext.nodeID + ": " + register.getTimestamp());
-            */
+
         });
     }
 

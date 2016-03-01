@@ -72,12 +72,12 @@ public abstract class AbstractCemetery<T extends CObject> implements Cemetery<T>
 
         for(int i = 0; i < lastVectorClocks.length; i++) {
             // TODO: use a map instead of nodeId != null ?
-            if(i != nodeId) {
-                //System.out.println(lastVectorClocks[i][0] + ", " + lastVectorClocks[i][1]);
+            //if(i != nodeId) {
+                //System.out.println(lastVectorClocks[i][siteId]);
                 if (lastVectorClocks[i][siteId] < min) {
                     min = lastVectorClocks[i][siteId];
                 }
-            }
+            //}
         }
 
         return min;
@@ -88,19 +88,30 @@ public abstract class AbstractCemetery<T extends CObject> implements Cemetery<T>
         int curr;
 
         for(int i = 0; i < lastVectorClocks.length; i++) {
-            if(i != nodeId) {
+            //if(i != nodeId) {
                 curr = Arrays.stream(lastVectorClocks[i]).sum();
                 if(curr < min) {
                     min = curr;
                 }
-            }
+           // }
         }
 
         return min;
     }
 
-    public void updateAndPurge(int[] vectorClock, int srcNode) {
-        lastVectorClocks[srcNode] = vectorClock;
+    public synchronized void updateAndPurge(int[] localVectorClock, int[] remoteVectorClock, int srcNode) {
+        lastVectorClocks[nodeId] = localVectorClock;
+        lastVectorClocks[srcNode] = remoteVectorClock;
+        StringBuilder sb = new StringBuilder();
+
+        for(int[] clock : lastVectorClocks) {
+            sb.append("[");
+            for(int i : clock) {
+                sb.append(i+",");
+            }
+            sb.append("], ");
+        }
+        System.out.println(sb.toString());
         // TODO: when, where and how often to purge?
         purge();
     }

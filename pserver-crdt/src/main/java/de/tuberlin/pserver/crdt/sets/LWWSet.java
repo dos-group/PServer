@@ -1,15 +1,12 @@
 package de.tuberlin.pserver.crdt.sets;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.crdt.CRDT;
-import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.crdt.operations.TaggedOperation;
-import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.operations.Operation;
+import de.tuberlin.pserver.operations.TaggedOperation;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**

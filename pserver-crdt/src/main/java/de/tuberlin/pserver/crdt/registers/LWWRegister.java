@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.crdt.registers;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.crdt.operations.TaggedOperation;
+import de.tuberlin.pserver.operations.Operation;
+import de.tuberlin.pserver.operations.TaggedOperation;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 // In the Shapiro paper, concurrent updates are solved by concatenating MAC address to the timestamp...
@@ -10,12 +10,19 @@ import de.tuberlin.pserver.runtime.driver.ProgramContext;
 // TODO: maybe don't even bother with the Date class, just do everything in long
 // Last Writer Wins Register
 public class LWWRegister<T extends Comparable> extends AbstractRegister<T> implements Register<T> {
-    private final ConcurrentResolver<T> resolver;
+    //private final ConcurrentResolver<T> resolver;
     private long timestamp;
+    private int currSrcNodeId = -1;
 
-    public LWWRegister(String id, int noOfReplicas, ProgramContext programContext, ConcurrentResolver<T> resolver) {
+    /*public LWWRegister(String id, int noOfReplicas, ProgramContext programContext, ConcurrentResolver<T> resolver) {
         super(id, noOfReplicas, programContext);
         this.resolver = resolver;
+        this.timestamp = System.nanoTime();
+        ready();
+    }*/
+
+    public LWWRegister(String id, int noOfReplicas, ProgramContext programContext) {
+        super(id, noOfReplicas, programContext);
         this.timestamp = System.nanoTime();
         ready();
     }
@@ -26,7 +33,7 @@ public class LWWRegister<T extends Comparable> extends AbstractRegister<T> imple
 
         long time = System.nanoTime();
 
-        if(setRegister(element, time)) {
+        if(setRegister(element, time, nodeId)) {
             broadcast(new TaggedOperation<>(Operation.OpType.ASSIGN, element, time));
             return true;
         }
@@ -41,7 +48,7 @@ public class LWWRegister<T extends Comparable> extends AbstractRegister<T> imple
 
         switch(taggedOp.getType()) {
             case ASSIGN:
-                return setRegister(taggedOp.getValue(), taggedOp.getTag());
+                return setRegister(taggedOp.getValue(), taggedOp.getTag(), srcNodeId);
             default:
                 throw new IllegalArgumentException("LWWRegister CRDTs do not allow the " + op.getType() + " operation.");
         }
@@ -55,24 +62,21 @@ public class LWWRegister<T extends Comparable> extends AbstractRegister<T> imple
         return this.timestamp;
     }
 
-    private synchronized void atomicUpdate(T element, long time) {
+    private synchronized void atomicUpdate(T element, long time, int srcNodeId) {
         super.set(element);
         setTimestamp(time);
+        this.currSrcNodeId = srcNodeId;
     }
 
-    private synchronized boolean resolveConcurrentUpdate(T element) {
-        if(resolver.resolveConcurrent(element, this.get())) {
-            atomicUpdate(element, getTimestamp());
-            return true;
-        }
+    private synchronized boolean resolveConcurrentUpdate(T element, int srcNodeId) {
+        //if(resolver.resolveConcurrent(element, this.get())) {
+        return currSrcNodeId < srcNodeId;
 
-        return false;
     }
 
-    private synchronized boolean setRegister(T element, long time) {
-        if(time > getTimestamp() || (time == getTimestamp() && resolveConcurrentUpdate(element))) {
-            atomicUpdate(element, time);
-            //broadcast(new TaggedOperation<>(Operation.OpType.ASSIGN, element, time));
+    private synchronized boolean setRegister(T element, long time, int srcNodeId) {
+        if(time > getTimestamp() || (time == getTimestamp() && resolveConcurrentUpdate(element, srcNodeId))) {
+            atomicUpdate(element, time, srcNodeId);
 
             return true;
         }

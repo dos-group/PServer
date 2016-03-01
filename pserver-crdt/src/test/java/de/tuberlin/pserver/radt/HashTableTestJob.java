@@ -18,8 +18,8 @@ import java.util.stream.IntStream;
 import static org.junit.Assert.assertArrayEquals;
 
 public class HashTableTestJob extends Program {
-    private static final int NUM_NODES = 4;
-    private static final int NUM_ELEMENTS = 1000;
+    private static final int NUM_NODES = 3;
+    private static final int NUM_ELEMENTS = 10;
 
 
     private static final String RADT_ID = "hashtable";
@@ -39,6 +39,9 @@ public class HashTableTestJob extends Program {
             IntStream.range(0,NUM_ELEMENTS/5)
                     .forEach(i -> hashTable.remove(Random.nextInt(NUM_ELEMENTS / 2)));
 
+            IntStream.range(0, NUM_ELEMENTS)
+                    .forEach(i -> hashTable.put(Random.nextInt(NUM_ELEMENTS), Random.nextInt(NUM_ELEMENTS)));
+
             hashTable.finish();
 
 
@@ -54,6 +57,8 @@ public class HashTableTestJob extends Program {
                     + hashTable.toString());
             System.out.println("[DEBUG] Queue of HashTable of node " + programContext.runtimeContext.nodeID + ": "
                     + hashTable.getQueue().size());
+            System.out.println("[DEBUG] Tombstones of HashTable of node " + programContext.runtimeContext.nodeID + ": "
+                    + hashTable.getTombstones());
         });
     }
 

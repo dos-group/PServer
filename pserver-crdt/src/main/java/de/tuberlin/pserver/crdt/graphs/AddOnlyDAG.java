@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.crdt.graphs;
 
-import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.operations.Operation;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 import java.util.HashSet;

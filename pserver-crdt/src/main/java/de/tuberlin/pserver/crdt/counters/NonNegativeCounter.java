@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.crdt.counters;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.crdt.operations.Operation;
-import de.tuberlin.pserver.crdt.operations.SimpleOperation;
+import de.tuberlin.pserver.operations.Operation;
+import de.tuberlin.pserver.operations.SimpleOperation;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
 /**

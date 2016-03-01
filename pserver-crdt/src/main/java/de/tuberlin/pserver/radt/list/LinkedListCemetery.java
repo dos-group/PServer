@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.radt.list;
 
 import de.tuberlin.pserver.radt.AbstractCemetery;
-import de.tuberlin.pserver.radt.hashtable.Slot;
 
 import java.util.*;
 
@@ -31,12 +30,12 @@ public class LinkedListCemetery<T> extends AbstractCemetery<Node<T>> {
 
         for(Queue<Node<T>> queue : cemetery) {
 
-            //System.out.println(nodeId + "One: " + allReplicasHaveExecutedDelete(queue.peek()) + ", Two: " + noTwo(queue.peek()));
+            //System.out.println(nodeId + "One: " + allReplicasHaveExecutedDelete(queue.peek()) + ", Two: " + doesRightCobjectSucceed(queue.peek()));
 
-            while(allReplicasHaveExecutedDelete(queue.peek()) && noTwo(queue.peek())) {
+            while(allReplicasHaveExecutedDelete(queue.peek()) && doesRightCobjectSucceed(queue.peek())) {
                 node = queue.poll();
                 //System.out.println(list);
-                //System.out.println("[DEBUG]" + nodeId +" Removing " + node.getS4Vector());
+                System.out.println("[DEBUG] " + nodeId +" Purging " + node.getS4Vector() + " | " + node.getUpdateDeleteS4());
                 list.removeTombstone(node);
                 //System.out.println(list);
 
@@ -49,15 +48,17 @@ public class LinkedListCemetery<T> extends AbstractCemetery<Node<T>> {
     private synchronized boolean allReplicasHaveExecutedDelete(Node<T> node) {
         // Every site has executed the deletion D, therefore from now on only operations happening after D will arrive
         if(node == null) return false;
-        //System.out.println("Seq: " + node.getS4Vector().getSeq());
-        //System.out.println("Min: " + getMinVectorClockEntry(node.getS4Vector().getSiteId())+"\n");
+        System.out.println("\n" + "Seq: " + node.getUpdateDeleteS4().getSeq());
+        System.out.println("Min: " + getMinVectorClockEntry(node.getUpdateDeleteS4().getSiteId()));
         return node.getUpdateDeleteS4().getSeq() <= getMinVectorClockEntry(node.getUpdateDeleteS4().getSiteId());
     }
 
-    private synchronized boolean noTwo(Node<T> node) {
+    private synchronized boolean doesRightCobjectSucceed(Node<T> node) {
         if(node == null) return false;
         if(node.getLink() == null) return true;
         // TODO: should I use node.getUpdateDeleteS4().getSiteId() ? => prob no
+        //System.out.println("Sum: " + node.getLink().getS4Vector().getVectorClockSum());
+        //System.out.println("Min sum: " + getMinVectorSumEntry()+"\n");
         return node.getLink().getS4Vector().getVectorClockSum() < getMinVectorSumEntry();
     }
 }

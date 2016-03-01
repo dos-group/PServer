@@ -1,6 +1,6 @@
 package de.tuberlin.pserver;
 
-import de.tuberlin.pserver.crdt.operations.Operation;
+import de.tuberlin.pserver.operations.Operation;
 
 public interface ReplicatedDataType<T> {
 
@@ -10,6 +10,4 @@ public interface ReplicatedDataType<T> {
      * token from all other existing replicas and applies all outstanding operations to reach the final state of this CRDT.
      */
     void finish();
-    //void ready();
-    //ReplicatedDataType newReplica();
 }

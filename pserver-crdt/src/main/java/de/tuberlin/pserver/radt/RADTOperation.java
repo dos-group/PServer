@@ -1,7 +1,7 @@
 package de.tuberlin.pserver.radt;
 
 
-import de.tuberlin.pserver.crdt.operations.SimpleOperation;
+import de.tuberlin.pserver.operations.SimpleOperation;
 
 public abstract class RADTOperation<V> extends SimpleOperation<V> {
 

@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.radt.list;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.crdt.exceptions.CRDTException;
-import de.tuberlin.pserver.crdt.operations.Operation;
+import de.tuberlin.pserver.ReplicatedDataTypeException;
+import de.tuberlin.pserver.operations.Operation;
 import de.tuberlin.pserver.radt.S4Vector;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 
@@ -56,6 +56,7 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
 
         int[] clock = increaseVectorClock();
         S4Vector s4 = new S4Vector(nodeId, clock);
+        System.out.println("[DEBUG] " + nodeId + " Inserting " + s4 + " ref: " + refNode.getS4Vector());
 
         // TODO: does the node constructor need two fields for s4 or is it always the same value?
         Node<T> node = new Node<>(value, s4, s4, refNode.getLink());
@@ -79,7 +80,7 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
     }
 
     @Override
-    public boolean update(int index, T value) {
+    public synchronized boolean update(int index, T value) {
         Preconditions.checkState(!isFinished, "After finish() has been called on a CRDT no more changes can be made to it");
 
         index++; // to adjust for getNodeById() method returning element left of index (for inserts etc.)
@@ -88,11 +89,14 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
         Preconditions.checkArgument(value != null);
         Node<T> node = getNodeByIndex(index);
 
+
         if(node == null) return false;
 
         int[] clock = increaseVectorClock();
         S4Vector s4 = new S4Vector(nodeId, clock);
         node.setUpdateDeleteS4(s4);
+
+        System.out.println("[DEBUG] " + nodeId + " Update " + s4 + " ref: " + node.getS4Vector());
 
         node.setValue(value);
 
@@ -117,12 +121,15 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
         S4Vector s4 = new S4Vector(nodeId, clock);
         node.setUpdateDeleteS4(s4);
 
+        System.out.println("[DEBUG] " + nodeId + " Delete " + s4 + " ref: " + node.getS4Vector());
+
+
         broadcast(new ListOperation<>(Operation.OpType.DELETE, null, s4, node.getS4Vector(), clock));
 
         return true;
     }
 
-    public int getTombstones() {
+    public synchronized int getTombstones() {
         int sum = 0;
         Node<T> node = getHead();
 
@@ -135,7 +142,7 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
 
     }
 
-    @Override
+    /*@Override
     public synchronized String toString() {
         final StringBuilder sb = new StringBuilder("\nLinkedList {");
         Node<T> node = getHead();
@@ -149,13 +156,13 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
             node = node.getLink();
         }
         return sb.toString();
-    }
+    }*/
 
 
 
     //FOR DEBUG
 
-    /*@Override
+    @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("\nLinkedList {\n");
         Node<T> node = getHead();
@@ -171,7 +178,7 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
             node = node.getLink();
         }
         return sb.toString();
-    }*/
+    }
 
 
     @Override
@@ -196,15 +203,15 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
         switch(listOp.getType()) {
             case INSERT:
                 result = remoteInsert(listOp.getValue(), listOp.getS4Vector(), listOp.getRefS4());
-                cemetery.updateAndPurge(listOp.getVectorClock(), srcNodeId);
+                cemetery.updateAndPurge(vectorClock, listOp.getVectorClock(), srcNodeId);
                 return result;
             case UPDATE:
                 result = remoteUpdate(listOp.getValue(), listOp.getRefS4(), listOp.getS4Vector());
-                cemetery.updateAndPurge(listOp.getVectorClock(), srcNodeId);
+                cemetery.updateAndPurge(vectorClock, listOp.getVectorClock(), srcNodeId);
                 return result;
             case DELETE:
                 result = remoteDelete(listOp.getRefS4(), listOp.getS4Vector(), srcNodeId);
-                cemetery.updateAndPurge(listOp.getVectorClock(), srcNodeId);
+                cemetery.updateAndPurge(vectorClock, listOp.getVectorClock(), srcNodeId);
                 return result;
 
             default:
@@ -215,6 +222,8 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
     private synchronized boolean remoteInsertAtHead(T value, S4Vector s4) {
         Node<T> node = new Node<>(value, s4, s4, null);
         svi.put(s4, node);
+        System.out.println("[DEBUG] " + nodeId + " Remote Inserting " + s4 + " at head");
+
 
         if(getHead() == null) {
             setHead(node);
@@ -248,8 +257,10 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
         // 1. Find the left node (reference node) in the hash table
         Node<T> refNode = getSVIEntry(refS4);
 
+        System.out.println("[DEBUG] " + nodeId + " Remote Inserting " + s4 + " ref: " + refS4);
+
         if (refNode == null)
-            throw new CRDTException("Node " + nodeId + " could not find the reference node " + refS4 + " for remote insert " + value);
+            throw new ReplicatedDataTypeException("Node " + nodeId + " could not find the reference node " + refS4 + " for remote insert " + value);
 
 
         // 2. Make new node
@@ -268,17 +279,20 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
         refNode.setLink(node);
         size++;
 
+
         return true;
     }
 
     private synchronized boolean remoteUpdate(T value, S4Vector refS4, S4Vector s4) {
         Node<T> node = getSVIEntry(refS4);
+        System.out.println("[DEBUG] " + nodeId + " Remote Updating " + s4 + " ref: " + refS4);
 
-        if(node == null) throw new CRDTException("Node " + nodeId + " could not find the node " + refS4 + " for remote update with " + value);
+
+        if(node == null) throw new ReplicatedDataTypeException("Node " + nodeId + " could not find the node " + refS4 + " for remote update with " + value);
 
         if(node.isTombstone()) return false;
 
-       // System.out.println(node.getUpdateDeleteS4() + " // " + s4 + " // " + s4.precedes(node.getUpdateDeleteS4()));
+        //System.out.println(node.getUpdateDeleteS4() + " // " + s4 + " // " + s4.precedes(node.getUpdateDeleteS4()));
 
         if(s4.precedes(node.getUpdateDeleteS4())) return false;
 
@@ -294,10 +308,17 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
         //System.out.println(nodeId + " Remote Deleting: " + refS4);
         //System.out.println(this);
 
+        System.out.println("[DEBUG] " + nodeId + " Remote Deleting " + s4 + " ref: " + refS4);
 
-        if(node == null) throw new CRDTException("Could not find the node " + refS4 + " for deletion");
 
-        if(node.isTombstone()) return true;
+        if(node == null) throw new ReplicatedDataTypeException("Node " + nodeId + " Could not find the node " + refS4 + " for deletion");
+
+        if(node.isTombstone()) {
+
+            //TODO: THIS IS AN EXPERIMENT!!! (setUpdateDelete())
+            //node.setUpdateDeleteS4(s4);
+            return true;
+        }
 
         node.setUpdateDeleteS4(s4);
         cemetery.enrol(srcNodeId, node);
@@ -351,7 +372,7 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
             refNode = refNode.getLink();
         }
 
-        if(refNode == null) throw new CRDTException("Could not find the correct reference node");
+        if(refNode == null) throw new ReplicatedDataTypeException("Could not find the correct reference node");
 
         //System.out.println("Found "  + refNode.getLink().getS4Vector() + ", " + refNode.getLink().getValue());
 
@@ -363,6 +384,7 @@ public class LinkedList<T> extends AbstractLinkedList<T> {
         return true;
     }
 
+    // TODO: test that this works properly...
     public int size() {
         return size;
     }
