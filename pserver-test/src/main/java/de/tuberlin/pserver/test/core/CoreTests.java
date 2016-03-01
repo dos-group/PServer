@@ -3,6 +3,7 @@ package de.tuberlin.pserver.test.core;
 
 import de.tuberlin.pserver.client.PServerClient;
 import de.tuberlin.pserver.client.PServerClientFactory;
+import de.tuberlin.pserver.runtime.core.config.ConfigLoader;
 import de.tuberlin.pserver.test.IntegrationTestSuite;
 import de.tuberlin.pserver.test.core.programs.*;
 import org.junit.AfterClass;
@@ -25,7 +26,7 @@ public class CoreTests {
     public static void setup() {
         if (!IntegrationTestSuite.isRunning)
             IntegrationTestSuite.setUpTestEnvironment();
-        client = new PServerClient(PServerClientFactory.INSTANCE);
+        client = new PServerClient(new PServerClientFactory(ConfigLoader.loadResource("local.conf")));
     }
 
     // --------------------------------------------------

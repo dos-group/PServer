@@ -89,8 +89,8 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
         colArr = colList.toArray();
         colList = null;
         rowPtrArr = rowPtrList.toArray();
-        if (rowPtrList.size() - 1 != rows())
-            throw new IllegalStateException();
+        //if (rowPtrList.size() - 1 != rows())
+        //    throw new IllegalStateException("rowPtrList.size() = " + rowPtrList.size() + " | rows() = " + rows());
         rowPtrList = null;
         valueArr = valueList.toArray();
         valueList = null;

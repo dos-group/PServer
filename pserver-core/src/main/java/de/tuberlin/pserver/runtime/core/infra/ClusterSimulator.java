@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.runtime.core.infra;
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.runtime.core.common.Deactivatable;
-import de.tuberlin.pserver.runtime.core.config.IConfig;
+import de.tuberlin.pserver.runtime.core.config.Config;
+import de.tuberlin.pserver.runtime.core.lifecycle.Deactivatable;
 import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.server.NIOServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -24,7 +24,7 @@ public final class ClusterSimulator implements Deactivatable {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClusterSimulator.class);
 
-    private final List<ProcessExecutor> peList;
+    private final List<ProcessExecutor> processes;
 
     private final ZooKeeperServer zookeeperServer;
 
@@ -34,21 +34,21 @@ public final class ClusterSimulator implements Deactivatable {
     // Constructors.
     // ---------------------------------------------------
 
-    public ClusterSimulator(final IConfig config,
+    public ClusterSimulator(final Config config,
                             final boolean isDebug,
                             final Class<?> mainClass) {
 
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(mainClass);
 
-        final int numNodes = config.getInt("simulation.numNodes");
+        final int numNodes = config.getInt("global.simNodes");
 
         final int tickTime = 1;
         final int numConnections = 50;
-        final String zkServer = ZookeeperClient.buildServersString(config.getObjectList("zookeeper.servers"));
-        final int zkPort = config.getObjectList("zookeeper.servers").get(0).getInt("port");
-        final boolean useZookeeper = config.getBoolean("simulation.useZookeeper");
-        final List<String> jvmOpts = config.getStringList("simulation.jvmOptions");
+        final String zkServer = ZookeeperClient.buildServersString(config.getObjectList("global.zookeeper.servers"));
+        final int zkPort = config.getObjectList("global.zookeeper.servers").get(0).getInt("port");
+        final boolean useZookeeper = config.getBoolean("global.useZookeeper");
+        final List<String> jvmOpts = config.getStringList("worker.jvmOptions");
 
         // sanity check.
         ZookeeperClient.checkConnectionString(zkServer);
@@ -56,7 +56,7 @@ public final class ClusterSimulator implements Deactivatable {
         if (numNodes < 1)
             throw new IllegalArgumentException("numNodes < 1");
 
-        this.peList = new ArrayList<>();
+        this.processes = new ArrayList<>();
 
         // ------- bootstrap zookeeper server -------
 
@@ -97,17 +97,20 @@ public final class ClusterSimulator implements Deactivatable {
         // ------- bootstrap cluster -------
 
         if (!isDebug) {
+
+            String configFile = "local.conf";
+
             for (int i = 0; i < numNodes; ++i) {
                 //List<String> nodeJvmOpts = new ArrayList<>(jvmOpts);
                 // nodeJvmOpts.add(String.fileFormat("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=%d",8000+i));
-                peList.add(new ProcessExecutor(mainClass).execute(jvmOpts.toArray(new String[jvmOpts.size()])));
+                processes.add(new ProcessExecutor(mainClass).execute(jvmOpts.toArray(new String[jvmOpts.size()]), configFile));
             }
         }
     }
 
     @Override
     public void deactivate() {
-        peList.forEach(ClusterSimulator.ProcessExecutor::destroy);
+        processes.forEach(ClusterSimulator.ProcessExecutor::destroy);
         this.zookeeperServer.shutdown();
         this.zookeeperCNXNFactory.closeAll();
     }
@@ -122,7 +125,7 @@ public final class ClusterSimulator implements Deactivatable {
         // Fields.
         // ---------------------------------------------------
 
-        private final Class<?> executableClazz;
+        private final Class<?> mainClass;
 
         private Process process;
 
@@ -130,14 +133,14 @@ public final class ClusterSimulator implements Deactivatable {
         // Constructors.
         // ---------------------------------------------------
 
-        public ProcessExecutor(final Class<?> executableClazz) {
-            Preconditions.checkNotNull(executableClazz);
+        public ProcessExecutor(final Class<?> mainClass) {
+            Preconditions.checkNotNull(mainClass);
             try {
-                executableClazz.getMethod("main", String[].class);
+                mainClass.getMethod("main", String[].class);
             } catch (NoSuchMethodException | SecurityException e) {
                 throw new IllegalArgumentException(e);
             }
-            this.executableClazz = executableClazz;
+            this.mainClass = mainClass;
             this.process = null;
         }
 
@@ -149,15 +152,14 @@ public final class ClusterSimulator implements Deactivatable {
             final String javaRuntime = System.getProperty("java.home") + "/bin/java";
             final String classpath =
                     System.getProperty("java.class.path") + ":"
-                            + executableClazz.getProtectionDomain().getCodeSource().getLocation().getPath();
-            final String canonicalName = executableClazz.getCanonicalName();
+                            + mainClass.getProtectionDomain().getCodeSource().getLocation().getPath();
             try {
                 final List<String> commandList = new ArrayList<>();
                 commandList.add(javaRuntime);
                 commandList.add("-cp");
                 commandList.add(classpath);
                 commandList.addAll(Arrays.asList(jvmOpts));
-                commandList.add(canonicalName);
+                commandList.add(mainClass.getCanonicalName());
                 commandList.addAll(Arrays.asList(params));
                 final ProcessBuilder builder = new ProcessBuilder(commandList);
                 builder.redirectErrorStream(true);

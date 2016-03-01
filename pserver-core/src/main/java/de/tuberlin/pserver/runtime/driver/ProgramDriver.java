@@ -7,8 +7,8 @@ import de.tuberlin.pserver.compiler.*;
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.runtime.RuntimeContext;
-import de.tuberlin.pserver.runtime.core.common.Deactivatable;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
+import de.tuberlin.pserver.runtime.core.lifecycle.Deactivatable;
 import de.tuberlin.pserver.runtime.core.usercode.UserCodeManager;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
 import de.tuberlin.pserver.runtime.state.matrix.MatrixLoader;
@@ -154,7 +154,7 @@ public class ProgramDriver implements Deactivatable {
                 if (stateAndProxy.getLeft() != null) {
                     runtimeContext.runtimeManager.putDHT(state.name(), stateAndProxy.getLeft());
                     if (state.input() != null && !("".equals(state.input().filePath())))
-                        matrixLoader.add(state, stateAndProxy.getLeft());
+                        matrixLoader.add(state);
                 }
                 if (stateAndProxy.getRight() != null)
                     remoteObjectRefs.put(state.name(), stateAndProxy.getRight());

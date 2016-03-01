@@ -17,8 +17,6 @@ public class LibSVMReaderJob extends Program {
     // Constants.
     // ---------------------------------------------------
 
-    private static final int NUM_SIMULATION_NODES = 2;
-
     private static final String FILE_PATH = "datasets/svmSmallTestFile";
 
     // ---------------------------------------------------
@@ -55,10 +53,7 @@ public class LibSVMReaderJob extends Program {
     // ---------------------------------------------------
 
     public static void main(final String[] args) {
-
-        // Configure the number of simulation nodes.
-        System.setProperty("simulation.numNodes", String.valueOf(NUM_SIMULATION_NODES));
-
+        System.setProperty("global.simNodes", "2");
         PServerExecutor.LOCAL
                 .run(LibSVMReaderJob.class)
                 .done();

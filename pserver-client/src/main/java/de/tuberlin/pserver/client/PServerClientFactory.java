@@ -2,8 +2,7 @@ package de.tuberlin.pserver.client;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.runtime.core.config.IConfig;
-import de.tuberlin.pserver.runtime.core.config.IConfigFactory;
+import de.tuberlin.pserver.runtime.core.config.Config;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
 import de.tuberlin.pserver.runtime.core.infra.InetHelper;
@@ -21,13 +20,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-public enum PServerClientFactory {
-
-    // ---------------------------------------------------
-    // Constants.
-    // ---------------------------------------------------
-
-    INSTANCE(IConfigFactory.load(IConfig.Type.PSERVER_CLIENT));
+public class PServerClientFactory {
 
     // ---------------------------------------------------
     // Fields.
@@ -35,7 +28,7 @@ public enum PServerClientFactory {
 
     private final Logger LOG = LoggerFactory.getLogger(PServerClientFactory.class);
 
-    public final IConfig config;
+    public final Config config;
 
     public final MachineDescriptor machine;
 
@@ -49,24 +42,19 @@ public enum PServerClientFactory {
     // Constructors.
     // ---------------------------------------------------
 
-    private PServerClientFactory(final IConfig config) {
+    public PServerClientFactory(final Config config) {
         Preconditions.checkNotNull(config);
         final long start = System.nanoTime();
-
         try {
-
-            final String zookeeperServer = ZookeeperClient.buildServersString(config.getObjectList("zookeeper.servers"));
+            final String zookeeperServer = ZookeeperClient.buildServersString(config.getObjectList("global.zookeeper.servers"));
             ZookeeperClient.checkConnectionString(zookeeperServer);
-
             this.config = Preconditions.checkNotNull(config);
             this.machine = configureMachine();
             this.infraManager = new InfrastructureManager(machine, config, true);
             this.netManager = new NetManager(infraManager, machine, 16);
             this.netManager.start();
-
             infraManager.start(); // blocking until all at are registered at zookeeper
             infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connect);
-
             // block until all at are really ready for job submission
             final Set<UUID> responses = new HashSet<>();
             infraManager.getMachines().forEach(md -> responses.add(md.machineID));
@@ -82,7 +70,6 @@ public enum PServerClientFactory {
                         }
                     }
             );
-
             synchronized (responses) {
                 while (!responses.isEmpty()) {
                     try {
@@ -96,13 +83,10 @@ public enum PServerClientFactory {
                     }
                 }
             }
-
             this.userCodeManager = new UserCodeManager(this.getClass().getClassLoader());
-
         } catch(Exception e) {
             throw new IllegalStateException(e);
         }
-
         LOG.info("PServer Client Startup: " + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms");
     }
 
@@ -110,7 +94,9 @@ public enum PServerClientFactory {
     // Public Methods.
     // ---------------------------------------------------
 
-    public static PServerClient createPServerClient() { return new PServerClient(INSTANCE); }
+    public static PServerClient createPServerClient(Config config) {
+        return new PServerClient(new PServerClientFactory(config));
+    }
 
     // ---------------------------------------------------
     // Private Methods.

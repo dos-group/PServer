@@ -3,7 +3,6 @@ package de.tuberlin.pserver.runtime.state.matrix.rpc;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.core.remoteobj.MethodInvocationMsg;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
-import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
 
 import java.lang.reflect.InvocationHandler;

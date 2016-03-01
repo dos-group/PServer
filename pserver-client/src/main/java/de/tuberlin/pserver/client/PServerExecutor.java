@@ -5,8 +5,8 @@ import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.node.PServerMain;
 import de.tuberlin.pserver.node.PServerNode;
 import de.tuberlin.pserver.node.PServerNodeFactory;
-import de.tuberlin.pserver.runtime.core.config.IConfig;
-import de.tuberlin.pserver.runtime.core.config.IConfigFactory;
+import de.tuberlin.pserver.runtime.core.config.Config;
+import de.tuberlin.pserver.runtime.core.config.ConfigLoader;
 import de.tuberlin.pserver.runtime.core.infra.ClusterSimulator;
 import org.apache.log4j.ConsoleAppender;
 
@@ -17,13 +17,13 @@ import java.util.UUID;
 
 public enum PServerExecutor {
 
-    LOCAL        (true,     false),
+    LOCAL (true,     false),
 
-    LOCAL_DEBUG  (true,     true),
+    LOCAL_DEBUG (true,     true),
 
-    REMOTE       (false,    false),
+    DISTRIBUTED (false,    false),
 
-    REMOTE_DEBUG (false,    true); // Not used at the moment.
+    DISTRIBUTED_DEBUG (false,    true); // Not used at the moment.
 
     // ---------------------------------------------------
     // Fields.
@@ -45,13 +45,10 @@ public enum PServerExecutor {
     // Constructors.
     // ---------------------------------------------------
 
-    private PServerExecutor(final boolean isLocal, final boolean isDebug) {
+    PServerExecutor(final boolean isLocal, final boolean isDebug) {
         org.apache.log4j.Logger.getRootLogger().addAppender(new ConsoleAppender());
-
         this.nodes = new ArrayList<>();
-
         this.isLocal = isLocal;
-
         this.isDebug = isDebug;
     }
 
@@ -59,10 +56,9 @@ public enum PServerExecutor {
     // Public Methods.
     // ---------------------------------------------------
 
-    public PServerExecutor run(final Class<? extends Program> programClass) { return run(programClass, 1); }
-    public PServerExecutor run(final Class<? extends Program> programClass, final int perNodeParallelism) {
+    public PServerExecutor run(final Class<? extends Program> programClass) { return run(ConfigLoader.loadResource("local.conf"), programClass); }
+    public PServerExecutor run(final Config config, final Class<? extends Program> programClass) {
         if (isLocal) {
-            final IConfig config = IConfigFactory.load(IConfig.Type.PSERVER_SIMULATION);
             simulator = new ClusterSimulator(
                     config,
                     isDebug,
@@ -70,19 +66,19 @@ public enum PServerExecutor {
             );
 
             if (isDebug) {
-                for (int i = 0; i < config.getInt("simulation.numNodes"); ++i) {
+                for (int i = 0; i < config.getInt("global.simNodes"); ++i) {
                     try {
                         Thread.sleep(2000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    new Thread(() -> nodes.add(PServerNodeFactory.createNode())).start();
+                    new Thread(() -> nodes.add(PServerNodeFactory.createNode(config))).start();
                 }
             }
         } else
             simulator = null;
 
-        client = PServerClientFactory.createPServerClient();
+        client = PServerClientFactory.createPServerClient(config);
         currentJob = client.execute(Preconditions.checkNotNull(programClass));
         return this;
     }

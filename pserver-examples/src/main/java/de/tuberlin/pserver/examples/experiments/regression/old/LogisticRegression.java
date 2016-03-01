@@ -30,8 +30,6 @@ public class LogisticRegression extends Program {
     // Constants.
     // ---------------------------------------------------
 
-    private static final String NUM_NODES = "2";
-
     private static final String X_TRAIN_PATH = "datasets/X_train.csv";
     private static final String Y_TRAIN_PATH = "datasets/Y_train.csv";
     private static final String X_TEST_PATH  = "datasets/X_test.csv";
@@ -158,10 +156,9 @@ public class LogisticRegression extends Program {
     // ---------------------------------------------------
 
     private static void local() {
-        System.setProperty("simulation.numNodes", NUM_NODES);
 
+        System.setProperty("global.simNodes", "1");
         final List<List<Serializable>> result = Lists.newArrayList();
-
         PServerExecutor.LOCAL
                 .run(LogisticRegression.class)
                 .results(result)

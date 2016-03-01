@@ -4,12 +4,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import de.tuberlin.pserver.commons.compression.Compressor;
 import de.tuberlin.pserver.commons.hashtable.NonBlockingHashMap;
-import de.tuberlin.pserver.runtime.core.common.Deactivatable;
-import de.tuberlin.pserver.runtime.core.config.IConfig;
+import de.tuberlin.pserver.runtime.core.config.Config;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
+import de.tuberlin.pserver.runtime.core.lifecycle.Deactivatable;
 import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
 import de.tuberlin.pserver.runtime.core.network.NetEvent;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
@@ -138,7 +138,7 @@ public final class DHTManager extends EventDispatcher implements Deactivatable {
 
     // ---------------------------------------------------
 
-    private final IConfig config;
+    private final Config config;
 
     private final InfrastructureManager infraManager;
 
@@ -170,7 +170,7 @@ public final class DHTManager extends EventDispatcher implements Deactivatable {
     // Constructors.
     // ---------------------------------------------------
 
-    public DHTManager(final IConfig config,
+    public DHTManager(final Config config,
                       final InfrastructureManager infraManager,
                       final NetManager netManager) {
 
@@ -188,9 +188,7 @@ public final class DHTManager extends EventDispatcher implements Deactivatable {
         this.store          = new NonBlockingHashMap<>();
         //this.lstore         = new NonBlockingHashMap<>();
 
-        this.compressionType = Compressor.CompressionType.valueOf(
-                this.config.getString("dht.compression.compressionType")
-        );
+        this.compressionType = Compressor.CompressionType.NO_COMPRESSION;
 
         // Register DHT events.
         netManager.addEventListener(DHT_EVENT_PUT_VALUE, new DHTPutValueHandler());

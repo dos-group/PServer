@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.test;
 
 import de.tuberlin.pserver.node.PServerMain;
-import de.tuberlin.pserver.runtime.core.config.IConfig;
-import de.tuberlin.pserver.runtime.core.config.IConfigFactory;
+import de.tuberlin.pserver.runtime.core.config.Config;
+import de.tuberlin.pserver.runtime.core.config.ConfigLoader;
 import de.tuberlin.pserver.runtime.core.infra.ClusterSimulator;
 import de.tuberlin.pserver.test.core.CoreTests;
 import org.junit.AfterClass;
@@ -47,7 +47,7 @@ public class IntegrationTestSuite {
     @BeforeClass
     public static void setUpTestEnvironment() {
         System.setProperty("simulation.numNodes", String.valueOf(NUM_NODES));
-        final IConfig simConfig = IConfigFactory.load(IConfig.Type.PSERVER_SIMULATION);
+        final Config simConfig = ConfigLoader.loadResource("local.config");
         clusterSimulator = new ClusterSimulator(simConfig, false, PServerMain.class);
     }
 

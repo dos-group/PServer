@@ -96,7 +96,7 @@ public class ParameterServerSketch extends Program {
     // ---------------------------------------------------
 
     public static void main(final String[] args) {
-        System.setProperty("simulation.numNodes", "4");
+        System.setProperty("global.simNodes", "4");
         PServerExecutor.LOCAL
                 .run(DataParallelJob.class)
                 .done();

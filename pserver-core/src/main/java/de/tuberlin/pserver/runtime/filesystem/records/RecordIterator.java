@@ -9,15 +9,16 @@ import java.io.InputStreamReader;
 import java.util.Iterator;
 import java.util.Optional;
 
-public abstract class RecordIterator<T extends Record> implements Iterator<T> {
+public abstract class RecordIterator implements Iterator<Record> {
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
     protected BufferedReader reader;
+
     protected Optional<long[]> projection;
-    protected long row;
+
     protected Record reusableRecord;
 
     // ---------------------------------------------------
@@ -27,7 +28,6 @@ public abstract class RecordIterator<T extends Record> implements Iterator<T> {
     protected RecordIterator(InputStream inputStream, Optional<long[]> projection) {
         this.reader = new BufferedReader(new InputStreamReader(Preconditions.checkNotNull(inputStream)));
         this.projection = projection;
-        this.row = 0;
     }
 
     // ---------------------------------------------------
@@ -40,17 +40,12 @@ public abstract class RecordIterator<T extends Record> implements Iterator<T> {
 
     public static RecordIterator create(FileFormat fileFormat, InputStream inputStream, Optional<long[]> projection) {
         switch(fileFormat) {
-            case SVM_FORMAT:    SVMRecord.SVMParser.setFileFormat(fileFormat);
-                                return new SVMRecordIterator(inputStream, projection);
-            default:            throw new IllegalArgumentException("Unknown File Format");
+            case SVM_FORMAT: {
+                SVMRecord.SVMParser.setFileFormat(fileFormat);
+                return new SVMRecordIterator(inputStream, projection);
+            }
+            default:
+                throw new UnsupportedOperationException("unknown file format");
         }
     }
-
-    // ---------------------------------------------------
-    // Abstract Methods.
-    // ---------------------------------------------------
-
-    public abstract T next();
-
-    public abstract T next(long lineNum);
 }

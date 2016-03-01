@@ -156,6 +156,21 @@
                 <artifactId>pserver-crdt</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-criteo</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-criteo-spark</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-benchmarks</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <!-- SYSTEM DEPENDENCIES -->
             <dependency>
@@ -359,6 +374,7 @@
         <module>pserver-test</module>
         <module>pserver-dist</module>
         <module>pserver-dist-peel</module>
+        <module>pserver-benchmark-suite</module>
     </modules>
 
 </project>

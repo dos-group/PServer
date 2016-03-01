@@ -1,10 +1,15 @@
 package de.tuberlin.pserver.runtime.filesystem.records;
 
-import de.tuberlin.pserver.commons.tuples.Tuple2;
 import de.tuberlin.pserver.types.typeinfo.properties.FileFormat;
+import gnu.trove.iterator.TLongFloatIterator;
+import gnu.trove.map.TLongFloatMap;
+import gnu.trove.map.hash.TLongFloatHashMap;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.text.StrTokenizer;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 public class SVMRecord implements Record {
 
@@ -16,40 +21,40 @@ public class SVMRecord implements Record {
 
         private static FileFormat fileFormat = FileFormat.SVM_FORMAT;
 
-        public static void setFileFormat(FileFormat fileFormat) {
-            SVMParser.fileFormat = fileFormat;
-        }
+        private static StrTokenizer tokenizer = new StrTokenizer();
 
-        @SuppressWarnings("unchecked")
-        protected static <V extends Number> Tuple2<V, Map<Long, V>> parse(String line, Optional<long[]> projection) {
+        private static List<Long> projectionList;
 
-            StringTokenizer tokenizer = new StringTokenizer(line, FileFormat.SVM_FORMAT.getDelimiter());
+        // ---------------------------------------------------
 
-            V label;
-            if (fileFormat.getValueType() == FileFormat.ValueType.FLOAT)
-                label = (V) (Float) Float.parseFloat(tokenizer.nextToken());
-            else
-                label = (V) (Double) Double.parseDouble(tokenizer.nextToken());
+        public static void setFileFormat(FileFormat fileFormat) { SVMParser.fileFormat = fileFormat; }
 
-            List<Long> projectionList = null;
+        public static void setProjection(Optional<long[]> projection) {
             if (projection.isPresent())
                 projectionList = Arrays.asList(ArrayUtils.toObject(projection.get()));
+        }
 
-            Map<Long, V> attributes = new TreeMap<>();
-            while(tokenizer.hasMoreTokens()) {
+        protected static float parse(String line, TLongFloatMap attributes) {
+            float label;
+            tokenizer.setDelimiterString(FileFormat.SVM_FORMAT.getDelimiter());
+            tokenizer.reset(line);
+            if (fileFormat.getValueType() == FileFormat.ValueType.FLOAT)
+                label = Float.parseFloat(tokenizer.nextToken());
+            else
+                throw new UnsupportedOperationException();
+            while(tokenizer.hasNext()) {
                 String column = tokenizer.nextToken();
-                Long index = Long.parseLong(column.substring(0, column.indexOf(":")));
+                long index = Long.parseLong(column.substring(0, column.indexOf(":")));
                 // index is decremented because LIBSVM format starts on col index 1 and we need to load this into a [0,0] matrix
                 index--;
                 if (projectionList == null || projectionList.contains(index)) {
                     if (fileFormat.getValueType() == FileFormat.ValueType.FLOAT)
-                        attributes.put(index, (V) (Float) Float.parseFloat(column.substring(column.indexOf(":") + 1)));
+                        attributes.put(index, Float.parseFloat(column.substring(column.indexOf(":") + 1)));
                     else
-                        attributes.put(index, (V) (Double) Double.parseDouble(column.substring(column.indexOf(":") + 1)));
+                        throw new UnsupportedOperationException();
                 }
             }
-
-            return new Tuple2<>(label, attributes);
+            return label;
         }
     }
 
@@ -58,70 +63,51 @@ public class SVMRecord implements Record {
     // ---------------------------------------------------
 
     private long row;
-    private Tuple2<Float, Map<Long, Float>> data;
-    private Iterator<Long> attributeIterator;
+
+    private float label;
+
+    private TLongFloatIterator attrIterator;
+
+    private TLongFloatMap attributes = new TLongFloatHashMap();
+
+    private RecordEntry32F reusableEntry = new RecordEntry32F(-1, -1, Float.NaN);
 
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
-    public SVMRecord(long row, String line) {
-        this(row, line, Optional.empty());
-    }
-
-    public SVMRecord(long row, String line, Optional<long[]> projection) {
-        this.row = row;
-        this.data = SVMParser.parse(line, projection);
-        this.attributeIterator = data._2.keySet().iterator();
+    public SVMRecord(Optional<long[]> projection) {
+        SVMParser.setProjection(projection);
     }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    public long getRow() {
-        return this.row;
-    }
+    public long getRow() { return this.row; }
 
-    public void setLabel(float label) {
-        this.data._1 = label;
-    }
+    public void setLabel(float label) { this.label = label; }
 
-    public float getLabel() {
-        return this.data._1;
+    public float getLabel() { return this.label; }
+
+    @Override public int size() { return this.attributes.size(); }
+
+    @Override public boolean hasNext() { return attrIterator.hasNext(); }
+
+    // ---------------------------------------------------
+
+    @Override
+    public RecordEntry32F next() {
+        attrIterator.advance();
+        return reusableEntry.set(this.row, attrIterator.key(), attrIterator.value());
     }
 
     @Override
-    public int size() {
-        return this.data._2.size();
-    }
-
-    @Override
-    public boolean hasNext() {
-        return this.attributeIterator.hasNext();
-    }
-
-    @Override
-    public Entry32F next() {
-        return this.next(null);
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public Entry32F next(Entry32F reusableEntry) {
-        Long index = this.attributeIterator.next();
-        float value = this.data._2.get(index);
-        if (reusableEntry == null)
-            return new Entry32F(this.row, index, value);
-        return reusableEntry.set(this.row, index, value);
-    }
-
-    @Override
-    public SVMRecord set(long row, String line, Optional<long[]> projection) {
+    public SVMRecord set(long row, String line) {
         this.row = row;
-        this.data = SVMParser.parse(line, projection);
-        this.attributeIterator = data._2.keySet().iterator();
+        this.attributes.clear();
+        this.label = SVMParser.parse(line, attributes);
+        this.attrIterator = attributes.iterator();
         return this;
     }
-
 }
