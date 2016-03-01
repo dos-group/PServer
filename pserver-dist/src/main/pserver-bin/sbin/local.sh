@@ -63,7 +63,7 @@ pserver-start)
         rotateLogFile $out
 
         echo "[NOTICE][${HOSTNAME}] Starting pserver node ... "
-        $JAVA_RUN $JVM_ARGS $PSERVER_OPTS $log_setting -classpath $PSERVER_NODE_CLASSPATH de.tuberlin.pserver.node.PServerMain --config-dir=$PSERVER_CONF_DIR --profile=$PSERVER_PROFILE > "$out" 2>&1 < /dev/null &
+        $JAVA_RUN $JVM_ARGS $PSERVER_OPTS $log_setting -classpath $PSERVER_NODE_CLASSPATH de.tuberlin.pserver.node.PServerMain distributed.conf > "$out" 2>&1 < /dev/null &
         echo $! > $pid
         ;;
 
