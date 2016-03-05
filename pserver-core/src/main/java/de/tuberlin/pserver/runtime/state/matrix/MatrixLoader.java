@@ -1,14 +1,13 @@
 package de.tuberlin.pserver.runtime.state.matrix;
 
+import de.tuberlin.pserver.runtime.core.diagnostics.MemoryTracer;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.AbstractFileIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
-import de.tuberlin.pserver.runtime.filesystem.records.RecordEntry32F;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.CSRMatrix32F;
 import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
-import gnu.trove.map.hash.TIntFloatHashMap;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,33 +45,30 @@ public final class MatrixLoader {
 
         @Override
         public void putRecord(Record record, Matrix32F dataMatrix, Matrix32F labelMatrix) {
-            while (record.hasNext()) {
+            throw new UnsupportedOperationException();
+            /*while (record.hasNext()) {
                 final RecordEntry32F entry = record.next();
                 if (labelMatrix != null && entry.getCol() == 0)
                     labelMatrix.set(record.getRow(), entry.getCol(), record.getLabel());
                 else
                     dataMatrix.set(entry.getRow(), entry.getCol() - ((labelMatrix != null) ? 1 : 0), entry.getValue());
-            }
+            }*/
         }
     }
 
     private final static class CSRMatrix32LoaderStrategy extends MatrixLoaderStrategy {
 
-        private final TIntFloatHashMap rowData = new TIntFloatHashMap();
-
         public CSRMatrix32LoaderStrategy(Matrix32F matrix)  { super(matrix); }
 
         @Override
         public void putRecord(Record record, Matrix32F dataMatrix, Matrix32F labelMatrix) {
-            while (record.hasNext()) {
-                final RecordEntry32F entry = record.next();
-                if (labelMatrix != null && entry.getCol() == 0)
-                    labelMatrix.set(record.getRow(), entry.getCol(), record.getLabel()); // TODO: VERIFY THAT!!!!!!!!!!!!!!!!!!!!
-                else
-                    rowData.put((int) entry.getCol() - ((labelMatrix != null) ? 1 : 0), entry.getValue());
+            try {
+                if (labelMatrix != null)
+                    labelMatrix.set(record.row, 0, record.label);
+                ((CSRMatrix32F) dataMatrix).addRow(record.entries);
+            } catch (Throwable t) {
+                throw new IllegalStateException("OOME @ row = " + ((CSRMatrix32F) dataMatrix).getCurrentNumOfRows(), t);
             }
-            ((CSRMatrix32F) dataMatrix).addRow(rowData);
-            rowData.clear();
         }
 
         @Override
@@ -112,17 +108,18 @@ public final class MatrixLoader {
 
     public void load() {
         programContext.runtimeContext.fileManager.buildPartitions();
+        System.out.println(MemoryTracer.getTrace("BeforeFileLoading"));
         for (DistributedTypeInfo typeInfo : loadingTasks) {
             Matrix32F dataMatrix = (Matrix32F)typeInfo;
             AbstractFileIterator fileIterator = fileManager.getFileIterator(typeInfo);
             Matrix32F labelMatrix = null;
-            if (!"".equals(typeInfo.input().labels())) {
+            if (!"".equals(typeInfo.input().labels()))
                 labelMatrix = programContext.runtimeContext.runtimeManager.getDHT(typeInfo.input().labels());
-            }
             final MatrixLoaderStrategy loader = MatrixLoaderStrategy.createLoader(typeInfo);
             while (fileIterator.hasNext())
                 loader.putRecord(fileIterator.next(), dataMatrix, labelMatrix);
             loader.done(dataMatrix);
+            System.out.println(MemoryTracer.getTrace("AfterFileLoading"));
         }
     }
 }

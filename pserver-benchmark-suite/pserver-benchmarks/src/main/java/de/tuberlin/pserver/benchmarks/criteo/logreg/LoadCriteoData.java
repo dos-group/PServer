@@ -4,6 +4,7 @@ import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
+import de.tuberlin.pserver.runtime.core.config.ConfigLoader;
 import de.tuberlin.pserver.types.matrix.annotations.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.CSRMatrix32F;
@@ -49,15 +50,9 @@ public class LoadCriteoData extends Program {
     // Entry Point.
     // ---------------------------------------------------
 
-    public static void main(final String[] args) { local(); }
-
-    // ---------------------------------------------------
-
-    private static void local() {
-        System.setProperty("simulation.numNodes", "1");
-
+    public static void main(final String[] args) {
         PServerExecutor.DISTRIBUTED
-                .run(LoadCriteoData.class)
+                .run(ConfigLoader.loadResource("distributed.conf"), LoadCriteoData.class)
                 .done();
     }
 }

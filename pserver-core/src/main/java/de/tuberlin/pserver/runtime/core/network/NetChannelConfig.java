@@ -1,5 +1,6 @@
 package de.tuberlin.pserver.runtime.core.network;
 
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelConfig;
 import io.netty.channel.ChannelOption;
@@ -47,11 +48,11 @@ public class NetChannelConfig {
     // NOTE: Linux assumes that half of the send/receive buffer is used for internal
     // kernel structures; thus the sysctls are twice what can be observed on the wire.
 
+    // --------------------------------------------------
+    // Constants.
+    // --------------------------------------------------
 
     // NETTY HIGH- AND LOW- WATERMARK
-
-
-
 
     private final boolean tcpKeepAlive            = true;
 
@@ -65,12 +66,27 @@ public class NetChannelConfig {
 
     private final int writeBufferLowWatermark     = 8 * 1024;
 
+    // --------------------------------------------------
+    // Fields.
+    // --------------------------------------------------
+
+    private final ByteBufAllocator allocator;
+
+    // --------------------------------------------------
+    // Constructor.
+    // --------------------------------------------------
+
+    public NetChannelConfig(ByteBufAllocator allocator) {
+        this.allocator = allocator;
+    }
+
+    // --------------------------------------------------
+    // Public Methods.
+    // --------------------------------------------------
 
     public void configureChannel(Channel channel) {
 
         ChannelConfig channelConfig = channel.config();
-
-
         // The maximum writeQueue length for incoming connection indications (a request
         // to connect) is set to the backlog parameter. If a connection indication
         // arrives when the writeQueue is full, the connection is refused.
@@ -121,5 +137,7 @@ public class NetChannelConfig {
         // Once the number of bytes queued in the write buffer exceeded the high water mark and
         // then dropped down below this value, Channel.isWritable() will return true again.
         channelConfig.setOption(ChannelOption.WRITE_BUFFER_LOW_WATER_MARK, writeBufferLowWatermark);
+
+        channelConfig.setOption(ChannelOption.ALLOCATOR, allocator);
     }
 }

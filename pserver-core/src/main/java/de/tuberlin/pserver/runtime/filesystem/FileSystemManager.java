@@ -2,6 +2,8 @@ package de.tuberlin.pserver.runtime.filesystem;
 
 
 import de.tuberlin.pserver.runtime.core.config.Config;
+import de.tuberlin.pserver.runtime.core.diagnostics.MemoryTracer;
+import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.runtime.core.lifecycle.Deactivatable;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.filesystem.distributed.DistributedFile;
@@ -43,18 +45,21 @@ public class FileSystemManager implements Deactivatable {
 
     private final Map<String,AbstractFile> files;
 
+    private final InfrastructureManager infraManager;
+
     private final NetManager netManager;
 
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
-    public FileSystemManager(Config config, NetManager netManager, FileSystemType type, int nodeID) {
-        this.config     = config;
-        this.netManager = netManager;
-        this.type       = type;
-        this.nodeID     = nodeID;
-        this.files      = new HashMap<>();
+    public FileSystemManager(Config config, InfrastructureManager infraManager, NetManager netManager, FileSystemType type, int nodeID) {
+        this.config         = config;
+        this.infraManager   = infraManager;
+        this.netManager     = netManager;
+        this.type           = type;
+        this.nodeID         = nodeID;
+        this.files          = new HashMap<>();
     }
 
     // ---------------------------------------------------
@@ -83,11 +88,17 @@ public class FileSystemManager implements Deactivatable {
     }
 
     public void buildPartitions() {
+
+        System.out.println(MemoryTracer.getTrace("start_buildPartitions"));
+
         try {
-            CountDownLatch rcvPartitionsLatch = new CountDownLatch(files.size());
+            CountDownLatch rcvPartitionsLatch = new CountDownLatch(1);
             netManager.addEventListener(FilePartitionEvent.FILE_PARTITION_EVENT, event -> {
                 FilePartitionEvent fpe = (FilePartitionEvent)event;
                 files.get(fpe.filePartitionDescriptor.file).setFilePartition(fpe.filePartitionDescriptor);
+
+                System.out.println("Received file partition descriptor.");
+
                 rcvPartitionsLatch.countDown();
             });
 
@@ -96,8 +107,8 @@ public class FileSystemManager implements Deactivatable {
                 for (AbstractFile inputFile : files.values()) {
 
                     List<AbstractFilePartition> filePartitions = (type == FileSystemType.DISTRIBUTED_FILE_SYSTEM) ?
-                            new DistributedFilePartitionScheduler(config, (DistributedFile) inputFile)
-                                    .schedule(AbstractFilePartitionScheduler.ScheduleType.ORDERED)
+                            new DistributedFilePartitionScheduler(config, infraManager, (DistributedFile) inputFile)
+                                    .schedule(AbstractFilePartitionScheduler.ScheduleType.COLOCATED)
                             : new LocalFilePartitionScheduler((LocalFile) inputFile)
                                     .schedule(AbstractFilePartitionScheduler.ScheduleType.ORDERED);
 
@@ -112,6 +123,8 @@ public class FileSystemManager implements Deactivatable {
                             files.get(inputFile.getTypeInfo().input().filePath()).setFilePartition(fpd);
                     }
                 }
+
+                System.out.println(MemoryTracer.getTrace("after_scheduledFilePartitions"));
 
             } else {
                 rcvPartitionsLatch.await();

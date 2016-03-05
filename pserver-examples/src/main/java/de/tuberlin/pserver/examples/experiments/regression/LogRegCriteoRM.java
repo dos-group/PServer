@@ -22,8 +22,8 @@ public class LogRegCriteoRM extends Program {
     // Constants.
     // ---------------------------------------------------
 
-    private static final String X_TRAIN_PATH = "datasets/svm_train";
-    private static final int N_TRAIN = 80000;
+    private static final String X_TRAIN_PATH = "datasets/svm_trainBIG";
+    private static final int N_TRAIN = 80000 * 9;
     private static final int D = 1048615;
     private static float STEP_SIZE = 1e-3f;
     private static int NUM_EPOCHS = 100;
@@ -35,7 +35,7 @@ public class LogRegCriteoRM extends Program {
     @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TRAIN, cols = 1)
     public DenseMatrix32F trainLabel;
 
-    @Load(filePath = X_TRAIN_PATH, labels = "trainLabel")
+    //@Load(filePath = X_TRAIN_PATH, labels = "trainLabel")
     @Matrix(scheme = DistScheme.H_PARTITIONED, rows = N_TRAIN, cols = D)
     public CSRMatrix32F trainFeatures;
 
@@ -50,6 +50,9 @@ public class LogRegCriteoRM extends Program {
     public void unit(Lifecycle lifecycle) {
 
         lifecycle.process(() -> {
+
+            Thread.sleep(30000);
+
 
             /*DenseMatrix32F grad = (DenseMatrix32F)new MatrixBuilder().dimension(1, trainFeatures.cols()).build();
             DenseMatrix32F derivative = (DenseMatrix32F)new MatrixBuilder().dimension(1, trainFeatures.cols()).build();
@@ -82,7 +85,7 @@ public class LogRegCriteoRM extends Program {
     // ---------------------------------------------------
 
     private static void local() {
-        System.setProperty("global.simNodes", "2");
+        System.setProperty("global.simNodes", "1");
 
         PServerExecutor.LOCAL
                 .run(LogRegCriteoRM.class)

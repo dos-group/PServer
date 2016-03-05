@@ -18,15 +18,16 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.GlobalEventExecutor;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class NetManager extends EventDispatcher {
 
     // TODO: ChannelGroup: Single outbound pipeline pass possible?
+
+    // ---------------------------------------------------
+    // Cosntants.
+    // ---------------------------------------------------
 
     public static final String OUT_CHANNELS = "out_channels";
 
@@ -34,19 +35,21 @@ public final class NetManager extends EventDispatcher {
 
     public static final String ALL_CHANNELS = "broadcast_channels";
 
-    // -------------------------------------------------------
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
 
     private final InfrastructureManager infraManager;
 
     private final MachineDescriptor machine;
 
-    private final NetChannelConfig  channelConfig;
+    private final NetChannelConfig  nettyChannelConfig;
 
     private final EventLoopGroup    bossGroup;
 
     private final EventLoopGroup    workerGroup;
 
-    private final ByteBufAllocator  allocator;
+    private final ByteBufAllocator  nettyAllocator;
 
     private final ChannelGroup      outChannels;
 
@@ -54,18 +57,22 @@ public final class NetManager extends EventDispatcher {
 
     private final ChannelGroup      allChannels;
 
-    private final Map<MachineDescriptor, List<NetChannel>> activeChannels;
+    private final Map<MachineDescriptor, NetChannel> activeChannels;
 
-    // -------------------------------------------------------
+    private final Object connectMutex = new Object();
+
+    // ---------------------------------------------------
+    // Constructor.
+    // ---------------------------------------------------
 
     public NetManager(InfrastructureManager infraManager, MachineDescriptor machine, int numThreads) {
         super(true);
         this.infraManager       = Preconditions.checkNotNull(infraManager);
         this.machine            = Preconditions.checkNotNull(machine);
-        this.channelConfig      = new NetChannelConfig();
         this.bossGroup          = new NioEventLoopGroup(1);
         this.workerGroup        = new NioEventLoopGroup(numThreads);
-        this.allocator          = NetBufferAllocator.create(); // TODO: Change this!
+        this.nettyAllocator     = NetBufferAllocator.create(); // TODO: Change this!
+        this.nettyChannelConfig = new NetChannelConfig(nettyAllocator);
         this.activeChannels     = new ConcurrentHashMap<>();
         this.outChannels        = new DefaultChannelGroup(OUT_CHANNELS, GlobalEventExecutor.INSTANCE);
         this.inChannels         = new DefaultChannelGroup(IN_CHANNELS,  GlobalEventExecutor.INSTANCE);
@@ -82,47 +89,26 @@ public final class NetManager extends EventDispatcher {
         }
     }
 
-    // -------------------------------------------------------
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
 
-    private void defineServerPipeline(ChannelPipeline pipeline) {
-        pipeline.addLast(
-                //new Lz4FrameEncoder(true),
-                //new Lz4FrameDecoder(true),
-                new NetKryoEncoder(),
-                new NetKryoDecoder(),
-                //new ObjectEncoder(),
-                //new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(getClass().getClassLoader())),
-                new NetHandshakeRequestHandler(),
-                new NetMessageHandler(NetManager.this)
-        );
-    }
+    public MachineDescriptor getMachineDescriptor() { return machine; }
 
-    private void defineClientPipeline(ChannelPipeline pipeline) {
-        pipeline.addLast(
-                //new Lz4FrameEncoder(true),
-                //new Lz4FrameDecoder(true),
-                new NetKryoEncoder(),
-                new NetKryoDecoder(),
-                //new ObjectEncoder(),
-                //new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(getClass().getClassLoader())),
-                new NetHandshakeResponseHandler(),
-                new NetMessageHandler(NetManager.this)
-        );
-    }
-
-    // -------------------------------------------------------
+    public Collection<NetChannel> getActiveChannels() { return Collections.unmodifiableCollection(activeChannels.values()); }
 
     public void start() throws Exception {
         ServerBootstrap srvBootstrap = new ServerBootstrap();
         srvBootstrap.group(bossGroup, workerGroup);
         srvBootstrap.channel(NioServerSocketChannel.class);
+        srvBootstrap.option(ChannelOption.ALLOCATOR, nettyAllocator);
+        srvBootstrap.childOption(ChannelOption.ALLOCATOR, nettyAllocator);
         srvBootstrap.handler(new LoggingHandler(LogLevel.INFO));
         srvBootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
 
             @Override
             public void initChannel(SocketChannel ch) throws Exception {
-                channelConfig.configureChannel(ch);
-                ch.config().setAllocator(allocator);
+                nettyChannelConfig.configureChannel(ch);
                 defineServerPipeline(ch.pipeline());
             }
         });
@@ -138,23 +124,29 @@ public final class NetManager extends EventDispatcher {
     }
 
     public NetChannel connect(MachineDescriptor descriptor) {
+
+        synchronized (connectMutex) {
+            if (activeChannels.containsKey(descriptor))
+                return activeChannels.get(descriptor);
+        }
+
         try {
             Bootstrap cliBootstrap = new Bootstrap();
             cliBootstrap.group(workerGroup);
             cliBootstrap.channel(NioSocketChannel.class);
+            cliBootstrap.option(ChannelOption.ALLOCATOR, nettyAllocator);
             cliBootstrap.handler(new ChannelInitializer<SocketChannel>() {
 
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
-                    channelConfig.configureChannel(ch);
-                    ch.config().setAllocator(allocator);
+                    nettyChannelConfig.configureChannel(ch);
                     defineClientPipeline(ch.pipeline());
                 }
             });
 
-            // Start the connection attempt.
             ChannelFuture channelFuture = cliBootstrap.connect(descriptor.hostname, descriptor.port);
-            channelFuture.awaitUninterruptibly();
+            channelFuture.await();
+
             // Now we are sure the future is completed.
             assert channelFuture.isDone();
             if (channelFuture.isCancelled()) {
@@ -171,6 +163,7 @@ public final class NetManager extends EventDispatcher {
             e.printStackTrace();
             throw new IllegalStateException(e);
         }
+
     }
 
     public void closeAllChannels() throws Exception {
@@ -203,11 +196,10 @@ public final class NetManager extends EventDispatcher {
         }
     }
 
-    public MachineDescriptor getMachineDescriptor() {
-        return machine;
-    }
 
-    // -------------------------------------------------------
+    // ---------------------------------------------------
+    // Distributed Event Interface.
+    // ---------------------------------------------------
 
     public void dispatchEventAt(final int[] nodeIDs, final NetEvent event) {
         for (int nodeID : nodeIDs) {
@@ -217,11 +209,10 @@ public final class NetManager extends EventDispatcher {
         }
     }
 
-    public void dispatchEventAt(UUID machineID, NetEvent event) { dispatchEventAt(infraManager.getMachine(machineID), event, 0); }
-    public void dispatchEventAt(MachineDescriptor netDescriptor, NetEvent event) { dispatchEventAt(netDescriptor, event, 0); }
-    public void dispatchEventAt(MachineDescriptor netDescriptor, NetEvent event, int channelIdx) {
+    public void dispatchEventAt(UUID machineID, NetEvent event) { dispatchEventAt(infraManager.getMachine(machineID), event); }
+    public void dispatchEventAt(MachineDescriptor netDescriptor, NetEvent event) {
         Preconditions.checkNotNull(netDescriptor);
-        NetChannel netChannel = activeChannels.get(netDescriptor).get(channelIdx);
+        NetChannel netChannel = activeChannels.get(netDescriptor);
         event.netChannel = Preconditions.checkNotNull(netChannel);
         event.dstMachineID = netDescriptor.machineID;
         event.srcMachineID = machine.machineID;
@@ -235,15 +226,47 @@ public final class NetManager extends EventDispatcher {
         }
     }
 
-    /*public <T> void addChannelHandler(Class<T> msgType, NetChannelHandler<T> handler) {
-        addEventListener(msgType.getName(), (Event event) -> handler.handle(
-                ((NetChannelEvent)event).netChannel, ((T)event.getPayload())
-        ));
-    }*/
+    // ---------------------------------------------------
+    // Private Methods.
+    // ---------------------------------------------------
 
-    // -------------------------------------------------------
+    private void defineServerPipeline(ChannelPipeline pipeline) {
+        pipeline.addLast(
+                //new Lz4FrameEncoder(true),
+                //new Lz4FrameDecoder(true),
+                new NetKryoEncoder(),
+                new NetKryoDecoder(),
+                //new ObjectEncoder(),
+                //new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(getClass().getClassLoader())),
+                new NetHandshakeRequestHandler(),
+                new NetMessageHandler(NetManager.this)
+        );
+    }
+
+    private void defineClientPipeline(ChannelPipeline pipeline) {
+        pipeline.addLast(
+                //new Lz4FrameEncoder(true),
+                //new Lz4FrameDecoder(true),
+                new NetKryoEncoder(),
+                new NetKryoDecoder(),
+                //new ObjectEncoder(),
+                //new ObjectDecoder(Integer.MAX_VALUE, ClassResolvers.cacheDisabled(getClass().getClassLoader())),
+                new NetHandshakeResponseHandler(),
+                new NetMessageHandler(NetManager.this)
+        );
+    }
 
     private NetChannel registerNetChannel(MachineDescriptor descriptor, Channel channel,  NetChannel.NetChannelType type) {
+
+        NetChannel netChannel = null;
+
+        synchronized (connectMutex) {
+            if (activeChannels.containsKey(descriptor))
+                return activeChannels.get(descriptor);
+        }
+        netChannel = new NetChannel(descriptor, type, channel);
+        activeChannels.put(descriptor, netChannel);
+
         boolean channelGroupRegistration = false;
         if (type == NetChannel.NetChannelType.CHANNEL_IN)
             channelGroupRegistration = inChannels.add(channel);
@@ -254,23 +277,15 @@ public final class NetManager extends EventDispatcher {
         if (!channelGroupRegistration)
             throw new IllegalStateException("Could not register to channel groups.");
 
-        NetChannel netChannel = new NetChannel(descriptor, type, channel);
-        List<NetChannel> netChannelList = activeChannels.get(descriptor);
-        if (netChannelList == null) {
-            netChannelList = new ArrayList<>();
-            activeChannels.put(descriptor, netChannelList);
-        }
-        netChannelList.add(netChannel);
         // Inject runtime netChannel object in associated message read handler.
         NetMessageHandler msgReadHandler = (NetMessageHandler)
                 channel.pipeline().context(NetMessageHandler.class).handler();
         msgReadHandler.setNetChannel(netChannel);
-        // Send thisNetDescriptor as handshake object.
+        // Send net descriptor as handshake object.
         if (type == NetChannel.NetChannelType.CHANNEL_OUT)
             netChannel.channel.writeAndFlush(machine, netChannel.channel.voidPromise());
-        else if (type == NetChannel.NetChannelType.CHANNEL_IN)
+        else
             netChannel.channel.writeAndFlush(descriptor, netChannel.channel.voidPromise());
-
         return netChannel;
     }
 

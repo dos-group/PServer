@@ -31,7 +31,9 @@ public final class NetBufferAllocator {
 
         int minNumHeapArena = runtime.availableProcessors() * 2;
 
-        int numHeapArena = (int) Math.min(minNumHeapArena, runtime.maxMemory() / chunkSize / 2 / 3);
+        //int numHeapArena = (int) Math.min(minNumHeapArena, runtime.maxMemory() / chunkSize / 2 / 3);
+
+        int numHeapArena = 3; //(int) Math.min(minNumHeapArena, runtime.maxMemory() / chunkSize / 2 / 3);
 
         int numDirectArena = 0;
 

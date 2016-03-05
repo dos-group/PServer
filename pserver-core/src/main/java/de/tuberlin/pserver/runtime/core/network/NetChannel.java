@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class NetChannel {
 
-    public static enum NetChannelType {
+    public enum NetChannelType {
 
         CHANNEL_IN,
 

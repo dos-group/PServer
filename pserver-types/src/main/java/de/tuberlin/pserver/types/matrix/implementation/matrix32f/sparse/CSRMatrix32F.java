@@ -11,6 +11,8 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntFloatMap;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public final class CSRMatrix32F extends Matrix32FEmptyImpl {
@@ -40,8 +42,7 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
     // Constructors.
     // ---------------------------------------------------
 
-    public CSRMatrix32F() {
-    }
+    public CSRMatrix32F() {}
 
     // Local Constructor.
     public CSRMatrix32F(long globalRows, long globalCols) {
@@ -78,7 +79,7 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
 
     public void addRow(TIntFloatMap vector) {
         vector.forEachEntry((k, v) -> {
-            colList.add(k);
+            colList.add(k - 1); // Shifted because of label!
             valueList.add(v);
             return true;
         });
@@ -105,6 +106,11 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
     // ---------------------------------------------------
     // Private Methods.
     // ---------------------------------------------------
+
+    public long getCurrentNumOfRows() {
+        return rowPtrList.size() - 1;
+    }
+
 
     /*private static int binarySearch(long[] a, int fromIndex, int toIndex, long key) {
         int low = fromIndex;

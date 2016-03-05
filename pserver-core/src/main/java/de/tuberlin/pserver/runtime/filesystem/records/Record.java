@@ -1,19 +1,32 @@
 package de.tuberlin.pserver.runtime.filesystem.records;
 
-import java.util.Iterator;
+import gnu.trove.map.TIntFloatMap;
+import gnu.trove.map.hash.TIntFloatHashMap;
 
+public class Record {
 
-public interface Record extends Iterator<RecordEntry32F> {
+    // ---------------------------------------------------
+    // Constants.
+    // ---------------------------------------------------
 
-    int size();
+    public static final int DEFAULT_RECORD_CAPACITY = 50;
 
-    void setLabel(float label);
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
 
-    float getLabel();
+    public int row;
 
-    long getRow();
+    public float label;
 
-    RecordEntry32F next();
+    public TIntFloatMap entries;
 
-    Record set(long row, String line);
+    // ---------------------------------------------------
+    // Constructor.
+    // ---------------------------------------------------
+
+    public Record() {
+        this.label   = Float.NaN;
+        this.entries = new TIntFloatHashMap(DEFAULT_RECORD_CAPACITY);
+    }
 }

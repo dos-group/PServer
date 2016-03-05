@@ -7,6 +7,7 @@ import de.tuberlin.pserver.compiler.*;
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.runtime.RuntimeContext;
+import de.tuberlin.pserver.runtime.core.diagnostics.MemoryTracer;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.runtime.core.lifecycle.Deactivatable;
 import de.tuberlin.pserver.runtime.core.usercode.UserCodeManager;
@@ -107,6 +108,9 @@ public class ProgramDriver implements Deactivatable {
         // PSERVER ML PROGRAM EXECUTION LIFECYCLE!
         //
 
+        System.out.println(MemoryTracer.getTrace("start_executeProgram"));
+
+
         programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
 
         allocateGlobalObjects();
@@ -114,6 +118,8 @@ public class ProgramDriver implements Deactivatable {
         bindGlobalObjects(instance);
 
         allocateState();
+
+        System.out.println(MemoryTracer.getTrace("after_allocateState"));
 
         programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
 

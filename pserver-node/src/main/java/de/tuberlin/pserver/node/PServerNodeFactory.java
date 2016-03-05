@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.runtime.RuntimeManager;
 import de.tuberlin.pserver.runtime.core.config.Config;
+import de.tuberlin.pserver.runtime.core.diagnostics.MemoryTracer;
 import de.tuberlin.pserver.runtime.core.infra.InetHelper;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
@@ -62,16 +63,36 @@ public final class PServerNodeFactory {
             this.machine = configureMachine();
             this.memoryManager = null; //new MemoryManager(config);
             this.infraManager = new InfrastructureManager(machine, config, false);
+
+            System.out.println(MemoryTracer.getTrace("Initialized_InfraStructureManager"));
+
             this.netManager = new NetManager(infraManager, machine, 16);
             this.netManager.start();
+
+            Thread.sleep(5000);
+
+            System.out.println(MemoryTracer.getTrace("Initialized_NetManager"));
+
             this.userCodeManager = new UserCodeManager(this.getClass().getClassLoader());
             this.rpcManager = new RPCManager(netManager);
             infraManager.start(); // blocking until all at are registered at zookeeper
             infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connect);
 
+            Thread.sleep(5000);
+
+            System.out.println("NUM OF ACTIVE CHANNELS: " + netManager.getActiveChannels().size());
+
+            System.out.println(MemoryTracer.getTrace("Connected_RemoteMachines"));
+
             FileSystemManager.FileSystemType type = FileSystemManager.FileSystemType.valueOf(config.getString("worker.filesystem.type"));
-            this.fileManager = new FileSystemManager(config, netManager, type, infraManager.getNodeID());
+            this.fileManager = new FileSystemManager(config, infraManager, netManager, type, infraManager.getNodeID());
+
+            System.out.println(MemoryTracer.getTrace("Initialized_FileSystemManager"));
+
             this.dhtManager = new DHTManager(this.config, infraManager, netManager);
+
+            System.out.println(MemoryTracer.getTrace("Initialized_DHTManager"));
+
             this.runtimeManager = new RuntimeManager(infraManager, netManager, fileManager, dhtManager);
 
             this.runtimeContext = new RuntimeContext(

@@ -1,35 +1,42 @@
 package de.tuberlin.pserver.runtime.filesystem.distributed;
 
 
-import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.filesystem.AbstractFileIterator;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.runtime.filesystem.records.RecordIterator;
+import de.tuberlin.pserver.types.matrix.typeinfo.MatrixTypeInfo;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import java.io.IOException;
-import java.util.Optional;
 
 public class DistributedFileIterator implements AbstractFileIterator {
+
+    // ---------------------------------------------------
+    // Constants.
+    // ---------------------------------------------------
+
+    private static final long blockAccessTimeout = 150000;
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    public final DistributedFilePartition partition;
-
-    private FSDataInputStream inputStream;
+    private DistributedFile file;
 
     private RecordIterator recordIterator;
+
+    private DistributedFileIterationContext ic;
 
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
 
     public DistributedFileIterator(DistributedFile file) {
-        this.partition = (DistributedFilePartition) Preconditions.checkNotNull(file).getFilePartition();
+        this.ic = new DistributedFileIterationContext((DistributedFilePartition) file.getFilePartition());
+        this.file = file;
     }
 
     // ---------------------------------------------------
@@ -37,35 +44,16 @@ public class DistributedFileIterator implements AbstractFileIterator {
     // ---------------------------------------------------
 
     @Override
-    public void open() {
-        try {
-            FileAccessThread fat = new FileAccessThread(partition, 150000);
-            fat.start();
-            inputStream = fat.waitForCompletion();
-        } catch (Throwable t) {
-            throw new IllegalStateException("Error opening distributed file partition. " +
-                    "\nFile: " +   partition.file +
-                    "\nOffset: " + partition.startOffset +
-                    "\nSize: " +   partition.size + "\n : " + t.getMessage(), t);
-        }
-
-        if (partition.startOffset != 0) {
-            try {
-                this.inputStream.seek(partition.startOffset);
-                this.inputStream.readLine();
-            } catch (IOException ex) {
-                throw new IllegalStateException(ex);
-            }
-        }
-
-        recordIterator = RecordIterator.create(partition.fileFormat, inputStream, Optional.<long[]>empty());
-    }
+    public void open() { firstBlock(); }
 
     @Override
     public boolean hasNext() {
-        final boolean hasNext = recordIterator.hasNext();
-        if (!hasNext)
-            close();
+        checkForNextBlock();
+        boolean hasNext = recordIterator.hasNext();
+        if (!hasNext) {
+            if (checkForNextBlock())
+                hasNext = recordIterator.hasNext();
+        }
         return hasNext;
     }
 
@@ -75,13 +63,80 @@ public class DistributedFileIterator implements AbstractFileIterator {
     @Override
     public void close() {
         try {
-            if (inputStream != null) {
-                inputStream.close();
-                inputStream = null;
+            if (ic.inputStream != null) {
+                ic.inputStream.close();
+                ic.inputStream = null;
             }
         } catch (IOException ex) {
             throw new IllegalStateException(ex);
         }
+    }
+
+
+    //public Pair<Integer,Long>
+
+
+    // ---------------------------------------------------
+    // Private Methods.
+    // ---------------------------------------------------
+
+    private void firstBlock() {
+        try {
+            boolean skipFirstLine = ic.partition.blocks.get(ic.blockSeqID).blockLoc.getOffset() != 0;
+            FileAccessThread fat = new FileAccessThread(
+                    ic.partition.hdfsConfig,
+                    ic.partition.blocks.get(ic.blockSeqID),
+                    skipFirstLine,
+                    blockAccessTimeout
+            );
+            fat.start();
+            ic.inputStream = fat.waitForCompletion();
+            recordIterator = RecordIterator.create((MatrixTypeInfo) file.getTypeInfo(), ic);
+            System.out.println("access first block => " + ic.partition.blocks.get(ic.blockSeqID).file);
+        } catch (Throwable ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    private boolean checkForNextBlock() {
+        if (ic.blockSeqID + 1 == ic.partition.blocks.size())
+            return false;
+
+        try {
+
+            if (ic.requireNextBlock()) {
+                boolean skipFirstLine = ic.inputStream.getPos() != ic.getCurrentBlockEndOffset() && !ic.exceededBlock;
+
+                ++ic.blockSeqID;
+                try {
+                    close();
+
+                    FileAccessThread fat = new FileAccessThread(
+                            ic.partition.hdfsConfig,
+                            ic.partition.blocks.get(ic.blockSeqID),
+                            skipFirstLine,
+                            blockAccessTimeout
+                    );
+                    fat.start();
+
+                    ic.exceededBlock = false;
+                    ic.inputStream = fat.waitForCompletion();
+
+                    System.out.println("Access next block [" + ic.blockSeqID + "] " +
+                            "of file [" + ic.partition.blocks.get(ic.blockSeqID).file + "]");
+
+                } catch (Throwable t) {
+                    throw new IllegalStateException("Error opening distributed file partition. " +
+                            "\nFile: "      + ic.partition.file +
+                            "\nOffset: "    + ic.partition.startOffset +
+                            "\nSize: "      + ic.partition.size + "\n : " + t.getMessage(), t);
+                }
+            }
+
+        } catch (Exception ex) {
+            throw new IllegalStateException(ex);
+        }
+        return true;
     }
 
     // ---------------------------------------------------
@@ -94,7 +149,11 @@ public class DistributedFileIterator implements AbstractFileIterator {
         // Fields.
         // ---------------------------------------------------
 
-        private final DistributedFilePartition partition;
+        private final Configuration hdfsConfig;
+
+        private final DistributedBlock distBlock;
+
+        private final boolean skipFirstLine;
 
         private volatile FSDataInputStream inputStream;
 
@@ -108,11 +167,13 @@ public class DistributedFileIterator implements AbstractFileIterator {
         // Constructor.
         // ---------------------------------------------------
 
-        public FileAccessThread(DistributedFilePartition partition, long timeout) {
-            super("Transient InputSplit Opener");
+        public FileAccessThread(Configuration hdfsConfig, DistributedBlock distBlock, boolean skipFirstLine, long timeout) {
+            super("DistributedBlock-Opener-Thread");
             setDaemon(true);
-            this.partition = partition;
-            this.timeout = timeout;
+            this.hdfsConfig     = hdfsConfig;
+            this.distBlock      = distBlock;
+            this.skipFirstLine  = skipFirstLine;
+            this.timeout        = timeout;
         }
 
         // ---------------------------------------------------
@@ -122,49 +183,59 @@ public class DistributedFileIterator implements AbstractFileIterator {
         @Override
         public void run() {
             try {
-                final FileSystem fs = FileSystem.get(partition.hdfsConfig);
-                this.inputStream = fs.open(new Path(this.partition.file));
+                FileSystem fs = FileSystem.get(hdfsConfig);
+                inputStream = fs.open(new Path(distBlock.file));
+
+                if (distBlock.blockLoc.getOffset() != 0) {
+                    inputStream.seek(distBlock.blockLoc.getOffset());
+                    if (skipFirstLine) {
+                        System.out.println("SKIP first line of block [" + distBlock.blockSeqID + "].");
+                        inputStream.readLine();
+                    } else {
+                        System.out.println("SKIP NOT first line of block [" + distBlock.blockSeqID + "].");
+                    }
+                }
                 // check for canceling and close the stream in that case, because no one will obtain it
                 if (this.aborted) {
-                    final FSDataInputStream f = this.inputStream;
-                    this.inputStream = null;
+                    final FSDataInputStream f = inputStream;
+                    inputStream = null;
                     f.close();
                 }
             }
             catch (Throwable t) {
-                this.error = t;
+                error = t;
             }
         }
 
         public FSDataInputStream waitForCompletion() throws Throwable {
-            final long start = System.currentTimeMillis();
+            long start = System.currentTimeMillis();
             long remaining = this.timeout;
             do {
                 try {
                     // wait for the task completion
-                    this.join(remaining);
+                    join(remaining);
                 } catch (InterruptedException iex) {
                     // we were canceled, so abort the procedure
                     abortWait();
                     throw iex;
                 }
-            } while(this.error == null
-                    && this.inputStream == null
-                    && (remaining = this.timeout + start - System.currentTimeMillis()) > 0);
+            } while(error == null
+                    && inputStream == null
+                    && (remaining = timeout + start - System.currentTimeMillis()) > 0);
 
-            if (this.error != null)
-                throw this.error;
+            if (error != null)
+                throw error;
 
-            if (this.inputStream != null) {
-                return this.inputStream;
+            if (inputStream != null) {
+                return inputStream;
             } else {
                 // double-check that the stream has not been set by now. we don't know here whether
                 // a) the opener thread recognized the canceling and closed the stream
                 // b) the flag was set such that the stream did not see it and we have a valid stream
                 // In any case, close the stream and throw an exception.
                 abortWait();
-                final boolean stillAlive = this.isAlive();
-                final StringBuilder bld = new StringBuilder(256);
+                boolean stillAlive = this.isAlive();
+                StringBuilder bld = new StringBuilder(256);
                 for (StackTraceElement e : this.getStackTrace()) {
                     bld.append("\tat ").append(e.toString()).append('\n');
                 }
@@ -174,9 +245,9 @@ public class DistributedFileIterator implements AbstractFileIterator {
         }
 
         private void abortWait() {
-            this.aborted = true;
-            final FSDataInputStream inStream = this.inputStream;
-            this.inputStream = null;
+            aborted = true;
+            FSDataInputStream inStream = this.inputStream;
+            inputStream = null;
             if (inStream != null) {
                 try {
                     inStream.close();

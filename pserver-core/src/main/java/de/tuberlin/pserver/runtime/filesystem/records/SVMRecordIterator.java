@@ -1,24 +1,27 @@
 package de.tuberlin.pserver.runtime.filesystem.records;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Optional;
+import de.tuberlin.pserver.runtime.filesystem.AbstractFileIterationContext;
+import de.tuberlin.pserver.types.matrix.typeinfo.MatrixTypeInfo;
 
-public class SVMRecordIterator extends RecordIterator {
+public class SVMRecordIterator implements RecordIterator {
 
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
 
-    private long row;
+    private final MatrixTypeInfo matrixTypeInfo;
+
+    private final SVMRecordParser recordParser;
+
+    private int currentRow;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
-    public SVMRecordIterator(InputStream inputStream, Optional<long[]> projection) {
-        super(inputStream, projection);
-        reusableRecord = new SVMRecord(this.projection);
+    public SVMRecordIterator(MatrixTypeInfo matrixTypeInfo, AbstractFileIterationContext ic) {
+        this.matrixTypeInfo = matrixTypeInfo;
+        this.recordParser   = new SVMRecordParser(ic);
     }
 
     // ---------------------------------------------------
@@ -26,27 +29,12 @@ public class SVMRecordIterator extends RecordIterator {
     // ---------------------------------------------------
 
     @Override
-    public boolean hasNext() {
-        try {
-            reader.mark(1);
-            if (reader.read() < 0) {
-                this.reader.close();
-                return false;
-            } else {
-                reader.reset();
-                return true;
-            }
-        } catch (IOException e) {
-            return false;
-        }
-    }
+    public boolean hasNext() { return matrixTypeInfo.rows() > currentRow; }
 
     @Override
     public Record next() {
-        try {
-            return this.reusableRecord.set(row++, reader.readLine());
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
+        Record record = recordParser.parseNextRow(currentRow);
+        ++currentRow;
+        return record;
     }
 }

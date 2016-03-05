@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.runtime.filesystem.AbstractFileIterator;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.runtime.filesystem.records.RecordIterator;
+import de.tuberlin.pserver.types.matrix.typeinfo.MatrixTypeInfo;
 
 import java.io.*;
 
@@ -14,11 +15,11 @@ public class LocalFileIterator implements AbstractFileIterator {
     // Fields.
     // ---------------------------------------------------
 
-    private final InputStream inputStream;
+    private final LocalFile file;
+
+    private final LocalFileIterationContext ic;
 
     private RecordIterator recordIterator;
-
-    public final LocalFilePartition partition;
 
     private long currRow = 0;
 
@@ -27,9 +28,10 @@ public class LocalFileIterator implements AbstractFileIterator {
     // ---------------------------------------------------
 
     public LocalFileIterator(LocalFile file) {
-        this.partition = (LocalFilePartition) Preconditions.checkNotNull(file).getFilePartition();
+        this.file = file;
+        this.ic = new LocalFileIterationContext((LocalFilePartition) Preconditions.checkNotNull(file).getFilePartition());
         try {
-            inputStream  = new FileInputStream(Preconditions.checkNotNull(partition.file));
+            this.ic.inputStream = new FileInputStream(Preconditions.checkNotNull(file.getTypeInfo().input().filePath()));
         } catch(Exception e) {
             close();
             throw new IllegalStateException(e);
@@ -43,10 +45,10 @@ public class LocalFileIterator implements AbstractFileIterator {
     @Override
     public void open() {
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            for (int i = 0; i <= partition.offset; ++i)
+            BufferedReader reader = new BufferedReader(new InputStreamReader(this.ic.inputStream));
+            for (int i = 0; i <= ic.partition.offset; ++i)
                 reader.readLine();
-            recordIterator = RecordIterator.create(partition.fileFormat, inputStream);
+            recordIterator = RecordIterator.create((MatrixTypeInfo) file.getTypeInfo(), ic);
         } catch(Exception e) {
             throw new IllegalStateException(e);
         }
@@ -54,7 +56,7 @@ public class LocalFileIterator implements AbstractFileIterator {
 
     @Override
     public boolean hasNext() {
-        boolean hasNext = recordIterator.hasNext() && currRow < partition.linesToRead;
+        boolean hasNext = recordIterator.hasNext() && currRow < ic.partition.linesToRead;
         if (!hasNext)
             close();
         return hasNext;
@@ -69,8 +71,8 @@ public class LocalFileIterator implements AbstractFileIterator {
     @Override
     public void close() {
         try {
-            if (inputStream != null)
-                inputStream.close();
+            if (ic.inputStream != null)
+                ic.inputStream.close();
         } catch (IOException ioe) {
             throw new IllegalStateException(ioe);
         }

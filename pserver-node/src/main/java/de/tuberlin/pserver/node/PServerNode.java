@@ -3,6 +3,7 @@ package de.tuberlin.pserver.node;
 import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.runtime.RuntimeManager;
+import de.tuberlin.pserver.runtime.core.diagnostics.MemoryTracer;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
@@ -51,6 +52,8 @@ public final class PServerNode extends EventDispatcher {
         this.runtimeContext     = factory.runtimeContext;
 
         this.driver = new ProgramDriver(infraManager, factory.userCodeManager, runtimeContext);
+
+        System.out.println(MemoryTracer.getTrace("Initialized_ProgramDriver"));
 
         netManager.addEventListener(ProgramSubmissionEvent.PSERVER_JOB_SUBMISSION_EVENT, new PServerJobHandler());
     }
