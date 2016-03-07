@@ -34,9 +34,8 @@ public class LocalFilePartitionScheduler implements AbstractFilePartitionSchedul
     public List<AbstractFilePartition> schedule(ScheduleType type) {
         switch (type) {
             case ORDERED:
-                return orderedBlockScheduler(file.getTypeInfo());
             case COLOCATED:
-                throw new UnsupportedOperationException();
+                return scheduler(file.getTypeInfo());
             default:
                 throw new IllegalStateException();
         }
@@ -46,7 +45,7 @@ public class LocalFilePartitionScheduler implements AbstractFilePartitionSchedul
     // Private Methods.
     // ---------------------------------------------------
 
-    private List<AbstractFilePartition> orderedBlockScheduler(DistributedTypeInfo typeInfo) {
+    private List<AbstractFilePartition> scheduler(DistributedTypeInfo typeInfo) {
         final long totalLines = getNumberOfLines(typeInfo);
         List<AbstractFilePartition> inputPartitions = new ArrayList<>();
         // We assume here, that number of row-partitions determine file splitting. This is not necessarily
@@ -63,14 +62,11 @@ public class LocalFilePartitionScheduler implements AbstractFilePartitionSchedul
                     )
             );
         } else {
-
             final long lps = totalLines / typeInfo.nodes().length;
             for (int i = 0; i < typeInfo.nodes().length; ++i) {
-
                 final long linesToRead = (typeInfo.nodes()[i] == (typeInfo.nodes().length - 1))
                         ? lps + (totalLines % lps) : lps;
                 long offset = linesToRead * typeInfo.nodes()[i];
-
                 inputPartitions.add(
                         new LocalFilePartition(
                             typeInfo.nodes()[i],
@@ -96,32 +92,4 @@ public class LocalFilePartitionScheduler implements AbstractFilePartitionSchedul
             throw new IllegalStateException(ioe);
         }
     }
-
-    /*private int getLineEndingCharCount(BufferedReader br) {
-        try {
-            char[] buffer = new char[8192];
-            int result = 0;
-            while (result == 0 && br.read(buffer) > 0) {
-                for (int i = 0; i < buffer.length; i++) {
-                    char c = buffer[i];
-                    if(c == '\n' || c == '\r') {
-                        result++;
-                        char c2 = 0;
-                        if(i + 1 < buffer.length)
-                            c2 = buffer[i + 1];
-                        else if(br.read(buffer) > 0)
-                            c2 = buffer[0];
-                        if(c2 > 0 && (c2 == '\n' || c2 == '\r'))
-                            result++;
-                        break;
-                    }
-                }
-            }
-            if(result <= 0 || result > 2)
-                throw new IllegalStateException("line ending char count = " + result);
-            return result;
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-    }*/
 }

@@ -1,10 +1,10 @@
 package de.tuberlin.pserver.node;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.diagnostics.MemoryTracer;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.runtime.RuntimeManager;
-import de.tuberlin.pserver.runtime.core.config.Config;
-import de.tuberlin.pserver.runtime.core.diagnostics.MemoryTracer;
+import de.tuberlin.pserver.commons.config.Config;
 import de.tuberlin.pserver.runtime.core.infra.InetHelper;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
@@ -58,43 +58,26 @@ public final class PServerNodeFactory {
     public PServerNodeFactory(final Config config) {
         final long start = System.nanoTime();
         try {
-
             this.config = Preconditions.checkNotNull(config);
             this.machine = configureMachine();
             this.memoryManager = null; //new MemoryManager(config);
             this.infraManager = new InfrastructureManager(machine, config, false);
-
-            System.out.println(MemoryTracer.getTrace("Initialized_InfraStructureManager"));
-
+            MemoryTracer.printTrace("Initialized_InfraStructureManager");
             this.netManager = new NetManager(infraManager, machine, 16);
             this.netManager.start();
-
-            Thread.sleep(5000);
-
-            System.out.println(MemoryTracer.getTrace("Initialized_NetManager"));
-
+            MemoryTracer.printTrace("Initialized_NetManager");
             this.userCodeManager = new UserCodeManager(this.getClass().getClassLoader());
             this.rpcManager = new RPCManager(netManager);
             infraManager.start(); // blocking until all at are registered at zookeeper
             infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connect);
-
-            Thread.sleep(5000);
-
-            System.out.println("NUM OF ACTIVE CHANNELS: " + netManager.getActiveChannels().size());
-
-            System.out.println(MemoryTracer.getTrace("Connected_RemoteMachines"));
-
+            System.out.println("NUM OF ACTIVE CHANNELS: " + netManager.getActiveChannels().size() + " | nodeID = " + infraManager.getNodeID());
+            MemoryTracer.printTrace("Connected_RemoteMachines");
             FileSystemManager.FileSystemType type = FileSystemManager.FileSystemType.valueOf(config.getString("worker.filesystem.type"));
             this.fileManager = new FileSystemManager(config, infraManager, netManager, type, infraManager.getNodeID());
-
-            System.out.println(MemoryTracer.getTrace("Initialized_FileSystemManager"));
-
+            MemoryTracer.printTrace("Initialized_FileSystemManager");
             this.dhtManager = new DHTManager(this.config, infraManager, netManager);
-
-            System.out.println(MemoryTracer.getTrace("Initialized_DHTManager"));
-
+            MemoryTracer.printTrace("Initialized_DHTManager");
             this.runtimeManager = new RuntimeManager(infraManager, netManager, fileManager, dhtManager);
-
             this.runtimeContext = new RuntimeContext(
                     machine,
                     infraManager.getMachines().size(),
@@ -106,16 +89,13 @@ public final class PServerNodeFactory {
                     runtimeManager,
                     infraManager
             );
-
             netManager.addEventListener(NetEvent.NetEventTypes.ECHO_REQUEST, event -> {
                 MachineDescriptor clmd = (MachineDescriptor) event.getPayload();
                 netManager.dispatchEventAt(clmd, new NetEvent(NetEvent.NetEventTypes.ECHO_RESPONSE));
             });
-
         } catch(Exception e) {
             throw new IllegalStateException(e);
         }
-
         LOG.info("PServer Node Startup: " + Long.toString(Math.abs(System.nanoTime() - start) / 1000000) + " ms");
     }
 

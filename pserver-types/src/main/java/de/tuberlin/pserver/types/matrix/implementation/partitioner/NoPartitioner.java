@@ -4,9 +4,8 @@ import de.tuberlin.pserver.types.matrix.typeinfo.MatrixTypeInfo;
 
 public class NoPartitioner extends AbstractMatrixPartitioner {
 
-    public NoPartitioner(MatrixTypeInfo distributedMatrixType) {
-        super(distributedMatrixType);
-    }
+    public NoPartitioner() { this(null); }
+    public NoPartitioner(MatrixTypeInfo distributedMatrixType) { super(distributedMatrixType); }
 
     @Override
     public int getPartitionOfEntry(long row, long col) {
@@ -45,6 +44,9 @@ public class NoPartitioner extends AbstractMatrixPartitioner {
 
     @Override
     protected MatrixPartitionShape computeMatrixPartitionShape() {
-        return new MatrixPartitionShape(distributedMatrixType.globalRows(), distributedMatrixType.globalCols(), 0, 0);
+        if (distributedMatrixType != null)
+            return new MatrixPartitionShape(distributedMatrixType.globalRows(), distributedMatrixType.globalCols(), 0, 0);
+        else
+            return null;
     }
 }

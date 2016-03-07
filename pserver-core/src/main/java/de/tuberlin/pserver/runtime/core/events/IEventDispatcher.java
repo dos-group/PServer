@@ -6,25 +6,27 @@ import java.util.List;
 
 public interface IEventDispatcher extends Deactivatable {
 
-    public abstract int getNumOfQueuedEvents();
+    int getNumOfQueuedEvents();
 
-    public abstract int getNumOfCachedEvents(String type);
+    int getNumOfCachedEvents(String type);
 
-    public abstract void addEventListener(String type, IEventHandler listener);
+    void addEventListener(String type, IEventHandler listener);
 
-    public abstract void addEventListener(final String[] types, final IEventHandler listener);
+    void addEventListener(final String[] types, final IEventHandler listener);
 
-    public abstract List<IEventHandler> getEventListener(final String type);
+    List<IEventHandler> getEventListener(final String type);
 
-    public abstract boolean removeEventListener(String type, IEventHandler listener);
+    boolean removeEventListener(String type, IEventHandler listener);
 
-    public abstract void removeAllEventListener();
+    boolean removeEventListener(String type);
 
-    public abstract void dispatchEvent(Event event);
+    void removeAllEventListener();
 
-    public abstract boolean hasEventListener(String type);
+    void dispatchEvent(Event event);
 
-    public abstract void joinDispatcherThread();
+    boolean hasEventListener(String type);
 
-    public abstract Thread getDispatcherThread();
+    void joinDispatcherThread();
+
+    Thread getDispatcherThread();
 }

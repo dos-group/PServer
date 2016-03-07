@@ -1,6 +1,6 @@
-package de.tuberlin.pserver.runtime.state.matrix;
+package de.tuberlin.pserver.runtime.filesystem.typeloader;
 
-import de.tuberlin.pserver.runtime.core.diagnostics.MemoryTracer;
+import de.tuberlin.pserver.diagnostics.MemoryTracer;
 import de.tuberlin.pserver.runtime.driver.ProgramContext;
 import de.tuberlin.pserver.runtime.filesystem.AbstractFileIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
@@ -108,18 +108,21 @@ public final class MatrixLoader {
 
     public void load() {
         programContext.runtimeContext.fileManager.buildPartitions();
-        System.out.println(MemoryTracer.getTrace("BeforeFileLoading"));
+        MemoryTracer.printTrace("BeforeFileLoading");
         for (DistributedTypeInfo typeInfo : loadingTasks) {
             Matrix32F dataMatrix = (Matrix32F)typeInfo;
             AbstractFileIterator fileIterator = fileManager.getFileIterator(typeInfo);
             Matrix32F labelMatrix = null;
+
             if (!"".equals(typeInfo.input().labels()))
                 labelMatrix = programContext.runtimeContext.runtimeManager.getDHT(typeInfo.input().labels());
+
             final MatrixLoaderStrategy loader = MatrixLoaderStrategy.createLoader(typeInfo);
             while (fileIterator.hasNext())
                 loader.putRecord(fileIterator.next(), dataMatrix, labelMatrix);
             loader.done(dataMatrix);
-            System.out.println(MemoryTracer.getTrace("AfterFileLoading"));
+
+            MemoryTracer.printTrace("AfterFileLoading");
         }
     }
 }

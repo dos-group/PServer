@@ -1,9 +1,9 @@
 package de.tuberlin.pserver.node;
 
 import de.tuberlin.pserver.compiler.Program;
+import de.tuberlin.pserver.diagnostics.MemoryTracer;
 import de.tuberlin.pserver.runtime.RuntimeContext;
 import de.tuberlin.pserver.runtime.RuntimeManager;
-import de.tuberlin.pserver.runtime.core.diagnostics.MemoryTracer;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
@@ -52,9 +52,7 @@ public final class PServerNode extends EventDispatcher {
         this.runtimeContext     = factory.runtimeContext;
 
         this.driver = new ProgramDriver(infraManager, factory.userCodeManager, runtimeContext);
-
-        System.out.println(MemoryTracer.getTrace("Initialized_ProgramDriver"));
-
+        MemoryTracer.printTrace("Initialized_ProgramDriver");
         netManager.addEventListener(ProgramSubmissionEvent.PSERVER_JOB_SUBMISSION_EVENT, new PServerJobHandler());
     }
 
@@ -83,16 +81,13 @@ public final class PServerNode extends EventDispatcher {
                         ParallelRuntime.INSTANCE.addPrimaryThread(netManager.getDispatcherThread().getId());
                         driver.executeProgram();
                         final List<Serializable> results = instance.programContext.getResults();
-
                         final ProgramResultEvent jre = new ProgramResultEvent(
                                 runtimeContext.machine,
                                 runtimeContext.nodeID,
                                 instance.programContext.programID,
                                 results
                         );
-
                         netManager.dispatchEventAt(programSubmission.clientMachine, jre);
-
                     } catch (Throwable ex) {
                         final ProgramFailureEvent jfe = new ProgramFailureEvent(
                                 machine,
@@ -102,14 +97,12 @@ public final class PServerNode extends EventDispatcher {
                                 instance.getClass().getSimpleName(),
                                 ExceptionUtils.getStackTrace(ex)
                         );
-
                         netManager.dispatchEventAt(programSubmission.clientMachine, jfe);
                     } finally {
                         driver.deactivate();
                         runtimeManager.clearContext();
                         ParallelRuntime.INSTANCE.deactivate();
                     }
-
                 }).start();
             } catch (Exception ex) {
                 throw new IllegalStateException(ex);

@@ -3,7 +3,7 @@ package de.tuberlin.pserver.client;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.commons.tuples.Tuple2;
 import de.tuberlin.pserver.compiler.Program;
-import de.tuberlin.pserver.runtime.core.config.Config;
+import de.tuberlin.pserver.commons.config.Config;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;

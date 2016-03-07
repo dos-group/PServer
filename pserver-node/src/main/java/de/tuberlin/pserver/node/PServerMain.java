@@ -1,7 +1,8 @@
 package de.tuberlin.pserver.node;
 
-import de.tuberlin.pserver.runtime.core.config.ConfigLoader;
-import de.tuberlin.pserver.runtime.core.diagnostics.MemoryTracer;
+import de.tuberlin.pserver.diagnostics.MemoryTracer;
+import de.tuberlin.pserver.commons.config.Config;
+import de.tuberlin.pserver.commons.config.ConfigLoader;
 
 public final class PServerMain {
 
@@ -14,8 +15,9 @@ public final class PServerMain {
         if (args == null || args.length != 1)
             throw new IllegalStateException();
 
-        System.out.println(MemoryTracer.getTrace("Initial"));
-
-        PServerNodeFactory.createNode(ConfigLoader.loadResource(args[0]));
+        Config config = ConfigLoader.loadResource(args[0]);
+        MemoryTracer.setConfig(config);
+        MemoryTracer.printTrace("Initial");
+        PServerNodeFactory.createNode(config);
     }
 }

@@ -16,7 +16,7 @@ public class DistributedFileIterationContext implements AbstractFileIterationCon
 
     public FSDataInputStream inputStream;
 
-    public int blockSeqID;
+    public int localBlockID;
 
     public boolean exceededBlock;
 
@@ -27,7 +27,7 @@ public class DistributedFileIterationContext implements AbstractFileIterationCon
     public DistributedFileIterationContext(DistributedFilePartition partition) {
         this.partition      = partition;
         this.inputStream    = null;
-        this.blockSeqID     = 0;
+        this.localBlockID   = 0;
         this.exceededBlock  = false;
     }
 
@@ -41,15 +41,15 @@ public class DistributedFileIterationContext implements AbstractFileIterationCon
     }
 
     public long getCurrentBlockStartOffset() {
-        return partition.blocks.get(blockSeqID).blockLoc.getOffset();
+        return partition.blocks.get(localBlockID).blockLoc.getOffset();
     }
 
     public long getCurrentBlockLength() {
-        return partition.blocks.get(blockSeqID).blockLoc.getLength();
+        return partition.blocks.get(localBlockID).blockLoc.getLength();
     }
 
     public long getCurrentBlockEndOffset() {
-        return getCurrentBlockStartOffset() + partition.blocks.get(blockSeqID).blockLoc.getLength();
+        return getCurrentBlockStartOffset() + partition.blocks.get(localBlockID).blockLoc.getLength();
     }
 
     public boolean requireNextBlock() throws Exception {

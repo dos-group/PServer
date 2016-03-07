@@ -17,16 +17,14 @@
     <name>pserver-benchmark-suite</name>
 
     <!-- ================================= -->
-    <!-- MAVEN DEPENDENCIES. -->
+    <!-- MAVEN MODULES. -->
     <!-- ================================= -->
 
-    <dependencies>
-
-        <!-- SYSTEM DEPENDENCIES -->
-
-
-    </dependencies>
-
+    <modules>
+        <module>pre-processing</module>
+        <module>spark-benchmarks</module>
+        <module>pserver-benchmarks</module>
+    </modules>
 
     <!-- ================================= -->
     <!-- BUILD. -->
@@ -45,15 +43,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <!-- ================================= -->
-    <!-- MAVEN MODULES. -->
-    <!-- ================================= -->
-
-    <modules>
-        <module>pre-processing</module>
-        <module>spark-benchmarks</module>
-        <module>pserver-benchmarks</module>
-    </modules>
-
 </project>

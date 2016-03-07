@@ -1,8 +1,8 @@
 package de.tuberlin.pserver.test;
 
 import de.tuberlin.pserver.node.PServerMain;
-import de.tuberlin.pserver.runtime.core.config.Config;
-import de.tuberlin.pserver.runtime.core.config.ConfigLoader;
+import de.tuberlin.pserver.commons.config.Config;
+import de.tuberlin.pserver.commons.config.ConfigLoader;
 import de.tuberlin.pserver.runtime.core.infra.ClusterSimulator;
 import de.tuberlin.pserver.test.core.CoreTests;
 import org.junit.AfterClass;

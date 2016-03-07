@@ -13,20 +13,13 @@ import gnu.trove.map.TLongFloatMap;
 import gnu.trove.map.hash.TLongFloatHashMap;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.math3.random.RandomDataGenerator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class SparseMatrix32F extends AbstractMatrixTypeInfo implements Matrix32F {
-
-    // ---------------------------------------------------
-    // Logger.
-    // ---------------------------------------------------
-
-    static final Logger logger = LoggerFactory.getLogger(SparseMatrix32F.class);
 
     // ---------------------------------------------------
     // Fields.
@@ -207,7 +200,6 @@ public class SparseMatrix32F extends AbstractMatrixTypeInfo implements Matrix32F
 
     @Override
     public Matrix32F applyOnElements(UnaryOperator32 f, Matrix32F m) {
-        logger.info("Warning! 'applyOnElements' is potentially a very expensive operation.");
         for (int i = 0; i < m.rows(); i++) {
             for (int j = 0; j < m.cols(); j++) {
                 m.set(i, j, f.apply(this.get(i, j)));
@@ -223,7 +215,6 @@ public class SparseMatrix32F extends AbstractMatrixTypeInfo implements Matrix32F
 
     @Override
     public Matrix32F applyOnElements(Matrix32F m, BinaryOperator32 f, Matrix32F result) {
-        logger.info("Warning! 'applyOnElements' is potentially a very expensive operation.");
         for (int i = 0; i < this.rows(); i++) {
             for (int j = 0; j < this.cols(); j++) {
                 result.set(i, j, f.apply(this.get(i, j), m.get(i, j)));
@@ -239,7 +230,6 @@ public class SparseMatrix32F extends AbstractMatrixTypeInfo implements Matrix32F
 
     @Override
     public Matrix32F applyOnElements(MatrixElementUnaryOperator32 f, Matrix32F m) {
-        logger.info("Warning! 'applyOnElements' is potentially a very expensive operation.");
         for (int i = 0; i < m.rows(); i++) {
             for (int j = 0; j < m.cols(); j++) {
                 m.set(i, j, f.apply(i, j, this.get(i, j)));
@@ -273,7 +263,6 @@ public class SparseMatrix32F extends AbstractMatrixTypeInfo implements Matrix32F
 
     @Override
     public Matrix32F assign(float f) {
-        logger.info("Warning! 'assign(float)' is potentially a very expensive operation.");
         for (int i = 0; i < rows() * cols(); i++)
             this.data.put(i, f);
         return this;
@@ -281,7 +270,6 @@ public class SparseMatrix32F extends AbstractMatrixTypeInfo implements Matrix32F
 
     @Override
     public Matrix32F assign(Matrix32F m) {
-        logger.info("Warning! 'assign(float)' is potentially a very expensive operation.");
         for (int row = 0; row < m.rows(); row++)
             for (int col = 0; col < m.cols(); col++)
                 this.set(row, col, m.get(row, col));
@@ -304,7 +292,6 @@ public class SparseMatrix32F extends AbstractMatrixTypeInfo implements Matrix32F
 
     @Override
     public Matrix32F assign(long rowOffset, long colOffset, Matrix32F m) {
-        logger.info("Warning! 'assign(float)' is potentially a very expensive operation.");
         for (long col = colOffset; col < m.cols(); col++)
             this.set(rowOffset, col, m.get(rowOffset, col));
         return this;

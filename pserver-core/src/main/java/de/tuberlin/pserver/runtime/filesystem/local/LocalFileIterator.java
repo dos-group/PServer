@@ -46,7 +46,7 @@ public class LocalFileIterator implements AbstractFileIterator {
     public void open() {
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(this.ic.inputStream));
-            for (int i = 0; i <= ic.partition.offset; ++i)
+            for (int i = 0; i <= ic.partition.localBlock.offset; ++i)
                 reader.readLine();
             recordIterator = RecordIterator.create((MatrixTypeInfo) file.getTypeInfo(), ic);
         } catch(Exception e) {
@@ -56,7 +56,7 @@ public class LocalFileIterator implements AbstractFileIterator {
 
     @Override
     public boolean hasNext() {
-        boolean hasNext = recordIterator.hasNext() && currRow < ic.partition.linesToRead;
+        boolean hasNext = recordIterator.hasNext() && currRow < ic.partition.localBlock.linesToRead;
         if (!hasNext)
             close();
         return hasNext;

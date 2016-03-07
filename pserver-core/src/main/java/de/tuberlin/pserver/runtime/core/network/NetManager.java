@@ -67,6 +67,11 @@ public final class NetManager extends EventDispatcher {
 
     public NetManager(InfrastructureManager infraManager, MachineDescriptor machine, int numThreads) {
         super(true);
+
+        //System.setProperty("io.netty.allocator.numHeapArenas", "0");
+        //System.setProperty("io.netty.allocator.numDirectArenas", "32");
+        //System.setProperty("io.netty.allocator.pageSize", "32768");
+
         this.infraManager       = Preconditions.checkNotNull(infraManager);
         this.machine            = Preconditions.checkNotNull(machine);
         this.bossGroup          = new NioEventLoopGroup(1);
@@ -178,9 +183,8 @@ public final class NetManager extends EventDispatcher {
     }
 
     public void connectToAll(List<MachineDescriptor> in, List<MachineDescriptor> out) throws Exception {
-        for (MachineDescriptor nd : out) {
+        for (MachineDescriptor nd : out)
             connect(nd);
-        }
         for (;;) {
             boolean isConnected = true;
             for (MachineDescriptor nd : in) {
@@ -257,9 +261,7 @@ public final class NetManager extends EventDispatcher {
     }
 
     private NetChannel registerNetChannel(MachineDescriptor descriptor, Channel channel,  NetChannel.NetChannelType type) {
-
         NetChannel netChannel = null;
-
         synchronized (connectMutex) {
             if (activeChannels.containsKey(descriptor))
                 return activeChannels.get(descriptor);
@@ -286,6 +288,7 @@ public final class NetManager extends EventDispatcher {
             netChannel.channel.writeAndFlush(machine, netChannel.channel.voidPromise());
         else
             netChannel.channel.writeAndFlush(descriptor, netChannel.channel.voidPromise());
+
         return netChannel;
     }
 

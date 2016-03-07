@@ -29,6 +29,10 @@
         </dependency>
         <dependency>
             <groupId>de.tuberlin.pserver</groupId>
+            <artifactId>pserver-diagnostics</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.tuberlin.pserver</groupId>
             <artifactId>pserver-types</artifactId>
         </dependency>
 

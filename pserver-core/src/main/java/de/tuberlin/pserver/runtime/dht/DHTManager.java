@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import de.tuberlin.pserver.commons.compression.Compressor;
 import de.tuberlin.pserver.commons.hashtable.NonBlockingHashMap;
-import de.tuberlin.pserver.runtime.core.config.Config;
+import de.tuberlin.pserver.commons.config.Config;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;

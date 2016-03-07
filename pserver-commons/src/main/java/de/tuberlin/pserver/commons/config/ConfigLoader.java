@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.runtime.core.config;
+package de.tuberlin.pserver.commons.config;
 
 
 import com.typesafe.config.ConfigFactory;

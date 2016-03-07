@@ -1,9 +1,10 @@
 package de.tuberlin.pserver.runtime.filesystem.distributed;
 
 
-import de.tuberlin.pserver.runtime.core.config.Config;
+import de.tuberlin.pserver.commons.config.Config;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;
+import de.tuberlin.pserver.runtime.filesystem.AbstractBlock;
 import de.tuberlin.pserver.runtime.filesystem.AbstractFilePartition;
 import de.tuberlin.pserver.runtime.filesystem.AbstractFilePartitionScheduler;
 import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
@@ -30,6 +31,8 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
 
     private final Map<String, MachineDescriptor> hostMD;
 
+    private final List<AbstractBlock> remainingBlocks = new ArrayList<>();
+
     // ---------------------------------------------------
     // Constructor.
     // ---------------------------------------------------
@@ -55,6 +58,8 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
     // Public Methods.
     // ---------------------------------------------------
 
+    public List<AbstractBlock> getRemainingBlocks() { return remainingBlocks; }
+
     public List<AbstractFilePartition> schedule(ScheduleType type) {
         switch (type) {
             case ORDERED:
@@ -72,25 +77,17 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
 
     private List<AbstractFilePartition> colocatedBlockScheduler(DistributedTypeInfo typeInfo) {
         List<AbstractFilePartition> inputPartitions = new ArrayList<>();
-
         try {
-            long totalLength = 0;
             List<FileStatus> files = new ArrayList<>();
             Path hdfsPath = new Path(typeInfo.input().filePath());
             FileSystem dfs = hdfsPath.getFileSystem(hdfsConfig);
             FileStatus inputStatus = dfs.getFileStatus(hdfsPath);
-            if (inputStatus.isDirectory()) {
-                for (FileStatus dir : dfs.listStatus(hdfsPath)) {
-                    if (!dir.isDirectory() && acceptFile(dir)) {
+            if (inputStatus.isDirectory())
+                for (FileStatus dir : dfs.listStatus(hdfsPath))
+                    if (!dir.isDirectory() && acceptFile(dir))
                         files.add(dir);
-                        totalLength += dir.getLen();
-                    }
-                }
-            } else {
+            else
                 files.add(inputStatus);
-                totalLength += inputStatus.getLen();
-            }
-            //long partitionSize = totalLength / typeInfo.nodes().length;
 
             System.out.println(" ---------------------------------------------------------------- ");
             System.out.println(" |                      Partition Scheduler                     | ");
@@ -108,7 +105,6 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
                         else
                             return 0;
                 });
-
                 System.out.println("File [" + file.getPath() + "] has " + blockLocations.length + " blocks.");
                 int blockSeqCounter = 0;
                 for (BlockLocation bl : blockLocations) {
@@ -118,12 +114,13 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
                             hostBlockList = new LinkedList<>();
                             hostBlockMap.put(host, hostBlockList);
                         }
-                        hostBlockList.add(new DistributedBlock(null, file.getPath().toString(), blockSeqCounter, bl));
+                        hostBlockList.add(new DistributedBlock(file.getPath().toString(), blockSeqCounter, bl));
                     }
                     ++blockSeqCounter;
                 }
             }
-
+            System.out.println(" ---------------------------------------------------------------- ");
+            System.out.println(" |                           Phase 1                            | ");
             System.out.println(" ---------------------------------------------------------------- ");
 
             Map<String, List<DistributedBlock>> hostAssignments = new HashMap<>();
@@ -133,19 +130,18 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
             });
 
             System.out.println(" ---------------------------------------------------------------- ");
-
+            System.out.println(" |                           Phase 2                            | ");
+            System.out.println(" ---------------------------------------------------------------- ");
 
             int globalBlockCount = 0;
             for (List<DistributedBlock> blockPerHost : hostAssignments.values())
                 globalBlockCount += blockPerHost.size();
-
             System.out.println("=> global block count = " + globalBlockCount);
             int blocksPerHost = (globalBlockCount / hostAssignments.size());
             System.out.println("=> block rest = " + (globalBlockCount % hostAssignments.size()));
 
-
-            List<DistributedBlock> restBlocks = new ArrayList<>();
-
+            System.out.println(" ---------------------------------------------------------------- ");
+            System.out.println(" |                           Phase 3                            | ");
             System.out.println(" ---------------------------------------------------------------- ");
 
             Set<Pair<String,Long>> assignedBlocks = new HashSet<>();
@@ -162,7 +158,7 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
                             if (hostAssignments.get(host).size() < blocksPerHost)
                                 hostAssignments.get(host).add(fileBlock);
                             else
-                                restBlocks.add(fileBlock);
+                                remainingBlocks.add(fileBlock);
                         }
                     }
                 }
@@ -172,14 +168,15 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
                 if (isFinished)
                     break;
             }
-
             for (String host : hostAssignments.keySet()) {
                 List<DistributedBlock> hostBlockList = hostBlockMap.get(host);
-                for (int i = 0; hostBlockList.size() < blocksPerHost && i < restBlocks.size(); ++i) {
-                    hostBlockList.add(restBlocks.remove(restBlocks.size() - 1));
+                for (int i = 0; hostBlockList.size() < blocksPerHost && i < remainingBlocks.size(); ++i) {
+                    hostBlockList.add((DistributedBlock) remainingBlocks.remove(remainingBlocks.size() - 1));
                 }
             }
 
+            System.out.println(" ---------------------------------------------------------------- ");
+            System.out.println(" |                           Phase 4                            | ");
             System.out.println(" ---------------------------------------------------------------- ");
 
             hostAssignments.forEach((host,blocks) -> {
@@ -208,20 +205,16 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
                     System.out.println("Blocks at host " + host + " could not be assigned.");
             });
 
-            System.out.println(" ---------------------------------------------------------------- ");
-
         } catch(Exception ex) {
             throw new IllegalStateException(ex);
         }
-
         return inputPartitions;
     }
 
     // ---------------------------------------------------
 
     private List<AbstractFilePartition> orderedBlockScheduler(DistributedTypeInfo typeInfo) {
-        List<AbstractFilePartition> inputPartitions = new ArrayList<>();
-        return inputPartitions;
+        return null;
     }
 
     // ---------------------------------------------------

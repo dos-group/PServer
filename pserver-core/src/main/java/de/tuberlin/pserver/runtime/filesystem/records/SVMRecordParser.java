@@ -36,14 +36,11 @@ public final class SVMRecordParser {
     // ---------------------------------------------------
 
     public Record parseNextRow(int row) {
-
         reusedRecord.row = row;
-
         try {
             // --------------------------------------
             // PARSE LABEL
             // --------------------------------------
-
             if (!readNextByte())
                 throw new IllegalStateException();
             while ((currentChar == '-' || currentChar == '.' || currentChar == 'E' || Character.isDigit(currentChar))) {
@@ -51,17 +48,14 @@ public final class SVMRecordParser {
                 if (!readNextByte())
                     break;
             }
-
             stringBuilder.append(parseBuffer, 0, bufferIndex);
             reusedRecord.label = Float.parseFloat(stringBuilder.toString());
             stringBuilder.setLength(0);
             bufferIndex = 0;
-
             // --------------------------------------
             // PARSE ENTRY
             // --------------------------------------
             while (currentChar != '\n') {
-
                 // ---------------
                 // PARSE INDEX
                 // ---------------
@@ -78,7 +72,6 @@ public final class SVMRecordParser {
                 int index = Integer.parseInt(stringBuilder.toString());
                 stringBuilder.setLength(0);
                 bufferIndex = 0;
-
                 // ---------------
                 // PARSE VALUE
                 // ---------------
@@ -97,11 +90,9 @@ public final class SVMRecordParser {
                 stringBuilder.setLength(0);
                 bufferIndex = 0;
             }
-
         } catch(Throwable t) {
             throw new IllegalStateException(t);
         }
-
         return reusedRecord;
     }
 

@@ -4,15 +4,15 @@ package de.tuberlin.pserver.runtime.driver;
 import com.google.common.base.Preconditions;
 import de.tuberlin.pserver.compiler.Compiler;
 import de.tuberlin.pserver.compiler.*;
+import de.tuberlin.pserver.diagnostics.MemoryTracer;
 import de.tuberlin.pserver.dsl.transaction.TransactionController;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.runtime.RuntimeContext;
-import de.tuberlin.pserver.runtime.core.diagnostics.MemoryTracer;
 import de.tuberlin.pserver.runtime.core.infra.InfrastructureManager;
 import de.tuberlin.pserver.runtime.core.lifecycle.Deactivatable;
 import de.tuberlin.pserver.runtime.core.usercode.UserCodeManager;
 import de.tuberlin.pserver.runtime.events.ProgramSubmissionEvent;
-import de.tuberlin.pserver.runtime.state.matrix.MatrixLoader;
+import de.tuberlin.pserver.runtime.filesystem.typeloader.MatrixLoader;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import de.tuberlin.pserver.types.typeinfo.DistributedTypeInfo;
 import org.apache.commons.lang3.ArrayUtils;
@@ -76,12 +76,10 @@ public class ProgramDriver implements Deactivatable {
     @SuppressWarnings("unchecked")
     public Program install(final ProgramSubmissionEvent submissionEvent) throws Exception {
         Preconditions.checkNotNull(submissionEvent);
-
         final int nodeDOP = infraManager.getMachines().size();
         final Class<? extends Program> programClass = (Class<? extends Program>) userCodeManager.implantClass(submissionEvent.byteCode);
         this.instance = programClass.newInstance();
         this.programTable = new Compiler(runtimeContext, programClass).compile(instance, nodeDOP);
-
         this.programContext = new ProgramContext(
                 runtimeContext,
                 submissionEvent.clientMachine,
@@ -91,48 +89,27 @@ public class ProgramDriver implements Deactivatable {
                 programTable,
                 nodeDOP
         );
-
         this.matrixLoader = new MatrixLoader(programContext);
         this.stateAllocator = new StateAllocator();
         this.globalObjectAllocator = new GlobalObjectAllocator();
         this.remoteObjectRefs = new HashMap<>();
-
         instance.injectContext(programContext);
-
         return instance;
     }
 
     public void executeProgram() throws Exception {
-
-        //
-        // PSERVER ML PROGRAM EXECUTION LIFECYCLE!
-        //
-
-        System.out.println(MemoryTracer.getTrace("start_executeProgram"));
-
-
+        MemoryTracer.printTrace("start_executeProgram");
         programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
-
         allocateGlobalObjects();
-
         bindGlobalObjects(instance);
-
         allocateState();
-
-        System.out.println(MemoryTracer.getTrace("after_allocateState"));
-
+        MemoryTracer.printTrace("after_allocateState");
         programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
-
         matrixLoader.load();
-
         bindState(instance);
-
         bindTransactions();
-
         defineProgram(instance);
-
         programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
-
         instance.run();
     }
 
@@ -178,10 +155,8 @@ public class ProgramDriver implements Deactivatable {
             } else {
                 stateObj = remoteObjectRefs.get(state.name());
             }
-
             Preconditions.checkState(stateObj != null, "State object '" + state.name()
                     + "' not found at Node [" + runtimeContext.nodeID + "].");
-
             field.set(instance, stateObj);
         }
     }

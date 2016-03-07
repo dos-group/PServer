@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.runtime.core.diagnostics;
+package de.tuberlin.pserver.diagnostics;
 
 
 public class DeadlockDetector {

@@ -118,6 +118,11 @@
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-diagnostics</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
                 <artifactId>pserver-types</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -364,6 +369,7 @@
 
     <modules>
         <module>pserver-commons</module>
+        <module>pserver-diagnostics</module>
         <module>pserver-types</module>
         <module>pserver-core</module>
         <module>pserver-client</module>

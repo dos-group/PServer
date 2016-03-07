@@ -5,8 +5,8 @@ import de.tuberlin.pserver.compiler.Program;
 import de.tuberlin.pserver.node.PServerMain;
 import de.tuberlin.pserver.node.PServerNode;
 import de.tuberlin.pserver.node.PServerNodeFactory;
-import de.tuberlin.pserver.runtime.core.config.Config;
-import de.tuberlin.pserver.runtime.core.config.ConfigLoader;
+import de.tuberlin.pserver.commons.config.Config;
+import de.tuberlin.pserver.commons.config.ConfigLoader;
 import de.tuberlin.pserver.runtime.core.infra.ClusterSimulator;
 import org.apache.log4j.ConsoleAppender;
 
@@ -100,6 +100,7 @@ public enum PServerExecutor {
                 }
             }
             simulator.deactivate();
+            System.exit(0); // TODO: change this.
         }
     }
 }

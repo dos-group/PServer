@@ -2,7 +2,7 @@ package de.tuberlin.pserver.client;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.runtime.core.config.Config;
+import de.tuberlin.pserver.commons.config.Config;
 import de.tuberlin.pserver.runtime.core.events.Event;
 import de.tuberlin.pserver.runtime.core.events.IEventHandler;
 import de.tuberlin.pserver.runtime.core.infra.InetHelper;

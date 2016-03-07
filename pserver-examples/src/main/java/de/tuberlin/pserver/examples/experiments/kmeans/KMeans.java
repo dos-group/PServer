@@ -11,7 +11,7 @@ import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.dsl.unit.controlflow.loop.Loop;
-import de.tuberlin.pserver.runtime.core.config.ConfigLoader;
+import de.tuberlin.pserver.commons.config.ConfigLoader;
 import de.tuberlin.pserver.runtime.parallel.Parallel;
 import de.tuberlin.pserver.types.matrix.annotations.Matrix;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;

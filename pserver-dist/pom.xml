@@ -69,49 +69,49 @@
             <id>include-yarn</id>
             <activation>
                 <property> -->
-                    <!-- Please do not remove the 'hadoop2' comment. See ./tools/generate_specific_pom.sh -->
-                    <!--hadoop2-->
-                    <!--<unitName>hadoop.profile</unitName>
-                    <value>2</value>
-                </property>
-            </activation> -->
-            <!--
-            <dependencies>
-                <dependency>
-                    <groupId>de.tuberlin.pserver</groupId>
-                    <artifactId>yarn</artifactId>
-                    <version>${project.version}</version>
-                </dependency>
-            </dependencies>
-            -->
-            <!--<build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <version>2.5</version>
-                        <executions>
-                            <execution>
-                                <id>single-jar</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <configuration>
-                                    <archive>
-                                        <manifest>
-                                            <mainClass>de.tuberlin.pserver.yarn.Client</mainClass>
-                                        </manifest>
-                                    </archive>
-                                    <descriptors>
-                                        <descriptor>src/main/assemblies/yarn-uberjar.xml</descriptor>
-                                    </descriptors>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>-->
+        <!-- Please do not remove the 'hadoop2' comment. See ./tools/generate_specific_pom.sh -->
+        <!--hadoop2-->
+        <!--<unitName>hadoop.profile</unitName>
+        <value>2</value>
+    </property>
+</activation> -->
+        <!--
+        <dependencies>
+            <dependency>
+                <groupId>de.tuberlin.pserver</groupId>
+                <artifactId>yarn</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+        -->
+        <!--<build>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>2.5</version>
+                    <executions>
+                        <execution>
+                            <id>single-jar</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                            <configuration>
+                                <archive>
+                                    <manifest>
+                                        <mainClass>de.tuberlin.pserver.yarn.Client</mainClass>
+                                    </manifest>
+                                </archive>
+                                <descriptors>
+                                    <descriptor>src/main/assemblies/yarn-uberjar.xml</descriptor>
+                                </descriptors>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </build>
+    </profile>-->
 
         <profile>
             <id>hadoop-2</id>

@@ -2,7 +2,7 @@ package de.tuberlin.pserver.runtime.core.infra;
 
 
 import com.google.common.base.Preconditions;
-import de.tuberlin.pserver.runtime.core.config.Config;
+import de.tuberlin.pserver.commons.config.Config;
 import de.tuberlin.pserver.runtime.core.events.EventDispatcher;
 import de.tuberlin.pserver.runtime.core.lifecycle.Deactivatable;
 import de.tuberlin.pserver.runtime.core.network.MachineDescriptor;

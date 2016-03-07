@@ -74,9 +74,8 @@ public class EventDispatcher implements IEventDispatcher {
                                         events.add(event);
                                     }
                                 }
-                            } else {
+                            } else
                                 LOG.trace("kill dispatcher thread");
-                            }
                         } catch (InterruptedException e) {
                             LOG.error(e.getLocalizedMessage(), e);
                         }
@@ -84,11 +83,10 @@ public class EventDispatcher implements IEventDispatcher {
                     removeAllEventListener();
                 }
             };
-            if (name != null) {
-                this.dispatcherThread = new Thread(runnable, name);
-            } else {
-                this.dispatcherThread = new Thread(runnable);
-            }
+            this.dispatcherThread =
+                    name != null ? new Thread(runnable, name)
+                            : new Thread(runnable);
+
             this.dispatcherThread.start();
         } else {
             this.dispatcherThread = null;
@@ -120,7 +118,6 @@ public class EventDispatcher implements IEventDispatcher {
             listenerMap.put(type, listeners);
         }
         listeners.add(listener);
-
         if (cachedEvents.containsKey(type)) {
             final List<Event> events = cachedEvents.remove(type);
             events.forEach(this::dispatch);
@@ -131,9 +128,8 @@ public class EventDispatcher implements IEventDispatcher {
     public synchronized void addEventListener(final String[] types, final IEventHandler listener) {
         Preconditions.checkNotNull(types);
         Preconditions.checkNotNull(listener);
-        for (final String type : types) {
+        for (final String type : types)
             addEventListener(type, listener);
-        }
     }
 
     @Override
@@ -143,20 +139,22 @@ public class EventDispatcher implements IEventDispatcher {
     }
 
     @Override
+    public synchronized boolean removeEventListener(String type) {
+        return removeEventListener(type, null);
+    }
+
+    @Override
     public synchronized boolean removeEventListener(final String type, final IEventHandler listener) {
-        Preconditions.checkNotNull(type);
-        Preconditions.checkNotNull(listener);
-        final List<IEventHandler> listeners = listenerMap.get(type);
-        if (listeners != null) {
-            boolean isRemoved = listeners.remove(listener);
+        boolean isRemoved = false;
+        List<IEventHandler> listeners = listenerMap.get(Preconditions.checkNotNull(type));
+        //if (listener == null && listeners.size() > 1)
+        //    throw new IllegalStateException();
+        if (listeners != null && listeners.size() > 0) {
+            isRemoved = listeners.remove(listener);
             // if no more listeners registered, we remove the complete mapping.
-            if (isRemoved && listeners.size() == 0) {
-                listenerMap.remove(type);
-            }
-            return isRemoved;
-        } else {
-            return false;
+            //listenerMap.remove(type);
         }
+        return isRemoved;
     }
 
     @Override
@@ -168,9 +166,9 @@ public class EventDispatcher implements IEventDispatcher {
     @Override
     public synchronized void dispatchEvent(final Event event) {
         Preconditions.checkNotNull(event);
-        if (useDispatchThread) {
+        if (useDispatchThread)
             eventQueue.offer(event);
-        } else {
+        else {
             if (!dispatch(event)) {
                 if (event.isSticky) {
                     List<Event> events = cachedEvents.get(event.type);
@@ -221,9 +219,7 @@ public class EventDispatcher implements IEventDispatcher {
     }
 
     @Override
-    public Thread getDispatcherThread() {
-        return dispatcherThread;
-    }
+    public Thread getDispatcherThread() { return dispatcherThread; }
 
     // ---------------------------------------------------
     // Private Methods.
@@ -231,7 +227,6 @@ public class EventDispatcher implements IEventDispatcher {
 
     private boolean dispatch(final Event event) {
         Preconditions.checkNotNull(event);
-
         List<IEventHandler> listeners = null;
         int retryCount = 5;
         while (listeners == null && retryCount-- > 0) {
@@ -244,7 +239,6 @@ public class EventDispatcher implements IEventDispatcher {
                 }
             }
         }
-
         if (listeners != null) {
             List<IEventHandler> l = new ArrayList<>(listeners);
             for (final IEventHandler el : l) {
