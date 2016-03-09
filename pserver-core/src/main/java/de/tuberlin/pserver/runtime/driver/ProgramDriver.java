@@ -106,6 +106,7 @@ public class ProgramDriver implements Deactivatable {
         MemoryTracer.printTrace("after_allocateState");
         programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
         matrixLoader.load();
+        Thread.sleep(5000);
         bindState(instance);
         bindTransactions();
         defineProgram(instance);

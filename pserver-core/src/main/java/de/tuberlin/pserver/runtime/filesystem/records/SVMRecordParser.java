@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.runtime.filesystem.records;
 
 import de.tuberlin.pserver.runtime.filesystem.AbstractFileIterationContext;
+import de.tuberlin.pserver.runtime.filesystem.distributed.DistributedFileIterationContext;
 
 public final class SVMRecordParser {
 
@@ -60,7 +61,7 @@ public final class SVMRecordParser {
                 // PARSE INDEX
                 // ---------------
                 if (currentChar != ' ')
-                    throw new IllegalStateException();
+                    throw new IllegalStateException("currentChar = '" + currentChar + "'");
                 if (!readNextByte())
                     throw new IllegalStateException();
                 while ((currentChar == '-' || currentChar == '.' || currentChar == 'E' || Character.isDigit(currentChar))) {
@@ -76,7 +77,7 @@ public final class SVMRecordParser {
                 // PARSE VALUE
                 // ---------------
                 if (currentChar != ':')
-                    throw new IllegalStateException();
+                    throw new IllegalStateException("currentChar = '" + currentChar + "'");
                 if (!readNextByte())
                     throw new IllegalStateException();
                 while ((currentChar == '-' || currentChar == '.' || currentChar == 'E' || Character.isDigit(currentChar))) {
@@ -91,6 +92,7 @@ public final class SVMRecordParser {
                 bufferIndex = 0;
             }
         } catch(Throwable t) {
+            System.out.println(t.toString() + " | " + t.getMessage());
             throw new IllegalStateException(t);
         }
         return reusedRecord;

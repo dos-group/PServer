@@ -57,6 +57,7 @@ public final class ReplicatedModelExchange extends Program {
     public void unit(Lifecycle lifecycle) {
         lifecycle.process(() -> {
             Random rand = new Random();
+            long start = System.currentTimeMillis();
             for (int i = 0; i < NUM_EPOCHS; ++i) {
                 atomic(state(W), () -> {
                     for (int j = 0; j < COLS; ++j) {
@@ -65,7 +66,10 @@ public final class ReplicatedModelExchange extends Program {
                     }
                 });
                 TransactionMng.commit(syncW);
+                System.out.println("Pull Remote Models.");
             }
+            long duration = System.currentTimeMillis() - start;
+            System.out.println("Duration: " + duration);
         });
     }
 

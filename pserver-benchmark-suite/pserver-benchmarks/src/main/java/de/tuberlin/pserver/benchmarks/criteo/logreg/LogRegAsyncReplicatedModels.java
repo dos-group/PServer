@@ -28,7 +28,7 @@ public class LogRegAsyncReplicatedModels extends Program {
     // Constants.
     // ---------------------------------------------------
 
-    private static final int NUM_EPOCHS = 50;
+    private static final int NUM_EPOCHS = 15;
     private static final float STEP_SIZE = 0.5f;
 
     private static final String DATA_PATH = "/criteo/criteo_train";
@@ -105,6 +105,8 @@ public class LogRegAsyncReplicatedModels extends Program {
                 //
                 // Model Merging.
                 //
+
+                LocalFSObjectStorage.writeTo(W, "/home/tobias.herb/criteo_model_" + epoch);
 
                 TransactionMng.commit(syncW);
             });

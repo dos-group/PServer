@@ -62,20 +62,28 @@ public final class PServerNodeFactory {
             this.machine = configureMachine();
             this.memoryManager = null; //new MemoryManager(config);
             this.infraManager = new InfrastructureManager(machine, config, false);
+
             MemoryTracer.printTrace("Initialized_InfraStructureManager");
             this.netManager = new NetManager(infraManager, machine, 16);
             this.netManager.start();
+
             MemoryTracer.printTrace("Initialized_NetManager");
             this.userCodeManager = new UserCodeManager(this.getClass().getClassLoader());
             this.rpcManager = new RPCManager(netManager);
             infraManager.start(); // blocking until all at are registered at zookeeper
+
+            Thread.sleep(infraManager.getNodeID() * 500); // TODO: AVOID DOUBLE CONNECTIONS...
+
             infraManager.getMachines().stream().filter(md -> md != machine).forEach(netManager::connect);
             System.out.println("NUM OF ACTIVE CHANNELS: " + netManager.getActiveChannels().size() + " | nodeID = " + infraManager.getNodeID());
+
             MemoryTracer.printTrace("Connected_RemoteMachines");
             FileSystemManager.FileSystemType type = FileSystemManager.FileSystemType.valueOf(config.getString("worker.filesystem.type"));
             this.fileManager = new FileSystemManager(config, infraManager, netManager, type, infraManager.getNodeID());
+
             MemoryTracer.printTrace("Initialized_FileSystemManager");
             this.dhtManager = new DHTManager(this.config, infraManager, netManager);
+
             MemoryTracer.printTrace("Initialized_DHTManager");
             this.runtimeManager = new RuntimeManager(infraManager, netManager, fileManager, dhtManager);
             this.runtimeContext = new RuntimeContext(

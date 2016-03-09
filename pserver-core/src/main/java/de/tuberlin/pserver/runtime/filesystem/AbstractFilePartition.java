@@ -11,7 +11,7 @@ public abstract class AbstractFilePartition {
     // Fields.
     // ---------------------------------------------------
 
-    protected transient Gson gson = GsonUtils.createPrettyPrintAndAnnotationExclusionGson();
+    //protected transient Gson gson = GsonUtils.createPrettyPrintAndAnnotationExclusionGson();
 
     public final int nodeID;
 

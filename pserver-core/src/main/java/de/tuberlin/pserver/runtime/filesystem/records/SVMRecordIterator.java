@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.runtime.filesystem.records;
 
 import de.tuberlin.pserver.runtime.filesystem.AbstractFileIterationContext;
+import de.tuberlin.pserver.runtime.filesystem.distributed.DistributedFileIterationContext;
 import de.tuberlin.pserver.types.matrix.typeinfo.MatrixTypeInfo;
 
 public class SVMRecordIterator implements RecordIterator {
@@ -11,17 +12,18 @@ public class SVMRecordIterator implements RecordIterator {
 
     private final MatrixTypeInfo matrixTypeInfo;
 
-    private final SVMRecordParser recordParser;
+    private final DistributedFileIterationContext iterationContext;
 
-    private int currentRow;
+    private final SVMRecordParser recordParser;
 
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
 
     public SVMRecordIterator(MatrixTypeInfo matrixTypeInfo, AbstractFileIterationContext ic) {
-        this.matrixTypeInfo = matrixTypeInfo;
-        this.recordParser   = new SVMRecordParser(ic);
+        this.matrixTypeInfo     = matrixTypeInfo;
+        this.iterationContext   = (DistributedFileIterationContext)ic;
+        this.recordParser       = new SVMRecordParser(ic);
     }
 
     // ---------------------------------------------------
@@ -29,12 +31,12 @@ public class SVMRecordIterator implements RecordIterator {
     // ---------------------------------------------------
 
     @Override
-    public boolean hasNext() { return matrixTypeInfo.rows() > currentRow; }
+    public boolean hasNext() { return matrixTypeInfo.rows() > iterationContext.row; }
 
     @Override
     public Record next() {
-        Record record = recordParser.parseNextRow(currentRow);
-        ++currentRow;
+        Record record = recordParser.parseNextRow(iterationContext.row);
+        ++iterationContext.row;
         return record;
     }
 }

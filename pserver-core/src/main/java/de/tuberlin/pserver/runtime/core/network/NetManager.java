@@ -200,7 +200,6 @@ public final class NetManager extends EventDispatcher {
         }
     }
 
-
     // ---------------------------------------------------
     // Distributed Event Interface.
     // ---------------------------------------------------
@@ -215,11 +214,20 @@ public final class NetManager extends EventDispatcher {
 
     public void dispatchEventAt(UUID machineID, NetEvent event) { dispatchEventAt(infraManager.getMachine(machineID), event); }
     public void dispatchEventAt(MachineDescriptor netDescriptor, NetEvent event) {
-        Preconditions.checkNotNull(netDescriptor);
-        NetChannel netChannel = activeChannels.get(netDescriptor);
-        event.netChannel = Preconditions.checkNotNull(netChannel);
-        event.dstMachineID = netDescriptor.machineID;
-        event.srcMachineID = machine.machineID;
+        NetChannel netChannel = activeChannels.get(Preconditions.checkNotNull(netDescriptor));
+        if (netChannel == null) {
+            if (netDescriptor.equals(machine)) {
+                event.netChannel    = null;
+                event.dstMachineID  = machine.machineID;
+                event.srcMachineID  = machine.machineID;
+                this.dispatchEvent(event);
+                return;
+            } else
+                throw new IllegalStateException();
+        }
+        event.netChannel    = netChannel;
+        event.dstMachineID  = netDescriptor.machineID;
+        event.srcMachineID  = machine.machineID;
         netChannel.sendMsg(event);
     }
 
@@ -261,11 +269,18 @@ public final class NetManager extends EventDispatcher {
     }
 
     private NetChannel registerNetChannel(MachineDescriptor descriptor, Channel channel,  NetChannel.NetChannelType type) {
-        NetChannel netChannel = null;
+        NetChannel netChannel;
+
         synchronized (connectMutex) {
-            if (activeChannels.containsKey(descriptor))
+            if (activeChannels.containsKey(descriptor)) {
+
+                if (type == NetChannel.NetChannelType.CHANNEL_IN)
+                    System.out.println("ALREADY CONNECTED ======> PRODUCE MEMORY LEAK!!!!!!");
+                    //channel.close();
                 return activeChannels.get(descriptor);
+            }
         }
+
         netChannel = new NetChannel(descriptor, type, channel);
         activeChannels.put(descriptor, netChannel);
 
@@ -283,6 +298,7 @@ public final class NetManager extends EventDispatcher {
         NetMessageHandler msgReadHandler = (NetMessageHandler)
                 channel.pipeline().context(NetMessageHandler.class).handler();
         msgReadHandler.setNetChannel(netChannel);
+
         // Send net descriptor as handshake object.
         if (type == NetChannel.NetChannelType.CHANNEL_OUT)
             netChannel.channel.writeAndFlush(machine, netChannel.channel.voidPromise());
@@ -303,9 +319,8 @@ public final class NetManager extends EventDispatcher {
             if (msg instanceof MachineDescriptor) {
                 registerNetChannel((MachineDescriptor) msg, ctx.channel(), NetChannel.NetChannelType.CHANNEL_IN);
                 ctx.pipeline().remove(this);
-            } else {
-                throw new IllegalStateException("Wrong handshake protocol.");
-            }
+            } else
+                throw new IllegalStateException("Wrong handshake protocol. msg = " + msg);
         }
     }
 
@@ -316,7 +331,7 @@ public final class NetManager extends EventDispatcher {
             if (msg instanceof MachineDescriptor && msg.equals(machine))
                 ctx.pipeline().remove(this);
             else
-                throw new IllegalStateException("Wrong handshake protocol.");
+                throw new IllegalStateException("Wrong handshake protocol. msg = " + msg);
         }
     }
 }

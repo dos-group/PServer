@@ -3,9 +3,7 @@ package de.tuberlin.pserver.runtime.filesystem.distributed;
 
 import de.tuberlin.pserver.runtime.filesystem.AbstractFilePartition;
 import de.tuberlin.pserver.types.typeinfo.properties.FileFormat;
-import org.apache.hadoop.conf.Configuration;
 
-import java.util.Collections;
 import java.util.List;
 
 public final class DistributedFilePartition extends AbstractFilePartition {
@@ -14,7 +12,11 @@ public final class DistributedFilePartition extends AbstractFilePartition {
     // Fields.
     // ---------------------------------------------------
 
-    public final Configuration hdfsConfig;
+    //public final Configuration hdfsConfig;
+
+    public final String hdfsHome;
+
+    public final String hdfsURL;
 
     public final long startOffset;
 
@@ -26,8 +28,9 @@ public final class DistributedFilePartition extends AbstractFilePartition {
     // Constructor.
     // ---------------------------------------------------
 
-    public DistributedFilePartition() { this(null, -1,  null, null, -1, -1, null); }
-    public DistributedFilePartition(Configuration hdfsConfig,
+    public DistributedFilePartition() { this(null, null, -1,  null, null, -1, -1, null); }
+    public DistributedFilePartition(String hdfsHome,
+                                    String hdfsURL,
                                     int nodeID,
                                     String file,
                                     FileFormat fileFormat,
@@ -36,10 +39,12 @@ public final class DistributedFilePartition extends AbstractFilePartition {
                                     List<DistributedBlock> blocks) {
 
         super(nodeID, file, fileFormat);
-        this.hdfsConfig     = hdfsConfig;
+        //this.hdfsConfig     = hdfsConfig;
+        this.hdfsHome       = hdfsHome;
+        this.hdfsURL        = hdfsURL;
         this.startOffset    = startOffset;
         this.size           = size;
-        this.blocks         = Collections.unmodifiableList(blocks);
+        this.blocks         = blocks;
     }
 
     // ---------------------------------------------------
@@ -62,4 +67,7 @@ public final class DistributedFilePartition extends AbstractFilePartition {
         result = 31 * result + (int) (size ^ (size >>> 32));
         return result;
     }
+
+    @Override
+    public String toString() { return "num of blocks = " + blocks.size(); }
 }

@@ -66,6 +66,7 @@ public final class MatrixLoader {
                 if (labelMatrix != null)
                     labelMatrix.set(record.row, 0, record.label);
                 ((CSRMatrix32F) dataMatrix).addRow(record.entries);
+                record.reuse();
             } catch (Throwable t) {
                 throw new IllegalStateException("OOME @ row = " + ((CSRMatrix32F) dataMatrix).getCurrentNumOfRows(), t);
             }
@@ -108,7 +109,7 @@ public final class MatrixLoader {
 
     public void load() {
         programContext.runtimeContext.fileManager.buildPartitions();
-        MemoryTracer.printTrace("BeforeFileLoading");
+        MemoryTracer.printTrace("Before_FileLoading");
         for (DistributedTypeInfo typeInfo : loadingTasks) {
             Matrix32F dataMatrix = (Matrix32F)typeInfo;
             AbstractFileIterator fileIterator = fileManager.getFileIterator(typeInfo);
@@ -118,11 +119,12 @@ public final class MatrixLoader {
                 labelMatrix = programContext.runtimeContext.runtimeManager.getDHT(typeInfo.input().labels());
 
             final MatrixLoaderStrategy loader = MatrixLoaderStrategy.createLoader(typeInfo);
-            while (fileIterator.hasNext())
+            while (fileIterator.hasNext()) {
                 loader.putRecord(fileIterator.next(), dataMatrix, labelMatrix);
+            }
             loader.done(dataMatrix);
-
-            MemoryTracer.printTrace("AfterFileLoading");
+            System.out.println("DONE LOADING DATA!");
+            MemoryTracer.printTrace("After_FileLoading");
         }
     }
 }

@@ -9,6 +9,7 @@ import de.tuberlin.pserver.runtime.core.network.NetEvent;
 import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.filesystem.distributed.DistributedFile;
 import de.tuberlin.pserver.runtime.filesystem.distributed.DistributedFileIterator;
+import de.tuberlin.pserver.runtime.filesystem.distributed.DistributedFilePartition;
 import de.tuberlin.pserver.runtime.filesystem.distributed.DistributedFilePartitionScheduler;
 import de.tuberlin.pserver.runtime.filesystem.local.LocalFile;
 import de.tuberlin.pserver.runtime.filesystem.local.LocalFilePartitionScheduler;
@@ -67,25 +68,30 @@ public class FileSystemManager implements Deactivatable {
         this.nodeID         = nodeID;
         this.files          = new HashMap<>();
 
-        netManager.addEventListener(DistributedFileIterator.FILE_SYSTEM_RETURN_REMAINING_BLOCKS, (event) -> {
-            remainingBlocks.add((AbstractBlock) event.getPayload());
+        netManager.addEventListener(DistributedFileIterator.FILE_SYSTEM_COLLECT_BLOCKS, (event) -> {
+            System.out.println("FILE_SYSTEM_COLLECT_BLOCKS => " + ((NetEvent)event).srcMachineID);
+            remainingBlocks.addAll((List<AbstractBlock>)event.getPayload());
         });
 
         netManager.addEventListener(DistributedFileIterator.FILE_SYSTEM_BLOCK_REQUEST, (event) -> {
+            System.out.println("FILE_SYSTEM_BLOCK_REQUEST => " + ((NetEvent)event).srcMachineID);
             AbstractBlock block;
             try {
                 block = remainingBlocks.take();
             } catch (InterruptedException e) {
                 throw new IllegalStateException();
             }
-            ((NetEvent)event).netChannel.sendMsg(new NetEvent(DistributedFileIterator.FILE_SYSTEM_BLOCK_RESPONSE, block));
+            //((NetEvent)event).netChannel.sendMsg(new NetEvent(DistributedFileIterator.FILE_SYSTEM_BLOCK_RESPONSE, block));
+            netManager.dispatchEventAt(
+                    ((NetEvent)event).srcMachineID,
+                    new NetEvent(DistributedFileIterator.FILE_SYSTEM_BLOCK_RESPONSE, block)
+            );
         });
 
-
         netManager.addEventListener(FilePartitionEvent.FILE_PARTITION_EVENT, event -> {
-            FilePartitionEvent fpe = (FilePartitionEvent)event;
-            files.get(fpe.filePartitionDescriptor.file).setFilePartition(fpe.filePartitionDescriptor);
             System.out.println("Received file partition descriptor.");
+            DistributedFilePartition dfp = (DistributedFilePartition)event.getPayload();
+            files.get(dfp.file).setFilePartition(dfp);
             rcvPartitionsLatch.countDown();
         });
     }
@@ -94,13 +100,9 @@ public class FileSystemManager implements Deactivatable {
     // Component Lifecycle.
     // ---------------------------------------------------
 
-    public void clearContext() {
+    public void clearContext() {}
 
-    }
-
-    public void deactivate() {
-
-    }
+    public void deactivate() {}
 
     // ---------------------------------------------------
     // Public Methods.
@@ -119,18 +121,24 @@ public class FileSystemManager implements Deactivatable {
     public void buildPartitions() {
         MemoryTracer.printTrace("start_buildPartitions");
         try {
-
             if (config.getInt(FILE_MASTER_NODE_ID) == nodeID) {
                 for (AbstractFile inputFile : files.values()) {
                     List<AbstractFilePartition> filePartitions = schedulePartitions(inputFile);
-                    for (AbstractFilePartition fpd : filePartitions) {
-                        if (fpd.nodeID != nodeID)
-                            netManager.dispatchEventAt(
-                                    new int[]{fpd.nodeID},
-                                    new FilePartitionEvent(fpd)
-                            );
-                        else
-                            files.get(inputFile.getTypeInfo().input().filePath()).setFilePartition(fpd);
+
+                    System.out.println(" ---------------------------------------------------------------- ");
+                    System.out.println(" |                   SEND PARTITIONS TO NODES                   | ");
+                    System.out.println(" ---------------------------------------------------------------- ");
+
+                    for (AbstractFilePartition fp : filePartitions) {
+                        if (fp.nodeID != nodeID) {
+                            NetEvent fpe = new NetEvent(FilePartitionEvent.FILE_PARTITION_EVENT);
+                            fpe.setPayload(fp);
+                            netManager.dispatchEventAt(new int[]{ fp.nodeID }, fpe);
+                            System.out.println("Send partition to Node: " + fp.nodeID
+                                    + " | blocks.size = " +  ((DistributedFilePartition)fp).blocks.size());
+                        } else {
+                            files.get(inputFile.getTypeInfo().input().filePath()).setFilePartition(fp);
+                        }
                     }
                 }
                 MemoryTracer.printTrace("after_scheduledFilePartitions");
@@ -159,7 +167,7 @@ public class FileSystemManager implements Deactivatable {
     private List<AbstractFilePartition> schedulePartitions(AbstractFile inputFile) {
         List<AbstractFilePartition> filePartitions;
         switch (type) {
-            case LOCAL_FILE_SYSTEM: {
+            case DISTRIBUTED_FILE_SYSTEM: {
                 DistributedFilePartitionScheduler partitionScheduler =
                         new DistributedFilePartitionScheduler(
                                 config,
@@ -169,7 +177,7 @@ public class FileSystemManager implements Deactivatable {
                 filePartitions = partitionScheduler.schedule(AbstractFilePartitionScheduler.ScheduleType.COLOCATED);
                 remainingBlocks.addAll(partitionScheduler.getRemainingBlocks());
             } break;
-            case DISTRIBUTED_FILE_SYSTEM: {
+            case LOCAL_FILE_SYSTEM: {
                 filePartitions = new LocalFilePartitionScheduler((LocalFile) inputFile)
                         .schedule(AbstractFilePartitionScheduler.ScheduleType.ORDERED);
             } break;

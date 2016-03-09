@@ -23,6 +23,8 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
     // Fields.
     // ---------------------------------------------------
 
+    private final Config config;
+
     private final Configuration hdfsConfig;
 
     private final InfrastructureManager infraManager;
@@ -38,6 +40,7 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
     // ---------------------------------------------------
 
     public DistributedFilePartitionScheduler(Config config, InfrastructureManager infraManager, DistributedFile file) {
+        this.config = config;
         this.infraManager = infraManager;
         this.file = file;
         String hdfsHome = config.getString("worker.filesystem.hdfs.home");
@@ -48,7 +51,6 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
         this.hdfsConfig.set("hadoop.home.dir", hdfsHome);
         System.setProperty("HADOOP_HOME", hdfsHome);
         System.setProperty("hadoop.home.dir", hdfsHome);
-
         this.hostMD = new HashMap<>();
         for (MachineDescriptor md : infraManager.getMachines())
             hostMD.put(md.hostname, md);
@@ -93,6 +95,8 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
             System.out.println(" |                      Partition Scheduler                     | ");
             System.out.println(" ---------------------------------------------------------------- ");
 
+            int numBlocks = 0;
+
             Map<String, List<DistributedBlock>> hostBlockMap = new HashMap<>();
             for (FileStatus file : files) {
                 BlockLocation[] blockLocations = dfs.getFileBlockLocations(file, 0, file.getLen());
@@ -114,7 +118,21 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
                             hostBlockList = new LinkedList<>();
                             hostBlockMap.put(host, hostBlockList);
                         }
-                        hostBlockList.add(new DistributedBlock(file.getPath().toString(), blockSeqCounter, bl));
+
+                        DistributedBlock db =
+                                new DistributedBlock(
+                                    file.getPath().toString(),
+                                    blockSeqCounter,
+                                    bl.isCorrupt(),
+                                    bl.getOffset(),
+                                    bl.getLength(),
+                                    -1,
+                                    false
+                                );
+
+                        hostBlockList.add(db);
+                        ++numBlocks;
+                        //System.out.println("Block " + db.toString());
                     }
                     ++blockSeqCounter;
                 }
@@ -129,19 +147,11 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
                 hostAssignments.put(k, new LinkedList<>());
             });
 
+            final int replicationFactor = 3;
+            final int blocksPerHost = ((numBlocks / replicationFactor) / hostAssignments.size());
+
             System.out.println(" ---------------------------------------------------------------- ");
             System.out.println(" |                           Phase 2                            | ");
-            System.out.println(" ---------------------------------------------------------------- ");
-
-            int globalBlockCount = 0;
-            for (List<DistributedBlock> blockPerHost : hostAssignments.values())
-                globalBlockCount += blockPerHost.size();
-            System.out.println("=> global block count = " + globalBlockCount);
-            int blocksPerHost = (globalBlockCount / hostAssignments.size());
-            System.out.println("=> block rest = " + (globalBlockCount % hostAssignments.size()));
-
-            System.out.println(" ---------------------------------------------------------------- ");
-            System.out.println(" |                           Phase 3                            | ");
             System.out.println(" ---------------------------------------------------------------- ");
 
             Set<Pair<String,Long>> assignedBlocks = new HashSet<>();
@@ -152,9 +162,13 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
                         DistributedBlock fileBlock = hostBlockList.remove(hostBlockList.size() - 1);
                         if (hostBlockList.isEmpty())
                             System.out.println("Host " + host + " is scheduled.");
-                        if (/*!fileBlock.blockLoc.isCorrupt() &&*/
-                                assignedBlocks.add(Pair.of(fileBlock.file, fileBlock.blockLoc.getOffset()))) {
 
+                        if (fileBlock.isCorrupt) {
+                            System.out.println("BLOCK " + fileBlock.file + "[" + fileBlock.blockSeqID + "] is corrupt.");
+                        }
+
+                        if (!fileBlock.isCorrupt && assignedBlocks.add(Pair.of(fileBlock.file, fileBlock.offset))) {
+                            //hostAssignments.get(host).add(fileBlock);
                             if (hostAssignments.get(host).size() < blocksPerHost)
                                 hostAssignments.get(host).add(fileBlock);
                             else
@@ -168,24 +182,30 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
                 if (isFinished)
                     break;
             }
+
             for (String host : hostAssignments.keySet()) {
-                List<DistributedBlock> hostBlockList = hostBlockMap.get(host);
+                List<DistributedBlock> hostBlockList = hostAssignments.get(host);
                 for (int i = 0; hostBlockList.size() < blocksPerHost && i < remainingBlocks.size(); ++i) {
                     hostBlockList.add((DistributedBlock) remainingBlocks.remove(remainingBlocks.size() - 1));
                 }
             }
 
+            System.out.println("number of blocks = " + numBlocks);
+            System.out.println("number of blocks without replication = " + (numBlocks / replicationFactor) + " | assigned blocks = " + assignedBlocks.size());
+            System.out.println("number of blocks per host = " + blocksPerHost);
+            System.out.println("number of remaining/unscheduled blocks = " + remainingBlocks.size());
+
             System.out.println(" ---------------------------------------------------------------- ");
-            System.out.println(" |                           Phase 4                            | ");
+            System.out.println(" |                           Phase 3                            | ");
             System.out.println(" ---------------------------------------------------------------- ");
 
             hostAssignments.forEach((host,blocks) -> {
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < blocks.size(); ++i) {
                     DistributedBlock bl = blocks.get(i);
-                    sb.append("B['").append(bl.file).append("']")
-                            .append(i).append("(").append(bl.blockLoc.getOffset()).append(",")
-                            .append(bl.blockLoc.getLength()).append(") | ");
+                    sb.append("B['").append("").append("']")
+                            .append(i).append("(").append(bl.offset).append(",")
+                            .append(bl.length).append(") | ");
                 }
                 System.out.println(host + " => " + sb.toString());
                 MachineDescriptor md = hostMD.get(host);
@@ -193,7 +213,8 @@ public final class DistributedFilePartitionScheduler implements AbstractFilePart
                     int nodeID = infraManager.getMachineIndex(md);
                     inputPartitions.add(
                             new DistributedFilePartition(
-                                    hdfsConfig,
+                                    config.getString("worker.filesystem.hdfs.home"),
+                                    config.getString("worker.filesystem.hdfs.url"),
                                     nodeID,
                                     typeInfo.input().filePath(),
                                     typeInfo.input().fileFormat(),

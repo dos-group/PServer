@@ -1,7 +1,6 @@
 package de.tuberlin.pserver.runtime.filesystem.distributed;
 
 import de.tuberlin.pserver.runtime.filesystem.AbstractBlock;
-import org.apache.hadoop.fs.BlockLocation;
 
 
 public final class DistributedBlock implements AbstractBlock {
@@ -14,7 +13,13 @@ public final class DistributedBlock implements AbstractBlock {
 
     public final long blockSeqID;
 
-    public final BlockLocation blockLoc;
+    public final boolean isCorrupt;
+
+    //public final BlockLocation blockLoc;
+
+    public final long offset;
+
+    public final long length;
 
     // ---------------------------------------------------
 
@@ -26,12 +31,14 @@ public final class DistributedBlock implements AbstractBlock {
     // Constructor.
     // ---------------------------------------------------
 
-    public DistributedBlock() { this(null, -1, null, -1, false); }
-    public DistributedBlock(String file, long blockSeqID, BlockLocation blockLoc) { this(file, blockSeqID, blockLoc, -1, false); }
-    public DistributedBlock(String file, long blockSeqID, BlockLocation blockLoc, long splitOffset, boolean isSplitBlock) {
+    public DistributedBlock() { this(null, -1, false, -1, -1, -1, false); }
+    //public DistributedBlock(String file, long blockSeqID, long offset, long length) { this(file, blockSeqID, -1, -1, -1, false); }
+    public DistributedBlock(String file, long blockSeqID, boolean isCorrupt, long offset, long length, long splitOffset, boolean isSplitBlock) {
         this.file           = file;
         this.blockSeqID     = blockSeqID;
-        this.blockLoc       = blockLoc;
+        this.isCorrupt      = isCorrupt;
+        this.offset         = offset;
+        this.length         = length;
         this.splitOffset    = splitOffset;
         this.isSplitBlock   = isSplitBlock;
     }
@@ -46,10 +53,10 @@ public final class DistributedBlock implements AbstractBlock {
         if (o == null || getClass() != o.getClass()) return false;
         DistributedBlock that = (DistributedBlock) o;
         if (blockSeqID != that.blockSeqID) return false;
-        if (splitOffset != that.splitOffset) return false;
+        if (offset != that.offset) return false;
         if (isSplitBlock != that.isSplitBlock) return false;
-        if (!file.equals(that.file)) return false;
-        return blockLoc.equals(that.blockLoc);
+        if (splitOffset != that.splitOffset) return false;
+        return file.equals(that.file);
 
     }
 
@@ -57,9 +64,13 @@ public final class DistributedBlock implements AbstractBlock {
     public int hashCode() {
         int result = file.hashCode();
         result = 31 * result + (int) (blockSeqID ^ (blockSeqID >>> 32));
-        result = 31 * result + (int) (splitOffset ^ (splitOffset >>> 32));
-        result = 31 * result + blockLoc.hashCode();
-        result = 31 * result + (isSplitBlock ? 1 : 0);
+        result = 31 * result + (int) (offset ^ (offset >>> 32));
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "[file = " + file + ", blockSeqID = " + blockSeqID
+                + ", offset = " + offset + ", length = " + length + "]";
     }
 }

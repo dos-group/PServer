@@ -13,8 +13,34 @@ import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
 import java.io.ByteArrayInputStream;
 
-
 public class  LoadCriteoData extends Program {
+
+/*
+    fs.default.name = "hdfs://"${runtime.hostname}":45010/"
+    ./hadoop dfsadmin -report
+    ./hadoop fsck /criteo/criteo_train -files -blocks
+
+    Status: HEALTHY
+    Total size:	                    102779460059 B
+    Total dirs:	                    1
+    Total files:	                16
+    Total symlinks:		            0
+    Total blocks (validated):	    774 (avg. block size 132790000 B)
+    Minimally replicated blocks:	774 (100.0 %)
+    Over-replicated blocks:	        0 (0.0 %)
+    Under-replicated blocks:	    0 (0.0 %)
+    Mis-replicated blocks:		    0 (0.0 %)
+    Default replication factor:	    3
+    Average block replication:	    3.0
+    Corrupt blocks:		            0
+    Missing replicas:		        0 (0.0 %)
+    Number of data-nodes:		    16
+    Number of racks:		        1
+    FSCK ended at Tue Mar 08 22:38:18 CET 2016 in 29 milliseconds
+
+    systems/flink-0.10.0/bin/flink run -c de.tuberlin.pserver.criteo.CriteoPreprocessingJob pserver-criteo-1.0-SNAPSHOT.jar --input hdfs://wally099.cit.tu-berlin.de:45010/criteo/criteo_small --output hdfs://wally099.cit.tu-berlin.de:45010/criteo/ --mean /home/tobias.herb/mean.csv --stdDeviation /home/tobias.herb/stdDeviation.csv
+*/
+
 
     // ---------------------------------------------------
     // Constants.

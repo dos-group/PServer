@@ -8,7 +8,7 @@ import de.tuberlin.pserver.runtime.core.network.NetManager;
 import de.tuberlin.pserver.runtime.filesystem.AbstractFileIterator;
 import de.tuberlin.pserver.runtime.filesystem.FileSystemManager;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
-import de.tuberlin.pserver.runtime.filesystem.records.RecordIterator;
+import de.tuberlin.pserver.runtime.filesystem.records.SVMRecordParser;
 import de.tuberlin.pserver.types.matrix.typeinfo.MatrixTypeInfo;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -30,7 +30,7 @@ public class DistributedFileIterator implements AbstractFileIterator {
 
     public static final String FILE_SYSTEM_BLOCK_RESPONSE = "file_system_block_response";
 
-    public static final String FILE_SYSTEM_RETURN_REMAINING_BLOCKS = "file_system_return_remaining_blocks";
+    public static final String FILE_SYSTEM_COLLECT_BLOCKS = "file_system_return_remaining_blocks";
 
     private static final long BLOCK_ACCESS_TIMEOUT = 150000;
 
@@ -38,15 +38,17 @@ public class DistributedFileIterator implements AbstractFileIterator {
     // Fields.
     // ---------------------------------------------------
 
+    private final Configuration hdfsConfig;
+
     private final int fileSystemMaster;
 
     private final NetManager netManager;
 
-    private final DistributedFile file;
+    private final SVMRecordParser recordParser;
 
-    private RecordIterator recordIterator;
+    private final DistributedFileIterationContext ic;
 
-    private DistributedFileIterationContext ic;
+    private final MatrixTypeInfo matrixTypeInfo;
 
     // ---------------------------------------------------
     // Constructor.
@@ -54,9 +56,18 @@ public class DistributedFileIterator implements AbstractFileIterator {
 
     public DistributedFileIterator(Config config, NetManager netManager, DistributedFile file) {
         this.ic = new DistributedFileIterationContext((DistributedFilePartition) file.getFilePartition());
-        this.fileSystemMaster = config.getInt(FileSystemManager.FILE_MASTER_NODE_ID);
+
+        this.hdfsConfig = new Configuration();
+        this.hdfsConfig.set("fs.defaultFS",     ic.partition.hdfsURL);
+        this.hdfsConfig.set("HADOOP_HOME",      ic.partition.hdfsHome);
+        this.hdfsConfig.set("hadoop.home.dir",  ic.partition.hdfsHome);
+        System.setProperty("HADOOP_HOME",       ic.partition.hdfsHome);
+        System.setProperty("hadoop.home.dir",   ic.partition.hdfsHome);
+
         this.netManager = netManager;
-        this.file = file;
+        this.fileSystemMaster = config.getInt(FileSystemManager.FILE_MASTER_NODE_ID);
+        this.recordParser = new SVMRecordParser(ic);
+        this.matrixTypeInfo = (MatrixTypeInfo)file.getTypeInfo();
     }
 
     // ---------------------------------------------------
@@ -64,26 +75,39 @@ public class DistributedFileIterator implements AbstractFileIterator {
     // ---------------------------------------------------
 
     @Override
-    public void open() { firstBlock(); }
+    public void open() { fetchNextBlock(); }
 
     @Override
     public boolean hasNext() {
-        checkForNextBlock();
-        boolean hasNext = recordIterator.hasNext();
-        if (!hasNext && checkForNextBlock())
-            hasNext = recordIterator.hasNext();
-        if (!hasNext) {
+        boolean hasNext = matrixTypeInfo.rows() > ic.row;
+        if (hasNext) {
+            try {
+                if (ic.requireNextBlock()) {
+                    if (ic.localBlockID + 1 >= ic.partition.blocks.size()) {
+                        requestRemoteBlock();
+                    }
+                    fetchNextBlock();
+                }
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        } else {
             List<DistributedBlock> remainingBlocks = collectRemainingBlocks();
+            System.out.println("COLLECT REMAINING BLOCKS => " + remainingBlocks.size());
             netManager.dispatchEventAt(
                     new int[] { fileSystemMaster },
-                    new NetEvent(FILE_SYSTEM_RETURN_REMAINING_BLOCKS, remainingBlocks)
+                    new NetEvent(FILE_SYSTEM_COLLECT_BLOCKS, remainingBlocks)
             );
         }
         return hasNext;
     }
 
     @Override
-    public Record next() { return recordIterator.next(); }
+    public Record next() {
+        Record record = recordParser.parseNextRow(ic.row);
+        ++ic.row;
+        return record;
+    }
 
     @Override
     public void close() {
@@ -101,74 +125,54 @@ public class DistributedFileIterator implements AbstractFileIterator {
     // Private Methods.
     // ---------------------------------------------------
 
-    private void firstBlock() {
-        try {
-            boolean skipFirstLine = ic.partition.blocks.get(ic.localBlockID).blockLoc.getOffset() != 0;
-            FileAccessThread fat = new FileAccessThread(
-                    ic.partition.hdfsConfig,
-                    ic.partition.blocks.get(ic.localBlockID),
-                    skipFirstLine,
-                    BLOCK_ACCESS_TIMEOUT
-            );
-            fat.start();
-            ic.inputStream = fat.waitForCompletion();
-            recordIterator = RecordIterator.create((MatrixTypeInfo) file.getTypeInfo(), ic);
-            System.out.println("access first block => " + ic.partition.blocks.get(ic.localBlockID).file);
-        } catch (Throwable ex) {
-            throw new IllegalStateException(ex);
+    private void initInputStream(DistributedBlock block) throws Exception {
+        ic.currentFile = block.file;
+        if (block.isSplitBlock) {
+            ic.inputStream.seek(block.splitOffset);
+        } else {
+            if (block.offset != 0) {
+                ic.inputStream.seek(block.offset - 1);
+                if (((char) ic.inputStream.read()) != '\n')
+                    ic.inputStream.readLine();
+            }
         }
     }
 
-    private boolean checkForNextBlock() {
-        if (ic.localBlockID + 1 == ic.partition.blocks.size())
-            requestRemoteBlock();
+    private void fetchNextBlock() {
         try {
-            if (ic.requireNextBlock()) {
-                boolean skipFirstLine = ic.inputStream.getPos() != ic.getCurrentBlockEndOffset() && !ic.exceededBlock;
-                ++ic.localBlockID;
-                try {
-                    close();
-                    FileAccessThread fat = new FileAccessThread(
-                            ic.partition.hdfsConfig,
-                            ic.partition.blocks.get(ic.localBlockID),
-                            skipFirstLine,
-                            BLOCK_ACCESS_TIMEOUT
-                    );
-                    fat.start();
-                    ic.exceededBlock = false;
-                    ic.inputStream = fat.waitForCompletion();
-                    System.out.println("Access next block [" + ic.localBlockID + "] " +
-                            "of file [" + ic.partition.blocks.get(ic.localBlockID).file + "]");
-                } catch (Throwable t) {
-                    throw new IllegalStateException("Error opening distributed file partition. " +
-                            "\nFile: "      + ic.partition.file +
-                            "\nOffset: "    + ic.partition.startOffset +
-                            "\nSize: "      + ic.partition.size + "\n : " + t.getMessage(), t);
-                }
-            }
-        } catch (Exception ex) {
-            throw new IllegalStateException(ex);
+            close();
+            ++ic.localBlockID;
+            DistributedBlock block = ic.partition.blocks.get(ic.localBlockID);
+            FileAccessThread fat = new FileAccessThread(hdfsConfig, block, BLOCK_ACCESS_TIMEOUT);
+            fat.start();
+            ic.inputStream = fat.waitForCompletion();
+            initInputStream(block);
+            System.out.println("ACCESS NEXT BLOCK [" + ic.localBlockID + "] " + "OF FILE [" + ic.partition.blocks.get(ic.localBlockID).file + "]");
+        } catch (Throwable t) {
+            throw new IllegalStateException("Error opening distributed file partition. " +
+                    "\nFile: "      + ic.partition.file +
+                    "\nOffset: "    + ic.partition.startOffset +
+                    "\nSize: "      + ic.partition.size + "\n : " + t.getMessage(), t);
         }
-        return true;
     }
 
     private List<DistributedBlock> collectRemainingBlocks() {
         List<DistributedBlock> remainingBlocks = new ArrayList<>();
         try {
-            if (ic.exceededBlock) {
-                if (!(ic.localBlockID + 1 < ic.partition.blocks.size())) {
-                    DistributedBlock db = new DistributedBlock(
-                            ic.partition.blocks.get(ic.localBlockID).file,
-                            ic.localBlockID,
-                            ic.partition.blocks.get(ic.localBlockID).blockLoc,
-                            ic.inputStream.getPos(),
-                            true
-                    );
-                    remainingBlocks.add(db);
-                }
-                if (ic.localBlockID + 1 < ic.partition.blocks.size())
-                    remainingBlocks.addAll(ic.partition.blocks.subList(ic.localBlockID + 1, ic.partition.blocks.size()));
+            if (ic.inputStream.getPos() < ic.getCurrentBlockEndOffset()) {
+                DistributedBlock db = new DistributedBlock(
+                        ic.partition.blocks.get(ic.localBlockID).file,
+                        ic.partition.blocks.get(ic.localBlockID).blockSeqID,
+                        ic.partition.blocks.get(ic.localBlockID).isCorrupt,
+                        ic.partition.blocks.get(ic.localBlockID).offset,
+                        ic.partition.blocks.get(ic.localBlockID).length,
+                        ic.inputStream.getPos(),
+                        true
+                );
+                remainingBlocks.add(db);
             }
+            if (ic.localBlockID + 1 < ic.partition.blocks.size())
+                remainingBlocks.addAll(ic.partition.blocks.subList(ic.localBlockID + 1, ic.partition.blocks.size()));
         } catch (Exception ex) {
             throw new IllegalStateException(ex);
         }
@@ -181,7 +185,7 @@ public class DistributedFileIterator implements AbstractFileIterator {
             ic.partition.blocks.add(Preconditions.checkNotNull((DistributedBlock) event.getPayload()));
             awaitBlockResponse.countDown();
         } );
-        // Request a block and wait.
+        System.out.println("REQUEST REMOTE BLOCK");
         netManager.dispatchEventAt(new int[] { fileSystemMaster }, new NetEvent(FILE_SYSTEM_BLOCK_REQUEST));
         try {
             awaitBlockResponse.await();
@@ -207,8 +211,6 @@ public class DistributedFileIterator implements AbstractFileIterator {
 
         private final DistributedBlock distBlock;
 
-        private final boolean skipFirstLine;
-
         private volatile FSDataInputStream inputStream;
 
         private volatile Throwable error;
@@ -221,12 +223,11 @@ public class DistributedFileIterator implements AbstractFileIterator {
         // Constructor.
         // ---------------------------------------------------
 
-        public FileAccessThread(Configuration hdfsConfig, DistributedBlock distBlock, boolean skipFirstLine, long timeout) {
+        public FileAccessThread(Configuration hdfsConfig, DistributedBlock distBlock, long timeout) {
             super("DistributedBlock-Opener-Thread");
             setDaemon(true);
             this.hdfsConfig     = hdfsConfig;
             this.distBlock      = distBlock;
-            this.skipFirstLine  = skipFirstLine;
             this.timeout        = timeout;
         }
 
@@ -239,18 +240,6 @@ public class DistributedFileIterator implements AbstractFileIterator {
             try {
                 FileSystem fs = FileSystem.get(hdfsConfig);
                 inputStream = fs.open(new Path(distBlock.file));
-
-                if (distBlock.blockLoc.getOffset() != 0 && !distBlock.isSplitBlock) {
-                    inputStream.seek(distBlock.blockLoc.getOffset());
-                    if (skipFirstLine) {
-                        System.out.println("SKIP first line of block [" + distBlock.blockSeqID + "].");
-                        inputStream.readLine();
-                    } else
-                        System.out.println("SKIP NOT first line of block [" + distBlock.blockSeqID + "].");
-                } else {
-                    if (distBlock.isSplitBlock)
-                        inputStream.seek(distBlock.splitOffset);
-                }
                 // check for canceling and close the stream in that case, because no one will obtain it
                 if (this.aborted) {
                     final FSDataInputStream f = inputStream;

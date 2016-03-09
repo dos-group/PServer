@@ -11,7 +11,7 @@ public final class FilePartitionEvent extends NetEvent {
 
     public static final String FILE_PARTITION_EVENT = "file_partition_event";
 
-    public AbstractFilePartition filePartitionDescriptor;
+    public final AbstractFilePartition filePartitionDescriptor;
 
     // ---------------------------------------------------
     // Constructor.

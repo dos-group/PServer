@@ -18,7 +18,9 @@ public class DistributedFileIterationContext implements AbstractFileIterationCon
 
     public int localBlockID;
 
-    public boolean exceededBlock;
+    public int row;
+
+    public String currentFile;
 
     // ---------------------------------------------------
     // Constructor.
@@ -27,46 +29,27 @@ public class DistributedFileIterationContext implements AbstractFileIterationCon
     public DistributedFileIterationContext(DistributedFilePartition partition) {
         this.partition      = partition;
         this.inputStream    = null;
-        this.localBlockID   = 0;
-        this.exceededBlock  = false;
+        this.localBlockID   = -1;
+        this.row            = 0;
     }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
-    public boolean checkAndSetBlockExceeded() throws Exception {
-        exceededBlock = inputStream.getPos() > getCurrentBlockEndOffset();
-        return exceededBlock;
-    }
-
-    public long getCurrentBlockStartOffset() {
-        return partition.blocks.get(localBlockID).blockLoc.getOffset();
-    }
-
-    public long getCurrentBlockLength() {
-        return partition.blocks.get(localBlockID).blockLoc.getLength();
-    }
-
-    public long getCurrentBlockEndOffset() {
-        return getCurrentBlockStartOffset() + partition.blocks.get(localBlockID).blockLoc.getLength();
-    }
-
-    public boolean requireNextBlock() throws Exception {
-        return inputStream.getPos() >= getCurrentBlockEndOffset();
-    }
+    public long getCurrentBlockStartOffset() { return partition.blocks.get(localBlockID).offset; }
+    public long getCurrentBlockLength() { return partition.blocks.get(localBlockID).length; }
+    public long getCurrentBlockEndOffset() { return getCurrentBlockStartOffset() + partition.blocks.get(localBlockID).length; }
+    public boolean requireNextBlock() throws Exception { return inputStream.getPos() >= getCurrentBlockEndOffset(); }
 
     // ---------------------------------------------------
 
     @Override
-    public InputStream getInputStream() {
-        return inputStream;
-    }
+    public InputStream getInputStream() { return inputStream; }
 
     @Override
     public int readNext() throws Exception {
         int c = inputStream.read();
-        checkAndSetBlockExceeded();
         return c;
     }
 }

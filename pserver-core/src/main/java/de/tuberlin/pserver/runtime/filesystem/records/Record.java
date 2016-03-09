@@ -27,6 +27,14 @@ public class Record {
 
     public Record() {
         this.label   = Float.NaN;
-        this.entries = new TIntFloatHashMap(DEFAULT_RECORD_CAPACITY);
+        this.entries = new TIntFloatHashMap();
+    }
+
+    // ---------------------------------------------------
+    // Public Method.
+    // ---------------------------------------------------
+
+    public void reuse() {
+        entries.clear();
     }
 }
