@@ -68,7 +68,7 @@ public final class MatrixLoader {
                 ((CSRMatrix32F) dataMatrix).addRow(record.entries);
                 record.reuse();
             } catch (Throwable t) {
-                throw new IllegalStateException("OOME @ row = " + ((CSRMatrix32F) dataMatrix).getCurrentNumOfRows(), t);
+                throw new IllegalStateException(t);
             }
         }
 

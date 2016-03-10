@@ -11,9 +11,8 @@ import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntFloatMap;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.*;
 
 public final class CSRMatrix32F extends Matrix32FEmptyImpl {
 
@@ -23,7 +22,7 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
 
     public interface RowProcessor {
 
-        void process(int row, float[] valueList, int rowStart, int rowEnd, int[] colList);
+        void process(int coreID, int row, float[] valueList, int rowStart, int rowEnd, int[] colList) throws Exception;
     }
 
     // ---------------------------------------------------
@@ -79,7 +78,7 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
 
     public void addRow(TIntFloatMap vector) {
         vector.forEachEntry((k, v) -> {
-            colList.add(k - 1); // Shifted because of label!
+            colList.add(k);
             valueList.add(v);
             return true;
         });
@@ -90,81 +89,69 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
         colArr = colList.toArray();
         colList = null;
         rowPtrArr = rowPtrList.toArray();
-        //if (rowPtrList.size() - 1 != rows())
-        //    throw new IllegalStateException("rowPtrList.size() = " + rowPtrList.size() + " | rows() = " + rows());
+        if (rowPtrList.size() - 1 != rows())
+            throw new IllegalStateException("rowPtrList.size() = " + rowPtrList.size() + " | rows() = " + rows());
         rowPtrList = null;
         valueArr = valueList.toArray();
         valueList = null;
     }
 
-    public void processRows(RowProcessor processor) {
-        for (int i = 0; i < rows() - 1; ++i) {
-            processor.process(i, valueArr, rowPtrArr[i], rowPtrArr[i + 1] - 1, colArr);
+    // ---------------------------------------------------
+    // Parallel Processor.
+    // ---------------------------------------------------
+
+
+
+
+    private final ExecutorService executorService = (ThreadPoolExecutor)
+            Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+    private final class PartitionProcessor implements Runnable {
+
+        private final int id;
+        private final int startRow;
+        private final int endRow;
+        private final RowProcessor rowProcessor;
+
+        public PartitionProcessor(int id, int startRow, int endRow, RowProcessor rowProcessor) {
+            this.id = id;
+            this.startRow     = startRow;
+            this.endRow       = endRow;
+            this.rowProcessor = rowProcessor;
         }
-    }
 
-    // ---------------------------------------------------
-    // Private Methods.
-    // ---------------------------------------------------
-
-    public long getCurrentNumOfRows() {
-        return rowPtrList.size() - 1;
-    }
-
-
-    /*private static int binarySearch(long[] a, int fromIndex, int toIndex, long key) {
-        int low = fromIndex;
-        int high = toIndex - 1;
-        while (low <= high) {
-            int mid = (low + high) >>> 1;
-            long midVal = a[mid];
-            if (midVal < key)
-                low = mid + 1;
-            else if (midVal > key)
-                high = mid - 1;
-            else
-                return mid; // key found
-        }
-        return -(low + 1);  // key not found.
-    }
-
-    int[] rowPtr = new int[2];
-    int s = 0;
-
-    private int[] getRowPtr(long[] keys, long row, long cols) {
-        final long lastRowIndex = row * cols + cols - 1;
-        int o = s;
-        final int range = (int)(o + cols > keys.length
-                ? keys.length : o + cols);
-        s = binarySearch(keys, o, range, lastRowIndex);
-        if (s < 0)
-            s = (s * -1) - 1;
-        rowPtr[0] = o;
-        rowPtr[1] = s - o;
-        return rowPtr;
-    }*/
-
-    // ---------------------------------------------------
-    // Public Static Methods.
-    // ---------------------------------------------------
-
-    /*public static CSRMatrix32F fromSparseMatrix32F(SparseMatrix32F m) {
-        CSRMatrix32F csrData = new CSRMatrix32F(m);
-        m.createSortedKeys();
-        TIntFloatHashMap d = new TIntFloatHashMap();
-        for (int i = 0; i < m.rows(); ++i) {
-            int[] rowPtr = csrData.getRowPtr(m.sortedKeys, i, m.cols());
-            for (int j = 0; j < rowPtr[1]; ++j) {
-                long k = m.sortedKeys[rowPtr[0] + j];
-                float v = m.data.get(k);
-                d.put((int)(k % m.cols()), v);
+        @Override
+        public void run() {
+            try {
+                for (int i = startRow; i < endRow; ++i)
+                    rowProcessor.process(id, i, valueArr, rowPtrArr[i], rowPtrArr[i + 1] - 1, colArr);
+            } catch(Exception e) {
+                throw new IllegalStateException(e);
             }
-            csrData.addRow(d);
-            d.clear();
         }
-        csrData.build();
-        return csrData;
-    }*/
+    }
+
+    public void processRows(RowProcessor processor) {
+        processRows(Runtime.getRuntime().availableProcessors(), processor);
+    }
+
+    public void processRows(int dop, RowProcessor processor) {
+        Collection<Future<?>> futures = new LinkedList<>();
+        int partitionSize = (int)rows() / dop;
+        int lastPartitionRest = (int)rows() % dop;
+        for (int id = 0; id < dop; ++id) {
+            int startRow = id * partitionSize;
+            int endRow = id * partitionSize + partitionSize - 1 + ((id == dop - 1) ? lastPartitionRest : 0);
+            futures.add(executorService.submit(new PartitionProcessor(id, startRow, endRow, processor)));
+        }
+        try {
+            for (Future<?> future:futures) {
+                future.get();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     // ---------------------------------------------------
     // ROW ITERATOR.

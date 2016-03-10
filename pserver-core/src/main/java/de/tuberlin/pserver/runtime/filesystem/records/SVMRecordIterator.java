@@ -12,7 +12,7 @@ public class SVMRecordIterator implements RecordIterator {
 
     private final MatrixTypeInfo matrixTypeInfo;
 
-    private final DistributedFileIterationContext iterationContext;
+    private final AbstractFileIterationContext iterationContext;
 
     private final SVMRecordParser recordParser;
 
@@ -20,10 +20,10 @@ public class SVMRecordIterator implements RecordIterator {
     // Constructors.
     // ---------------------------------------------------
 
-    public SVMRecordIterator(MatrixTypeInfo matrixTypeInfo, AbstractFileIterationContext ic) {
+    public SVMRecordIterator(MatrixTypeInfo matrixTypeInfo, AbstractFileIterationContext iterationContext) {
         this.matrixTypeInfo     = matrixTypeInfo;
-        this.iterationContext   = (DistributedFileIterationContext)ic;
-        this.recordParser       = new SVMRecordParser(ic);
+        this.iterationContext   = iterationContext;
+        this.recordParser       = new SVMRecordParser(iterationContext);
     }
 
     // ---------------------------------------------------

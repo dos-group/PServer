@@ -2,6 +2,7 @@ package de.tuberlin.pserver.runtime.filesystem.records;
 
 import de.tuberlin.pserver.runtime.filesystem.AbstractFileIterationContext;
 import de.tuberlin.pserver.runtime.filesystem.distributed.DistributedFileIterationContext;
+import de.tuberlin.pserver.runtime.filesystem.local.LocalFileIterationContext;
 
 public final class SVMRecordParser {
 
@@ -21,6 +22,8 @@ public final class SVMRecordParser {
 
     private char currentChar;
 
+    private long col;
+
     // ---------------------------------------------------
     // Constructors.
     // ---------------------------------------------------
@@ -38,12 +41,14 @@ public final class SVMRecordParser {
 
     public Record parseNextRow(int row) {
         reusedRecord.row = row;
+        col = 0;
         try {
             // --------------------------------------
             // PARSE LABEL
             // --------------------------------------
             if (!readNextByte())
                 throw new IllegalStateException();
+
             while ((currentChar == '-' || currentChar == '.' || currentChar == 'E' || Character.isDigit(currentChar))) {
                 parseBuffer[bufferIndex++] = currentChar;
                 if (!readNextByte())
@@ -61,7 +66,7 @@ public final class SVMRecordParser {
                 // PARSE INDEX
                 // ---------------
                 if (currentChar != ' ')
-                    throw new IllegalStateException("currentChar = '" + currentChar + "'");
+                    throw new IllegalStateException("currentChar = '" + currentChar + "'@row[" + row + "]");
                 if (!readNextByte())
                     throw new IllegalStateException();
                 while ((currentChar == '-' || currentChar == '.' || currentChar == 'E' || Character.isDigit(currentChar))) {
@@ -77,7 +82,7 @@ public final class SVMRecordParser {
                 // PARSE VALUE
                 // ---------------
                 if (currentChar != ':')
-                    throw new IllegalStateException("currentChar = '" + currentChar + "'");
+                    throw new IllegalStateException("currentChar = '" + currentChar + "''@row[" + row + "]");
                 if (!readNextByte())
                     throw new IllegalStateException();
                 while ((currentChar == '-' || currentChar == '.' || currentChar == 'E' || Character.isDigit(currentChar))) {
@@ -91,8 +96,12 @@ public final class SVMRecordParser {
                 stringBuilder.setLength(0);
                 bufferIndex = 0;
             }
-        } catch(Throwable t) {
-            System.out.println(t.toString() + " | " + t.getMessage());
+        } catch(Exception t) {
+            System.out.println(t.toString()
+                    + " | row = " + iteratorContext.row
+                    + ", col = " + col
+                    + ", offset = " + ((LocalFileIterationContext)iteratorContext).partition.localBlock.offset
+                    + ", currentChar = " + currentChar);
             throw new IllegalStateException(t);
         }
         return reusedRecord;
@@ -103,7 +112,7 @@ public final class SVMRecordParser {
     // ---------------------------------------------------
 
     private boolean readNextByte() throws Exception {
-        int i = iteratorContext.readNext();
+        int i = iteratorContext.readNext(); ++col;
         currentChar = (char) i;
         return !(i == -1);
     }

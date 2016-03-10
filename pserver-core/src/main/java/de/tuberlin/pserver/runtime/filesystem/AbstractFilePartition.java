@@ -1,8 +1,6 @@
 package de.tuberlin.pserver.runtime.filesystem;
 
 
-import com.google.gson.Gson;
-import de.tuberlin.pserver.commons.json.GsonUtils;
 import de.tuberlin.pserver.types.typeinfo.properties.FileFormat;
 
 public abstract class AbstractFilePartition {
@@ -10,8 +8,6 @@ public abstract class AbstractFilePartition {
     // ---------------------------------------------------
     // Fields.
     // ---------------------------------------------------
-
-    //protected transient Gson gson = GsonUtils.createPrettyPrintAndAnnotationExclusionGson();
 
     public final int nodeID;
 

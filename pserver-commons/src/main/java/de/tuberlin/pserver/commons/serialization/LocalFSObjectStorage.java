@@ -1,7 +1,5 @@
-package de.tuberlin.pserver.benchmarks.criteo.logreg;
+package de.tuberlin.pserver.commons.serialization;
 
-
-import de.tuberlin.pserver.commons.serialization.ObjectSerializer;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;

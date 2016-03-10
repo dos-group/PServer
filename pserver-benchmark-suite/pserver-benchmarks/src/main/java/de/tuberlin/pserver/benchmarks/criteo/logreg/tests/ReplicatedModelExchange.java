@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.benchmarks.criteo.logreg;
+package de.tuberlin.pserver.benchmarks.criteo.logreg.tests;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;

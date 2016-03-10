@@ -5,7 +5,7 @@ import de.tuberlin.pserver.runtime.filesystem.AbstractFileIterationContext;
 
 import java.io.InputStream;
 
-public class LocalFileIterationContext implements AbstractFileIterationContext {
+public class LocalFileIterationContext extends AbstractFileIterationContext {
 
     // ---------------------------------------------------
     // Fields.
@@ -19,18 +19,14 @@ public class LocalFileIterationContext implements AbstractFileIterationContext {
     // Constructor.
     // ---------------------------------------------------
 
-    public LocalFileIterationContext(LocalFilePartition partition) {
-        this.partition = partition;
-    }
+    public LocalFileIterationContext(LocalFilePartition partition) { this.partition = partition; }
 
     // ---------------------------------------------------
     // Public Methods.
     // ---------------------------------------------------
 
     @Override
-    public InputStream getInputStream() {
-        return inputStream;
-    }
+    public InputStream getInputStream() { return inputStream; }
 
     @Override
     public int readNext() throws Exception {

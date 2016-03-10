@@ -1,6 +1,7 @@
 package de.tuberlin.pserver.compiler;
 
 import com.google.common.base.Preconditions;
+import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.controlflow.base.Body;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.runtime.RuntimeManager;
@@ -69,6 +70,8 @@ public abstract class Program extends EventDispatcher {
                     + " pre-process phase [duration: " + (end - start) + " ms].");
         }
 
+        programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
+
         {
             LOG.info(slotIDStr + "Enter " + lifecycle.programContext.simpleClassName + " process phase.");
 
@@ -81,6 +84,8 @@ public abstract class Program extends EventDispatcher {
             LOG.info(slotIDStr + "Leave " + lifecycle.programContext.simpleClassName +
                     " process phase [duration: " + (end - start) + " ms].");
         }
+
+        programContext.synchronizeUnit(UnitMng.GLOBAL_BARRIER);
 
         {
             LOG.info(slotIDStr + "Enter " + lifecycle.programContext.simpleClassName + " post-process phase.");

@@ -81,7 +81,6 @@ public class FileSystemManager implements Deactivatable {
             } catch (InterruptedException e) {
                 throw new IllegalStateException();
             }
-            //((NetEvent)event).netChannel.sendMsg(new NetEvent(DistributedFileIterator.FILE_SYSTEM_BLOCK_RESPONSE, block));
             netManager.dispatchEventAt(
                     ((NetEvent)event).srcMachineID,
                     new NetEvent(DistributedFileIterator.FILE_SYSTEM_BLOCK_RESPONSE, block)
@@ -90,7 +89,7 @@ public class FileSystemManager implements Deactivatable {
 
         netManager.addEventListener(FilePartitionEvent.FILE_PARTITION_EVENT, event -> {
             System.out.println("Received file partition descriptor.");
-            DistributedFilePartition dfp = (DistributedFilePartition)event.getPayload();
+            AbstractFilePartition dfp = (AbstractFilePartition)event.getPayload();
             files.get(dfp.file).setFilePartition(dfp);
             rcvPartitionsLatch.countDown();
         });
@@ -124,18 +123,12 @@ public class FileSystemManager implements Deactivatable {
             if (config.getInt(FILE_MASTER_NODE_ID) == nodeID) {
                 for (AbstractFile inputFile : files.values()) {
                     List<AbstractFilePartition> filePartitions = schedulePartitions(inputFile);
-
-                    System.out.println(" ---------------------------------------------------------------- ");
-                    System.out.println(" |                   SEND PARTITIONS TO NODES                   | ");
-                    System.out.println(" ---------------------------------------------------------------- ");
-
                     for (AbstractFilePartition fp : filePartitions) {
                         if (fp.nodeID != nodeID) {
                             NetEvent fpe = new NetEvent(FilePartitionEvent.FILE_PARTITION_EVENT);
                             fpe.setPayload(fp);
                             netManager.dispatchEventAt(new int[]{ fp.nodeID }, fpe);
-                            System.out.println("Send partition to Node: " + fp.nodeID
-                                    + " | blocks.size = " +  ((DistributedFilePartition)fp).blocks.size());
+                            System.out.println("Send partition to Node: " + fp.nodeID);
                         } else {
                             files.get(inputFile.getTypeInfo().input().filePath()).setFilePartition(fp);
                         }

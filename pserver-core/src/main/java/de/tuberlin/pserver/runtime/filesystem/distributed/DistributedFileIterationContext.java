@@ -6,7 +6,7 @@ import org.apache.hadoop.fs.FSDataInputStream;
 
 import java.io.InputStream;
 
-public class DistributedFileIterationContext implements AbstractFileIterationContext {
+public class DistributedFileIterationContext extends AbstractFileIterationContext {
 
     // ---------------------------------------------------
     // Fields.
@@ -17,8 +17,6 @@ public class DistributedFileIterationContext implements AbstractFileIterationCon
     public FSDataInputStream inputStream;
 
     public int localBlockID;
-
-    public int row;
 
     public String currentFile;
 
@@ -49,7 +47,6 @@ public class DistributedFileIterationContext implements AbstractFileIterationCon
 
     @Override
     public int readNext() throws Exception {
-        int c = inputStream.read();
-        return c;
+        return inputStream.read();
     }
 }

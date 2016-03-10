@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.benchmarks.criteo.logreg;
+package de.tuberlin.pserver.benchmarks.criteo.logreg.tests;
 
 
 import de.tuberlin.pserver.client.PServerExecutor;
@@ -19,8 +19,6 @@ import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatr
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.CSRMatrix32F;
 import de.tuberlin.pserver.types.typeinfo.annotations.Load;
 import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
-
-import java.util.Arrays;
 
 public class LogRegAsyncSharedModel extends Program {
 
@@ -51,7 +49,7 @@ public class LogRegAsyncSharedModel extends Program {
     @Matrix(at = "1 - 15", scheme = DistScheme.H_PARTITIONED, rows = ROWS, cols = 1)
     public DenseMatrix32F labels;
 
-    @Load(filePath = DATA_PATH, labels = "labels")
+    @Load(filePath = DATA_PATH, labels = "Y")
     @Matrix(at = "1 - 15", scheme = DistScheme.H_PARTITIONED, rows = ROWS, cols = COLS)
     public CSRMatrix32F features;
 
@@ -110,21 +108,21 @@ public class LogRegAsyncSharedModel extends Program {
                 // Local Model Training.
                 //
 
-                Arrays.fill(derivative.data, 0f);
+                /*Arrays.fill(derivative.data, 0f);
                 Arrays.fill(grad.data, 0f);
                 features.processRows((row, valueList, rowStart, rowEnd, colList) -> {
                     float yPredict = 0;
                     for (int i = rowStart; i < rowEnd; ++i) {
                         yPredict += valueList[i] * cached_W.data[colList[i]];
                     }
-                    float f = labels.data[row] - yPredict;
+                    float f = Y.data[row] - yPredict;
                     for (int j = rowStart; j < rowEnd; ++j) {
                         int ci = colList[j];
                         derivative.data[ci] = valueList[ci] * f;
                         grad.data[ci] += derivative.data[ci] * STEP_SIZE;
                         cached_W.data[ci] -= grad.data[ci];
                     }
-                });
+                });*/
 
                 //
                 // Push to Parameter Server.

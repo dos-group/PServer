@@ -2,6 +2,7 @@ package de.tuberlin.pserver.runtime.filesystem.local;
 
 
 import com.google.common.base.Preconditions;
+import com.google.common.io.CountingInputStream;
 import de.tuberlin.pserver.runtime.filesystem.AbstractFileIterator;
 import de.tuberlin.pserver.runtime.filesystem.records.Record;
 import de.tuberlin.pserver.runtime.filesystem.records.RecordIterator;
@@ -31,7 +32,7 @@ public class LocalFileIterator implements AbstractFileIterator {
         this.file = file;
         this.ic = new LocalFileIterationContext((LocalFilePartition) Preconditions.checkNotNull(file).getFilePartition());
         try {
-            this.ic.inputStream = new FileInputStream(Preconditions.checkNotNull(file.getTypeInfo().input().filePath()));
+            this.ic.inputStream = new CountingInputStream(new FileInputStream(Preconditions.checkNotNull(file.getTypeInfo().input().filePath())));
         } catch(Exception e) {
             close();
             throw new IllegalStateException(e);
@@ -45,9 +46,12 @@ public class LocalFileIterator implements AbstractFileIterator {
     @Override
     public void open() {
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(this.ic.inputStream));
-            for (int i = 0; i <= ic.partition.localBlock.offset; ++i)
-                reader.readLine();
+
+            int lineCount = 0;
+            while (lineCount < ic.partition.localBlock.offset)
+                if (ic.inputStream.read() == '\n')
+                    lineCount++;
+
             recordIterator = RecordIterator.create((MatrixTypeInfo) file.getTypeInfo(), ic);
         } catch(Exception e) {
             throw new IllegalStateException(e);

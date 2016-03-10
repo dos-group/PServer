@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.benchmarks.criteo.logreg;
+package de.tuberlin.pserver.benchmarks.criteo.logreg.tests;
 
 import de.tuberlin.pserver.client.PServerExecutor;
 import de.tuberlin.pserver.compiler.Program;
@@ -10,8 +10,6 @@ import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatr
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.CSRMatrix32F;
 import de.tuberlin.pserver.types.typeinfo.annotations.Load;
 import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
-
-import java.io.ByteArrayInputStream;
 
 public class  LoadCriteoData extends Program {
 
@@ -61,7 +59,7 @@ public class  LoadCriteoData extends Program {
     @Matrix(scheme = DistScheme.H_PARTITIONED, rows = ROWS, cols = 1)
     public DenseMatrix32F labels;
 
-    @Load(filePath = DATA_PATH, labels = "labels")
+    @Load(filePath = DATA_PATH, labels = "Y")
     @Matrix(scheme = DistScheme.H_PARTITIONED, rows = ROWS, cols = COLS)
     public CSRMatrix32F features;
 

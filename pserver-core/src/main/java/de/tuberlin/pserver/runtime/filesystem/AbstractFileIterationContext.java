@@ -3,9 +3,19 @@ package de.tuberlin.pserver.runtime.filesystem;
 
 import java.io.InputStream;
 
-public interface AbstractFileIterationContext {
+public abstract class AbstractFileIterationContext {
 
-    InputStream getInputStream();
+    // ---------------------------------------------------
+    // Fields.
+    // ---------------------------------------------------
 
-    int readNext() throws Exception;
+    public int row;
+
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
+
+    public abstract InputStream getInputStream();
+
+    public abstract int readNext() throws Exception;
 }

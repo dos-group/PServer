@@ -17,6 +17,7 @@ public final class LocalBlock implements AbstractBlock {
     // Constructor.
     // ---------------------------------------------------
 
+    public LocalBlock() { this(-1, -1); }
     public LocalBlock(long offset, long linesToRead) {
         this.offset      = offset;
         this.linesToRead = linesToRead;
