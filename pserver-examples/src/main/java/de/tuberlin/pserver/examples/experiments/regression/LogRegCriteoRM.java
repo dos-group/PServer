@@ -53,17 +53,17 @@ public class LogRegCriteoRM extends Program {
             (UPDATE_MODEL == UpdateModel.PAR || UPDATE_MODEL == UpdateModel.RED)
                     ? Runtime.getRuntime().availableProcessors() : 1;
 
-    private static final String HOME        = "/home/tobias.herb/model_" + LogRegCriteoRM.class.getSimpleName()
+    private static final String HOME        = "/Users/Chris/Downloads/model_" + LogRegCriteoRM.class.getSimpleName()
             + "_" + CONSISTENCY_MODEL + "_" + UPDATE_MODEL;
 
 
-    private static final double STEP_SIZE    = 0.0001;
+    private static final double STEP_SIZE    = 1e-2;
 
-    private static final int NUM_EPOCHS     = 15;
+    private static final int NUM_EPOCHS     = 250;
 
-    private static final String DATA_PATH   = "datasets/onelinemtx";
+    private static final String DATA_PATH   = "datasets/svm_train";
 
-    private static final long ROWS          = 1;
+    private static final long ROWS          = 80000;
 
     private static final long COLS          = 1048615;
 
@@ -131,8 +131,9 @@ public class LogRegCriteoRM extends Program {
                 // Local Model Update.
                 //
 
-                mle = 0;
                 model.nextEpoch();
+
+                //TODO: random sampling is missing
 
                 atomic(state(W), () ->
                     F.processRows(PER_NODE_DOP, (id, row, valueList, rowStart, rowEnd, colList) -> {
@@ -141,42 +142,45 @@ public class LogRegCriteoRM extends Program {
                                 ? model.getModel().data
                                 : model.getModel(id).data;
 
-                        System.out.println("TEST");
-
-                        // z = W^T * x
-                        /*double z = 0;
+                        double z = 0;
                         for (int i = rowStart; i < rowEnd; ++i)
                             z += valueList[i] * w[colList[i]];
 
-                        // h(x) = 1 / (1 + exp(-z))
-                        // gradient = (y(x) - h(x)) * x
-                        double f = Y.data[row] - (1.0 / (1.0 + Math.exp(-1.0 * z)));
+                        double label = Y.data[row];
+
+                        double h = sigmoid(z);
+
+                        double f = h - label;
 
                         for (int j = rowStart; j < rowEnd; ++j) {
                             int ci = colList[j];
-                            w[ci] += STEP_SIZE * valueList[j] * f; <----------
-                        }*/
-
-                        /*float logit = 0f;
-                        for (int i = rowStart; i < rowEnd; i++)
-                            logit += w[colList[i]] * valueList[i];
-                        double predicted = sigmoid(logit);
-
-                        double label = Y.data[row];
-                        for (int i = rowStart; i < rowEnd; i++)
-                            w[colList[i]] = (float)(w[colList[i]] + STEP_SIZE * (label - predicted) * valueList[i]);
-
-                        if (UPDATE_MODEL == UpdateModel.RED)
-                            model.sync();
-
-                        mle += Y.data[row] * Math.log(predicted) + (1 - Y.data[row]) * Math.log(1 - predicted);*/
-
-                        //if (row % 50 == 0)
-                        //    System.out.println("row = " + row + " => mle = " + mle);
+                            w[ci] -= STEP_SIZE * valueList[j] * f;
+                        }
                     })
                 );
 
-                System.out.println("mle[" + epoch + "] -> " + mle);
+                mle = 0;
+
+                F.processRows(PER_NODE_DOP, (id, row, valueList, rowStart, rowEnd, colList) -> {
+
+                    float[] w = UPDATE_MODEL == UpdateModel.SEQ
+                            ? model.getModel().data
+                            : model.getModel(id).data;
+
+                    double z = 0;
+                    for (int i = rowStart; i < rowEnd; ++i)
+                        z += valueList[i] * w[colList[i]];
+
+                    double label = Y.data[row];
+
+                    if (label > 0) {
+                        mle += Math.log1p(Math.exp(-z));
+                    } else {
+                        mle += Math.log1p(Math.exp(-z)) + z;
+                    }
+                });
+
+                System.out.println("MLE[" + epoch + "]: " + mle);
 
                 //
                 // Global Model Merging.
@@ -184,6 +188,8 @@ public class LogRegCriteoRM extends Program {
 
                 //TransactionMng.commit(merge_W);
                 //model.save(epoch);
+
+                System.out.println("FINISHED EPOCH [" + epoch + "]");
             });
 
         }).postProcess(() -> {
