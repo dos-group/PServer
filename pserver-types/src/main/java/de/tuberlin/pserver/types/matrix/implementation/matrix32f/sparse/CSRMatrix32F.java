@@ -76,19 +76,12 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
 
     public void addRow(TIntFloatMap vector) {
         vector.forEachEntry((k, v) -> {
-
-            if (rowPtrList.size() == 1) {
-                System.out.println(k + ":" + v);
-            }
-
             colList.add(k);
             valueList.add(v);
             return true;
         });
 
-
         rowPtrList.add(colList.size());
-
     }
 
     public void build() {
@@ -145,7 +138,7 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
         int lastPartitionRest = (int)rows() % dop;
         for (int id = 0; id < dop; ++id) {
             int startRow = id * partitionSize;
-            int endRow = id * partitionSize + partitionSize - 1 + ((id == dop - 1) ? lastPartitionRest : 0);
+            int endRow = id * partitionSize + partitionSize + ((id == dop - 1) ? lastPartitionRest : 0);
             futures.add(executorService.submit(new PartitionProcessor(id, startRow, endRow, processor)));
         }
         try {

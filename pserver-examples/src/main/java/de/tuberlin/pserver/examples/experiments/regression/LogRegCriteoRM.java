@@ -17,6 +17,8 @@ import de.tuberlin.pserver.types.matrix.implementation.matrix32f.sparse.CSRMatri
 import de.tuberlin.pserver.types.typeinfo.annotations.Load;
 import de.tuberlin.pserver.types.typeinfo.properties.DistScheme;
 
+import java.util.Arrays;
+
 
 public class LogRegCriteoRM extends Program {
 
@@ -55,13 +57,13 @@ public class LogRegCriteoRM extends Program {
             + "_" + CONSISTENCY_MODEL + "_" + UPDATE_MODEL;
 
 
-    private static final float STEP_SIZE    = 1.0f;
+    private static final double STEP_SIZE    = 0.0001;
 
-    private static final int NUM_EPOCHS     = 1;
+    private static final int NUM_EPOCHS     = 15;
 
-    private static final String DATA_PATH   = "datasets/svm_small";
+    private static final String DATA_PATH   = "datasets/onelinemtx";
 
-    private static final long ROWS          = 40000;
+    private static final long ROWS          = 1;
 
     private static final long COLS          = 1048615;
 
@@ -70,6 +72,8 @@ public class LogRegCriteoRM extends Program {
     // ---------------------------------------------------
 
     private LinearModel model;
+
+    private double mle = 0.0;
 
     // ---------------------------------------------------
     // State.
@@ -98,6 +102,17 @@ public class LogRegCriteoRM extends Program {
     // Units.
     // ---------------------------------------------------
 
+    private static double sigmoid(double z) {
+        return 1.0f / (1.0f + Math.exp(-z));
+    }
+
+    /*private static double classify(float[] w, float[] x) {
+        float logit = 0f;
+        for (int i = 0; i < w.length; i++)
+            logit += w[i] * x[i];
+        return sigmoid(logit);
+    }*/
+
     @Unit
     public void unit(Lifecycle lifecycle) {
 
@@ -116,35 +131,52 @@ public class LogRegCriteoRM extends Program {
                 // Local Model Update.
                 //
 
+                mle = 0;
                 model.nextEpoch();
 
                 atomic(state(W), () ->
                     F.processRows(PER_NODE_DOP, (id, row, valueList, rowStart, rowEnd, colList) -> {
 
-                        float[] w = UPDATE_MODEL == UpdateModel.RED
-                                ? model.getModel(id).data
-                                : model.getModel().data;
+                        float[] w = UPDATE_MODEL == UpdateModel.SEQ
+                                ? model.getModel().data
+                                : model.getModel(id).data;
 
-                        float[] d = model.getDerivative(id).data;
-                        float[] g = model.getGradient(id).data;
+                        System.out.println("TEST");
 
-                        float yPredict = 0;
-                        for (int i = rowStart; i < rowEnd; ++i) {
-                            yPredict += valueList[i] * w[colList[i]];
-                        }
+                        // z = W^T * x
+                        /*double z = 0;
+                        for (int i = rowStart; i < rowEnd; ++i)
+                            z += valueList[i] * w[colList[i]];
 
-                        float f = Y.data[row] - yPredict;
+                        // h(x) = 1 / (1 + exp(-z))
+                        // gradient = (y(x) - h(x)) * x
+                        double f = Y.data[row] - (1.0 / (1.0 + Math.exp(-1.0 * z)));
+
                         for (int j = rowStart; j < rowEnd; ++j) {
                             int ci = colList[j];
-                            d[ci] = valueList[ci] * f;
-                            g[ci] += d[ci] * STEP_SIZE;
-                            w[ci] -= g[ci];
-                        }
+                            w[ci] += STEP_SIZE * valueList[j] * f; <----------
+                        }*/
+
+                        /*float logit = 0f;
+                        for (int i = rowStart; i < rowEnd; i++)
+                            logit += w[colList[i]] * valueList[i];
+                        double predicted = sigmoid(logit);
+
+                        double label = Y.data[row];
+                        for (int i = rowStart; i < rowEnd; i++)
+                            w[colList[i]] = (float)(w[colList[i]] + STEP_SIZE * (label - predicted) * valueList[i]);
 
                         if (UPDATE_MODEL == UpdateModel.RED)
                             model.sync();
+
+                        mle += Y.data[row] * Math.log(predicted) + (1 - Y.data[row]) * Math.log(1 - predicted);*/
+
+                        //if (row % 50 == 0)
+                        //    System.out.println("row = " + row + " => mle = " + mle);
                     })
                 );
+
+                System.out.println("mle[" + epoch + "] -> " + mle);
 
                 //
                 // Global Model Merging.
@@ -152,8 +184,6 @@ public class LogRegCriteoRM extends Program {
 
                 //TransactionMng.commit(merge_W);
                 //model.save(epoch);
-
-                System.out.println("FINISHED EPOCH [" + epoch + "]");
             });
 
         }).postProcess(() -> {

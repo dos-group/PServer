@@ -122,14 +122,6 @@ public class Exp_LRRM extends Program {
                 atomic(state(W), () ->
                     F.processRows(PER_NODE_DOP, (id, row, valueList, rowStart, rowEnd, colList) -> {
 
-                        if (row > 0 && row < 10) {
-                            System.out.println("Label = " + Y.data[row]);
-                            for (int i = rowStart; i < rowEnd; ++i) {
-                                System.out.println(colList[i] + ":" + valueList[i]);
-                            }
-                            System.out.println("--------------");
-                        }
-
                         float[] w = UPDATE_MODEL == UpdateModel.RED
                                 ? model.getModel(id).data
                                 : model.getModel().data;
