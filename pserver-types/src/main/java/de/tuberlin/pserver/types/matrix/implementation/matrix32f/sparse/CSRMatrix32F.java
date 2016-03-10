@@ -72,17 +72,23 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
     // Public Methods.
     // ---------------------------------------------------
 
-    @Override public float get(final long row, final long col) {
-        return 0f;
-    }
+    @Override public float get(final long row, final long col) { throw new UnsupportedOperationException(); }
 
     public void addRow(TIntFloatMap vector) {
         vector.forEachEntry((k, v) -> {
+
+            if (rowPtrList.size() == 1) {
+                System.out.println(k + ":" + v);
+            }
+
             colList.add(k);
             valueList.add(v);
             return true;
         });
+
+
         rowPtrList.add(colList.size());
+
     }
 
     public void build() {
@@ -100,9 +106,6 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
     // Parallel Processor.
     // ---------------------------------------------------
 
-
-
-
     private final ExecutorService executorService = (ThreadPoolExecutor)
             Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
@@ -114,7 +117,7 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
         private final RowProcessor rowProcessor;
 
         public PartitionProcessor(int id, int startRow, int endRow, RowProcessor rowProcessor) {
-            this.id = id;
+            this.id           = id;
             this.startRow     = startRow;
             this.endRow       = endRow;
             this.rowProcessor = rowProcessor;
@@ -123,8 +126,9 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
         @Override
         public void run() {
             try {
-                for (int i = startRow; i < endRow; ++i)
-                    rowProcessor.process(id, i, valueArr, rowPtrArr[i], rowPtrArr[i + 1] - 1, colArr);
+                for (int i = startRow; i < endRow; ++i) {
+                    rowProcessor.process(id, i, valueArr, rowPtrArr[i], rowPtrArr[i + 1], colArr);
+                }
             } catch(Exception e) {
                 throw new IllegalStateException(e);
             }
@@ -145,11 +149,10 @@ public final class CSRMatrix32F extends Matrix32FEmptyImpl {
             futures.add(executorService.submit(new PartitionProcessor(id, startRow, endRow, processor)));
         }
         try {
-            for (Future<?> future:futures) {
+            for (Future<?> future:futures)
                 future.get();
-            }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new IllegalStateException(e);
         }
     }
 
