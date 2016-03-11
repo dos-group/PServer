@@ -6,7 +6,6 @@ import de.tuberlin.pserver.types.matrix.MatrixBuilder;
 import de.tuberlin.pserver.types.matrix.implementation.Matrix32F;
 import de.tuberlin.pserver.types.matrix.implementation.matrix32f.dense.DenseMatrix32F;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 
@@ -21,10 +20,6 @@ public final class LinearModel {
     // ---------------------------------------------------
 
     transient private final DenseMatrix32F internal[];
-
-    transient private final DenseMatrix32F derivative[];
-
-    transient private final DenseMatrix32F gradient[];
 
     // ---------------------------------------------------
 
@@ -45,13 +40,8 @@ public final class LinearModel {
         this.path       = path;
 
         this.internal   = new DenseMatrix32F[dop];
-        this.derivative = new DenseMatrix32F[dop];
-        this.gradient   = new DenseMatrix32F[dop];
-
         for (int i = 0; i < dop; ++i) {
             internal[i]   = (DenseMatrix32F)new MatrixBuilder().dimension(1, model.cols()).build();
-            derivative[i] = (DenseMatrix32F)new MatrixBuilder().dimension(1, model.cols()).build();
-            gradient[i]   = (DenseMatrix32F)new MatrixBuilder().dimension(1, model.cols()).build();
         }
 
         this.barrier  = new CyclicBarrier(dop, () -> {
@@ -67,10 +57,6 @@ public final class LinearModel {
 
     public DenseMatrix32F getModel(int id) { return internal[id]; }
 
-    public DenseMatrix32F getDerivative(int id) { return derivative[id]; }
-
-    public DenseMatrix32F getGradient(int id) { return gradient[id]; }
-
     // ---------------------------------------------------
 
     public DenseMatrix32F getModel() { return model; }
@@ -84,11 +70,8 @@ public final class LinearModel {
     // ---------------------------------------------------
 
     public LinearModel nextEpoch() {
-        for (int i = 0; i < dop; ++i) {
-            Arrays.fill(derivative[i].data, 0f);
-            Arrays.fill(gradient[i].data, 0f);
+        for (int i = 0; i < dop; ++i)
             System.arraycopy(model.data, 0, internal[i].data, 0, model.data.length);
-        }
         return this;
     }
 

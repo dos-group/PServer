@@ -43,7 +43,7 @@ public class LogRegCriteoRM extends Program {
 
     private static final ConsistencyModel CONSISTENCY_MODEL = ConsistencyModel.TAP;
 
-    private static final UpdateModel UPDATE_MODEL = UpdateModel.SEQ;
+    private static final UpdateModel UPDATE_MODEL = UpdateModel.RED;
 
     // ---------------------------------------------------
     // Constants.
@@ -57,7 +57,7 @@ public class LogRegCriteoRM extends Program {
             + "_" + CONSISTENCY_MODEL + "_" + UPDATE_MODEL;
 
 
-    private static final double STEP_SIZE    = 1e-2;
+    private double STEP_SIZE   = 1e-2;
 
     private static final int NUM_EPOCHS     = 250;
 
@@ -158,6 +158,13 @@ public class LogRegCriteoRM extends Program {
                         }
                     })
                 );
+
+                //STEP_SIZE = STEP_SIZE / Math.sqrt(epoch + 1);
+
+
+                // MLE[249]: 24905.668330398796 ("")
+
+                // MLE[249]: 13985.955956234639
 
                 mle = 0;
 

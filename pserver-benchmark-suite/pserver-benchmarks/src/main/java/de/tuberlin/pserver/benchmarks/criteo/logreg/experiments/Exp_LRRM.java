@@ -43,7 +43,7 @@ public class Exp_LRRM extends Program {
 
     private static final ConsistencyModel CONSISTENCY_MODEL = ConsistencyModel.TAP;
 
-    private static final UpdateModel UPDATE_MODEL = UpdateModel.SEQ;
+    private static final UpdateModel UPDATE_MODEL = UpdateModel.PAR;
 
     private static final int PER_NODE_DOP =
             (UPDATE_MODEL == UpdateModel.PAR || UPDATE_MODEL == UpdateModel.RED)
@@ -53,14 +53,14 @@ public class Exp_LRRM extends Program {
     // Constants.
     // ---------------------------------------------------
 
-    private static final String HOME        = "/home/tobias.herb/model_" + Exp_LRRM.class.getSimpleName()
+    private static final String HOME        = "/home/tobias.herb/exp_models/model_" + Exp_LRRM.class.getSimpleName()
             + "_" + CONSISTENCY_MODEL + "_" + UPDATE_MODEL;
 
-    private static final String DATA_PATH   = "/criteo/criteo_train";
+    private static final String DATA_PATH   = "/criteo_prep/criteo_train";
 
-    private static final int NUM_EPOCHS     = 15;
+    private static final int NUM_EPOCHS     = 50;
 
-    private static final float STEP_SIZE    = 1.0f;
+    private static final double STEP_SIZE   = 1e-2f;
 
     private static final long ROWS          = 195841983;
 
@@ -120,38 +120,30 @@ public class Exp_LRRM extends Program {
                 model.nextEpoch();
 
                 atomic(state(W), () ->
-                    F.processRows(PER_NODE_DOP, (id, row, valueList, rowStart, rowEnd, colList) -> {
+                        F.processRows(PER_NODE_DOP, (id, row, valueList, rowStart, rowEnd, colList) -> {
 
-                        float[] w = UPDATE_MODEL == UpdateModel.RED
-                                ? model.getModel(id).data
-                                : model.getModel().data;
+                            float[] w = UPDATE_MODEL == UpdateModel.SEQ
+                                    ? model.getModel().data
+                                    : model.getModel(id).data;
 
-                        float[] d = model.getDerivative(id).data;
-                        float[] g = model.getGradient(id).data;
+                            double z = 0;
+                            for (int i = rowStart; i < rowEnd; ++i)
+                                z += valueList[i] * w[colList[i]];
 
-                        float yPredict = 0;
-                        for (int i = rowStart; i < rowEnd; ++i) {
-                            yPredict += valueList[i] * w[colList[i]];
-                        }
+                            double f = (1.0f / (1.0f + Math.exp(-z))) - Y.data[row];
 
-                        float f = Y.data[row] - yPredict;
-                        for (int j = rowStart; j < rowEnd; ++j) {
-                            int ci = colList[j];
-                            d[ci] = valueList[ci] * f;
-                            g[ci] += d[ci] * STEP_SIZE;
-                            w[ci] -= g[ci];
-                        }
-
-                        if (UPDATE_MODEL == UpdateModel.RED)
-                            model.sync();
-                    })
+                            for (int j = rowStart; j < rowEnd; ++j)
+                                w[colList[j]] -= STEP_SIZE * valueList[j] * f;
+                        })
                 );
 
                 //
                 // Global Model Merging.
                 //
                 TransactionMng.commit(merge_W);
+
                 model.save(epoch);
+
                 System.out.println("FINISHED EPOCH [" + epoch + "]");
             });
 
