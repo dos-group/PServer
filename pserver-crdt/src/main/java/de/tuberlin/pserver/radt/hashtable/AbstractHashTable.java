@@ -14,14 +14,16 @@ public abstract class AbstractHashTable<K,V> extends AbstractRADT<V> implements 
     // ---------------------------------------------------
 
     protected final Map<K, Slot<K,V>> map;
+
     protected final HashTableCemetery<K,V> cemetery;
 
 
     // ---------------------------------------------------
-    // Constructor.
+    // Constructors.
     // ---------------------------------------------------
 
     protected AbstractHashTable(String id, int noOfReplicas, ProgramContext programContext) {
+
         super(id, noOfReplicas, programContext);
 
         // Initialize HashTable
@@ -30,25 +32,32 @@ public abstract class AbstractHashTable<K,V> extends AbstractRADT<V> implements 
 
         // Initialize Cemetery
         this.cemetery = new HashTableCemetery<>(map, noOfReplicas, nodeId);
+
     }
 
     @Override
     public synchronized Hashtable<K,V> getHashtable() {
+
         Hashtable<K,V> result = new Hashtable<>();
 
         map.values().stream()
                 .filter(entry -> entry.getValue() != null)
                 .forEach(entry -> result.put(entry.getKey(), entry.getValue()));
 
+
         return result;
+
     }
 
     @Override
     public synchronized Set<Map.Entry<K,V>> getEntrySet() {
+
         Map<K,V> result = map.values().stream()
                 .filter(slot -> slot.getValue() != null)
                 .collect(Collectors.<Slot<K,V>, K, V>toMap(Slot::getKey, CObject::getValue));
 
         return result.entrySet();
+
     }
+
 }

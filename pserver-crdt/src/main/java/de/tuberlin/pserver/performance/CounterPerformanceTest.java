@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.experiments;
+package de.tuberlin.pserver.performance;
 
 
 import com.google.common.collect.Lists;
@@ -8,18 +8,15 @@ import de.tuberlin.pserver.crdt.counters.SimpleCounter;
 import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
+import de.tuberlin.pserver.runtime.core.config.ConfigLoader;
 
 import java.io.Serializable;
-import java.util.Calendar;
 import java.util.List;
-import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 
 public class CounterPerformanceTest extends Program {
-    private static final int NUM_NODES = 16;
+    private static final int NUM_NODES = 4;
     private static final int NUM_OPERATIONS = 1000000;
 
     private static final String CRDT_ID = "counter";
@@ -30,24 +27,21 @@ public class CounterPerformanceTest extends Program {
 
             SimpleCounter counter = SimpleCounter.newReplica(CRDT_ID, NUM_NODES, programContext);
 
-
-
-
             UnitMng.barrier(UnitMng.GLOBAL_BARRIER);
-            final long startTime = Calendar.getInstance().getTimeInMillis();
+
+            final long startTime = System.currentTimeMillis();
 
             System.out.println("[TEST] " + programContext.nodeID + " Starting operations");
-
 
             for(int i = 0; i < NUM_OPERATIONS; i++) {
                 counter.increment(1);
             }
 
-            final long intermediateTime = Calendar.getInstance().getTimeInMillis();
+            final long intermediateTime = System.currentTimeMillis();
 
             counter.finish();
 
-            final long stopTime = Calendar.getInstance().getTimeInMillis();
+            final long stopTime = System.currentTimeMillis();
 
             System.out.println("[TEST] " + programContext.nodeID + " Finished.");
 
@@ -70,9 +64,8 @@ public class CounterPerformanceTest extends Program {
         // Set the memory each simulated node gets.
         //System.setProperty("jvmOptions", "[\"-Xmx512m\"]");
 
-        System.setProperty("pserver.profile", "wally");
-        PServerExecutor.REMOTE
-                .run(CounterPerformanceTest.class)
+        PServerExecutor.DISTRIBUTED
+                .run(ConfigLoader.loadResource("distributed.conf"), CounterPerformanceTest.class)
                 .results(results)
                 .done();
 
@@ -87,20 +80,19 @@ public class CounterPerformanceTest extends Program {
 
         System.out.println("\n[TEST] ***Results***");
         long avgTime = 0;
-        long avgRegplicationTime = 0;
+        long convergenceTime = 0;
 
         for(int i = 0; i < NUM_NODES; i++) {
             System.out.println("[TEST] Node " + i + ": "
                     + "execution time " + results.get(i).get(1) + "ms, "
-                    + "replication time " + results.get(i).get(2) + "ms, "
-                    + "count value = " + results.get(i).get(0));
+                    + "convergence time " + results.get(i).get(2) + "ms, ");
             avgTime += (long)results.get(i).get(1);
-            avgRegplicationTime += (long)results.get(i).get(2);
+            convergenceTime += (long)results.get(i).get(2);
         }
         avgTime /= NUM_NODES;
-        avgRegplicationTime /= NUM_NODES;
+        convergenceTime /= NUM_NODES;
 
         System.out.println("[TEST] Avg. execution time: " + avgTime + "ms"
-                    + ", Avg convergence time: " + avgRegplicationTime + "ms");
+                + ", Convergence time: " + convergenceTime);
     }
 }

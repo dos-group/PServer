@@ -4,9 +4,15 @@ import de.tuberlin.pserver.crdt.CRDT;
 
 public interface Graph<T> extends CRDT {
 
-    public boolean addVertex(Vertex<T> v);
-    public boolean removeVertex(Vertex<T> v);
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
 
-    public boolean addEdge(Edge e);
-    public boolean removeEdge(Edge e);
+    boolean addVertex(Vertex<T> v);
+
+    boolean removeVertex(Vertex<T> v);
+
+    boolean addEdge(Edge e);
+
+    boolean removeEdge(Edge e);
 }

@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.benchmarks.crdt;
+package de.tuberlin.pserver.performance;
 
 
 import com.google.common.collect.Lists;
@@ -8,6 +8,7 @@ import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.radt.arrays.Array;
+import de.tuberlin.pserver.runtime.core.config.ConfigLoader;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -18,9 +19,9 @@ import java.util.Random;
 import static org.junit.Assert.assertArrayEquals;
 
 public class ArrayPerformanceTest extends Program {
-    private static final int NUM_NODES = 3;
-    private static final int ARRAY_SIZE = 100;
-    private static final int NUM_OPERATIONS = 1000;
+    private static final int NUM_NODES = 16;
+    private static final int ARRAY_SIZE = 100000;
+    private static final int NUM_OPERATIONS = 1000000;
     private static final String RADT_ID = "array";
 
     @Unit
@@ -36,7 +37,7 @@ public class ArrayPerformanceTest extends Program {
 
             // 1. Fill the buffer with writes
             for(int i = 0; i < NUM_OPERATIONS; i++) {
-                buffer.add(new ImmutablePair<>(rand.nextInt(ARRAY_SIZE + 1), rand.nextInt()));
+                buffer.add(new ImmutablePair<>(rand.nextInt(ARRAY_SIZE), rand.nextInt()));
             }
 
             UnitMng.barrier(UnitMng.GLOBAL_BARRIER);
@@ -72,8 +73,8 @@ public class ArrayPerformanceTest extends Program {
         // Set the memory each simulated node gets.
         System.setProperty("jvmOptions", "[\"-Xmx256m\"]");
 
-        PServerExecutor.LOCAL
-                .run(ArrayPerformanceTest.class)
+        PServerExecutor.DISTRIBUTED
+                .run(ConfigLoader.loadResource("distributed.conf"), ArrayPerformanceTest.class)
                 .results(results)
                 .done();
 

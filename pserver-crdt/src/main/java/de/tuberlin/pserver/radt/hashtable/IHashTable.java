@@ -8,6 +8,10 @@ import java.util.Set;
 
 public interface IHashTable<K,V> extends RADT {
 
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
+
     void put(K key, V value);
 
     V read(K key);

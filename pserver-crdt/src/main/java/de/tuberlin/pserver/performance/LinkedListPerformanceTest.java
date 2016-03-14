@@ -1,4 +1,4 @@
-package de.tuberlin.pserver.benchmarks.crdt;
+package de.tuberlin.pserver.performance;
 
 
 import com.google.common.collect.Lists;
@@ -9,6 +9,7 @@ import de.tuberlin.pserver.dsl.unit.UnitMng;
 import de.tuberlin.pserver.dsl.unit.annotations.Unit;
 import de.tuberlin.pserver.dsl.unit.controlflow.lifecycle.Lifecycle;
 import de.tuberlin.pserver.radt.list.LinkedList;
+import de.tuberlin.pserver.runtime.core.config.ConfigLoader;
 
 import java.io.Serializable;
 import java.util.Calendar;
@@ -20,10 +21,9 @@ import static org.junit.Assert.assertArrayEquals;
 
 public class LinkedListPerformanceTest extends Program {
     private static final String RADT_ID = "linkedList";
-    private static final int NUM_NODES = 3;
-    private static final int NUM_ELEMENTS = 100;
-    private static final int NUM_OPERATIONS = 1000;
-    private static final int MIN_ELEMENTS = 10;
+    private static final int NUM_NODES = 16;
+    private static final int NUM_ELEMENTS = 10000;
+    private static final int NUM_OPERATIONS = 1000000;
 
     public static final int INSERT = 0;
     public static final int UPDATE = 1;
@@ -37,107 +37,49 @@ public class LinkedListPerformanceTest extends Program {
             List<Tuple3<Integer, Integer, Integer>> buffer = new java.util.LinkedList<>();
 
 
-
             System.out.println("[TEST] " + programContext.nodeID + " Filling operation buffer");
 
 
-            /*int num_inserts = 0;
-            int num_deletes = 0;
-            float p = 0;
-
-            for(int i = 0; i < NUM_OPERATIONS; i++) {
-                if(num_inserts - num_deletes < MIN_ELEMENTS) {
-                    buffer.add(new Command(Type.INSERT, 0, rand.nextInt()));
-                    num_inserts++;
-                }
-                else {
-                    p = rand.nextFloat();
-                    if(p < 0.5) {
-                        buffer.add(new Command(Type.INSERT, rand.nextInt(MIN_ELEMENTS), rand.nextInt()));
-                        num_inserts++;
-                    }
-                    else if(p < 0.75) {
-                        buffer.add(new Command(Type.UPDATE, rand.nextInt(MIN_ELEMENTS), rand.nextInt()));
-                    }
-                    else {
-                        buffer.add(new Command(Type.DELETE, rand.nextInt(MIN_ELEMENTS), 0));
-                        num_deletes++;
-                    }
-                }
-            }*/
-
-
-
             // 1. Fill the list
-            for(int i = 0; i < NUM_ELEMENTS; i++) {
+            /*for(int i = 0; i < NUM_ELEMENTS/NUM_NODES; i++) {
                 list.insert(i, rand.nextInt());
             }
 
             // 2. Now execute different operations
             for(int i = 0; i < NUM_OPERATIONS; i++) {
                 if(i % 2 == 0) {
-                    buffer.add(new Tuple3<>(UPDATE, rand.nextInt(MIN_ELEMENTS), rand.nextInt()));
-                }
-                else if(i % 3 == 0) {
-                    buffer.add(new Tuple3<>(DELETE, rand.nextInt(MIN_ELEMENTS), rand.nextInt()));
+                    buffer.add(new Tuple3<>(UPDATE, rand.nextInt(NUM_ELEMENTS+i/2), rand.nextInt()));
                 }
                 else {
-                    buffer.add(new Tuple3<>(INSERT, rand.nextInt(MIN_ELEMENTS), rand.nextInt()));
+                    buffer.add(new Tuple3<>(INSERT, rand.nextInt(NUM_ELEMENTS+i/2), rand.nextInt()));
                 }
-            }
-
-            /*for(int i = 0; i< NUM_OPERATIONS; i++) {
-                //list.insert()
             }*/
-/*
-            for(int i = 0; i < NUM_OPERATIONS/NUM_NODES; i++) {
-                buffer.add(new Tuple3<>(UPDATE, rand.nextInt(MIN_ELEMENTS), rand.nextInt()));
-            }
 
-            for(int i = 0; i < (NUM_ELEMENTS - MIN_ELEMENTS)/NUM_NODES; i++) {
-                buffer.add(new Tuple3<>(DELETE, rand.nextInt(MIN_ELEMENTS), rand.nextInt()));
-            }
-
-            for(int i = 0; i < 100; i++) {
-                buffer.add(new Tuple3<>(INSERT, i, rand.nextInt()));
-            }
-*/
-
-
-
-
-/*
-
-            // 1. Fill the whole list
-            for(int i = 0; i < NUM_ELEMENTS; i++) {
+            for (int i = 0; i < NUM_ELEMENTS / NUM_NODES; i++) {
                 buffer.add(new Tuple3<>(INSERT, i, rand.nextInt()));
             }
 
-            // 2. Do some updates
-            for(int i = 0; i < (NUM_ELEMENTS/NUM_NODES)/2; i++) {
+            for(int i = 0; i < (NUM_OPERATIONS - (NUM_ELEMENTS/NUM_NODES)); i++) {
                 buffer.add(new Tuple3<>(UPDATE, rand.nextInt(NUM_ELEMENTS), rand.nextInt()));
+                /*buffer.add(new Tuple3<>(INSERT, rand.nextInt(NUM_ELEMENTS), rand.nextInt()));
+                buffer.add(new Tuple3<>(DELETE, rand.nextInt(NUM_ELEMENTS), null));*/
             }
 
-            // 3. Do some deletions
-            for(int i = 0; i< (NUM_ELEMENTS/NUM_NODES)/4; i++) {
-                buffer.add(new Tuple3<>(DELETE, rand.nextInt(NUM_ELEMENTS/4), rand.nextInt()));
-            }
-*/
             UnitMng.barrier(UnitMng.GLOBAL_BARRIER);
             final long startTime = System.currentTimeMillis();
 
             System.out.println("[TEST] " + programContext.nodeID + " Starting operations");
 
-            for(Tuple3<Integer, Integer, Integer> tuple : buffer) {
+           for(Tuple3<Integer, Integer, Integer> tuple : buffer) {
                 if(tuple._1 == INSERT) {
                     list.insert(tuple._2, tuple._3);
                 }
                 else if(tuple._1 == UPDATE) {
                     list.update(tuple._2, tuple._3);
                 }
-                else if(tuple._1 == DELETE) {
+                /*else if(tuple._1 == DELETE) {
                     list.delete(tuple._2);
-                }
+                }*/
                 else {
                     throw new RuntimeException("Unknown operation type " + tuple._1);
                 }
@@ -167,12 +109,12 @@ public class LinkedListPerformanceTest extends Program {
 
         // Set the number of simulated nodes, can also be
         // configured via 'pserver/pserver-core/src/main/resources/reference.simulation.conf'
-        System.setProperty("simulation.numNodes", String.valueOf(NUM_NODES));
+        //System.setProperty("simulation.numNodes", String.valueOf(NUM_NODES));
         // Set the memory each simulated node gets.
-        System.setProperty("jvmOptions", "[\"-Xmx512m\"]");
+        //System.setProperty("jvmOptions", "[\"-Xmx512m\"]");
 
-        PServerExecutor.LOCAL //REMOTE
-                .run(LinkedListPerformanceTest.class)
+        PServerExecutor.DISTRIBUTED
+                .run(ConfigLoader.loadResource("distributed.conf"), LinkedListPerformanceTest.class)
                 .results(results)
                 .done();
 
@@ -183,6 +125,7 @@ public class LinkedListPerformanceTest extends Program {
             assertArrayEquals("The resulting CRDTs are not identical", firstResult, (Object[])results.get(i).get(0));
         }
         System.out.println("\n[TEST] Passed: CRDTs have converged to consistent state.");
+        System.out.println("Size: " + firstResult.length);
 
         System.out.println("\n[TEST] ***Results***");
         long avgTime = 0;

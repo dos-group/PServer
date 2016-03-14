@@ -4,6 +4,10 @@ import de.tuberlin.pserver.operations.Operation;
 
 public interface ReplicatedDataType<T> {
 
+    // ---------------------------------------------------
+    // Public Methods.
+    // ---------------------------------------------------
+
     /**
      * Signals that this replica has finished broadcasting updates. It then waits to receive the
      * {@link Operation.OpType#END END}
