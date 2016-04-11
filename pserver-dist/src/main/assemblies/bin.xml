@@ -1,0 +1,137 @@
+<assembly
+        xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
+    <id>bin</id>
+    <formats>
+        <format>dir</format>
+    </formats>
+
+    <includeBaseDirectory>true</includeBaseDirectory>
+    <baseDirectory>pserver-${project.version}</baseDirectory>
+
+    <!-- copy all jar files and their dependencies -->
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>lib</outputDirectory>
+            <unpack>false</unpack>
+            <useTransitiveDependencies>true</useTransitiveDependencies>
+            <useProjectArtifact>false</useProjectArtifact>
+            <useProjectAttachments>false</useProjectAttachments>
+            <useTransitiveFiltering>true</useTransitiveFiltering>
+            <fileMode>0644</fileMode>
+
+            <excludes>
+                <exclude>de.tuberlin.pserver:pserver-examples</exclude>
+            </excludes>
+        </dependencySet>
+
+        <dependencySet>
+            <outputDirectory>lib_clients</outputDirectory>
+            <unpack>false</unpack>
+            <useTransitiveDependencies>true</useTransitiveDependencies>
+            <useProjectArtifact>false</useProjectArtifact>
+            <useProjectAttachments>false</useProjectAttachments>
+            <useTransitiveFiltering>true</useTransitiveFiltering>
+            <fileMode>0644</fileMode>
+
+            <includes>
+                <include>de.tuberlin.pserver:pserver-client:**</include>
+            </includes>
+
+            <!--
+            <excludes>
+                <exclude>**/*examples*.jar</exclude>
+                <exclude>**/*javadoc*</exclude>
+                <exclude>**/*sources*</exclude>
+            </excludes>
+            -->
+        </dependencySet>
+    </dependencySets>
+
+    <fileSets>
+
+        <fileSet>
+            <!-- copy start scripts -->
+            <directory>src/main/pserver-bin/bin</directory>
+            <outputDirectory>bin</outputDirectory>
+            <fileMode>0755</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <!-- copy default configuration -->
+            <directory>src/main/pserver-bin/conf</directory>
+            <outputDirectory>conf</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+        <!-- copy env -->
+        <fileSet>
+            <directory>src/main/pserver-bin/env</directory>
+            <outputDirectory>env</outputDirectory>
+            <fileMode>0744</fileMode>
+        </fileSet>
+
+        <!-- copy sbin -->
+        <fileSet>
+            <directory>src/main/pserver-bin/sbin</directory>
+            <outputDirectory>sbin</outputDirectory>
+            <fileMode>0755</fileMode>
+        </fileSet>
+
+        <!-- copy profiles -->
+        <fileSet>
+            <directory>src/main/pserver-bin/profiles</directory>
+            <outputDirectory>profiles</outputDirectory>
+            <fileMode>0744</fileMode>
+        </fileSet>
+
+        <!-- copy incs -->
+        <fileSet>
+            <directory>src/main/pserver-bin/inc</directory>
+            <outputDirectory>inc</outputDirectory>
+            <fileMode>0744</fileMode>
+        </fileSet>
+
+        <!-- copy scripts -->
+        <fileSet>
+            <directory>src/main/pserver-bin/scripts</directory>
+            <outputDirectory>scripts</outputDirectory>
+            <fileMode>0755</fileMode>
+        </fileSet>
+
+        <fileSet>
+            <!-- create an empty log directory -->
+            <directory>src/main/pserver-bin/</directory>
+            <outputDirectory>log</outputDirectory>
+            <fileMode>0644</fileMode>
+            <excludes>
+                <exclude>**/*</exclude>
+            </excludes>
+        </fileSet>
+
+        <fileSet>
+            <!-- copy *.txt files -->
+            <directory>src/main/pserver-bin/</directory>
+            <outputDirectory></outputDirectory>
+            <fileMode>0644</fileMode>
+            <includes>
+                <include>*.txt</include>
+                <include>*.properties</include>
+            </includes>
+        </fileSet>
+
+        <fileSet>
+            <!-- copy JavaDocs -->
+            <!-- <directory>../target/apidocs</directory -->
+            <directory>../target</directory>
+            <includes>
+                <include>pserver-*-javadoc.jar</include>
+            </includes>
+            <outputDirectory>docs/javadoc</outputDirectory>
+            <fileMode>0644</fileMode>
+        </fileSet>
+
+    </fileSets>
+
+</assembly>

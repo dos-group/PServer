@@ -1,0 +1,140 @@
+<?xml version="1.0"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <!-- ================================= -->
+    <!-- MAVEN HEADER. -->
+    <!-- ================================= -->
+
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>de.tuberlin.pserver</groupId>
+        <artifactId>pserver</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>pserver-core</artifactId>
+    <packaging>jar</packaging>
+    <name>pserver-core</name>
+
+    <!-- ================================= -->
+    <!-- MAVEN DEPENDENCIES. -->
+    <!-- ================================= -->
+
+    <dependencies>
+
+        <!-- PROJECT DEPENDENCIES -->
+        <dependency>
+            <groupId>de.tuberlin.pserver</groupId>
+            <artifactId>pserver-commons</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.tuberlin.pserver</groupId>
+            <artifactId>pserver-diagnostics</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.tuberlin.pserver</groupId>
+            <artifactId>pserver-types</artifactId>
+        </dependency>
+
+        <!-- SYSTEM DEPENDENCIES -->
+
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.sourceforge.argparse4j</groupId>
+            <artifactId>argparse4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe</groupId>
+            <artifactId>config</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.1.0.CR3</version>
+        </dependency>
+
+        <!-- OLD ZOOKEEPER DEPENDENCIES -->
+        <!--dependency>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-framework</artifactId>
+        </dependency-->
+        <!-- OLD ZOOKEEPER DEPENDENCIES -->
+
+        <dependency>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+            <version>3.5.1-alpha</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-framework</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-recipes</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-test</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-client</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.jcip</groupId>
+            <artifactId>jcip-annotations</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>bcel</groupId>
+            <artifactId>bcel</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.univocity</groupId>
+            <artifactId>univocity-parsers</artifactId>
+            <version>1.5.6</version>
+            <type>jar</type>
+        </dependency>
+
+        <!--<dependency>
+            <groupId>it.unimi.dsi</groupId>
+            <artifactId>fastutil</artifactId>
+            <version>7.0.9</version>
+        </dependency>-->
+
+    </dependencies>
+</project>

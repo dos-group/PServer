@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>de.tuberlin.pserver</groupId>
+    <artifactId>pserver</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <name>pserver</name>
+    <packaging>pom</packaging>
+    <url>https://github.com/citlab/PServer</url>
+
+    <!--scm>
+        <url>https://github.com/citlab/PServer</url>
+        <connection>scm:git:git@github.com:citlab/PServer.git</connection>
+        <developerConnection>scm:git:git@github.com:citlab/PServer.git</developerConnection>
+    </scm-->
+
+    <!-- ================================= -->
+    <!-- PSERVER PROJECT CONFIGURATION.    -->
+    <!-- ================================= -->
+
+    <properties>
+        <!-- build -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Java -->
+        <jdk.version>1.8</jdk.version>
+
+        <!-- Maven Plugins -->
+        <maven-compiler-plugin.version>3.1</maven-compiler-plugin.version>
+        <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
+        <maven-surefire-plugin.version>2.17</maven-surefire-plugin.version>
+
+        <!-- Dependencies -->
+        <slf4j-api.version>1.7.5</slf4j-api.version>
+        <slf4j-log4j12.version>1.7.5</slf4j-log4j12.version>
+        <guava.version>15.0</guava.version>
+        <commons-lang3.version>3.3.2</commons-lang3.version>
+        <commons-io.version>1.3.2</commons-io.version>
+        <argparse4j.version>0.4.3</argparse4j.version>
+        <config.version>1.2.1</config.version>
+        <gson.version>2.3.1</gson.version>
+        <commons-cvs.version>1.1</commons-cvs.version>
+
+        <netty-all.version>4.0.12.Final</netty-all.version>
+        <kryo.version>3.0.1</kryo.version>
+        <zookeeper.version>3.4.5</zookeeper.version>
+        <curator.version>2.5.0</curator.version>
+        <jcip-annotations.version>1.0</jcip-annotations.version>
+
+        <asm.version>4.0</asm.version>
+        <bcel.version>5.1</bcel.version>
+
+        <jblas.version>1.2.3</jblas.version>
+        <mtj.version>1.0.2</mtj.version>
+        <ejml.version>0.25</ejml.version>
+
+        <hadoop-client.version>2.4.1</hadoop-client.version>
+
+        <commons.math3.version>3.2</commons.math3.version>
+    </properties>
+
+    <!-- ================================= -->
+    <!-- MAVEN DEPENDENCIES. -->
+    <!-- ================================= -->
+
+    <dependencies>
+
+        <!-- SYSTEM DEPENDENCIES -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <!--globalScope>test</globalScope-->
+        </dependency>
+
+        <dependency>
+            <groupId>net.sf.trove4j</groupId>
+            <artifactId>trove4j</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+        </dependency>
+
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- PROJECT DEPENDENCIES -->
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-commons</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-diagnostics</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-types</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-node</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-ml</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-examples</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-test</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-crdt</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-criteo</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-criteo-spark</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>pserver-benchmarks</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- SYSTEM DEPENDENCIES -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+                <version>${slf4j-log4j12.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.sourceforge.argparse4j</groupId>
+                <artifactId>argparse4j</artifactId>
+                <version>${argparse4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.typesafe</groupId>
+                <artifactId>config</artifactId>
+                <version>${config.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>${gson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-csv</artifactId>
+                <version>${commons-cvs.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty-all.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.esotericsoftware</groupId>
+                <artifactId>kryo</artifactId>
+                <version>${kryo.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.zookeeper</groupId>
+                <artifactId>zookeeper</artifactId>
+                <version>${zookeeper.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>log4j</groupId>
+                        <artifactId>log4j</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-framework</artifactId>
+                <version>${curator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.jcip</groupId>
+                <artifactId>jcip-annotations</artifactId>
+                <version>${jcip-annotations.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm</artifactId>
+                <version>${asm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>bcel</groupId>
+                <artifactId>bcel</artifactId>
+                <version>${bcel.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jblas</groupId>
+                <artifactId>jblas</artifactId>
+                <version>${jblas.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.googlecode.currentState-toolkits-java</groupId>
+                <artifactId>mtj</artifactId>
+                <version>${mtj.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.googlecode.efficient-java-currentState-library</groupId>
+                <artifactId>ejml</artifactId>
+                <version>{ejml.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-client</artifactId>
+                <version>${hadoop-client.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-math3</artifactId>
+                <version>${commons.math3.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.sf.trove4j</groupId>
+                <artifactId>trove4j</artifactId>
+                <version>3.0.3</version>
+            </dependency>
+
+
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- ================================= -->
+    <!-- MAVEN BUILD. -->
+    <!-- ================================= -->
+
+    <build>
+        <pluginManagement>
+            <plugins>
+
+                <!-- enable specific JVM version -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin.version}</version>
+                    <configuration>
+                        <source>${jdk.version}</source>
+                        <target>${jdk.version}</target>
+                    </configuration>
+                </plugin>
+
+                <!-- enable code formatting -->
+                <!--plugin>
+                    <groupId>com.googlecode.maven-java-formatter-plugin</groupId>
+                    <artifactId>maven-java-formatter-plugin</artifactId>
+                    <version>0.4</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>fileFormat</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <configFile>eclipse/formatter.xml</configFile>
+                    </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>pserver-build-tools</artifactId>
+                        </dependency>
+                    </dependencies>
+                </plugin-->
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven-surefire-plugin.version}</version>
+                    <configuration>
+                        <includes>
+                            <include>**/*TestSuite.java</include>
+                        </includes>
+                    </configuration>
+                </plugin>
+
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <!-- ================================= -->
+    <!-- MAVEN MODULES. -->
+    <!-- ================================= -->
+
+    <modules>
+        <module>pserver-commons</module>
+        <module>pserver-diagnostics</module>
+        <module>pserver-types</module>
+        <module>pserver-core</module>
+        <module>pserver-client</module>
+        <module>pserver-node</module>
+        <module>pserver-ml</module>
+        <module>pserver-crdt</module>
+        <module>pserver-examples</module>
+        <module>pserver-test</module>
+        <module>pserver-dist</module>
+        <module>pserver-dist-peel</module>
+        <module>pserver-benchmark-suite</module>
+    </modules>
+
+</project>

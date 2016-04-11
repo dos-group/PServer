@@ -1,0 +1,8 @@
+
+mvn clean install
+# deploy and start:
+scripts/deploy-zookeeper-setup-start-all.sh -f <start-node> -c <num-nodes> -z <zookeeper-instances>
+# stop (äquivalent für nur start, wenn schon deployed)
+scripts/stop-all.sh -f <start-node> -c <num-nodes> -z <zookeeper-instances>
+# fetch logs
+sbin/cluster.sh fetch-logs f <start-node> -c <num-nodes> -z <zookeeper-instances> [-fetch-logs-interval]
