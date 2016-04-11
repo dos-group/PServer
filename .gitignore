@@ -62,7 +62,5 @@ logs/
 
 datasets/
 
-dev-cluster/
-
 # python object files
 *.pyc

@@ -2,5 +2,5 @@
 
 for i in `seq -f '%02g' 1 $1`;
 do
-  vagrant up c64$i
+  vagrant up c71$i
 done

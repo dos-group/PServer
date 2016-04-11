@@ -1,9 +1,11 @@
 
+***************************************
 PServer Development Cluster Environment
 ***************************************
 
-This will guide you through the process of setting up a local development cluster consisting of up to 10 CentOS 6.4 virtual machines as well as how to manage distributed services using Apache Ambari.
+This will guide you through the process of setting up a local development cluster consisting of up to 10 CentOS 7.1 virtual machines as well as how to manage distributed services using Apache Ambari.
 
+*************
 Prerequisites 
 *************
 
@@ -17,27 +19,31 @@ The following software needs to be installed locally before you can initialize t
 
 Copy the contents of the hosts file (excluding the first two lines) into your /etc/hosts file. This will require sudo access.
 
+**********************
 Installing the cluster 
 **********************
 
 Apache Ambari is a tool for provisioning, managing, and monitoring Apache Hadoop clusters. Ambari consists of a set of RESTful APIs and a browser-based management interface. 
 
-To initialize the cluster, run "./up.sh Num_of_nodes" with num_of_nodes being an integer between 1 and 10 which represents the number of nodes you want in your cluster.
+To change the setup (e.g. memory) of virtual mahcines, edit the "Vagrantfile".
 
-This will setup however many nodes you requested with CentOS 6.4 and install Ambari Server v2.2.1 on c6401. It will take approximately 15 minutes (For 3 nodes and assuming all steps are successful)
+To initialize the cluster, run "./up.sh num_of_nodes" with num_of_nodes being an integer between 1 and 10 which represents the number of nodes you want in your cluster.
+
+This will setup however many nodes you requested with CentOS 7.1 and install Ambari Server v2.2.1 on c7101. It will take approximately 15 minutes (For 3 nodes and assuming all steps are successful)
 
 For troubleshooting see https://cwiki.apache.org/confluence/display/AMBARI/Quick+Start+Guide
 
+***********************
 Setting up the Services
 ***********************
 
-After the cluster has successfully been installed, the next task is to setup the services for our cluster. Open the ambari management console at http://c6401.ambari.apache.org:8080, the login username and password is "admin".
+After the cluster has successfully been installed, the next task is to setup the services for our cluster. Open the ambari management console at http://c7101.ambari.apache.org:8080, the login username and password is "admin".
 
 Click "launch install wizard" and proceed to install the services you would like on your cluster. 
 
 When you get to "Install Options" you can enter the following into "Target Hosts":
 
-c64[01-03].ambari.apache.org
+c71[01-03].ambari.apache.org
 
 NOTE: this assumes you have 3 nodes, if you have more/less, just change the values in brackets.
 
@@ -45,10 +51,9 @@ Also on "Install Options", under "Host Registration Information" you can find th
 
 Once you get to the end of the install wizard, congratulations on your new development cluster!
 
-To stop the cluster you can use "vagrant suspend" in the console. To bring it back up again, "./up.sh num_of_nodes". NB: Remember to go into the ambari management console to ensure all services are up and running on resume!!! 
+To stop the cluster you can use "vagrant suspend" in the console. To bring it back up again, "./up.sh num_of_nodes". Good luck!
 
-Good luck!
-
+*******************
 Basic VM Operations
 *******************
 
@@ -76,6 +81,7 @@ Starts a SSH session to the host. For example: vagrant ssh c6401
 vagrant status
 Shows which VMs are running, suspended, etc.
 
+*************
 HDFS Commands
 *************
 
