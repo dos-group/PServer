@@ -12,6 +12,12 @@ echo "/swapfile       none    swap    sw      0       0" >> /etc/fstab
 cp /vagrant/insecure_private_key /root/insecure_private_key
 chmod 600 /root/insecure_private_key
 
+sudo cp /vagrant/id_rsa /root/.ssh
+sudo cp /vagrant/id_rsa.pub /root/.ssh
+sudo chmod 700 /root/.ssh
+sudo chmod 600 /root/.ssh/authorized_keys
+cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys  
+
 # wget and install Java 8
 sudo apt-get install -y build-essential software-properties-common python-software-properties debconf-utils
 sudo add-apt-repository -y ppa:webupd8team/java
@@ -21,3 +27,4 @@ sudo apt-get install -y oracle-java8-installer
 
 # Dependancies for parameter server and petuum
 sudo apt-get -y install g++ make autoconf git libtool uuid-dev openssh-server cmake libopenmpi-dev openmpi-bin libssl-dev libnuma-dev python-dev python-numpy python-scipy python-yaml protobuf-compiler subversion libxml2-dev libxslt-dev zlibc zlib1g zlib1g-dev libbz2-1.0 libbz2-dev libboost-all-dev
+

@@ -71,6 +71,13 @@ Once you get to the end of the install wizard, congratulations on your new devel
 To stop the cluster you can use "vagrant suspend" in the console. To bring it back up again, "./up.sh num_of_nodes". Good luck!
 
 
+**Using the correct account**
+*******************
+
+When login into a vagrant box via terminal, make sure you use the root account (ssh keys are setup for this user). Use the following command:
+
+sudo -su root
+
 **Basic VM Operations**
 *******************
 
