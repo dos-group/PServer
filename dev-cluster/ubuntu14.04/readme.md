@@ -26,7 +26,7 @@ Apache Ambari is a tool for provisioning, managing, and monitoring Apache Hadoop
 
 To change the setup (e.g. memory) of virtual mahcines, edit the "Vagrantfile".
 
-To initialize the cluster, run "./up.sh num_of_nodes" with num_of_nodes being an integer between 1 and 10 which represents the number of nodes you want in your cluster.
+To initialize the cluster, run ```./up.sh num_of_nodes``` with num_of_nodes being an integer between 1 and 10 which represents the number of nodes you want in your cluster.
 
 This will setup however many nodes you requested with Ubuntu 14.04 and install Ambari Server v2.2.1 on u1401. It will take approximately 15 minutes (For 3 nodes and assuming all steps are successful)
 
@@ -39,13 +39,15 @@ Unforunately with Ubuntu 14.04 the system hangs when trying to automatically ins
 
 First, ssh into the virtual machine where you would like to install the Ambari-server software. You can choose any machine in the cluster, for the tutorial we will use u1401.
 
-vagrant ssh u1401
+```vagrant ssh u1401```
 
 Next, run the following commmand on the virtual machine:
 
-sudo apt-get install ambari-server -y
+```sudo apt-get install ambari-server -y
+
 sudo ambari-server setup -s -v -j /usr/lib/jvm/java-8-oracle
-sudo ambari-server start
+
+sudo ambari-server start```
 
 Once finished, logout from the virtual machine and continue to setup the services.
 
@@ -58,7 +60,7 @@ Click "launch install wizard" and proceed to install the services you would like
 
 When you get to "Install Options" you can enter the following into "Target Hosts":
 
-u14[01-03].ambari.apache.org
+````u14[01-03].ambari.apache.org```
 
 NOTE: this assumes you have 3 nodes, if you have more/less, just change the values in brackets.
 
@@ -72,28 +74,28 @@ To stop the cluster you can use "vagrant suspend" in the console. To bring it ba
 **Basic VM Operations**
 *******************
 
-vagrant up <vm name>
+```vagrant up <vm name>```
 Starts a specific VM. up.sh is a wrapper for this call.
 Note: if you don’t specify the <vm name> parameter, it will try to start 10 VMs 
 You can run this if you want to start more VMs after you already called up.sh
 For example: vagrant up u1406
 
-vagrant destroy -f
+```vagrant destroy -f```
 Destroys all VMs launched from the current directory (deletes them from disk as well)
 You can optionally specify a specific VM to destroy
 
-vagrant suspend
+```vagrant suspend```
 Suspends (snapshot) all VMs launched from the current directory so that you can resume them later
 You can optionally specify a specific VM to suspend
 
-vagrant resume
+```vagrant resume```
 Resumes all suspended VMs launched from the current directory
 You can optionally specify a specific VM to resume
 
-vagrant ssh host
+```vagrant ssh host```
 Starts a SSH session to the host. For example: vagrant ssh u1401
 
-vagrant status
+```vagrant status```
 Shows which VMs are running, suspended, etc.
 
 
@@ -101,14 +103,14 @@ Shows which VMs are running, suspended, etc.
 *************
 
 Making a new Directory
-HADOOP_USER_NAME=hdfs hdfs dfs -mkdir /datasets
+```HADOOP_USER_NAME=hdfs hdfs dfs -mkdir /datasets```
 
 Putting all files in a directory to HDFS
-HADOOP_USER_NAME=hdfs hdfs dfs -put /vagrant/datasets /
+```HADOOP_USER_NAME=hdfs hdfs dfs -put /vagrant/datasets /```
 
 View files in a folder
-HADOOP_USER_NAME=hdfs hdfs dfs -ls /datasets
+```HADOOP_USER_NAME=hdfs hdfs dfs -ls /datasets```
 
 Delete a directory
-HADOOP_USER_NAME=hdfs hdfs dfs -rmr /datasets
+```HADOOP_USER_NAME=hdfs hdfs dfs -rmr /datasets```
 
