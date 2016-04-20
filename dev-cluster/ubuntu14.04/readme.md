@@ -74,7 +74,7 @@ To stop the cluster you can use "vagrant suspend" in the console. To bring it ba
 **Using the correct account**
 *******************
 
-When login into a vagrant box via terminal, make sure you use the root account (ssh keys are setup for this user). Use the following command:
+When login into a vagrant box via terminal, make sure you use the root account (ssh keys are setup for this user). Use the following command before running jobs manually:
 
 sudo -su root
 
