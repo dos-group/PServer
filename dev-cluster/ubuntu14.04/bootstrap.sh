@@ -16,6 +16,7 @@ sudo cp /vagrant/id_rsa /root/.ssh
 sudo cp /vagrant/id_rsa.pub /root/.ssh
 sudo chmod 700 /root/.ssh
 sudo chmod 600 /root/.ssh/authorized_keys
+sudo chmod 400 /root/.ssh/id_rsa
 cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys  
 
 # wget and install Java 8
